@@ -132,3 +132,37 @@ Commits this pass: 59c7943 (the fix itself, landed earlier same day),
 a20e533 (hub link -> route, floater_analyze.py + shard_report.json).
 Verification screenshots: /tmp/qa_final_default_cam.png,
 /tmp/qa_final_close_cam.png, /tmp/viewer_shots_after/before_raw_mode.png.
+
+## 2026-09-13 pass 3 (IO direct): ROOT CAUSE FOUND AND FIXED - missing NORMAL attribute
+
+Defect (persisted after 59c7943): figure rendered as black salt-and-pepper
+silhouette in arsenal-viewer (PIXELATED mode), all race bodies.
+
+Diagnosis trail:
+- Pass 2 (astra, truncated) disproved UV scramble: adjacent-face brightness
+  delta mean 3.7/255 on human-hunter-male pixelated GLB - texture path clean.
+  Its iso-harness "zero triangles drawn" was a harness artifact (the real
+  viewer draws 13,415 tris for the same mesh).
+- GLB JSON parse (glb_json.py): ALL 10 race pixelated GLBs have attributes
+  POSITION + TEXCOORD_0 only. NO NORMAL. Raw GLBs are POSITION-only.
+- three.js r147 lighting (ambient + 3 directionals + point) needs NORMAL;
+  without it all light contribution is zero -> flat black ambient silhouette,
+  and nearest-filter sampling of the dark atlas reads as salt-and-pepper.
+  Trimesh/matplotlib previews shade by face color, which is why Python-side
+  QA always looked correct and browser-side never did.
+
+Fix: art-direction/3d/add_normals.py - welds verts at 1e-4, computes
+area-weighted smooth per-vertex normals, appends NORMAL accessor/view in
+place preserving UV + material. Applied to all 10 race pixelated GLBs
+(commit 31b5e03), viewer rebuilt (d3b910d).
+
+Verified (playwright + vision QA, /tmp/fix_normals_close.png,
+/tmp/fix_normals_default.png, /tmp/fix_orc_default.png):
+- directional lighting present (shoulder highlights, shadowed folds)
+- salt-and-pepper noise GONE; texture reads as intended chunky pixel blocks
+- no detached floating shards (perimeter fragments are connected surface)
+- figure reads as upright cloaked hunter; orc reads as bulky upright orc
+
+Remaining (not defects): jagged tattered-cloak hem is intentional concept
+design, geometry verified in-contact (floater_analyze.py). RAW toggle still
+broken-ish (raw GLBs lack TEXCOORD_0 - UV-less textured render); parked.
