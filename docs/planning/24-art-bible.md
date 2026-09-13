@@ -223,6 +223,15 @@ art-direction/sprites/<card>/):
     first-round PASS (empty-hand instruction per L1+L2 held). APPROVED.
     8 directions + 5-frame idle built (S3/S4); flicker 8.3-19.0, best
     of the run so far. Weapon not baked: separate layer per doc 27.
+41. sprites/undead-male/concept.png - CARD 03 S1: risen undead soldier,
+    frock coat + tricorn, grave-green lantern, ruined chapel; v1 archived
+    in _qa/ (landscape/small figure; recomposed to portrait mid-scale).
+    APPROVED.
+42. sprites/undead-male/turnaround.png - CARD 03 S2: 4-view turnaround,
+    first-round PASS (lantern stripped with the weapons per body-canon
+    rule; empty hands held in all views). APPROVED. 8 directions +
+    5-frame idle built (S3/S4); flicker 18.1-30.2 (cloth coat, per L4).
+    Lantern not baked: gear layer per doc 27.
 
 Page captions for every frame live in 00-art-direction.html and are the
 canonical short descriptions; the pair descriptions there tie each pair
