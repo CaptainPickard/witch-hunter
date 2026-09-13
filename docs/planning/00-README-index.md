@@ -967,3 +967,16 @@ feature-by-feature implementation against the GDD.
     capture into motion, the unintended consequence: a grave-side
     whisper can topple a hold. Catalog twin THE DEAD MAN'S JUSTICE
     added (archetype 25, doc 37 now 25 archetypes).
+
+73. THE OVERHEARD WORD (2026-09-13, Nicko, baked into doc 37 Part
+    3b): two rulings. (1) THE UNKNOWABLE WEIGHT: the vendetta cascade
+    stays unknowable in advance, like real life, we all know not the
+    gravity of our actions until it is too late; heirlessness is
+    learnable only from tavern chatter and overheard conversation,
+    never a UI surface. (2) THE PRIVATE-CONVERSATION RULE: NPCs with
+    important things to say only say them when they think no one else
+    is hearing besides the person they talk to; important
+    conversations run an audience check; stealth becomes an
+    information-gathering verb apart from theft. Gives doc 30's
+    unowned G19 stealth gap its reward economy and keys off G17
+    schedules.

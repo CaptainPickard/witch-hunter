@@ -634,3 +634,26 @@ with assignments:
    immunity says NO for spine NPCs as targets; confirm the guard) :
    doc 20 progression-safety cross-check, IO to verify against doc 20
    SPINE IMMUNITY.
+
+## OVERHEARD WORD PASS (2026-09-13, doc 37 third pass)
+
+Two rulings locked (doc 37 Part 3b): THE UNKNOWABLE WEIGHT (vendetta
+cascade unknowable in advance; heirlessness learnable only through
+overheard conversation, never UI) and THE PRIVATE-CONVERSATION RULE
+(NPCs withhold important lines when they detect an audience; stealth
+becomes an information-gathering verb). New system: THE OVERHEARD
+WORD, conversations as a stealth-reward economy. Wires into doc 30's
+G19 stealth gap (reward economy requirement on the detection model)
+and G17 schedules open (private conversations key off NPC routines).
+
+New opens from this pass, tracked in doc 37's Open Questions section
+with assignments:
+10. Overheard Word audience-check tuning: detection radius vs speech
+    volume bands, line-withheld vs conversation-defers behavior
+    weights (stealth GDD, G19 owner).
+11. Which world facts are Overheard-Word seeded vs rumor-tier only
+    (heirlessness confirmed in-world; feuds, debts, illegitimate
+    children proposed): world GDD pass.
+12. Paranoid-speaker behavior: which NPC dispositions remember an
+    eavesdropper and at what severity (deed log entry, grudge,
+    hostile): G17 dialogue GDD.

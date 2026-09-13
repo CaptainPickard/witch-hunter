@@ -22,6 +22,15 @@ the tissue only, per doc 20's locked rule.
 3. CONSENT RULE: digging always costs light rep; consent only affects
    what the dead give you. ("Digging always costs light rep, consent
    only affects what the dead give you")
+4. THE UNKNOWABLE WEIGHT: the vendetta cascade stays unknowable in
+   advance, just like real life: we all know not the gravity of our
+   actions until it is too late. Heirlessness is learnable only
+   through the Overheard Word (Part 3b), never a UI surface.
+5. THE PRIVATE-CONVERSATION RULE: NPCs with important things to say
+   only say them when they think no one else is hearing, besides the
+   person they are talking to. Stealth becomes an
+   information-gathering verb, not just theft. (Part 3b, the
+   Overheard Word.)
 
 ## Part 1: The Rumor Engine (taverns speak of dungeons)
 
@@ -142,11 +151,19 @@ the Long Agency (doc 19).
      that scales that high: the dead ask for justice, the world
      decides what that justice costs. Resolution texture: the player
      can refuse the vendetta (the grave stays restless, the revenant
-     returns), complete it quietly (the target dies, the deed log
+     can complete it quietly (the target dies, the deed log
      records an unknown-hand kill), or complete it loudly (witnesses,
      faction consequence, the noble's court remembers). All three are
      legitimate endings per the frame grammar; only the world's
      cascade is not optional.
+   - THE UNKNOWABLE WEIGHT (RULING 4, locked 2026-09-13): the
+     unknowable cascade is CONFIRMED as the design intent. The player
+     does not and cannot reliably know the gravity of their actions
+     in advance, just like real life: we all know not the gravity of
+     our actions until it is too late. Heirlessness is learnable
+     only through the Overheard Word system below, never from a
+     UI panel, a bestiary-style entry, or a quest marker: the
+     knowledge lives in the world's conversations or nowhere.
    - CONSENT TEXTURE. Digging always costs light rep (RULING 3).
      What changes with consent: the dead of an aided grave GIVE (testimony,
      treasure leads, kin words, sometimes grave-goods freely handed
@@ -174,6 +191,61 @@ graverobber example):
   reads a place everyone else visits (the graveyard, the tavern, the
   road), not just add stats. Discovery is diegetic: the mechanic
   reveals itself in play, not in a menu.
+
+## Part 3b: The Overheard Word (conversations as a stealth-reward system)
+
+New system from the 2026-09-13 second pass (Nicko idea). Two rules,
+locked in session:
+
+- HEIRLESSNESS AND OTHER WORLD FACTS ARE OVERHEARD. One way to know
+  a hold's noble is heirless is tavern chatter or conversation heard
+  out in the open. It can be as simple as being in the right place at
+  the right time. Heirless nobles, succession anxiety, feuds,
+  illegitimate children, debts: the facts that make the world's
+  cascades readable are seeded into ambient conversation and tavern
+  rumor, catchable by anyone who happens to be present. No interface
+  surfaces them.
+- THE PRIVATE-CONVERSATION RULE (RULING 5, locked): NPCs that have
+  important things to say will only do so if they think no one else
+  is hearing, besides the person they are talking to. Important
+  conversations trigger an audience check: if the player (or a
+  follower) is detectable to the speakers, the important line is
+  withheld or the conversation defers (moves elsewhere, drops to
+  small talk). This creates a real need to sneak undetected apart
+  from theft: stealth becomes an INFORMATION-GATHERING verb. The
+  player who wants the heirless-noble fact, the debt gossip, the
+  coven's meeting time, or the keeper's secret must stand in the
+  dark, behind a wall, up on the gallery, unseen.
+
+Mechanics notes (PROPOSED, for GDD tuning):
+
+- The Overheard Word is the stealth system's reward economy: doc 30's
+  G19 gap (stealth specifications, unowned) now has a REASON to
+  exist beyond thief intrusions (doc 11) and the Graverobber (doc
+  16). Wire this section into the eventual stealth GDD as a
+  requirement on the detection model: sight cones and noise radii
+  are what decide whether the important line is spoken.
+- LISTENING POSITIONS: the game reads the same detection model
+  inversely: the player hidden from the speakers and in earshot
+  collects the line. Darkness, crowd, elevation, and distance are
+  the tools. A detected listener does not just miss the line: the
+  speakers may stop, move, or remember the eavesdropper (deed log,
+  a grudge from the paranoid).
+- SCHEDULES MAKE IT POSSIBLE: private conversations key off doc 30's
+  G17 open (NPC schedules/routines): a noble and his steward argue
+  in the study at a certain hour, the miller's widow meets a
+  smuggler by the river at dusk. Time-of-day knowledge becomes
+  intel knowledge.
+- FOLLOWER LIABILITY: a hidden player with a loud follower loses
+  the line. The retinue is a stealth liability here (doc 23
+  behavior intents), which makes solo listening a real build
+  choice.
+- TIE-IN: this is also how the Vendetta Grave's grave-side whisper
+  can be pre-read. The heirless-noble fact is in the world's
+  conversations: a player who never eavesdrops takes the kill
+  unknowing (the unknowable weight, RULING 4); a player who
+  eavesdrops for weeks holds a map of succession crises. Knowledge
+  is earned, never given.
 
 ## Part 4: The quest catalog, by court
 
