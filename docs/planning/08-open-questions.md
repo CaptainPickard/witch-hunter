@@ -781,3 +781,29 @@ with assignments:
 29. Does clearing a tier-3 faction war dungeon write conquest state
     (does the winning faction's dungeon claim affect the hold above,
     doc 13 texture): doc 13 cross-check, IO reconciliation.
+
+## REPLAYABILITY PASS (2026-09-13, doc 37 ninth pass)
+
+Ruling 15 locked (doc 37 Part 5): 15A THE CLEARED-WOUND RULE plus
+THE VACUUM RULE (destruction persists; new tenants colonize the
+player's ruins: bandits, spiders, necromancers, wizards, squatters,
+refugees, scavengers). 15B THE SITUATION SYSTEM (six dungeon
+situations: OCCUPIED / INFESTED / ABANDONED-RECENTLY / CONTESTED /
+CONSECRATED-DESECRATED / COLLAPSING; re-rolled on long timers,
+readable from outside, rumor-reported). Design contract baked: four
+layers (context / depth / faction / memory), four clocks, the same
+dungeon is never the same dungeon. Six working ideas parked in doc
+37 (ghost corpses, adapted denizens, dungeon economy, Veil-Tide
+interiors, expedition format, dungeon-type specials).
+
+New opens from this pass, tracked in doc 37's Open Questions section
+with assignments:
+30. Situation re-roll timers and transition rules (how often a
+    dungeon changes situation, what triggers a change beyond timers:
+    clears, war events, blight creep): GDD tuning.
+31. Vacuum-tenant draw tables per region and dungeon type (which
+    colonizers can appear where, doc 14 pools + doc 34 bestiary
+    cross-check): world GDD pass.
+32. Cleared-wound persistence budget (how much per-room destruction
+    state the save blob carries, doc 35 G11 persistence
+    cross-check): slice-systems pass.

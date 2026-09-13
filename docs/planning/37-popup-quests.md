@@ -86,6 +86,20 @@ the tissue only, per doc 20's locked rule.
     double agent, or (neutral tier 3 only) taking the dungeon for
     themselves. Tier 3 availability seeded by the war state (doc
     13): the war leaks underground.
+15. REPLAYABILITY RULES (ninth pass, Nicko locks): 15A THE
+    CLEARED-WOUND RULE, what the player destroys stays destroyed
+    (burnt rooms, cut bridges, boss corpses persist), and THE
+    VACUUM RULE, cleared space does not stay empty: bandits,
+    spiders, necromancers, wizards, squatters, refugees, scavengers
+    move in to colonize the ruins the player made. 15B THE
+    SITUATION SYSTEM, every dungeon carries one of six situations
+    (OCCUPIED / INFESTED / ABANDONED-RECENTLY / CONTESTED /
+    CONSECRATED-DESECRATED / COLLAPSING), re-rolled on long timers,
+    readable from outside, reported by the rumor engine. Design
+    contract: four layers, four clocks, the same dungeon is never
+    the same dungeon. Six working ideas parked (ghost corpses,
+    adapted denizens, dungeon economy, Veil-Tide interiors,
+    expedition format, type specials).
 
 ## Part 1: The Rumor Engine (taverns speak of dungeons)
 
@@ -894,6 +908,66 @@ the war state (doc 13): a tier-3 faction battle inside a dungeon is
 the war leaking underground, so its availability tracks the Two
 Thrones' momentum. The crossing rule holds at every tier: band
 respected, rarity odds deepen.
+
+### The Cleared-Wound Rule and the Situation system (added ninth
+pass, 2026-09-13, Nicko locks for replayability)
+
+The goal: dungeons stay FRESH again and again. The same place takes
+longer and gets more dangerous with each revisit, but under a
+DIFFERENT context each time, and the player learns to read the
+escalation pattern. Two locked rules deliver this:
+
+15A. THE CLEARED-WOUND RULE (locked): what the player destroys stays
+destroyed. The barracks you burned is still a burnt room three dives
+later, the bridge you cut is still down, the boss's corpse is still
+there. Persistence (doc 03) makes the player's history visible in
+the geometry. THE VACUUM RULE (locked with it): cleared space does
+not stay empty. Other things MOVE IN to fill the vacuum the player
+created: bandits, spiders, necromancers, wizards, squatters,
+refugees, scavengers, whatever the region can produce. Fresh context
+is what colonizes the ruins you made. The dungeon does not respawn
+its old self; it grows a new tenant on your wound.
+
+15B. THE SITUATION SYSTEM (locked): every dungeon carries one of six
+SITUATIONS, re-rolled on long timers and readable from outside (the
+rumor engine, Part 1, reports situation changes; the entrance shows
+it: cart tracks, war banners, quarantine sigils):
+- OCCUPIED (default): who holds it now.
+- INFESTED: something bred up in the deep (vermin, spiders, worse).
+- ABANDONED-RECENTLY: loot-rich, with the tension of WHY it was
+  left.
+- CONTESTED: two powers inside, the tier-3 key state.
+- CONSECRATED / DESECRATED: court work was done here (light or
+  dark), leaving standing effects and faction interest.
+- COLLAPSING: time-limited, dive before it closes for a season.
+The situation decides what moves in after a clearing, which quests
+attach, which keys make sense, and what the entrance reads as.
+Situation changes are reported by the rumor engine and the Overheard
+Word: the world knows a dungeon changed hands before the player
+walks in.
+
+Design contract: the situation system is the CONTEXT layer, the
+descent gates are the DEPTH layer, the faction keys are the
+FACTION layer, and the cleared-wound rule is the MEMORY layer.
+Four clocks, never all ticking the same way twice: the same
+dungeon is never the same dungeon.
+
+PARKED WORKING IDEAS from the ninth-pass menu (not baked, for future
+sessions):
+- The ghosts of your last dive: previous corpses as permanent set
+  pieces; the Graverobber can dead-speak their own old corpse.
+- The adapted denizens: residents adapt to HOW you killed them
+  (capped at 3-5 beats, learning not rubber-banding).
+- The dungeon economy: claimed floors as player assets, toll
+  rights, the exhausted-vein endgame (the dungeon that goes COLD).
+- Veil-Tide interior calendar: sun-charged fronts dry flooded
+  galleries, Veil-charged fronts raise dead pools, blizzards close
+  mountain dungeons (doc 03 weather, interiors edition).
+- The expedition format: forward camps for deep strata, squire
+  resupply, corpse runs as heists.
+- Dungeon-type specials: one signature mechanic per type (crypts
+  re-bury, mines settle, dens redirect, camps entrench, warrens
+  multiply).
 
 ### What I would add (working ideas, for review)
 

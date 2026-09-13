@@ -1047,3 +1047,12 @@ feature-by-feature implementation against the GDD.
     for a side / loot the crossfire / double agent / neutral-only
     ownership. Tier 3 seeded by war state (doc 13): the war leaks
     underground. Opens 27-29 logged.
+
+79. REPLAYABILITY RULES (2026-09-13, Nicko, baked into doc 37 Part
+    5): 15A THE CLEARED-WOUND RULE (destruction persists in the
+    geometry) plus THE VACUUM RULE (bandits, spiders, necromancers,
+    wizards, refugees, scavengers colonize cleared space). 15B THE
+    SITUATION SYSTEM (six dungeon situations re-rolled on long
+    timers, readable from outside, rumor-reported). Four-layer
+    design contract: context / depth / faction / memory. Six
+    working ideas parked. Opens 30-32 logged.
