@@ -74,6 +74,18 @@ the tissue only, per doc 20's locked rule.
     regional band (ruling 11 still holds). Claim rule proposed:
     keyed layers persist as faction claims until a different key is
     used.
+14. KEY TIERS (eighth pass, Nicko idea): each court family sells
+    THREE key tiers at deepening affinity thresholds (friendly /
+    honored / sworn, exact thresholds GDD tuning). Each tier
+    escalates differently, not just harder: T1 baseline operations
+    (excavation, purge, nest, cache), T2 faction projects (the
+    Warden survey-hunt, the Militant crusade floor, the coven's
+    ritual choir, the underworld auction house), T3 FACTION WARS
+    INSIDE DUNGEONS: close-quarters battles between major factions,
+    the player fighting for a side, looting the crossfire, playing
+    double agent, or (neutral tier 3 only) taking the dungeon for
+    themselves. Tier 3 availability seeded by the war state (doc
+    13): the war leaks underground.
 
 ## Part 1: The Rumor Engine (taverns speak of dungeons)
 
@@ -808,6 +820,80 @@ same dungeon three different operations.
   that faction's presence (their NPCs, their prices, their
   quests). This is the conquest system's smallest unit (doc 13
   texture): you are not taking a hold, you are taking a floor.
+
+### Key tiers (added eighth pass, Nicko idea, 2026-09-13)
+
+Each court family sells THREE key tiers, gated by deepening affinity
+thresholds (doc 12's tier ladder, exact thresholds GDD tuning: tier
+1 keys at friendly standing, tier 2 at honored tier, tier 3 at
+sworn/deep). Each tier escalates DIFFERENTLY, not just harder: the
+faction's operation inside the dungeon changes character.
+
+NEUTRAL / WARDEN KEYS (Reliquary Wardens vendor):
+- T1, THE EXCAVATION (friendly): the working dig site as baked in
+  the seventh pass. Meticulous traps, authenticated loot.
+- T2, THE SURVEY (honored): the Wardens are not excavating, they
+  are HUNTING something in the layers (a misfiled pre-Fall
+  artifact, a rogue signer's cache). The dungeon's inhabitants
+  were moved aside: something else is down there now. Loot adds
+  Warden-quest hooks and the standing ladder accelerates.
+- T3, THE CONTESTED SITE (sworn): the Wardens' dig has been
+  ATTACKED. The layers become a live three-way: Warden holdout
+  positions, raiders (scavenger guilds, the Shadow Court, or
+  graverobber crews, drawn from the region's powers), and the
+  dungeon's own residents. Close quarters, all three sides hostile
+  to each other, the player the fourth. Loot: whatever both
+  factions came for, contested at the deep.
+
+LIGHT / GUILD SEALS (Guild/Church vendor):
+- T1, THE SANCTIFIED PURGE (friendly): the purge site as baked.
+- T2, THE CRUSADE FLOOR (honored): a full Militant operation: the
+  layers are a siege in miniature, the faction is TAKING the
+  dungeon, and the player fights alongside paladin squads against
+  the incumbent pool. Loot adds Militant requisition claims.
+- T3, THE WAR BELOW (sworn): the light court and the dark court
+  are fighting OVER the dungeon. The strata are the front line:
+  paladin vanguards vs coven/necro warbands, corridors changing
+  hands between visits, the player free to fight for a side, loot
+  the crossfire, or play double agent (doc 12 proposal C's
+  gameplay). Close-quarters faction battle: the tier-3 signature.
+
+DARK / COVEN KEYS (coven or necro-court vendor):
+- T1, THE COVEN NEST (friendly): the nest as baked, tithe fine
+  print included.
+- T2, THE CHOIR (honored): the coven's layers host a RITUAL
+  IN PROGRESS: processions, altar chambers, the incubation of
+  something (doc 19's sect hooks: Old Blood restoration work or
+  Veil Faithful devotion, seeded by the player's own sect
+  standing). Loot adds ritual components and one-time pact
+  opportunities.
+- T3, THE COURT BELOW (sworn): the necro-court and the coven are
+  at war over the deep (doc 14's necro-aristocracy politics made
+  playable): the layers are contested ground between undead
+  houses and coven cells, the player fights for a side or sells
+  intelligence to both. The dark court's civil war, diveable.
+
+NEUTRAL / SMUGGLER TALLIES (underworld vendor):
+- T1, THE CACHE (friendly): economics as baked.
+- T2, THE AUCTION HOUSE (honored): the layers host the underworld's
+  black auction: buyer encampments, auction lots in the vaults,
+  bidding as gameplay. Everything is for sale, including intel
+  the Overheard Word would charge for.
+- T3, THE HOSTILE TAKEOVER (sworn): the underworld's syndicates
+  are fighting over the site (thieves guild vs smuggler rings vs
+  mercenary companies, the neutral court's own politics): the
+  player backs a syndicate, arbitrages between them, or takes the
+  floor for themselves. The neutral court's tier 3 is the only one
+  where the player can end up owning the dungeon.
+
+TIER RULES (working ideas): tier-2 keys require the tier-1 key's
+content to have been cleared at least once under that faction (the
+faction escalates its investment only after you have proven the
+floor); tier-3 keys are FACTION EVENTS, purchasable but seeded by
+the war state (doc 13): a tier-3 faction battle inside a dungeon is
+the war leaking underground, so its availability tracks the Two
+Thrones' momentum. The crossing rule holds at every tier: band
+respected, rarity odds deepen.
 
 ### What I would add (working ideas, for review)
 

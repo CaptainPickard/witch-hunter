@@ -1037,3 +1037,13 @@ feature-by-feature implementation against the GDD.
     11). Claim rule proposed: keyed layers persist as faction claims
     until a different key is used, the conquest system's smallest
     unit. Opens 24-26 logged.
+
+78. KEY TIERS (2026-09-13, Nicko, baked into doc 37 Part 5): three
+    key tiers per court family at deepening affinity thresholds
+    (friendly/honored/sworn). T1 baseline operations; T2 faction
+    projects (Warden survey-hunt, Militant crusade floor, coven
+    ritual choir, underworld auction house); T3 FACTION WARS INSIDE
+    DUNGEONS: close-quarters battles between major factions, fight
+    for a side / loot the crossfire / double agent / neutral-only
+    ownership. Tier 3 seeded by war state (doc 13): the war leaks
+    underground. Opens 27-29 logged.

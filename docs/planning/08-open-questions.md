@@ -756,3 +756,28 @@ with assignments:
     factions react to your keyed floors, does the World Ledger track
     keyed dungeons as territory texture): doc 13 conquest
     cross-check.
+
+## KEY TIER PASS (2026-09-13, doc 37 eighth pass)
+
+Ruling 14 locked (doc 37 Part 5): three key tiers per court family,
+gated at deepening affinity thresholds (friendly/honored/sworn, GDD
+tuning). Each tier escalates differently: T1 baseline (excavation /
+purge / nest / cache), T2 faction projects (Warden survey-hunt /
+Militant crusade floor / coven ritual choir / underworld auction
+house), T3 faction wars inside dungeons (contested site / war below
+/ the court below / hostile takeover): close-quarters major-faction
+battles, player fights for a side, loots the crossfire, plays double
+agent, or (neutral only) owns the dungeon. Tier-2 gate proposal:
+tier-1 floor cleared first under that faction. Tier-3 availability
+seeded by war state (doc 13): the war leaks underground.
+
+New opens from this pass, tracked in doc 37's Open Questions section
+with assignments:
+27. Exact affinity thresholds per key tier (friendly/honored/sworn
+    bands, doc 12 tier ladder numbers): GDD tuning.
+28. Tier-3 faction-war scaling: side strength vs war momentum,
+    corridor-capture persistence between visits, respawn grammar
+    (doc 13 + doc 34 cross-check): GDD pass.
+29. Does clearing a tier-3 faction war dungeon write conquest state
+    (does the winning faction's dungeon claim affect the hold above,
+    doc 13 texture): doc 13 cross-check, IO reconciliation.
