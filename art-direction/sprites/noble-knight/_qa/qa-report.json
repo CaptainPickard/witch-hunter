@@ -1,0 +1,77 @@
+{
+ "flicker": [
+  28.8,
+  21.5,
+  21.5,
+  30.2
+ ],
+ "coverage": {
+  "knight-idle-f1.png": 20.8,
+  "knight-idle-f2.png": 21.6,
+  "knight-idle-f3.png": 20.8,
+  "knight-idle-f4.png": 20.8,
+  "knight-idle-f5.png": 21.6,
+  "knight-view-3q-front-right.png": 15.4,
+  "knight-view-3q-front.png": 16.0,
+  "knight-view-3q-rear-right.png": 16.9,
+  "knight-view-3q-rear.png": 17.8,
+  "knight-view-back.png": 20.6,
+  "knight-view-front.png": 17.2,
+  "knight-view-side-right.png": 13.8,
+  "knight-view-side.png": 13.1
+ },
+ "accents": {
+  "knight-idle-f1.png": {
+   "gold%": 5.51,
+   "warm%": 5.54
+  },
+  "knight-idle-f2.png": {
+   "gold%": 5.41,
+   "warm%": 5.79
+  },
+  "knight-idle-f3.png": {
+   "gold%": 5.2,
+   "warm%": 6.14
+  },
+  "knight-idle-f4.png": {
+   "gold%": 5.86,
+   "warm%": 5.89
+  },
+  "knight-idle-f5.png": {
+   "gold%": 7.02,
+   "warm%": 6.88
+  },
+  "knight-view-3q-front-right.png": {
+   "gold%": 13.07,
+   "warm%": 10.33
+  },
+  "knight-view-3q-front.png": {
+   "gold%": 9.46,
+   "warm%": 7.25
+  },
+  "knight-view-3q-rear-right.png": {
+   "gold%": 7.55,
+   "warm%": 7.3
+  },
+  "knight-view-3q-rear.png": {
+   "gold%": 5.45,
+   "warm%": 4.44
+  },
+  "knight-view-back.png": {
+   "gold%": 5.28,
+   "warm%": 5.34
+  },
+  "knight-view-front.png": {
+   "gold%": 9.99,
+   "warm%": 8.42
+  },
+  "knight-view-side-right.png": {
+   "gold%": 9.26,
+   "warm%": 8.59
+  },
+  "knight-view-side.png": {
+   "gold%": 8.42,
+   "warm%": 6.59
+  }
+ }
+}
