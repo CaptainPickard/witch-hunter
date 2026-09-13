@@ -258,6 +258,15 @@ art-direction/sprites/<card>/):
     turnaround, 2 QA rounds (r1 pooled gown hid the feet; r2 with
     ankle-height hem PASS). APPROVED. 8 directions + 5-frame idle
     (flicker 9.5-16.8). Fan not baked: gear layer per doc 27.
+49. sprites/elf-male/concept.png - CARD 07 S1: dawn-refuser elf warden,
+    white/blue/silver sylvan attire, silver circlet, unlit silver
+    lantern, cold moon over the silver-bark forest hall (cool accent
+    only). APPROVED (first-round register PASS).
+50. sprites/elf-male/turnaround.png - CARD 07 S2: 4-view turnaround,
+    first-round PASS (lantern stripped per body-canon rule). APPROVED.
+    8 directions + 5-frame idle built (S3/S4); flicker 22.0-29.0
+    (free cloak edge per L4). Lantern not baked: gear layer per doc 27;
+    star-and-bow clasp stays as identity.
 
 Page captions for every frame live in 00-art-direction.html and are the
 canonical short descriptions; the pair descriptions there tie each pair

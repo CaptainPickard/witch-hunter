@@ -104,10 +104,16 @@ design sheet -> turnaround (Nicko gate) -> 8 directions -> 5-frame idle
 - [x] S7 atlas + billboard page (sprites/vampire-female/card06-billboard.html)
 - [x] catalog in 24-art-bible.md + commit to repo
 
-### CARD 07: ELF (DAWN-REFUSER), MALE
-- [ ] S1 sheet (light-court sylvan lines, stars-and-bows charges,
-      white/blue palette law)
-- [ ] S2-S7 (same stages)
+### CARD 07: ELF (DAWN-REFUSER), MALE  [COMPLETE 2026-09-13]
+- [x] S1 sheet (light-court sylvan lines, stars-and-bows identity pin,
+      white/blue/silver palette, cold moon accent; first-round PASS)
+- [x] S2 turnaround (first-round PASS; lantern stripped per body-canon)
+- [x] S3 8 directional views (derived sheet PASS)
+- [x] S4 5-frame idle (flicker 22.0-29.0, cloak edge per L4; vision PASS)
+- [x] S5 cleanup (alpha, defringe, normalize)
+- [x] S6 QA (scripted metrics + vision gates)
+- [x] S7 atlas + billboard page (sprites/elf-male/card07-billboard.html)
+- [x] catalog in 24-art-bible.md + commit to repo
 
 ### CARD 08: ELF (DAWN-REFUSER), FEMALE
 - [ ] S1 sheet

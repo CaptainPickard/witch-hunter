@@ -1,0 +1,148 @@
+{
+ "flicker": [
+  {
+   "elf-m-idle-f1.png->elf-m-idle-f2.png": 29.0
+  },
+  {
+   "elf-m-idle-f2.png->elf-m-idle-f3.png": 22.0
+  },
+  {
+   "elf-m-idle-f3.png->elf-m-idle-f4.png": 27.5
+  },
+  {
+   "elf-m-idle-f4.png->elf-m-idle-f5.png": 26.6
+  },
+  {
+   "elf-m-idle-f5.png->elf-m-view-3q-front-right.png": 71.8
+  },
+  {
+   "elf-m-view-3q-front-right.png->elf-m-view-3q-front.png": 60.6
+  },
+  {
+   "elf-m-view-3q-front.png->elf-m-view-3q-rear-right.png": 76.4
+  },
+  {
+   "elf-m-view-3q-rear-right.png->elf-m-view-3q-rear.png": 47.3
+  },
+  {
+   "elf-m-view-3q-rear.png->elf-m-view-back.png": 53.5
+  },
+  {
+   "elf-m-view-back.png->elf-m-view-front.png": 70.7
+  },
+  {
+   "elf-m-view-front.png->elf-m-view-side-right.png": 72.1
+  },
+  {
+   "elf-m-view-side-right.png->elf-m-view-side.png": 70.7
+  }
+ ],
+ "coverage": {
+  "elf-m-idle-f1.png": 8.7,
+  "elf-m-idle-f2.png": 8.3,
+  "elf-m-idle-f3.png": 8.2,
+  "elf-m-idle-f4.png": 8.2,
+  "elf-m-idle-f5.png": 9.6,
+  "elf-m-view-3q-front-right.png": 12.1,
+  "elf-m-view-3q-front.png": 12.6,
+  "elf-m-view-3q-rear-right.png": 9.0,
+  "elf-m-view-3q-rear.png": 8.8,
+  "elf-m-view-back.png": 8.7,
+  "elf-m-view-front.png": 13.2,
+  "elf-m-view-side-right.png": 9.2,
+  "elf-m-view-side.png": 9.1
+ },
+ "accents": {
+  "elf-m-idle-f1.png": {
+   "green": 0,
+   "blue": 925,
+   "warm": 466,
+   "gray": 55,
+   "other": 0
+  },
+  "elf-m-idle-f2.png": {
+   "green": 0,
+   "blue": 887,
+   "warm": 455,
+   "gray": 62,
+   "other": 0
+  },
+  "elf-m-idle-f3.png": {
+   "green": 0,
+   "blue": 875,
+   "warm": 449,
+   "gray": 35,
+   "other": 0
+  },
+  "elf-m-idle-f4.png": {
+   "green": 0,
+   "blue": 924,
+   "warm": 447,
+   "gray": 39,
+   "other": 0
+  },
+  "elf-m-idle-f5.png": {
+   "green": 0,
+   "blue": 1089,
+   "warm": 453,
+   "gray": 56,
+   "other": 0
+  },
+  "elf-m-view-3q-front-right.png": {
+   "green": 0,
+   "blue": 1356,
+   "warm": 504,
+   "gray": 84,
+   "other": 0
+  },
+  "elf-m-view-3q-front.png": {
+   "green": 0,
+   "blue": 1653,
+   "warm": 352,
+   "gray": 58,
+   "other": 0
+  },
+  "elf-m-view-3q-rear-right.png": {
+   "green": 0,
+   "blue": 973,
+   "warm": 490,
+   "gray": 34,
+   "other": 0
+  },
+  "elf-m-view-3q-rear.png": {
+   "green": 0,
+   "blue": 1044,
+   "warm": 432,
+   "gray": 44,
+   "other": 0
+  },
+  "elf-m-view-back.png": {
+   "green": 0,
+   "blue": 1017,
+   "warm": 404,
+   "gray": 48,
+   "other": 0
+  },
+  "elf-m-view-front.png": {
+   "green": 0,
+   "blue": 1688,
+   "warm": 386,
+   "gray": 77,
+   "other": 0
+  },
+  "elf-m-view-side-right.png": {
+   "green": 0,
+   "blue": 1089,
+   "warm": 362,
+   "gray": 36,
+   "other": 0
+  },
+  "elf-m-view-side.png": {
+   "green": 0,
+   "blue": 1112,
+   "warm": 347,
+   "gray": 48,
+   "other": 0
+  }
+ }
+}
