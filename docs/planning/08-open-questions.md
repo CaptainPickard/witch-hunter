@@ -729,3 +729,30 @@ with assignments:
 22. Warden door-inspection service: standing cost, availability: doc
     19 Warden GDD pass.
 23. Layer-5 deep boss named-item guaranteed drops: GDD tuning.
+
+## FACTION KEYS PASS (2026-09-13, doc 37 seventh pass)
+
+Ruling 13 locked (doc 37 Part 5): faction keys. Buy a faction's key
+from its vendor, use it on a descent gate, and the layers CHANGE
+(different enemies, traps, unique loot per affinity). Key table
+(working idea): Warden key (neutral, excavation, relic-signing
+perks), Guild seal (light, sanctified purge, requisition attached),
+Coven key (dark, coven nest, tithe fine print), Smuggler's tally
+(neutral, economics only, changes what enemies GUARD). Affinity
+gating per doc 12 vendor rules; crossing rule holds (ruling 11).
+Claim rule proposed: keyed layers persist as faction claims until a
+different key is used (the conquest system's smallest unit, doc 13
+texture).
+
+New opens from this pass, tracked in doc 37's Open Questions section
+with assignments:
+24. Faction key pricing and vendor availability per court family
+    (doc 06 vendor economy + doc 12 axis-gating cross-check): GDD
+    tuning.
+25. Whether keyed layers stack with level strata (does a Warden key
+    used at gate II change only layer 2-3, or the whole descent): GDD
+    pass.
+26. Faction-claim consequences beyond the claim rule (do rival
+    factions react to your keyed floors, does the World Ledger track
+    keyed dungeons as territory texture): doc 13 conquest
+    cross-check.

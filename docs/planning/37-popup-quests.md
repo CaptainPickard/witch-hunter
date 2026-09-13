@@ -64,6 +64,16 @@ the tissue only, per doc 20's locked rule.
     respected, tier band stays regional).
 12. Part 5 bake scope: full section with details as working ideas,
     opens 19-23 logged.
+13. FACTION KEYS (seventh pass, Nicko idea): buy a faction's key
+    from its vendor, use it on a descent gate, and the layers CHANGE:
+    different enemies, traps, and unique loot per affinity. One key
+    per court family: Warden key (neutral, excavation), Guild seal
+    (light, sanctified purge), Coven key (dark, coven nest),
+    Smuggler's tally (neutral, economics only). Affinity gating per
+    doc 12 vendor rules. Keys re-weight flavor and rarity within the
+    regional band (ruling 11 still holds). Claim rule proposed:
+    keyed layers persist as faction claims until a different key is
+    used.
 
 ## Part 1: The Rumor Engine (taverns speak of dungeons)
 
@@ -748,6 +758,56 @@ ideas for what each type's layer 5 holds:
 - BLIGHTED DEEP (blighted zones only, late-game): the pact's
   scar tissue has architecture. The blight's inner dungeons (doc 03
   opportunity texture) are gate-IV-exclusive content.
+
+### Faction keys (added seventh pass, Nicko idea, 2026-09-13)
+
+Buy a faction's key from its vendor, use it on a descent gate, and
+the gate's layers CHANGE: different enemies, different traps, unique
+loot per affinity. A second way past the doors, and a way to make the
+same dungeon three different operations.
+
+- THE FACTION KEY TABLE (working idea, one key per court family):
+  - THE WARDEN KEY (neutral, Reliquary Wardens vendor): the layer
+    becomes a WARDEN EXCAVATION. Their dig crews, their survey
+    stakes, their hazards (tame, meticulous, trapped by archivists
+    not sadists). Loot: authenticated artifacts, pre-Fall relics,
+    relic-signing services discounted by how deep you went. The
+    Warden key is the standing-cheapest: the Wardens want sites
+    opened, not looted.
+  - THE GUILD SEAL (light, Guild/Church vendor): the layer becomes a
+    SANCTIFIED PURGE SITE: blessed braziers, paladin escorts on the
+    upper strata, the undead pool weighted up and the loot table
+    weighted holy (consecrated silver, Aegis-adjacent components at
+    the deep, holy reagents). The Church pays per purge, not per
+    visit: light keys come with a requisition attached.
+  - THE COVEN KEY (dark, coven or necro-court vendor): the layer
+    becomes a COVEN NEST. The pool inverts: the living are the
+    intruders, the dark creatures are tenants. Loot: Dark Pacts
+    tomes, taint reagents, the coven's own ritual components. The
+    coven key's fine print: the nest expects tithes on the way out.
+  - THE SMUGGLER'S TALLY (neutral court, underworld vendor): no
+    faction flavor, pure economics: the layer's loot converts to
+    broker-managed caches (higher rarity variance, no court
+    reagents, fence access on return). The neutral key does not
+    change the enemies; it changes what the enemies are GUARDING.
+- AFFINITY GATING (doc 12 vendor rules carry): keys are sold to
+  axis-compatible buyers the way tomes are. A deep-evil player
+  cannot buy the Guild Seal at the counter; a light player buys the
+  Coven Key only through fences at a markup. Neutral players can
+  buy Warden and Smuggler keys freely, the neutral court's
+  advantage.
+- WHAT THE KEY CHANGES: enemy pool re-weight, trap grammar
+  re-themed, loot table overlay (doc 06's court-territory overlay
+  applied to the strata), and the layer's fiction: whose operation
+  the dungeon reads as. THE CROSSING RULE STILL HOLDS (ruling 11):
+  keys shift flavor and rarity odds within the regional tier band;
+  no key crosses the band.
+- CLAIM RULE (working idea): a keyed layer keeps the faction's
+  content until a DIFFERENT faction's key is used. Factions treat a
+  keyed dungeon as a claim: repeated delves under one key deepen
+  that faction's presence (their NPCs, their prices, their
+  quests). This is the conquest system's smallest unit (doc 13
+  texture): you are not taking a hold, you are taking a floor.
 
 ### What I would add (working ideas, for review)
 

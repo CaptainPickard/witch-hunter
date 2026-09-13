@@ -1026,3 +1026,14 @@ feature-by-feature implementation against the GDD.
     deep). Additions proposed: Warden seal warnings, rooms-not-
     numbers escalation, per-layer boss rule, THE UNOPENABLE doors,
     the mislabeled door. Opens 19-23 logged.
+
+77. FACTION KEYS (2026-09-13, Nicko, baked into doc 37 Part 5): buy a
+    faction's key from its vendor and use it on a descent gate; the
+    gate's layers CHANGE (different enemies, traps, unique loot per
+    affinity). One key per court family: Warden key (neutral,
+    excavation), Guild seal (light, sanctified purge), Coven key
+    (dark, coven nest), Smuggler's tally (neutral, pure economics).
+    Affinity-gated sales per doc 12; crossing rule holds (ruling
+    11). Claim rule proposed: keyed layers persist as faction claims
+    until a different key is used, the conquest system's smallest
+    unit. Opens 24-26 logged.
