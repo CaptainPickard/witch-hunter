@@ -39,6 +39,20 @@ the tissue only, per doc 20's locked rule.
    overheard anywhere in the territory. Treasure locations and
    monster locations are also GUARDED (paranoid-tier). The full tier
    table is in Part 3b.
+7. MONSTERS HOLD GRUDGES AS FACTIONS (RULING 7, locked 2026-09-13,
+   fifth pass): killing the toll goblin triggers the Warren chain
+   (Part 3c); goblin kidnappers take the player ASLEEP, and capture
+   REPLACES the death penalty for that ambush only (gear stripped
+   into the hoard, recoverable, no currency or XP loss). The capture
+   is a NON-DEATH DEFEAT STATE, the first in the game. The general
+   rule (which monster societies hold grudges, which do not, what
+   other courts get capture mechanics): open question 15.
+8. THE PETTY LEGALIST (RULING 8, locked 2026-09-13): the Goblin
+   King's personality is toll-law bureaucracy played straight: the
+   trial itemizes the debt, the remedy is working it off, dark
+   comedy. The Warren chain baked as archetype 26 (Part 3c) with
+   all four endings (cleared ledger, escape, dead king, the
+   volunteer).
 
 ## Part 1: The Rumor Engine (taverns speak of dungeons)
 
@@ -368,6 +382,149 @@ Design rule for all seeds: the overheard FACT is cheap to learn
 tier table decides who speaks; the frame grammar decides what
 listening earns.
 
+## Part 3c: The Warren Under the Bridge (archetype 26: the hidden chain)
+
+Added 2026-09-13, fifth pass (Nicko idea). Builds directly on THE
+GOBLIN TOLL seed above. The full hidden chain, baked from session
+rulings 7 and 8.
+
+### The trigger (RULING 7, locked): monsters hold grudges as factions
+
+Killing the toll goblin writes a HIDDEN GRUDGE into the World Ledger:
+the bridge warren is the first MONSTER FACTION WITH A GRIEVANCE, the
+Vendetta Grave's mechanic turned around, a living monster society
+instead of a dead man holding the grudge. The toll goblin was the
+king's licensed collector, probably kin. Consequence: GOBLIN
+KIDNAPPERS COME FOR YOU. They do not attack on the road: they take
+you ASLEEP (at camp, in the tavern's stable, crossing the bridge at
+dusk). Goblins are cowards by reputation and pragmatists by culture:
+they jump you at your worst hour. If they defeat you, you do not die:
+you wake bound in a cave.
+
+CAPTURE REPLACES THE DEATH PENALTY (RULING 7, locked): for this one
+ambush only, the goblin capture REPLACES the normal death penalty
+(doc 04: currency plus 25 percent XP). No currency drop, no XP loss:
+the capture IS the penalty. What the goblins take is your GEAR:
+stripped and stacked in the king's hoard, fully recoverable. Goblins
+do not want you dead; they want you ANSWERABLE. This is a
+NON-DEATH DEFEAT STATE, the first in the game, and a template for
+faction captures generally (see the grudges-as-factions open
+question).
+
+### The trial: the Petty Legalist (RULING 8, locked)
+
+The Goblin King's personality is THE PETTY LEGALIST (Nicko lock):
+the warren runs on TOLL-LAW. The king is not outraged that you killed
+a goblin; he is outraged that you killed a LICENSED OFFICER and
+DEFRAUDED THE TOLL. The trial is a bureaucratic farce played
+straight: he reads the toll schedule aloud, itemizes what you owe
+(one collector, plus interest, plus court costs), and offers the
+ancient remedy: THE DEBT CAN BE WORKED OFF. THE CHOICE: work for him
+or die. Dark comedy, goblin bureaucracy as the mirror of doc 22's
+necro-court paperwork, the same absurdity scaled down to a bridge.
+
+### Working for the king: the goblin bullshit job menu
+
+Each completed job pays down the debt in installments. The chain ends
+when the ledger clears. Working jobs:
+
+1. THE NEW COLLECTOR. Stand at the bridge with the king's badge and
+   collect from travelers, humans included, until the debt is paid.
+   The loop closes: you become the toll of catalog seed 11, the
+   quest target for the next mercenary who hears kill the toll.
+2. THE SNUFF-BOX WAR. A rival warren under the mill claims the
+   bridge's territory. Steal their tribute-hoard or their
+   champion's ears. Goblins hire outsiders because they will not
+   fight their own kin cleanly.
+3. THE DWARF CARAVAN. Shake down a contract clan's freight on the
+   mountain road (doc 14: dwarves are contract clans). The king
+   wants the clan's seal-stamp as a trophy either way.
+4. THE FEAST OF THE DEBT. Hunt the marsh beast for the
+   debt-forgiveness feast. Ties into THE TITHE THAT LEAVES AT
+   NIGHT: if that seed is live in the region, the thing being fed
+   in the marsh is now on the menu, and the player learns what the
+   lord has been paying.
+5. THE CROWN OF TIN. The king's crown is pawned to a smuggler
+   fence. Steal it back. Robbing the underworld for goblins makes
+   you a debtor in two worlds.
+6. THE TONGUE-TAX. Bring the king something overheard (Overheard
+   Word tie-in). Goblins pay for gossip like currency; the warren
+   is the region's best intel bazaar because goblins hear
+   everything that crosses the bridge.
+7. THE PALE LADY'S GIFT. Escort the king's courting gift to a coven
+   matron in the Darkwood. The gift is alive, or must be fed
+   nightly, or is a child's tooth collection. The dark texture
+   under the comedy.
+
+Cleared-ledger reward: freed with a ceremony, a badge, and the
+standing to collect the toll (the king's real goal: the warren wants
+a living human officer on the bridge, someone the other courts will
+not shoot on sight).
+
+### The escape routes (choose death, or fight, or just leave)
+
+The lair is an escape dungeon where the stealth system's pieces pay
+off. Working routes:
+
+- THE BONDS. Escape begins bound: pick the pins (doc 15's Feel for
+  the Pins), gnaw through (time and Strength), or talk a goblin into
+  untying you (Speech, or bribery with grave-goods trinkets: goblins
+  love grave loot).
+- THE LAIR IS A LISTENING LEVEL. The Overheard Word applies: goblin
+  guards gossip constantly because nobody taught them better.
+  Listening positions reveal trapped corridors, the gear-hoard's
+  location, which guard is drunk, and the king's schedule. Treasure
+  locations are GUARDED per the tier table, but goblins are the
+  world's worst secret-keepers: the tier is easier and the noise
+  discipline is brutal (goblins hear better than men).
+- THE OTHER CAGES. The warren holds other captives: a merchant
+  whose ransom is late, a Militant friar preaching at his jailers,
+  a Warden archivist cataloguing goblin grave-goods, maybe a
+  smuggler who recognizes you. Freeing them pays standing elsewhere
+  (the friar is a Mercy deed; the merchant becomes a promoted
+  recurring patron, doc 20's promotion rule).
+- THE PIT GAMBLE. Goblin culture's one sacred thing: games. Wager
+  your freedom and gear on the pit: bone dice, riddle-duel, or the
+  warren champion. High variance, in character, and the king loves
+  it because the house always wins. Unless it does not.
+- THE FLOOD DOOR. The warren's one weakness, learnable only from
+  overheard goblin grumbling: the river still reaches the old
+  flood-gallery. Open it and the warren drowns: the chain resolves
+  in chaos, everything in the hoard washes into the river shallows,
+  lootable for days. The nuclear option: the toll is dead, the
+  warren is dead, the bridge is free, and the smugglers' ledger
+  notes who broke their profitable arrangement.
+
+### The four endings (RULING 8 bake, all four locked in concept)
+
+- THE CLEARED LEDGER (work the debt off): free with a badge; the
+  toll line in the catalog flips to the collector is a human in
+  goblin service; smugglers respect you, the light court does not.
+- THE ESCAPE (flee with or without your gear): the warren hunts you
+  for N days (blood-feud ambush events on that bridge's road); the
+  toll post stays empty, the toll collapses, the smugglers profit.
+- THE DEAD KING. Kill the king instead: the warren splinters into
+  rival claimants (doc 13's procedural churn), the bridge becomes
+  contested, and every goblin warren within a region's ride knows
+  the face of the toll-killer. Crossing any bridge near that warren
+  reads your face.
+- THE VOLUNTEER (the ending you cannot take back). Take the badge
+  voluntarily without ever being captured: a player who
+  investigates the toll before killing it can find the king's court
+  and apply for the collector's job. The whole chain, offered
+  freely. Hidden content that respects the player who talks first
+  and kills later.
+
+### GRUDGES AS FACTIONS (proposed rule, open question 15)
+
+This chain is the proof-of-concept for a general rule: MONSTERS HOLD
+GRUDGES AS FACTIONS, the Vendetta Grave's mechanic extended from the
+dead to the living. Not every monster, only the ones with a court:
+the goblin warrens, the Cold Widows of the pass, the coven, the
+marsh thing the tithe feeds. Disrespect a monster SOCIETY and it
+remembers in kind: captures, ambushes, grudges with faction memory.
+Beasts do not hold grudges. Peoples do.
+
 ## Part 4: The quest catalog, by court
 
 Tissue archetypes, each a doc 20 frame-grammar application with 2-3
@@ -484,7 +641,7 @@ engine and the Quiet Parish.
     can redraw a border. Can surface from any court's territory; the
     dead are not loyal to the living's factions.
 
-Count: 25 working archetypes on top of the 8 locked frame templates
+Count: 26 working archetypes on top of the 8 locked frame templates
 (doc 21: hunt, escort, clear-site, defense, supply, curse-lift,
 relic-hunt, parish-work). Every archetype is frame-grammar
 expressible.
@@ -528,3 +685,38 @@ The slice carries three systems, not all four parts:
    THE LOST CHILD and THE NIGHT HAUNTER: slice scoping pass.
 7. Quiet Parish keeper-catch consequences beyond standing loss (does
    the keeper remember across holds): world GDD pass.
+8. Vendetta Grave spawn weights: what share of graves carry a
+   vendetta, and the noble-without-heir draw rate (GDD tuning).
+9. Whether the killer of a bound dead can be a spine NPC (spine
+   immunity says NO for spine NPCs as targets; confirm the guard) :
+   doc 20 progression-safety cross-check, IO to verify against doc 20
+   SPINE IMMUNITY.
+10. Overheard Word audience-check tuning: detection radius vs speech
+    volume bands, line-withheld vs conversation-defers behavior
+    weights (stealth GDD, G19 owner).
+11. Which world facts are Overheard-Word seeded vs rumor-tier only
+    (heirlessness confirmed in-world; feuds, debts, illegitimate
+    children proposed): world GDD pass.
+12. Paranoid-speaker behavior: which NPC dispositions remember an
+    eavesdropper and at what severity (deed log entry, grudge,
+    hostile): G17 dialogue GDD.
+13. PUBLIC-vs-GUARDED boundary cases beyond heirlessness (which other
+    facts are territory-common vs guarded, e.g. famine scares,
+    coven memberships): world GDD pass, per-territory tier table.
+14. Overheard-seed spawn density: how many seeds per hold, per
+    schedule slot, and their respawn rules (G17 schedules GDD).
+15. GRUDGES AS FACTIONS scope (Part 3c): which monster societies
+    hold faction grudges and get capture mechanics (goblin warrens
+    confirmed by RULING 7; the Cold Widows, the coven, the marsh
+    thing proposed), which are beasts that do not; capture-ambush
+    grammar per faction; whether faction captures share the one
+    non-death defeat state: doc 34 bestiary + doc 04 cross-check,
+    IO reconciliation pass.
+16. Goblin warren map: how many warrens per region, which bridges
+    have them, whether the toll seed can spawn in holds without a
+    bridge territory (doc 03 world GDD pass).
+17. The pit-gamble ruleset (bone dice, riddle-duel, champion fight,
+    wager ladder, house edge): GDD tuning.
+18. Goblin King procedural or fixed: one Petty Legalist king per
+    warren with procedural name and toll-schedule, or fully
+    procedural (doc 14 pools GDD pass).

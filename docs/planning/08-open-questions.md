@@ -674,3 +674,28 @@ with assignments:
     coven memberships): world GDD pass, per-territory tier table.
 14. Overheard-seed spawn density: how many seeds per hold, per
     schedule slot, and their respawn rules (G17 schedules GDD).
+
+## WARREN UNDER THE BRIDGE PASS (2026-09-13, doc 37 fifth pass)
+
+Rulings 7 and 8 locked (doc 37 Part 3c, archetype 26 THE WARREN UNDER
+THE BRIDGE): (7) MONSTERS HOLD GRUDGES AS FACTIONS trigger, goblin
+kidnappers take the player ASLEEP, capture REPLACES the death penalty
+for that ambush only (gear stripped to the hoard, recoverable, no
+currency or XP loss; the game's first NON-DEATH DEFEAT STATE), (8)
+the Goblin King is THE PETTY LEGALIST, toll-law trial, itemized debt,
+work it off, dark comedy played straight. Job menu (7 jobs), escape
+routes (5), and four endings (cleared ledger, escape, dead king, the
+volunteer) baked as working content. Doc 37 archetype count now 26.
+
+New opens from this pass, tracked in doc 37's Open Questions section
+with assignments:
+15. GRUDGES AS FACTIONS scope (Part 3c): which monster societies hold
+    faction grudges and get capture mechanics (goblin warrens
+    confirmed by RULING 7; Cold Widows, coven, marsh thing proposed),
+    which are beasts that do not; capture-ambush grammar per
+    faction: doc 34 bestiary + doc 04 cross-check.
+16. Goblin warren map: warrens per region, which bridges have them,
+    toll seed spawn rules (doc 03 world GDD pass).
+17. The pit-gamble ruleset: GDD tuning.
+18. Goblin King procedural or fixed per warren (doc 14 pools GDD
+    pass).

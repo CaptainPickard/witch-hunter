@@ -994,3 +994,20 @@ feature-by-feature implementation against the GDD.
     keeper's secret lane, coven meeting at the stone, night tithe,
     sick lady of the tower, Warden double ledger, goblin toll, cold
     widows of the pass.
+
+75. THE WARREN UNDER THE BRIDGE (2026-09-13, Nicko, baked into doc 37
+    Part 3c, archetype 26): the Goblin Toll seed's hidden chain.
+    RULING 7: killing the toll goblin writes a faction grudge; goblin
+    kidnappers take the player ASLEEP; capture REPLACES the death
+    penalty for that ambush only (gear stripped into the hoard,
+    recoverable, no currency or XP loss, the game's first NON-DEATH
+    DEFEAT STATE). RULING 8: the Goblin King is THE PETTY LEGALIST
+    (toll-law trial, itemized debt, work it off, comedy played
+    straight). Baked: 7-job debt menu (new collector, snuff-box war,
+    dwarf caravan, feast of the debt, crown of tin, tongue-tax,
+    pale lady's gift), 5 escape routes (bonds, listening level,
+    other cages, pit gamble, flood door), 4 endings (cleared ledger,
+    escape, dead king, the volunteer: take the badge without ever
+    being captured). Proposed general rule parked as open question
+    15: monsters hold grudges as factions, beasts do not. Archetype
+    count 26.
