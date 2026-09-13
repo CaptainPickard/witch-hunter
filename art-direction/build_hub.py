@@ -46,6 +46,7 @@ CARDS = [
  ('card05-vampire-male','CARD 05: VAMPIRE, MALE', 'Blood Count of the veil court: tall, gaunt, silver-white hair, veil-black doublet, blood-red spire glow. Flicker 6.6-10.6, best of the run.'),
  ('card06-vampire-female','CARD 06: VAMPIRE, FEMALE','Veil Duchess: pinned silver-white hair, veil-black court gown, closed lacquered fan. Flicker 9.5-16.8.'),
  ('card07-elf-male',   'CARD 07: ELF (DAWN-REFUSER), MALE', 'Light-court warden: white linen and deep blue half-cloak, silver star-and-bow clasp, cold moon over the silver-bark hall. Flicker 22.0-29.0.'),
+ ('card08-elf-female', 'CARD 08: ELF (DAWN-REFUSER), FEMALE', 'Archer-warden of the light court: pale-silver braid, moon-circlet, white tunic and blue riding cloak, cold moon over the watchtower. Flicker 23.1-46.5, vision GOOD.'),
 ]
 
 card_figs = []
