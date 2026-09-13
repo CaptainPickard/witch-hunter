@@ -89,15 +89,19 @@ footer { text-align:center; color:#565C6C; font-size:11px; letter-spacing:0.3em;
 
 <section class="view" id="v-lab">
   <div class="sec-rule"><span class="orn"></span><h2>Layer Lab: The Equipment System</h2><span class="orn"></span></div>
-  <p class="lead">The locked paper-doll system, live: a body canon in neutral under-layers plus three independently generated equipment layers. Toggle pieces; equip = layer swap.</p>
+  <p class="lead">The locked paper-doll system, live: a front-facing body canon in neutral under-layers plus five independently generated equipment layers (cloak, greaves, gauntlets, cuirass, helm), each diff-extracted from in-place generations for perfect registration. Toggle pieces; equip = layer swap.</p>
   <div class="stage" id="stage">
     <img class="layer" id="l-cloak" src="__L_CLOAK__">
     <img class="layer" id="l-body" src="__L_BODY__">
+    <img class="layer" id="l-greaves" src="__L_GREAVES__">
+    <img class="layer" id="l-gloves" src="__L_GLOVES__">
     <img class="layer" id="l-chest" src="__L_CHEST__">
     <img class="layer" id="l-helm" src="__L_HELM__">
   </div>
   <div class="ctl">
     <button id="b-cloak" class="on">cloak: on</button>
+    <button id="b-greaves" class="on">greaves: on</button>
+    <button id="b-gloves" class="on">gauntlets: on</button>
     <button id="b-chest" class="on">cuirass: on</button>
     <button id="b-helm" class="on">helm: on</button>
   </div>
@@ -136,9 +140,9 @@ for (const [id, label] of SECTIONS) {
 }
 nav.querySelector('button').classList.add('active');
 document.getElementById('v-world').classList.add('active');
-const state = {cloak:true, chest:true, helm:true};
+const state = {cloak:true, greaves:true, gloves:true, chest:true, helm:true};
 function renderLab() {
-  for (const k of ['cloak','chest','helm']) {
+  for (const k of ['cloak','greaves','gloves','chest','helm']) {
     document.getElementById('l-'+k).style.visibility = state[k] ? 'visible' : 'hidden';
     const b = document.getElementById('b-'+k);
     b.className = state[k] ? 'on' : '';
@@ -147,7 +151,7 @@ function renderLab() {
   const worn = ['body', ...Object.keys(state).filter(k=>state[k])];
   document.getElementById('labreadout').textContent = 'wearing: ' + worn.join(' + ');
 }
-for (const k of ['cloak','chest','helm']) {
+for (const k of ['cloak','greaves','gloves','chest','helm']) {
   document.getElementById('b-'+k).onclick = () => { state[k] = !state[k]; renderLab(); };
 }
 renderLab();

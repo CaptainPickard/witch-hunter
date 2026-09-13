@@ -20,6 +20,7 @@ def png_small(path, max_h=460):
 
 lbase = artdir + '/sprites/noble-knight/layers'
 L = {k: png_small(lbase + '/normalized/' + k + '.png') for k in ['body','cloak','chest','helm']}
+LF = {k: png_small(lbase + '/normalized/' + k + '.png') for k in ['body-front','piece-cloak','piece-greaves','piece-gloves','piece-chest','piece-helm']}
 
 def fig(name, title, cap):
     return ('<figure class="panel"><div class="frame"><img src="' + b64f(name) + '"></div>'
@@ -78,8 +79,9 @@ CSS = open(artdir + '/hub-template.css').read() if os.path.exists(artdir + '/hub
 html = open(artdir + '/hub-template.html').read()
 html = html.replace('__WORLD__', world).replace('__CAST__', cast).replace('__SCENES__', scenes)
 html = html.replace('__CAMPS__', camps).replace('__PILOTS__', pilots)
-html = html.replace('__L_CLOAK__', L['cloak']).replace('__L_BODY__', L['body'])
-html = html.replace('__L_CHEST__', L['chest']).replace('__L_HELM__', L['helm'])
+html = html.replace('__L_CLOAK__', LF['piece-cloak']).replace('__L_BODY__', LF['body-front'])
+html = html.replace('__L_GREAVES__', LF['piece-greaves']).replace('__L_GLOVES__', LF['piece-gloves'])
+html = html.replace('__L_CHEST__', LF['piece-chest']).replace('__L_HELM__', LF['piece-helm'])
 html = html.replace('__K_COMPOSITE__', b64f('knight-composite')).replace('__K_CONCEPT__', b64f('n-knight'))
 
 out = artdir + '/index.html'
