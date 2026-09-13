@@ -36,16 +36,15 @@ design sheet -> turnaround (Nicko gate) -> 8 directions -> 5-frame idle
 
 ## Queue
 
-### CARD 01: ORC, MALE
-- [ ] S1 design sheet (tusks, heavy jaw, First Forge heraldry hooks
-      per doc 03; bulk silhouette)
-- [ ] S2 turnaround + Nicko gate
-- [ ] S3 8 directional views
-- [ ] S4 5-frame idle
-- [ ] S5 cleanup (alpha, defringe, normalize)
-- [ ] S6 QA (scripted + vision) + Nicko gate
-- [ ] S7 atlas + billboard page
-- [ ] catalog in 24-art-bible.md + commit to repo
+### CARD 01: ORC, MALE  [COMPLETE 2026-09-13]
+- [x] S1 concept frame (Mordor register; 1 recompose pass; v1 archived)
+- [x] S2 turnaround (first-round PASS)
+- [x] S3 8 directional views
+- [x] S4 5-frame idle (flicker 18.6-26.7, best of 3 characters)
+- [x] S5 cleanup (alpha, defringe, normalize)
+- [x] S6 QA (scripted metrics + vision gates)
+- [x] S7 atlas + billboard page (sprites/orc-male/card01-billboard.html)
+- [x] catalog in 24-art-bible.md + commit to repo
 
 ### CARD 02: ORC, FEMALE
 - [ ] S1 sheet (same grammar, leaner silhouette, rank-gender variants

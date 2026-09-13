@@ -1,0 +1,24 @@
+{
+ "flicker": [
+  26.1,
+  18.6,
+  26.7,
+  22.7
+ ],
+ "coverage": {
+  "orc-m-idle-f1.png": 13.5,
+  "orc-m-idle-f2.png": 13.1,
+  "orc-m-idle-f3.png": 14.3,
+  "orc-m-idle-f4.png": 13.6,
+  "orc-m-idle-f5.png": 15.4,
+  "orc-m-view-3q-front-right.png": 17.8,
+  "orc-m-view-3q-front.png": 13.9,
+  "orc-m-view-3q-rear-right.png": 12.2,
+  "orc-m-view-3q-rear.png": 12.3,
+  "orc-m-view-back.png": 13.1,
+  "orc-m-view-front.png": 17.8,
+  "orc-m-view-side-right.png": 10.7,
+  "orc-m-view-side.png": 9.6
+ },
+ "accents": {}
+}

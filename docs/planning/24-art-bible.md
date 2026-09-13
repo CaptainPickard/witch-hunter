@@ -205,6 +205,17 @@ SCENE FRAMES (concepts/scene-*.png), 2026-09-13:
     passage on a moonlit gorge bridge, red brazier. APPROVED
     (near-perfect register match).
 
+PRODUCTION CARDS (docs/planning/26 queue; sprite assets in
+art-direction/sprites/<card>/):
+37. sprites/orc-male/concept.png - CARD 01 S1: Mordor-register orc male
+    at a smoldering war-camp; recomposed once to register (v1 archived
+    in _qa/). APPROVED.
+38. sprites/orc-male/turnaround.png - CARD 01 S2: 4-view turnaround,
+    first-round PASS (weapon-removal instruction per L1). APPROVED.
+    8 directions + 5-frame idle built (S3/S4); flicker 18.6-26.7
+    (best of three characters; rigid mass animates clean). Weapon
+    deliberately not baked: separate layer per doc 27.
+
 Page captions for every frame live in 00-art-direction.html and are the
 canonical short descriptions; the pair descriptions there tie each pair
 to the clock mechanics.
