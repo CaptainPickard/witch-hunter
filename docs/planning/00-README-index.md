@@ -70,6 +70,10 @@ structural ambition with a modern atmospheric layer on top.
                                vampire/elf/dwarf, male+female each),
                                standing pilot lessons incl. hand-pose
                                drift rule
+- 27-equipment-visual-system.md - PROPOSED: layered paper-doll equipment
+                               system (body + per-piece sprite layers,
+                               palette variants, anchor contract) for
+                               player fashion expression
 
 ## Decisions Locked So Far (2026-09-11)
 1. Procedural dungeons persist once generated (Daggerfall-style).
