@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Witch Hunter - Art Direction Hub</title>
+<style>
+:root { --ink:#08090D; --gold:#C9A227; --bone:#D6D2C4; --ash:#8D93A3; --line:#2A3142; --panel:#0D1017; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:Georgia,'Times New Roman',serif; color:var(--bone); background:var(--ink);
+  background-image:radial-gradient(ellipse at 50% 0%, #10131C, #08090D 70%);
+  line-height:1.6; font-size:17px; padding:0 0 80px; }
+body::after { content:''; position:fixed; inset:0; pointer-events:none; z-index:50;
+  background-image:repeating-conic-gradient(rgba(255,255,255,0.012) 0% 25%, transparent 0% 50%);
+  background-size:3px 3px; mix-blend-mode:overlay; }
+header { text-align:center; padding:48px 20px 8px; }
+h1 { font-size:56px; letter-spacing:0.03em; color:var(--bone); text-shadow:0 0 24px rgba(201,162,39,0.3); }
+.sub { color:var(--ash); font-size:12px; letter-spacing:0.3em; text-transform:uppercase; margin:8px 0 4px; }
+.tag { color:#6E7484; font-size:13px; font-style:italic; }
+nav { position:sticky; top:0; z-index:40; background:rgba(8,9,13,0.96); border-bottom:1px solid var(--line);
+  display:flex; flex-wrap:wrap; justify-content:center; gap:2px; padding:10px 8px; }
+nav button { background:transparent; color:var(--ash); border:1px solid transparent; padding:8px 14px;
+  font-family:Georgia,serif; font-size:13.5px; letter-spacing:0.12em; text-transform:uppercase; cursor:pointer; }
+nav button:hover { color:var(--gold); }
+nav button.active { color:var(--gold); border:1px solid #3D4759; background:var(--panel); }
+.wrap { max-width:1120px; margin:0 auto; padding:0 26px; }
+section.view { display:none; padding-top:26px; }
+section.view.active { display:block; }
+.sec-rule { display:flex; align-items:center; gap:18px; margin:30px 0 22px; }
+.sec-rule .orn { flex:1; height:1px; background:linear-gradient(90deg, transparent, #8A741F, transparent); }
+h2 { font-variant:small-caps; letter-spacing:0.4em; color:var(--gold); font-weight:normal; font-size:17px; text-align:center; white-space:nowrap; }
+.lead { text-align:center; color:#B9BDC9; max-width:760px; margin:0 auto 10px; }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:22px; }
+@media (max-width:900px) { .grid2 { grid-template-columns:1fr; } }
+figure.panel { margin:0; }
+.frame { border:1px solid #3D4759; padding:6px; background:#05060A; box-shadow:0 14px 40px rgba(0,0,0,0.6); }
+.frame img { display:block; width:100%; height:auto; }
+figcaption { margin-top:10px; }
+.cap-title { display:block; font-variant:small-caps; letter-spacing:0.22em; color:var(--gold); font-size:13.5px; }
+.cap-body { display:block; color:var(--ash); font-size:14.5px; margin-top:3px; }
+.pair { margin:24px 0; }
+.pair-imgs { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media (max-width:900px) { .pair-imgs { grid-template-columns:1fr; } }
+.ptag { text-align:center; color:#6E7484; font-size:10.5px; letter-spacing:0.28em; text-transform:uppercase; margin-top:6px; display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media (max-width:900px) { .ptag { grid-template-columns:1fr; } }
+.stage { position:relative; width:440px; max-width:100%; margin:0 auto; aspect-ratio:1; border:1px solid #3D4759; background:#05060A; }
+.stage img.layer { position:absolute; inset:0; width:100%; height:100%; }
+.ctl { text-align:center; margin-top:14px; }
+.ctl button { background:#0D1017; color:var(--gold); border:1px solid #3D4759; padding:8px 16px; font-family:Georgia,serif; font-size:14px; cursor:pointer; margin:4px; }
+.ctl button.on { border-color:var(--gold); background:#141a26; }
+.readout { text-align:center; color:var(--ash); font-size:13px; margin-top:10px; }
+footer { text-align:center; color:#565C6C; font-size:11px; letter-spacing:0.3em; text-transform:uppercase; margin-top:60px; }
+.hubnote { text-align:center; color:#6E7484; font-size:12.5px; margin-top:18px; }
+</style></head>
+<body>
+<header>
+  <h1>Witch Hunter</h1>
+  <div class="sub">Art Direction Hub</div>
+  <div class="tag">Pre-production proof of concept - locked register, sprite pipeline, equipment system</div>
+</header>
+<nav id="nav"></nav>
+<div class="wrap">
+
+<section class="view" id="v-world">
+  <div class="sec-rule"><span class="orn"></span><h2>The World: Biomes, Day and Night</h2><span class="orn"></span></div>
+  <p class="lead">Every place exists twice under the 24:1 clock. The register: painterly pixel-art hybrid, 60-80 percent near-black at night, one accent per frame, tiny figures against colossal scale.</p>
+  __WORLD__
+</section>
+
+<section class="view" id="v-cast">
+  <div class="sec-rule"><span class="orn"></span><h2>The Cast: NPCs and Player Characters</h2><span class="orn"></span></div>
+  <p class="lead">The court seen from underneath, the war made human, and the three transformation-line player characters. Affinity pairs mirror each other; the cast becomes 360-degree painted sprites.</p>
+  __CAST__
+</section>
+
+<section class="view" id="v-scenes">
+  <div class="sec-rule"><span class="orn"></span><h2>Signature Scenes</h2><span class="orn"></span></div>
+  __SCENES__
+</section>
+
+<section class="view" id="v-camps">
+  <div class="sec-rule"><span class="orn"></span><h2>The Warp Camps: Three Affinities</h2><span class="orn"></span></div>
+  <p class="lead">One camp skeleton, three readings. Good displays banners; neutral flies none; dark displays wealth as threat.</p>
+  __CAMPS__
+</section>
+
+<section class="view" id="v-pilots">
+  <div class="sec-rule"><span class="orn"></span><h2>Sprite Pipeline Pilots</h2><span class="orn"></span></div>
+  <p class="lead">Two characters taken through the full S1-S7 pipeline: concept frame to rotating 8-direction billboard sprite. Atlases and concept comparisons below.</p>
+  __PILOTS__
+</section>
+
+<section class="view" id="v-lab">
+  <div class="sec-rule"><span class="orn"></span><h2>Layer Lab: The Equipment System</h2><span class="orn"></span></div>
+  <p class="lead">The locked paper-doll system, live: a body canon in neutral under-layers plus three independently generated equipment layers. Toggle pieces; equip = layer swap.</p>
+  <div class="stage" id="stage">
+    <img class="layer" id="l-cloak" src="__L_CLOAK__">
+    <img class="layer" id="l-body" src="__L_BODY__">
+    <img class="layer" id="l-chest" src="__L_CHEST__">
+    <img class="layer" id="l-helm" src="__L_HELM__">
+  </div>
+  <div class="ctl">
+    <button id="b-cloak" class="on">cloak: on</button>
+    <button id="b-chest" class="on">cuirass: on</button>
+    <button id="b-helm" class="on">helm: on</button>
+  </div>
+  <div class="readout" id="labreadout"></div>
+  <div class="grid2" style="margin-top:22px">
+    <figure class="panel"><div class="frame"><img src="__K_COMPOSITE__"></div><figcaption><span class="cap-title">The composite</span><span class="cap-body">Body + cloak + cuirass + helm, vision-QA passed. Punch-through masking hides hair under the helm; anchor bands seat every piece.</span></figcaption></figure>
+    <figure class="panel"><div class="frame"><img src="__K_CONCEPT__"></div><figcaption><span class="cap-title">The approved concept (char-08)</span><span class="cap-body">The register the layers must match: painterly pixel-art hybrid, one gold accent, rim light.</span></figcaption></figure>
+  </div>
+</section>
+
+<section class="view" id="v-about">
+  <div class="sec-rule"><span class="orn"></span><h2>About This Hub</h2><span class="orn"></span></div>
+  <p class="lead">Witch Hunter is a single-player third-person open-world dark fantasy ARPG: a Daggerfall-like retro 3D world with modern action combat, and all characters, creatures, and props as 2D painted sprites with 360-degree rotation. A stylized, pixelated Elden Ring.</p>
+  <p class="lead">Everything here is generated concept art produced for the project following the locked art register (docs/planning/02 and 24): painterly pixel-art hybrid illustration, dithered gradients and film grain, massive negative space, monochromatic cool base with exactly one accent, third-person camera, held-breath mood. The sprite pipeline (doc 25) and the layered equipment system (doc 27) are proven by the pilots under Sprite Pipeline Pilots and Layer Lab.</p>
+  <p class="hubnote">Canonical sources: docs/planning/24-art-bible.md (frame catalog), 25-art-pipeline.md, 27-equipment-visual-system.md. Repo: github.com/CaptainPickard/witch-hunter</p>
+</section>
+</div>
+<footer>Witch Hunter - pre-production art hub - 2026-09-13</footer>
+<script>
+const SECTIONS = [
+  ['v-world','World'], ['v-cast','Cast'], ['v-scenes','Scenes'], ['v-camps','Camps'],
+  ['v-pilots','Sprite Pilots'], ['v-lab','Layer Lab'], ['v-about','About'],
+];
+const nav = document.getElementById('nav');
+for (const [id, label] of SECTIONS) {
+  const b = document.createElement('button');
+  b.textContent = label; b.dataset.target = id;
+  b.onclick = () => {
+    document.querySelectorAll('section.view').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('nav button').forEach(x => x.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    b.classList.add('active');
+    window.scrollTo(0, 0);
+  };
+  nav.appendChild(b);
+}
+nav.querySelector('button').classList.add('active');
+document.getElementById('v-world').classList.add('active');
+const state = {cloak:true, chest:true, helm:true};
+function renderLab() {
+  for (const k of ['cloak','chest','helm']) {
+    document.getElementById('l-'+k).style.visibility = state[k] ? 'visible' : 'hidden';
+    const b = document.getElementById('b-'+k);
+    b.className = state[k] ? 'on' : '';
+    b.textContent = k + ': ' + (state[k] ? 'on' : 'off');
+  }
+  const worn = ['body', ...Object.keys(state).filter(k=>state[k])];
+  document.getElementById('labreadout').textContent = 'wearing: ' + worn.join(' + ');
+}
+for (const k of ['cloak','chest','helm']) {
+  document.getElementById('b-'+k).onclick = () => { state[k] = !state[k]; renderLab(); };
+}
+renderLab();
+</script>
+</body></html>
