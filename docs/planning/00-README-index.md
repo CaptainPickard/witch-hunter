@@ -927,3 +927,18 @@ feature-by-feature implementation against the GDD.
     unmarked grave (THE NAME IN THE GRAVE), and speaking it
     aloud in the finale breaks her composure. Six new opens
     tracked in doc 36 with assignments.
+
+70. THE THREE VERSIONS COHERENCE PASS (2026-09-13, Nicko, spec
+    in doc 36 THE THREE VERSIONS): the three affinity storylines
+    written out as complete narratives. Light = THE SANCTIFIED
+    WAR (learns the witch and the compulsion, never the
+    creditor; ending is a victory that serves her). Dark = THE
+    DEBTOR'S REVOLT (learns the lie, never the liar; the sigil
+    wall at deepest standing; a revolt that misses). Neutral =
+    THE TRUE ENDING (the only line assembling all three
+    fragments; the unmasking is the big reveal and the neutral
+    finale's climax: the witch is behind everything). NG+
+    availability LOCKED: NG+ opens at the credits of any
+    completed run; only the player (not the character) carries
+    the reveal knowledge into NG+, fragments without the
+    keystone.

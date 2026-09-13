@@ -369,3 +369,62 @@ New opens surfaced by the rulings:
    whose ground, what guards it) and does finding it have
    light/dark-line echoes (a light player can find the grave
    and not understand it)? Assignment: world GDD item.
+
+## THE THREE VERSIONS (coherence pass, 2026-09-13; written from
+the locked rulings above; the world's public story is doc 19's
+inherited myth, one world, one truth, three vantage points)
+
+The frame: each affinity plays a different lie inside the world's
+public myth. Each version is a complete, satisfying storyline on
+its own terms; the neutral line is the only vantage from which
+the other two make sense.
+
+- LIGHT AFFINITY, THE SANCTIFIED WAR: you learn the witch, never
+  the witchcraft. The war against the dark court is real and
+  winnable and genuinely protective. The wrongness surfaces
+  without a name: the king's rages, Mercy's cures that leave no
+  taint, the Sun altar reading cold. The reveal arc: the queen
+  is a witch and the king is bound (full arc: evidence past her
+  wards, the confrontation, the choice of what to do with a
+  beloved queen unmasked before a court that cannot afford the
+  truth). UNREACHABLE in this line: the creditor, the debt, the
+  Fall as love story. The light ending: expose, depose, or kill
+  her, and it changes nothing, because the queen was never the
+  engine, only its face; the harvest runs through the Church's
+  own hands. Final image: a victory parade, and above it an
+  altar still quietly draining. The player ends the story
+  certain they won.
+- DARK AFFINITY, THE DEBTOR'S REVOLT: you learn the lie, never
+  the liar. The debt is manufactured, the terms a con, and at
+  deepest standing the wall: the creditor's sigils match sigils
+  worn openly in the light court. UNREACHABLE: whose face; the
+  creditor has no name, no body, no door (the rule that was
+  always hers). The dark ending is a revolt that misses: refuse
+  the payments and the ledger continues, because you cannot
+  default to someone you cannot find; or the bankruptcy ritual,
+  demons called down to buy a century. Final image: a court
+  that finally stopped paying, and a debt that did not notice.
+- NEUTRAL, THE TRUE ENDING: six refusals, both courts hunting
+  you, the underworld your only nation. The three fragments
+  assemble: the light fragment (the queen is a witch, the king
+  bound), the dark fragment (the creditor's sigils are human,
+  worn in the light court), the Warden fragment (the Fall's
+  true history, and the trap: the penitent Signer is the bait
+  in the trap she built herself). THE BIG REVEAL lands here and
+  only here, as the neutral finale's climax: the unmasking (the
+  Signer is the Pale Queen; the girl, the witch, the invented
+  devil, the debt, the beloved queen: one soul wearing two
+  kingdoms as a mask). Then the locked sequence runs: the dark
+  queen's mid-ritual choice beat, the Last Dance, the Deep
+  Altar against the engine, the Hunter Becomes the Ledger
+  sentence, the Name in the Grave as the optional key spoken
+  within the finale.
+- REVEAL AND NG+ (locked 2026-09-13, Nicko): the witch-behind-
+  everything reveal exists only in the neutral finale, as its
+  climax beat, before the credits. NG+ becomes available at the
+  credits of ANY completed run, but the knowledge does not: a
+  light or dark NG+ carries fragments without the keystone, and
+  the player, not the character, is the one who knows what the
+  sigils mean. The asymmetry is the design: the reveal is a
+  reward for the player's journey across playthroughs, and the
+  world stays honest by never telling.
