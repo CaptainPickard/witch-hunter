@@ -151,9 +151,18 @@ design sheet -> turnaround (Nicko gate) -> 8 directions -> 5-frame idle
 - [x] S7 atlas + billboard page (sprites/dwarf-male/card09-billboard.html)
 - [x] catalog in 24-art-bible.md + commit to repo
 
-### CARD 10: DWARF, FEMALE
-- [ ] S1 sheet
-- [ ] S2-S7 (same stages)
+### CARD 10: DWARF, FEMALE  [COMPLETE 2026-09-13]
+- [x] S1 sheet (stocky silhouette, forge gold accent, fur mantle +
+      grey-streaked auburn braids; 2 rounds - v1 archived belt hammer,
+      L8 caught proactively)
+- [x] S2 turnaround (first-round PASS; L8 replacement-content pattern)
+- [x] S3 8 directional views (derived sheet PASS)
+- [x] S4 5-frame idle (flicker 20.0-28.5, fur mantle per L4; vision PASS)
+- [x] S5 cleanup (alpha, defringe, normalize)
+- [x] S6 QA (scripted metrics + vision gates)
+- [x] S7 atlas + billboard page (sprites/dwarf-female/card10-billboard.html)
+- [x] catalog in 24-art-bible.md + commit to repo
+- PRODUCTION RUN COMPLETE: all 10 race/sex cards through S1-S7.
 
 ## Batch Workflow (once 2+ cards are done)
 
@@ -184,3 +193,17 @@ institution). Palette law per-biome/race in 24-art-bible.md section 3.
 - Loop-later principle: cards produce canonical turnarounds + atlases;
   batch variation (outfit tiers, age tiers, damage states) loops on top
   of approved canon later.
+
+## Bake-in from 26-A analysis (2026-09-13, PROPOSED)
+
+Status line per item: PROPOSED (Astrabot bake-in from 26-A analysis,
+2026-09-13, pending Nicko lock). Source: 26-astrabot-analysis.md Part 3
+gap 2.
+
+- NEW HIGH-priority cards: HUMAN male body, HUMAN female body. The
+  player is human-locked per doc 03 and the player's sprite is the
+  most-viewed asset per doc 27 section 4; the current 10-card queue
+  covers orc/undead/vampire/elf/dwarf only. PROPOSED.
+- Gate note: card 10 (dwarf female) and any new cards proceed in
+  parallel with, but production mass-scaling waits on, the combat
+  animation prove-or-kill artifact (doc 25 bake-in). PROPOSED.

@@ -285,6 +285,14 @@ art-direction/sprites/<card>/):
     the no-weapon prompt; r2 with plain bedroll PASS). APPROVED.
     8 directions + 5-frame idle built (S3/S4); flicker 17.1-20.5.
     Lantern/anvil/hammer not baked: gear layers per doc 27.
+55. sprites/dwarf-female/concept.png - CARD 10 S1: dwarf woman smith-
+    warden, grey-streaked auburn braids, leather apron over wool dress,
+    fur mantle, forge-lantern, mountain-hall gate. APPROVED (2 rounds:
+    v1 archived - belt hammer, L8 caught proactively).
+56. sprites/dwarf-female/turnaround.png - CARD 10 S2: 4-view turnaround,
+    first-round PASS (L8 replacement-content prompt pattern held).
+    APPROVED. 8 directions + 5-frame idle built (S3/S4); flicker
+    20.0-28.5 (fur mantle per L4). Lantern not baked: gear per doc 27.
 
 Page captions for every frame live in 00-art-direction.html and are the
 canonical short descriptions; the pair descriptions there tie each pair
@@ -335,3 +343,33 @@ to the clock mechanics.
 - Mourning ring: set dressing or mechanically keyed camp mood.
 - concept-04 and concept-08 cooling passes (section 5 notes) - pending
   Nicko's "keep going" call.
+
+## Bake-in from 26-A analysis (2026-09-13, PROPOSED)
+
+Status line per item: PROPOSED (Astrabot bake-in from 26-A analysis,
+2026-09-13, pending Nicko lock). Source: 26-astrabot-analysis.md Part 2
+Tension 3 and Part 3 gap 8.
+
+- COMBAT READABILITY FLOOR: section 8's open ruling ("fog depth vs
+  sprite silhouette readability floor") promoted to a locked-rule
+  proposal, with numbers to be set at the UE5 spike: silhouette contrast
+  target at fixed gameplay distances, tested with tools/qa_gate.py's
+  existing 25 percent silhouette check, under night + Pale Tide lighting
+  (worst case: doc 03's night-anchored undead in Pale Tide fog).
+  PROPOSED.
+- Hostile rim-light boost: rim light on hostile sprites slightly
+  stronger than on scenery, still diegetic (lantern, moon). PROPOSED.
+- Fog keyed to encounter state: fog recedes inside locked-on combat,
+  thickens in exploration. The fog is the mood, combat buys clarity.
+  PROPOSED.
+- Accent collision ranking: when multiple combat VFX compete mid-fight
+  (zones, wards, bleed, corruption), threat accent (red) outranks magic
+  accent (cyan), which outranks ambient accents. Resolves section 8's
+  one-accent-vs-combat-VFX collision flag. PROPOSED.
+- Dithering ruling recommendation: painted dithering first, post-process
+  shader only where painted dithering cannot reach (fog edges,
+  gradients). Final call pending (section 8's open ruling). PROPOSED.
+- Equipment silhouette QA: each equipment variant (doc 27) must preserve
+  the piece-type silhouette markers (helm/shield/weapon shape) that doc
+  04's enemy-grammar read depends on. Add as a qa_gate.py check.
+  PROPOSED.
