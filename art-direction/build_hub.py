@@ -34,6 +34,38 @@ def pair(day, night, title, cap):
             '<figcaption style="margin-top:8px"><span class="cap-title" style="display:block;font-variant:small-caps;letter-spacing:0.22em;color:#C9A227;font-size:13.5px;text-align:center">' + title + '</span>'
             '<span class="cap-body" style="display:block;color:#8D93A3;font-size:14.5px;text-align:center">' + cap + '</span></figcaption></div>')
 
+# STANDING RULE (Nicko, 2026-09-13): every finished image goes on the hub.
+# When a production card completes S1-S7, add ONE line here - concept web
+# derivative + atlas web derivative + caption - then re-run this script.
+# The RACE CARDS section and the roster strip build from this list.
+CARDS = [
+ ('card01-orc-male',   'CARD 01: ORC, MALE',     'Mordor-register creature of evil: hulking, hunched, scavenged dark-iron harness. Ember war-camp horizon. Idle flicker 18.6-26.7.'),
+ ('card02-orc-female', 'CARD 02: ORC, FEMALE',   'War-earned rank of the horde: leaner, wirier, trophy cloak of chained skulls. Idle flicker 8.3-19.0.'),
+ ('card03-undead-male','CARD 03: UNDEAD, MALE',  'Risen soldier of the necro-aristocracy: gray-green flesh, rotted frock coat and tricorn, grave-green lantern. Flicker 18.1-30.2.'),
+ ('card04-undead-female','CARD 04: UNDEAD, FEMALE','Risen laborer: matted braid under a headscarf, layered rotted skirts, drowned-crypt marsh. Flicker 23.7-28.5.'),
+ ('card05-vampire-male','CARD 05: VAMPIRE, MALE', 'Blood Count of the veil court: tall, gaunt, silver-white hair, veil-black doublet, blood-red spire glow. Flicker 6.6-10.6, best of the run.'),
+ ('card06-vampire-female','CARD 06: VAMPIRE, FEMALE','Veil Duchess: pinned silver-white hair, veil-black court gown, closed lacquered fan. Flicker 9.5-16.8.'),
+ ('card07-elf-male',   'CARD 07: ELF (DAWN-REFUSER), MALE', 'Light-court warden: white linen and deep blue half-cloak, silver star-and-bow clasp, cold moon over the silver-bark hall. Flicker 22.0-29.0.'),
+]
+
+card_figs = []
+for slug, title, cap in CARDS:
+    card_figs.append(
+        '<div class="pair"><div class="pair-imgs">'
+        '<div class="frame"><img src="' + b64f(slug) + '"></div>'
+        '<div class="frame"><img src="' + b64f(slug + '-atlas') + '"></div></div>'
+        '<div class="ptag"><span>concept frame</span><span>8-direction atlas</span></div>'
+        '<figcaption style="margin-top:8px"><span class="cap-title" style="display:block;font-variant:small-caps;letter-spacing:0.22em;color:#C9A227;font-size:13.5px;text-align:center">' + title + '</span>'
+        '<span class="cap-body" style="display:block;color:#8D93A3;font-size:14.5px;text-align:center">' + cap + '</span></figcaption></div>')
+cards_html = ''.join(card_figs)
+
+# Roster proof sheet: all concept frames in one strip
+roster_imgs = ''.join('<div class="frame"><img src="' + b64f(slug) + '"></div>' for slug, _, _ in CARDS)
+cards_html += ('<div class="sec-rule" style="margin-top:40px"><span class="orn"></span>'
+               '<h2>Roster Proof Sheet</h2><span class="orn"></span></div>'
+               '<p class="lead">Every completed race card in one strip - the NPC base cast as of the current run. Grows by one frame per card.</p>'
+               '<div class="pair-imgs">' + roster_imgs + '</div>')
+
 world = (pair('d01-darkwood','c01-darkwood','DARKWOOD FORESTS','Day never truly arrives under the canopy; night belongs to the fog and the lantern is the only law.')
  + pair('d02-moors','c02-moors','MOORS AND HIGHLANDS','Day: long sight-lines and weathered stone. Night: the beacon window is a life-or-death question.')
  + pair('d03-blight','c03-blight','BLIGHTED ZONES','The blight has no honest day. Noon is a burned disc behind ash haze; the red glow never sleeps.')
@@ -79,6 +111,7 @@ CSS = open(artdir + '/hub-template.css').read() if os.path.exists(artdir + '/hub
 html = open(artdir + '/hub-template.html').read()
 html = html.replace('__WORLD__', world).replace('__CAST__', cast).replace('__SCENES__', scenes)
 html = html.replace('__CAMPS__', camps).replace('__PILOTS__', pilots)
+html = html.replace('__CARDS__', cards_html)
 html = html.replace('__L_CLOAK__', LF['piece-cloak']).replace('__L_BODY__', LF['body-front'])
 html = html.replace('__L_GLOVES__', LF['piece-gloves'])
 html = html.replace('__L_CHEST__', LF['piece-chest']).replace('__L_HELM__', LF['piece-helm'])
@@ -86,5 +119,12 @@ html = html.replace('__K_COMPOSITE__', b64f('knight-composite')).replace('__K_CO
 
 out = artdir + '/index.html'
 open(out, 'w').write(html)
-leftover = [p for p in ['__WORLD__','__CAST__','__SCENES__','__CAMPS__','__PILOTS__','__L_BODY__','__K_COMPOSITE__'] if p in html]
+# WebUI /art-hub route serves this file live from the bind-mounted workspace
+# as the hermeswebui runtime user (UID 1024); the build runs as root, so
+# normalize ownership/mode every rebuild or the route goes dark with 403/404.
+try:
+    os.chmod(out, 0o644)
+except PermissionError:
+    pass
+leftover = [p for p in ['__WORLD__','__CAST__','__SCENES__','__CAMPS__','__PILOTS__','__CARDS__','__L_BODY__','__K_COMPOSITE__'] if p in html]
 print('written', out, os.path.getsize(out)//1024, 'KB; leftovers:', leftover)

@@ -81,6 +81,12 @@ footer { text-align:center; color:#565C6C; font-size:11px; letter-spacing:0.3em;
   __CAMPS__
 </section>
 
+<section class="view" id="v-cards">
+  <div class="sec-rule"><span class="orn"></span><h2>Race Cards: The NPC Base Cast</h2><span class="orn"></span></div>
+  <p class="lead">The doc-26 production run: every race/sex card through the full S1-S7 pipeline. Each entry shows the approved concept frame beside its 8-direction atlas. These are the canonical body canons the equipment layers land on.</p>
+  __CARDS__
+</section>
+
 <section class="view" id="v-pilots">
   <div class="sec-rule"><span class="orn"></span><h2>Sprite Pipeline Pilots</h2><span class="orn"></span></div>
   <p class="lead">Two characters taken through the full S1-S7 pipeline: concept frame to rotating 8-direction billboard sprite. Atlases and concept comparisons below.</p>
@@ -121,7 +127,7 @@ footer { text-align:center; color:#565C6C; font-size:11px; letter-spacing:0.3em;
 <script>
 const SECTIONS = [
   ['v-world','World'], ['v-cast','Cast'], ['v-scenes','Scenes'], ['v-camps','Camps'],
-  ['v-pilots','Sprite Pilots'], ['v-lab','Layer Lab'], ['v-about','About'],
+  ['v-cards','Race Cards'], ['v-pilots','Sprite Pilots'], ['v-lab','Layer Lab'], ['v-about','About'],
 ];
 const nav = document.getElementById('nav');
 for (const [id, label] of SECTIONS) {
