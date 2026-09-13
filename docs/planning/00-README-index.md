@@ -65,6 +65,11 @@ structural ambition with a modern atmospheric layer on top.
                                directional bake -> frame stacks ->
                                cleanup -> atlas -> billboard), feasibility
                                verdict + pilot milestone
+- 26-sprite-production-queue.md - living to-do queue for the race sprite
+                               production run (10 cards: orc/undead/
+                               vampire/elf/dwarf, male+female each),
+                               standing pilot lessons incl. hand-pose
+                               drift rule
 
 ## Decisions Locked So Far (2026-09-11)
 1. Procedural dungeons persist once generated (Daggerfall-style).
