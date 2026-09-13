@@ -122,9 +122,17 @@ design sheet -> turnaround (Nicko gate) -> 8 directions -> 5-frame idle
 - [x] S7 atlas + billboard page (sprites/elf-male/card07-billboard.html)
 - [x] catalog in 24-art-bible.md + commit to repo
 
-### CARD 08: ELF (DAWN-REFUSER), FEMALE
-- [ ] S1 sheet
-- [ ] S2-S7 (same stages)
+### CARD 08: ELF (DAWN-REFUSER), FEMALE  [COMPLETE 2026-09-13]
+- [x] S1 sheet (light-court watchtower; white/blue/silver; 2 rounds -
+      v1 archived for smooth paint + baked bow/quiver)
+- [x] S2 turnaround (first-round PASS; gear stripped per body-canon)
+- [x] S3 8 directional views (derived sheet PASS)
+- [x] S4 5-frame idle (flicker 23.1-46.5 metric-high but vision grade
+      GOOD: subtle sway, no pose breaks; dither inflates metric)
+- [x] S5 cleanup (alpha, defringe, normalize)
+- [x] S6 QA (scripted metrics + vision gates)
+- [x] S7 atlas + billboard page (sprites/elf-female/card08-billboard.html)
+- [x] catalog in 24-art-bible.md + commit to repo
 
 ### CARD 09: DWARF, MALE
 - [ ] S1 sheet (anvil/mountain-hall marks, stocky silhouette, forge

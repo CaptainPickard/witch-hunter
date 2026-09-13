@@ -267,6 +267,15 @@ art-direction/sprites/<card>/):
     8 directions + 5-frame idle built (S3/S4); flicker 22.0-29.0
     (free cloak edge per L4). Lantern not baked: gear layer per doc 27;
     star-and-bow clasp stays as identity.
+51. sprites/elf-female/concept.png - CARD 08 S1: dawn-refuser elf
+    archer-warden, pale-silver braid, moon-circlet, white tunic + blue
+    riding cloak, cold moon over the light-court watchtower. APPROVED
+    (2 rounds: v1 archived - smooth paint + baked bow/quiver).
+52. sprites/elf-female/turnaround.png - CARD 08 S2: 4-view turnaround,
+    first-round PASS (lantern/bow/quiver stripped per body-canon).
+    APPROVED. 8 directions + 5-frame idle built (S3/S4); flicker
+    23.1-46.5 with vision grade GOOD (breathing sway, no pose breaks;
+    pale tunic dither inflates the metric). Gear not baked per doc 27.
 
 Page captions for every frame live in 00-art-direction.html and are the
 canonical short descriptions; the pair descriptions there tie each pair
