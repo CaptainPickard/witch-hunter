@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Witch Hunter 3D - Arsenal & Character Viewer</title>
+<style>
+ body{margin:0;background:#39424c;color:#b8c0c8;font-family:monospace;overflow:hidden}
+ #c{width:100vw;height:100vh;display:block}
+ .hud{position:fixed;top:10px;left:12px;font-size:11px;line-height:1.5;z-index:5;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+ .hud b{color:#e8ece8}
+ .panel{position:fixed;z-index:5;display:flex;flex-direction:column;gap:4px;max-height:96vh;overflow-y:auto;background:rgba(20,24,28,.85);border:1px solid #4a545e;padding:8px;border-radius:4px}
+ #leftPanel{top:10px;right:10px;width:250px}
+ #rightPanel{bottom:10px;left:10px;width:250px}
+ .panel h3{margin:2px 0 6px;font-size:11px;color:#9aa8b4;letter-spacing:1px}
+ .panel .row{display:flex;gap:4px;align-items:center;margin:2px 0}
+ .panel select{flex:1;background:#1a2026;color:#c8d0d8;border:1px solid #4a545e;font-family:monospace;font-size:11px;padding:3px}
+ .panel button{background:#e8e4da;border:1px solid #6a7480;color:#2a323a;padding:5px 8px;font-family:monospace;cursor:pointer;font-size:10px;font-weight:bold}
+ .panel button:hover{background:#ffffff}
+ .panel button.on{background:#7a8a5a;color:#0a0c08}
+ .panel label{font-size:10px;color:#8a97a4;min-width:52px}
+ #err{position:fixed;bottom:2px;right:270px;color:#c86060;font-size:10px;z-index:9;white-space:pre-wrap;max-width:40vw}
+ #stat{position:fixed;top:10px;left:50%;transform:translateX(-50%);font-size:10px;color:#8a949e;z-index:5}
+</style></head>
+<body>
+<canvas id="c"></canvas>
+<div class="hud"><b>WITCH HUNTER 3D - ARSENAL &amp; CHARACTER VIEWER</b><br>
+drag orbit / scroll zoom / rotate toggle<br>
+equip weapons (right hand), shields (left hand), helm/hood/chest on body slots</div>
+<div id="stat">loading assets...</div>
+<div class="panel" id="leftPanel">
+ <h3>CHARACTER</h3>
+ <div class="row"><label>body</label><select id="selBody"><option value="">- none -</option></select></div>
+ <h3>ARMOR SLOTS</h3>
+ <div class="row"><label>head</label><select id="selHead"><option value="">- none -</option></select></div>
+ <div class="row"><label>chest</label><select id="selChest"><option value="">- none -</option></select></div>
+ <div class="row"><button id="btnHead">equip</button><button id="btnChest">equip</button></div>
+</div>
+<div class="panel" id="rightPanel">
+ <h3>WEAPONS</h3>
+ <div class="row"><label>right hand</label><select id="selRH"><option value="">- empty -</option></select></div>
+ <div class="row"><label>left hand</label><select id="selLH"><option value="">- empty -</option></select></div>
+ <div class="row"><button id="btnRH">equip</button><button id="btnLH">equip</button></div>
+ <h3>VIEW</h3>
+ <div class="row"><button id="btnRot">rotation ON</button><button id="btnRaw">texture: PIXELATED</button></div>
+</div>
+<div id="err"></div>
+<script>/*THREE_JS_PLACEHOLDER*/</script>
+<script>/*ORBIT_CONTROLS_PLACEHOLDER*/</script>
+<script>/*GLTF_LOADER_PLACEHOLDER*/</script>
+<script>
+window.addEventListener('error', function(e){ document.getElementById('err').textContent += 'ERR: '+e.message+'\n'; });
+
+var canvas = document.getElementById('c');
+var renderer = new THREE.WebGLRenderer({canvas: canvas, antialias: false});
+renderer.setPixelRatio(1);
+var INTERNAL_H = 540;
+function sizeRenderer(){
+  var h = INTERNAL_H, w = Math.round(h * innerWidth/innerHeight);
+  renderer.setSize(w, h, false);
+  canvas.style.width = '100vw'; canvas.style.height = '100vh';
+  if(camera){ camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix(); }
+}
+var scene = new THREE.Scene();
+scene.background = new THREE.Color(0x39424c);
+scene.fog = new THREE.FogExp2(0x39424c, 0.018);
+var camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.05, 100);
+camera.position.set(1.6, 1.4, 3.2);
+sizeRenderer(); addEventListener('resize', sizeRenderer);
+var controls = new THREE.OrbitControls(camera, canvas);
+controls.target.set(0, 1.0, 0);
+
+var key = new THREE.PointLight(0x9ab8c8, 2.2, 14); key.position.set(-1.0, 1.6, 1.6); scene.add(key);
+var moon = new THREE.DirectionalLight(0xc8d8e8, 2.2); moon.position.set(2, 4, 1.5); scene.add(moon);
+var rim = new THREE.DirectionalLight(0x8aa4b4, 1.6); rim.position.set(-2, 2, -3); scene.add(rim);
+scene.add(new THREE.AmbientLight(0x8a97a4, 1.3));
+var floor = new THREE.Mesh(new THREE.CircleGeometry(8, 40), new THREE.MeshStandardMaterial({color:0x4a5560, roughness:1}));
+floor.rotation.x = -Math.PI/2; floor.position.y = -0.01; scene.add(floor);
+
+function loadB64(b64, cb){
+  var bin = Uint8Array.from(atob(b64), function(c){ return c.charCodeAt(0); });
+  var url = URL.createObjectURL(new Blob([bin], {type:'model/gltf-binary'}));
+  new THREE.GLTFLoader().load(url, function(g){ cb(g.scene); }, undefined, function(e){ document.getElementById('err').textContent += 'LOAD FAIL: '+e+'\n'; });
+}
+function pixelFilter(root, nearest){
+  root.traverse(function(o){
+    if(o.isMesh && o.material && o.material.map){
+      var f = nearest ? THREE.NearestFilter : THREE.LinearFilter;
+      o.material.map.magFilter = f;
+      o.material.map.minFilter = nearest ? THREE.NearestFilter : THREE.LinearMipmapLinearFilter;
+      o.material.map.generateMipmaps = !nearest;
+      o.material.map.needsUpdate = true;
+    }
+  });
+}
+
+// ASSETS is injected: {name: {cat, url, urlRaw, slot}} base64 data URIs are built at load
+var ASSETS = {};
+var EQUIP_SLOTS = {};
+var loaded = {};
+var body = null, autoRot = true;
+var equip = {head: null, chest: null, rh: null, lh: null};
+var anchors = {};
+var texMode = 'pixelated';
+
+function loadAsset(name, slot, cb){
+  if(loaded[name]){ cb(loaded[name]); return; }
+  var src = texMode === 'pixelated' ? ASSETS[name].url : (ASSETS[name].urlRaw || ASSETS[name].url);
+  new THREE.GLTFLoader().load(src, function(g){
+    pixelFilter(g.scene, texMode === 'pixelated');
+    loaded[name] = g.scene;
+    cb(g.scene);
+  }, function(x){ }, function(e){ document.getElementById('err').textContent += 'LOAD FAIL '+name+': '+e+'\n'; });
+}
+
+function clearGroup(g){
+  if(!g) return;
+  while(g.children.length) g.remove(g.children[0]);
+}
+
+function equipTo(slot, name){
+  var holder = slot + 'Slot';
+  if(!body) { document.getElementById('err').textContent += 'no body equipped\n'; return; }
+  equip[slot] = name;
+  clearGroup(anchors[holder]);
+  document.getElementById('btn'+(slot==='rh'?'RH':slot==='lh'?'LH':slot==='head'?'Head':'Chest')).className = name ? 'on' : '';
+  if(name){
+    loadAsset(name, slot, function(scene_){
+      if(equip[slot] !== name) return; // stale
+      var wrap = new THREE.Group();
+      wrap.add(scene_);
+      // normalize prop scale onto a 1.8-unit figure
+      var box = new THREE.Box3().setFromObject(scene_);
+      var size = box.getSize(new THREE.Vector3());
+      var center = box.getCenter(new THREE.Vector3());
+      var targetLen = slot==='head' ? 0.30 : slot==='rh'||slot==='lh' ? 0.62 : 0.62;
+      var len = Math.max(size.x, size.y, size.z) || 1;
+      var s = targetLen/len;
+      wrap.scale.set(s,s,s);
+      scene_.position.set(-center.x*s, -center.y*s, -center.z*s);
+      anchors[holder].add(wrap);
+      wrap.userData.baseScale = s;
+      updateStat();
+    });
+  } else {
+    clearGroup(anchors[holder]);
+    updateStat();
+  }
+}
+
+function updateStat(){
+  var n = 0; for(var k in equip) if(equip[k]) n++;
+  document.getElementById('stat').textContent = 'body: '+(bodyName||'none')+' | equipped: '+n+' | assets: '+Object.keys(ASSETS).length;
+}
+var bodyName = '';
+
+function setBody(name){
+  if(body){ scene.remove(body); body = null; }
+  ['headSlot','rhSlot','lhSlot','chestSlot'].forEach(function(k){ if(anchors[k]){ clearGroup(anchors[k]); } });
+  equip = {head: null, chest: null, rh: null, lh: null};
+  document.querySelectorAll('.panel button').forEach(function(b){ if(b.id !== 'btnRot' && b.id !== 'btnRaw') b.className = ''; });
+  document.getElementById('selHead').value = '';
+  document.getElementById('selChest').value = '';
+  document.getElementById('selRH').value = '';
+  document.getElementById('selLH').value = '';
+  if(!name){ bodyName=''; updateStat(); return; }
+  bodyName = name;
+  loadAsset(name, 'body', function(scene_){
+    if(body) scene.remove(body);
+    body = scene_;
+    var box = new THREE.Box3().setFromObject(scene_);
+    var size = box.getSize(new THREE.Vector3());
+    var s = 1.8/size.y;
+    body.scale.set(s,s,s);
+    scene.add(body);
+    // anchors relative to the normalized 1.8 figure: head ~1.63, hands ~0.9
+    anchors.headSlot = new THREE.Group();
+    anchors.headSlot.position.set(0, 1.02, 0.0);
+    anchors.rhSlot = new THREE.Group();
+    anchors.rhSlot.position.set(0.44, 0.02, 0.14);
+    anchors.lhSlot = new THREE.Group();
+    anchors.lhSlot.position.set(-0.44, 0.02, 0.14);
+    anchors.chestSlot = new THREE.Group();
+    anchors.chestSlot.position.set(0, 0.45, 0.16);
+    body.add(anchors.headSlot); body.add(anchors.rhSlot); body.add(anchors.lhSlot); body.add(anchors.chestSlot);
+    updateStat();
+  });
+}
+
+// populate selects
+function fillSelect(sel, cats){
+  var el = document.getElementById(sel);
+  el.innerHTML = '';
+  var opt = document.createElement('option'); opt.value=''; opt.textContent = el.id==='selBody' ? '- none -' : '- empty -';
+  el.appendChild(opt);
+  Object.keys(ASSETS).sort().forEach(function(name){
+    var a = ASSETS[name];
+    if(cats.indexOf(a.cat) >= 0){
+      var o = document.createElement('option'); o.value = name; o.textContent = a.cat+': '+name;
+      el.appendChild(o);
+    }
+  });
+}
+
+document.getElementById('selBody').onchange = function(){ setBody(this.value); };
+document.getElementById('btnHead').onclick = function(){ equipTo('head', document.getElementById('selHead').value); };
+document.getElementById('btnChest').onclick = function(){ equipTo('chest', document.getElementById('selChest').value); };
+document.getElementById('btnRH').onclick = function(){ equipTo('rh', document.getElementById('selRH').value); };
+document.getElementById('btnLH').onclick = function(){ equipTo('lh', document.getElementById('selLH').value); };
+document.getElementById('btnRot').onclick = function(){ autoRot = !autoRot; this.textContent = 'rotation ' + (autoRot ? 'ON' : 'OFF'); };
+document.getElementById('btnRaw').onclick = function(){
+  texMode = texMode === 'pixelated' ? 'raw' : 'pixelated';
+  this.textContent = 'texture: ' + texMode.toUpperCase();
+  loaded = {};
+  setBody(bodyName);
+  // re-equip current selections in new texture mode
+  setTimeout(function(){
+    equipTo('head', document.getElementById('selHead').value);
+    equipTo('chest', document.getElementById('selChest').value);
+    equipTo('rh', document.getElementById('selRH').value);
+    equipTo('lh', document.getElementById('selLH').value);
+  }, 50);
+};
+
+function tick(){
+  requestAnimationFrame(tick);
+  if(body && autoRot) body.rotation.y += 0.006;
+  controls.update();
+  renderer.render(scene, camera);
+}
+tick();
+</script>
+</body></html>
