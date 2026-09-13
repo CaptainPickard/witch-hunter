@@ -170,10 +170,10 @@ answers.
 
 ## Repo Contents
 
-- docs/planning/ - the full planning set (35 docs: vision, world
+- docs/planning/ - the full planning set (36 docs: vision, world
   design, combat, crafting, quests, factions, moral axis, territory
   conquest, lore spine, followers, controls, art style, art bible,
-  art pipeline, vertical slice).
+  art pipeline, vertical slice, pop-up quest systems).
 - docs/planning/24-art-bible.md - canonical concept-art catalog (36
   frames), locked mood register, per-biome palette law, generation
   grammar, QA checklist.

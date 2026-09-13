@@ -579,3 +579,35 @@ reconciliation pass), the neutral ending's sentence mechanics
 (endgame GDD), the dark queen's mid-ritual consequence table (endgame
 GDD), the Last Dance failure state (endgame GDD), and the grave site
 (world GDD item).
+
+## POP-UP QUEST OPENS (2026-09-13, doc 37 quest content pass)
+
+New open questions from the doc 37 concept pass, all tracked in doc
+37's Open Questions section with assignments:
+1. Which hidden specializations beyond the undead graverobber enter
+   the family first, and their mechanics (doc 16 follow-up, next
+   specialties session).
+2. Rumor-trap frequency and detection grammar (how often planted
+   rumors appear, what telegraphs them): GDD tuning.
+3. Bounty proof grammar details (trophy-specific vs generic part
+   proofs, per enemy tier): GDD tuning.
+4. Whether the dead can lie (working idea in doc 37: the dead cannot
+   lie about their own life but can be wrong, and can be bound by
+   whoever killed them): Nicko ruling.
+5. Keeper mini-faction standing ladder and rite-service prices: GDD
+   tuning.
+6. Which 2-3 archetypes prove the frame grammar in the slice beyond
+   THE LOST CHILD and THE NIGHT HAUNTER: slice scoping pass.
+7. Quiet Parish keeper-catch consequences beyond standing loss (does
+   the keeper remember across holds): world GDD pass.
+Still open carried from docs 30-36: doc 31 M4 live decisions, NG+
+preserve-list (doc 35 G13), squire-overflow save location (doc 35
+G13), dark-vendor currency question (doc 35 G14), camp-raid corpse
+edge (doc 35 G15), trigger-curve validation (doc 32), GAS adoption
+gate and perf revisions (doc 31), bandit rout flavor and Darkbread
+cue timing (doc 34), stamina-break window tuning (doc 33), doc 30's
+unowned gaps G16+ (audio, dialogue, stealth, mounts, day-night
+content, ammo, localization, accessibility), doc 36's six opens
+(Wardens after the unmasking, Signer mask re-derivation, neutral
+sentence mechanics, dark queen mid-ritual table, Last Dance failure
+state, grave site).

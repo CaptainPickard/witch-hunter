@@ -942,3 +942,16 @@ feature-by-feature implementation against the GDD.
     completed run; only the player (not the character) carries
     the reveal knowledge into NG+, fragments without the
     keystone.
+
+71. POP-UP QUEST CONCEPT PASS (2026-09-13, Nicko, spec in doc 37):
+    tavern rumor engine, bounty boards, the Quiet Parish cemetery
+    mechanic, and a 24-archetype quest catalog (neutral, light, dark,
+    cross-cutting) for the procedural tissue layer. Three rulings
+    locked in session: (1) full concept doc now with slice scoping
+    inside it; (2) DEAD-SPEECH GATE: no one can speak to the dead
+    except an actual undead graverobber, a hidden mechanic for the
+    specific class, the pinnacle example of hidden mechanics through
+    class gates, more hidden specializations for other classes
+    planned; (3) digging always costs light rep, consent only affects
+    what the dead give you. New doc: 37-popup-quests.md. 7 open
+    questions tracked in doc 37 and 08.
