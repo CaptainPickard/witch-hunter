@@ -1,7 +1,11 @@
-# 27 - EQUIPMENT VISUAL SYSTEM: THE SPRITE FASHION PIPELINE (PROPOSED,
-# 2026-09-13)
+# 27 - EQUIPMENT VISUAL SYSTEM: THE SPRITE FASHION PIPELINE
+# (LOCKED 2026-09-13, Nicko: "All three decisions are approved. Move
+# forward with that." D1 layered paper-doll approved; D2 doc-26 race
+# cards produce bodies in neutral under-layers; D3 layer pilot approved
+# as third prove-or-kill artifact.)
 
-Status: PROPOSED for Nicko review. Answers Nicko's question: "I want to
+Status: LOCKED 2026-09-13 (D1/D2/D3 all approved by Nicko). Answers
+Nicko's question: "I want to
 eventually make it so that each piece of equipped armor changes the
 actual player model, creating unique player expressions via fashion
 and unlocked equipment. How do we achieve that?"
