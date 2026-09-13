@@ -520,3 +520,32 @@ GAS adoption gate and perf revisions (doc 31), bandit rout flavor and
 Darkbread cue timing (doc 34), stamina-break window tuning (doc 33),
 doc 30's unowned gaps G16+ (audio, dialogue, stealth, mounts, day-night
 content, ammo, localization, accessibility).
+
+## PALE QUEEN OPENS (2026-09-13, doc 36 lore session)
+
+New open questions from the doc 36 lock session, all tracked in doc
+36's Open Questions section with assignments:
+1. What does the dark queen know about the creditor's identity
+   (doc 36, lore GDD pass).
+2. The Pale Queen's comeback-equivalent event (her desperate move,
+   parallel to the dark court's bankruptcy ritual, doc 36, lore
+   GDD pass).
+3. The king's rescue path: breaking the dark magic early and its
+   war-trajectory effects (doc 36, quests GDD item, doc 20 line).
+4. What happens when the Signer learns her penance was for a
+   framed crime (doc 36, quests GDD item).
+5. The two queens' fates in the neutral real ending (doc 36,
+   endgame GDD item).
+6. Harvest mechanic depth: Mercy-harvest taint flow as world
+   simulation meter vs fixed narrative resource (doc 36, quests
+   GDD + lore pass together).
+7. Whether the creditor's peasant name is ever learnable (doc 36,
+   lore GDD pass).
+Still open carried from docs 30-35: doc 31 M4 live decisions, NG+
+preserve-list (doc 35 G13), squire-overflow save location (doc 35
+G13), dark-vendor currency question (doc 35 G14), camp-raid corpse
+edge (doc 35 G15), trigger-curve validation (doc 32), GAS adoption
+gate and perf revisions (doc 31), bandit rout flavor and Darkbread
+cue timing (doc 34), stamina-break window tuning (doc 33), doc 30's
+unowned gaps G16+ (audio, dialogue, stealth, mounts, day-night
+content, ammo, localization, accessibility).

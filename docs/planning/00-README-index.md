@@ -886,3 +886,25 @@ feature-by-feature implementation against the GDD.
 - 35-slice-systems.md - HUD/UI, inventory mechanics, save and
   persistence, currency and economy, death and respawn edge rules
   (G11-G15); G11-G15 rulings locked 2026-09-13.
+
+68. THE PALE QUEEN LOCK SESSION (2026-09-13, Nicko, spec in doc
+    36): the light court's hidden spine. Locked rulings: the truth
+    of the Fall (peasant girl spurned by the elf king, her failed
+    working cursed him and his queen to vampiric immortality and
+    split the continent); the dark court's vampire queen is the
+    elven queen from the Fall, the two queens mirror each other;
+    the "Devil"/Undersovran is the witch herself, there is no
+    devil, she engineered the pact and collects the debt; she
+    siphons the altars (the Sun altar is her tap, not a ruin); she
+    controls the human king with dark magic; she has played both
+    sides for centuries and can be the true final antagonist;
+    working name THE PALE QUEEN; the Signer signed the pact
+    unwittingly, her penance is for a framed crime; the
+    grey-morality doctrine for all major players; three
+    allegiance-keyed reveal storylines with the NEUTRAL line as
+    the only path to the whole truth, and the neutral ending is
+    the game's actual official real ending. New doc:
+    36-pale-queen.md - the Pale Queen lore spine, grey-morality
+    doctrine, three reveals, 7 open questions (dark queen's
+    knowledge, comeback event, king rescue, Signer truth, mirror
+    ending, harvest depth, peasant name).
