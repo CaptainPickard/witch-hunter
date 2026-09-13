@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>bisect</title>
+<style>body{margin:0;background:#222;color:#ccc;font-family:monospace}canvas{display:block}</style>
+</head><body>
+<script>/*THREE_JS_PLACEHOLDER*/</script>
+<script>/*GLTF_LOADER_PLACEHOLDER*/</script>
+<script>
+var results = {};
+function label(t){ var d=document.createElement('div'); d.textContent=t; document.body.appendChild(d); }
+var renderer = new THREE.WebGLRenderer({antialias:false});
+renderer.setPixelRatio(1); renderer.setSize(640, 640); document.body.appendChild(renderer.domElement);
+var scene = new THREE.Scene();
+scene.background = new THREE.Color(0x606870);
+var camera = new THREE.PerspectiveCamera(50, 1, 0.05, 100);
+camera.position.set(0, 1.3, 6.4); camera.lookAt(0, 1.0, 0);
+scene.add(new THREE.AmbientLight(0xffffff, 2.0));
+var dir = new THREE.DirectionalLight(0xffffff, 2.5); dir.position.set(2, 4, 2); scene.add(dir);
+var dir2 = new THREE.DirectionalLight(0xffffff, 1.5); dir2.position.set(-2, 2, -2); scene.add(dir2);
+
+var GLBS = window.__GLBS__;  // {key: b64}
+var pending = Object.keys(GLBS).length;
+Object.keys(GLBS).forEach(function(key){
+  var bin = Uint8Array.from(atob(GLBS[key]), function(c){ return c.charCodeAt(0); });
+  var url = URL.createObjectURL(new Blob([bin], {type:'model/gltf-binary'}));
+  new THREE.GLTFLoader().load(url, function(g){
+    var s = g.scene;
+    var box = new THREE.Box3().setFromObject(s);
+    var size = box.getSize(new THREE.Vector3());
+    var sc = 1.8/size.y; s.scale.set(sc,sc,sc);
+    s.position.x = {raw_nearest:-2.4, raw_linear:-0.8, pix_nearest:0.8, pix_linear:2.4}[key];
+    // normalize mode: 'nearest' applies pixelFilter, 'linear' applies linear+mipmap
+    if(key.indexOf('nearest') >= 0){
+      s.traverse(function(o){ if(o.isMesh && o.material && o.material.map){
+        o.material.map.magFilter = THREE.NearestFilter;
+        o.material.map.minFilter = THREE.NearestFilter;
+        o.material.map.generateMipmaps = false;
+        o.material.map.needsUpdate = true; }});
+    } else {
+      s.traverse(function(o){ if(o.isMesh && o.material && o.material.map){
+        o.material.map.magFilter = THREE.LinearFilter;
+        o.material.map.minFilter = THREE.LinearMipmapLinearFilter;
+        o.material.map.generateMipmaps = true;
+        o.material.map.needsUpdate = true; }});
+    }
+    scene.add(s);
+    pending--; if(pending === 0) window.__READY__ = true;
+  }, undefined, function(e){ label('ERR '+key+': '+e); pending--; });
+});
+function tick(){ requestAnimationFrame(tick); renderer.render(scene, camera); }
+tick();
+</script>
+</body></html>

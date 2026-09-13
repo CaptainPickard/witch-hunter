@@ -44,3 +44,51 @@ Production-run economics: 46 assets in ~2.5 h wall clock, 690 credits
 (~15/asset, 0.46 USD-equivalent each at Pro 1000/mo), zero failed tasks,
 zero skips. The doc 29 pipeline is now validated at production scale for
 characters, props, and modular kit pieces.
+
+---
+
+## DEFECT FIX 2026-09-13 (arsenal viewer render defect, post-production-run)
+
+Defect: race bodies rendered wrong in the browser viewer: black silhouette,
+white salt-and-pepper speckle, detached floating shards near arms and feet,
+geometry reading as mangled. Python ortho previews of the same GLBs were
+correct, so the browser render path was suspect.
+
+Root causes (three, all verified by bisect + headless Chromium A/B):
+1. Decimation debris: every race body ships with ~300-1000 disconnected face
+islands from the Meshy source mesh; the 15k decimation orphaned tiny
+components. Worst case human-hunter-male (its pixelated GLB was re-decimated
+separately from raw): main body shattered 4855 to 1375 faces, 358
+far-floating shard components. Measured with welded-vertex adjacency
+(union-find at 1e-4 tolerance), not raw vertex adjacency (UV-seam duplicates
+lie).
+2. Backface culling: the fractured shells have real gaps; three.js FrontSide
+culling turned every gap into a see-through hole (the white speckle read as
+texture noise but was background showing through the body).
+3. Color encoding: GLTFLoader assigns sRGBEncoding (3001) to base-color
+textures, but the r147 renderer default outputEncoding is LinearEncoding
+(3000). sRGB texels decoded to linear and never re-encoded: texel 35/255
+rendered ~11/255. The black silhouette was a page bug, not an asset defect.
+
+Fixes:
+- art-direction/3d/drop_shards.py: drops face components that are BOTH tiny
+(under 10 faces) AND farther than 0.01 from the main body surface (cKDTree to
+the largest component's vertices). Applied to all 10 race pixelated GLBs:
+4,299 components dropped, UVs + 256px atlases preserved. Backup of pre-fix
+GLBs kept at /tmp/glb_backup_races (session-local, not committed).
+- arsenal-viewer.template.html: material.side = THREE.DoubleSide in
+pixelFilter; renderer.outputEncoding = THREE.sRGBEncoding; pixelated
+minFilter = NearestMipmapLinearFilter with mipmaps on (was full Nearest with
+generateMipmaps false, which made the dark atlas salt-and-pepper at
+distance). Rebuilt arsenal-viewer.html with build_viewer.py.
+
+Verified: headless Chromium screenshots before/after (shards gone, no
+see-through holes, figure reads as upright cloaked hunter with visible dark
+browns/greys). Deployed /art-3d-viewer route serves the file live from disk,
+byte-identical, no WebUI restart needed.
+
+Tooling committed alongside: drop_shards.py (shard-removal post-pass),
+shard_diagnose.py + weld_comps.py (connectivity diagnostics), uv_stats.py
+(atlas/UV island stats), shoot_viewer.py (playwright screenshot harness),
+bisect.template.html + build_bisect.py (raw-vs-pix x nearest-vs-linear
+bisect harness), check_encoding.py (r147 encoding constant check).

@@ -50,6 +50,10 @@ window.addEventListener('error', function(e){ document.getElementById('err').tex
 var canvas = document.getElementById('c');
 var renderer = new THREE.WebGLRenderer({canvas: canvas, antialias: false});
 renderer.setPixelRatio(1);
+// GLTFLoader marks base-color textures sRGB; the r147 renderer defaults to
+// LinearEncoding output, which double-darkens the dark baked albedo (texel 35
+// renders ~11). sRGB output restores the authored brightness.
+renderer.outputEncoding = THREE.sRGBEncoding;
 var INTERNAL_H = 540;
 function sizeRenderer(){
   var h = INTERNAL_H, w = Math.round(h * innerWidth/innerHeight);
@@ -83,9 +87,16 @@ function pixelFilter(root, nearest){
     if(o.isMesh && o.material && o.material.map){
       var f = nearest ? THREE.NearestFilter : THREE.LinearFilter;
       o.material.map.magFilter = f;
-      o.material.map.minFilter = nearest ? THREE.NearestFilter : THREE.LinearMipmapLinearFilter;
-      o.material.map.generateMipmaps = !nearest;
+      // NearestMipmapLinear: crisp texel magnification, smooth minification
+      // (full Nearest + no mipmaps makes the dark 256px atlas salt-and-pepper at distance)
+      o.material.map.minFilter = nearest ? THREE.NearestMipmapLinearFilter : THREE.LinearMipmapLinearFilter;
+      o.material.map.generateMipmaps = true;
       o.material.map.needsUpdate = true;
+    }
+    // the decimated bodies are island-fractured with real gaps; backface culling
+    // turns every gap into a see-through hole. Render both sides.
+    if(o.isMesh && o.material){
+      o.material.side = THREE.DoubleSide;
     }
   });
 }
