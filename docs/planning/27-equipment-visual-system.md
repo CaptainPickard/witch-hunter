@@ -4,8 +4,18 @@
 # cards produce bodies in neutral under-layers; D3 layer pilot approved
 # as third prove-or-kill artifact.)
 
-Status: LOCKED 2026-09-13 (D1/D2/D3 all approved by Nicko). Answers
-Nicko's question: "I want to
+Status: LOCKED 2026-09-13 (D1/D2/D3 all approved by Nicko). AMENDED
+2026-09-13 (Nicko ruling after the transition pass): the transition
+pieces (gorget, faulds, full leg harness) are NOT equipment slots.
+They are CANON LAYERS: permanently part of the body harness look, on
+for aesthetics and lore, never toggleable. The paper-doll system has
+two layer classes:
+- CANON LAYERS (always on, baked into the body canon render): linen
+  base, leg harness, faulds, gorget. Race cards produce these with the
+  body canon per D2.
+- EQUIPMENT SLOTS (swappable at runtime): cloak/back, gloves, chest
+  (cuirass variants), helm/head, weapon, plus future variants. These
+  are the fashion-expression surface.
 eventually make it so that each piece of equipped armor changes the
 actual player model, creating unique player expressions via fashion
 and unlocked equipment. How do we achieve that?"
