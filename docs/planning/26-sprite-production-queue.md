@@ -52,10 +52,15 @@ design sheet -> turnaround (Nicko gate) -> 8 directions -> 5-frame idle
 - [x] S2 through S7 (same stages as card 01; turnaround first-round
       PASS; idle flicker 8.3-19.0, best of the run)
 
-### CARD 03: UNDEAD, MALE
-- [ ] S1 sheet (gravedigger-adjacent but civilian/soldier mix; corpse
-      tone law: gray-green flesh, grave-green accent option)
-- [ ] S2-S7 (same stages)
+### CARD 03: UNDEAD, MALE  [PAUSED AT S4 - image gen credential dead]
+- [x] S1 sheet (corpse tone law: gray-green flesh, grave-green lantern
+      accent; v1 archived - landscape/small-figure, recomposed portrait)
+- [x] S2 turnaround (first-round PASS; lantern also stripped per L1)
+- [x] S3 8 directional views (derived sheet PASS)
+- [ ] S4-S7 BLOCKED 2026-09-13 ~06:15 UTC: openai-codex OAuth credential
+      revoked server-side (401 on generation; single allowed refresh
+      attempt also 401). Needs device-code re-auth via Hermes model
+      setup, then resume S4 idle frames from views/view-back.png.
 
 ### CARD 04: UNDEAD, FEMALE
 - [ ] S1 sheet
