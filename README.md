@@ -23,6 +23,7 @@ reference for world and character creation.
 - docs/planning/26-astrabot-analysis.md - Astrabot project digest, art-style x third-person-controls analysis, and gap audit (2026-09-13).
 - docs/planning/28-controls-camera-gdd.md - PROPOSED controls and camera GDD (camera registers, billboard facing rules, roll direction, readability floor).
 - docs/planning/29-art-style-bake-off-spike.md - RESOLVED: pivot to a true 3D world (low-poly pixelated models, PSX-style), locked painterly-pixel register unchanged, all concept art retained as canon reference. Contains the 3D pipeline validation plan.
+- docs/planning/30-remote-ue5-pipeline.md - PROPOSED: how IO (on the VPS) builds UE5 assets and scenes in the editor running on Nicko's PC over Tailscale (Remote Control API / MCP), with the asset-to-scene-to-review loop and phased adoption plan.
 - art-direction/ - concept art masters (concepts/), web derivatives
   (concepts-web/), reference images, the canonical art-direction page
   (00-art-direction.html, self-contained), gothic fonts.
