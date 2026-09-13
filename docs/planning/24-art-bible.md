@@ -240,6 +240,16 @@ art-direction/sprites/<card>/):
     first-round PASS (lantern stripped per body-canon rule). APPROVED.
     8 directions + 5-frame idle built (S3/S4); flicker 23.7-28.5
     (layered cloth, per L4). Lantern not baked: gear layer per doc 27.
+45. sprites/vampire-male/concept.png - CARD 05 S1: Blood Count of the
+    veil court, tall gaunt elf-vampire, silver-white hair, veil-black
+    doublet with broken-sun crimson embroidery, trailing cloak, unlit
+    court lantern, blood-red spire glow as the single accent. APPROVED
+    (first-round register PASS).
+46. sprites/vampire-male/turnaround.png - CARD 05 S2: 4-view turnaround,
+    first-round PASS (lantern stripped per body-canon rule). APPROVED.
+    8 directions + 5-frame idle built (S3/S4); flicker 6.6-10.6, best
+    of the run (rigid doublet per L4). Lantern not baked: gear layer
+    per doc 27.
 
 Page captions for every frame live in 00-art-direction.html and are the
 canonical short descriptions; the pair descriptions there tie each pair

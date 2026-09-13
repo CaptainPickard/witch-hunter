@@ -76,10 +76,16 @@ design sheet -> turnaround (Nicko gate) -> 8 directions -> 5-frame idle
 - [x] S7 atlas + billboard page (sprites/undead-female/card04-billboard.html)
 - [x] catalog in 24-art-bible.md + commit to repo
 
-### CARD 05: VAMPIRE, MALE
-- [ ] S1 sheet (elf-vampire court: tall gaunt, veil-black/blood-red
-      wardrobe, broken-sun motifs, red accent law)
-- [ ] S2-S7 (same stages)
+### CARD 05: VAMPIRE, MALE  [COMPLETE 2026-09-13]
+- [x] S1 sheet (veil-black/blood-red court; unlit lantern stripped for
+      body canon; first-round register PASS)
+- [x] S2 turnaround (first-round PASS)
+- [x] S3 8 directional views (derived sheet PASS)
+- [x] S4 5-frame idle (flicker 6.6-10.6, BEST of the run; vision PASS)
+- [x] S5 cleanup (alpha, defringe, normalize)
+- [x] S6 QA (scripted metrics + vision gates)
+- [x] S7 atlas + billboard page (sprites/vampire-male/card05-billboard.html)
+- [x] catalog in 24-art-bible.md + commit to repo
 
 ### CARD 06: VAMPIRE, FEMALE
 - [ ] S1 sheet
