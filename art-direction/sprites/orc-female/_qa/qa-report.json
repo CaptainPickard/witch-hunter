@@ -1,0 +1,148 @@
+{
+ "flicker": [
+  {
+   "orc-f-idle-f1.png->orc-f-idle-f2.png": 19.0
+  },
+  {
+   "orc-f-idle-f2.png->orc-f-idle-f3.png": 12.6
+  },
+  {
+   "orc-f-idle-f3.png->orc-f-idle-f4.png": 16.0
+  },
+  {
+   "orc-f-idle-f4.png->orc-f-idle-f5.png": 8.3
+  },
+  {
+   "orc-f-idle-f5.png->orc-f-view-3q-front-right.png": 35.8
+  },
+  {
+   "orc-f-view-3q-front-right.png->orc-f-view-3q-front.png": 36.0
+  },
+  {
+   "orc-f-view-3q-front.png->orc-f-view-3q-rear-right.png": 35.7
+  },
+  {
+   "orc-f-view-3q-rear-right.png->orc-f-view-3q-rear.png": 23.0
+  },
+  {
+   "orc-f-view-3q-rear.png->orc-f-view-back.png": 28.7
+  },
+  {
+   "orc-f-view-back.png->orc-f-view-front.png": 36.7
+  },
+  {
+   "orc-f-view-front.png->orc-f-view-side-right.png": 36.8
+  },
+  {
+   "orc-f-view-side-right.png->orc-f-view-side.png": 25.0
+  }
+ ],
+ "coverage": {
+  "orc-f-idle-f1.png": 5.3,
+  "orc-f-idle-f2.png": 6.2,
+  "orc-f-idle-f3.png": 5.6,
+  "orc-f-idle-f4.png": 5.1,
+  "orc-f-idle-f5.png": 5.8,
+  "orc-f-view-3q-front-right.png": 6.4,
+  "orc-f-view-3q-front.png": 5.5,
+  "orc-f-view-3q-rear-right.png": 4.8,
+  "orc-f-view-3q-rear.png": 4.8,
+  "orc-f-view-back.png": 4.9,
+  "orc-f-view-front.png": 7.3,
+  "orc-f-view-side-right.png": 4.4,
+  "orc-f-view-side.png": 3.7
+ },
+ "accents": {
+  "orc-f-idle-f1.png": {
+   "green": 0,
+   "blue": 1,
+   "warm": 836,
+   "gray": 192,
+   "other": 0
+  },
+  "orc-f-idle-f2.png": {
+   "green": 0,
+   "blue": 3,
+   "warm": 976,
+   "gray": 212,
+   "other": 0
+  },
+  "orc-f-idle-f3.png": {
+   "green": 0,
+   "blue": 3,
+   "warm": 894,
+   "gray": 199,
+   "other": 0
+  },
+  "orc-f-idle-f4.png": {
+   "green": 0,
+   "blue": 1,
+   "warm": 856,
+   "gray": 141,
+   "other": 0
+  },
+  "orc-f-idle-f5.png": {
+   "green": 0,
+   "blue": 2,
+   "warm": 962,
+   "gray": 141,
+   "other": 0
+  },
+  "orc-f-view-3q-front-right.png": {
+   "green": 0,
+   "blue": 0,
+   "warm": 1090,
+   "gray": 2,
+   "other": 0
+  },
+  "orc-f-view-3q-front.png": {
+   "green": 0,
+   "blue": 3,
+   "warm": 974,
+   "gray": 143,
+   "other": 0
+  },
+  "orc-f-view-3q-rear-right.png": {
+   "green": 0,
+   "blue": 0,
+   "warm": 840,
+   "gray": 97,
+   "other": 0
+  },
+  "orc-f-view-3q-rear.png": {
+   "green": 0,
+   "blue": 1,
+   "warm": 824,
+   "gray": 209,
+   "other": 0
+  },
+  "orc-f-view-back.png": {
+   "green": 0,
+   "blue": 4,
+   "warm": 847,
+   "gray": 202,
+   "other": 0
+  },
+  "orc-f-view-front.png": {
+   "green": 0,
+   "blue": 0,
+   "warm": 1234,
+   "gray": 55,
+   "other": 0
+  },
+  "orc-f-view-side-right.png": {
+   "green": 0,
+   "blue": 1,
+   "warm": 722,
+   "gray": 116,
+   "other": 0
+  },
+  "orc-f-view-side.png": {
+   "green": 0,
+   "blue": 2,
+   "warm": 642,
+   "gray": 134,
+   "other": 0
+  }
+ }
+}

@@ -46,10 +46,11 @@ design sheet -> turnaround (Nicko gate) -> 8 directions -> 5-frame idle
 - [x] S7 atlas + billboard page (sprites/orc-male/card01-billboard.html)
 - [x] catalog in 24-art-bible.md + commit to repo
 
-### CARD 02: ORC, FEMALE
-- [ ] S1 sheet (same grammar, leaner silhouette, rank-gender variants
-      per doc 14 earned-title culture)
-- [ ] S2 through S7 (same stages as card 01)
+### CARD 02: ORC, FEMALE  [COMPLETE 2026-09-13]
+- [x] S1 sheet (same grammar, leaner silhouette, rank-gender variants
+      per doc 14 earned-title culture; v1 archived - weapon removed)
+- [x] S2 through S7 (same stages as card 01; turnaround first-round
+      PASS; idle flicker 8.3-19.0, best of the run)
 
 ### CARD 03: UNDEAD, MALE
 - [ ] S1 sheet (gravedigger-adjacent but civilian/soldier mix; corpse

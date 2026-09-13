@@ -215,6 +215,14 @@ art-direction/sprites/<card>/):
     8 directions + 5-frame idle built (S3/S4); flicker 18.6-26.7
     (best of three characters; rigid mass animates clean). Weapon
     deliberately not baked: separate layer per doc 27.
+39. sprites/orc-female/concept.png - CARD 02 S1: Mordor-register orc
+    female, war-earned trophy rank, ember war-camp horizon; v1 archived
+    in _qa/ (held a sword; regenerated with explicit empty hands).
+    APPROVED.
+40. sprites/orc-female/turnaround.png - CARD 02 S2: 4-view turnaround,
+    first-round PASS (empty-hand instruction per L1+L2 held). APPROVED.
+    8 directions + 5-frame idle built (S3/S4); flicker 8.3-19.0, best
+    of the run so far. Weapon not baked: separate layer per doc 27.
 
 Page captions for every frame live in 00-art-direction.html and are the
 canonical short descriptions; the pair descriptions there tie each pair
