@@ -143,3 +143,16 @@ in). For the fashion system, characters split into canonical pieces:
 - D3: approve the layer pilot as the third prove-or-kill artifact
   (knight body + 3 equipment pieces, live composite in the billboard
   page) before the 10-card production run.
+
+## Bake-in from 26-A analysis (2026-09-13, PROPOSED)
+
+Status line per item: PROPOSED (Astrabot bake-in from 26-A analysis,
+2026-09-13, pending Nicko lock). Source: 26-astrabot-analysis.md Part 2
+Tension 3, Part 3 gap 2.
+
+- Variant silhouette QA check: every equipment variant preserves the
+  piece-type silhouette markers that enemy-grammar readability keys off
+  (cross-ref doc 24 bake-in, PROPOSED). PROPOSED.
+- Human body canon dependency: the paper-doll system currently lacks
+  body canon for the human player body; blocked on doc 26's proposed
+  human cards (doc 26 bake-in, PROPOSED). PROPOSED.

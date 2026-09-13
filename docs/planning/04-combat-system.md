@@ -473,3 +473,26 @@ Structural rules locked with Nicko 2026-09-12:
 - Parry move-set specifics (window sizes, weapon-parry rules): GDD-stage
   balance work.
 - Stamina/health regen exact rules: GDD-stage.
+
+## Bake-in from 26-A analysis (2026-09-13, PROPOSED)
+
+Status line per item: PROPOSED (Astrabot bake-in from 26-A analysis,
+2026-09-13, pending Nicko lock). Source: 26-astrabot-analysis.md.
+
+- Facing rules for billboard combat: logical facing = last input;
+  rendered view = nearest directional view of that facing; combat arcs
+  (block, parry, Wall of Steel, Firm Stance) resolve against logical
+  facing; defensive poses snap their directional view to logical facing.
+  Full spec in doc 28 (PROPOSED). PROPOSED.
+- Telegraph frame contract: every enemy attack animation carries a
+  mandatory telegraph frame flashing the danger accent. Parry-window
+  readability depends on it. PROPOSED.
+- Per-pose frame budgets: 8 frames for wind-ups and staggers, 4 for
+  idle/walk. PROPOSED.
+- Hit feedback rule: because every flipbook hit-react costs frames x 8
+  directions, lean hit feedback on the engine: hit-stop, contact flash
+  on the impact accent, camera shake, light-tint per doc 02 pillars 3-4.
+  Impacts stay inside doc 24's no-modern-particle-realism law (diegetic
+  light, not particle realism). PROPOSED.
+- Roll direction: 16-view player recommendation (spec and the 8-view
+  alternative in doc 28, PROPOSED). PROPOSED.

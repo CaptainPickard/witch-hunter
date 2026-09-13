@@ -126,3 +126,27 @@ idle stack -> cleanup -> atlas -> billboard test render in a browser
 prototype. Deliverable: a page showing the approved concept frame
 beside the generated sprite rotating in-engine. That single artifact
 proves or kills the pipeline before any deeper investment.
+
+## Bake-in from 26-A analysis (2026-09-13, PROPOSED)
+
+Status line per item: PROPOSED (Astrabot bake-in from 26-A analysis,
+2026-09-13, pending Nicko lock). Source: 26-astrabot-analysis.md Part 2
+Tension 6, Part 3 gaps 3/15/16.
+
+- Combat animation cost model: a full combat pose set (idle, walk, run,
+  light/heavy attacks, block, parry, hit-react, stagger, death, roll x 8
+  directions) is roughly 10-15 poses, i.e. 300-700 illustrations per key
+  character at doc 02's 32-48-per-animation pricing. Doc 26's queue
+  prices bodies at turnaround + idle only. This is the project's largest
+  unproven art bet; a prove-or-kill artifact (ONE full combat animation
+  stack for the player body, in-engine) must precede any mass
+  production. PROPOSED.
+- Cloth flicker extended to combat: combat frames derive image-to-image
+  from one source view; cloth-heavy bodies get silhouette-stabilized
+  combat poses. Extends lessons L3/L4, which flagged flicker at IDLE.
+  PROPOSED.
+- Named-character LoRA (section 5): costing + tooling + fallback still
+  open. PROPOSED (carried open).
+- Human approval gates (caveat 2): throughput model needed before
+  production scales to hundreds of NPCs + thousands of equipment pieces
+  (doc 27 section 4). PROPOSED (carried open).

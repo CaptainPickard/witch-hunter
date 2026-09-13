@@ -396,3 +396,80 @@ checklist for "no holes or gaps."
 - Engine note: Unreal target; the Unreal MCP integration is a tooling
   phase idea - validate actual capabilities before committing any
   workflow to it.
+
+## ASTRABOT BAKE-IN (2026-09-13, from 26-astrabot-analysis.md)
+
+### PROPOSED rulings (baked into docs 02, 04, 24, 25, 26, 27, 28 — pending Nicko lock)
+
+Each is PROPOSED (Astrabot bake-in from 26-A analysis, 2026-09-13,
+pending Nicko lock). One line per proposal:
+
+- 16 directional views for the player and hero-tier enemies, 8 for
+  ambient props/distant NPCs (doc 02).
+- Per-pose frame budgets: 8 for attack wind-ups/staggers, 4 for
+  idle/walk (docs 02, 04).
+- Mandatory telegraph frame in every enemy attack stack, flashing the
+  threat accent (docs 02, 04).
+- Three camera registers: exploration/combat/aim, sprite resolution
+  sized to combat (doc 28).
+- Lock-on camera behavior: angular-velocity cap, view reselection hidden
+  in hit-stop (doc 28).
+- Logical facing rule for billboard combat arcs, defensive-pose view
+  snapping (docs 04, 28).
+- Roll direction: 16-view player recommendation, 8-view quantization as
+  the stated alternative (docs 04, 28).
+- Combat readability floor proposal: silhouette contrast target under
+  night + Pale Tide, numbers at the UE5 spike (doc 24).
+- Hostile rim-light boost, still diegetic (doc 24).
+- Fog keyed to encounter state: recedes in locked-on combat (doc 24).
+- Accent collision ranking: red > cyan > ambient (doc 24).
+- Dithering ruling recommendation: painted first, shader only where
+  painted cannot reach; final call pending (doc 24).
+- Equipment silhouette QA as a qa_gate.py check (docs 24, 27).
+- Combat animation cost model + prove-or-kill artifact gate (doc 25).
+- Cloth flicker mitigation extended to combat poses (doc 25).
+- Named-character LoRA costing/tooling/fallback carried open (doc 25).
+- Human approval gate throughput model carried open (doc 25).
+- New HIGH-priority human male/female body cards (doc 26).
+- Human body canon dependency blocking the paper-doll player body
+  (doc 27).
+- RESOLVED 2026-09-13 (Nicko): carrier = TRUE 3D world, low-poly
+  pixelated models. Billboard-specific items above stay in the docs as
+  REFERENCE (palette law, QA methodology, lessons); the camera
+  registers, readability floor, rim-light boost, fog-by-encounter, and
+  accent ranking carry over to the 3D carrier unchanged. Pipeline
+  validation plan: doc 29.
+
+### NEW opens surfaced by the audit
+
+All OPEN, none resolved:
+
+- Vertical-slice scope definition (doc 01 open question, unassigned).
+- UE5 spike priority + Unreal version (docs 00, 08, 26).
+- Combat animation cost prove-or-kill (doc 25).
+- Audio direction doc (no doc).
+- UI/UX art direction doc (docs 02, 11, 13, 20).
+- Mount visual system (docs 02, 03, 04).
+- Transformation-strain sprite plan incl. gear transfer (docs 22, 26, 27).
+- Boss/colossal sprite treatment (docs 04, 24).
+- Runtime perf budget for hundreds of billboard sprites (doc 02 pillar 5).
+- Cutscene format beyond portraits (docs 02, 08).
+- Hold defense + specialty catalog sessions (already listed above,
+  confirm cross-ref).
+- Rembg replacement (tools).
+- Title IP check (doc 01).
+
+## ART-STYLE FORK (2026-09-13, Nicko)
+
+Nicko opened the carrier question: 2D billboard sprites vs low-poly
+pixelated 3D models (PSX-style retro 3D) under the same locked
+painterly-pixel register. RESOLVED 2026-09-13 (Nicko): TRUE 3D world,
+low-poly pixelated 3D models are the carrier, register unchanged, all
+concept art and sprite cards remain canon REFERENCE for world and
+character creation. Decision record + converted 3D pipeline validation
+plan: doc 29. The 16-view ruling below remains locked for spirit but is
+superseded by the 3D carrier (a mesh has continuous facing); doc 28's
+billboard-facing sections are demoted to reference. Carrier-agnostic
+locks (camera registers, readability floor, fog-by-encounter, accent
+ranking) carry forward. Spike blockers needing Nicko: a Meshy/Tripo
+API key and engine access (a machine with UE5).

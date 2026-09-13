@@ -147,3 +147,23 @@ As the camera orbits, the sprite re-selects its directional view.
 ## Open Questions (carried)
 - Sound and music direction: no doc yet (tracked in 08-open-questions).
 - Cutscene format beyond the dialogue/portrait system.
+
+## Bake-in from 26-A analysis (2026-09-13, PROPOSED)
+
+Status line per item: PROPOSED (Astrabot bake-in from 26-A analysis,
+2026-09-13, pending Nicko lock). Source: 26-astrabot-analysis.md.
+
+- 16 directional views as the baseline for the PLAYER and hero-tier
+  enemies. 8 views reserved for ambient props and distant NPCs only.
+  Resolves 26-A Part 2 Tension 1. PROPOSED.
+- Per-pose frame budgets instead of the global 4-8: 8 frames for attack
+  wind-ups and staggers (the fairness-critical poses), 4 for idle/walk.
+  Resolves 26-A Part 2 Tension 2. PROPOSED.
+- Mandatory TELEGRAPH FRAME in every enemy attack stack: one deliberately
+  exaggerated anticipation frame that flashes the threat accent
+  (blood-red per doc 24 section 3). Diegetic and register-legal.
+  Resolves 26-A Part 2 Tension 2. PROPOSED.
+- Cross-reference: camera registers and billboard facing rules now live
+  in doc 28 (PROPOSED).
+- Cross-reference: the combat readability floor proposal lives in doc 24
+  (PROPOSED).

@@ -3,8 +3,12 @@
 A single-player, third-person open-world dark fantasy action RPG.
 "A more stylized, but pixelated version of Elden Ring": a Daggerfall-like
 retro 3D world (dynamic lighting, fog, volumetrics) with modern
-Souls-style action combat, and ALL characters, creatures, and props
-presented as 2D painted sprites with 360-degree rotation.
+Souls-style action combat, rendered in a painterly pixel-art register.
+PIVOT 2026-09-13 (Nicko): characters, creatures, and props are low-poly
+3D models with pixelated/posterized textures (PSX-style retro 3D); the
+locked painterly-pixel register now lives in textures, lighting, and
+post-processing. All concept art and sprite cards remain canon
+reference for world and character creation.
 
 ## Repo Contents
 
@@ -16,13 +20,17 @@ presented as 2D painted sprites with 360-degree rotation.
   grammar, QA checklist.
 - docs/planning/25-art-pipeline.md - the art production pipeline (S1-S7
   sprite factory) and feasibility verdict.
+- docs/planning/26-astrabot-analysis.md - Astrabot project digest, art-style x third-person-controls analysis, and gap audit (2026-09-13).
+- docs/planning/28-controls-camera-gdd.md - PROPOSED controls and camera GDD (camera registers, billboard facing rules, roll direction, readability floor).
+- docs/planning/29-art-style-bake-off-spike.md - RESOLVED: pivot to a true 3D world (low-poly pixelated models, PSX-style), locked painterly-pixel register unchanged, all concept art retained as canon reference. Contains the 3D pipeline validation plan.
 - art-direction/ - concept art masters (concepts/), web derivatives
   (concepts-web/), reference images, the canonical art-direction page
   (00-art-direction.html, self-contained), gothic fonts.
 - art-direction/sprites/gravedigger/ - the PILOT: first character taken
-  through the full pipeline (turnaround, 8 directional views, 5-frame
-  idle stack, alpha/defringe cleanup, atlases, live billboard test page
-  pilot-billboard.html).
+  through the full sprite pipeline (turnaround, 8 directional views,
+  5-frame idle stack, alpha/defringe cleanup, atlases, live billboard
+  test page pilot-billboard.html). Retained as canon reference and QA
+  methodology after the 3D pivot (doc 29).
 - tools/ - the pipeline's scripted tooling (see tools/README.md).
 
 ## The Art Register (locked)
