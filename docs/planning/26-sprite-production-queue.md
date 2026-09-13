@@ -65,9 +65,16 @@ design sheet -> turnaround (Nicko gate) -> 8 directions -> 5-frame idle
 - Note: split across the openai-codex credential outage (S1-S3 before,
   S4-S7 after Nicko re-authed 2026-09-13 13:41 UTC).
 
-### CARD 04: UNDEAD, FEMALE
-- [ ] S1 sheet
-- [ ] S2-S7 (same stages)
+### CARD 04: UNDEAD, FEMALE  [COMPLETE 2026-09-13]
+- [x] S1 sheet (drowned-crypt marsh; grave-green lantern accent;
+      first-round register PASS)
+- [x] S2 turnaround (first-round PASS; lantern stripped per body-canon)
+- [x] S3 8 directional views (derived sheet PASS)
+- [x] S4 5-frame idle (flicker 23.7-28.5, layered cloth per L4; vision PASS)
+- [x] S5 cleanup (alpha, defringe, normalize)
+- [x] S6 QA (scripted metrics + vision gates)
+- [x] S7 atlas + billboard page (sprites/undead-female/card04-billboard.html)
+- [x] catalog in 24-art-bible.md + commit to repo
 
 ### CARD 05: VAMPIRE, MALE
 - [ ] S1 sheet (elf-vampire court: tall gaunt, veil-black/blood-red

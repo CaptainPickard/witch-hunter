@@ -232,6 +232,14 @@ art-direction/sprites/<card>/):
     rule; empty hands held in all views). APPROVED. 8 directions +
     5-frame idle built (S3/S4); flicker 18.1-30.2 (cloth coat, per L4).
     Lantern not baked: gear layer per doc 27.
+43. sprites/undead-female/concept.png - CARD 04 S1: risen undead
+    laborer, headscarf + matted gray hair, layered rotted skirts, shawl,
+    carter's apron, drowned-crypt marsh, grave-green lantern. APPROVED
+    (first-round register PASS).
+44. sprites/undead-female/turnaround.png - CARD 04 S2: 4-view turnaround,
+    first-round PASS (lantern stripped per body-canon rule). APPROVED.
+    8 directions + 5-frame idle built (S3/S4); flicker 23.7-28.5
+    (layered cloth, per L4). Lantern not baked: gear layer per doc 27.
 
 Page captions for every frame live in 00-art-direction.html and are the
 canonical short descriptions; the pair descriptions there tie each pair
