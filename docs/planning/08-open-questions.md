@@ -473,3 +473,50 @@ billboard-facing sections are demoted to reference. Carrier-agnostic
 locks (camera registers, readability floor, fog-by-encounter, accent
 ranking) carry forward. Spike blockers needing Nicko: a Meshy/Tripo
 API key and engine access (a machine with UE5).
+## HARD-NUMBERS PASS RULINGS (2026-09-13)
+
+Seventeen live rulings by Nicko, 2026-09-13, on the hard-numbers pass
+(docs 31-35). All LOCKED. Rulings 2-12 are doc 35 rulings and the
+corresponding doc 35 open-question blocks are updated in place.
+
+1. Roll i-frames: the docs 33/34 version wins. Equip-load bands (fast
+   30f / 11 i-frames f12-f23 / 22 stamina; standard 37f / 6 i-frames
+   f12-f18 / 26 stamina; slow 48f / 3 i-frames f12-f15 / 32 stamina;
+   roll disabled above 30.0 load). Doc 32 section 4.2 rewritten to
+   match (docs 32, 33, 34).
+2. Damage numbers ON for player hits, OFF for incoming (doc 35 G11).
+3. Focus bar hidden for non-casters, renders when Focus first becomes
+   relevant (doc 35 G11).
+4. Follower menu camp/tavern only at slice 1 (doc 35 G11).
+5. Inventory capacity = 100 + Carry Weight x 2.5 (doc 35 G12).
+6. Quest items in a zero-weight quest pocket (doc 35 G12).
+7. Squire overflow scales with squire level: base +150 at level 1; the
+   per-level increment is PROPOSED tuning at +15/level (doc 35 G12).
+8. Dungeon-clear delta written only at the dungeon EXIT trigger, not at
+   camp saves (doc 35 G13).
+9. Currency: Silver Marks, single neutral currency (doc 35 G14).
+10. Camp construction is the primary late-game money sink, no new sink
+    doc (doc 35 G14).
+11. One corpse on the field; the newest drop replaces the older
+    permanently (doc 35 G15).
+12. Death penalty: currency plus 25 percent of current-level XP (doc 35
+    G15).
+13. Two talisman slots: YES (doc 33 section 5).
+14. Armor model: flat ladder plus percent cap as proposed (doc 33
+    section 6).
+15. Crit cap: 30 percent (doc 33).
+16. Rot-Mother boss IN at slice 1; the M4 checkpoint can still cut it
+    for scope (docs 31, 34).
+17. Bestiary scope confirmed: Bandit 180 / Rot Wolf 140 / Grave Ghoul
+    220 plus Rot-Mother 900 (doc 34).
+
+Engine note in the same pass: Unreal Engine 5.8 LOCKED by Nicko,
+2026-09-13 (doc 31 section 2; resolves the UE-version open item in docs
+00, 08, and 30-remote-ue5-pipeline.md). Still open from these docs: doc
+31 M4 live decisions, NG+ preserve-list (doc 35 G13), squire-overflow
+save location (doc 35 G13), dark-vendor currency question (doc 35 G14),
+camp-raid corpse edge (doc 35 G15), trigger-curve validation (doc 32),
+GAS adoption gate and perf revisions (doc 31), bandit rout flavor and
+Darkbread cue timing (doc 34), stamina-break window tuning (doc 33),
+doc 30's unowned gaps G16+ (audio, dialogue, stealth, mounts, day-night
+content, ammo, localization, accessibility).

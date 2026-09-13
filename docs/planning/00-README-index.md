@@ -837,3 +837,52 @@ structural ambition with a modern atmospheric layer on top.
 Each planning doc is a raw idea capture. The promotion path is:
 planning doc -> reviewed with Nicko -> formal GDD (one per major system) ->
 feature-by-feature implementation against the GDD.
+66. HARD-NUMBERS PASS RULINGS (2026-09-13, Nicko, spec in docs 31-35):
+    seventeen live rulings locked in one session. (1) Roll i-frames =
+    the docs 33/34 equip-load band version: fast 30f / 11 i-frames
+    f12-f23 / 22 stamina, standard 37f / 6 i-frames f12-f18 / 26
+    stamina, slow 48f / 3 i-frames f12-f15 / 32 stamina, roll disabled
+    above 30.0 load; doc 32's roll section rewritten to match. (2)
+    Damage numbers ON for player hits, OFF for incoming. (3) Focus bar
+    hidden for non-casters. (4) Follower menu camp/tavern only at
+    slice 1. (5) Inventory capacity = 100 + Carry Weight x 2.5. (6)
+    Quest items in a zero-weight quest pocket. (7) Squire overflow
+    scales with squire level, base +150 at level 1, per-level
+    increment PROPOSED (+15/level tuning). (8) Dungeon-clear delta
+    written only at the dungeon EXIT trigger. (9) Currency = Silver
+    Marks, single neutral. (10) Camp construction is the primary
+    late-game money sink, no new sink doc. (11) One corpse on the
+    field, newest drop replaces the older permanently. (12) Death
+    penalty = currency + 25 percent of current-level XP. (13) Two
+    talisman slots: YES. (14) Armor model = flat ladder + percent cap
+    as proposed. (15) Crit cap 30 percent. (16) Rot-Mother boss IN at
+    slice 1 (M4 checkpoint may cut). (17) Bestiary scope confirmed:
+    Bandit 180 / Rot Wolf 140 / Grave Ghoul 220 + Rot-Mother 900.
+    RULING LOG: 08-open-questions.md section HARD-NUMBERS PASS
+    RULINGS (2026-09-13).
+
+67. UE 5.8 ENGINE LOCK (2026-09-13, Nicko, spec in doc 31): Unreal
+    Engine 5.8 is the target version for the slice and beyond;
+    resolves the UE-version open item in docs 00, 08, and
+    30-remote-ue5-pipeline.md. Pipeline workflow, repo split
+    (witch-hunter-ue, LFS), and folder layout per doc 31 section 2.
+
+## New docs 30-35 (2026-09-13, hard-numbers pass)
+- 30-prototype-gap-analysis.md - gap audit across docs 00-29: G1-G15
+  blockers and needed-soon items, G16-G33 deferable items; prototype
+  readiness verdict.
+- 31-vertical-slice-scope.md - vertical slice scope and UE 5.8
+  engine/pipeline plan (G1, G2): arena pocket, milestones M0-M6,
+  GAS-vs-custom gate, perf budget, acceptance test.
+- 32-controls-frame-data.md - controls, camera completion, player
+  animation set (26 clips), combat frame data (G3, G4, G5, G10); roll
+  bands locked by Nicko 2026-09-13.
+- 33-equipment-and-formulas.md - mechanical equipment slots, weapon
+  class table, damage/crit/poise/stamina formulas, equip-load bands
+  (G6, G7); talisman, armor model, crit cap locked 2026-09-13.
+- 34-enemy-ai-and-bestiary.md - enemy AI (perception, aggro/taunt,
+  court grammar) and slice-1 bestiary with spawn tables (G8, G9);
+  bestiary scope and Rot-Mother locked 2026-09-13.
+- 35-slice-systems.md - HUD/UI, inventory mechanics, save and
+  persistence, currency and economy, death and respawn edge rules
+  (G11-G15); G11-G15 rulings locked 2026-09-13.
