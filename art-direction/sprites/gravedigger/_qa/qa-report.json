@@ -1,0 +1,74 @@
+[
+ [
+  "flicker f1-f2",
+  33.5
+ ],
+ [
+  "flicker f2-f3",
+  27.6
+ ],
+ [
+  "flicker f3-f4",
+  36.5
+ ],
+ [
+  "flicker f4-f5",
+  38.0
+ ],
+ [
+  "coverage gravedigger-idle-f1.png",
+  9.9
+ ],
+ [
+  "coverage gravedigger-idle-f2.png",
+  9.7
+ ],
+ [
+  "coverage gravedigger-idle-f3.png",
+  9.1
+ ],
+ [
+  "coverage gravedigger-idle-f4.png",
+  8.9
+ ],
+ [
+  "coverage gravedigger-idle-f5.png",
+  10.0
+ ],
+ [
+  "coverage gravedigger-view-3q-front-right.png",
+  9.0
+ ],
+ [
+  "coverage gravedigger-view-3q-front.png",
+  9.1
+ ],
+ [
+  "coverage gravedigger-view-3q-rear-right.png",
+  10.6
+ ],
+ [
+  "coverage gravedigger-view-3q-rear.png",
+  8.7
+ ],
+ [
+  "coverage gravedigger-view-back.png",
+  9.9
+ ],
+ [
+  "coverage gravedigger-view-front.png",
+  9.1
+ ],
+ [
+  "coverage gravedigger-view-side-right.png",
+  6.6
+ ],
+ [
+  "coverage gravedigger-view-side.png",
+  6.7
+ ],
+ [
+  "green% view-back",
+  0.0
+ ]
+]

@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WITCH HUNTER - ART DIRECTION E - WOODCUT SHADOW COURT</title>
+<style>
+:root{
+  --ink:#1a1712;
+  --paper:#e7dcc3;
+  --paper-dark:#d8c9a8;
+  --teal:#1f6b62;
+  --oxblood:#6e2418;
+  --faded:#8f8266;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  background:#c9bda0;
+  background-image:repeating-linear-gradient(0deg,rgba(26,23,18,0.03) 0px,rgba(26,23,18,0.03) 1px,transparent 1px,transparent 7px),repeating-linear-gradient(90deg,rgba(26,23,18,0.02) 0px,rgba(26,23,18,0.02) 1px,transparent 1px,transparent 9px);
+  color:var(--ink);
+  font-family:Georgia,"Times New Roman",Times,serif;
+  font-size:15px;
+  line-height:1.5;
+  padding:34px 16px 60px 16px;
+}
+.page{
+  max-width:1020px;
+  margin:0 auto;
+  background:var(--paper);
+  background-image:radial-gradient(ellipse at 20% 15%,rgba(158,133,90,0.28) 0%,transparent 55%),radial-gradient(ellipse at 85% 80%,rgba(122,100,64,0.30) 0%,transparent 50%),radial-gradient(ellipse at 55% 40%,rgba(210,192,152,0.5) 0%,transparent 60%);
+  border:6px solid var(--ink);
+  outline:2px solid var(--ink);
+  outline-offset:5px;
+  padding:44px 40px 56px 40px;
+  position:relative;
+}
+.page:before{
+  content:"";
+  position:absolute;
+  top:8px;left:8px;right:8px;bottom:8px;
+  border:1px solid var(--ink);
+  pointer-events:none;
+}
+.rough-border{
+  border:3px solid var(--ink);
+  box-shadow:3px 3px 0 var(--ink),3px 3px 0 1px var(--ink);
+  background:rgba(255,252,240,0.25);
+}
+/* ---------- woodblock display lettering ---------- */
+.blockhead{
+  font-family:"Arial Black","Helvetica Neue",Arial,sans-serif;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:6px;
+  line-height:1.05;
+  color:var(--ink);
+}
+h1.blockhead{font-size:44px;letter-spacing:9px;}
+h2.blockhead{
+  font-size:24px;
+  letter-spacing:5px;
+  margin:0 0 18px 0;
+  padding:10px 14px 10px 16px;
+  border-top:4px solid var(--ink);
+  border-bottom:4px solid var(--ink);
+  background:var(--ink);
+  color:var(--paper);
+  position:relative;
+}
+h2.blockhead:after{
+  content:"";
+  position:absolute;
+  right:0;top:0;bottom:0;
+  width:14px;
+  background:repeating-linear-gradient(45deg,var(--paper) 0 3px,transparent 3px 7px);
+  opacity:0.5;
+}
+h3.blockhead{
+  font-size:15px;
+  letter-spacing:3px;
+  margin:0 0 8px 0;
+  color:var(--oxblood);
+}
+h4.blockhead{font-size:12px;letter-spacing:2px;margin:0 0 6px 0;}
+.kicker{
+  font-family:"Courier New",Courier,monospace;
+  font-size:11px;
+  letter-spacing:4px;
+  text-transform:uppercase;
+  color:var(--teal);
+  margin-bottom:6px;
+}
+/* ---------- layout ---------- */
+section{margin:0 0 46px 0;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+.panel{padding:16px;}
+/* ---------- hatch shading ---------- */
+.hatch-h{background-image:repeating-linear-gradient(0deg,var(--ink) 0 1px,transparent 1px 4px);}
+.hatch-x{background-image:repeating-linear-gradient(45deg,rgba(26,23,18,0.7) 0 1px,transparent 1px 5px);}
+/* ---------- stamps and seals ---------- */
+.stamp{
+  display:inline-block;
+  border:3px double var(--oxblood);
+  color:var(--oxblood);
+  font-family:"Arial Black",Arial,sans-serif;
+  font-weight:900;
+  font-size:10px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  padding:4px 9px;
+  transform:rotate(-4deg);
+  opacity:0.85;
+}
+.seal{
+  width:86px;height:86px;
+  border:3px solid var(--ink);
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--teal);
+  font-family:"Arial Black",Arial,sans-serif;
+  font-weight:900;
+  font-size:9px;
+  letter-spacing:1px;
+  text-align:center;
+  transform:rotate(7deg);
+  box-shadow:inset 0 0 0 4px var(--paper),inset 0 0 0 6px var(--teal);
+  opacity:0.8;
+  line-height:1.3;
+}
+/* ---------- manifest tables ---------- */
+table.manifest{
+  width:100%;
+  border-collapse:collapse;
+  font-family:"Courier New",Courier,monospace;
+  font-size:13px;
+}
+table.manifest th{
+  text-align:left;
+  font-size:10px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  border-bottom:3px solid var(--ink);
+  padding:4px 6px;
+}
+table.manifest td{
+  border-bottom:1px dashed var(--ink);
+  padding:5px 6px;
+  vertical-align:top;
+}
+table.manifest tr:last-child td{border-bottom:3px solid var(--ink);}
+/* ---------- swatches ---------- */
+.swatches{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;}
+.swatch{border:3px solid var(--ink);background:#fffef6;padding:0;}
+.swatch .chip{height:64px;border-bottom:3px solid var(--ink);}
+.swatch .name{
+  font-family:"Arial Black",Arial,sans-serif;
+  font-weight:900;font-size:9px;letter-spacing:1px;
+  text-transform:uppercase;padding:5px 4px 1px 4px;
+}
+.swatch .hex{font-family:"Courier New",monospace;font-size:10px;padding:0 4px 5px 4px;}
+/* ---------- misc ---------- */
+.small{font-family:"Courier New",Courier,monospace;font-size:11.5px;}
+.dim{color:var(--faded);}
+.rule-heavy{height:6px;background:var(--ink);margin:6px 0 14px 0;}
+.rule-heavy:after{content:"";display:block;height:2px;background:var(--ink);margin-top:8px;}
+.tag{
+  display:inline-block;
+  border:2px solid var(--ink);
+  padding:2px 8px;
+  font-family:"Courier New",Courier,monospace;
+  font-size:11px;
+  letter-spacing:1px;
+  margin:2px 4px 2px 0;
+  background:rgba(255,252,240,0.4);
+}
+.tag.hot{border-color:var(--oxblood);color:var(--oxblood);}
+.tag.cold{border-color:var(--teal);color:var(--teal);}
+ul.plain{list-style:none;}
+ul.plain li{
+  padding-left:16px;position:relative;margin-bottom:7px;
+}
+ul.plain li:before{
+  content:"X";position:absolute;left:0;top:1px;
+  font-family:"Arial Black",Arial,sans-serif;font-size:10px;color:var(--oxblood);
+}
+svg{display:block;}
+.figure-caption{
+  font-family:"Courier New",Courier,monospace;
+  font-size:10px;letter-spacing:2px;text-transform:uppercase;
+  margin-top:6px;color:var(--ink);
+}
+.vignette{border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);background:#f3ecda;padding:0;position:relative;overflow:hidden;}
+.vignette .vbody{padding:12px 14px 14px 14px;}
+.corner-cut{
+  clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px));
+}
+@media(max-width:760px){
+  .grid2,.grid3,.grid4,.swatches{grid-template-columns:1fr 1fr;}
+  h1.blockhead{font-size:30px;letter-spacing:5px;}
+}
+</style>
+</head>
+<body>
+<div class="page"><!-- ================= HEADER ================= -->
+<header style="text-align:center;padding:10px 0 30px 0;position:relative;">
+  <div class="stamp" style="position:absolute;left:0;top:6px;">Printed Illicit</div>
+  <div class="seal" style="position:absolute;right:-4px;top:0;">SHADOW<br>COURT<br>PASS</div>
+  <div class="kicker">Witch Hunter - Art Direction Plate E - Bonus</div>
+  <h1 class="blockhead">The Woodcut<br>Shadow Court</h1>
+  <div class="rule-heavy" style="max-width:420px;margin:14px auto 10px auto;"></div>
+  <p class="small" style="max-width:640px;margin:0 auto;">Blockprint plate for the neutral underworld and the Old Faith: smuggler manifests, coven broadsides, wanted posters nailed to tavern doors. Heavy iron-black shapes cut into aged rag paper. One second ink - teal, or oxblood when blood is owed.</p>
+</header>
+
+<!-- ================= 1. CHARACTER ================= -->
+<section id="character">
+  <h2 class="blockhead">I. The Hunter - Character Presentation</h2>
+  <div class="grid2">
+    <div class="rough-border panel corner-cut">
+      <div class="kicker">Block A - Portrait</div>
+      <h3 class="blockhead">MAERWEN HALLOW, "The Toll-Taker"</h3>
+      <p class="small dim" style="margin-bottom:10px;">Specialty: Veil-Roads (smuggler pathing) + Old Faith Rites (coven rite-craft). Neutral underworld fixer and witch-hunter. Serves neither court; serves the road, the toll, and the altars.</p>
+      <div style="display:flex;gap:14px;align-items:flex-start;">
+        <svg width="170" height="210" viewBox="0 0 170 210" style="border:3px solid var(--ink);background:#f3ecda;box-shadow:4px 4px 0 var(--ink);flex:0 0 auto;">
+          <defs>
+            <pattern id="hatchA" width="5" height="5" patternUnits="userSpaceOnUse">
+              <path d="M0 5 L5 0" stroke="#1a1712" stroke-width="1"/>
+            </pattern>
+            <pattern id="hatchB" width="7" height="7" patternUnits="userSpaceOnUse">
+              <path d="M0 7 L7 0" stroke="#1a1712" stroke-width="0.7"/>
+            </pattern>
+          </defs>
+          <rect x="0" y="0" width="170" height="210" fill="url(#hatchB)" opacity="0.25"/>
+          <!-- hooded hunter silhouette -->
+          <path d="M85 18 C64 18 52 34 52 56 L52 72 L118 72 L118 56 C118 34 106 18 85 18 Z" fill="#1a1712"/>
+          <path d="M60 40 C64 30 76 26 85 26 C94 26 106 30 110 40 C104 34 96 32 85 32 C74 32 66 34 60 40 Z" fill="#1f6b62"/>
+          <rect x="56" y="60" width="58" height="14" fill="#1a1712"/>
+          <path d="M55 74 L44 96 L38 140 L52 138 L58 108 L58 200 L72 200 L74 150 L96 150 L98 200 L112 200 L112 108 L118 138 L132 140 L126 96 L115 74 Z" fill="#1a1712"/>
+          <path d="M58 108 L52 150 L60 152 L66 116 Z" fill="url(#hatchA)"/>
+          <path d="M112 108 L118 150 L110 152 L104 116 Z" fill="url(#hatchA)"/>
+          <!-- satchel -->
+          <rect x="70" y="104" width="30" height="26" fill="#1a1712"/>
+          <rect x="73" y="108" width="24" height="6" fill="#1f6b62"/>
+          <!-- hooked blade -->
+          <path d="M126 92 L142 78 L146 82 L132 96 Z" fill="#1a1712"/>
+          <circle cx="128" cy="94" r="3" fill="#6e2418"/>
+          <!-- toll tag -->
+          <rect x="20" y="88" width="26" height="16" fill="none" stroke="#6e2418" stroke-width="2" transform="rotate(-12 33 96)"/>
+          <rect x="24" y="92" width="18" height="8" fill="#6e2418" transform="rotate(-12 33 96)"/>
+          <!-- frame hatching -->
+          <rect x="0" y="0" width="170" height="10" fill="#1a1712"/>
+          <rect x="0" y="200" width="170" height="10" fill="#1a1712"/>
+        </svg>
+        <div>
+          <h4 class="blockhead">Nameplate Block</h4>
+          <table class="manifest">
+            <tr><td class="dim">Calling</td><td>Hunter, Unsworn</td></tr>
+            <tr><td class="dim">Ink</td><td style="color:var(--teal);">Teal (neutral)</td></tr>
+            <tr><td class="dim">Poster</td><td>Wanted in both courts</td></tr>
+            <tr><td class="dim">Altar</td><td>Keeps the Deep Altar</td></tr>
+          </table>
+          <p class="small" style="margin-top:10px;">Portrait is a carved silhouette: solid ink hood and cloak, teal eye-slit cut through the block, oxblood seal where the toll-ring hangs. No facial detail is ever rendered - the block is the face.</p>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="rough-border panel corner-cut" style="margin-bottom:16px;">
+        <div class="kicker">Block B - Stat Manifest</div>
+        <table class="manifest">
+          <tr><th>Stat</th><th>Value</th><th>Cut</th></tr>
+          <tr><td>Vigor</td><td>7</td><td class="dim">carved deep</td></tr>
+          <tr><td>Grit</td><td>6</td><td class="dim">carved</td></tr>
+          <tr><td>Blade</td><td>8</td><td style="color:var(--oxblood);">deepest cut</td></tr>
+          <tr><td>Veil-Roads</td><td>9</td><td style="color:var(--oxblood);">deepest cut</td></tr>
+          <tr><td>Old Faith Rites</td><td>6</td><td class="dim">carved</td></tr>
+          <tr><td>Sneak</td><td>7</td><td class="dim">carved deep</td></tr>
+          <tr><td>Bargain</td><td>5</td><td class="dim">shallow</td></tr>
+          <tr><td>Skirmish</td><td>4</td><td class="dim">shallow</td></tr>
+          <tr><td>Lore of Courts</td><td>5</td><td class="dim">shallow</td></tr>
+        </table>
+        <p class="small dim" style="margin-top:8px;">Values print as stamped tallies; the deepest-cut stat gets an oxblood underline drawn by hand, never a highlight box.</p>
+      </div>
+      <div class="rough-border panel corner-cut">
+        <div class="kicker">Block C - Equipment Strip (7 slots)</div>
+        <table class="manifest">
+          <tr><th>Slot</th><th>Item</th></tr>
+          <tr><td>Blade</td><td>Toll-Knife, hooked</td></tr>
+          <tr><td>Off-hand</td><td>Smuggler's lantern, shuttered</td></tr>
+          <tr><td>Cloak</td><td>River-gray oilcloth hood</td></tr>
+          <tr><td>Charm</td><td>Deep Altar talisman, knot-bound</td></tr>
+          <tr><td>Potion</td><td>Morning Ritual prep vial</td></tr>
+          <tr><td>Tool</td><td>Chalk, salt, and a stamped pass</td></tr>
+          <tr><td>Rations</td><td>Hard bread and river eel</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ================= 2. THEME ================= -->
+<section id="theme">
+  <h2 class="blockhead">II. Theme - Mood, Type, Ink and Light</h2>
+  <div class="grid2">
+    <div class="rough-border panel corner-cut">
+      <div class="kicker">Block D - Mood Statement</div>
+      <h3 class="blockhead">The World Is A Printed Rumor</h3>
+      <p style="margin-bottom:10px;">In the underworld nothing is written down, so everything is printed by hand. Wanted posters, coven woodcuts, toll manifests, altar rubbings - the truth arrives coarse, second-hand, and slightly wrong every time it is recarved. The player reads the war of two courts the way a commoner does: through broadsides nailed to tavern doors and seals broken on smuggler manifests.</p>
+      <p>Every image in this register should feel like it was pulled by hand in a back room: ink that skips, edges that bite crooked, paper that shows through. Never glossy, never precise, never machine-made.</p>
+      <div style="margin-top:12px;">
+        <span class="stamp">Owl-Road Pass</span>
+        <span class="stamp" style="transform:rotate(3deg);border-color:var(--teal);color:var(--teal);">Toll Paid</span>
+        <span class="stamp" style="transform:rotate(-7deg);">Owed In Blood</span>
+      </div>
+    </div>
+    <div>
+      <div class="rough-border panel corner-cut" style="margin-bottom:16px;">
+        <div class="kicker">Block E - Typography Direction</div>
+        <h4 class="blockhead" style="font-size:20px;letter-spacing:5px;">WOODBLOCK DISPLAY</h4>
+        <p class="small">All-caps display set like cut poster letters: heavy, slab, slightly uneven, tight vertical rhythm. Letterforms may lean one degree off true - the block was not planed level. Use for names, warnings, and section seals only.</p>
+        <h4 class="blockhead" style="margin-top:10px;">Manifest Hand</h4>
+        <p class="small">Monospace courier for ledgers, stats, prices, tallies - the clerk's voice of the underworld. Values read as stamps, not text.</p>
+        <h4 class="blockhead" style="margin-top:10px;">Serif Body</h4>
+        <p class="small">A workman serif (Georgia class) for narration - the voice of a person recounting, not a system informing.</p>
+        <div style="margin-top:10px;">
+          <span class="tag">POSTER CAPS</span><span class="tag cold">LEDGER MONO</span><span class="tag">SERIF BODY</span>
+        </div>
+      </div>
+      <div class="rough-border panel corner-cut">
+        <div class="kicker">Block F - Texture and Lighting Language</div>
+        <ul class="plain small">
+          <li>Every dark shape is cut ink: hard silhouette edges, no gradients, no soft shadows. Depth comes from hatch density, not blur.</li>
+          <li>Light is described by omission - a torch is a ragged white hole bitten out of the black; moonlight is thin parallel cuts of silver-gray.</li>
+          <li>Ink skip: at 10-15% of any filled shape, paper shows through as speckle. Applied via texture pass, never hand-placed.</li>
+          <li>Weather reads as print weather: Red Vigil is an oxblood wash across the whole plate; Pale Tide is a teal-gray fog band of horizontal hatching.</li>
+          <li>Damage and dread are printed crooked: when the Veil presses close, the frame itself misregisters one degree.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="rough-border panel corner-cut" style="margin-top:20px;">
+    <div class="kicker">Block G - Palette (7 swatches)</div>
+    <div class="swatches">
+      <div class="swatch"><div class="chip" style="background:#1a1712;"></div><div class="name">Iron Black</div><div class="hex">#1A1712</div></div>
+      <div class="swatch"><div class="chip" style="background:#1f6b62;"></div><div class="name">Toll Teal</div><div class="hex">#1F6B62</div></div>
+      <div class="swatch"><div class="chip" style="background:#6e2418;"></div><div class="name">Oxblood</div><div class="hex">#6E2418</div></div>
+      <div class="swatch"><div class="chip" style="background:#e7dcc3;"></div><div class="name">Rag Paper</div><div class="hex">#E7DCC3</div></div>
+      <div class="swatch"><div class="chip" style="background:#d8c9a8;"></div><div class="name">Aged Ground</div><div class="hex">#D8C9A8</div></div>
+      <div class="swatch"><div class="chip" style="background:#8f8266;"></div><div class="name">Faded Stamp</div><div class="hex">#8F8266</div></div>
+      <div class="swatch"><div class="chip" style="background:#4a4a45;"></div><div class="name">River Gray</div><div class="hex">#4A4A45</div></div>
+    </div>
+    <p class="small dim" style="margin-top:10px;">Rule: iron black is the world; teal is the underworld's claim (tolls, passes, neutral ground); oxblood appears only when something is owed - blood, debt, or a name on a poster. Two accents on any plate at most.</p>
+  </div>
+</section>
+<!-- ================= 3. SETTING ================= -->
+<section id="setting">
+  <h2 class="blockhead">III. Setting - Darkwood Panel and Tavern Panel</h2>
+  <div class="grid2">
+    <div class="vignette">
+      <svg width="100%" height="300" viewBox="0 0 460 300" preserveAspectRatio="xMidYMid slice">
+        <rect width="460" height="300" fill="#f3ecda"/>
+        <defs>
+          <pattern id="fogH" width="8" height="8" patternUnits="userSpaceOnUse">
+            <path d="M0 4 H8" stroke="#1f6b62" stroke-width="0.8" opacity="0.5"/>
+          </pattern>
+          <pattern id="treeH" width="6" height="6" patternUnits="userSpaceOnUse">
+            <path d="M6 0 L0 6" stroke="#1a1712" stroke-width="0.6"/>
+          </pattern>
+        </defs>
+        <!-- sky fog bands -->
+        <rect x="0" y="0" width="460" height="70" fill="url(#fogH)"/>
+        <!-- distant treeline silhouette -->
+        <path d="M0 110 L30 78 L44 110 L70 70 L92 110 L120 82 L138 112 L160 74 L186 112 L210 80 L232 112 L260 76 L282 112 L310 82 L334 112 L358 78 L382 112 L410 80 L436 112 L460 88 L460 130 L0 130 Z" fill="#1a1712" opacity="0.75"/>
+        <!-- fog band mid -->
+        <rect x="0" y="118" width="460" height="40" fill="url(#fogH)" opacity="0.8"/>
+        <rect x="0" y="118" width="460" height="40" fill="#e7dcc3" opacity="0.35"/>
+        <!-- great darkwood trunks -->
+        <path d="M60 260 L52 130 L58 110 L72 130 L74 260 Z" fill="#1a1712"/>
+        <path d="M52 150 L20 132 L18 140 L50 158 Z" fill="#1a1712"/>
+        <path d="M74 160 L104 140 L106 148 L76 168 Z" fill="#1a1712"/>
+        <path d="M360 260 L352 118 L360 96 L374 118 L376 260 Z" fill="#1a1712"/>
+        <path d="M352 140 L318 122 L316 132 L350 150 Z" fill="#1a1712"/>
+        <path d="M376 150 L410 128 L412 138 L378 158 Z" fill="#1a1712"/>
+        <path d="M210 262 L204 150 L212 134 L222 150 L224 262 Z" fill="#1a1712" opacity="0.85"/>
+        <!-- trunks hatched -->
+        <rect x="56" y="140" width="10" height="110" fill="url(#treeH)" opacity="0.6"/>
+        <rect x="356" y="140" width="10" height="110" fill="url(#treeH)" opacity="0.6"/>
+        <!-- hanging witch-charms -->
+        <line x1="212" y1="150" x2="212" y2="176" stroke="#1a1712" stroke-width="1.5"/>
+        <path d="M206 176 L218 176 L212 192 Z" fill="#6e2418"/>
+        <line x1="60" y1="170" x2="60" y2="190" stroke="#1a1712" stroke-width="1.5"/>
+        <circle cx="60" cy="196" r="7" fill="none" stroke="#6e2418" stroke-width="2"/>
+        <!-- ground -->
+        <path d="M0 300 L0 262 C80 252 160 266 230 258 C300 250 380 262 460 256 L460 300 Z" fill="#1a1712"/>
+        <rect x="0" y="252" width="460" height="14" fill="url(#treeH)" opacity="0.5"/>
+        <!-- coven mark carved in ground -->
+        <circle cx="300" cy="278" r="14" fill="none" stroke="#1f6b62" stroke-width="2.5"/>
+        <path d="M290 278 L310 278 M300 268 L300 288" stroke="#1f6b62" stroke-width="2"/>
+        <!-- eye in the dark -->
+        <circle cx="130" cy="246" r="4" fill="#1f6b62"/>
+      </svg>
+      <div class="vbody">
+        <div class="kicker">Biome Panel - Darkwood</div>
+        <h3 class="blockhead">The Owl-Road</h3>
+        <p class="small">The underworld's highway through the old growth. Rendered as a near-solid ink print: two colossal trunks cut as pure black, the canopy a single ragged silhouette, fog as horizontal teal hatching punched between them. Witch-charms hang at eye height - the covens mark their toll. Depth is flat by design: foreground, fog-band, treeline. Three planes only, like a print pulled in three passes. An eye of teal in the ground shadow tells the player something has already seen them.</p>
+      </div>
+    </div>
+    <div class="vignette">
+      <svg width="100%" height="300" viewBox="0 0 460 300" preserveAspectRatio="xMidYMid slice">
+        <rect width="460" height="300" fill="#f3ecda"/>
+        <!-- night sky -->
+        <rect x="0" y="0" width="460" height="120" fill="#1a1712"/>
+        <circle cx="400" cy="44" r="26" fill="#e7dcc3"/>
+        <circle cx="392" cy="38" r="24" fill="#1a1712"/>
+        <path d="M20 30 L34 30 L30 44 L44 44 L30 66 L34 52 L20 52 Z" fill="#1f6b62" opacity="0.7"/>
+        <!-- tavern block -->
+        <path d="M70 120 L70 66 L110 44 L150 66 L150 120 Z" fill="#1a1712"/>
+        <path d="M70 120 L150 120 L150 210 L70 210 Z" fill="#1a1712"/>
+        <!-- roof hatch -->
+        <path d="M70 66 L110 44 L150 66 Z" fill="none" stroke="#e7dcc3" stroke-width="1"/>
+        <!-- windows as bitten holes -->
+        <rect x="86" y="86" width="20" height="24" fill="#f3ecda"/>
+        <rect x="126" y="86" width="20" height="24" fill="#f3ecda"/>
+        <rect x="86" y="140" width="20" height="24" fill="#e7dcc3" opacity="0.85"/>
+        <rect x="126" y="140" width="20" height="24" fill="#e7dcc3" opacity="0.85"/>
+        <!-- door with teal light -->
+        <rect x="102" y="166" width="26" height="44" fill="#1f6b62"/>
+        <rect x="102" y="166" width="26" height="44" fill="url(#fogH)" opacity="0.4"/>
+        <!-- sign post -->
+        <line x1="60" y1="120" x2="60" y2="210" stroke="#1a1712" stroke-width="4"/>
+        <path d="M34 128 L60 120 L60 144 Z" fill="#6e2418"/>
+        <!-- smoke -->
+        <path d="M110 40 C104 28 118 24 112 12 C108 4 118 2 116 -4 L128 -4 C124 6 130 12 122 20 C118 28 126 32 122 40 Z" fill="#8f8266" opacity="0.8"/>
+        <!-- ground -->
+        <path d="M0 300 L0 212 L460 206 L460 300 Z" fill="#d8c9a8"/>
+        <rect x="0" y="204" width="460" height="12" fill="#1a1712"/>
+        <!-- wanted poster nailed to tavern -->
+        <rect x="196" y="150" width="58" height="80" fill="#e7dcc3" stroke="#1a1712" stroke-width="3"/>
+        <rect x="202" y="156" width="46" height="34" fill="#1a1712"/>
+        <path d="M202 200 H248 M202 208 H248 M202 216 H240" stroke="#1a1712" stroke-width="2"/>
+        <circle cx="225" cy="150" r="3" fill="#6e2418"/>
+        <circle cx="225" cy="230" r="3" fill="#6e2418"/>
+        <!-- lantern by door -->
+        <line x1="140" y1="166" x2="140" y2="158" stroke="#e7dcc3" stroke-width="2"/>
+        <rect x="134" y="150" width="12" height="14" fill="#f3ecda" stroke="#1a1712" stroke-width="2"/>
+        <!-- hatching ground shadow -->
+        <rect x="0" y="260" width="460" height="40" fill="url(#treeH)" opacity="0.35"/>
+      </svg>
+      <div class="vbody">
+        <div class="kicker">Settlement Panel - Tavern Save-Point</div>
+        <h3 class="blockhead">The Broken Keel, River Landing</h3>
+        <p class="small">A neutral save-anchor on a smuggler route. The tavern reads as a single black blockprint mass against a night plate, its lit windows bitten out of the ink as ragged paper holes - the visual promise of rest. A teal door-glow marks neutral ground; an oxblood nailed sign (the broken-keel charge) marks whose route it stands on. The wanted poster beside the door is a recurring world-detail: sometimes it is the player's own face. Respawn here prints a small stamped seal over the minimap, not a bright marker.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ================= 4. SITUATIONS ================= -->
+<section id="situations">
+  <h2 class="blockhead">IV. Situations - Four Vignettes</h2>
+  <div class="grid2" style="grid-template-columns:1fr 1fr;">
+    <!-- (a) tavern save -->
+    <div class="rough-border panel corner-cut">
+      <div class="kicker">Vignette A - Tavern Save-Point</div>
+      <svg width="100%" height="130" viewBox="0 0 420 130">
+        <rect width="420" height="130" fill="#f3ecda"/>
+        <rect x="20" y="20" width="380" height="90" fill="none" stroke="#1a1712" stroke-width="4"/>
+        <path d="M40 46 L380 46 L380 78 L40 78 Z" fill="#1a1712"/>
+        <rect x="48" y="52" width="70" height="20" fill="#f3ecda"/>
+        <text x="54" y="67" font-family="Arial Black,Arial" font-weight="900" font-size="11" fill="#1a1712">RENT ROOM</text>
+        <rect x="130" y="52" width="80" height="20" fill="#1f6b62"/>
+        <text x="136" y="67" font-family="Arial Black,Arial" font-weight="900" font-size="11" fill="#e7dcc3">SET RESPAWN</text>
+        <rect x="222" y="52" width="90" height="20" fill="#6e2418"/>
+        <text x="228" y="67" font-family="Arial Black,Arial" font-weight="900" font-size="11" fill="#e7dcc3">MORNING RITE</text>
+        <circle cx="340" cy="62" r="12" fill="none" stroke="#e7dcc3" stroke-width="2"/>
+        <path d="M336 62 H344 M340 58 V66" stroke="#e7dcc3" stroke-width="2"/>
+        <path d="M40 92 H380" stroke="#1a1712" stroke-width="2"/>
+        <text x="40" y="106" font-family="Courier New,monospace" font-size="10" fill="#1a1712">THE BROKEN KEEL - ROOM 3 - TOLL PAID - WATCH ENDS AT DAWN</text>
+      </svg>
+      <p class="small">Save UI as a stamped inn ledger: a coarse ink bar across the plate with carved option-stamps. Resting prints a teal seal on the page corner that stays until the next death.</p>
+    </div>
+    <!-- (b) night ambush -->
+    <div class="rough-border panel corner-cut">
+      <div class="kicker">Vignette B - Night Ambush</div>
+      <svg width="100%" height="130" viewBox="0 0 420 130">
+        <rect width="420" height="130" fill="#1a1712"/>
+        <path d="M0 130 L0 96 L60 88 L120 100 L180 90 L240 102 L300 92 L360 100 L420 94 L420 130 Z" fill="#0e0c09"/>
+        <!-- hunter silhouette center -->
+        <path d="M210 40 C202 40 197 47 197 56 L197 62 L223 62 L223 56 C223 47 218 40 210 40 Z" fill="#0e0c09"/>
+        <path d="M198 62 L190 84 L186 110 L196 108 L200 88 L200 122 L208 122 L209 96 L211 96 L212 122 L220 122 L220 88 L224 108 L234 110 L230 84 L222 62 Z" fill="#0e0c09"/>
+        <!-- lantern flare bitten out -->
+        <circle cx="238" cy="74" r="14" fill="#e7dcc3"/>
+        <circle cx="238" cy="74" r="7" fill="#f3ecda"/>
+        <!-- wolves as ink shapes with teal eyes -->
+        <path d="M60 104 L74 88 L86 96 L96 86 L104 104 L100 122 L88 122 L90 112 L74 112 L72 122 L62 122 Z" fill="#0e0c09"/>
+        <circle cx="88" cy="94" r="2.5" fill="#1f6b62"/>
+        <circle cx="94" cy="96" r="2.5" fill="#1f6b62"/>
+        <path d="M330 106 L344 90 L356 98 L366 88 L374 106 L370 124 L358 124 L360 114 L344 114 L342 124 L332 124 Z" fill="#0e0c09"/>
+        <circle cx="358" cy="96" r="2.5" fill="#1f6b62"/>
+        <circle cx="364" cy="98" r="2.5" fill="#1f6b62"/>
+        <!-- health hatch -->
+        <rect x="20" y="14" width="140" height="10" fill="#0e0c09" stroke="#e7dcc3" stroke-width="1.5"/>
+        <rect x="20" y="14" width="86" height="10" fill="#6e2418"/>
+        <rect x="20" y="30" width="140" height="6" fill="none" stroke="#1f6b62" stroke-width="1"/>
+        <rect x="20" y="30" width="54" height="6" fill="#1f6b62"/>
+      </svg>
+      <p class="small">Enemies are black-on-black shapes that resolve only when the lantern cone bites them into paper. Wolves show twin teal eye-cuts before their bodies resolve. Health bar is a hatched oxblood tally, drawn by hand.</p>
+    </div>
+    <!-- (c) siege council -->
+    <div class="rough-border panel corner-cut">
+      <div class="kicker">Vignette C - Siege War Council</div>
+      <svg width="100%" height="130" viewBox="0 0 420 130">
+        <rect width="420" height="130" fill="#f3ecda"/>
+        <rect x="10" y="10" width="400" height="110" fill="none" stroke="#1a1712" stroke-width="3"/>
+        <!-- map table -->
+        <path d="M60 74 L360 74 L372 92 L48 92 Z" fill="#1a1712"/>
+        <rect x="66" y="60" width="120" height="20" fill="#e7dcc3" stroke="#1a1712" stroke-width="2"/>
+        <rect x="200" y="60" width="120" height="20" fill="#1f6b62"/>
+        <text x="74" y="74" font-family="Arial Black,Arial" font-weight="900" font-size="9" fill="#1a1712">SOLAR THRONE</text>
+        <text x="208" y="74" font-family="Arial Black,Arial" font-weight="900" font-size="9" fill="#e7dcc3">VEIL SPIRE</text>
+        <!-- arrow -->
+        <path d="M120 84 L290 84 L282 78 L290 84 L282 90" stroke="#6e2418" stroke-width="3" fill="none"/>
+        <!-- council silhouettes -->
+        <path d="M40 92 L40 50 C40 40 52 40 52 50 L52 92 Z" fill="#1a1712"/>
+        <path d="M368 92 L368 50 C368 40 380 40 380 50 L380 92 Z" fill="#1a1712"/>
+        <path d="M20 92 L20 58 C20 50 30 50 30 58 L30 92 Z" fill="#1a1712" opacity="0.7"/>
+        <path d="M390 92 L390 58 C390 50 400 50 400 58 L400 92 Z" fill="#1a1712" opacity="0.7"/>
+        <!-- broken sun seal -->
+        <circle cx="210" cy="30" r="14" fill="none" stroke="#1a1712" stroke-width="2.5"/>
+        <path d="M210 12 L210 44 M196 24 L224 36 M224 24 L196 36" stroke="#1a1712" stroke-width="2"/>
+        <text x="60" y="110" font-family="Courier New,monospace" font-size="10" fill="#6e2418">COUNCIL - THE DEBT'S ECHO - STORM-CALL LIKELY - DECIDE BY TIDE</text>
+      </svg>
+      <p class="small">Council scenes are printed as manifest pages: a map-table block with court charges (sun-gold name plate vs teal), an oxblood assault arrow, and a broken-sun seal above. War decisions stamp directly onto the plan.</p>
+    </div>
+    <!-- (d) camp mourning -->
+    <div class="rough-border panel corner-cut">
+      <div class="kicker">Vignette D - Camp Mourning (14-Day Remembrance)</div>
+      <svg width="100%" height="130" viewBox="0 0 420 130">
+        <rect width="420" height="130" fill="#e7dcc3"/>
+        <rect x="10" y="10" width="400" height="110" fill="none" stroke="#1a1712" stroke-width="3"/>
+        <!-- 14 tally marks -->
+        <g stroke="#1a1712" stroke-width="3">
+          <line x1="34" y1="26" x2="34" y2="44"/><line x1="44" y1="26" x2="44" y2="44"/>
+          <line x1="54" y1="26" x2="54" y2="44"/><line x1="64" y1="26" x2="64" y2="44"/>
+          <line x1="28" y1="35" x2="70" y2="35"/>
+          <line x1="86" y1="26" x2="86" y2="44"/><line x1="96" y1="26" x2="96" y2="44"/>
+          <line x1="106" y1="26" x2="106" y2="44"/><line x1="116" y1="26" x2="116" y2="44"/>
+          <line x1="80" y1="35" x2="122" y2="35"/>
+          <line x1="138" y1="26" x2="138" y2="44"/><line x1="148" y1="26" x2="148" y2="44"/>
+          <line x1="158" y1="26" x2="158" y2="44"/><line x1="168" y1="26" x2="168" y2="44"/>
+          <line x1="132" y1="35" x2="174" y2="35"/>
+        </g>
+        <text x="188" y="40" font-family="Courier New,monospace" font-size="10" fill="#1a1712">DAY 5 OF 14 - THE CAMP REMEMBERS</text>
+        <!-- memorial plank -->
+        <path d="M250 96 L250 58 L278 58 L278 96 Z" fill="#1a1712"/>
+        <rect x="254" y="64" width="20" height="16" fill="#e7dcc3"/>
+        <circle cx="264" cy="72" r="5" fill="none" stroke="#6e2418" stroke-width="2"/>
+        <!-- mourner silhouettes -->
+        <path d="M110 96 L110 62 C110 54 122 54 122 62 L122 96 Z" fill="#1a1712"/>
+        <path d="M140 96 L140 66 C140 59 150 59 150 66 L150 96 Z" fill="#1a1712" opacity="0.8"/>
+        <path d="M160 96 L160 70 C160 64 168 64 168 70 L168 96 Z" fill="#1a1712" opacity="0.6"/>
+        <!-- campfire bitten -->
+        <path d="M196 96 L200 82 L206 88 L212 78 L216 90 L220 96 Z" fill="#6e2418"/>
+        <rect x="188" y="96" width="42" height="6" fill="#1a1712"/>
+        <text x="34" y="112" font-family="Courier New,monospace" font-size="10" fill="#8f8266">NO NAME SPOKEN UNTIL DAY 14 - THEN THE SEAL IS BROKEN</text>
+      </svg>
+      <p class="small">Mourning prints as a tally page: fourteen cut marks, the fallen rendered as a faceless ink plank with an oxblood ring. Each dawn one mark is crossed in teal. No music, no UI glow - only the count.</p>
+    </div>
+  </div>
+</section>
+<!-- ================= 5. NOTES ================= -->
+<section id="notes">
+  <h2 class="blockhead">V. Notes - Open Questions and Gaps</h2>
+  <div class="rough-border panel corner-cut">
+    <ul class="plain">
+      <li>Sprite scale question: the woodcut register wants hard silhouette edges, but 512-1024px sprites at 4-8 frames may wobble the "cut" line in motion. Do we accept boil (natural, hand-printed feel) or lock every frame to a shared silhouette pass?</li>
+      <li>Teal vs oxblood priority is undefined at the UI level. Proposal: teal owns menus and neutral-ground chrome, oxblood owns damage, debt, and death states - but confirm no oxblood bleed into menus.</li>
+      <li>Ink-skip speckle needs a spec: is it a shader pass over all sprites, an art-baked texture per sheet, or both? Performance cost on true-3D world with full sprite population untested.</li>
+      <li>The "misregistered frame" Veil-dread effect is described but unmeasured: one degree off what - the sprite frame, the screen vignette, or the UI frame only? Needs a playable feel test.</li>
+      <li>Wanted-poster system: if posters can show the player's face after notoriety, we need a carve-style generator for player portraits (silhouette + 2 accent marks) rather than a rendered image.</li>
+      <li>Weather plates (Red Vigil, Pale Tide, Storm-Calls) sketched here as washes and hatch bands; need a decision on whether they are post-process passes over the 3D scene or per-biome sprite repaints.</li>
+      <li>Readability risk: black-on-black enemy design (Vignette B) depends entirely on lantern light logic. If light rendering changes, this scene language breaks. Flag as a dependency, not a style choice.</li>
+      <li>Stat tallies are stamped in the manifest table here; other art-direction pages likely use bars or orbs. Confirm which page owns the canonical UI stat language and whether the woodcut plate is a skin over it or a separate underworld-only UI mode.</li>
+      <li>No decision yet on how the three-altar sites read in this register versus the Light/Dark court registers - the Deep Altar is underworld-kept, so it should get the teal seal treatment, but it is not drawn here.</li>
+      <li>ASCII-only constraint kept for this plate; confirm the woodcut display face will be a custom in-game bitmap font so no unicode decorative characters are ever needed at runtime.</li>
+    </ul>
+  </div>
+</section>
+
+<footer style="text-align:center;margin-top:10px;">
+  <div class="rule-heavy" style="max-width:300px;margin:0 auto 14px auto;"></div>
+  <div class="seal" style="margin:0 auto;">WITCH<br>HUNTER<br>PLATE E</div>
+  <p class="small dim" style="margin-top:14px;">Printed by hand. Read it as if found nailed to a tavern door. - END OF PLATE E -</p>
+</footer>
+</div>
+</body>
+</html>

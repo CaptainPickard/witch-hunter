@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WITCH HUNTER - Art Direction A - Pulp Cover</title>
+<style>
+:root{
+  --ink:#171009;
+  --soot:#241a10;
+  --umber:#3a2a18;
+  --hide:#5c4426;
+  --parch:#c9a97a;
+  --bone:#e8d6ae;
+  --rust:#c14a24;
+  --rust-dk:#8a2f14;
+  --gold:#b08a3e;
+  --smoke:#8a7d68;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{background:var(--ink);}
+body{
+  font-family:"Arial Narrow","Helvetica Neue Condensed",Arial,Helvetica,sans-serif;
+  color:var(--bone);
+  background:
+    radial-gradient(ellipse 120% 60% at 50% -10%, #3d2b14 0%, transparent 60%),
+    repeating-linear-gradient(35deg, rgba(255,220,160,0.015) 0 2px, transparent 2px 5px),
+    var(--ink);
+  max-width:1180px;
+  margin:0 auto;
+  padding:0 24px 80px;
+}
+.gouache::before{
+  content:"";
+  display:block;
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:99;
+  background:
+    repeating-linear-gradient(0deg, rgba(23,16,9,0.05) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgba(232,214,174,0.02) 0 1px, transparent 1px 4px),
+    radial-gradient(ellipse 80% 70% at 30% 20%, rgba(193,74,36,0.05), transparent 70%);
+  mix-blend-mode:overlay;
+}
+h1,h2,h3,.display{
+  font-family:"Haettenschweiler","Arial Narrow",Impact,"Franklin Gothic Medium",Arial,sans-serif;
+  font-stretch:condensed;
+  text-transform:uppercase;
+  letter-spacing:0.02em;
+}
+.section-head{
+  display:flex;
+  align-items:baseline;
+  gap:18px;
+  margin:64px 0 8px;
+  border-bottom:3px solid var(--rust);
+  padding-bottom:6px;
+}
+.section-head .num{
+  font-family:"Haettenschweiler",Impact,sans-serif;
+  font-size:40px;
+  line-height:1;
+  color:var(--rust);
+}
+.section-head h2{
+  font-size:34px;
+  color:var(--bone);
+  line-height:1;
+}
+.section-head .tag{
+  margin-left:auto;
+  font-size:11px;
+  letter-spacing:0.35em;
+  text-transform:uppercase;
+  color:var(--smoke);
+}
+.lede{
+  font-size:14px;
+  color:var(--parch);
+  max-width:760px;
+  margin:10px 0 24px;
+  line-height:1.6;
+  font-family:Georgia,"Times New Roman",serif;
+  font-style:italic;
+}
+.panel{
+  background:linear-gradient(180deg, var(--soot) 0%, var(--ink) 100%);
+  border:2px solid var(--hide);
+  box-shadow:inset 0 0 0 1px rgba(232,214,174,0.12), 0 8px 30px rgba(0,0,0,0.6);
+  padding:22px;
+  position:relative;
+}
+.panel h3{
+  font-size:20px;
+  color:var(--gold);
+  margin-bottom:10px;
+  letter-spacing:0.08em;
+}
+.grain{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(193,74,36,0.08), transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(176,138,62,0.06), transparent 45%),
+    repeating-linear-gradient(120deg, rgba(23,16,9,0.25) 0 1px, transparent 1px 4px);
+  mix-blend-mode:multiply;
+}
+.caption{
+  font-size:11px;
+  letter-spacing:0.25em;
+  text-transform:uppercase;
+  color:var(--smoke);
+  margin-top:10px;
+}
+a{color:var(--gold);}
+</style>
+</head>
+<body class="gouache"><!-- ============ MASTHEAD: THE COVER ============ -->
+<header class="cover" style="position:relative;border:3px solid var(--rust);margin-top:28px;overflow:hidden;background:linear-gradient(180deg,#1a1208 0%,#241a10 45%,#171009 100%);">
+  <div class="grain"></div>
+  <!-- broken sun behind hero -->
+  <svg viewBox="0 0 1180 620" style="display:block;width:100%;height:auto;" role="img" aria-label="Cover art: hunter silhouette against a broken sun over a fog-choked forest">
+    <defs>
+      <radialGradient id="sunGlow" cx="50%" cy="42%" r="45%">
+        <stop offset="0%" stop-color="#c14a24" stop-opacity="0.9"/>
+        <stop offset="55%" stop-color="#8a2f14" stop-opacity="0.45"/>
+        <stop offset="100%" stop-color="#171009" stop-opacity="0"/>
+      </radialGradient>
+      <linearGradient id="fogBand" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#3a2a18" stop-opacity="0"/>
+        <stop offset="100%" stop-color="#171009" stop-opacity="0.95"/>
+      </linearGradient>
+      <radialGradient id="rimLight" cx="50%" cy="35%" r="40%">
+        <stop offset="0%" stop-color="#e8d6ae" stop-opacity="0.25"/>
+        <stop offset="100%" stop-color="#e8d6ae" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <rect width="1180" height="620" fill="#171009"/>
+    <ellipse cx="590" cy="260" rx="480" ry="300" fill="url(#sunGlow)"/>
+    <!-- broken sun: half disc with a notch -->
+    <g>
+      <circle cx="590" cy="255" r="130" fill="#c14a24"/>
+      <path d="M590 125 L590 255 L720 255 A130 130 0 0 0 590 125 Z" fill="#171009"/>
+      <g stroke="#171009" stroke-width="10">
+        <line x1="590" y1="100" x2="590" y2="150"/>
+        <line x1="470" y1="150" x2="500" y2="185"/>
+        <line x1="710" y1="150" x2="680" y2="185"/>
+        <line x1="440" y1="255" x2="490" y2="255"/>
+      </g>
+    </g>
+    <!-- distant tree line -->
+    <g fill="#241a10">
+      <path d="M0 330 L60 300 L110 330 L160 285 L210 330 L280 310 L330 330 L330 400 L0 400 Z"/>
+      <path d="M850 330 L910 290 L970 330 L1020 300 L1080 335 L1180 310 L1180 400 L850 400 Z"/>
+    </g>
+    <!-- moor ridge -->
+    <path d="M0 400 Q200 370 420 395 T820 390 T1180 405 L1180 470 L0 470 Z" fill="#1a1208"/>
+    <!-- hunter silhouette: long coat, crossbow, rim-lit left edge -->
+    <g transform="translate(590 620)">
+      <g fill="#100b05">
+        <!-- legs/coat base -->
+        <path d="M-46 0 L-40 -110 Q-30 -125 -12 -122 L14 -122 Q32 -125 42 -108 L40 0 Z"/>
+        <!-- long coat body -->
+        <path d="M-52 0 L-44 -140 Q-38 -195 -20 -215 L20 -215 Q38 -195 46 -138 L52 0 Z"/>
+        <!-- shoulders and head -->
+        <path d="M-34 -210 Q-42 -250 -26 -272 Q-8 -292 8 -290 Q28 -288 34 -268 Q40 -246 32 -212 Z"/>
+        <!-- wide brim hat -->
+        <path d="M-74 -262 Q0 -296 74 -262 Q40 -272 0 -274 Q-40 -272 -74 -262 Z"/>
+        <path d="M-30 -272 Q-20 -306 2 -306 Q26 -304 30 -274 Z"/>
+        <!-- crossbow arm raised right -->
+        <path d="M30 -200 L86 -236 L96 -224 L44 -186 Z"/>
+        <path d="M96 -236 L150 -252 L154 -240 L100 -222 Z"/>
+        <path d="M148 -258 L158 -234 L152 -234 L142 -256 Z"/>
+        <!-- left hand on hilt -->
+        <path d="M-30 -198 L-70 -176 L-64 -166 L-28 -186 Z"/>
+        <path d="M-72 -182 L-66 -150 L-58 -152 L-64 -180 Z"/>
+      </g>
+      <!-- rim light along left edge -->
+      <path d="M-52 0 L-44 -140 Q-38 -195 -20 -215 L-14 -216 Q-34 -196 -40 -140 L-46 0 Z" fill="#c9a97a" opacity="0.55"/>
+      <path d="M-74 -262 Q-40 -272 0 -274 L0 -270 Q-40 -268 -70 -259 Z" fill="#c14a24" opacity="0.8"/>
+      <path d="M96 -236 L148 -252 L150 -248 L98 -232 Z" fill="#c9a97a" opacity="0.5"/>
+    </g>
+    <!-- foreground fog -->
+    <rect x="0" y="440" width="1180" height="180" fill="url(#fogBand)"/>
+    <rect width="1180" height="620" fill="url(#rimLight)"/>
+    <!-- ravens -->
+    <g fill="#100b05">
+      <path d="M330 150 q10 -12 22 -6 q8 -14 20 -8 q-6 10 -16 12 q8 4 16 2 q-12 12 -26 6 q-10 10 -22 4 q6 -6 6 -10 Z"/>
+      <path d="M860 120 q8 -10 18 -5 q7 -11 16 -6 q-5 8 -13 10 q6 3 13 1 q-10 10 -21 5 q-8 8 -18 3 q5 -5 5 -8 Z"/>
+      <path d="M770 190 q6 -8 14 -4 q5 -8 12 -4 q-4 6 -10 7 q4 2 10 1 q-8 8 -16 4 q-6 6 -14 2 q4 -4 4 -6 Z"/>
+    </g>
+  </svg>
+  <!-- cover type: masthead and taglines -->
+  <div style="position:absolute;top:26px;left:0;right:0;text-align:center;">
+    <div style="font-size:11px;letter-spacing:0.6em;color:var(--parch);text-transform:uppercase;">A Dark Fantasy Saga of the Two Courts</div>
+    <h1 style="font-size:104px;line-height:0.92;margin-top:6px;color:var(--bone);text-shadow:0 0 22px rgba(193,74,36,0.55), 4px 4px 0 var(--ink);">Witch<span style="color:var(--rust);"> </span>Hunter</h1>
+    <div style="font-family:Georgia,serif;font-style:italic;font-size:17px;color:var(--gold);margin-top:2px;">The Veil Has Fallen. The Hunt Has Not.</div>
+  </div>
+  <div style="position:absolute;bottom:24px;left:28px;right:28px;display:flex;justify-content:space-between;align-items:flex-end;">
+    <div style="font-size:13px;letter-spacing:0.4em;text-transform:uppercase;color:var(--parch);">Art Direction Sheet A<br><span style="color:var(--smoke);letter-spacing:0.2em;font-size:10px;">Pulp Cover. The Masthead Look.</span></div>
+    <div class="display" style="font-size:30px;color:var(--rust);text-align:right;line-height:1;">WALK EVERY ROAD.<br><span style="color:var(--bone);font-size:22px;">REST AT NO INN TWICE.</span></div>
+  </div>
+</header>
+
+<!-- ============ 1. CHARACTER ============ -->
+<div class="section-head"><span class="num">I.</span><h2>The Hunter</h2><span class="tag">Character Plate</span></div>
+<p class="lede">The hero is sold like a paperback protagonist: one strong silhouette, one weapon catching the light, a name that sounds carved into a shield. Everything else is small print.</p>
+
+<div style="display:grid;grid-template-columns:340px 1fr;gap:22px;align-items:start;">
+  <div class="panel">
+    <div class="grain"></div>
+    <svg viewBox="0 0 300 420" style="display:block;width:100%;height:auto;" role="img" aria-label="Portrait placeholder silhouette of Aldric Veyne">
+      <defs>
+        <linearGradient id="portBg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#3a2a18"/><stop offset="100%" stop-color="#171009"/>
+        </linearGradient>
+        <radialGradient id="portGlow" cx="50%" cy="30%" r="55%">
+          <stop offset="0%" stop-color="#c14a24" stop-opacity="0.5"/><stop offset="100%" stop-color="#c14a24" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <rect width="300" height="420" fill="url(#portBg)"/>
+      <ellipse cx="150" cy="150" rx="140" ry="120" fill="url(#portGlow)"/>
+      <!-- framed oval like an oil portrait -->
+      <ellipse cx="150" cy="215" rx="120" ry="180" fill="none" stroke="#8a2f14" stroke-width="4"/>
+      <ellipse cx="150" cy="215" rx="112" ry="172" fill="none" stroke="#5c4426" stroke-width="2"/>
+      <!-- bust silhouette with hat -->
+      <g fill="#100b05">
+        <path d="M70 420 L74 330 Q76 285 100 268 L110 250 Q88 235 88 195 Q88 150 150 145 Q212 150 212 195 Q212 235 190 250 L200 268 Q224 285 226 330 L230 420 Z"/>
+        <path d="M58 172 Q150 138 242 172 Q196 186 150 186 Q104 186 58 172 Z"/>
+        <path d="M96 174 Q108 128 150 126 Q192 128 204 174 Z"/>
+        <!-- collar and scar catch -->
+        <path d="M108 262 Q150 282 192 262 L188 282 Q150 300 112 282 Z"/>
+      </g>
+      <!-- rim light: left edge of hat and jaw -->
+      <path d="M58 172 Q104 186 150 186 L150 190 Q100 190 60 176 Z" fill="#c9a97a" opacity="0.7"/>
+      <path d="M96 174 Q100 140 128 130 L130 134 Q106 146 102 172 Z" fill="#c9a97a" opacity="0.5"/>
+      <path d="M88 200 Q86 235 110 250 L112 254 Q84 238 84 198 Z" fill="#c14a24" opacity="0.6"/>
+      <!-- crossbow bolt pin over shoulder -->
+      <g stroke="#5c4426" stroke-width="5"><line x1="86" y1="300" x2="216" y2="282"/></g>
+      <g stroke="#c9a97a" stroke-width="2"><line x1="86" y1="300" x2="216" y2="282"/></g>
+    </svg>
+    <div style="text-align:center;margin-top:12px;">
+      <div class="display" style="font-size:36px;color:var(--bone);line-height:1;">Aldric Veyne</div>
+      <div style="font-size:12px;letter-spacing:0.3em;text-transform:uppercase;color:var(--rust);margin-top:4px;">Veil-Touched Quarrelsmith</div>
+      <div style="font-family:Georgia,serif;font-style:italic;font-size:12px;color:var(--smoke);margin-top:6px;">Skill line: Crossbow Mastery + Blight Lore + Camp Cook</div>
+    </div>
+  </div>
+  <div style="display:grid;gap:22px;">
+    <div class="panel">
+      <div class="grain"></div>
+      <h3>Stat Readout - Nine Virtues of the Hunt</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <tr style="color:var(--smoke);letter-spacing:0.2em;text-transform:uppercase;font-size:10px;">
+          <td style="padding:4px 8px 8px 0;">Stat</td><td>Value</td><td>Bar, inked</td><td>Note</td>
+        </tr>
+        <tr><td style="padding:5px 8px;color:var(--parch);">Vigor</td><td style="color:var(--bone);font-weight:bold;">72</td><td style="width:42%;"><div style="height:10px;background:#171009;border:1px solid var(--hide);"><div style="width:72%;height:100%;background:var(--rust);"></div></div></td><td style="color:var(--smoke);font-size:11px;">Marches all day</td></tr>
+        <tr><td style="padding:5px 8px;color:var(--parch);">Endurance</td><td style="color:var(--bone);font-weight:bold;">64</td><td><div style="height:10px;background:#171009;border:1px solid var(--hide);"><div style="width:64%;height:100%;background:var(--rust);"></div></div></td><td style="color:var(--smoke);font-size:11px;">Carries the whole camp</td></tr>
+        <tr><td style="padding:5px 8px;color:var(--parch);">Marksmanship</td><td style="color:var(--bone);font-weight:bold;">81</td><td><div style="height:10px;background:#171009;border:1px solid var(--hide);"><div style="width:81%;height:100%;background:var(--gold);"></div></div></td><td style="color:var(--smoke);font-size:11px;">The signature stat</td></tr>
+        <tr><td style="padding:5px 8px;color:var(--parch);">Blade Craft</td><td style="color:var(--bone);font-weight:bold;">47</td><td><div style="height:10px;background:#171009;border:1px solid var(--hide);"><div style="width:47%;height:100%;background:var(--hide);"></div></div></td><td style="color:var(--smoke);font-size:11px;">Backup, not creed</td></tr>
+        <tr><td style="padding:5px 8px;color:var(--parch);">Veil Lore</td><td style="color:var(--bone);font-weight:bold;">58</td><td><div style="height:10px;background:#171009;border:1px solid var(--hide);"><div style="width:58%;height:100%;background:var(--gold);"></div></div></td><td style="color:var(--smoke);font-size:11px;">Reads the sky, not a meter</td></tr>
+        <tr><td style="padding:5px 8px;color:var(--parch);">Alchemy</td><td style="color:var(--bone);font-weight:bold;">55</td><td><div style="height:10px;background:#171009;border:1px solid var(--hide);"><div style="width:55%;height:100%;background:var(--hide);"></div></div></td><td style="color:var(--smoke);font-size:11px;">Brews over a campfire</td></tr>
+        <tr><td style="padding:5px 8px;color:var(--parch);">Stealth</td><td style="color:var(--bone);font-weight:bold;">49</td><td><div style="height:10px;background:#171009;border:1px solid var(--hide);"><div style="width:49%;height:100%;background:var(--hide);"></div></div></td><td style="color:var(--smoke);font-size:11px;">Fog is a friend</td></tr>
+        <tr><td style="padding:5px 8px;color:var(--parch);">Parley</td><td style="color:var(--bone);font-weight:bold;">38</td><td><div style="height:10px;background:#171009;border:1px solid var(--hide);"><div style="width:38%;height:100%;background:var(--hide);"></div></div></td><td style="color:var(--smoke);font-size:11px;">Neutral ground only</td></tr>
+        <tr><td style="padding:5px 8px;color:var(--parch);">Resolve</td><td style="color:var(--bone);font-weight:bold;">70</td><td><div style="height:10px;background:#171009;border:1px solid var(--hide);"><div style="width:70%;height:100%;background:var(--rust);"></div></div></td><td style="color:var(--smoke);font-size:11px;">Mourns, then moves</td></tr>
+      </table>
+    </div>
+    <div class="panel">
+      <div class="grain"></div>
+      <h3>Equipment Strip - Eight Slots, No Fast Travel</h3>
+      <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:8px;">
+        <div style="border:1px solid var(--hide);padding:8px 4px;text-align:center;background:#171009;"><svg viewBox="0 0 60 60" style="width:100%;"><rect x="12" y="4" width="36" height="10" fill="#5c4426"/><rect x="8" y="12" width="44" height="6" fill="#c9a97a"/><path d="M20 18 L18 52 L24 52 L26 18 Z" fill="#8a2f14"/><path d="M40 18 L42 52 L36 52 L34 18 Z" fill="#8a2f14"/></svg><div style="font-size:9px;color:var(--parch);margin-top:4px;line-height:1.2;">Ashwood<br>Heavy Crossbow</div></div>
+        <div style="border:1px solid var(--hide);padding:8px 4px;text-align:center;background:#171009;"><svg viewBox="0 0 60 60" style="width:100%;"><rect x="26" y="4" width="8" height="40" fill="#c9a97a"/><rect x="20" y="44" width="20" height="6" fill="#5c4426"/><rect x="24" y="50" width="12" height="6" fill="#8a2f14"/></svg><div style="font-size:9px;color:var(--parch);margin-top:4px;line-height:1.2;">Coffin-Iron<br>Shortsword</div></div>
+        <div style="border:1px solid var(--hide);padding:8px 4px;text-align:center;background:#171009;"><svg viewBox="0 0 60 60" style="width:100%;"><path d="M14 8 Q30 2 46 8 L44 44 Q30 52 16 44 Z" fill="#3a2a18" stroke="#c9a97a" stroke-width="2"/><circle cx="30" cy="26" r="6" fill="#c14a24"/></svg><div style="font-size:9px;color:var(--parch);margin-top:4px;line-height:1.2;">Blight-Cured<br>Longcoat</div></div>
+        <div style="border:1px solid var(--hide);padding:8px 4px;text-align:center;background:#171009;"><svg viewBox="0 0 60 60" style="width:100%;"><path d="M10 24 Q30 10 50 24 L44 40 Q30 30 16 40 Z" fill="#241a10" stroke="#5c4426" stroke-width="2"/></svg><div style="font-size:9px;color:var(--parch);margin-top:4px;line-height:1.2;">Raven-Brim<br>Felt Hat</div></div>
+        <div style="border:1px solid var(--hide);padding:8px 4px;text-align:center;background:#171009;"><svg viewBox="0 0 60 60" style="width:100%;"><path d="M22 6 L38 6 L36 30 L42 30 L30 54 L34 34 L26 34 Z" fill="#c14a24" stroke="#c9a97a" stroke-width="2"/></svg><div style="font-size:9px;color:var(--parch);margin-top:4px;line-height:1.2;">Morning Ritual<br>Vial</div></div>
+        <div style="border:1px solid var(--hide);padding:8px 4px;text-align:center;background:#171009;"><svg viewBox="0 0 60 60" style="width:100%;"><circle cx="30" cy="30" r="16" fill="none" stroke="#c9a97a" stroke-width="3"/><path d="M30 14 L34 26 L46 26 L36 34 L40 46 L30 38 L20 46 L24 34 L14 26 L26 26 Z" fill="#b08a3e"/></svg><div style="font-size:9px;color:var(--parch);margin-top:4px;line-height:1.2;">Solar Ward<br>Silver Talisman</div></div>
+        <div style="border:1px solid var(--hide);padding:8px 4px;text-align:center;background:#171009;"><svg viewBox="0 0 60 60" style="width:100%;"><path d="M14 20 L46 20 L42 44 L18 44 Z" fill="#5c4426"/><rect x="24" y="8" width="12" height="12" fill="#8a2f14"/></svg><div style="font-size:9px;color:var(--parch);margin-top:4px;line-height:1.2;">Rendered<br>Bolts x24</div></div>
+        <div style="border:1px solid var(--hide);padding:8px 4px;text-align:center;background:#171009;"><svg viewBox="0 0 60 60" style="width:100%;"><path d="M12 30 Q30 16 48 30 L48 50 L12 50 Z" fill="#3a2a18" stroke="#5c4426" stroke-width="2"/><path d="M24 30 L24 12 L36 12 L36 30" fill="none" stroke="#c9a97a" stroke-width="3"/></svg><div style="font-size:9px;color:var(--parch);margin-top:4px;line-height:1.2;">Waxed Canvas<br>Bedroll</div></div>
+      </div>
+      <div class="caption">Carry-weight limited. Every slot is a decision before the road.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 2. THEME ============ -->
+<div class="section-head"><span class="num">II.</span><h2>Theme</h2><span class="tag">Mood, Type, Palette</span></div>
+<p class="lede">The mood statement: a hunter stands between two courts that would own the sky, and the only honest weather is the storm overhead. Deliberate, gothic, painted - never miserable, never playful.</p>
+
+<div style="display:grid;grid-template-columns:1.2fr 1fr;gap:22px;">
+  <div class="panel">
+    <div class="grain"></div>
+    <h3>Typography Direction</h3>
+    <div class="display" style="font-size:58px;color:var(--bone);line-height:0.95;text-shadow:3px 3px 0 var(--ink);">Bold Condensed Display</div>
+    <div style="font-family:Georgia,serif;font-style:italic;font-size:15px;color:var(--parch);margin-top:12px;line-height:1.6;">
+      Cover type is the masthead voice: heavy condensed caps for titles and taglines, warm parchment serif italics for flavor copy, narrow sans small print for data. Titles get a hard drop shadow and a rust-colored rim. Taglines read like paperback back covers: short, imperative, fatalistic.
+    </div>
+    <div style="margin-top:14px;border-top:1px solid var(--hide);padding-top:10px;font-size:12px;color:var(--smoke);line-height:1.7;">
+      Title / tagline: condensed grotesque, all caps, tracked tight. - Body flavor: serif italic, parchment tone. - UI labels: narrow sans caps, letterspaced 0.25em. - Numerals: tabular, inked.
+    </div>
+  </div>
+  <div class="panel">
+    <div class="grain"></div>
+    <h3>Palette - Muted Warm, One Sharp Accent</h3>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;">
+      <div><div style="height:56px;background:#171009;border:1px solid var(--hide);"></div><div style="font-size:9px;margin-top:3px;color:var(--parch);">Ink Night<br>#171009</div></div>
+      <div><div style="height:56px;background:#3a2a18;"></div><div style="font-size:9px;margin-top:3px;color:var(--parch);">Old Umber<br>#3A2A18</div></div>
+      <div><div style="height:56px;background:#5c4426;"></div><div style="font-size:9px;margin-top:3px;color:var(--parch);">Tanned Hide<br>#5C4426</div></div>
+      <div><div style="height:56px;background:#c9a97a;"></div><div style="font-size:9px;margin-top:3px;color:var(--parch);">Parchment<br>#C9A97A</div></div>
+      <div><div style="height:56px;background:#b08a3e;"></div><div style="font-size:9px;margin-top:3px;color:var(--parch);">Altar Gold<br>#B08A3E</div></div>
+      <div><div style="height:56px;background:#8a7d68;"></div><div style="font-size:9px;margin-top:3px;color:var(--parch);">Moor Smoke<br>#8A7D68</div></div>
+      <div><div style="height:56px;background:#c14a24;border:1px solid var(--bone);"></div><div style="font-size:9px;margin-top:3px;color:var(--rust);">Veil Rust (accent)<br>#C14A24</div></div>
+    </div>
+    <div style="margin-top:12px;font-size:12px;color:var(--smoke);line-height:1.7;">
+      <b style="color:var(--gold);">Texture:</b> gouache brush strokes, dry-brush grain, canvas tooth, heavy ink outlines that break where the light hits. <b style="color:var(--gold);">Lighting:</b> single hard rim light against dark ground; accent color reserved for danger, blight, and one focal element per composition.
+    </div>
+  </div>
+</div>
+
+<!-- ============ 3. SETTING ============ -->
+<div class="section-head"><span class="num">III.</span><h2>Setting</h2><span class="tag">One Wild Biome, One Hearth</span></div>
+<p class="lede">Two panels that bookend every journey: the Darkwood you must walk through, and the tavern hearth that is the only place the world lets you stop.</p>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:22px;">
+  <div class="panel">
+    <div class="grain"></div>
+    <h3>The Darkwood - Fog-Choked Old Growth</h3>
+    <svg viewBox="0 0 520 300" style="display:block;width:100%;height:auto;" role="img" aria-label="Darkwood forest panel: fog, giant trunks, a coven glyph">
+      <defs>
+        <linearGradient id="wood" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#241a10"/><stop offset="100%" stop-color="#171009"/>
+        </linearGradient>
+        <radialGradient id="woodGlow" cx="62%" cy="24%" r="42%">
+          <stop offset="0%" stop-color="#c14a24" stop-opacity="0.5"/><stop offset="100%" stop-color="#c14a24" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <rect width="520" height="300" fill="url(#wood)"/>
+      <ellipse cx="325" cy="70" rx="150" ry="90" fill="url(#woodGlow)"/>
+      <!-- canopy trunks -->
+      <g fill="#100b05">
+        <path d="M40 0 L70 0 L62 300 L30 300 Z"/>
+        <path d="M130 0 L158 0 L150 300 L118 300 Z"/>
+        <path d="M300 0 L326 0 L318 300 L288 300 Z"/>
+        <path d="M440 0 L472 0 L462 300 L428 300 Z"/>
+        <path d="M496 0 L520 0 L520 300 L504 300 Z"/>
+        <!-- branches -->
+        <path d="M62 90 L150 70 L152 76 L64 98 Z"/>
+        <path d="M158 140 L240 128 L242 134 L160 146 Z"/>
+        <path d="M326 60 L440 44 L442 50 L328 66 Z"/>
+        <path d="M470 110 L400 96 L400 102 L470 116 Z"/>
+      </g>
+      <!-- broken sun coven glyph, glowing rust -->
+      <g transform="translate(325 70)">
+        <circle r="34" fill="none" stroke="#c14a24" stroke-width="4"/>
+        <path d="M-34 0 L0 0 M0 0 L0 -34 M0 0 L24 24 M0 0 L-24 24" stroke="#c14a24" stroke-width="4"/>
+        <path d="M8 -34 L0 -14 L-8 -34" fill="none" stroke="#c14a24" stroke-width="3"/>
+      </g>
+      <!-- ferns and undergrowth silhouettes -->
+      <g fill="#241a10">
+        <path d="M0 260 Q60 238 120 258 Q180 240 250 260 Q330 236 400 258 Q470 240 520 262 L520 300 L0 300 Z"/>
+        <path d="M180 250 q10 -22 6 -30 q14 10 12 30 Z"/>
+        <path d="M360 246 q8 -18 4 -26 q12 8 10 26 Z"/>
+      </g>
+      <!-- fog bands -->
+      <rect x="0" y="180" width="520" height="120" fill="#3a2a18" opacity="0.35"/>
+      <rect x="0" y="220" width="520" height="80" fill="#8a7d68" opacity="0.18"/>
+      <!-- tiny hunter, rim-lit -->
+      <g transform="translate(150 300)"><path d="M-7 0 L-6 -34 Q-2 -40 4 -40 L8 -40 Q14 -40 15 -33 L13 0 Z" fill="#100b05"/><path d="M-4 -36 Q-5 -56 4 -56 Q14 -55 13 -36 Z" fill="#100b05"/><path d="M-6 -58 Q4 -62 14 -58 L14 -54 L-6 -54 Z" fill="#100b05"/><path d="M-6 -38 L-2 -38 L-3 -52 L-5 -50 Z" fill="#c9a97a" opacity="0.6"/></g>
+    </svg>
+    <div class="caption">Composition rule: trunks as vertical ink bars, one rust focal glyph, fog as horizontal paint. Covens mark their ground in broken-sun sigils.</div>
+  </div>
+  <div class="panel">
+    <div class="grain"></div>
+    <h3>The Guttering Lantern - Tavern Save-Point</h3>
+    <svg viewBox="0 0 520 300" style="display:block;width:100%;height:auto;" role="img" aria-label="Tavern save point panel: inn with lantern, sign, warm windows">
+      <rect width="520" height="300" fill="#171009"/>
+      <ellipse cx="260" cy="90" rx="200" ry="70" fill="#241a10" opacity="0.8"/>
+      <!-- inn building -->
+      <g>
+        <path d="M90 130 L260 58 L430 130 L430 138 L90 138 Z" fill="#100b05"/>
+        <rect x="110" y="138" width="300" height="110" fill="#241a10" stroke="#5c4426" stroke-width="2"/>
+        <!-- timber framing -->
+        <g stroke="#100b05" stroke-width="5">
+          <line x1="180" y1="138" x2="180" y2="248"/>
+          <line x1="340" y1="138" x2="340" y2="248"/>
+          <line x1="110" y1="190" x2="410" y2="190"/>
+        </g>
+        <!-- windows, warm -->
+        <g>
+          <rect x="128" y="152" width="36" height="28" fill="#c14a24" opacity="0.85"/>
+          <rect x="212" y="152" width="36" height="28" fill="#c14a24" opacity="0.55"/>
+          <rect x="362" y="152" width="36" height="28" fill="#c14a24" opacity="0.85"/>
+          <rect x="130" y="204" width="34" height="34" fill="#b08a3e" opacity="0.4"/>
+          <rect x="364" y="204" width="34" height="34" fill="#b08a3e" opacity="0.4"/>
+        </g>
+        <!-- door -->
+        <rect x="282" y="196" width="38" height="52" fill="#100b05" stroke="#5c4426" stroke-width="2"/>
+        <circle cx="288" cy="224" r="2.5" fill="#c9a97a"/>
+        <!-- hanging sign: broken sun -->
+        <g transform="translate(438 168)">
+          <rect x="-3" y="-30" width="6" height="36" fill="#5c4426"/>
+          <rect x="-22" y="0" width="44" height="34" rx="4" fill="#241a10" stroke="#c9a97a" stroke-width="2"/>
+          <circle cx="0" cy="17" r="9" fill="none" stroke="#c14a24" stroke-width="3"/>
+          <path d="M-9 17 L0 17 M0 17 L0 8 M0 17 L6 23" stroke="#c14a24" stroke-width="3"/>
+        </g>
+        <!-- lantern by the door -->
+        <g transform="translate(268 200)">
+          <line x1="0" y1="-8" x2="0" y2="0" stroke="#5c4426" stroke-width="2"/>
+          <rect x="-7" y="0" width="14" height="18" fill="#c14a24"/>
+          <rect x="-7" y="0" width="14" height="18" fill="none" stroke="#100b05" stroke-width="3"/>
+          <ellipse cx="0" cy="9" rx="20" ry="16" fill="#c14a24" opacity="0.25"/>
+        </g>
+      </g>
+      <!-- ground and road -->
+      <rect x="0" y="248" width="520" height="52" fill="#1a1208"/>
+      <path d="M180 300 Q260 258 330 300" fill="none" stroke="#5c4426" stroke-width="4" opacity="0.6"/>
+      <!-- chimney smoke -->
+      <path d="M390 60 Q400 40 390 24 Q382 12 392 0" fill="none" stroke="#8a7d68" stroke-width="5" opacity="0.4" stroke-linecap="round"/>
+      <rect x="376" y="70" width="20" height="70" fill="#100b05"/>
+      <!-- respawn marker on door: small glyph -->
+      <text x="301" y="226" fill="#c9a97a" font-family="Georgia,serif" font-size="12" font-style="italic" text-anchor="middle">rest</text>
+    </svg>
+    <div class="caption">Rent a room. Rest. Set your respawn. The lantern is the save light - warm rust against the ink, faction-neutral ground inside.</div>
+  </div>
+</div>
+
+<!-- ============ 4. SITUATIONS ============ -->
+<div class="section-head"><span class="num">IV.</span><h2>Situations</h2><span class="tag">Four Cover Panels, Four Moods</span></div>
+<p class="lede">Each vignette is framed like a pulp cover inset: silhouette, rim light, one accent focal point, a short imperative caption. Scene mood carries the UI truth - the clock, the weather, the remembrance.</p>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:22px;">
+
+  <div class="panel">
+    <div class="grain"></div>
+    <h3>a. The Save - Last Room at the Lantern</h3>
+    <svg viewBox="0 0 480 200" style="display:block;width:100%;height:auto;" role="img" aria-label="Tavern save vignette: hunter by hearth with quill ledger">
+      <rect width="480" height="200" fill="#171009"/>
+      <ellipse cx="330" cy="110" rx="120" ry="80" fill="#c14a24" opacity="0.18"/>
+      <rect x="240" y="60" width="120" height="100" fill="#241a10" stroke="#5c4426"/>
+      <path d="M300 160 L300 90 Q330 70 360 90 L360 160 Z" fill="#c14a24" opacity="0.75"/>
+      <path d="M310 160 L312 110 Q330 98 348 110 L350 160 Z" fill="#e8d6ae" opacity="0.6"/>
+      <g transform="translate(150 160)">
+        <path d="M-16 0 L-14 -50 Q-8 -58 2 -58 L10 -58 Q20 -58 22 -48 L20 0 Z" fill="#100b05"/>
+        <path d="M-12 -56 Q-2 -78 6 -76 Q14 -74 14 -56 Z" fill="#100b05"/>
+        <path d="M-20 -60 Q0 -68 20 -60 L20 -57 Q0 -64 -20 -57 Z" fill="#100b05"/>
+      </g>
+      <rect x="40" y="150" width="130" height="10" fill="#5c4426"/>
+      <g stroke="#c9a97a" stroke-width="2"><line x1="60" y1="132" x2="60" y2="150"/><line x1="90" y1="128" x2="90" y2="150"/><line x1="120" y1="134" x2="120" y2="150"/></g>
+      <path d="M404 44 Q412 30 404 16" fill="none" stroke="#8a7d68" stroke-width="4" opacity="0.4" stroke-linecap="round"/>
+    </svg>
+    <div class="display" style="font-size:22px;color:var(--rust);margin-top:10px;">REST IS A DECISION</div>
+    <div style="font-size:12px;color:var(--parch);margin-top:6px;line-height:1.6;">Room taken, respawn set. The ledger signs in quill ink. Clock reads half the night already gone; departure time is chosen here, at the fire.</div>
+  </div>
+
+  <div class="panel">
+    <div class="grain"></div>
+    <h3>b. Night Ambush - Wolves in the Pale Fog</h3>
+    <svg viewBox="0 0 480 200" style="display:block;width:100%;height:auto;" role="img" aria-label="Night ambush vignette: wolves circling the hunter in fog">
+      <rect width="480" height="200" fill="#100b05"/>
+      <ellipse cx="240" cy="120" rx="220" ry="90" fill="#8a7d68" opacity="0.15"/>
+      <circle cx="404" cy="42" r="22" fill="#c9a97a" opacity="0.85"/>
+      <circle cx="396" cy="36" r="22" fill="#100b05"/>
+      <g fill="#171009" stroke="#c9a97a" stroke-width="1.5" opacity="0.9">
+        <path d="M60 160 L64 140 L58 132 L66 130 L72 138 L84 136 L88 128 L96 132 L94 142 L104 158 L98 160 L92 150 L70 150 L66 160 Z"/>
+        <path d="M380 170 L384 152 L378 144 L386 142 L392 148 L404 146 L408 138 L416 142 L414 152 L424 168 L418 170 L412 160 L392 160 L388 170 Z"/>
+      </g>
+      <!-- eyes -->
+      <g fill="#c14a24"><circle cx="70" cy="140" r="2"/><circle cx="90" cy="140" r="2"/><circle cx="392" cy="150" r="2"/><circle cx="410" cy="150" r="2"/><circle cx="230" cy="158" r="2"/><circle cx="252" cy="156" r="2"/></g>
+      <!-- hunter, back to viewer, crossbow up -->
+      <g transform="translate(240 200)">
+        <path d="M-14 0 L-12 -64 Q-6 -72 4 -72 L12 -72 Q22 -70 24 -62 L18 0 Z" fill="#000"/>
+        <path d="M-10 -70 Q0 -94 8 -92 Q16 -90 16 -70 Z" fill="#000"/>
+        <path d="M-18 -74 Q0 -82 18 -74 L18 -70 Q0 -78 -18 -70 Z" fill="#000"/>
+        <path d="M20 -66 L58 -84 L62 -78 L24 -60 Z" fill="#000"/>
+        <path d="M54 -88 L70 -92 L70 -88 L56 -84 Z" fill="#c9a97a" opacity="0.7"/>
+        <path d="M-12 -66 L-8 -66 L-10 -78 L-13 -76 Z" fill="#c9a97a" opacity="0.6"/>
+      </g>
+      <rect x="0" y="176" width="480" height="24" fill="#241a10" opacity="0.7"/>
+    </svg>
+    <div class="display" style="font-size:22px;color:var(--rust);margin-top:10px;">THE PALE TIDE WAKES THEM</div>
+    <div style="font-size:12px;color:var(--parch);margin-top:6px;line-height:1.6;">Moon-fog on the moors lifts the blight's drain and wakes the wild strains. Eyes first, shapes second - enemies reveal as rim light before body ink. Night travel is a survival choice.</div>
+  </div>
+
+  <div class="panel">
+    <div class="grain"></div>
+    <h3>c. Siege War Council - Storm-Call Over the Hold</h3>
+    <svg viewBox="0 0 480 200" style="display:block;width:100%;height:auto;" role="img" aria-label="War council vignette: banners over a map table, storm front over a hold">
+      <rect width="480" height="200" fill="#171009"/>
+      <path d="M0 60 Q120 30 240 54 T480 40 L480 0 L0 0 Z" fill="#3a2a18"/>
+      <path d="M0 30 Q160 10 320 26 T480 18 L480 0 L0 0 Z" fill="#241a10"/>
+      <!-- two banners -->
+      <g transform="translate(90 8)">
+        <rect x="-4" y="0" width="8" height="86" fill="#5c4426"/>
+        <path d="M4 6 L44 6 L44 60 L24 52 L4 60 Z" fill="#b08a3e"/>
+        <path d="M24 16 L24 44 M14 30 L34 30" stroke="#171009" stroke-width="4"/>
+      </g>
+      <g transform="translate(380 8)">
+        <rect x="-4" y="0" width="8" height="86" fill="#5c4426"/>
+        <path d="M4 6 L44 6 L44 60 L24 52 L4 60 Z" fill="#8a2f14"/>
+        <circle cx="24" cy="30" r="9" fill="none" stroke="#171009" stroke-width="4"/>
+        <path d="M15 30 L33 30 M24 21 L24 39" stroke="#171009" stroke-width="4"/>
+      </g>
+      <!-- war table with map -->
+      <rect x="150" y="120" width="180" height="50" fill="#3a2a18" stroke="#5c4426" stroke-width="3"/>
+      <rect x="162" y="128" width="156" height="34" fill="#c9a97a" opacity="0.85"/>
+      <g stroke="#8a2f14" stroke-width="2.5" fill="none">
+        <path d="M170 150 Q210 132 250 144 Q280 152 310 138"/>
+        <circle cx="252" cy="144" r="5"/>
+      </g>
+      <g fill="#171009"><circle cx="196" cy="148" r="3"/><circle cx="282" cy="134" r="3"/></g>
+      <!-- figures leaning in -->
+      <g fill="#100b05">
+        <path d="M120 200 L122 148 Q126 138 136 136 L144 136 Q154 138 156 148 L154 200 Z"/>
+        <path d="M330 200 L332 152 Q336 140 346 138 L352 138 Q362 140 364 150 L362 200 Z"/>
+      </g>
+      <!-- storm front pinned over distant hold -->
+      <g transform="translate(432 96)">
+        <path d="M-30 0 Q0 -14 30 0 L24 8 L-24 0 Z" fill="#100b05"/>
+        <path d="M-10 0 L-8 -20 L8 -20 L10 0 Z" fill="#100b05"/>
+      </g>
+      <path d="M420 92 Q430 80 424 70" fill="none" stroke="#c14a24" stroke-width="3" opacity="0.6"/>
+    </svg>
+    <div class="display" style="font-size:22px;color:var(--rust);margin-top:10px;">THEY PIN THE SKY FIRST</div>
+    <div style="font-size:12px;color:var(--parch);margin-top:6px;line-height:1.6;">Storm-calls nail a Veil-charged front over the enemy hold before the siege. Banners of both courts over one table; the map shows the route the weather will decide.</div>
+  </div>
+
+  <div class="panel">
+    <div class="grain"></div>
+    <h3>d. Camp Mourning - The Fourteenth Day Remembrance</h3>
+    <svg viewBox="0 0 480 200" style="display:block;width:100%;height:auto;" role="img" aria-label="Camp mourning vignette: marker stones, lowered banner, hunter kneeling">
+      <rect width="480" height="200" fill="#171009"/>
+      <ellipse cx="240" cy="70" rx="200" ry="70" fill="#241a10" opacity="0.8"/>
+      <!-- campfire, low -->
+      <path d="M228 172 Q236 150 244 158 Q252 148 258 164 Q266 154 268 172 Z" fill="#c14a24" opacity="0.8"/>
+      <ellipse cx="246" cy="174" rx="30" ry="8" fill="#3a2a18"/>
+      <ellipse cx="246" cy="160" rx="46" ry="18" fill="#c14a24" opacity="0.18"/>
+      <!-- marker stones with talismans -->
+      <g>
+        <path d="M120 176 L124 148 L138 148 L142 176 Z" fill="#241a10" stroke="#5c4426" stroke-width="2"/>
+        <path d="M160 176 L163 156 L175 156 L178 176 Z" fill="#241a10" stroke="#5c4426" stroke-width="2"/>
+        <path d="M330 176 L333 156 L345 156 L348 176 Z" fill="#241a10" stroke="#5c4426" stroke-width="2"/>
+      </g>
+      <g stroke="#c9a97a" stroke-width="2"><line x1="131" y1="128" x2="131" y2="148"/><line x1="338" y1="136" x2="338" y2="156"/></g>
+      <circle cx="131" cy="124" r="4" fill="#b08a3e"/><circle cx="338" cy="132" r="4" fill="#b08a3e"/>
+      <!-- mourning banner, lowered, tattered -->
+      <g transform="translate(60 60)">
+        <rect x="-2" y="0" width="4" height="100" fill="#5c4426"/>
+        <path d="M2 34 L38 40 L36 66 L2 60 Z" fill="#8a2f14"/>
+        <path d="M2 34 L38 40 L34 44 L2 40 Z" fill="#c9a97a" opacity="0.5"/>
+      </g>
+      <!-- kneeling hunter, head bowed -->
+      <g transform="translate(246 200)">
+        <path d="M-14 0 Q-16 -14 -6 -18 L6 -18 Q18 -14 14 0 Z" fill="#000"/>
+        <path d="M-10 -18 Q-14 -48 -2 -52 L8 -52 Q16 -48 12 -18 Z" fill="#000"/>
+        <path d="M-4 -52 Q-6 -68 2 -68 Q12 -66 10 -52 Z" fill="#000"/>
+        <path d="M-6 -68 Q2 -74 10 -68 L10 -64 Q2 -70 -6 -64 Z" fill="#000"/>
+        <path d="M-10 -46 Q-16 -36 -14 -28 L-10 -30 Q-12 -38 -8 -44 Z" fill="#c9a97a" opacity="0.5"/>
+      </g>
+      <rect x="0" y="180" width="480" height="20" fill="#100b05"/>
+    </svg>
+    <div class="display" style="font-size:22px;color:var(--rust);margin-top:10px;">FOURTEEN DAYS, THEN THE ROAD</div>
+    <div style="font-size:12px;color:var(--parch);margin-top:6px;line-height:1.6;">The camp remembers its dead for fourteen in-game days: marker stones, lowered colors, a talisman hung per name. Fire burns low and rust, never cheerful. Mourning is honored, not dwelt in.</div>
+  </div>
+</div>
+
+<!-- ============ 5. NOTES ============ -->
+<div class="section-head"><span class="num">V.</span><h2>Notes</h2><span class="tag">Open Questions</span></div>
+<div class="panel">
+  <div class="grain"></div>
+  <ul style="font-size:13px;color:var(--parch);line-height:2;padding-left:22px;">
+    <li>Sprite cast vs. pulp page: confirm whether the masthead hero should also exist as a game sprite pose, or whether cover compositions stay promo-only.</li>
+    <li>Accent discipline: Veil Rust (#C14A24) is reserved for danger, blight, and focal elements - confirm the Light Court's sun-gold does not visually collide with it in shared scenes.</li>
+    <li>Condensed display faces vary across systems (Haettenschweiler vs Impact); a shipped title logo should be baked as SVG paths rather than trusted to font stacks.</li>
+    <li>Weather readability without a UI meter: does the Pale Tide fog need its own palette ramp distinct from Darkwood fog, or is a moon disc cue enough?</li>
+    <li>The 14-day mourning period - should the remembrance banner visibly gain a talisman per fallen name, and does the count render on the banner itself?</li>
+    <li>Tavern save-point: should the respawn glyph on the door be diegetic (carved sigil) or a subtle UI overlay on approach?</li>
+    <li>Portrait frame style: oval oil-portrait frame reads paperback; alternative is a plain inked rectangle closer to in-game sprite presentation. Needs one choice.</li>
+    <li>Blotted line weight for sprites (heavy ink) is close to the pulp cover linework, but rim-light pass may cost per-frame - verify budget for 4-8 frame animations.</li>
+  </ul>
+</div>
+
+<footer style="margin-top:56px;border-top:3px solid var(--rust);padding-top:14px;display:flex;justify-content:space-between;font-size:11px;letter-spacing:0.25em;text-transform:uppercase;color:var(--smoke);">
+  <span>Witch Hunter - Art Direction Sheet A</span>
+  <span>Pulp Cover Masthead - Frazetta / Bisley Energy</span>
+  <span>Sheet 01 of the Cast Direction Set</span>
+</footer>
+
+</body>
+</html>

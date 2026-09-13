@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="ascii">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Witch Hunter - Art Direction Folio III - The Church of Mercy</title>
+<style>
+  :root {
+    --parchment: #e8dcb8;
+    --parchment-deep: #dccfa4;
+    --ink: #2b241c;
+    --ink-soft: #4a4033;
+    --rubric: #8c1d18;
+    --rubric-deep: #6e1410;
+    --goldleaf: #c9a227;
+    --gold-bright: #e6c15c;
+    --candle: #d98c2b;
+    --court-blue: #2b4a6f;
+    --bone: #f2ead6;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { background: #241d13; }
+  body {
+    background:
+      radial-gradient(ellipse 120% 60% at 50% -10%, rgba(233,196,110,0.28), transparent 60%),
+      radial-gradient(ellipse 90% 50% at 50% 105%, rgba(120,80,30,0.20), transparent 65%),
+      linear-gradient(160deg, #2a2114 0%, #1d160d 55%, #241a0e 100%);
+    font-family: Georgia, 'Times New Roman', 'Palatino Linotype', serif;
+    color: var(--ink);
+    padding: 28px 12px 60px 12px;
+  }
+  .leaf {
+    max-width: 1060px;
+    margin: 0 auto;
+    background:
+      radial-gradient(ellipse 70% 40% at 18% 6%, rgba(255,246,220,0.55), transparent 55%),
+      radial-gradient(ellipse 55% 35% at 85% 92%, rgba(150,105,40,0.22), transparent 60%),
+      repeating-linear-gradient(0deg, rgba(120,90,40,0.045) 0 2px, transparent 2px 7px),
+      repeating-linear-gradient(90deg, rgba(120,90,40,0.035) 0 1px, transparent 1px 9px),
+      linear-gradient(175deg, var(--parchment) 0%, #eadfbd 40%, var(--parchment-deep) 100%);
+    border: 1px solid #a8895a;
+    box-shadow:
+      0 0 0 4px var(--parchment),
+      0 0 0 6px #8f7141,
+      0 0 0 7px #5f4a26,
+      0 22px 60px rgba(0,0,0,0.65),
+      inset 0 0 120px rgba(140,95,35,0.16);
+  }
+  .leaf-inner { padding: 34px 46px 46px 46px; position: relative; }
+  .rubric {
+    color: var(--rubric);
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-weight: bold;
+  }
+  h1 {
+    font-size: 54px;
+    letter-spacing: 0.30em;
+    color: var(--ink);
+    text-align: center;
+    line-height: 1.05;
+    text-shadow: 0 1px 0 rgba(255,240,200,0.7);
+  }
+  h1 .h-gold {
+    color: var(--goldleaf);
+    text-shadow: 0 1px 0 rgba(255,244,205,0.8), 0 2px 3px rgba(110,75,10,0.45);
+  }
+  h2 {
+    font-size: 26px;
+    color: var(--rubric-deep);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    border-bottom: 3px double var(--rubric);
+    padding-bottom: 6px;
+    margin-bottom: 4px;
+  }
+  h3 {
+    font-size: 17px;
+    color: var(--rubric);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .folio-head { text-align: center; margin-bottom: 10px; }
+  .folio-kicker {
+    font-size: 13px;
+    letter-spacing: 0.34em;
+    color: var(--court-blue);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .folio-sub {
+    text-align: center;
+    font-style: italic;
+    color: var(--ink-soft);
+    font-size: 15px;
+    margin-top: 8px;
+    letter-spacing: 0.06em;
+  }
+  .section { margin-top: 46px; }
+  .section-head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+  .section-head h2 { flex: none; margin-bottom: 0; border-bottom: none; }
+  .section-rule { flex: 1; height: 3px; border-top: 3px double var(--rubric); opacity: 0.55; }
+  .p {
+    font-size: 15px;
+    line-height: 1.62;
+    color: var(--ink);
+    margin-bottom: 12px;
+    text-align: justify;
+    hyphens: auto;
+  }
+  .dropcap::first-letter {
+    float: left;
+    font-size: 52px;
+    line-height: 0.82;
+    padding: 6px 10px 2px 2px;
+    margin-right: 6px;
+    color: var(--rubric);
+    font-weight: bold;
+    text-shadow: 0 1px 0 rgba(255,240,200,0.6);
+    border: 1px solid rgba(140,29,24,0.35);
+    background: linear-gradient(180deg, rgba(201,162,39,0.20), rgba(201,162,39,0.02));
+  }
+  .lead-note { font-style: italic; color: var(--ink-soft); }
+  .panel {
+    background:
+      repeating-linear-gradient(0deg, rgba(120,90,40,0.03) 0 3px, transparent 3px 8px),
+      linear-gradient(180deg, rgba(255,248,225,0.5), rgba(230,215,170,0.35));
+    border: 1px solid #b3925c;
+    box-shadow: inset 0 0 0 1px rgba(255,246,214,0.65), inset 0 0 0 4px rgba(201,162,39,0.28), 0 2px 8px rgba(60,40,10,0.18);
+    padding: 18px 20px;
+    position: relative;
+  }
+  .panel-corner { position: absolute; width: 34px; height: 34px; color: var(--goldleaf); opacity: 0.9; }
+  .panel-corner.tl { top: 4px; left: 4px; }
+  .panel-corner.tr { top: 4px; right: 4px; transform: scaleX(-1); }
+  .panel-corner.bl { bottom: 4px; left: 4px; transform: scaleY(-1); }
+  .panel-corner.br { bottom: 4px; right: 4px; transform: scale(-1,-1); }
+  .divider { margin: 34px auto; display: block; width: 420px; max-width: 80%; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 760px) {
+    .leaf-inner { padding: 22px 18px 30px 18px; }
+    h1 { font-size: 34px; }
+    .grid-2, .grid-4 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="leaf">
+<div class="leaf-inner"><!-- SVG defs: shared vine corner, knotwork, and motif symbols -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a5771b"/>
+      <stop offset="0.35" stop-color="#e6c15c"/>
+      <stop offset="0.6" stop-color="#8a5f10"/>
+      <stop offset="0.85" stop-color="#d9b654"/>
+      <stop offset="1" stop-color="#a5771b"/>
+    </linearGradient>
+    <linearGradient id="goldSoft" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e6c15c"/>
+      <stop offset="1" stop-color="#b3872a"/>
+    </linearGradient>
+    <g id="vine-corner">
+      <path d="M2,32 L2,10 Q2,2 10,2 L32,2" fill="none" stroke="url(#gold)" stroke-width="2.4"/>
+      <path d="M6,30 Q6,12 14,8 Q22,5 28,6" fill="none" stroke="#8c1d18" stroke-width="1.4" opacity="0.8"/>
+      <path d="M10,26 Q12,20 9,16 Q6,12 11,10" fill="none" stroke="#4a6b3a" stroke-width="1.4" opacity="0.85"/>
+      <circle cx="28" cy="6" r="2.4" fill="url(#goldSoft)"/>
+      <circle cx="9" cy="15" r="1.6" fill="#8c1d18"/>
+      <circle cx="13" cy="8" r="1.5" fill="#4a6b3a"/>
+      <path d="M6,30 Q10,28 9,24 Q8,21 12,22" fill="none" stroke="#4a6b3a" stroke-width="1.1" opacity="0.7"/>
+    </g>
+    <g id="knot-band" fill="none" stroke="url(#gold)" stroke-width="1.6">
+      <path d="M0,8 Q10,0 20,8 Q30,16 40,8 Q50,0 60,8 Q70,16 80,8 Q90,0 100,8 Q110,16 120,8 Q130,0 140,8"/>
+      <path d="M0,8 Q10,16 20,8 Q30,0 40,8 Q50,16 60,8 Q70,0 80,8 Q90,16 100,8 Q110,0 120,8 Q130,16 140,8" opacity="0.55"/>
+    </g>
+    <g id="broken-sun">
+      <circle cx="16" cy="16" r="7" fill="none" stroke="url(#gold)" stroke-width="2"/>
+      <path d="M16,3 L16,7 M16,25 L16,29 M3,16 L7,16 M25,16 L29,16" stroke="url(#gold)" stroke-width="2"/>
+      <path d="M22,10 L25,7 M10,22 L7,25 M22,22 L25,25" stroke="url(#gold)" stroke-width="1.6"/>
+      <path d="M7,25 L25,7" stroke="#2b241c" stroke-width="2.2" opacity="0.85"/>
+    </g>
+  </defs>
+</svg>
+
+<!-- ================= FOLIO HEADER ================= -->
+<header class="folio-head">
+  <div class="folio-kicker">Witch Hunter &middot; Art Direction Folio III of III</div>
+  <h1>THE <span class="h-gold">CHURCH</span> OF<br>MERCY</h1>
+  <div class="folio-sub">Illuminated manuscript direction for the light court: gold leaf on bone parchment,
+  rubricated in red ink, lit by candle and by storm.</div>
+</header>
+
+<div style="text-align:center; margin: 6px 0 4px 0;">
+  <svg width="300" height="18" viewBox="0 0 140 16" aria-hidden="true">
+    <use href="#knot-band" x="0" y="0"/>
+    <use href="#broken-sun" transform="translate(58,-4) scale(0.62)"/>
+  </svg>
+</div>
+
+<!-- ================= 1. CHARACTER ================= -->
+<section class="section">
+  <div class="section-head">
+    <h2>I. The Hunter Illuminated</h2>
+    <div class="section-rule"></div>
+    <svg width="40" height="40" viewBox="0 0 34 34" aria-hidden="true"><use href="#vine-corner"/></svg>
+  </div>
+
+  <p class="p dropcap">In folios of this order the hunter is drawn as the saints are drawn: bounded by gold,
+  named in red, rendered flat against burnished ground. The Church of Mercy keeps its killers gently,
+  and the art direction must hold both truths at once. Character presentation sits inside a devotional
+  panel: a gilded arch, a silhouette figure, and a ledger of the soul. Every element is framed as if
+  copied by a scribe who believes what he is writing.</p>
+
+  <div class="grid-2">
+    <!-- Character panel -->
+    <div class="panel">
+      <svg class="panel-corner tl" viewBox="0 0 34 34"><use href="#vine-corner"/></svg>
+      <svg class="panel-corner tr" viewBox="0 0 34 34"><use href="#vine-corner"/></svg>
+      <svg class="panel-corner bl" viewBox="0 0 34 34"><use href="#vine-corner"/></svg>
+      <svg class="panel-corner br" viewBox="0 0 34 34"><use href="#vine-corner"/></svg>
+
+      <h3>Name Plate</h3>
+      <div style="display:flex; align-items:center; gap:14px; margin:10px 0 16px 0;">
+        <svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true">
+          <rect x="1" y="1" width="62" height="62" fill="none" stroke="url(#gold)" stroke-width="2"/>
+          <rect x="5" y="5" width="54" height="54" fill="#2b241c" opacity="0.9"/>
+          <circle cx="32" cy="20" r="7" fill="#e8dcb8"/>
+          <path d="M32,28 C22,28 18,34 17,44 L17,54 L47,54 L47,44 C46,34 42,28 32,28 Z" fill="#e8dcb8"/>
+          <path d="M14,44 L18,54 M50,44 L46,54" stroke="url(#gold)" stroke-width="2"/>
+        </svg>
+        <div>
+          <div style="font-size:24px; font-weight:bold; letter-spacing:0.06em;">SISTER MARGUERITE VELL</div>
+          <div class="rubric" style="font-size:13px; margin-top:4px;">Mercy-Bound Pyromant &middot; Censer &amp; Longbow Line</div>
+          <div class="lead-note" style="font-size:12px; margin-top:4px;">Sworn of the Church of Mercy parish at Ashford Vale.</div>
+        </div>
+      </div>
+
+      <h3>Portrait Area</h3>
+      <div style="display:flex; gap:12px; align-items:stretch; margin-bottom:16px;">
+        <svg width="150" height="190" viewBox="0 0 150 190" aria-hidden="true" style="flex:none; border:1px solid #b3925c; background:linear-gradient(180deg,#3a2f1e,#241a0e);">
+          <rect x="4" y="4" width="142" height="182" fill="none" stroke="url(#gold)" stroke-width="1.6"/>
+          <ellipse cx="75" cy="150" rx="55" ry="10" fill="#000" opacity="0.5"/>
+          <circle cx="75" cy="58" r="20" fill="#c9b183"/>
+          <path d="M75,80 C50,80 40,96 38,122 L36,178 L114,178 L112,122 C110,96 100,80 75,80 Z" fill="#8c6a3f"/>
+          <path d="M55,84 L75,96 L95,84" fill="none" stroke="#2b241c" stroke-width="3"/>
+          <path d="M75,96 L75,150" stroke="url(#gold)" stroke-width="3"/>
+          <circle cx="75" cy="132" r="9" fill="url(#goldSoft)" stroke="#6e1410" stroke-width="2"/>
+          <path d="M40,178 L38,150 M110,178 L112,150" stroke="url(#gold)" stroke-width="2"/>
+          <path d="M60,44 Q75,34 92,42" stroke="#2b241c" stroke-width="4" fill="none"/>
+        </svg>
+        <div style="flex:1; line-height:1.55; color:var(--ink-soft);">
+          <p class="p" style="text-align:left; font-size:12.5px; margin-bottom:8px;">The portrait is a
+          reliquary miniature: silhouette first, detail second. The placeholder above shows the intended
+          composition - dark ground, gold frame, warm rim-light at the hood edge, one candle-lit highlight
+          on the censer at center chest.</p>
+          <p class="p" style="text-align:left; font-size:12.5px;">Final art: hand-drawn sprite portrait,
+          512px, lit as if by a single altar candle below-left. No smile. Mercy is in the posture,
+          not the face.</p>
+        </div>
+      </div>
+
+      <h3>Stat Readout - Nine Virtues of the Ledger</h3>
+      <div style="border:1px solid #b3925c; background:rgba(255,248,225,0.4); padding:10px 12px;">
+        <div style="font-size:13px; line-height:2.05; columns:2; column-gap:26px;">
+          <div><span class="rubric" style="letter-spacing:0.06em;">VIGOR</span> .......... 7</div>
+          <div><span class="rubric" style="letter-spacing:0.06em;">RESOLVE</span> ........ 6</div>
+          <div><span class="rubric" style="letter-spacing:0.06em;">FAITH</span> ........... 9</div>
+          <div><span class="rubric" style="letter-spacing:0.06em;">SIGHT</span> ........... 5</div>
+          <div><span class="rubric" style="letter-spacing:0.06em;">STEEL</span> ........... 4</div>
+          <div><span class="rubric" style="letter-spacing:0.06em;">GRACE</span> ........... 5</div>
+          <div><span class="rubric" style="letter-spacing:0.06em;">LORE</span> ............ 6</div>
+          <div><span class="rubric" style="letter-spacing:0.06em;">CRAFT</span> ........... 7</div>
+          <div><span class="rubric" style="letter-spacing:0.06em;">SILENCE</span> ........ 3</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Equipment ledger -->
+    <div class="panel">
+      <svg class="panel-corner tl" viewBox="0 0 34 34"><use href="#vine-corner"/></svg>
+      <svg class="panel-corner tr" viewBox="0 0 34 34"><use href="#vine-corner"/></svg>
+      <svg class="panel-corner bl" viewBox="0 0 34 34"><use href="#vine-corner"/></svg>
+      <svg class="panel-corner br" viewBox="0 0 34 34"><use href="#vine-corner"/></svg>
+
+      <h3>Equipment Strip - The Kit, Bound in Order of Carriage</h3>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+        <div style="border:1px solid #b3925c; padding:8px 10px; background:rgba(255,248,225,0.35);">
+          <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true" style="float:right; margin-left:6px;">
+            <path d="M4,4 L22,4 M13,4 L13,10 M9,10 L17,10 M10,10 L6,22 M16,10 L20,22" stroke="url(#gold)" stroke-width="2" fill="none"/>
+            <path d="M6,22 L20,22" stroke="#8c1d18" stroke-width="1.5"/>
+          </svg>
+          <div class="rubric" style="font-size:11px;">Main Hand</div>
+          <div style="font-size:14px; font-weight:bold;">Sanctified Longbow</div>
+          <div class="lead-note" style="font-size:11.5px;">Yew, wax-sealed, gilded nock.</div>
+        </div>
+        <div style="border:1px solid #b3925c; padding:8px 10px; background:rgba(255,248,225,0.35);">
+          <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true" style="float:right; margin-left:6px;">
+            <path d="M8,22 L18,22 L17,6 L15,4 L11,4 L9,6 Z" stroke="url(#gold)" stroke-width="2" fill="none"/>
+            <path d="M13,10 L13,16" stroke="#8c1d18" stroke-width="1.5"/>
+          </svg>
+          <div class="rubric" style="font-size:11px;">Off Hand</div>
+          <div style="font-size:14px; font-weight:bold;">Bronze Censer</div>
+          <div class="lead-note" style="font-size:11.5px;">Burns vigil-incense; wards the touched.</div>
+        </div>
+        <div style="border:1px solid #b3925c; padding:8px 10px; background:rgba(255,248,225,0.35);">
+          <div class="rubric" style="font-size:11px;">Armor</div>
+          <div style="font-size:14px; font-weight:bold;">Mercy Coat, Quilted</div>
+          <div class="lead-note" style="font-size:11.5px;">Blue wool over boiled hide.</div>
+        </div>
+        <div style="border:1px solid #b3925c; padding:8px 10px; background:rgba(255,248,225,0.35);">
+          <div class="rubric" style="font-size:11px;">Cloak</div>
+          <div style="font-size:14px; font-weight:bold;">Pilgrim's Sun-Mantle</div>
+          <div class="lead-note" style="font-size:11.5px;">Gold thread at the hem, frayed.</div>
+        </div>
+        <div style="border:1px solid #b3925c; padding:8px 10px; background:rgba(255,248,225,0.35);">
+          <div class="rubric" style="font-size:11px;">Talisman</div>
+          <div style="font-size:14px; font-weight:bold;">Stag-Horn Reliquary</div>
+          <div class="lead-note" style="font-size:11.5px;">Holds one pressed white flower.</div>
+        </div>
+        <div style="border:1px solid #b3925c; padding:8px 10px; background:rgba(255,248,225,0.35);">
+          <div class="rubric" style="font-size:11px;">Vial I</div>
+          <div style="font-size:14px; font-weight:bold;">Ember Draught</div>
+          <div class="lead-note" style="font-size:11.5px;">Health, brewed of marsh-myrrh.</div>
+        </div>
+        <div style="border:1px solid #b3925c; padding:8px 10px; background:rgba(255,248,225,0.35);">
+          <div class="rubric" style="font-size:11px;">Vial II</div>
+          <div style="font-size:14px; font-weight:bold;">Dawn Tincture</div>
+          <div class="lead-note" style="font-size:11.5px;">Mana, bitter as ash-wine.</div>
+        </div>
+        <div style="border:1px solid #b3925c; padding:8px 10px; background:rgba(255,248,225,0.35);">
+          <div class="rubric" style="font-size:11px;">Ritual</div>
+          <div style="font-size:14px; font-weight:bold;">Morning Ritual Phial</div>
+          <div class="lead-note" style="font-size:11.5px;">One per dawn. Chosen at rest.</div>
+        </div>
+      </div>
+
+      <p class="p dropcap" style="margin-top:14px; font-size:13.5px;">Equipment reads like an inventory
+      of a missionary's satchel, not a soldier's rack. Each slot is a ruled entry in the ledger; weight
+      limits are stated as the scribe would state them, in the margin, in red.</p>
+    </div>
+  </div>
+</section>
+
+<svg class="divider" height="22" viewBox="0 0 140 16" aria-hidden="true"><use href="#knot-band"/></svg>
+
+<!-- ================= 2. THEME ================= -->
+<section class="section">
+  <div class="section-head">
+    <h2>II. Theme, Letter, and Palette</h2>
+    <div class="section-rule"></div>
+    <svg width="40" height="40" viewBox="0 0 34 34" aria-hidden="true"><use href="#vine-corner"/></svg>
+  </div>
+
+  <p class="p dropcap">The Church of Mercy's art direction is an open book on a lectern: parchment, gold,
+  red ink, and the smell of hot wax. It is the light court at its most deliberate - holy, warm, ordered -
+  yet never soft. Gothic weight comes from tall pointed frames, dense rules, and the permanent shadow at
+  the bottom of every panel, where the candle does not reach. Mercy is the subject, not the mood.</p>
+
+  <h3>Mood Statement</h3>
+  <p class="p">The world is a page that has been wept upon, prayed over, and corrected in red. The hunter
+  walks through a manuscript where the illuminator is still working: gold leaf is laid over rot, rubrics
+  mark the graves. Warmth is active, earned light - candle, dawn, hearth, vigil-flame - never ambient.
+  Where the light stops, the Veil begins.</p>
+
+  <h3>Typography Direction</h3>
+  <div class="grid-2" style="margin-top:10px;">
+    <div class="panel" style="padding:14px 16px;">
+      <div style="font-size:13px; color:var(--ink-soft); line-height:1.6;">
+        <div style="font-size:20px; font-weight:bold; letter-spacing:0.24em; color:var(--rubric-deep);">RUBRICATED SMALL CAPS</div>
+        <div style="margin:6px 0;">Headings and labels: red-ink small capitals, wide letterspacing,
+        as if written between the lines by the rubricator's hand. Two weights only - bold for plate
+        names, regular for marginalia.</div>
+        <div style="margin-top:10px; font-size:26px; font-weight:bold; letter-spacing:0.06em;">Ledger Body</div>
+        <div>Body text is a warm serif with tall x-height, set justified with hyphenation, on a
+        generous 1.6 line. Paragraph openers take a three-line drop cap in red over a gold ground.</div>
+        <div style="margin-top:10px; font-style:italic;">Marginalia - italic, smaller, brown ink,
+        always to the outer edge, always a whisper: a warning, a memory, a debt.</div>
+      </div>
+    </div>
+    <div class="panel" style="padding:14px 16px;">
+      <div style="font-size:12.5px; color:var(--ink-soft); line-height:1.7;">
+        <div class="rubric" style="font-size:12px; margin-bottom:8px;">System Stacks (no external fonts)</div>
+        <div style="font-family: Georgia, 'Times New Roman', serif; font-size:15px;">Georgia / Times New Roman - body, ledger entries.</div>
+        <div style="font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, serif; font-size:15px; margin-top:6px;">Palatino / Book Antiqua - headings, name plates, small caps via letterspacing.</div>
+        <div style="font-family: 'Courier New', Courier, monospace; font-size:14px; margin-top:6px;">Courier New - only for item counts, weights, and numeric columns, as a ledger hand.</div>
+        <div style="margin-top:10px;">Numbers are always followed by a spelled unit in italic: 7 vigor,
+        14 days, 24 hours. The manuscript never shows a bare integer.</div>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="margin-top:20px;">Color Palette - Pigments of the Scriptorium</h3>
+  <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-top:10px;">
+    <div style="border:1px solid #b3925c;">
+      <div style="height:52px; background:#e8dcb8; border-bottom:1px solid #a8895a;"></div>
+      <div style="padding:8px 10px; font-size:12px;"><b>Vellum Bone</b><br>#E8DCB8 - page ground, sprite backdrop.</div>
+    </div>
+    <div style="border:1px solid #b3925c;">
+      <div style="height:52px; background:#dccfa4; border-bottom:1px solid #a8895a;"></div>
+      <div style="padding:8px 10px; font-size:12px;"><b>Aged Parchment</b><br>#DCCFA4 - panels, aged paper fills.</div>
+    </div>
+    <div style="border:1px solid #b3925c;">
+      <div style="height:52px; background:linear-gradient(100deg,#a5771b,#e6c15c 30%,#8a5f10 55%,#d9b654 78%,#a5771b); border-bottom:1px solid #8a5f10;"></div>
+      <div style="padding:8px 10px; font-size:12px;"><b>Gold Leaf</b><br>#C9A227 - frames, haloes, save-glyphs.</div>
+    </div>
+    <div style="border:1px solid #b3925c;">
+      <div style="height:52px; background:#8c1d18; border-bottom:1px solid #6e1410;"></div>
+      <div style="padding:8px 10px; font-size:12px;"><b>Rubric Red</b><br>#8C1D18 - headers, margins, warnings.</div>
+    </div>
+    <div style="border:1px solid #b3925c;">
+      <div style="height:52px; background:#2b4a6f; border-bottom:1px solid #1d3350;"></div>
+      <div style="padding:8px 10px; font-size:12px;"><b>Court Blue</b><br>#2B4A6F - heraldry, moonless night fills.</div>
+    </div>
+    <div style="border:1px solid #b3925c;">
+      <div style="height:52px; background:#d98c2b; border-bottom:1px solid #a5651a;"></div>
+      <div style="padding:8px 10px; font-size:12px;"><b>Candle Amber</b><br>#D98C2B - the only true light source in UI.</div>
+    </div>
+    <div style="border:1px solid #b3925c;">
+      <div style="height:52px; background:#2b241c; border-bottom:1px solid #1a150f;"></div>
+      <div style="padding:8px 10px; font-size:12px;"><b>Iron Gall Ink</b><br>#2B241C - all body text and line art.</div>
+    </div>
+  </div>
+
+  <h3 style="margin-top:20px;">Texture and Lighting Language</h3>
+  <div class="grid-2">
+    <div class="panel" style="padding:14px 16px;">
+      <p class="p" style="font-size:13px; text-align:left;">Texture: fiber grain in every surface; a faint
+      laid-paper ribbing; foxed spots at panel corners. Sprites carry a hand-inked outline the weight of
+      a quill stroke, and gold is reserved for what the Church blesses - never a texture, always an
+      application, laid in patches that catch light at a rake.</p>
+    </div>
+    <div class="panel" style="padding:14px 16px;">
+      <p class="p" style="font-size:13px; text-align:left;">Lighting: one candle logic everywhere. A single
+      warm source, deep falloff, gold bounce on parchment surfaces. Weather in this palette: THE RED VIGIL
+      reads as gilded storm-light on every gold surface at once; THE PALE TIDE cools the parchment to bone
+      and dims the gold to pewter. Rubric red survives both.</p>
+    </div>
+  </div>
+</section>
+
+<svg class="divider" height="22" viewBox="0 0 140 16" aria-hidden="true"><use href="#knot-band"/></svg>
+
+<!-- ================= 3. SETTING ================= -->
+<section class="section">
+  <div class="section-head">
+    <h2>III. Settings - Grove and Hearth</h2>
+    <div class="section-rule"></div>
+    <svg width="40" height="40" viewBox="0 0 34 34" aria-hidden="true"><use href="#vine-corner"/></svg>
+  </div>
+
+  <p class="p dropcap">Two settings are illuminated side by side, as a book pairs a psalm with its gloss:
+  the Darkwood, where the Church of Mercy sends its hunters to die politely, and the parish tavern,
+  where the hunter is remembered by name. One is painted in ink and shadow; the other in gold and
+  candlelight. Together they state the game's whole emotional range.</p>
+
+  <div class="grid-2">
+    <!-- Biome: Darkwood -->
+    <div class="panel">
+      <svg class="panel-corner tl" viewBox="0 0 34 34"><use href="#vine-corner"/></svg>
+      <svg class="panel-corner tr" viewBox="0 0 34 34"><use href="#vine-corner"/></svg>
+      <svg class="panel-corner bl" viewBox="0 0 34 34"><use href="#vine-corner"/></svg>
+      <svg class="panel-corner br" viewBox="0 0 34 34"><use href="#vine-corner"/></svg>
+
+      <h3>Biome - The Darkwood</h3>
+      <svg width="100%" height="230" viewBox="0 0 420 230" aria-hidden="true" style="display:block; border:1px solid #b3925c; background:linear-gradient(180deg,#1f2a1c 0%,#141b12 55%,#0d110a 100%);">
+        <rect x="0" y="0" width="420" height="230" fill="none" stroke="url(#gold)" stroke-width="1.4"/>
+        <circle cx="330" cy="52" r="26" fill="#d98c2b" opacity="0.35"/>
+        <circle cx="330" cy="52" r="14" fill="#e6c15c" opacity="0.4"/>
+        <path d="M0,210 L60,180 L120,205 L200,175 L280,200 L360,178 L420,205 L420,230 L0,230 Z" fill="#0a0d08"/>
+        <path d="M30,200 L36,120 L48,118 L54,200 Z" fill="#10160d"/>
+        <path d="M90,205 L98,90 L112,86 L120,205 Z" fill="#131a0f"/>
+        <path d="M170,200 L178,130 L188,128 L194,200 Z" fill="#0e130b"/>
+        <path d="M250,205 L258,100 L270,96 L278,205 Z" fill="#121810"/>
+        <path d="M330,200 L338,140 L346,138 L352,200 Z" fill="#0f140c"/>
+        <path d="M92,92 Q96,70 104,68 Q114,66 116,86 M96,84 L88,72 M110,80 L118,66" stroke="#0a0d08" stroke-width="7" fill="none"/>
+        <path d="M254,104 Q258,82 266,80 Q276,78 278,98 M258,96 L250,84 M272,92 L280,78" stroke="#0a0d08" stroke-width="7" fill="none"/>
+        <rect x="352" y="140" width="26" height="34" fill="#1c2417"/>
+        <path d="M352,140 L365,118 L378,140 Z" fill="#232d1c"/>
+        <ellipse cx="150" cy="208" rx="10" ry="4" fill="#000" opacity="0.6"/>
+        <circle cx="150" cy="190" r="8" fill="#3a2f1e"/>
+        <path d="M150,198 L150,208 M144,196 L138,188 M156,196 L162,188" stroke="#3a2f1e" stroke-width="3"/>
+        <path d="M30,40 Q60,28 90,40 M60,50 L60,60" stroke="url(#gold)" stroke-width="1" opacity="0.4"/>
+      </svg>
+      <p class="p" style="font-size:13px; margin-top:12px;">The Darkwood is drawn as an unfinished
+      illumination: the ink runs and the gold has not been laid yet. Fog-choked old growth rendered in
+      iron-gall greens and blacks, with a single failing sun-disc low on the horizon - the light court's
+      motif, barely surviving. Coven marks appear as red rubric glyphs scratched into bark, wrong-handed,
+      like a parody of scripture. Sprite direction: tall vertical trunks in 2-3 depth layers, hunter
+      sprite small against them, torch-glow the only warm value in frame.</p>
+    </div>
+
+    <!-- Settlement: Tavern save-point -->
+    <div class="panel">
+      <svg class="panel-corner tl" viewBox="0 0 34 34"><use href="#vine-corner"/></svg>
+      <svg class="panel-corner tr" viewBox="0 0 34 34"><use href="#vine-corner"/></svg>
+      <svg class="panel-corner bl" viewBox="0 0 34 34"><use href="#vine-corner"/></svg>
+      <svg class="panel-corner br" viewBox="0 0 34 34"><use href="#vine-corner"/></svg>
+
+      <h3>Settlement - The Gilded Fawn, a Tavern of the Parish</h3>
+      <svg width="100%" height="230" viewBox="0 0 420 230" aria-hidden="true" style="display:block; border:1px solid #b3925c; background:linear-gradient(180deg,#2a2114 0%,#3a2c18 50%,#241a0e 100%);">
+        <rect x="0" y="0" width="420" height="230" fill="none" stroke="url(#gold)" stroke-width="1.4"/>
+        <circle cx="70" cy="46" r="22" fill="#e6c15c" opacity="0.5"/>
+        <circle cx="70" cy="46" r="12" fill="#f2ead6" opacity="0.6"/>
+        <path d="M120,205 L120,120 L150,95 L180,120 L180,205 Z" fill="#4a3823"/>
+        <path d="M112,122 L150,88 L188,122 L180,126 L150,98 L120,126 Z" fill="url(#gold)"/>
+        <rect x="138" y="160" width="26" height="45" fill="#241a0e"/>
+        <rect x="168" y="130" width="18" height="18" fill="#d98c2b" opacity="0.85"/>
+        <rect x="128" y="130" width="18" height="18" fill="#d98c2b" opacity="0.85"/>
+        <path d="M180,205 L180,150 L220,130 L260,150 L260,205 Z" fill="#3f3020"/>
+        <path d="M176,152 L220,128 L264,152 L256,156 L220,136 L184,156 Z" fill="#8c6a3f"/>
+        <rect x="205" y="170" width="30" height="35" fill="#d98c2b" opacity="0.5"/>
+        <rect x="260" y="205" width="120" height="2" fill="url(#gold)" opacity="0.5"/>
+        <path d="M300,205 L300,160 L330,145 L360,160 L360,205 Z" fill="#3a2c18"/>
+        <circle cx="330" cy="178" r="8" fill="url(#goldSoft)"/>
+        <path d="M30,205 L390,205" stroke="#241a0e" stroke-width="4"/>
+        <path d="M200,40 L200,60 L220,60 L220,40 M210,40 L210,70" stroke="url(#gold)" stroke-width="1.4" opacity="0.7"/>
+      </svg>
+      <p class="p" style="font-size:13px; margin-top:12px;">The tavern is the manuscript's gold-leaf page:
+      the one place the illumination is finished. Warm amber windows, a gilded stag sign over the road,
+      candle-glow spilling on cobbles. The save-point is an illuminated initial in the corner of the
+      scene - a candle-lit board by the hearth where the hunter's name is written into the tavern's
+      guestbook, in red, the moment you rent a room. Departure is dramatized as the scribe's act of
+      closing the book.</p>
+    </div>
+  </div>
+</section>
+
+<svg class="divider" height="22" viewBox="0 0 140 16" aria-hidden="true"><use href="#knot-band"/></svg>
+
+<!-- ================= 4. SITUATIONS ================= -->
+<section class="section">
+  <div class="section-head">
+    <h2>IV. Situations - Four Marginal Vignettes</h2>
+    <div class="section-rule"></div>
+    <svg width="40" height="40" viewBox="0 0 34 34" aria-hidden="true"><use href="#vine-corner"/></svg>
+  </div>
+
+  <p class="p dropcap">In the manuscript's margins the scribe drew the small truths: the inn, the wolf,
+  the war, the grave. Each vignette below is a marginal illustration with its own rubric, showing how
+  UI and scene mood behave in four signature moments.</p>
+
+  <div class="grid-4">
+    <!-- (a) Tavern save-point -->
+    <div class="panel">
+      <svg class="panel-corner tl" viewBox="0 0 34 34"><use href="#vine-corner"/></svg>
+      <svg class="panel-corner br" viewBox="0 0 34 34"><use href="#vine-corner"/></svg>
+      <h3>(a) Vespers at the Hearth</h3>
+      <svg width="100%" height="120" viewBox="0 0 200 120" aria-hidden="true" style="display:block; border:1px solid #b3925c; background:linear-gradient(180deg,#3a2c18,#241a0e);">
+        <rect x="0" y="0" width="200" height="120" fill="none" stroke="url(#gold)" stroke-width="1.2"/>
+        <ellipse cx="100" cy="96" rx="70" ry="16" fill="#d98c2b" opacity="0.22"/>
+        <rect x="86" y="70" width="28" height="30" fill="#1a1208"/>
+        <path d="M92,84 Q100,72 108,84 Q102,92 92,88 Z" fill="#d98c2b" opacity="0.9"/>
+        <circle cx="100" cy="58" r="7" fill="#3a2f1e"/>
+        <path d="M100,66 L100,86 M92,72 L84,66 M108,72 L116,66" stroke="#3a2f1e" stroke-width="3"/>
+        <rect x="30" y="50" width="40" height="10" fill="#241a0e"/>
+        <path d="M40,50 L40,38 M60,50 L60,38" stroke="#241a0e" stroke-width="4"/>
+        <rect x="132" y="46" width="44" height="56" fill="#2a2013"/>
+        <path d="M136,52 L172,52 M136,62 L172,62 M136,72 L172,72 M136,82 L172,82" stroke="#c9a227" stroke-width="0.8" opacity="0.6"/>
+        <path d="M140,58 Q146,55 152,58" stroke="#8c1d18" stroke-width="1" fill="none"/>
+      </svg>
+      <p class="p" style="font-size:12px; margin-top:10px; text-align:left;">The save moment is a small
+      rite: the guestbook board by the hearth glows amber, the hunter's silhouette kneels one knee.
+      UI text is rubric red on parchment: <i>Room taken. Your resurrection is bound to this hearth.</i>
+      No meter, no spinner - the candle guttering is the progress.</p>
+    </div>
+
+    <!-- (b) Night ambush -->
+    <div class="panel">
+      <svg class="panel-corner tl" viewBox="0 0 34 34"><use href="#vine-corner"/></svg>
+      <svg class="panel-corner br" viewBox="0 0 34 34"><use href="#vine-corner"/></svg>
+      <h3>(b) The Pale Tide Ambush</h3>
+      <svg width="100%" height="120" viewBox="0 0 200 120" aria-hidden="true" style="display:block; border:1px solid #b3925c; background:linear-gradient(180deg,#1d2632,#10151d);">
+        <rect x="0" y="0" width="200" height="120" fill="none" stroke="url(#gold)" stroke-width="1.4"/>
+        <circle cx="160" cy="30" r="14" fill="#f2ead6" opacity="0.7"/>
+        <path d="M0,100 L200,100 L200,120 L0,120 Z" fill="#0d1117"/>
+        <path d="M100,58 L100,88 M92,64 L80,56 M108,64 L120,56" stroke="#c9b183" stroke-width="3"/>
+        <circle cx="100" cy="50" r="7" fill="#3a2f1e"/>
+        <path d="M40,94 L52,80 L58,88 L70,78 L78,90" stroke="#2a2f3a" stroke-width="4" fill="none"/>
+        <path d="M120,96 L134,84 L140,90 L154,80 L162,92" stroke="#2a2f3a" stroke-width="4" fill="none"/>
+        <circle cx="46" cy="80" r="2" fill="#8c1d18"/>
+        <circle cx="158" cy="80" r="2" fill="#8c1d18"/>
+        <path d="M100,64 L100,74 L96,78 M100,74 L104,78" stroke="url(#gold)" stroke-width="2" fill="none"/>
+      </svg>
+      <p class="p" style="font-size:12px; margin-top:10px; text-align:left;">Wolves of the wild strain
+      close under a moon-fog; the hunter's censer is the single warm point in a silver frame. UI turns
+      manuscript-dangerous: health is a red rubric line being un-written, edge to center, with a margin
+      note - <i>Faith holds. Breath. Loose at the second howl.</i></p>
+    </div>
+
+    <!-- (c) Siege war council -->
+    <div class="panel">
+      <svg class="panel-corner tl" viewBox="0 0 34 34"><use href="#vine-corner"/></svg>
+      <svg class="panel-corner br" viewBox="0 0 34 34"><use href="#vine-corner"/></svg>
+      <h3>(c) Council Before the Wall</h3>
+      <svg width="100%" height="120" viewBox="0 0 200 120" aria-hidden="true" style="display:block; border:1px solid #b3925c; background:linear-gradient(180deg,#4a3823,#2a2114);">
+        <rect x="0" y="0" width="200" height="120" fill="none" stroke="url(#gold)" stroke-width="1.4"/>
+        <rect x="26" y="60" width="148" height="14" fill="#5f4a26"/>
+        <rect x="120" y="26" width="34" height="36" fill="#4a3823"/>
+        <path d="M116,28 L137,10 L158,28 Z" fill="#6e1410"/>
+        <path d="M50,66 L50,52 M60,66 L60,56 M70,66 L70,52" stroke="#2b4a6f" stroke-width="3"/>
+        <circle cx="70" cy="66" r="5" fill="#c9b183"/>
+        <circle cx="100" cy="68" r="5" fill="#c9b183"/>
+        <circle cx="86" cy="70" r="5" fill="#8c6a3f"/>
+        <circle cx="200" cy="0" r="0" fill="none"/>
+        <ellipse cx="90" cy="92" rx="52" ry="8" fill="#d98c2b" opacity="0.25"/>
+        <path d="M40,90 L140,90" stroke="#241a0e" stroke-width="2"/>
+        <path d="M30,20 L46,20 L46,34 L30,34 Z" fill="url(#gold)" opacity="0.7"/>
+      </svg>
+      <p class="p" style="font-size:12px; margin-top:10px; text-align:left;">Officers around a trestle
+      under a Storm-Call-darkened sky; the keep's sun-banner burns low on the horizon. Dialogue UI is a
+      council page: speaker names in gold small caps, options as ruled choices in red - <i>Bless the
+      wall. Burn the causeway. Send for the Mercy tents.</i> The chosen line is illuminated; the rest
+      fades to brown ink.</p>
+    </div>
+
+    <!-- (d) Camp mourning -->
+    <div class="panel">
+      <svg class="panel-corner tl" viewBox="0 0 34 34"><use href="#vine-corner"/></svg>
+      <svg class="panel-corner br" viewBox="0 0 34 34"><use href="#vine-corner"/></svg>
+      <h3>(d) The Fourteen Days</h3>
+      <svg width="100%" height="120" viewBox="0 0 200 120" aria-hidden="true" style="display:block; border:1px solid #b3925c; background:linear-gradient(180deg,#3a3020,#241d13);">
+        <rect x="0" y="0" width="200" height="120" fill="none" stroke="url(#gold)" stroke-width="1.4"/>
+        <path d="M60,100 L60,66 L84,50 L108,66 L108,100" fill="#4a3a24"/>
+        <path d="M56,68 L84,46 L112,68" fill="none" stroke="url(#gold)" stroke-width="2"/>
+        <rect x="70" y="104" width="10" height="8" fill="#1a1409"/>
+        <rect x="94" y="104" width="10" height="8" fill="#1a1409"/>
+        <path d="M140,100 L140,72 M132,72 L148,72 M136,66 L144,66" stroke="#8c1d18" stroke-width="2"/>
+        <circle cx="140" cy="106" r="5" fill="#8c1d18" opacity="0.7"/>
+        <path d="M30,100 L40,84 L50,100 M36,92 L36,100" stroke="#2b241c" stroke-width="2" fill="none"/>
+        <path d="M160,100 L170,84 L180,100 M166,92 L166,100" stroke="#2b241c" stroke-width="2" fill="none"/>
+        <ellipse cx="100" cy="108" rx="80" ry="6" fill="#d98c2b" opacity="0.15"/>
+      </svg>
+      <p class="p" style="font-size:12px; margin-top:10px; text-align:left;">A mourner's tent in the camp
+      community; fourteen small red marks line the panel border, one struck through per in-game day.
+      The dead are remembered as marginalia: each name written into the camp's roll in brown ink, then
+      re-inked in red on the final day. UI never counts the dead; it keeps the list.</p>
+    </div>
+  </div>
+</section>
+
+<svg class="divider" height="22" viewBox="0 0 140 16" aria-hidden="true"><use href="#knot-band"/></svg>
+
+<!-- ================= 5. NOTES ================= -->
+<section class="section">
+  <div class="section-head">
+    <h2>V. Notes of the Scribe</h2>
+    <div class="section-rule"></div>
+    <svg width="40" height="40" viewBox="0 0 34 34" aria-hidden="true"><use href="#vine-corner"/></svg>
+  </div>
+
+  <p class="p dropcap">Marginal observations, doubts, and open questions, set down in the rubricator's
+  hand for the illuminators who follow.</p>
+
+  <div class="panel" style="padding:16px 20px;">
+    <svg class="panel-corner tl" viewBox="0 0 34 34"><use href="#vine-corner"/></svg>
+    <svg class="panel-corner br" viewBox="0 0 34 34"><use href="#vine-corner"/></svg>
+    <ul style="margin-left:22px; font-size:13.5px; line-height:1.85; color:var(--ink);">
+      <li>Open question: how far can gold leaf go before it reads as reward-spam? Reserve a hard budget
+      - gold appears only on blessed things and save points, and audit every screen for compliance.</li>
+      <li>Open question: does the rubric red survive as readable on the darkest Darkwood night frames,
+      or does marginalia need a bone-paper chip behind it in low-light scenes?</li>
+      <li>Open question: drop caps on every paragraph may be too liturgical for mid-combat UI. Propose
+      drop caps only for book-like screens (ledger, map legend, quest folios) and plain rubric headers
+      for the HUD.</li>
+      <li>Gap: no decision yet on how THE PALE TIDE's silver wash should treat the gold leaf - pewter
+      shift is proposed but untested against sprite readability at 512px.</li>
+      <li>Gap: the stat names (Vigor, Resolve, Faith, Sight, Steel, Grace, Lore, Craft, Silence) are
+      invented for this folio; confirm against the shared nine-stat design before they are treated as canon.</li>
+      <li>Gap: equipment strip shows 8 slots but weight rules live only in prose; the ledger needs a
+      defined carry-weight presentation (margin note vs. column figure).</li>
+      <li>Question for lighting: candle-amber is the only warm source in UI, but THE RED VIGIL floods
+      the world with storm-gold. Where is the line between weather light and UI light?</li>
+      <li>Concern: the mourning vignette's fourteen struck marks need a legible in-world counterpart -
+      confirm the camp's mourning roll is a readable object, not only a UI list.</li>
+      <li>Note: sprite frames (4-8) are sparse for the censer burn animation; flag for the animation
+      pass whether a dedicated 8-frame loop is budgeted.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- Closing knotwork and colophon -->
+<svg class="divider" height="22" viewBox="0 0 140 16" aria-hidden="true"><use href="#knot-band"/></svg>
+
+<div style="text-align:center; margin-top:6px;">
+  <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><use href="#vine-corner"/></svg>
+  <div style="font-size:12px; color:var(--ink-soft); font-style:italic; margin-top:6px; letter-spacing:0.08em;">
+    Here ends the third folio of the Witch Hunter art direction, written for the Church of Mercy,
+    in gold, in red, and in iron-gall ink.
+  </div>
+</div>
+
+</div><!-- /leaf-inner -->
+</div><!-- /leaf -->
+</body>
+</html>

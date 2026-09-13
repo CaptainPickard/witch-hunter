@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="ascii">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WITCH HUNTER - ART DIRECTION PAGE B - DAGGERFALL CRT</title>
+<style>
+:root{
+  --amber:#ffb000;
+  --amber-dim:#c07800;
+  --amber-deep:#6b4200;
+  --phos:#7fff5e;
+  --paper:#0a0804;
+  --panel:#171106;
+  --panel-lit:#241a08;
+  --ink:#e8c878;
+  --ink-dim:#8a6d33;
+  --blood:#b3221e;
+  --veil:#3d2a52;
+  --steel:#9aa2a8;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{background:#030202;}
+body{
+  font-family:"Courier New",Courier,monospace;
+  color:var(--ink);
+  background:#030202;
+  padding:24px 12px 60px 12px;
+}
+.page{max-width:1060px;margin:0 auto;position:relative;}
+/* CRT vignette overlay */
+body::after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:50;
+  background:radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,0.55) 100%);
+}
+/* scanlines overlay */
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:51;
+  background:repeating-linear-gradient(0deg, rgba(0,0,0,0.18) 0px, rgba(0,0,0,0.18) 1px, transparent 1px, transparent 3px);
+}
+/* ===== beveled double-border panel ===== */
+.panel{
+  background:var(--panel);
+  border:3px solid var(--amber-dim);
+  outline:2px solid #000;
+  box-shadow:inset 0 0 0 2px #000, inset 0 0 0 4px var(--amber-deep), 0 0 18px rgba(255,176,0,0.08);
+  margin:0 0 26px 0;
+  padding:18px 20px 20px 20px;
+  position:relative;
+}
+.panel::before{ /* dither top strip */
+  content:"";display:block;height:8px;margin:-8px 0 10px 0;
+  background:repeating-linear-gradient(90deg, var(--amber-deep) 0 2px, transparent 2px 4px);
+}
+.panel-title{
+  display:inline-block;
+  background:var(--amber-deep);
+  color:var(--amber);
+  border:2px solid var(--amber);
+  outline:2px solid #000;
+  padding:3px 14px 2px 14px;
+  font-size:15px;font-weight:bold;letter-spacing:3px;
+  margin:-32px 0 14px 0;
+  text-transform:uppercase;
+  box-shadow:3px 3px 0 #000;
+}
+h1,h2,h3,h4{text-transform:uppercase;}
+h2.sub{font-size:13px;color:var(--amber);letter-spacing:4px;margin:14px 0 8px 0;border-bottom:1px dashed var(--amber-deep);padding-bottom:4px;}
+p{font-size:13px;line-height:1.65;color:var(--ink);margin:0 0 10px 0;}
+p.dim{color:var(--ink-dim);}
+.small{font-size:11px;line-height:1.5;color:var(--ink-dim);}
+.lead{font-size:14px;color:var(--amber);}
+/* dithered gradient bar */
+.dither-bar{
+  height:14px;border:2px solid var(--amber-deep);outline:1px solid #000;margin:8px 0 16px 0;
+  background:linear-gradient(90deg, #000, var(--amber-deep) 45%, var(--amber) 100%);
+}
+.ditherbar-steps{
+  height:12px;margin:8px 0 14px 0;border:2px solid var(--amber-deep);
+  background:repeating-linear-gradient(90deg,
+    #000 0 16px, #241a08 16px 32px, #6b4200 32px 48px,
+    #c07800 48px 64px, #ffb000 64px 80px, #ffd866 80px 96px);
+}
+/* stat table */
+table.stats{border-collapse:collapse;width:100%;}
+table.stats td{
+  border:1px solid var(--amber-deep);
+  padding:4px 10px;font-size:12px;letter-spacing:1px;
+}
+table.stats td.k{color:var(--amber-dim);text-transform:uppercase;width:34%;}
+table.stats td.v{color:var(--ink);}
+table.stats td.bar{width:38%;}
+.meter{height:9px;border:1px solid var(--amber-deep);background:#000;position:relative;}
+.meter span{display:block;height:100%;background:repeating-linear-gradient(90deg, var(--amber) 0 3px, var(--amber-dim) 3px 4px);}
+/* equipment strip */
+.eq-strip{display:flex;flex-wrap:wrap;gap:8px;}
+.eq-slot{
+  width:118px;border:2px solid var(--amber-deep);outline:1px solid #000;background:#000;
+  padding:6px 6px 7px 6px;text-align:center;
+}
+.eq-slot .glyph{height:44px;display:flex;align-items:center;justify-content:center;color:var(--amber-dim);}
+.eq-slot .nm{font-size:9px;color:var(--ink);letter-spacing:0.5px;line-height:1.35;min-height:26px;}
+.eq-slot .tag{font-size:8px;color:var(--ink-dim);letter-spacing:1px;text-transform:uppercase;}
+/* swatches */
+.swrow{display:flex;flex-wrap:wrap;gap:10px;}
+.sw{width:120px;border:2px solid var(--amber-deep);outline:1px solid #000;background:#000;padding:5px;}
+.sw .chip{height:34px;border:1px solid #000;}
+.sw .nm{font-size:9px;color:var(--ink);letter-spacing:1px;text-transform:uppercase;margin-top:5px;}
+.sw .hx{font-size:9px;color:var(--amber-dim);}
+/* tabs */
+.tabs{display:flex;gap:4px;margin:4px 0 0 6px;}
+.tab{
+  border:2px solid var(--amber-deep);border-bottom:none;outline:1px solid #000;
+  padding:3px 12px 2px 12px;font-size:10px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--amber-dim);background:#0d0a04;box-shadow:inset 1px 1px 0 #2a1d06;
+}
+.tab.on{color:var(--amber);background:var(--amber-deep);border-color:var(--amber);}
+.tabbed-body{
+  border:2px solid var(--amber-deep);outline:1px solid #000;background:var(--panel-lit);
+  padding:12px 14px;
+}
+/* vignette frame div */
+.crt-frame{
+  border:3px solid var(--amber-deep);outline:2px solid #000;box-shadow:inset 0 0 40px rgba(0,0,0,0.85);
+  background:radial-gradient(ellipse at 50% 40%, #1c1206 0%, #0a0703 75%, #000 100%);
+}
+svg{display:block;}
+.center{text-align:center;}
+</style>
+</head>
+<body>
+<div class="page"><!-- ================= HEADER ================= -->
+<div class="panel">
+<div class="panel-title">Witch Hunter / Art Direction B</div>
+<h1 style="font-size:26px;letter-spacing:6px;color:var(--amber);text-shadow:0 0 8px rgba(255,176,0,0.4);">WITCH HUNTER</h1>
+<p class="lead">ART DIRECTION PAGE B - THE DAGGERFALL CRT FACE</p>
+<div class="ditherbar-steps"></div>
+<p class="dim small">PAGE A (PAINTED PULP) CARRIES THE ILLUSTRATION SOUL. PAGE B CARRIES THE STRUCTURAL SOUL: THE SCREEN ITSELF. THIS IS THE DOS-ERA INTERFACE VOICE - BEVELED PANELS, DITHERED SKIES, SCANLINES, AMBER READOUTS. EVERY MENU, JOURNAL PAGE, MAP SCREEN AND BARBER-SURGEON WINDOW DRAWS FROM THIS SHEET.</p>
+</div>
+
+<!-- ================= 1. CHARACTER ================= -->
+<div class="panel">
+<div class="panel-title">I. Character Sheet</div>
+<p class="small dim">MODEL FOR THE CHARACTER SCREEN. DOUBLE-BORDER BEVEL, TABBED DIALOG, MONOSPACE READOUT. THE PORTRAIT IS A DITHERED SILHOUETTE IN A CRT NODULE - NO PAINTED PORTRAITS IN UI; THE WORLD IS PAINTED, THE INTERFACE IS PHOSPHOR.</p>
+<div class="tabs">
+<div class="tab on">CHARACTER</div><div class="tab">SKILLS</div><div class="tab">JOURNAL</div><div class="tab">MAP</div><div class="tab">REST</div>
+</div>
+<div class="tabbed-body">
+<table style="width:100%;border-collapse:collapse;"><tr>
+<!-- portrait -->
+<td style="width:230px;vertical-align:top;padding-right:14px;">
+<div class="crt-frame" style="padding:8px;">
+<svg viewBox="0 0 160 200" width="210" height="180" style="image-rendering:pixelated;">
+  <defs>
+    <pattern id="dth1" width="4" height="4" patternUnits="userSpaceOnUse">
+      <rect width="4" height="4" fill="#1a1206"/>
+      <rect x="0" y="0" width="2" height="2" fill="#3a2a10"/>
+      <rect x="2" y="2" width="2" height="2" fill="#3a2a10"/>
+    </pattern>
+  </defs>
+  <rect x="0" y="0" width="160" height="200" fill="#0a0703"/>
+  <!-- horizon dither -->
+  <rect x="0" y="120" width="160" height="80" fill="url(#dth1)"/>
+  <!-- hunter silhouette -->
+  <g fill="#050302">
+    <!-- head + hood -->
+    <path d="M80 26 q16 0 18 16 q1 10 -6 14 l3 8 h-30 l3 -8 q-7 -4 -6 -14 q2 -16 18 -16 z"/>
+    <!-- shoulders / cloak -->
+    <path d="M40 74 q18 -14 40 -14 q22 0 40 14 l6 84 q-10 10 -26 12 l4 34 h-14 l-4 -30 h-12 l-4 30 h-14 l4 -34 q-16 -2 -26 -12 z"/>
+  </g>
+  <!-- hat brim highlight -->
+  <rect x="62" y="40" width="36" height="3" fill="#ffb000" opacity="0.65"/>
+  <!-- crossbow stock -->
+  <rect x="30" y="96" width="60" height="7" fill="#0b0805" stroke="#6b4200" stroke-width="1"/>
+  <rect x="84" y="92" width="14" height="15" fill="#0b0805" stroke="#6b4200" stroke-width="1"/>
+  <!-- lantern -->
+  <rect x="112" y="98" width="9" height="11" fill="#ffb000" opacity="0.85"/>
+  <circle cx="116" cy="103" r="10" fill="#ffb000" opacity="0.15"/>
+  <!-- scanlines on portrait -->
+  <g fill="#000" opacity="0.35">
+    <rect x="0" y="4" width="160" height="1"/><rect x="0" y="12" width="160" height="1"/>
+    <rect x="0" y="20" width="160" height="1"/><rect x="0" y="28" width="160" height="1"/>
+    <rect x="0" y="36" width="160" height="1"/><rect x="0" y="44" width="160" height="1"/>
+    <rect x="0" y="52" width="160" height="1"/><rect x="0" y="60" width="160" height="1"/>
+    <rect x="0" y="68" width="160" height="1"/><rect x="0" y="76" width="160" height="1"/>
+    <rect x="0" y="84" width="160" height="1"/><rect x="0" y="92" width="160" height="1"/>
+    <rect x="0" y="100" width="160" height="1"/><rect x="0" y="108" width="160" height="1"/>
+    <rect x="0" y="116" width="160" height="1"/><rect x="0" y="124" width="160" height="1"/>
+    <rect x="0" y="132" width="160" height="1"/><rect x="0" y="140" width="160" height="1"/>
+    <rect x="0" y="148" width="160" height="1"/><rect x="0" y="156" width="160" height="1"/>
+    <rect x="0" y="164" width="160" height="1"/><rect x="0" y="172" width="160" height="1"/>
+    <rect x="0" y="180" width="160" height="1"/><rect x="0" y="188" width="160" height="1"/>
+  </g>
+  <rect x="0" y="0" width="160" height="200" fill="none" stroke="#6b4200" stroke-width="2"/>
+</svg>
+</div>
+<div class="small" style="margin-top:6px;color:var(--ink-dim);">PORTRAIT: DITHERED SILHOUETTE,<br>HELD LANTERN, SCANLINE PASS</div>
+</td>
+<!-- name + stats -->
+<td style="vertical-align:top;">
+<table class="stats">
+<tr><td class="k">NAME</td><td class="v" style="color:var(--amber);font-weight:bold;">MAREN DUSKWARD</td><td class="k">TITLE</td><td class="v">VEILWARDEN / CROSSBOW</td></tr>
+<tr><td class="k">ALLEGIANCE</td><td class="v">UNSWORN (NEUTRAL)</td><td class="k">RANK</td><td class="v">HUNTER, 3RD MARK</td></tr>
+</table>
+<h2 class="sub">STAT READOUT</h2>
+<table class="stats">
+<tr><td class="k">STRENGTH</td><td class="v">07</td><td class="bar"><div class="meter"><span style="width:46%;"></span></div></td></tr>
+<tr><td class="k">AGILITY</td><td class="v">09</td><td class="bar"><div class="meter"><span style="width:60%;"></span></div></td></tr>
+<tr><td class="k">ENDURANCE</td><td class="v">08</td><td class="bar"><div class="meter"><span style="width:53%;"></span></div></td></tr>
+<tr><td class="k">PRECISION</td><td class="v">12</td><td class="bar"><div class="meter"><span style="width:80%;"></span></div></td></tr>
+<tr><td class="k">RESOLVE</td><td class="v">10</td><td class="bar"><div class="meter"><span style="width:66%;"></span></div></td></tr>
+<tr><td class="k">VEIL SENSE</td><td class="v">06</td><td class="bar"><div class="meter"><span style="width:40%;"></span></div></td></tr>
+<tr><td class="k">LORE</td><td class="v">09</td><td class="bar"><div class="meter"><span style="width:60%;"></span></div></td></tr>
+<tr><td class="k">GUILE</td><td class="v">05</td><td class="bar"><div class="meter"><span style="width:33%;"></span></div></td></tr>
+<tr><td class="k">PIETY</td><td class="v">04</td><td class="bar"><div class="meter"><span style="width:26%;"></span></div></td></tr>
+</table>
+<p class="small dim" style="margin-top:8px;">SKILL LINE: CROSSBOW IV / TRACKING V / WARD-LORE II / CAMP-RIGHTS III. SPECIALTY TITLE "VEILWARDEN" GRANTED AT RESOLVE 10 + LORE 09 - THE SHEET ANNOUNCES WHAT THE WORLD RESPECTS.</p>
+</td>
+</tr></table>
+<h2 class="sub">EQUIPMENT STRIP</h2>
+<div class="eq-strip">
+<div class="eq-slot"><div class="glyph"><svg viewBox="0 0 40 40" width="36" height="36"><path d="M6 34 L26 14 l4 4 L10 38 z M24 12 l8 -8 4 4 -8 8 z" fill="none" stroke="currentColor" stroke-width="2"/><rect x="27" y="5" width="10" height="3" fill="currentColor"/></svg></div><div class="nm">HUNTER'S CROSSBOW</div><div class="tag">MAIN HAND</div></div>
+<div class="eq-slot"><div class="glyph"><svg viewBox="0 0 40 40" width="36" height="36"><path d="M20 4 L30 10 V22 q0 10 -10 14 q-10 -4 -10 -14 V10 z" fill="none" stroke="currentColor" stroke-width="2"/></svg></div><div class="nm">QUARREL QUIVER x24</div><div class="tag">OFF HAND</div></div>
+<div class="eq-slot"><div class="glyph"><svg viewBox="0 0 40 40" width="36" height="36"><path d="M12 4 h16 l4 8 v6 h-24 v-6 z M18 18 h4 v14 h-4 z M12 36 h16 v3 h-16 z" fill="none" stroke="currentColor" stroke-width="2"/></svg></div><div class="nm">OILED WAX CLOAK</div><div class="tag">BODY</div></div>
+<div class="eq-slot"><div class="glyph"><svg viewBox="0 0 40 40" width="36" height="36"><rect x="8" y="12" width="24" height="20" fill="none" stroke="currentColor" stroke-width="2"/><rect x="8" y="8" width="24" height="4" fill="currentColor"/></svg></div><div class="nm">STAG-TALLOW POTION x2</div><div class="tag">BELT</div></div>
+<div class="eq-slot"><div class="glyph"><svg viewBox="0 0 40 40" width="36" height="36"><rect x="14" y="6" width="12" height="16" fill="none" stroke="currentColor" stroke-width="2"/><rect x="17" y="22" width="6" height="4" fill="currentColor"/><circle cx="20" cy="32" r="4" fill="none" stroke="currentColor" stroke-width="2"/></svg></div><div class="nm">VEIL-TAKER LANTERN</div><div class="tag">UTILITY</div></div>
+<div class="eq-slot"><div class="glyph"><svg viewBox="0 0 40 40" width="36" height="36"><path d="M8 30 L20 10 l12 20 M14 30 h12" fill="none" stroke="currentColor" stroke-width="2"/></svg></div><div class="nm">IRON-WAY CHARM</div><div class="tag">TRINKET</div></div>
+<div class="eq-slot"><div class="glyph"><svg viewBox="0 0 40 40" width="36" height="36"><path d="M10 8 h20 v6 h-20 z M12 14 v20 M28 14 v20" fill="none" stroke="currentColor" stroke-width="2"/></svg></div><div class="nm">TENT STAKES + OILCLOTH</div><div class="tag">CAMP KIT</div></div>
+</div>
+</div>
+</div>
+<!-- ================= 2. THEME ================= -->
+<div class="panel">
+<div class="panel-title">II. Theme, Type, Color, Texture</div>
+<p class="lead">MOOD STATEMENT</p>
+<p>WITCH HUNTER IS A DELIBERATE WORLD. THE PLAYER READS SKY, ROAD, AND SILENCE BEFORE READING HEALTH. THE CRT FACE OF PAGE B MAKES READING ITSELF PART OF THE FICTION: EVERY NUMBER IS A COUNTER ON A CHURCH-CALIBRATED MACHINE, EVERY PANEL A SCRIBE'S LEDGER RENDERED IN PHOSPHOR. WARM AND WATCHFUL, NEVER NEON. THE SCREEN GLOWS LIKE A LANTERN IN A DARK ROOM, NOT LIKE A NIGHTCLUB.</p>
+<div class="dither-bar"></div>
+<h2 class="sub">TYPOGRAPHY DIRECTION</h2>
+<p class="small">
+- INTERFACE TEXT: BLOCKY MONOSPACE-ADJACENT SYSTEM STACK (COURIER / FIXED-WIDTH CLASS), NEARLY ALWAYS UPPERCASE, WIDE LETTER-SPACING (2-6PX), NO ANTI-ALIAS ILLUSION - THIN STROKES LOOK BITMAP-CRUSHED.<br>
+- HEADLINES: 20-30PX, LETTER-SPACING 4-6PX, AMBER WITH A SOFT PHOSPHOR BLOOM (TEXT-SHADOW), NEVER GLOWING PULSING.<br>
+- BODY/LEDGER TEXT: 11-13PX MIXED CASE ONLY IN BOOK-AND-JOURNAL CONTEXTS (THE JOURNAL IS THE ONE DOCUMENT, THE REST IS THE MACHINE).<br>
+- NUMBERS ARE PART OF THE TYPE: TABULAR COUNTERS, ZERO-PADDED (07, 09, 12).<br>
+- NO SERIF DISPLAY, NO SANS, NO ROUNDED FONTS ANYWHERE IN UI.
+</p>
+<h2 class="sub">COLOR PALETTE</h2>
+<div class="swrow">
+<div class="sw"><div class="chip" style="background:#ffb000;"></div><div class="nm">SIGNAL AMBER</div><div class="hx">#FFB000</div></div>
+<div class="sw"><div class="chip" style="background:#6b4200;"></div><div class="nm">BEVEL BRONZE</div><div class="hx">#6B4200</div></div>
+<div class="sw"><div class="chip" style="background:#171106;"></div><div class="nm">LEDGER BLACK</div><div class="hx">#171106</div></div>
+<div class="sw"><div class="chip" style="background:#7fff5e;"></div><div class="nm">MERCY PHOSPHOR</div><div class="hx">#7FFF5E</div></div>
+<div class="sw"><div class="chip" style="background:#b3221e;"></div><div class="nm">BLOOD RED</div><div class="hx">#B3221E</div></div>
+<div class="sw"><div class="chip" style="background:#3d2a52;"></div><div class="nm">VEIL VIOLET</div><div class="hx">#3D2A52</div></div>
+<div class="sw"><div class="chip" style="background:#9aa2a8;"></div><div class="nm">IRON WAY</div><div class="hx">#9AA2A8</div></div>
+</div>
+<p class="small dim" style="margin-top:8px;">RULE: AMBER IS THE MACHINE'S VOICE. PHOSPHOR GREEN APPEARS ONLY FOR MERCY-CHURCH AND HEALING CONTEXTS. RED IS DAMAGE, CURSES, DARK-COURT SEAL. VIOLET IS THE VEIL ITSELF AND IS RATIONED - IF VIOLET APPEARS, SOMETHING IS WRONG WITH THE WORLD, NOT THE UI.</p>
+<h2 class="sub">TEXTURE AND LIGHTING LANGUAGE</h2>
+<p class="small">
+- EVERY GRADIENT IS DITHERED OR BANDED: SKIES, PORTRAIT BACKINGS, PANEL WASHES NEVER SHOW SMOOTH FALL-OFF. 2X2 AND 4X4 CHECKER PATTERNS ARE THE DEFAULT DITHER.<br>
+- 3PX SCANLINE PASS OVER ALL FULL-SCREEN SURFACES; 1PX DARK LINE EVERY 8PX ON PANELS.<br>
+- LIGHTING READS AS PHOSPHOR DECAY: BRIGHT ELEMENTS BLOOM SLIGHTLY AND FADE AT EDGES, BUT THE WORLD BEHIND THE PANEL STAYS BLACK. THE UI NEVER BRIGHTENS THE SCENE.<br>
+- BEVELS ARE DOUBLE: OUTER 3PX METAL BORDER, INNER 4PX SHADOW GROOVE, ALL AT 90-DEGREE CORNERS.<br>
+- ICONS ARE 32-40PX STROKE GLYPHS DRAWN LIKE ENGRAVED PLATES, ONE HOBBNAIL TEXTURE PERMITTED PER SCREEN.
+</p>
+</div>
+<!-- ================= 3. SETTING ================= -->
+<div class="panel">
+<div class="panel-title">III. Setting - Darkwood and the Wyrd Stag Tavern</div>
+<table style="width:100%;border-collapse:collapse;"><tr>
+<td style="width:50%;vertical-align:top;padding-right:12px;">
+<h2 class="sub">BIOME PANEL: DARKWOOD</h2>
+<div class="crt-frame" style="padding:6px;">
+<svg viewBox="0 0 300 170" width="100%" style="display:block;">
+  <defs>
+    <pattern id="dwood" width="6" height="6" patternUnits="userSpaceOnUse">
+      <rect width="6" height="6" fill="#0d0a04"/>
+      <rect width="3" height="3" fill="#171106"/><rect x="3" y="3" width="3" height="3" fill="#171106"/>
+    </pattern>
+    <pattern id="fogd" width="4" height="4" patternUnits="userSpaceOnUse">
+      <rect width="4" height="4" fill="none"/><rect width="2" height="2" fill="#8a6d33"/>
+    </pattern>
+  </defs>
+  <rect width="300" height="170" fill="url(#dwood)"/>
+  <rect y="0" width="300" height="60" fill="#241a08"/>
+  <rect y="60" width="300" height="40" fill="url(#fogd)" opacity="0.5"/>
+  <!-- far trees -->
+  <g fill="#0a0703">
+    <path d="M30 100 L45 40 L60 100 z"/><path d="M70 105 L88 30 L106 105 z"/>
+    <path d="M230 100 L248 36 L266 100 z"/><path d="M270 108 L284 52 L298 108 z"/>
+  </g>
+  <!-- near trees, darker -->
+  <g fill="#050302">
+    <path d="M0 170 L14 10 L20 10 L34 170 z"/>
+    <path d="M120 170 L136 0 L146 0 L162 170 z"/>
+    <path d="M250 170 L262 18 L272 18 L288 170 z"/>
+  </g>
+  <!-- fog band -->
+  <rect y="104" width="300" height="26" fill="url(#fogd)" opacity="0.65"/>
+  <!-- path -->
+  <path d="M0 170 L110 128 L190 128 L300 170 z" fill="#1c1206"/>
+  <!-- hunter sprite, small silhouette with lantern -->
+  <g>
+    <rect x="147" y="120" width="6" height="18" fill="#050302"/>
+    <circle cx="150" cy="115" r="4" fill="#050302"/>
+    <rect x="156" y="124" width="4" height="5" fill="#ffb000" opacity="0.9"/>
+    <circle cx="158" cy="126" r="8" fill="#ffb000" opacity="0.14"/>
+  </g>
+  <!-- lantern-glow fog light shafts -->
+  <path d="M160 120 L188 100 L188 126 z" fill="#ffb000" opacity="0.08"/>
+  <g fill="#000" opacity="0.3">
+    <rect y="20" width="300" height="1"/><rect y="44" width="300" height="1"/><rect y="68" width="300" height="1"/>
+    <rect y="92" width="300" height="1"/><rect y="116" width="300" height="1"/><rect y="140" width="300" height="1"/>
+  </g>
+  <rect width="300" height="170" fill="none" stroke="#6b4200" stroke-width="2"/>
+</svg>
+</div>
+<p class="small" style="margin-top:6px;">DARKWOOD, DUSK. FOG-CHOKED OLD GROWTH. TREES ARE FLAT BLACK PLATES OVER A DITHERED WASH; FOG IS A DITHER PATTERN BAND, NOT A BLUR. LIGHT EXISTS ONLY WHERE THE LANTERN CLAIMS IT. EVERYTHING UNLIT STAYS UNREADABLE - THE PLAYER LEARNS TO FEAR THE UNLIT EDGE OF THE SCREEN.</p>
+</td>
+<td style="width:50%;vertical-align:top;padding-left:12px;">
+<h2 class="sub">SETTLEMENT PANEL: TAVERN SAVE-POINT</h2>
+<div class="crt-frame" style="padding:6px;">
+<svg viewBox="0 0 300 170" width="100%" style="display:block;">
+  <defs>
+    <pattern id="wallp" width="8" height="8" patternUnits="userSpaceOnUse">
+      <rect width="8" height="8" fill="#1c1206"/>
+      <rect width="8" height="1" fill="#0a0703"/><rect y="4" width="8" height="1" fill="#0a0703"/>
+    </pattern>
+  </defs>
+  <rect width="300" height="170" fill="#0d0a04"/>
+  <!-- night sky dither -->
+  <rect width="300" height="70" fill="#241a08"/>
+  <rect width="300" height="70" fill="url(#fogd)" opacity="0.35"/>
+  <!-- moon, broken-sun counterpoint -->
+  <circle cx="250" cy="30" r="14" fill="#e8c878" opacity="0.8"/>
+  <rect x="236" y="30" width="28" height="1" fill="#0a0703" opacity="0.5"/>
+  <!-- tavern mass -->
+  <g>
+    <rect x="50" y="70" width="180" height="70" fill="url(#wallp)" stroke="#6b4200" stroke-width="2"/>
+    <path d="M42 70 L140 40 L238 70 z" fill="#171106" stroke="#6b4200" stroke-width="2"/>
+    <!-- door: amber spill -->
+    <rect x="128" y="100" width="26" height="40" fill="#ffb000" opacity="0.75"/>
+    <path d="M128 100 L180 80 L180 140 L154 140 L154 100 z" fill="#ffb000" opacity="0.16"/>
+    <rect x="128" y="100" width="26" height="40" fill="none" stroke="#6b4200" stroke-width="2"/>
+    <!-- windows -->
+    <rect x="70" y="96" width="22" height="18" fill="#ffb000" opacity="0.55"/>
+    <rect x="182" y="96" width="22" height="18" fill="#ffb000" opacity="0.55"/>
+    <!-- stag sign -->
+    <rect x="240" y="82" width="30" height="20" fill="#171106" stroke="#6b4200" stroke-width="2"/>
+    <path d="M245 96 l4 -6 4 3 4 -6 4 6 4 -3 4 6" fill="none" stroke="#ffb000" stroke-width="2"/>
+  </g>
+  <!-- ground -->
+  <rect y="140" width="300" height="30" fill="#050302"/>
+  <path d="M0 170 L120 148 L300 170 z" fill="#1c1206"/>
+  <!-- smoke -->
+  <rect x="200" y="48" width="6" height="24" fill="#050302" stroke="#6b4200" stroke-width="1"/>
+  <g fill="#8a6d33" opacity="0.4"><rect x="198" y="40" width="10" height="4"/><rect x="196" y="33" width="14" height="4"/><rect x="199" y="26" width="10" height="4"/></g>
+  <!-- save marker: phosphor green anvil glyph -->
+  <g>
+    <rect x="128" y="146" width="4" height="10" fill="#7fff5e"/>
+    <circle cx="130" cy="144" r="5" fill="none" stroke="#7fff5e" stroke-width="2"/>
+    <rect x="127" y="139" width="6" height="4" fill="#7fff5e"/>
+  </g>
+  <g fill="#000" opacity="0.3">
+    <rect y="16" width="300" height="1"/><rect y="40" width="300" height="1"/><rect y="64" width="300" height="1"/>
+    <rect y="88" width="300" height="1"/><rect y="112" width="300" height="1"/><rect y="136" width="300" height="1"/><rect y="160" width="300" height="1"/>
+  </g>
+  <rect width="300" height="170" fill="none" stroke="#6b4200" stroke-width="2"/>
+</svg>
+</div>
+<p class="small" style="margin-top:6px;">THE WYRD STAG, NIGHT. TAVERNS ARE SAVE AND RESPAWN ANCHORS: THE GREEN STAG-SIGN ANVIL MARKER IS THE ONLY PHOSPHOR-GREEN OBJECT OUTSIDE OF HEALING UI. AMBER LIGHT SPILLS FROM DOOR AND WINDOWS AS SOLID DITHERED SHAPE, NOT GLOW. SMOKE READS AS THREE STEPPED BANDS.</p>
+</td>
+</tr></table>
+</div>
+<!-- ================= 4. SITUATIONS ================= -->
+<div class="panel">
+<div class="panel-title">IV. Situations - Four Vignettes</div>
+<p class="small dim">UI/SCENE MOOD STUDIES. EACH IS A CRIT-FRAME OF ONE MOMENT, WITH THE DIALOG PANEL IT WOULD OPEN.</p>
+<table style="width:100%;border-collapse:collapse;"><tr>
+<td style="width:50%;vertical-align:top;padding-right:10px;">
+<h2 class="sub">A. TAVERN SAVE-POINT MOMENT</h2>
+<div class="crt-frame" style="padding:6px;">
+<svg viewBox="0 0 300 120" width="100%">
+  <rect width="300" height="120" fill="#171106"/>
+  <rect y="86" width="300" height="34" fill="#0a0703"/>
+  <!-- hearth -->
+  <rect x="16" y="66" width="34" height="24" fill="#050302" stroke="#6b4200" stroke-width="2"/>
+  <rect x="24" y="76" width="18" height="14" fill="#ffb000" opacity="0.85"/>
+  <path d="M16 66 L33 52 L50 66 z" fill="#171106" stroke="#6b4200" stroke-width="2"/>
+  <!-- long table, mugs -->
+  <rect x="70" y="84" width="170" height="10" fill="#1c1206" stroke="#6b4200" stroke-width="2"/>
+  <g fill="#8a6d33"><rect x="90" y="74" width="8" height="10"/><rect x="140" y="74" width="8" height="10"/><rect x="196" y="74" width="8" height="10"/></g>
+  <!-- keeper sprite -->
+  <rect x="250" y="62" width="12" height="24" fill="#050302"/>
+  <circle cx="256" cy="56" r="5" fill="#050302"/>
+  <!-- scanline pass -->
+  <g fill="#000" opacity="0.25"><rect y="10" width="300" height="1"/><rect y="30" width="300" height="1"/><rect y="50" width="300" height="1"/><rect y="70" width="300" height="1"/><rect y="90" width="300" height="1"/><rect y="110" width="300" height="1"/></g>
+  <rect width="300" height="120" fill="none" stroke="#6b4200" stroke-width="2"/>
+</svg>
+</div>
+<div class="tabbed-body" style="margin-top:8px;">
+<p class="small"><span style="color:var(--amber);">KEEPER GRETA:</span> "ROOM'S THREE CENTS A NIGHT. SLEEP AND THE ROAD'LL KEEP TILL MORNING."</p>
+<div class="tab" style="display:inline-block;margin-top:6px;">&gt; RENT A ROOM (SET RESPAWN)</div>
+<div class="tab" style="display:inline-block;">&gt; REST BY THE HOUR</div>
+<div class="tab" style="display:inline-block;">&gt; ASK FOR RUMORS</div>
+<p class="small dim" style="margin-top:8px;">THE ONLY SCREEN IN THE GAME WHERE NOTHING CAN HURT YOU. PANEL WARMTH RISES ONE STEP; THE RESPAWN CONFIRM IS A SINGLE PHOSPHOR-GREEN LINE UNDER THE NAMEPLATE.</p>
+</div>
+</td>
+<td style="width:50%;vertical-align:top;padding-left:10px;">
+<h2 class="sub">B. NIGHT AMBUSH</h2>
+<div class="crt-frame" style="padding:6px;">
+<svg viewBox="0 0 300 120" width="100%">
+  <rect width="300" height="120" fill="#0a0703"/>
+  <rect y="88" width="300" height="32" fill="#0d0a04"/>
+  <!-- moon + moor ridge -->
+  <circle cx="60" cy="26" r="11" fill="#e8c878" opacity="0.7"/>
+  <path d="M0 92 L60 74 L120 88 L180 70 L240 86 L300 76 L300 120 L0 120 z" fill="#050302"/>
+  <!-- eyes pair, violet -->
+  <g fill="#3d2a52"><rect x="132" y="64" width="4" height="3"/><rect x="140" y="64" width="4" height="3"/><rect x="204" y="58" width="4" height="3"/><rect x="212" y="58" width="4" height="3"/></g>
+  <!-- wolf silhouettes -->
+  <g fill="#030202">
+    <path d="M128 92 l10 -18 6 2 8 -6 -2 8 q6 6 4 14 z"/>
+    <path d="M200 92 l9 -16 5 1 7 -6 -1 7 q6 5 5 14 z"/>
+  </g>
+  <!-- hunter braced, crossbow raised -->
+  <rect x="256" y="70" width="8" height="20" fill="#050302"/>
+  <circle cx="260" cy="65" r="4" fill="#050302"/>
+  <rect x="238" y="66" width="22" height="4" fill="#050302" stroke="#6b4200" stroke-width="1"/>
+  <!-- red damage flash line -->
+  <rect x="0" y="52" width="300" height="3" fill="#b3221e" opacity="0.8"/>
+  <!-- scanline -->
+  <g fill="#000" opacity="0.3"><rect y="20" width="300" height="1"/><rect y="40" width="300" height="1"/><rect y="60" width="300" height="1"/><rect y="80" width="300" height="1"/><rect y="100" width="300" height="1"/></g>
+  <rect width="300" height="120" fill="none" stroke="#6b4200" stroke-width="2"/>
+</svg>
+</div>
+<div class="tabbed-body" style="margin-top:8px;">
+<p class="small"><span style="color:#b3221e;">AMBUSH - PALE TIDE WOLF STRAIN:</span> TWO WIGHTS AT THE RIDGE, FOUR EYES ON THE SCREEN EDGE. THE ONLY VIOLET PERMITTED ON A COMBAT SCREEN: ENEMY EYES AND THE VEIL WARNING TICK.</p>
+<p class="small dim">HEALTH READS AS A DITHERED AMBER METER THAT DECAYS IN 1PX STEPS. NO RED WASH OVER THE WORLD - THE WORLD STAYS BLACK; THE PANEL BORDER TURNS BLOOD RED INSTEAD.</p>
+</div>
+</td>
+</tr></table>
+<table style="width:100%;border-collapse:collapse;margin-top:6px;"><tr>
+<td style="width:50%;vertical-align:top;padding-right:10px;">
+<h2 class="sub">C. SIEGE WAR COUNCIL</h2>
+<div class="crt-frame" style="padding:6px;">
+<svg viewBox="0 0 300 120" width="100%">
+  <rect width="300" height="120" fill="#171106"/>
+  <rect y="90" width="300" height="30" fill="#0d0a04"/>
+  <!-- map table -->
+  <path d="M40 92 L150 76 L262 92 L150 110 z" fill="#1c1206" stroke="#6b4200" stroke-width="2"/>
+  <path d="M70 90 L130 82 L120 96 z" fill="#ffb000" opacity="0.5"/>
+  <path d="M170 84 L230 90 L200 98 z" fill="#b3221e" opacity="0.55"/>
+  <!-- banners crossed above -->
+  <g stroke="#ffb000" stroke-width="3" fill="none"><path d="M60 20 L120 46"/><path d="M120 20 L60 46"/></g>
+  <rect x="56" y="14" width="10" height="16" fill="#ffb000" opacity="0.6"/>
+  <rect x="234" y="14" width="10" height="16" fill="#b3221e" opacity="0.7"/>
+  <!-- storm-call glyph -->
+  <circle cx="150" cy="30" r="12" fill="none" stroke="#3d2a52" stroke-width="3"/>
+  <path d="M138 30 h24 M150 18 v24" stroke="#3d2a52" stroke-width="2"/>
+  <g fill="#000" opacity="0.25"><rect y="26" width="300" height="1"/><rect y="56" width="300" height="1"/><rect y="86" width="300" height="1"/></g>
+  <rect width="300" height="120" fill="none" stroke="#6b4200" stroke-width="2"/>
+</svg>
+</div>
+<div class="tabbed-body" style="margin-top:8px;">
+<p class="small"><span style="color:var(--amber);">COUNCIL OF THE PARISH WATCH:</span> "A STORM-CALL PINNED OVER EASTHOLD FOR NINE DAYS. THE FRONT IS CHARGED. WE MARCH BEFORE IT BREAKS OR NOT AT ALL."</p>
+<p class="small dim">TACTICAL MAPS RENDER AS DITHERED TERRAIN BLOCKS WITH GOLD/RED FIELDS OF CONTROL. THE VEIL FORECAST IS A VIOLET ASTROLABE GLYPH, NOT A METER. DEPARTURE HOUR IS CHOSEN ON A CHUNKY CLOCK DIAL.</p>
+</div>
+</td>
+<td style="width:50%;vertical-align:top;padding-left:10px;">
+<h2 class="sub">D. CAMP MOURNING (14-DAY REMEMBRANCE)</h2>
+<div class="crt-frame" style="padding:6px;">
+<svg viewBox="0 0 300 120" width="100%">
+  <rect width="300" height="120" fill="#0d0a04"/>
+  <rect y="92" width="300" height="28" fill="#050302"/>
+  <!-- dithered grey dawn -->
+  <rect width="300" height="60" fill="#241a08"/>
+  <rect width="300" height="60" fill="#9aa2a8" opacity="0.12"/>
+  <!-- grave markers, 14-day row -->
+  <g fill="#050302" stroke="#6b4200" stroke-width="1">
+    <rect x="70" y="78" width="10" height="16"/><rect x="88" y="78" width="10" height="16"/>
+    <rect x="106" y="78" width="10" height="16"/><circle cx="92" cy="70" r="0"/>
+  </g>
+  <rect x="106" y="72" width="10" height="6" fill="#050302" stroke="#6b4200" stroke-width="1"/>
+  <!-- fresh marker, candle -->
+  <rect x="150" y="76" width="12" height="18" fill="#050302" stroke="#8a6d33" stroke-width="2"/>
+  <rect x="155" y="66" width="2" height="8" fill="#e8c878"/>
+  <circle cx="156" cy="64" r="6" fill="#ffb000" opacity="0.18"/>
+  <rect x="155" y="63" width="3" height="4" fill="#ffb000"/>
+  <!-- camp tents -->
+  <path d="M210 94 L226 68 L242 94 z" fill="#0a0703" stroke="#6b4200" stroke-width="2"/>
+  <path d="M246 94 L258 76 L270 94 z" fill="#0a0703" stroke="#6b4200" stroke-width="2"/>
+  <!-- mourning figures, bowed -->
+  <g fill="#050302">
+    <rect x="126" y="80" width="7" height="14"/><circle cx="129" cy="77" r="3"/>
+    <rect x="140" y="82" width="7" height="12"/><circle cx="143" cy="79" r="3"/>
+  </g>
+  <g fill="#000" opacity="0.3"><rect y="20" width="300" height="1"/><rect y="44" width="300" height="1"/><rect y="68" width="300" height="1"/><rect y="92" width="300" height="1"/><rect y="110" width="300" height="1"/></g>
+  <rect width="300" height="120" fill="none" stroke="#6b4200" stroke-width="2"/>
+</svg>
+</div>
+<div class="tabbed-body" style="margin-top:8px;">
+<p class="small"><span style="color:var(--amber);">CAMP REMEMBRANCE:</span> "BROTHER CASS SLEPT UNDER THE ASHES. FOURTEEN DAYS HIS BUNK STAYS MADE."</p>
+<p class="small dim">THE CAMP ROSTER KEEPS THE DEAD LISTED IN DIM IRON-GRAY FOR THE FULL MOURNING PERIOD - NAME STRIKES TO A DITHERED GHOST ROW ON DAY 14, NOT BEFORE. NO MUSIC SWELL: A SINGLE STEPPED CANDLE FLICKER ANIMATION, 2 FRAMES.</p>
+</div>
+</td>
+</tr></table>
+</div>
+<!-- ================= 5. NOTES ================= -->
+<div class="panel">
+<div class="panel-title">V. Notes - Questions and Gaps</div>
+<ul class="small" style="margin-left:18px;line-height:1.8;">
+<li>OPEN: HOW DOES THE CRT FACE SCALE TO WIDE MODERN ASPECTS - FIXED 4:3 FRAME WITH PILLARBOX BEZEL, OR FULL-BLEED? 4:3 PILLARBOX READS MORE TRUE; FULL-BLEED READS MORE PLAYABLE. NEED A CALL.</li>
+<li>OPEN: DITHER DENSITY TOKENS ARE UNDECIDED - SHOULD FOREGROUND/WORLD/FOG EACH GET A NAMED PATTERN (2X2 VS 4X4 VS BAYER-8) SO DITHER IS A VOCABULARY, NOT AD-HOC?</li>
+<li>RISK: SCANLINES + DITHER CAN MUD SMALL TEXT AT 1080P. MINIMUM UI TEXT SIZE AND A "LEGIBILITY LAYER" (SCANLINE EXEMPTION ON READOUT PANELS) MAY BE NEEDED. UNTESTED.</li>
+<li>GAP: ANIMATION RULES FOR THE CRT FACE ARE THIN - NEED FRAME-COUNT BUDGETS (SUGGESTED: 2-4 FRAMES PER UI LOOP, STEPPED, NEVER EASED) WRITTEN AS HARD NUMBERS.</li>
+<li>GAP: HOW THE PHOSPHOR-GREEN MERCY COLOR AND THE RESPAWN ANVIL MARKER RELATE - SAME GREEN OR TWO GREENS? TENTATIVE SAME GREEN, NEED CONFIRMATION.</li>
+<li>QUESTION: DO FACTION PANELS GET TINTED CHROME (LIGHT = PALE GOLD BEVEL, DARK = RED-BLACK BEVEL, NEUTRAL = IRON) OR DOES AMBER CHROME STAY UNIVERSAL WITH CHARGE-GLYPHS ONLY? CURRENT SHEET ASSUMES UNIVERSAL AMBER.</li>
+<li>QUESTION: WEATHER IS READ FROM THE SKY, NEVER A METER - HOW DOES THE CRT PAGE SHOW VEIL-TIDE IN UI WITHOUT BECOMING A METER? PROPOSAL: A SKY STRIP IN THE MAP SCREEN DRAWN IN THE SAME DITHER AS THE WORLD.</li>
+<li>GAP: NO DECIDED TREATMENT FOR BLIGHTED-ZONE UI CORRUPTION (BORDER CORRUPTION? VIOLET TICK?) - DEFERRED, NEEDS ITS OWN VIGNETTE.</li>
+<li>NOTE: PAGE A (PAINTED PULP) AND THIS PAGE MUST AGREE ON WHAT STAYS BITMAP (UI) AND WHAT STAYS BRUSHED (SPRITES). THE SEAM IS THE 2D SPRITE RENDERED INTO A DITHERED CRIT-FRAME - RECOMMEND ONE SHARED SPEC OF THAT SEAM.</li>
+</ul>
+<div class="dither-bar"></div>
+<p class="small center" style="letter-spacing:4px;color:var(--amber-dim);">WITCH HUNTER / ART DIRECTION PAGE B / DAGGERFALL CRT - END OF SHEET</p>
+</div>
+</div>
+</body>
+</html>

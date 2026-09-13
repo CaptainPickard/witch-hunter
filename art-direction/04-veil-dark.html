@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="ascii">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WITCH HUNTER - Art Direction D - VEIL DARK</title>
+<style>
+:root{
+  --obsidian:#07070a;
+  --obsidian-2:#0d0d12;
+  --slab:#13131a;
+  --blood:#8e1220;
+  --blood-hi:#c22033;
+  --blood-glow:#e0354a;
+  --moon:#c9d2df;
+  --moon-dim:#8b93a3;
+  --moon-faint:#4a505e;
+  --fog:#1c2030;
+  --bone:#d8d3c4;
+  --line:#2a2c38;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{background:var(--obsidian);}
+body{
+  background:
+    radial-gradient(1200px 700px at 50% -100px, rgba(142,18,32,0.16), transparent 65%),
+    radial-gradient(900px 500px at 15% 20%, rgba(28,32,48,0.55), transparent 70%),
+    radial-gradient(900px 500px at 85% 55%, rgba(28,32,48,0.45), transparent 70%),
+    linear-gradient(180deg, var(--obsidian) 0%, #0a0a10 60%, var(--obsidian) 100%);
+  color:var(--moon-dim);
+  font-family:Georgia, "Times New Roman", Times, serif;
+  font-size:15px;
+  line-height:1.6;
+  padding:0 0 90px 0;
+}
+.page{max-width:1080px;margin:0 auto;padding:0 28px;}
+h1,h2,h3,h4{font-family:"Palatino Linotype","Book Antiqua",Palatino,Georgia,serif;color:var(--moon);font-weight:normal;letter-spacing:0.14em;}
+.mono{font-family:"Courier New",Courier,monospace;}
+.label{font-family:"Courier New",Courier,monospace;font-size:11px;letter-spacing:0.3em;text-transform:uppercase;color:var(--blood-hi);}
+.section{margin-top:70px;}
+.section-head{display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:26px;}
+.section-head .num{font-family:"Courier New",Courier,monospace;color:var(--blood-hi);font-size:13px;letter-spacing:0.2em;}
+.section-head h2{font-size:24px;letter-spacing:0.22em;text-transform:uppercase;}
+.section-head .sub{font-size:12px;color:var(--moon-faint);letter-spacing:0.12em;margin-left:auto;}
+p{margin:0 0 14px 0;}
+p.lede{color:var(--bone);font-size:16px;}
+em{color:var(--blood-hi);font-style:normal;}
+strong{color:var(--moon);font-weight:normal;}
+
+/* gothic tracery panel */
+.tracery{position:relative;border:1px solid var(--line);background:linear-gradient(180deg, var(--obsidian-2), var(--slab) 120%);padding:26px 28px;}
+.tracery::before,.tracery::after{content:"";position:absolute;top:-1px;width:38px;height:38px;border:1px solid var(--moon-faint);pointer-events:none;}
+.tracery::before{left:-1px;border-right:none;border-bottom:none;clip-path:polygon(0 100%, 0 0, 100% 0, 100% 18%, 12% 18%, 12% 100%);}
+.tracery::after{right:-1px;border-left:none;border-bottom:none;clip-path:polygon(100% 100%, 100% 0, 0 0, 0 18%, 88% 18%, 88% 100%);}
+/* pointed arch window frame */
+.arch{position:relative;padding:30px 26px;border:1px solid var(--line);background:rgba(9,9,14,0.75);}
+.arch .arch-window{position:absolute;top:-14px;left:50%;transform:translateX(-50%);width:120px;height:64px;opacity:0.9;}
+.fog-band{height:60px;background:linear-gradient(180deg, transparent, rgba(28,32,48,0.7), transparent);}
+.hr-moon{height:1px;background:linear-gradient(90deg, transparent, var(--moon-faint) 30%, var(--blood) 50%, var(--moon-faint) 70%, transparent);border:none;margin:34px 0;}
+.swatches{display:flex;gap:12px;flex-wrap:wrap;}
+.swatch{width:150px;border:1px solid var(--line);background:var(--obsidian-2);}
+.swatch .chip{height:64px;border-bottom:1px solid var(--line);}
+.swatch .nm{font-family:"Courier New",Courier,monospace;font-size:10px;letter-spacing:0.18em;color:var(--moon);padding:8px 10px 2px;text-transform:uppercase;}
+.swatch .hx{font-family:"Courier New",Courier,monospace;font-size:10px;color:var(--moon-faint);padding:0 10px 10px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
+.grid4{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
+.vignette{border:1px solid var(--line);background:linear-gradient(180deg, var(--obsidian-2), var(--slab));padding:20px 22px;position:relative;overflow:hidden;}
+.vignette h4{font-size:14px;letter-spacing:0.2em;text-transform:uppercase;color:var(--moon);margin-bottom:10px;}
+.vignette .tag{font-family:"Courier New",Courier,monospace;font-size:10px;letter-spacing:0.25em;color:var(--blood-hi);text-transform:uppercase;margin-bottom:8px;}
+ul{list-style:none;}
+ul.bul{margin:6px 0 14px 0;}
+ul.bul li{padding-left:16px;position:relative;margin-bottom:7px;}
+ul.bul li::before{content:"";position:absolute;left:0;top:9px;width:6px;height:6px;background:var(--blood);transform:rotate(45deg);}
+.stat-table{width:100%;border-collapse:collapse;font-family:"Courier New",Courier,monospace;font-size:12px;}
+.stat-table td{padding:7px 10px;border-bottom:1px solid rgba(42,44,56,0.6);color:var(--moon-dim);}
+.stat-table td.val{text-align:right;color:var(--moon);}
+.stat-table td.bar{width:130px;}
+.bar-track{height:5px;background:#14141c;border:1px solid var(--line);}
+.bar-fill{height:100%;background:linear-gradient(90deg, var(--blood), var(--blood-hi));}
+.bar-fill.silver{background:linear-gradient(90deg, var(--moon-faint), var(--moon-dim));}
+.eq-strip{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;}
+.eq{width:104px;border:1px solid var(--line);background:var(--obsidian-2);text-align:center;padding:10px 6px 8px;}
+.eq .glyph{height:34px;display:flex;align-items:center;justify-content:center;color:var(--blood-hi);}
+.eq .nm{font-family:"Courier New",Courier,monospace;font-size:9px;letter-spacing:0.12em;color:var(--moon-dim);text-transform:uppercase;margin-top:6px;line-height:1.4;}
+.eq .slot{font-family:"Courier New",Courier,monospace;font-size:8px;letter-spacing:0.2em;color:var(--moon-faint);text-transform:uppercase;margin-bottom:2px;}
+.portrait{width:190px;flex:0 0 190px;border:1px solid var(--line);background:radial-gradient(140px 170px at 50% 42%, #191922, var(--obsidian));display:flex;align-items:center;justify-content:center;padding:12px;}
+.nameplate{margin-bottom:18px;}
+.nameplate .title{font-size:13px;color:var(--blood-hi);letter-spacing:0.28em;text-transform:uppercase;font-family:"Courier New",Courier,monospace;}
+.nameplate .name{font-size:30px;color:var(--moon);letter-spacing:0.18em;font-family:"Palatino Linotype","Book Antiqua",Palatino,Georgia,serif;}
+.broken-sun{display:inline-block;vertical-align:middle;}
+.notebox{border-left:2px solid var(--blood);padding:10px 16px;background:rgba(142,18,32,0.07);font-size:13px;color:var(--moon-dim);}
+.small{font-size:12px;color:var(--moon-faint);}
+</style>
+</head>
+<body>
+<div class="page">
+<!-- ===================== HEADER + CHARACTER ===================== -->
+<header style="text-align:center;padding:64px 0 8px 0;">
+  <svg width="140" height="86" viewBox="0 0 140 86" style="opacity:0.85;">
+    <!-- broken sun: eclipsed disc, cracked rays -->
+    <circle cx="70" cy="34" r="16" fill="none" stroke="#8e1220" stroke-width="2"/>
+    <path d="M 70 18 A 16 16 0 0 1 86 34 L 78 34 A 8 8 0 0 0 70 26 Z" fill="#8e1220" opacity="0.85"/>
+    <line x1="70" y1="10" x2="70" y2="16" stroke="#4a505e" stroke-width="2"/>
+    <line x1="70" y1="52" x2="70" y2="58" stroke="#4a505e" stroke-width="2"/>
+    <line x1="46" y1="34" x2="52" y2="34" stroke="#4a505e" stroke-width="2"/>
+    <line x1="88" y1="34" x2="94" y2="34" stroke="#4a505e" stroke-width="2"/>
+    <line x1="53" y1="17" x2="57" y2="21" stroke="#4a505e" stroke-width="2"/>
+    <line x1="83" y1="47" x2="87" y2="51" stroke="#4a505e" stroke-width="2"/>
+    <!-- crack through the disc -->
+    <path d="M 66 20 L 70 30 L 64 36 L 71 44" fill="none" stroke="#c22033" stroke-width="1.5"/>
+    <line x1="20" y1="70" x2="120" y2="70" stroke="#2a2c38" stroke-width="1"/>
+    <line x1="40" y1="76" x2="100" y2="76" stroke="#2a2c38" stroke-width="1"/>
+  </svg>
+  <div class="label" style="margin-top:10px;">Witch Hunter - Art Direction Board D</div>
+  <h1 style="font-size:40px;letter-spacing:0.3em;margin:10px 0 6px 0;">VEIL DARK</h1>
+  <p class="small" style="letter-spacing:0.2em;">THE AESTHETIC OF THE DARK COURT - STANDING INSIDE THE VEIL SPIRE AT NIGHT</p>
+</header>
+
+<section class="section" id="character">
+  <div class="section-head">
+    <span class="num">I.</span><h2>Character</h2>
+    <span class="sub">Hero presentation - dark court hunter</span>
+  </div>
+
+  <div class="tracery">
+    <div class="nameplate">
+      <div class="title">Skill lines: Veilblade / Moon-Reader</div>
+      <div class="name">SERRA VANTH</div>
+      <div class="small" style="margin-top:4px;">Nightblade of the Dark Court - sworn through the Veil Altar's crypt door</div>
+    </div>
+
+    <div style="display:flex;gap:24px;flex-wrap:wrap;">
+      <!-- portrait: silhouette in a pointed-arch frame -->
+      <div class="portrait">
+        <svg width="150" height="300" viewBox="0 0 150 300">
+          <!-- pointed arch frame -->
+          <path d="M 20 290 L 20 110 Q 20 40 75 18 Q 130 40 130 110 L 130 290 Z"
+                fill="none" stroke="#4a505e" stroke-width="1.5"/>
+          <path d="M 30 282 L 30 114 Q 30 50 75 30 Q 120 50 120 114 L 120 282 Z"
+                fill="none" stroke="#2a2c38" stroke-width="1"/>
+          <!-- fog inside the arch -->
+          <ellipse cx="75" cy="230" rx="60" ry="34" fill="#1c2030" opacity="0.5"/>
+          <ellipse cx="75" cy="150" rx="46" ry="20" fill="#1c2030" opacity="0.35"/>
+          <!-- hunter silhouette -->
+          <g fill="#0d0d12" stroke="#8b93a3" stroke-width="1">
+            <!-- cloak mass -->
+            <path d="M 75 66 Q 60 78 56 110 L 48 250 L 60 250 L 66 190 L 70 250 L 80 250 L 84 190 L 90 250 L 102 250 L 94 110 Q 90 78 75 66 Z"/>
+            <!-- head, hooded -->
+            <path d="M 75 40 Q 62 44 62 60 Q 66 70 75 70 Q 84 70 88 60 Q 88 44 75 40 Z"/>
+          </g>
+          <!-- two pale eyes under the hood -->
+          <line x1="69" y1="56" x2="72" y2="56" stroke="#c9d2df" stroke-width="2"/>
+          <line x1="78" y1="56" x2="81" y2="56" stroke="#c9d2df" stroke-width="2"/>
+          <!-- sword across the back -->
+          <line x1="50" y1="240" x2="104" y2="120" stroke="#2a2c38" stroke-width="3"/>
+          <line x1="50" y1="240" x2="104" y2="120" stroke="#4a505e" stroke-width="1"/>
+          <!-- red sash, the one warm note -->
+          <path d="M 58 122 Q 75 130 92 122 L 92 130 Q 75 138 58 130 Z" fill="#8e1220"/>
+          <path d="M 90 128 L 98 150 L 92 148 Z" fill="#c22033"/>
+        </svg>
+      </div>
+
+      <div style="flex:1;min-width:300px;">
+        <table class="stat-table">
+          <tr><td>VIGOR</td><td class="bar"><div class="bar-track"><div class="bar-fill" style="width:78%;"></div></div></td><td class="val">78</td></tr>
+          <tr><td>BLOODCRAFT</td><td class="bar"><div class="bar-track"><div class="bar-fill" style="width:64%;"></div></div></td><td class="val">64</td></tr>
+          <tr><td>VEILCRAFT</td><td class="bar"><div class="bar-track"><div class="bar-fill" style="width:86%;"></div></div></td><td class="val">86</td></tr>
+          <tr><td>BLADEWORK</td><td class="bar"><div class="bar-track"><div class="bar-fill" style="width:71%;"></div></div></td><td class="val">71</td></tr>
+          <tr><td>MARKSMANSHIP</td><td class="bar"><div class="bar-track"><div class="bar-fill silver" style="width:55%;"></div></div></td><td class="val">55</td></tr>
+          <tr><td>STEALTH</td><td class="bar"><div class="bar-track"><div class="bar-fill silver" style="width:90%;"></div></div></td><td class="val">90</td></tr>
+          <tr><td>LORE</td><td class="bar"><div class="bar-track"><div class="bar-fill silver" style="width:48%;"></div></div></td><td class="val">48</td></tr>
+          <tr><td>SURVIVAL</td><td class="bar"><div class="bar-track"><div class="bar-fill silver" style="width:62%;"></div></div></td><td class="val">62</td></tr>
+          <tr><td>PRESENCE</td><td class="bar"><div class="bar-track"><div class="bar-fill" style="width:40%;"></div></div></td><td class="val">40</td></tr>
+        </table>
+
+        <div class="eq-strip">
+          <div class="eq"><div class="slot">Head</div><div class="glyph"><svg width="28" height="28" viewBox="0 0 28 28"><path d="M 6 16 Q 6 8 14 6 Q 22 8 22 16 L 22 22 L 6 22 Z" fill="none" stroke="#c22033" stroke-width="1.5"/><line x1="11" y1="15" x2="12" y2="15" stroke="#c9d2df" stroke-width="1.5"/><line x1="16" y1="15" x2="17" y2="15" stroke="#c9d2df" stroke-width="1.5"/></svg></div><div class="nm">Hood of Hushed Bells</div></div>
+          <div class="eq"><div class="slot">Cloak</div><div class="glyph"><svg width="28" height="28" viewBox="0 0 28 28"><path d="M 14 4 Q 8 10 6 24 L 22 24 Q 20 10 14 4 Z" fill="none" stroke="#c22033" stroke-width="1.5"/></svg></div><div class="nm">Shroud of the Long Night</div></div>
+          <div class="eq"><div class="slot">Main Hand</div><div class="glyph"><svg width="28" height="28" viewBox="0 0 28 28"><line x1="6" y1="24" x2="22" y2="6" stroke="#c9d2df" stroke-width="2"/><line x1="9" y1="20" x2="14" y2="25" stroke="#c22033" stroke-width="2"/></svg></div><div class="nm">Vow-Steel Saber</div></div>
+          <div class="eq"><div class="slot">Off Hand</div><div class="glyph"><svg width="28" height="28" viewBox="0 0 28 28"><path d="M 14 4 Q 8 10 8 18 Q 14 22 20 18 Q 20 10 14 4 Z" fill="none" stroke="#8e1220" stroke-width="1.5"/></svg></div><div class="nm">Obsidian Parry-Dagger</div></div>
+          <div class="eq"><div class="slot">Ranged</div><div class="glyph"><svg width="28" height="28" viewBox="0 0 28 28"><path d="M 8 4 Q 20 14 8 24" fill="none" stroke="#4a505e" stroke-width="1.5"/><line x1="8" y1="4" x2="8" y2="24" stroke="#8b93a3" stroke-width="1.5"/><line x1="8" y1="14" x2="22" y2="14" stroke="#c22033" stroke-width="1.5"/></svg></div><div class="nm">Nightbow, Silver-Tipped</div></div>
+          <div class="eq"><div class="slot">Torso</div><div class="glyph"><svg width="28" height="28" viewBox="0 0 28 28"><rect x="8" y="8" width="12" height="14" fill="none" stroke="#4a505e" stroke-width="1.5"/><line x1="14" y1="8" x2="14" y2="22" stroke="#2a2c38" stroke-width="1.5"/></svg></div><div class="nm">Veil-Temple Mail</div></div>
+          <div class="eq"><div class="slot">Talisman</div><div class="glyph"><svg width="28" height="28" viewBox="0 0 28 28"><circle cx="14" cy="14" r="7" fill="none" stroke="#8e1220" stroke-width="1.5"/><path d="M 10 12 L 14 16 L 18 10" fill="none" stroke="#c22033" stroke-width="1.5"/></svg></div><div class="nm">Cracked Sun Medallion</div></div>
+          <div class="eq"><div class="slot">Boots</div><div class="glyph"><svg width="28" height="28" viewBox="0 0 28 28"><path d="M 8 6 L 8 18 L 22 22 L 22 16 L 14 14 L 14 6 Z" fill="none" stroke="#4a505e" stroke-width="1.5"/></svg></div><div class="nm">Silent-Step Striders</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="notebox" style="margin-top:14px;">Character reads as a cut of black against candle-thin silver light. Color discipline: the only warm pixels on Serra are the red sash and the blade's blood groove. Everything else is moon-silver linework over near-black.</p>
+</section>
+
+<!-- ===================== THEME ===================== -->
+<section class="section" id="theme">
+  <div class="section-head">
+    <span class="num">II.</span><h2>Theme</h2>
+    <span class="sub">Mood, type, palette, texture, light</span>
+  </div>
+
+  <div class="arch">
+    <svg class="arch-window" viewBox="0 0 120 64">
+      <path d="M 10 64 L 10 30 Q 10 8 60 2 Q 110 8 110 30 L 110 64 Z" fill="none" stroke="#4a505e" stroke-width="1.5"/>
+      <path d="M 18 64 L 18 32 Q 18 14 60 9 Q 102 14 102 32 L 102 64 Z" fill="none" stroke="#2a2c38" stroke-width="1"/>
+      <line x1="60" y1="9" x2="60" y2="64" stroke="#2a2c38" stroke-width="1"/>
+      <path d="M 60 2 Q 40 8 38 30 L 60 30 Z" fill="#8e1220" opacity="0.35"/>
+      <circle cx="60" cy="22" r="5" fill="none" stroke="#c9d2df" stroke-width="1"/>
+      <line x1="52" y1="22" x2="56" y2="22" stroke="#c9d2df" stroke-width="1"/>
+    </svg>
+    <div class="label" style="text-align:center;">Mood Statement</div>
+    <p class="lede" style="text-align:center;max-width:760px;margin:12px auto 8px auto;">
+      The Dark Court does not shout. It <em>waits</em>. Veil Dark is the beauty of a place that has already
+      fallen and decided to make falling look like ceremony: obsidian halls, moon fog, red wax, an eclipsed
+      sun hung like a wound in the sky. The player should feel watched, courted, and
+      <em>in danger of liking it</em>.
+    </p>
+    <p class="small" style="text-align:center;">Deliberate gothic, not grimdark misery. Seduction over squalor. Red is rationed like blood.</p>
+  </div>
+
+  <div class="grid2" style="margin-top:22px;">
+    <div class="tracery">
+      <div class="label">Typography Direction</div>
+      <ul class="bul" style="margin-top:12px;">
+        <li><strong>Display:</strong> high-contrast serif with long serifs and wide tracking, courtly and cold. Uppercase for names of places and powers.</li>
+        <li><strong>Body:</strong> old-style serif, generous leading, pale silver-gray on near-black. Long paragraphs allowed; the court likes documents.</li>
+        <li><strong>UI numerals and labels:</strong> monospace, letter-spaced, small caps feel. Readouts should feel like inscriptions, not dashboards.</li>
+        <li><strong>Rule of use:</strong> no decorative frills, no glow-heavy fantasy logotypes. Elegance comes from spacing, not ornament.</li>
+      </ul>
+      <div style="border-top:1px solid var(--line);padding-top:12px;">
+        <div class="mono" style="color:var(--moon);font-size:20px;letter-spacing:0.3em;">THE MOON KEEPS ITS OWN LEDGER</div>
+        <div class="mono small" style="margin-top:4px;">display sample, tracking 0.30em</div>
+      </div>
+    </div>
+    <div class="tracery">
+      <div class="label">Texture and Lighting Language</div>
+      <ul class="bul" style="margin-top:12px;">
+        <li><strong>Surfaces:</strong> polished obsidian and wet black stone; red reflections travel along floors like slow candlelight.</li>
+        <li><strong>Fog:</strong> cold volumetric banks in blue-gray, always moving low; silhouettes resolve out of fog instead of walking into frame.</li>
+        <li><strong>Light:</strong> hard, thin, directional. Moon shafts through tracery windows; silver rims on every black edge.</li>
+        <li><strong>The corrupt sun:</strong> eclipsed, cracked, or burned-through. Appears in heraldry, scars on the land, and the blight's sky stain.</li>
+        <li><strong>Red discipline:</strong> blood-red appears in under 10 percent of any frame, always at meaning points: sashes, seals, warnings, wounds.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="tracery" style="margin-top:22px;">
+    <div class="label">Palette - Veil Court Swatches</div>
+    <div class="swatches" style="margin-top:14px;">
+      <div class="swatch"><div class="chip" style="background:#07070a;"></div><div class="nm">Veil Obsidian</div><div class="hx">#07070A</div></div>
+      <div class="swatch"><div class="chip" style="background:#13131a;"></div><div class="nm">Crypt Slab</div><div class="hx">#13131A</div></div>
+      <div class="swatch"><div class="chip" style="background:#8e1220;"></div><div class="nm">Blood Wax</div><div class="hx">#8E1220</div></div>
+      <div class="swatch"><div class="chip" style="background:#c22033;"></div><div class="nm">Vow Scarlet</div><div class="hx">#C22033</div></div>
+      <div class="swatch"><div class="chip" style="background:#c9d2df;"></div><div class="nm">Moonlight Silver</div><div class="hx">#C9D2DF</div></div>
+      <div class="swatch"><div class="chip" style="background:#8b93a3;"></div><div class="nm">Fog Steel</div><div class="hx">#8B93A3</div></div>
+      <div class="swatch"><div class="chip" style="background:#1c2030;"></div><div class="nm">Cold Fog Blue</div><div class="hx">#1C2030</div></div>
+    </div>
+    <p class="small" style="margin-top:14px;">Gradient law: fog gradients run cold (blue-gray to black). Red never gradients into fog; it sits alone as a point, a line, or a seal.</p>
+  </div>
+</section>
+
+<!-- ===================== SETTING ===================== -->
+<section class="section" id="setting">
+  <div class="section-head">
+    <span class="num">III.</span><h2>Setting</h2>
+    <span class="sub">Blighted moor approach - the Veil Spire</span>
+  </div>
+
+  <div class="grid2">
+    <!-- biome: blight -->
+    <div class="tracery">
+      <div class="label">Biome Panel - The Blighted Moors</div>
+      <svg width="100%" height="210" viewBox="0 0 500 210" style="display:block;margin-top:12px;">
+        <rect width="500" height="210" fill="#0a0a10"/>
+        <!-- burned-through sun in a stained sky -->
+        <circle cx="360" cy="52" r="26" fill="none" stroke="#8e1220" stroke-width="2" stroke-dasharray="10 6"/>
+        <circle cx="360" cy="52" r="16" fill="#8e1220" opacity="0.25"/>
+        <path d="M 352 38 L 360 52 L 350 60 L 362 70" fill="none" stroke="#c22033" stroke-width="1.5"/>
+        <!-- ash-gray scars radiating -->
+        <line x1="360" y1="52" x2="250" y2="30" stroke="#4a505e" stroke-width="1" opacity="0.5"/>
+        <line x1="360" y1="52" x2="470" y2="40" stroke="#4a505e" stroke-width="1" opacity="0.5"/>
+        <line x1="360" y1="52" x2="300" y2="10" stroke="#4a505e" stroke-width="1" opacity="0.4"/>
+        <!-- cold fog banks -->
+        <ellipse cx="140" cy="160" rx="180" ry="40" fill="#1c2030" opacity="0.7"/>
+        <ellipse cx="380" cy="175" rx="200" ry="36" fill="#1c2030" opacity="0.6"/>
+        <ellipse cx="240" cy="120" rx="150" ry="26" fill="#1c2030" opacity="0.4"/>
+        <!-- dead ground -->
+        <path d="M 0 190 Q 120 180 250 190 Q 380 200 500 188 L 500 210 L 0 210 Z" fill="#13131a"/>
+        <!-- leafless burned trees -->
+        <g stroke="#2a2c38" stroke-width="2" fill="none">
+          <path d="M 90 190 L 90 130 M 90 150 L 70 132 M 90 158 L 108 138 M 90 140 L 84 118"/>
+          <path d="M 150 192 L 150 142 M 150 160 L 136 146 M 150 166 L 164 150"/>
+        </g>
+        <!-- broken watchtower silhouette -->
+        <path d="M 440 188 L 440 120 L 452 108 L 464 120 L 464 188 Z" fill="#0d0d12" stroke="#2a2c38"/>
+        <!-- wolf eyes in fog -->
+        <line x1="200" y1="182" x2="204" y2="182" stroke="#c9d2df" stroke-width="2"/>
+        <line x1="212" y1="182" x2="216" y2="182" stroke="#c9d2df" stroke-width="2"/>
+        <!-- sun-motif burned into the ground -->
+        <circle cx="140" cy="196" r="10" fill="none" stroke="#8e1220" stroke-width="1.5" opacity="0.8"/>
+        <line x1="140" y1="183" x2="140" y2="209" stroke="#8e1220" stroke-width="1" opacity="0.6"/>
+      </svg>
+      <ul class="bul" style="margin-top:12px;">
+        <li>Sky is a stain, not a color: the eclipsed sun hangs as a cracked disc, and ash-gray scars radiate from the fallen capital's direction.</li>
+        <li>Nothing clean grows. Trees are charcoal linework; the only red is burned-in sun motifs on soil and stone.</li>
+        <li>Weather is read, not metered: when the Pale Tide rolls in, the fog turns silver and the drain on the land lifts visibly.</li>
+      </ul>
+    </div>
+
+    <!-- settlement: the Veil Spire -->
+    <div class="tracery">
+      <div class="label">Settlement Panel - The Veil Spire</div>
+      <svg width="100%" height="210" viewBox="0 0 500 210" style="display:block;margin-top:12px;">
+        <rect width="500" height="210" fill="#08080c"/>
+        <!-- moon shafts through high windows -->
+        <polygon points="150,0 170,0 190,120 160,120" fill="#1c2030" opacity="0.5"/>
+        <polygon points="330,0 350,0 330,110 306,110" fill="#1c2030" opacity="0.5"/>
+        <!-- spire silhouette -->
+        <g fill="#0d0d12" stroke="#2a2c38" stroke-width="1.5">
+          <path d="M 240 200 L 240 60 L 250 30 L 260 60 L 260 200 Z"/>
+          <path d="M 210 200 L 210 90 L 222 78 L 222 200 Z"/>
+          <path d="M 278 200 L 278 84 L 290 96 L 290 200 Z"/>
+        </g>
+        <!-- pointed arch windows lit candle-thin -->
+        <g fill="none" stroke="#c9d2df" stroke-width="1.2">
+          <path d="M 246 80 L 246 96 Q 250 100 254 96 L 254 80 Q 250 76 246 80 Z" fill="#c22033" fill-opacity="0.55"/>
+          <path d="M 246 120 L 246 136 Q 250 140 254 136 L 254 120 Q 250 116 246 120 Z" fill="#c9d2df" fill-opacity="0.5"/>
+          <path d="M 216 110 L 216 124 Q 219 127 222 124 L 222 110 Q 219 107 216 110 Z" fill="#c9d2df" fill-opacity="0.4"/>
+          <path d="M 284 116 L 284 130 Q 287 133 290 130 L 284 116 Q 287 113 284 116 Z" fill="#c9d2df" fill-opacity="0.4"/>
+        </g>
+        <!-- bat charge circling the spire -->
+        <path d="M 300 48 Q 308 42 312 48 Q 316 42 324 48 Q 318 54 312 52 Q 306 54 300 48 Z" fill="none" stroke="#8b93a3" stroke-width="1.2"/>
+        <!-- fog floor -->
+        <ellipse cx="250" cy="196" rx="220" ry="26" fill="#1c2030" opacity="0.7"/>
+        <!-- red procession line toward the gate -->
+        <line x1="60" y1="198" x2="238" y2="198" stroke="#8e1220" stroke-width="2"/>
+        <circle cx="70" cy="198" r="3" fill="#c22033"/>
+        <circle cx="110" cy="198" r="3" fill="#c22033"/>
+      </svg>
+      <ul class="bul" style="margin-top:12px;">
+        <li>The Spire is the old realm's fallen Solar Throne re-crowned in black: the sun-carvings were not removed, they were <em>eclipsed</em> with dark stone inlays.</li>
+        <li>Interior language: candle-thin silver shafts, red wax seals on every arch, fog pooling at ankle height.</li>
+        <li>Outside stands the Debt's Echo, a statue field with the faces struck flat - the court's idea of mercy.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== SITUATIONS ===================== -->
+<section class="section" id="situations">
+  <div class="section-head">
+    <span class="num">IV.</span><h2>Situations</h2>
+    <span class="sub">Four scene vignettes - UI and scene mood</span>
+  </div>
+
+  <div class="grid4">
+    <!-- (a) tavern save-point -->
+    <div class="vignette">
+      <div class="tag">A - Tavern Save-Point</div>
+      <h4>Rest, Rent, Respawn</h4>
+      <svg width="100%" height="120" viewBox="0 0 300 120">
+        <rect width="300" height="120" fill="#0a0a10"/>
+        <path d="M 40 110 L 40 55 L 60 42 L 80 55 L 80 110 Z" fill="none" stroke="#4a505e" stroke-width="1.5"/>
+        <line x1="60" y1="42" x2="60" y2="110" stroke="#2a2c38"/>
+        <ellipse cx="60" cy="52" rx="7" ry="5" fill="#8e1220" opacity="0.6"/>
+        <rect x="120" y="86" width="120" height="8" fill="#13131a" stroke="#2a2c38"/>
+        <ellipse cx="200" cy="80" rx="16" ry="5" fill="#1c2030" opacity="0.8"/>
+        <line x1="250" y1="94" x2="262" y2="60" stroke="#8b93a3" stroke-width="1"/>
+        <circle cx="264" cy="56" r="4" fill="none" stroke="#c9d2df" stroke-width="1.2"/>
+      </svg>
+      <p class="small">The hearth is one warm coal-light in a cold room; the room key hangs as a single red seal. Save prompt reads as an inscription: <em>"The night keeps what you leave with it."</em> Room rented, respawn anchored, rumors overheard in the back room on faction-neutral ground.</p>
+    </div>
+
+    <!-- (b) night ambush -->
+    <div class="vignette">
+      <div class="tag">B - Night Ambush</div>
+      <h4>Wights in the Fog</h4>
+      <svg width="100%" height="120" viewBox="0 0 300 120">
+        <rect width="300" height="120" fill="#08080c"/>
+        <ellipse cx="150" cy="96" rx="140" ry="22" fill="#1c2030" opacity="0.8"/>
+        <line x1="60" y1="26" x2="60" y2="34" stroke="#c9d2df" stroke-width="1.5"/>
+        <!-- hunter center, sword drawn -->
+        <path d="M 148 50 Q 142 58 142 78 L 158 78 Q 158 58 152 50 Z" fill="#0d0d12" stroke="#8b93a3" stroke-width="1"/>
+        <line x1="140" y1="84" x2="168" y2="44" stroke="#c22033" stroke-width="2"/>
+        <!-- wight silhouettes flanking -->
+        <path d="M 70 96 L 72 66 L 78 60 L 84 66 L 86 96 Z" fill="#0d0d12" stroke="#4a505e" stroke-width="1"/>
+        <path d="M 214 96 L 216 70 L 222 64 L 228 70 L 230 96 Z" fill="#0d0d12" stroke="#4a505e" stroke-width="1"/>
+        <line x1="76" y1="70" x2="80" y2="70" stroke="#c9d2df" stroke-width="1.5"/>
+        <line x1="220" y1="74" x2="224" y2="74" stroke="#c9d2df" stroke-width="1.5"/>
+      </svg>
+      <p class="small">Silver eyes surface in the fog before bodies do. UI stays silent; threat is shown through rim-light and eye-points. The saber's blood groove is the only red - the HUD vignette pulses once, thin, at the edges of the frame.</p>
+    </div>
+
+    <!-- (c) siege war council -->
+    <div class="vignette">
+      <div class="tag">C - Siege War Council</div>
+      <h4>Storm-Call over the Hold</h4>
+      <svg width="100%" height="120" viewBox="0 0 300 120">
+        <rect width="300" height="120" fill="#0a0a10"/>
+        <!-- long table, red map lines -->
+        <rect x="70" y="70" width="160" height="26" fill="#13131a" stroke="#2a2c38"/>
+        <path d="M 90 80 L 150 80 L 150 92 L 210 88" fill="none" stroke="#8e1220" stroke-width="1.5"/>
+        <circle cx="150" cy="86" r="4" fill="none" stroke="#c22033" stroke-width="1.5"/>
+        <!-- hooded figures -->
+        <path d="M 60 96 Q 60 74 70 70 Q 80 74 80 96 Z" fill="#0d0d12" stroke="#4a505e" stroke-width="1"/>
+        <path d="M 226 96 Q 226 76 234 72 Q 242 76 242 96 Z" fill="#0d0d12" stroke="#4a505e" stroke-width="1"/>
+        <line x1="66" y1="80" x2="70" y2="80" stroke="#c9d2df" stroke-width="1.5"/>
+        <!-- storm cloud pinned over hold icon -->
+        <path d="M 140 40 Q 148 32 156 40 Q 164 34 170 42 Q 160 48 150 46 Q 142 48 140 40 Z" fill="none" stroke="#8b93a3" stroke-width="1.2"/>
+        <line x1="154" y1="48" x2="150" y2="66" stroke="#8e1220" stroke-width="1.5"/>
+      </svg>
+      <p class="small">A Storm-Call ritual pins a Veil-charged front over the enemy hold; the war map marks it as a dark pressure, read from the sky above the model, never a meter. Red lines on the map are vows, not paths: signing one spends the coven's favor.</p>
+    </div>
+
+    <!-- (d) camp mourning -->
+    <div class="vignette">
+      <div class="tag">D - Camp Mourning</div>
+      <h4>The Fourteenth Night of Remembrance</h4>
+      <svg width="100%" height="120" viewBox="0 0 300 120">
+        <rect width="300" height="120" fill="#08080c"/>
+        <!-- tents -->
+        <path d="M 30 96 L 50 62 L 70 96 Z" fill="#0d0d12" stroke="#2a2c38"/>
+        <path d="M 230 96 L 250 62 L 270 96 Z" fill="#0d0d12" stroke="#2a2c38"/>
+        <!-- memorial: crossed blades, red ribbon -->
+        <line x1="136" y1="60" x2="164" y2="92" stroke="#8b93a3" stroke-width="1.5"/>
+        <line x1="164" y1="60" x2="136" y2="92" stroke="#8b93a3" stroke-width="1.5"/>
+        <path d="M 140 66 Q 150 74 160 66" fill="none" stroke="#8e1220" stroke-width="1.5"/>
+        <!-- day markers -->
+        <circle cx="126" cy="98" r="2" fill="#4a505e"/><circle cx="150" cy="100" r="2" fill="#4a505e"/><circle cx="174" cy="98" r="2" fill="#4a505e"/>
+        <circle cx="150" cy="100" r="5" fill="none" stroke="#c22033" stroke-width="1"/>
+        <ellipse cx="150" cy="106" rx="90" ry="10" fill="#1c2030" opacity="0.7"/>
+      </svg>
+      <p class="small">The camp remembers its dead for 14 in-game days. A thin red ring marks the current day of remembrance; on the fourteenth night the ring closes and the marker is lowered into the fog. No UI text announces it. The camp simply stops setting a place at the fire.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== NOTES ===================== -->
+<section class="section" id="notes">
+  <div class="section-head">
+    <span class="num">V.</span><h2>Notes</h2>
+    <span class="sub">Open questions and gaps</span>
+  </div>
+  <div class="tracery">
+    <ul class="bul">
+      <li>Red discipline needs a hard numeric rule for gameplay UI (proposed: red only for save anchors, vow/seal actions, wounds, and active threats - confirm with UI design).</li>
+      <li>How does the corrupt sun motif scale? It currently appears in heraldry, sky stain, burned ground marks, and the Spire's eclipsed carvings - risk of repetition diluting it. Propose three tiers: distant (sky), mid (architecture), near (items).</li>
+      <li>Silhouette legibility against fog: sprite linework (thin silver rims) must survive at 512-1024px sprite sizes in dense fog scenes - needs a sprite test pass on the moors biome.</li>
+      <li>Typography: courtly serif display has no agreed web-safe fallback stack yet; current sample leans on Palatino/Georgia. Confirm system stacks for the in-game UI build.</li>
+      <li>Undead and orc factions share the dark court palette here - do they need a secondary accent (bone-green, grave-ash) to separate them from court nobility in combat?</li>
+      <li>Mourning vignette: should the 14-day remembrance have any audio cue (bell count) or is silence intentional? Currently designed as fully silent visual.</li>
+      <li>Blight zone art: "nothing clean grows" needs an agreed rule for what little DOES grow (ash lichen? veilmoss?) so pickups read as harvestable.</li>
+      <li>Weather legibility gap: Red Vigil vs Pale Tide both read as fog events at distance; consider distinct fog edge shapes (hard gold burn line vs soft silver lift).</li>
+    </ul>
+  </div>
+</section>
+
+<footer style="margin-top:70px;text-align:center;">
+  <hr class="hr-moon">
+  <div class="label">Witch Hunter - Art Direction D - Veil Dark</div>
+  <div class="small" style="margin-top:6px;">Hand-authored board. Inline CSS and SVG only. No external assets.</div>
+</footer>
+
+</div>
+</body>
+</html>
