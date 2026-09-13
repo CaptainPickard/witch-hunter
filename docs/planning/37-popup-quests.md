@@ -126,6 +126,27 @@ the Long Agency (doc 19).
      (doc 19). A 400-year dead veteran of the Split is lore-gated
      content feeding the Wardens' contradictory-truths assembly.
      Deepest graves, oldest voices, highest risk.
+   - THE VENDETTA GRAVE (new archetype, Nicko idea 2026-09-13): some
+     dead are BOUND to their killer. They cannot lie, so when they
+     name who killed them, the name is true. Their unfinished
+     business is an assassination quest: kill the person they are
+     bound to. The target is drawn like any other patron (doc 20
+     pools): a random procedural NPC in the local area, OR a person
+     of importance, a noble without an heir. Killing a noble with no
+     heir feeds doc 13's regicide-with-heirs rule: an heirless
+     succession triggers, the hold's Sundering and capture can be set
+     into motion, and the war map moves. THE UNINTENDED CONSEQUENCE:
+     the dead man's justice is a pebble the player drops into the
+     war's machinery. A grave-side whisper can topple a hold. The
+     player often cannot know in advance which graves hide a vendetta
+     that scales that high: the dead ask for justice, the world
+     decides what that justice costs. Resolution texture: the player
+     can refuse the vendetta (the grave stays restless, the revenant
+     returns), complete it quietly (the target dies, the deed log
+     records an unknown-hand kill), or complete it loudly (witnesses,
+     faction consequence, the noble's court remembers). All three are
+     legitimate endings per the frame grammar; only the world's
+     cascade is not optional.
    - CONSENT TEXTURE. Digging always costs light rep (RULING 3).
      What changes with consent: the dead of an aided grave GIVE (testimony,
      treasure leads, kin words, sometimes grave-goods freely handed
@@ -261,8 +282,16 @@ engine and the Quiet Parish.
     and the neighboring tavern fills with refugees: escort contracts,
     camp-defense contracts, and a dark-court version where the
     "refugees" are inventory.
+25. THE DEAD MAN'S JUSTICE (catalog twin of the Part 3 VENDETTA
+    GRAVE). The full quest-shaped version: dig, hear the vendetta,
+    find the bound target (procedural NPC or an heirless noble),
+    deliver the killing. The kill's cascade through doc 13's
+    regicide-with-heirs rule is the archetype's signature: the
+    player's smallest employer is a corpse, and the corpse's contract
+    can redraw a border. Can surface from any court's territory; the
+    dead are not loyal to the living's factions.
 
-Count: 24 working archetypes on top of the 8 locked frame templates
+Count: 25 working archetypes on top of the 8 locked frame templates
 (doc 21: hunt, escort, clear-site, defense, supply, curse-lift,
 relic-hunt, parish-work). Every archetype is frame-grammar
 expressible.
@@ -294,9 +323,12 @@ The slice carries three systems, not all four parts:
    rumors appear, what telegraphs them): GDD tuning.
 3. Bounty proof grammar details (trophy-specific vs generic part
    proofs, per enemy tier): GDD tuning.
-4. Whether the dead can lie (working idea locked in concept: the dead
-   cannot lie about their own life but can be wrong, and can be bound
-   by whoever killed them): Nicko ruling.
+4. Whether the dead can lie: RESOLVED 2026-09-13 (Nicko): THE DEAD
+   CANNOT LIE, BUT CAN BE WRONG. Their testimony about their own life
+   (their name, their killer, their treasure, their unfinished
+   business) is always truthful but may be mistaken, and a bound dead
+   can be compelled by whoever holds the binding (see THE VENDETTA
+   GRAVE, Part 3).
 5. Keeper mini-faction standing ladder and rite-service prices: GDD
    tuning.
 6. Which 2-3 archetypes prove the frame grammar in the slice beyond

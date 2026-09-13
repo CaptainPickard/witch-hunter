@@ -955,3 +955,15 @@ feature-by-feature implementation against the GDD.
     planned; (3) digging always costs light rep, consent only affects
     what the dead give you. New doc: 37-popup-quests.md. 7 open
     questions tracked in doc 37 and 08.
+
+72. VENDETTA GRAVE + DEAD-TRUTH RULING (2026-09-13, Nicko, baked
+    into doc 37): the dead CANNOT LIE, BUT CAN BE WRONG (resolves doc
+    37 open question 4). New archetype THE VENDETTA GRAVE: some dead
+    are bound to their killer; their unfinished business is an
+    assassination quest on the person they are bound to. Target is a
+    random procedural NPC or a person of importance, a noble without
+    an heir; killing the heirless noble feeds doc 13's
+    regicide-with-heirs rule and can set the hold's Sundering and
+    capture into motion, the unintended consequence: a grave-side
+    whisper can topple a hold. Catalog twin THE DEAD MAN'S JUSTICE
+    added (archetype 25, doc 37 now 25 archetypes).

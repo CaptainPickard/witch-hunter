@@ -611,3 +611,26 @@ content, ammo, localization, accessibility), doc 36's six opens
 (Wardens after the unmasking, Signer mask re-derivation, neutral
 sentence mechanics, dark queen mid-ritual table, Last Dance failure
 state, grave site).
+
+## VENDETTA GRAVE PASS (2026-09-13, doc 37 second pass)
+
+Resolved in this pass: doc 37 open question 4, whether the dead can
+lie. RESOLVED 2026-09-13 (Nicko): THE DEAD CANNOT LIE, BUT CAN BE
+WRONG. Testimony about their own life is always truthful but may be
+mistaken; a bound dead can be compelled by whoever holds the binding.
+
+New content: THE VENDETTA GRAVE (doc 37 Part 3) and its catalog twin
+THE DEAD MAN'S JUSTICE (doc 37 archetype 25), baked 2026-09-13 from
+Nicko's idea: assassination quests given by the bound dead, targets
+random procedural NPC or heirless noble, heirless-noble kills cascade
+through doc 13's regicide-with-heirs rule into hold Sundering and
+capture. Doc 37 archetype count now 25.
+
+New opens from this pass, tracked in doc 37's Open Questions section
+with assignments:
+8. Vendetta Grave spawn weights: what share of graves carry a
+   vendetta, and the noble-without-heir draw rate (GDD tuning).
+9. Whether the killer of a bound dead can be a spine NPC (spine
+   immunity says NO for spine NPCs as targets; confirm the guard) :
+   doc 20 progression-safety cross-check, IO to verify against doc 20
+   SPINE IMMUNITY.
