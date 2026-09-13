@@ -92,3 +92,43 @@ shard_diagnose.py + weld_comps.py (connectivity diagnostics), uv_stats.py
 (atlas/UV island stats), shoot_viewer.py (playwright screenshot harness),
 bisect.template.html + build_bisect.py (raw-vs-pix x nearest-vs-linear
 bisect harness), check_encoding.py (r147 encoding constant check).
+
+## DEFECT FIX VERIFICATION PASS 2026-09-13 (shards + salt-and-pepper, independent re-verification)
+
+Scope: independent verification pass over the 2026-09-13 defect fix (commit
+59c7943). Re-derived the diagnostics from scratch rather than trusting the
+earlier session's claims.
+
+Findings:
+1. Islands: re-ran welded-vertex connectivity (union-find at 1e-4, networkx)
+on all 10 race pixelated GLBs. Counts (components / tiny <10 faces / tiny
+and far >1.0 from origin): dwarf-female 526/311/2, dwarf-male-smith
+565/440/4, elf-dawn-refuser-male 616/499/7, human-hunter-female 651/512/0,
+human-hunter-male 551/387/6, orc-female 894/742/3, orc-male-warrior
+875/757/7, undead-ghoul-male 757/616/8, vampire-female 760/554/1,
+vampire-male-noble 638/472/120. drop_shards.py --dry confirms ZERO
+remaining dropable shards: the tiny-far islands were already removed by
+59c7943.
+2. True-floater test (new tool floater_analyze.py): for every component,
+min vertex distance to the nearest vertex of any OTHER component. On
+human-hunter-male all 197 remaining components have gap_min = 0 (contact
+at the 1e-4 weld tolerance) - the islands interlock, they are NOT
+visibly floating; the jagged outline matches the concept's deliberately
+tattered cloak hem. No further mesh surgery warranted.
+3. Salt-and-pepper: fresh headless-Chromium screenshots of the deployed
+viewer (playwright, human-hunter-male, default + close cameras, raw +
+pixelated modes) show a coherent shaded surface - no high-frequency
+black/white speckle - confirming the NearestMipmapLinearFilter + mipmaps
++ DoubleSide + sRGB outputEncoding fix renders correctly. Raw mode also
+clean.
+4. Route: /art-3d-viewer is auth-gated (302 -> /login). Verified with a
+session cookie via /api/auth/login: served bytes byte-identical to disk
+(md5 9d10e970facf0bd8102816144008e734), no WebUI restart needed.
+5. Hub link fix: /art-hub viewer button opened the relative file link
+('3d/arsenal-viewer.html') which 404s through the WebUI route sandbox;
+switched hub-template.html + index.html to open /art-3d-viewer directly.
+
+Commits this pass: 59c7943 (the fix itself, landed earlier same day),
+a20e533 (hub link -> route, floater_analyze.py + shard_report.json).
+Verification screenshots: /tmp/qa_final_default_cam.png,
+/tmp/qa_final_close_cam.png, /tmp/viewer_shots_after/before_raw_mode.png.
