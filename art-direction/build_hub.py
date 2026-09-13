@@ -47,6 +47,8 @@ CARDS = [
  ('card06-vampire-female','CARD 06: VAMPIRE, FEMALE','Veil Duchess: pinned silver-white hair, veil-black court gown, closed lacquered fan. Flicker 9.5-16.8.'),
  ('card07-elf-male',   'CARD 07: ELF (DAWN-REFUSER), MALE', 'Light-court warden: white linen and deep blue half-cloak, silver star-and-bow clasp, cold moon over the silver-bark hall. Flicker 22.0-29.0.'),
  ('card08-elf-female', 'CARD 08: ELF (DAWN-REFUSER), FEMALE', 'Archer-warden of the light court: pale-silver braid, moon-circlet, white tunic and blue riding cloak, cold moon over the watchtower. Flicker 23.1-46.5, vision GOOD.'),
+ ('card09-dwarf-male', 'CARD 09: DWARF, MALE', 'Smith-warden of the mountain halls: broad as a door, braided russet beard, forge-worn apron over chainmail, forge-gold gate glow. Flicker 17.1-20.5.'),
+ ('card10-dwarf-female','CARD 10: DWARF, FEMALE', 'Smith-warden, old mountain style: grey-streaked auburn braids, forge apron over wool, fur mantle, forge-gold lantern. Flicker 20.0-28.5. Final card of the ten-card run.'),
 ]
 
 card_figs = []
