@@ -90,6 +90,59 @@ and loud. All of them move the same map. Aid a conquest decisively
 and a grateful throne may grant you the hold: from nobody, to
 landholder, to founder of a noble house that carries your name.
 
+## Camp, Survival, and the People You Keep
+
+The continent does not feed you. Towns and taverns are full service:
+rest, respawn, restock, craft, plan. Everything past the last wall is
+expedition territory, and what you carry becomes the constraint. Every
+bedroll, tent, torch bundle, and ration competes with loot for weight,
+so going deep means deciding what you can afford to bring back. A camp
+in the wild restores health and stamina, cures the small ailments, and
+gives the night its teeth: campsites attract wolves, bandits, and
+worse, site selection is a real read of the terrain, and a campfire
+turns raw ingredients into the meal that decides tomorrow.
+
+As you grow in power, the camp grows with you. The warp camp, earned
+as a mid-game milestone, is a home base you raise piece by piece:
+three tiers from a warp-in campsite to a full hold, with forges,
+alchemy tents, kitchens, storage halls, hired staff, and defenses
+worth their name. The base is the crafting endgame: you build every
+structure and every decoration yourself, and comfort feeds back into
+rest quality and the morale of the people living there.
+
+And the people are the point. Recruit them: hire at taverns, buy them
+out of slaver caravans, rescue them from capture, and they walk out
+with you, up to four at a time, bard, squire, guard, arcanist, each
+with their own kit and their own nerve. Enslave them: the neck chain
+is a real item you must carry, and a catchable thief or a broken foe
+can end up in one, but your retinue watches how you use it, and the
+ones who hate slavery will not forget. Liberate them: free the
+enslaved, break the caravan, and earn the loyalty the chains would
+never buy. Followers can die for real, the camp mourns its dead by
+name, and every one of them holds beliefs of their own. Your friends
+love you or hate you based on who you actually are, not what you
+spend on them: spare the witch and upset the zealous, enslave the
+thief and lose the virtuous, and watch each bond shift accordingly.
+
+## Craft, Cook, and Choose Your Path
+
+Crafting is a progression path, not a minigame. Five disciplines,
+weaponsmithing, armorsmithing, alchemy, enchanting, and gem crafting,
+rank up by use like every other skill, gate their quality behind
+materials and stations, and let a dedicated hunter out-equip their
+level. Cooking runs the same depth: one meal and one drink a day,
+buffs that last until tomorrow, dishes discovered by flavor families
+and regional pairings rather than read off a menu, and a kitchen tier
+that climbs from campfire to tavern to warp camp.
+
+Affinity runs through all of it. Invite the darkness: the night is
+yours, the vampire courts open their halls, and it is your camp that
+paladins burn at noon. Live in the light: own the day, earn the
+Church and the free cities, and sleep in armor. Or refuse both thrones
+six times and forge the neutral path: free trade with everyone,
+allegiance to no one, no protection from anything. There is no
+protected middle. The world does not grade you. It just answers.
+
 ## The Promise
 
 One character, one save, one continent that ends in a changed world,
