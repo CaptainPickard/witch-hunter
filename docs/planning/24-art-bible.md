@@ -276,6 +276,15 @@ art-direction/sprites/<card>/):
     APPROVED. 8 directions + 5-frame idle built (S3/S4); flicker
     23.1-46.5 with vision grade GOOD (breathing sway, no pose breaks;
     pale tunic dither inflates the metric). Gear not baked per doc 27.
+53. sprites/dwarf-male/concept.png - CARD 09 S1: dwarf smith-warden,
+    broad, braided russet beard, leather apron over chainmail, forge-
+    lantern, mountain-hall gate with forge-gold glow. APPROVED (2
+    rounds: v1 archived - photoreal register miss).
+54. sprites/dwarf-male/turnaround.png - CARD 09 S2: 4-view turnaround,
+    2 QA rounds (r1 archived - model hung a hammer on the pack despite
+    the no-weapon prompt; r2 with plain bedroll PASS). APPROVED.
+    8 directions + 5-frame idle built (S3/S4); flicker 17.1-20.5.
+    Lantern/anvil/hammer not baked: gear layers per doc 27.
 
 Page captions for every frame live in 00-art-direction.html and are the
 canonical short descriptions; the pair descriptions there tie each pair

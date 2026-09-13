@@ -37,6 +37,11 @@ turnaround and batch QA. Tick checkboxes as stages complete.
   ground-line anchoring. Turnaround prompts for gowned characters MUST
   pin the hem at ankle height and demand visible feet/shoes in every
   view; QA checks it explicitly.
+- L8 (dwarf male, card 09): race-archetype props fight the no-weapon
+  prompt (the smith archetype hung a hammer on the pack even when told
+  "no tools"). Banning alone is unreliable; the turnaround prompt must
+  NAME replacement content for the prop slot ("plain rounded bedroll
+  instead of tools") and QA must check attached gear explicitly.
 
 ## Card Format
 
@@ -134,10 +139,17 @@ design sheet -> turnaround (Nicko gate) -> 8 directions -> 5-frame idle
 - [x] S7 atlas + billboard page (sprites/elf-female/card08-billboard.html)
 - [x] catalog in 24-art-bible.md + commit to repo
 
-### CARD 09: DWARF, MALE
-- [ ] S1 sheet (anvil/mountain-hall marks, stocky silhouette, forge
-      gold accent)
-- [ ] S2-S7 (same stages)
+### CARD 09: DWARF, MALE  [COMPLETE 2026-09-13]
+- [x] S1 sheet (anvil/mountain-hall marks, stocky silhouette, forge
+      gold accent; 2 rounds - v1 archived photoreal)
+- [x] S2 turnaround (2 rounds - r1 archived, archetype-prop hammer
+      despite ban; r2 plain-bedroll replacement PASS)
+- [x] S3 8 directional views (derived sheet PASS)
+- [x] S4 5-frame idle (flicker 17.1-20.5; vision PASS)
+- [x] S5 cleanup (alpha, defringe, normalize)
+- [x] S6 QA (scripted metrics + vision gates)
+- [x] S7 atlas + billboard page (sprites/dwarf-male/card09-billboard.html)
+- [x] catalog in 24-art-bible.md + commit to repo
 
 ### CARD 10: DWARF, FEMALE
 - [ ] S1 sheet

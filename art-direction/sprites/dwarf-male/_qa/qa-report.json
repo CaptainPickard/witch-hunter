@@ -1,0 +1,148 @@
+{
+ "flicker": [
+  {
+   "dwf-m-idle-f1.png->dwf-m-idle-f2.png": 19.2
+  },
+  {
+   "dwf-m-idle-f2.png->dwf-m-idle-f3.png": 17.1
+  },
+  {
+   "dwf-m-idle-f3.png->dwf-m-idle-f4.png": 20.5
+  },
+  {
+   "dwf-m-idle-f4.png->dwf-m-idle-f5.png": 20.4
+  },
+  {
+   "dwf-m-idle-f5.png->dwf-m-view-3q-front-right.png": 35.9
+  },
+  {
+   "dwf-m-view-3q-front-right.png->dwf-m-view-3q-front.png": 36.6
+  },
+  {
+   "dwf-m-view-3q-front.png->dwf-m-view-3q-rear-right.png": 35.9
+  },
+  {
+   "dwf-m-view-3q-rear-right.png->dwf-m-view-3q-rear.png": 31.9
+  },
+  {
+   "dwf-m-view-3q-rear.png->dwf-m-view-back.png": 30.7
+  },
+  {
+   "dwf-m-view-back.png->dwf-m-view-front.png": 36.3
+  },
+  {
+   "dwf-m-view-front.png->dwf-m-view-side-right.png": 37.4
+  },
+  {
+   "dwf-m-view-side-right.png->dwf-m-view-side.png": 24.7
+  }
+ ],
+ "coverage": {
+  "dwf-m-idle-f1.png": 8.9,
+  "dwf-m-idle-f2.png": 7.3,
+  "dwf-m-idle-f3.png": 9.9,
+  "dwf-m-idle-f4.png": 7.9,
+  "dwf-m-idle-f5.png": 9.8,
+  "dwf-m-view-3q-front-right.png": 12.7,
+  "dwf-m-view-3q-front.png": 8.9,
+  "dwf-m-view-3q-rear-right.png": 8.6,
+  "dwf-m-view-3q-rear.png": 7.7,
+  "dwf-m-view-back.png": 8.0,
+  "dwf-m-view-front.png": 10.8,
+  "dwf-m-view-side-right.png": 7.3,
+  "dwf-m-view-side.png": 6.2
+ },
+ "accents": {
+  "dwf-m-idle-f1.png": {
+   "green": 0,
+   "blue": 219,
+   "warm": 1398,
+   "gray": 162,
+   "other": 0
+  },
+  "dwf-m-idle-f2.png": {
+   "green": 0,
+   "blue": 185,
+   "warm": 1231,
+   "gray": 114,
+   "other": 0
+  },
+  "dwf-m-idle-f3.png": {
+   "green": 0,
+   "blue": 211,
+   "warm": 1527,
+   "gray": 121,
+   "other": 0
+  },
+  "dwf-m-idle-f4.png": {
+   "green": 0,
+   "blue": 202,
+   "warm": 1257,
+   "gray": 138,
+   "other": 0
+  },
+  "dwf-m-idle-f5.png": {
+   "green": 0,
+   "blue": 245,
+   "warm": 1511,
+   "gray": 152,
+   "other": 0
+  },
+  "dwf-m-view-3q-front-right.png": {
+   "green": 0,
+   "blue": 165,
+   "warm": 2009,
+   "gray": 27,
+   "other": 0
+  },
+  "dwf-m-view-3q-front.png": {
+   "green": 0,
+   "blue": 175,
+   "warm": 1508,
+   "gray": 106,
+   "other": 0
+  },
+  "dwf-m-view-3q-rear-right.png": {
+   "green": 0,
+   "blue": 144,
+   "warm": 1399,
+   "gray": 99,
+   "other": 0
+  },
+  "dwf-m-view-3q-rear.png": {
+   "green": 0,
+   "blue": 169,
+   "warm": 1294,
+   "gray": 118,
+   "other": 0
+  },
+  "dwf-m-view-back.png": {
+   "green": 0,
+   "blue": 219,
+   "warm": 1256,
+   "gray": 116,
+   "other": 0
+  },
+  "dwf-m-view-front.png": {
+   "green": 0,
+   "blue": 183,
+   "warm": 1743,
+   "gray": 98,
+   "other": 0
+  },
+  "dwf-m-view-side-right.png": {
+   "green": 0,
+   "blue": 154,
+   "warm": 1162,
+   "gray": 101,
+   "other": 0
+  },
+  "dwf-m-view-side.png": {
+   "green": 0,
+   "blue": 130,
+   "warm": 1043,
+   "gray": 94,
+   "other": 0
+  }
+ }
+}
