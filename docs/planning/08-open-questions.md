@@ -699,3 +699,33 @@ with assignments:
 17. The pit-gamble ruleset: GDD tuning.
 18. Goblin King procedural or fixed per warren (doc 14 pools GDD
     pass).
+
+## DESCENT GATES PASS (2026-09-13, doc 37 sixth pass, Part 5)
+
+Four rulings locked: (9) descent gates are in-world physical doors at
+dungeon ends, labeled with tier number and lock-tier by Warden
+inspection; (10) one gate per dungeon, four escalating strata keyed
+to character level 10/20/30/40, descended within the one opened
+gate; (11) escalated layers drop better RARITY within the region's
+fixed tier band (doc 06 crossing rule respected, tier band stays
+regional); (12) full Part 5 baked with working ideas, opens logged.
+Two keys per gate: LEVEL key or LOCKPICK key (Feel for the Pins
+ladder); opened gates stay open for the playthrough. Deep Table
+added (per dungeon type, layer 5 content: crypt founder's vault,
+sealed mine vein, coven true altar, war camp command vault,
+monastery reliquary-under-reliquary, warren below the king's hall,
+blighted deep). Six working-idea additions in Part 5: Warden seal
+grammar, rooms-not-numbers escalation, per-layer boss rule,
+scavenger-spoils note, THE UNOPENABLE doors, the mislabeled door.
+
+New opens from this pass, tracked in doc 37's Open Questions section
+with assignments:
+19. Layer generation grammar: strata reuse of base layout, per-layer
+    archetype seeding (doc 03 + doc 31 G24 cross-check): world GDD.
+20. Descent-gate density: which dungeon types carry gates, gates per
+    cluster, named/special dungeon gate rules: world GDD pass.
+21. The Unopenable door list: which spine/standing/quest keys open
+    which Unopenables: doc 20/21 spine cross-check.
+22. Warden door-inspection service: standing cost, availability: doc
+    19 Warden GDD pass.
+23. Layer-5 deep boss named-item guaranteed drops: GDD tuning.

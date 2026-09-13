@@ -53,6 +53,17 @@ the tissue only, per doc 20's locked rule.
    comedy. The Warren chain baked as archetype 26 (Part 3c) with
    all four endings (cleared ledger, escape, dead king, the
    volunteer).
+9. LEGIBLE DOORS (sixth pass): descent gates are IN-WORLD, visible
+   and physical at dungeon ends, labeled with tier number and
+   lock-tier by Warden inspection. Diegetic, discoverable, no menu.
+10. ONE DOOR PER DUNGEON, FOUR STRATA (Part 5): one descent gate
+    per dungeon, four escalating layers keyed to level
+    10/20/30/40, descended within the one opened gate.
+11. THE CROSSING RULE HOLDS: escalated layers drop better RARITY
+    within the region's fixed tier band (doc 06 crossing rule
+    respected, tier band stays regional).
+12. Part 5 bake scope: full section with details as working ideas,
+    opens 19-23 logged.
 
 ## Part 1: The Rumor Engine (taverns speak of dungeons)
 
@@ -645,6 +656,151 @@ Count: 26 working archetypes on top of the 8 locked frame templates
 (doc 21: hunt, escort, clear-site, defense, supply, curse-lift,
 relic-hunt, parish-work). Every archetype is frame-grammar
 expressible.
+
+## Part 5: The Descent Gates (dungeon layers behind doors)
+
+Added 2026-09-13, sixth pass (Nicko idea). How dungeons work at
+different levels: every dungeon ends at a DOOR, and behind the door
+is an escalated version of the same dungeon: more dangerous monsters,
+different traps, better loot and mob drops. The gates let early
+dungeons be explored again once the gate unlocks, by level or by
+lockpicking skill.
+
+### Session rulings (locked by Nicko, 2026-09-13, sixth pass)
+
+9. LEGIBLE DOORS: descent gates are IN-WORLD, visible and physical at
+   dungeon ends, labeled with their tier number and lock-tier by
+   Warden inspection. Diegetic and discoverable. (No menu.)
+10. ONE DOOR PER DUNGEON, FOUR STRATA: each dungeon has ONE descent
+    gate; behind it are four escalating strata keyed to character
+    level 10 / 20 / 30 / 40. The gate opens on the layer matching
+    your level; the layers are reached by descending further within
+    the same opened gate.
+11. THE CROSSING RULE HOLDS (ruling 11, locked): escalated layers
+    drop better RARITY within the region's fixed tier band (doc 06's
+    crossing rule is respected: tier band stays regional, escalation
+    improves rarity and named-item odds within the band).
+12. BAKE SCOPE: full concept section in doc 37 (Part 5), details as
+    working ideas, opens logged.
+
+### The gate rule
+
+Every procedural dungeon (doc 03: generated interiors, persistent
+layouts) ends at a sealed DESCENT GATE: a visible, physical door in
+the dungeon's end chamber. The gate is labeled by Warden inspection
+(standing-neutral, any player can pay for or earn the read): its
+tier number (10/20/30/40) and its lock-tier. Two keys open it:
+
+- LEVEL KEY: character level meets or exceeds the gate's tier. The
+  door reads your level (it is not a moral gate, it is a weight and
+  craft gate: the door's makers did not trust the unproven with
+  what they kept).
+- LOCKPICK KEY: Lockpicking skill at the gate's lock-tier (doc 15's
+  Feel for the Pins ladder). The sneaky bypass: a lockpick character
+  descends early. The tradeoff is honest: you bypass the level gate
+  but the layer's danger does not negotiate.
+
+Gate tiers and their layers, one gate per dungeon, four strata:
+
+- GATE I (level 10 / lock Novice-Adept): layer 2 of the dungeon.
+  Harder variants of the base pool, first trap escalation, rarity
+  bump within the band.
+- GATE II (level 20 / lock Adept-Expert): layer 3. New enemy types
+  enter the pool (doc 34's bestiary widens), different trap grammar
+  (environmental, not just spike-and-pit), rare-material veins.
+- GATE III (level 30 / lock Expert): layer 4. The layer's own
+  guardian (a named elite, not the base boss remixed: a new
+  encounter), named-item chance opens.
+- GATE IV (level 40 / lock Grandmaster): layer 5, the deep. The
+  dungeon's true content: the reason the place was built. Each
+  dungeon TYPE has a different deep (see The Deep Table below).
+
+Re-locking: a gate you opened stays open for the playthrough (doc
+03's persistence rule). The door remembers being picked: a
+Lockpicking-opened gate stays unlocked once picked, so the sneaky
+path does not need repeating.
+
+### The Deep Table (what waits at gate IV, by dungeon type)
+
+Doc 06's dungeon-type keys become the deep-layer identity. Working
+ideas for what each type's layer 5 holds:
+
+- CRYPT/Cemetery deep: the founder's vault. The cemetery's oldest
+  resident (Long Agency witness territory, doc 19): the coffin
+  chains, the unconfessed sin, the grave-goods the family never
+  dared sell. The Quiet Parish's deepest dead-speech content lives
+  here.
+- MINE: the vein that was sealed. Why the diggers stopped, what the
+  ore was for, and the sealed gallery's resident (doc 22's
+  orc-prehistory hooks: some mines seal warren doors, some seal
+  worse).
+- COVEN DEN: the true altar room. The den's surface level is the
+  coven's work; the deep is the coven's faith. Dark Pacts tier
+  content, Veil Faithful hooks (doc 19 sects).
+- WAR CAMP: the command vault. The general's map table, the
+  requisition chest, the siege plans. Court-territory overlay
+  (doc 06 layer 4) reads darkest here: the deep vault knows who the
+  war is really for.
+- MONASTERY/CHAPEL: the reliquary under the reliquary. What the
+  parish buried twice.
+- WARREN (goblin): the king's hall is not the bottom. The toll
+  schedule's fine print lists what the crown owes DOWN there.
+- BLIGHTED DEEP (blighted zones only, late-game): the pact's
+  scar tissue has architecture. The blight's inner dungeons (doc 03
+  opportunity texture) are gate-IV-exclusive content.
+
+### What I would add (working ideas, for review)
+
+- THE WARDEN SEAL as the label grammar: the Warden inspection read
+  is also a Warden SERVICE (doc 19: they authenticate relics; they
+  authenticate doors). A Warden-touched gate can also carry their
+  warning: sealed by the Wardens, or sealed by someone who was NOT
+  the Wardens. The second kind is a quest seed, not just a door.
+- ESCALATION CHANGES THE ROOMS, NOT JUST THE NUMBERS: per doc 03's
+  layout archetypes, each layer's generation seeds shift (new
+  layout archetypes, hazard density up, water rising, the crypt's
+  lower galleries flooded, the mine's timber rotted). The layer
+  should feel like the same place with the lid taken off, not a
+  reskin. Traps follow dungeon-type keys (doc 06): mines gas and
+  collapse, crypts flood and lock behind you, dens ward and
+  redirect.
+- THE LAYER BOSS RULE: doc 35's rule (dungeon inhabitants respawn
+  on rest, bosses do not) applies per LAYER: each strata keeps a
+  resident boss that stays dead once killed. The deep's resident
+  is the dungeon's real boss; the base layer's boss is its
+  doorman.
+- SCAVENGER SPOILS: gates mean old cleared dungeons have content
+  again, but the base layer should not become trivial trash: base
+  layers keep their own respawn economy (doc 35), and the deep's
+  pull is the rarity bump, not the base layer's leftovers.
+- THE UNDOORABLE: a small set of descent gates that neither level
+  nor Lockpicking opens (working name: the Unopenable). Keyed to
+  spine progress, court standing, or a specific quest's key item
+  (doc 20's threshold rule). Every dungeon cluster should have one
+  door the player cannot open yet: the world should always be
+  bigger than your keys.
+- THE MISLABELED DOOR: rare tissue event: a Warden read that turns
+  out wrong (the dead cannot lie but the living misread, doc 37's
+  dead-truth rule applies to documents too). The door said 10. It
+  was lying, or its label was moved. Feeds the rumor-trap grammar
+  (open question 2).
+
+### Open Questions (assigned per tracker rules)
+
+19. Layer generation grammar: how strata reuse the base layout
+    (doc 03 archetype seeding per layer, doc 31 G24 cross-check):
+    world GDD pass.
+20. Descent-gate density: which dungeon types carry gates, how many
+    gates per dungeon cluster, whether named/special dungeons
+    (doc 03 hand-authored) get gates or their own rules: world GDD
+    pass.
+21. The Unopenable door list: which keys (spine chains, court
+    standing, quest items) open which Unopenables: doc 20/21 spine
+    cross-check.
+22. Warden door-inspection service standing cost and availability
+    (any player or standing-gated): doc 19 Warden GDD pass.
+23. Whether layer-5 deep bosses carry named-item guaranteed drops
+    (doc 06 named-item economy cross-check): GDD tuning.
 
 ## Slice scoping (first-pass subset for the vertical slice)
 

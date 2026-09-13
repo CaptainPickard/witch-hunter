@@ -1011,3 +1011,18 @@ feature-by-feature implementation against the GDD.
     being captured). Proposed general rule parked as open question
     15: monsters hold grudges as factions, beasts do not. Archetype
     count 26.
+
+76. THE DESCENT GATES (2026-09-13, Nicko, baked into doc 37 Part 5):
+    every dungeon ends at a sealed door; behind it four escalating
+    strata keyed to level 10/20/30/40 (more dangerous monsters,
+    different traps, better loot). RULING 9: doors are in-world,
+    physical, labeled by Warden inspection. RULING 10: one gate per
+    dungeon, four strata. RULING 11: escalation improves RARITY
+    within the regional tier band (doc 06 crossing rule respected).
+    Two keys: level gate or Lockpicking bypass; opened gates stay
+    open. Deep Table by dungeon type (crypt founder's vault, sealed
+    mine, coven true altar, war camp command vault, monastery
+    reliquary-under-reliquary, warren below the king, blighted
+    deep). Additions proposed: Warden seal warnings, rooms-not-
+    numbers escalation, per-layer boss rule, THE UNOPENABLE doors,
+    the mislabeled door. Opens 19-23 logged.
