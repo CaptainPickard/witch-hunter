@@ -657,3 +657,20 @@ with assignments:
 12. Paranoid-speaker behavior: which NPC dispositions remember an
     eavesdropper and at what severity (deed log entry, grudge,
     hostile): G17 dialogue GDD.
+
+## INTEL TIER PASS (2026-09-13, doc 37 fourth pass)
+
+Ruling 6 locked (doc 37 Part 3b intel tier table): hold-toppling
+facts are GUARDED (paranoid-speaker memory); heirlessness is PUBLIC
+(common knowledge for common folk of a territory, Nicko's exception);
+treasure and monster locations are GUARDED. DEAD-SPOKEN is the third
+tier (undead graverobber only). 12 overheard quest seeds added as
+working ideas in doc 37's quest-seed catalog.
+
+New opens from this pass, tracked in doc 37's Open Questions section
+with assignments:
+13. PUBLIC-vs-GUARDED boundary cases beyond heirlessness (which other
+    facts are territory-common vs guarded, e.g. famine scares,
+    coven memberships): world GDD pass, per-territory tier table.
+14. Overheard-seed spawn density: how many seeds per hold, per
+    schedule slot, and their respawn rules (G17 schedules GDD).

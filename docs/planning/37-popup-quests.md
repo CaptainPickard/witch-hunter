@@ -31,6 +31,14 @@ the tissue only, per doc 20's locked rule.
    person they are talking to. Stealth becomes an
    information-gathering verb, not just theft. (Part 3b, the
    Overheard Word.)
+6. INTEL TIERS (locked 2026-09-13, fourth pass): any fact or piece of
+   information that can result in a hold toppling or being captured
+   is PARANOID-SPEAKER memory: it is only spoken under the
+   private-conversation rule. THE EXCEPTION: heirlessness is PUBLIC
+   knowledge, common knowledge for the common folk of a territory,
+   overheard anywhere in the territory. Treasure locations and
+   monster locations are also GUARDED (paranoid-tier). The full tier
+   table is in Part 3b.
 
 ## Part 1: The Rumor Engine (taverns speak of dungeons)
 
@@ -246,6 +254,119 @@ Mechanics notes (PROPOSED, for GDD tuning):
   unknowing (the unknowable weight, RULING 4); a player who
   eavesdrops for weeks holds a map of succession crises. Knowledge
   is earned, never given.
+
+### The intel tier table (RULING 6, locked 2026-09-13)
+
+The Overheard Word has three tiers. The tier decides WHERE a fact can
+be learned, and how dangerous learning it is:
+
+- PUBLIC (common knowledge, overheard anywhere in the territory):
+  heirlessness (THE EXCEPTION per Nicko: common folk know who has no
+  heir), open feuds, famine scares, which hold is at war, which roads
+  are unsafe, the shape of local resentment. PUBLIC facts ride
+  ordinary ambient chatter and tavern rumor: no audience check, no
+  risk.
+- GUARDED (paranoid-speaker memory, private-conversation rule
+  applies): any fact that can result in a HOLD TOPPLING or being
+  CAPTURED (the ruling's own words): illegitimate heirs, forged
+  wills, a steward skimming the garrison's pay, a captain who can be
+  bought, where the granary's rot is hidden, which gate's guard is
+  understrength, a cult under the chapel floor. ALSO GUARDED:
+  TREASURE LOCATIONS and MONSTER LOCATIONS (Nicko, locked): where
+  the merchant's real strongbox sits, the mine the family sealed,
+  what lairs under the mill. GUARDED facts are spoken only when the
+  speakers believe they are alone: stealth is the price of entry.
+- DEAD-SPOKEN (the Quiet Parish's own tier): facts the dead hold that
+  the living never say: the vendetta's true binding, the unconfessed
+  sin, the grave's real name. Undead graverobber only (RULING 2).
+
+Rule: TIER FOLLOWS CONSEQUENCE, not secrecy. A fact is GUARDED
+because of what it can topple, not because someone whispered it. The
+same fact can sit in different tiers by territory: heirlessness is
+PUBLIC in its own hold and GUARDED in the rival hold that wants to
+exploit it (their illegitimate-children talk happens in the dark).
+
+### The overheard quest-seed catalog (working ideas, fourth pass)
+
+Facts the player can overhear, by what quest they become. Working
+names, nothing locked beyond the tier table above:
+
+- THE PAID GATE. Two guards arguing: one is being paid to look away
+  on a certain night. Overheard GUARDED: becomes a heist-ally
+  opportunity (slip in on the pay-night), or a loyalty test to
+  expose, or the player takes the smugglers' side of the deal
+  themselves.
+- THE ROT IN THE GRANARY. A steward and a factor whisper: the
+  lord's grain is spoiled and the ledger hides it. GUARDED. Becomes
+  THE SALT SCARE (catalog 13) from the inside: expose it, join the
+  skim, or use the famine to break the hold's loyalty for a court.
+- THE BASTARD IN THE WOODS. An old nurse and a priest: the lord
+  fathered a child on a woodcutter's daughter; the child lives near
+  the mill. GUARDED (succession fact, toppling-grade). Becomes an
+  heir-hunting quest with three buyers: the lord (silence it), a
+  rival house (crown it), the child's mother (protect it). Every
+  buyer changes a hold's fate; the player picks the border's next
+  owner without ever reading a war map.
+- WHERE THE WATCH DOES NOT RIDE. A poacher and a fence: the moor
+  road is unpatrolled between two stones after the bell. PUBLIC
+  (roads are common talk) but the REASON it is unpatrolled is
+  GUARDED: the captain sold the route. Follow it far enough and the
+  why becomes a quest: corrupt captain, wolf-bought patrol, or
+  something worse walking the gap.
+- THE MINE THE FAMILY SEALED. Two cousins at a funeral: grandfather
+  sealed the mine after what the diggers found; the deed and the
+  key are still in the hall. GUARDED (treasure tier). Becomes a
+  delve with a mystery cap: what was sealed in, and is the family's
+  fear still alive down there.
+- THE KEEPER'S SECRET LANE. A sexton, drunk, to the verger: there is
+  a second entrance to the crypt under the yew, and the keeper does
+  not know the gravediggers use it. GUARDED (treasure tier).
+  Becomes the back-door version of any cemetery quest: smuggling
+  route, older graves, or the Quiet Parish meta-quest's missing
+  coffin went in through the yew.
+- THE MEETING AT THE STONE. A veiled woman and a farmhand,
+  whispered: the coven meets at the split stone on the dark of the
+  moon, and the farmhand's brother is one of them now. GUARDED
+  (monster/cult tier). Becomes a coven infiltration, a rescue from
+  conversion, or the player's own dark-court introduction (the
+  Overheard Word is affinity-blind: it feeds evil players the same
+  way).
+- THE TITHE THAT LEAVES AT NIGHT. A carter and his wife: the
+  manor's grain tithe does not go to the granary; it goes into the
+  marsh by torchlight once a month. GUARDED. Becomes a shadow
+  operation with three reads: the lord feeds something in the
+  marsh, the steward is smuggling, or the marsh's drowned dead are
+  being paid their due. All three reads are playable.
+- THE SICK LADY OF THE TOWER. Two maids: the lady has not been seen
+  since winter, the physician visits with a black bag, and the lord
+  has doubled the tower guard. GUARDED (toppling-grade: a captive
+  heir is a succession crisis). Becomes THE LOST CHILD's adult twin:
+  the rescue quest where the captive might be ill, pregnant,
+  imprisoned, or already something else.
+- THE WARDEN'S DOUBLE LEDGER. Two Wardens, low voices, in the
+  reliquary stacks: the authentication ledger has a second book, and
+  some relics are signed twice. GUARDED (toppling-grade for the
+  Wardens themselves). A rare dark-tier intel that touches doc 36's
+  mask: players who dig into it brush the Pale Queen's machinery
+  without ever being told so.
+- THE GOBLIN TOLL. Smugglers, laughing: the bridge between the
+  holds now charges a toll to the things that live under it, and
+  business is good since nobody patrols. PUBLIC (roads) with a
+  GUARDED underbelly (what the toll actually buys). Becomes a
+  monster-bounty quest (catalog 2, VERMIN tier) or a smuggler
+  alliance quest: kill the toll, or become the toll's new
+  collector.
+- THE COLD WIDOWS OF THE PASS. Mountain guides, quietly: three
+  widows of the pass walk at night and bury travelers who freeze.
+  Respect them or do not, but never dig what they bury. GUARDED
+  (monster tier). Becomes a grave-site delve, an undead mercy
+  quest, or the discovery that the widows are feeding the pass's
+  wight something worse than corpses.
+
+Design rule for all seeds: the overheard FACT is cheap to learn
+(being present, unseen); the QUEST is what the fact grows into. The
+tier table decides who speaks; the frame grammar decides what
+listening earns.
 
 ## Part 4: The quest catalog, by court
 

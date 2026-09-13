@@ -980,3 +980,17 @@ feature-by-feature implementation against the GDD.
     information-gathering verb apart from theft. Gives doc 30's
     unowned G19 stealth gap its reward economy and keys off G17
     schedules.
+
+74. INTEL TIERS + QUEST-SEED CATALOG (2026-09-13, Nicko, baked into
+    doc 37 Part 3b): ruling 6, any fact that can result in a hold
+    toppling or being captured is paranoid-speaker memory
+    (private-conversation rule); THE EXCEPTION is heirlessness,
+    common knowledge for common folk of a territory, overheard
+    anywhere; treasure and monster locations are also GUARDED.
+    Three-tier intel table locked: PUBLIC / GUARDED / DEAD-SPOKEN
+    (tier follows consequence, not secrecy). 12-entry overheard
+    quest-seed catalog added (working ideas): paid gate, rot in the
+    granary, bastard in the woods, unpatrolled road, sealed mine,
+    keeper's secret lane, coven meeting at the stone, night tithe,
+    sick lady of the tower, Warden double ledger, goblin toll, cold
+    widows of the pass.
