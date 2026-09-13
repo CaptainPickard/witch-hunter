@@ -8,6 +8,13 @@ turnaround and batch QA. Tick checkboxes as stages complete.
 
 ## Standing Lessons (from pilots 1-2, apply to every card)
 
+- L0 (Nicko standing rule, 2026-09-13): EVERY FINISHED IMAGE GOES ON THE
+  HUB. A card is not done until its concept frame + atlases appear on
+  art-direction/index.html (Race Cards section + Roster Proof Sheet).
+  Mechanics: web derivative into art-direction/web/, one CARDS list
+  line in build_hub.py, rebuild with /app/venv/bin/python, commit with
+  the card. See the witch-hunter-art-generation skill section 9.
+
 - L1: held weapons and heraldic charges are the consistency killers in
   turnarounds; expect 2-3 QA rounds. QA MUST check weapon presence in
   EVERY view, explicitly.
