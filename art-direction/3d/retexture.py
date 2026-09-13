@@ -33,12 +33,19 @@ def main(inp, outp):
     scene = trimesh.load(inp)
     n = 0
     for name, geom in scene.geometry.items():
-        mat = geom.visual.material
+        vis = geom.visual
+        mat = getattr(vis, 'material', None)
+        uv = getattr(vis, 'uv', None)
+        if mat is None:
+            continue
         tex = getattr(mat, 'baseColorTexture', None)
         if tex is not None:
             new = pixelate(tex)
             mat.baseColorTexture = new
             n += 1
+            if uv is not None:
+                from trimesh.visual.texture import TextureVisuals
+                geom.visual = TextureVisuals(uv=uv, material=mat, image=new)
         # normal maps: soften by pixelate-lite to kill photoreal detail
         nmap = getattr(mat, 'normalTexture', None)
         if nmap is not None:
