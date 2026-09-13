@@ -126,9 +126,56 @@ pipeline before mass production. Success criteria, not A-vs-B judging:
       Docker/UE5; options: Nicko's PC, or a hosted build runner).
 - [ ] Concept frame selected and exported for image-to-3D input.
 
-## Deliverable
+## VALIDATION MEMO (interim, 2026-09-13, updated through equipment-slot demo)
 
-A one-page pipeline validation memo appended to this doc: in-engine
-screenshots vs concept frames, hours-per-body measured stage by stage,
-readability numbers, and the skill-ownership call. If register survival
-or cost fails, the bake-off reopens with evidence.
+Stages validated so far, all timed in art-direction/3d-spike/SPIKE-LOG.md:
+
+- IMAGE-TO-3D (S-B1): PASS. Meshy meshy-5, quad topology. Body
+  (15k tris): 2.8 min, 15 credits. Helmet prop (3k tris): 2.9 min,
+  15 credits. Both instantly recognizable vs canon frames.
+- INPUT PREP (S-A1): PASS. 1-2 image-gen rounds per asset to get a
+  clean single-figure A-pose on neutral gray; vision-QA the output
+  before submission (round 1 of the body was a multi-view sheet,
+  caught by vision QA).
+- REGISTER RE-TEXTURE PASS (S-B3): PASS. Scripted PIL pass (256px
+  downsample, 48-color MEDIANCUT quantize, 5-bit posterize, nearest-
+  neighbor in engine) applied to any mesh's baked GLB texture in
+  seconds, zero per-body manual work. Vision QA confirms painterly
+  pixel-art read. Recipe: art-direction/3d-spike/ scripts.
+- EQUIPMENT SLOTS (S-C0): PASS. Separate helmet mesh attached to/
+  detached from a head anchor on the body mesh at runtime
+  (gravedigger-equip-demo-v2.html). Equipment pieces cost ~5 min +
+  15 credits each, vs 8-direction x per-body illustration math under
+  the sprite carrier. Variant palettes are near-free on shared
+  geometry (doc 27 economics carry over).
+- SCENE READABILITY: PASS after key-light raise. Dark characters need
+  a brightened set (slate background, doubled moon/rim/ambient, fog
+  0.018) to read at the doc 28 combat register.
+
+### KNOWN ISSUES (production rules, not blockers)
+
+1. OCCLUSION, cloth vs hard pieces: the gravedigger's hood pokes
+   through the back of the equipped helmet. Confirmed in-engine by
+   Nicko 2026-09-13. Production rule (from doc 27's punch-through
+   design, now mesh-based): bodies ship as region sub-meshes
+   (skull/hood, torso-soft, torso-armored, limbs, robe-skirt); a
+   slot piece that covers a region hides the soft region mesh under
+   it. Helmets that replace hoods hide the hood sub-mesh; hoods that
+   stay hide nothing. Budget a sub-mesh split per body in the rig
+   stage.
+2. AI-mesh artifacts (merged geometry, shredded non-manifold edges):
+   present on both meshes, acceptable at gameplay distance, retop
+   pass required before hero-tier closeups. Cost TBD in rig/anim
+   stage.
+3. Anchor placement is manual per body in the spike (head anchor at
+   y=1.63 on a normalized 1.8 figure). Production: sockets defined
+   once per rigged skeleton, not per piece.
+
+### Remaining unvalidated stages
+
+- Auto-rig + animation (Meshy or manual): timing + quality unknown.
+- UE5 scene parity (Three.js demo is representative, not final).
+
+Stills + viewer artifacts: art-direction/3d-spike/. Live demos:
+gravedigger-3d-viewer-v2.html (mesh + register pass),
+gravedigger-equip-demo-v2.html (equipment slot).
