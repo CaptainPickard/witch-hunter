@@ -25,6 +25,11 @@ turnaround and batch QA. Tick checkboxes as stages complete.
   training (LoRA) before final production bakes.
 - L6: chroma-key + defringe is the proven cleanup path (rembg's model
   download kills the pilot host; revisit only with pre-cached model).
+- L7 (vampire female, card 06): floor-length garments will pool on the
+  floor and hide the feet in turnaround sheets, which breaks atlas
+  ground-line anchoring. Turnaround prompts for gowned characters MUST
+  pin the hem at ankle height and demand visible feet/shoes in every
+  view; QA checks it explicitly.
 
 ## Card Format
 
@@ -87,9 +92,17 @@ design sheet -> turnaround (Nicko gate) -> 8 directions -> 5-frame idle
 - [x] S7 atlas + billboard page (sprites/vampire-male/card05-billboard.html)
 - [x] catalog in 24-art-bible.md + commit to repo
 
-### CARD 06: VAMPIRE, FEMALE
-- [ ] S1 sheet
-- [ ] S2-S7 (same stages)
+### CARD 06: VAMPIRE, FEMALE  [COMPLETE 2026-09-13]
+- [x] S1 sheet (Veil Duchess register; fan stripped for body canon;
+      first-round register PASS)
+- [x] S2 turnaround (2 rounds: r1 pooled gown hid feet, archived;
+      r2 ankle-hem PASS; new lesson L7 in QA notes)
+- [x] S3 8 directional views (derived sheet PASS)
+- [x] S4 5-frame idle (flicker 9.5-16.8; vision PASS)
+- [x] S5 cleanup (alpha, defringe, normalize)
+- [x] S6 QA (scripted metrics + vision gates)
+- [x] S7 atlas + billboard page (sprites/vampire-female/card06-billboard.html)
+- [x] catalog in 24-art-bible.md + commit to repo
 
 ### CARD 07: ELF (DAWN-REFUSER), MALE
 - [ ] S1 sheet (light-court sylvan lines, stars-and-bows charges,

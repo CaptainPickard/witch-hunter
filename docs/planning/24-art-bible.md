@@ -250,6 +250,14 @@ art-direction/sprites/<card>/):
     8 directions + 5-frame idle built (S3/S4); flicker 6.6-10.6, best
     of the run (rigid doublet per L4). Lantern not baked: gear layer
     per doc 27.
+47. sprites/vampire-female/concept.png - CARD 06 S1: Veil Duchess, tall
+    gaunt elf-vampire noblewoman, pinned silver-white hair, veil-black
+    bodice + court gown, closed lacquered fan, blood-red spire glow as
+    the single accent. APPROVED (first-round register PASS).
+48. sprites/vampire-female/turnaround.png - CARD 06 S2: 4-view
+    turnaround, 2 QA rounds (r1 pooled gown hid the feet; r2 with
+    ankle-height hem PASS). APPROVED. 8 directions + 5-frame idle
+    (flicker 9.5-16.8). Fan not baked: gear layer per doc 27.
 
 Page captions for every frame live in 00-art-direction.html and are the
 canonical short descriptions; the pair descriptions there tie each pair
