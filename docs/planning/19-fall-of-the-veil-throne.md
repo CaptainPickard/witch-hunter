@@ -153,6 +153,15 @@ the memory of what was lost.
   signed the pact as royal chancellor. She has been slowly starving
   herself by choice for every century since, trying to undo her own
   signature. See the Hidden Court below: she keeps one card.
+- SUPERSEDED 2026-09-13 (Nicko ruling, doc 36 RULING PASS entry 4):
+  there is no separate Signer. The 'Signer' is a role the PALE
+  QUEEN has performed for 400 years inside the Wardens (she is a
+  master of alteration magic; the starving is theater; she
+  invented the penitent chancellor to sell the official story of
+  the Fall). This section's portrait remains what the WORLD
+  believes; the mask's true identity, the unmasking as the neutral
+  ending's climax, and the Wardens' crisis are locked in doc 36.
+  Her placement under the underworld questlines stands unchanged.
 
 ## THE HIDDEN COURT (LOCKED 2026-09-12, Nicko directive; LORE REVISITED
 2026-09-12, second ruling, see below)

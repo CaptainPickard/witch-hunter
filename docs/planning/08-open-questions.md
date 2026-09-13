@@ -549,3 +549,33 @@ gate and perf revisions (doc 31), bandit rout flavor and Darkbread
 cue timing (doc 34), stamina-break window tuning (doc 33), doc 30's
 unowned gaps G16+ (audio, dialogue, stealth, mounts, day-night
 content, ammo, localization, accessibility).
+
+## PALE QUEEN RULING PASS (2026-09-13, second session, doc 36)
+
+All 7 original doc 36 opens RESOLVED by Nicko (rulings in doc 36's
+RULING PASS section, verbatim): dark queen learns mid-ritual only
+(her reaction is a live player-choice beat); comeback event = THE
+LAST DANCE (pour 400 years of harvested taint through the Sun altar
+to un-sin the world, a world where the elf king loved her); the
+king's compulsion is permanent by design, no rescue, the choice is
+which kingdom you leave him to; THE SIGNER IS THE PALE QUEEN (THE
+PENITENT IS THE PEN: a 400-year alteration-magic mask inside the
+Wardens, the penitent chancellor was invented, the unmasking is the
+neutral ending's climax and the Wardens fragment is the trap she
+built; doc 19 Signer section carries a supersession note; doc 19's
+framed-chancellor premise is superseded); the neutral ending's fate
+of the Pale Queen = THE HUNTER BECOMES THE LEDGER (mortal and
+powerless after the engine breaks; the player's final choice is her
+sentence: execution, exile, wardenship, or freedom); harvest depth
+= FIXED NARRATIVE RESOURCE (story beats, no simulation meter);
+peasant name = THE NAME IN THE GRAVE (learnable on an unmarked
+grave she made for herself; speaking it aloud in the finale is the
+one line that breaks her composure).
+
+New opens from the rulings, tracked in doc 36's Open Questions
+section with assignments: the Wardens after the unmasking (underworld
+GDD pass), the Signer mask's operations needing re-derivation (doc 19
+reconciliation pass), the neutral ending's sentence mechanics
+(endgame GDD), the dark queen's mid-ritual consequence table (endgame
+GDD), the Last Dance failure state (endgame GDD), and the grave site
+(world GDD item).

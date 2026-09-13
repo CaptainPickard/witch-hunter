@@ -251,3 +251,121 @@ know her as the same word twice.
   gains its hidden tenant (the Pale Queen's court); the Veil
   Spire's crypt holds the Veil altar ruin and, potentially, the
   proof the Signer needs.
+
+## RULING PASS (2026-09-13, Nicko, second session: all 7 open
+questions resolved; entries below are locked rulings; the earlier
+Signer framing in THE GREY-MORALITY DOCTRINE above is SUPERSEDED
+where it conflicts)
+
+1. WHAT DOES THE DARK QUEEN KNOW (was open 1): LOCKED. She does
+   not know. The reveal happens live in the neutral ending: she
+   learns mid-ritual, and what she does with the truth (kill the
+   Pale Queen herself, or break) becomes a player-choice beat.
+   Her 400-year silence never existed: she was never carrying
+   the secret, which is its own tragedy (the original rival was
+   never told she had won).
+
+2. THE PALE QUEEN'S COMEBACK EVENT (was open 2): LOCKED. THE
+   LAST DANCE. With the Deep Altar lit against her, she stops
+   harvesting and starts burning. The working that made the Fall
+   was one girl's soul against half a kingdom; her endgame move
+   is the same transaction scaled up: she surrenders what
+   remains of her soul and pours 400 years of harvested taint
+   back through the Sun altar as one working, to re-make the
+   world in one stroke: erase the war, the Fall, and the
+   marriage that broke her, a world where the elf king loved
+   her. The neutral player must stop a working whose goal is,
+   read plainly, to un-sin the world. Killing it means the world
+   keeps its scar.
+
+3. THE KING'S RESCUE PATH (was open 3): LOCKED. NO RESCUE. The
+   compulsion is permanent by design. The king is the Pale
+   Queen's anchor to the light throne: kill him and her machine
+   loses its center; save him and he stays her puppet. The
+   choice the game gives is not save vs free, it is which
+   kingdom you leave him to.
+
+4. THE SIGNER LEARNS THE TRUTH (was open 4): LOCKED, and it
+   SUPERSEDES the doc 19 Signer identity. THE PENITENT IS THE
+   PEN: there is no separate Signer. The 'Signer' is a role the
+   PALE QUEEN has performed for 400 years inside the Wardens:
+   she is a master of alteration magic, reality-bending, form-
+   changing. She did not frame a chancellor, she INVENTED one: a
+   fictional penitent monster whose visible suffering is what
+   sells the official story of the Fall (a chancellor who sinned
+   and repents is more believable than no culprit at all). The
+   starving is theater. The Hidden Court's leash (doc 19's 'one
+   card') is held by her mask: the Pale Queen has been holding
+   the underworld's ace the whole time. The unmasking is the
+   neutral ending's climax (locked): the Wardens fragment of the
+   truth is the trap she built, and walking through it is how
+   the player wins. The Wardens' crisis is discovering their
+   saint never existed. Doc 19 edits (append-only): the Signer
+   section carries a supersession note pointing here; her
+   'leader of the Wardens' placement stands, her identity
+   beneath the mask is now the Pale Queen's.
+
+5. THE TWO QUEENS' FATES IN THE NEUTRAL REAL ENDING (was open
+   5): LOCKED. THE HUNTER BECOMES THE LEDGER. The neutral ending
+   does not end the Pale Queen. It ends the debt, the pact, and
+   her engine, and what remains is a mortal, powerless, 400-
+   year-old girl with all her memories in a world that hates
+   what she did. The player's final choice is her sentence:
+   execution, exile, wardenship (turn her over to the Wardens
+   she deceived), or the strangest one: let her live free,
+   because the world she built is now everyone's to keep. (The
+   dark queen's mortal fate rides the pact's breaking: free of
+   the creditor, the curse's terms are hers to survive.)
+
+6. HARVEST MECHANIC DEPTH (was open 6): LOCKED. FIXED
+   NARRATIVE RESOURCE. The harvest is scripted to the reveal
+   arcs: it advances by story beats, not simulation. The
+   light playthrough's wrongness is authored, not emergent.
+   (Trade accepted: zero simulation cost, zero risk of the
+   meter contradicting the narrative; the world does not
+   mechanically react to the harvest.)
+
+7. HER PEASANT NAME (was open 7): LOCKED. THE NAME IN THE
+   GRAVE. Her peasant name is learnable, but only where no one
+   would look for it: carved on an unmarked grave. The girl who
+   became the witch died the night of the Fall (the name is
+   buried with her), and the player learns it in the neutral
+   line by finding the grave she made for herself under another
+   name. The Pale Queen has spent 400 years being called by
+   names she stole, and the only true one is on a stone no one
+   visits. Saying her name aloud to her in the final
+   confrontation is the one line of dialogue that breaks her
+   composure.
+
+## OPEN QUESTIONS (status after the 2026-09-13 second session)
+
+All seven original opens are RESOLVED (see RULING PASS above).
+New opens surfaced by the rulings:
+
+1. THE WARDENS AFTER THE UNMASKING: who leads the Reliquary
+   Wardens when their saint never existed, and what happens to
+   the authentication office (doc 06 relic-gating) when its
+   authority was built on a fraud? Assignment: underworld GDD
+   pass.
+2. THE SIGNER MASK'S OPERATIONS: which doc 19 Signer behaviors
+   were performed by the mask and which need re-derivation
+   (the Hidden Court leash transfer, the self-starvation
+   schedule the Wardens witnessed)? Assignment: doc 19
+   reconciliation pass.
+3. THE NEUTRAL ENDING'S SENTENCE MECHANICS: execution, exile,
+   wardenship, or freedom, what does each mechanically change
+   about the post-ending world (faction standings, spawn
+   tables, who inherits the altars)? Assignment: endgame GDD
+   item.
+4. THE DARK QUEEN'S MID-RITUAL CHOICE BEAT: the kill-or-break
+   player choice needs its consequence table (does killing the
+   Pale Queen before the engine fully breaks cost the world the
+   altars' balance?). Assignment: endgame GDD item.
+5. THE LAST DANCE'S FAILURE STATE: what does the world look
+   like if the player fails to stop the working (the un-sinned
+   world as a playable NG+ seed, or a hard endstate)?
+   Assignment: endgame GDD item.
+6. THE GRAVE SITE: where is the unmarked grave (which biome,
+   whose ground, what guards it) and does finding it have
+   light/dark-line echoes (a light player can find the grave
+   and not understand it)? Assignment: world GDD item.

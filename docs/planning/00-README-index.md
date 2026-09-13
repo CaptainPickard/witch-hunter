@@ -908,3 +908,22 @@ feature-by-feature implementation against the GDD.
     doctrine, three reveals, 7 open questions (dark queen's
     knowledge, comeback event, king rescue, Signer truth, mirror
     ending, harvest depth, peasant name).
+
+69. PALE QUEEN RULING PASS (2026-09-13, second session, Nicko,
+    rulings verbatim in doc 36 RULING PASS): all 7 doc 36 opens
+    resolved. Headline rulings: the dark queen does not know,
+    learns mid-ritual in the neutral ending, her reaction is a
+    player-choice beat; comeback event THE LAST DANCE (one
+    working of 400 years of harvested taint to un-sin the world);
+    the king's compulsion is permanent, no rescue; THE SIGNER IS
+    THE PALE QUEEN (THE PENITENT IS THE PEN: 400-year alteration-
+    magic mask inside the Wardens, the penitent chancellor was
+    invented, unmasking is the neutral ending's climax, the
+    Wardens fragment is her trap; doc 19 carries a supersession
+    note); the neutral ending leaves her mortal and powerless,
+    the player chooses her sentence (THE HUNTER BECOMES THE
+    LEDGER); harvest is a fixed narrative resource, no
+    simulation meter; her peasant name is learnable on an
+    unmarked grave (THE NAME IN THE GRAVE), and speaking it
+    aloud in the finale breaks her composure. Six new opens
+    tracked in doc 36 with assignments.
