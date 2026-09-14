@@ -1,6 +1,9 @@
-# 36 - The Pale Queen (The Light Court's Hidden Spine)
+# 36 - The Witch Queen (The Light Court's Hidden Spine)
 
-Drafted 2026-09-13, lore session. Expands doc 19's lore spine: the
+Drafted 2026-09-13, lore session; identity corrected 2026-09-14 (see
+the RULING PASS 2026-09-14 near the end; every "Pale Queen" in the
+pre-correction text refers to the WITCH). Expands doc 19's lore
+spine: the
 light court's hidden agenda, the truth of the Fall, and the
 grey-morality doctrine across the major players. Built on the doc 19
 core myth (the Solar Throne, the pact, the Undersovran debt) and
@@ -29,12 +32,15 @@ darkness: the elf king and his elven queen were cursed to
 immortality, vampires ruling the dark throne forever, and the
 continent split along the scar of her working.
 
-The two queens mirror each other across the whole war:
+The two queens mirror each other across the whole war (the light
+queen is THE WITCH; the PALE QUEEN is the separate neutral vampire,
+see RULING PASS 2026-09-14):
 
 - THE DARK QUEEN is the elven queen from the Fall, the bride the
   king chose, cursed beside him. She has ruled darkness for four
   centuries beside a husband she may or may not still love.
-- THE PALE QUEEN is the peasant girl from the Fall. She did not get
+- THE WITCH (then called the Pale Queen in pre-correction drafts) is
+  the peasant girl from the Fall. She did not get
   the king. She got eternity instead, and she spent it building
   herself a kingdom of light to inherit the ashes she made. Her
   public face: the human queen of the light court, beautiful,
@@ -67,7 +73,7 @@ Consequences locked with this:
   is the source of her magic and the fuel of her immortality. The
   Sun altar's ruin is not desecrated. It is drained.
 
-## THE PALE QUEEN'S TWO COURTS (locked by Nicko, 2026-09-13: she
+## THE WITCH'S TWO COURTS (locked by Nicko, 2026-09-13: she
 has been playing both sides for centuries, and can be the true
 final antagonist)
 
@@ -109,8 +115,9 @@ on both sides that do real good and real harm with the same hands.
   not know about. His reign's greatest cruelties may be the witch's
   hand, not his heart. He is the war's most tragic figure: the
   enemy within his own castle.
-- THE PALE QUEEN: the true antagonist (locked). Beautiful outside,
-  400-year-old witch underneath, playing both sides. Her public
+- THE WITCH (the light queen): the true antagonist (locked).
+  Beautiful outside, 400-year-old witch underneath, playing both
+  sides. Her public
   goodness is genuine in effect (the light court does protect
   mortals) and rotten in purpose (it is her harvest machine). She
   is proof the doctrine cuts both ways: bad in the good.
@@ -121,11 +128,14 @@ on both sides that do real good and real harm with the same hands.
   woman who ruined him and calls it destiny.
 - THE DARK QUEEN: taken from her king's side by the girl he did
   not choose, then cursed beside him for four centuries. She is
-  both the original rival (to the Pale Queen) and the Fall's other
+  both the original rival (to the witch) and the Fall's other
   victim. What she knows about the creditor is a PROPOSED open
   question (below).
-- THE SIGNER: the witch engineered the pact and the Signer signed
-  it unwittingly (locked by Nicko, 2026-09-13). Her four-century
+- THE SIGNER: a MASK of the witch (locked 2026-09-14 correction:
+  the Signer was always the witch). The doc 19 portrait of the
+  penitent who signed the pact and starves to undo the signature
+  is what the WORLD believes; beneath the mask is the light queen
+  herself. Her four-century
   penance is for a crime she was framed for. The doc 19 portrait
   (starving herself by choice every century to undo her own
   signature) is unchanged: it is the deepest tragic irony in the
@@ -135,14 +145,16 @@ on both sides that do real good and real harm with the same hands.
   the only institution that has contained the blight's spread for
   four centuries. The purge doctrine is monstrous and it works.
 - THE CHURCH OF MERCY: the redemption doctrine is sincere, and
-  (PROPOSED) it is unknowingly the Pale Queen's harvest line.
+  (PROPOSED) it is unknowingly the WITCH's harvest line.
   Every cure feeds her.
 - THE RELIQUARY WARDENS: memory-keepers who authenticate the
   world's history. They preserve the truth and bury it at once:
-  the Wardens hold the Pale Queen's version of the Fall in their
+  the Wardens hold the WITCH's version of the Fall in their
   deepest vault, unspoken, because saying it aloud would ignite a
   war of extermination against every human court. Their protection
-  of the world has become her protection (PROPOSED status).
+  of the world has become her protection (PROPOSED status; the
+  Pale Queen of the neutral underground is a SEPARATE character who
+  knows the Signer was false, see doc 44).
 - THE HIDDEN COURT: neutral wolves, conversion by law and trial,
   discipline holding the wild strains back. Their discipline
   exists because the Signer holds their leash (doc 19). Unleashed
@@ -154,7 +166,7 @@ on both sides that do real good and real harm with the same hands.
 ## THE THREE REVEALS (locked by Nicko, 2026-09-13: three separate
 storylines by allegiance, only neutral uncovers the whole truth)
 
-The Pale Queen's truth must not be one cheap twist. It is told in
+The witch's truth must not be one cheap twist. It is told in
 three separate storyline lenses, one per allegiance, and the
 allegiance itself decides how much of the truth is reachable:
 
@@ -197,14 +209,15 @@ allegiance itself decides how much of the truth is reachable:
   sense. Cross-playthrough knowledge, not missable content, is
   what teaches the player there was always a third story.
 
-## NAMING (locked by Nicko, 2026-09-13: working name THE PALE QUEEN)
+## NAMING (locked by Nicko, 2026-09-13; CORRECTED 2026-09-14)
 
-She is THE PALE QUEEN in both faces: the elegant light-court queen
-and the pale specter of the Undersovran. The same word does double
-duty across both courts, and the player who learns the name in one
-context shivers at its echo in the other. The dark court knows her
-as the creditor; the light court knows her as the queen; the docs
-know her as the same word twice.
+SUPERSEDED 2026-09-14 (Nicko): the name THE PALE QUEEN now belongs
+to the neutral underground vampire (doc 44), a SEPARATE character.
+The light queen is THE WITCH (working title THE WITCH QUEEN for
+docs). The echo device survives differently now: the player who
+learns in the underworld that "a witch broke the world" and later
+stands before the beloved light queen holds both halves of one
+truth without the world ever saying so.
 
 ## OPEN QUESTIONS (per 08 rules: added to 08 in the same pass)
 
@@ -238,7 +251,7 @@ know her as the same word twice.
 
 ## RELATION TO OTHER DOCS (append-only cross-references)
 
-- doc 19: the Undersovran section is now the Pale Queen's mask;
+- doc 19: the Undersovran section is now the WITCH's mask;
   the debt arc gains the human-creditor layer; the Third Altar
   section stands unchanged (the Deep Altar is the counter-engine).
 - doc 12: light/dark/neutral day-night ownership and the
@@ -248,7 +261,7 @@ know her as the same word twice.
   alignment-keyed apex structure; the debt discovery arc gains
   its light-court mirror (the Mercy harvest arc).
 - doc 22 (Veil Spire, New Capital capitals): the New Capital
-  gains its hidden tenant (the Pale Queen's court); the Veil
+  gains its hidden tenant (the WITCH's court); the Veil
   Spire's crypt holds the Veil altar ruin and, potentially, the
   proof the Signer needs.
 
@@ -260,12 +273,12 @@ where it conflicts)
 1. WHAT DOES THE DARK QUEEN KNOW (was open 1): LOCKED. She does
    not know. The reveal happens live in the neutral ending: she
    learns mid-ritual, and what she does with the truth (kill the
-   Pale Queen herself, or break) becomes a player-choice beat.
+   WITCH herself, or break) becomes a player-choice beat.
    Her 400-year silence never existed: she was never carrying
    the secret, which is its own tragedy (the original rival was
    never told she had won).
 
-2. THE PALE QUEEN'S COMEBACK EVENT (was open 2): LOCKED. THE
+2. THE WITCH QUEEN'S COMEBACK EVENT (was open 2): LOCKED. THE
    LAST DANCE. With the Deep Altar lit against her, she stops
    harvesting and starts burning. The working that made the Fall
    was one girl's soul against half a kingdom; her endgame move
@@ -279,35 +292,33 @@ where it conflicts)
    keeps its scar.
 
 3. THE KING'S RESCUE PATH (was open 3): LOCKED. NO RESCUE. The
-   compulsion is permanent by design. The king is the Pale
-   Queen's anchor to the light throne: kill him and her machine
+   compulsion is permanent by design. The king is the WITCH's
+   anchor to the light throne: kill him and her machine
    loses its center; save him and he stays her puppet. The
    choice the game gives is not save vs free, it is which
    kingdom you leave him to.
 
 4. THE SIGNER LEARNS THE TRUTH (was open 4): LOCKED, and it
-   SUPERSEDES the doc 19 Signer identity. THE PENITENT IS THE
-   PEN: there is no separate Signer. The 'Signer' is a role the
-   PALE QUEEN has performed for 400 years inside the Wardens:
-   she is a master of alteration magic, reality-bending, form-
-   changing. She did not frame a chancellor, she INVENTED one: a
-   fictional penitent monster whose visible suffering is what
-   sells the official story of the Fall (a chancellor who sinned
-   and repents is more believable than no culprit at all). The
-   starving is theater. The Hidden Court's leash (doc 19's 'one
-   card') is held by her mask: the Pale Queen has been holding
-   the underworld's ace the whole time. The unmasking is the
+   SUPERSEDED TWICE: by the 09-13 ruling below AND by the
+   2026-09-14 correction (see RULING PASS 2026-09-14). The
+   'Signer' is a role the WITCH has performed for 400 years
+   inside the Wardens (the penitent persona: the starving is
+   theater, the mask sells the official story of the Fall). The
+   Hidden Court's leash (doc 19's 'one card') is held by that
+   mask: the WITCH has been holding the underworld's ace the
+   whole time. The unmasking is the
    neutral ending's climax (locked): the Wardens fragment of the
    truth is the trap she built, and walking through it is how
    the player wins. The Wardens' crisis is discovering their
    saint never existed. Doc 19 edits (append-only): the Signer
    section carries a supersession note pointing here; her
    'leader of the Wardens' placement stands, her identity
-   beneath the mask is now the Pale Queen's.
+   beneath the mask is the WITCH's (the 09-13 invented-chancellor
+   story is superseded; the mask is the witch's persona).
 
 5. THE TWO QUEENS' FATES IN THE NEUTRAL REAL ENDING (was open
    5): LOCKED. THE HUNTER BECOMES THE LEDGER. The neutral ending
-   does not end the Pale Queen. It ends the debt, the pact, and
+   does not end the WITCH. It ends the debt, the pact, and
    her engine, and what remains is a mortal, powerless, 400-
    year-old girl with all her memories in a world that hates
    what she did. The player's final choice is her sentence:
@@ -325,13 +336,14 @@ where it conflicts)
    meter contradicting the narrative; the world does not
    mechanically react to the harvest.)
 
-7. HER PEASANT NAME (was open 7): LOCKED. THE NAME IN THE
+7. HER PEASANT NAME (was open 7; the WITCH's peasant name):
+   LOCKED. THE NAME IN THE
    GRAVE. Her peasant name is learnable, but only where no one
    would look for it: carved on an unmarked grave. The girl who
    became the witch died the night of the Fall (the name is
    buried with her), and the player learns it in the neutral
    line by finding the grave she made for herself under another
-   name. The Pale Queen has spent 400 years being called by
+   name. The WITCH has spent 400 years being called by
    names she stole, and the only true one is on a stone no one
    visits. Saying her name aloud to her in the final
    confrontation is the one line of dialogue that breaks her
@@ -359,7 +371,7 @@ New opens surfaced by the rulings:
    item.
 4. THE DARK QUEEN'S MID-RITUAL CHOICE BEAT: the kill-or-break
    player choice needs its consequence table (does killing the
-   Pale Queen before the engine fully breaks cost the world the
+   WITCH before the engine fully breaks cost the world the
    altars' balance?). Assignment: endgame GDD item.
 5. THE LAST DANCE'S FAILURE STATE: what does the world look
    like if the player fails to stop the working (the un-sinned
@@ -370,7 +382,7 @@ New opens surfaced by the rulings:
    light/dark-line echoes (a light player can find the grave
    and not understand it)? Assignment: world GDD item.
 
-## RULING PASS (2026-09-14, Nicko: identity correction, reconciliation session PENDING)
+## RULING PASS (2026-09-14, Nicko: identity correction, reconciliation session DELIVERED)
 
 Nicko's correction (verbatim intent): THE SIGNER WAS ALWAYS THE WITCH,
 posing as the GOOD COURT'S QUEEN in the present day. The PALE QUEEN is
@@ -386,16 +398,20 @@ final battle.
 - This SUPERSEDES ruling 4 above ("THE SIGNER IS THE PALE QUEEN, the
   penitent is the pen"): the Signer/Witch identity and the Pale
   Queen's identity are SEPARATE characters again.
-- The doc 36/19 reconciliation session (pending, after the current
-  ruling chain) re-derives: the Signer/Witch's good-court-queen
-  masquerade and its tell-tale trail, the Pale Queen's vampire
-  dissent-and-hide history, her unite-the-neutral-factions questline
-  as the neutral path's spine (this quest grant was always hers),
-  which doc 19 Signer behaviors belong to the Witch versus the Pale
-  Queen, and the fates of BOTH queens in the neutral ending under
-  the corrected identities.
-- All doc 36 opens 1-6 above and the doc 19 mask re-derivation roll
-  into this reconciliation session; none are ruled until then.
+- RECONCILIATION DELIVERED same day: doc 44-story-web is the
+  reconciliation product (cast, knowledge ledger, domination web,
+  underworld alignment doors, reveal beats).
+- NAMING CORRECTION 2026-09-14 (Nicko, second correction): the
+  neutral vampire keeps the name THE PALE QUEEN. She is met toward
+  the START of the main neutral questline as the leader of ONE of
+  the 7 underground factions; her plan is to unite the other 6
+  under one banner, and she needs the player's help. She says the
+  state of the world is due to a powerful witch, but she does NOT
+  know who that person is in the present day, only that the world
+  broke because of the witch's actions. She was there at the
+  BEGINNING, at the signing before it all broke, and she knows the
+  "Signer" was not who they claimed to be (she smelled the plot
+  under the hood). Doc 44 Part 1 entry 5 carries her full spec.
 
 ## THE THREE VERSIONS (coherence pass, 2026-09-13; written from
 the locked rulings above; the world's public story is doc 19's
@@ -439,7 +455,7 @@ the other two make sense.
   true history, and the trap: the penitent Signer is the bait
   in the trap she built herself). THE BIG REVEAL lands here and
   only here, as the neutral finale's climax: the unmasking (the
-  Signer is the Pale Queen; the girl, the witch, the invented
+  Signer is the WITCH; the girl, the witch, the invented
   devil, the debt, the beloved queen: one soul wearing two
   kingdoms as a mask). Then the locked sequence runs: the dark
   queen's mid-ritual choice beat, the Last Dance, the Deep

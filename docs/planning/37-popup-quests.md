@@ -466,7 +466,7 @@ names, nothing locked beyond the tier table above:
   reliquary stacks: the authentication ledger has a second book, and
   some relics are signed twice. GUARDED (toppling-grade for the
   Wardens themselves). A rare dark-tier intel that touches doc 36's
-  mask: players who dig into it brush the Pale Queen's machinery
+  mask: players who dig into it brush the WITCH's machinery
   without ever being told so.
 - THE GOBLIN TOLL. Smugglers, laughing: the bridge between the
   holds now charges a toll to the things that live under it, and

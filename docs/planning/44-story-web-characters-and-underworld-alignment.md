@@ -142,8 +142,12 @@ survive the others.
 - IDENTITY (the corrected one): a former advisor of the Solar
   Throne, turned vampire in the Fall's corruption 400 years ago, who
   dissented from both emerging courts and vanished into the neutral
-  underworld. The underworld's unifier. She grants the Third Path
-  unite-quest.
+  underworld. The underworld's unifier. UPDATE (Nicko, 2026-09-14):
+  she keeps the name THE PALE QUEEN, and when the player meets her
+  toward the START of the main neutral questline she is the leader
+  of ONE of the seven underground factions (Part 4's roster); her
+  plan is to unite the other SIX under one banner, and she needs the
+  player's help to do it. She grants the Third Path unite-quest.
 - PUBLIC FACE (underworld): a patient, courtly power broker with no
   banner and no demands; the one figure every smuggler, mercenary,
   and thief respects and none can name the limits of.
@@ -154,14 +158,17 @@ survive the others.
 - KNOWS: the continent's political reality better than any court
   strategist; the underworld's every route, ring, and grudge; that
   SOMETHING unnatural sits under the war's economics (the debt's
-  shape is visible to anyone who has watched four centuries of
-  tithes). Does NOT know how it all started: not the witch's guilt,
-  not the creditor's identity, not that the pact's author is alive
-  and crowned. Her blindness is the story's cruelest engine: she is
-  organizing the one force that could end the war without knowing
-  the war's author is already inside her opposition's head, her
-  head's opposite number, and (as the Signer) nominally her own
-  underworld's certifying authority.
+  tithes). SHE KNOWS THE SIGNER WAS NOT WHO THEY CLAIMED TO BE
+  (locked 2026-09-14): she was THERE AT THE BEGINNING, at the
+  signing before it all broke, and she smelled the plot under the
+  hood; the world's official story of the Fall is wrong, and a
+  powerful witch is behind the world's broken state. She does NOT
+  know: who that witch is in the modern day (the light queen's face
+  and the Signer's mask do not connect for her), the witch's guilt,
+  or that the creditor and the witch and the queen are one. Her
+  blindness is the story's cruelest engine: she is organizing the
+  one force that could end the war, carrying the one true clue (the
+  Signer is false) without the key that unlocks it.
 - LETS ON: neutrality as philosophy ("neither throne, ever").
 - HIDES: her origin (Solar Throne advisor; she knew the king, the
   queen, and the court before the Fall: she may recognize the light
@@ -228,9 +235,9 @@ arc must not contradict it.
 | The king is compelled | KNOWS | no (victim) | no | no | no | no | no |
 | The altars are siphoned | KNOWS | no | no | no | no | no | no |
 | The Mercy/Militant harvest feeds her | KNOWS | no | no | no | no | no | no |
-| The Signer is a mask | KNOWS | no | no | no | no | no (the leash is real to them) | no |
+| The Signer is a mask | KNOWS | no | no | no | KNOWS (locked 2026-09-14: she was at the signing, she smelled the plot) | no (the leash is real to them) | no |
 | The witch survived as the light queen | KNOWS | no | no | no | no | no | no |
-| The Pale Queen lives in the underworld | no (uncertain) | no | no | no | - | SUSPECTS (an unifier moves pieces) | no |
+| The Pale Queen lives in the underworld and unites the rings | no (uncertain) | no | no | no | - | SUSPECTS (an unifier moves pieces) | no |
 | The Deep Altar exists and what it is | KNOWS (she drains the other two; the Deep one she forgot, doc 19) | no | no | no | SUSPECTS (the underworld sits on it) | no | SUSPECTS (in their archives) |
 
 Note the asymmetry that makes the game work: the witch knows
@@ -361,8 +368,11 @@ Full arcs live in docs 36/19/20; the corrected sequence:
    war has a hidden bill.
 2. The compulsion (light-court line): the king is not free.
 3. The Signer's mask (Wardens line): the memory-keepers are chaired
-   by someone false. (The 09-13 "penitent is the pen" invention story
-   is superseded; the mask is the witch's.)
+   by someone false. THE PALE QUEEN HAS KNOWN THIS FROM THE START
+   (locked 2026-09-14): her opening speech to the player ("a witch
+   broke the world; the Signer was not who they claimed") is the
+   questline's first clue, delivered in act one and only understood
+   at the finale.
 4. The creditor's face (neutral ending, mid-ritual, locked): the
    dark queen learns it live; the player can know earlier by
    assembling the ledger.
@@ -386,7 +396,8 @@ provisional notes already):
    by the Signer-as-witch's-mask framing (the trap mechanism stands;
    the invented-chancellor story does not).
 3. Doc 36's Three Versions section: vantage points survive, but every
-   "Pale Queen" reference in them re-points per the correction.
+   "Pale Queen" reference in them re-points per the correction
+   (APPLIED 2026-09-14: all such references now read the WITCH).
 4. Doc 19's Signer section: the provisional 2026-09-14 note becomes
    the standing text once doc 44 is locked.
 

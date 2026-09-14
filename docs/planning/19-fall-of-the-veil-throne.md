@@ -166,12 +166,15 @@ the memory of what was lost.
   RULING PASS 2026-09-14): the 09-13 ruling above is itself
   superseded. THE SIGNER WAS ALWAYS THE WITCH, posing as the good
   court's queen in the present day. The PALE QUEEN is a SEPARATE
-  character hiding among the neutral underground (ex-Solar Throne
+  character hiding among the neutral underworld (ex-Solar Throne
   advisor, turned vampire 400 years prior, dissented and hid; she
-  grants the unite-the-neutral-factions quest for the final
-  battle). The doc 36/19 reconciliation session (pending) re-derives
-  the Signer/Witch's masquerade, the Pale Queen's history, and the
-  mask behaviors' ownership; all doc 36 opens roll into it.
+  grants the unite-the-neutral-factions quest for the final battle,
+  met at the questline's start as leader of one of the 7 underworld
+  factions, uniting the other 6 with the player's help). She was at
+  the signing and KNOWS the Signer was not who they claimed to be.
+  Reconciliation DELIVERED: doc 44-story-web is the standing text
+  for the corrected cast and the underworld alignment; the mask
+  behaviors belong to the WITCH.
 
 ## THE HIDDEN COURT (LOCKED 2026-09-12, Nicko directive; LORE REVISITED
 2026-09-12, second ruling, see below)

@@ -91,7 +91,7 @@ family, or relic story slot.
 | T2 | Huntsman's Saber | silver | yew, wolf | town vendors, crypt gear layer | COMMON |
 | T3 | Warbrand | steel | yew, boar-tusk | war camps, hold sieges, moor dungeons | COMMON/RARE |
 | T4 | Cold Iron Falchion | cold iron | thorn-yew, ibex | mountain strata 2+, blight scars | RARE |
-| T5 | The Pale Verdict | blacksteel | blackwood, ghoul-hide | relic story slot (Named, Pale Queen arc) | STORY |
+| T5 | The Pale Verdict | blacksteel | blackwood, ghoul-hide | relic story slot (Named, Pale Queen arc: the neutral underworld unifier, doc 44) | STORY |
 
 ### Blunt (doc 33: 22 dmg, stagger identity)
 

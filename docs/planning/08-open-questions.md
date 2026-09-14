@@ -532,7 +532,7 @@ New open questions from the doc 36 lock session, all tracked in doc
 36's Open Questions section with assignments:
 1. What does the dark queen know about the creditor's identity
    (doc 36, lore GDD pass).
-2. The Pale Queen's comeback-equivalent event (her desperate move,
+2. The WITCH's comeback-equivalent event (her desperate move,
    parallel to the dark court's bankruptcy ritual, doc 36, lore
    GDD pass).
 3. The king's rescue path: breaking the dark magic early and its
@@ -569,7 +569,7 @@ Wardens, the penitent chancellor was invented, the unmasking is the
 neutral ending's climax and the Wardens fragment is the trap she
 built; doc 19 Signer section carries a supersession note; doc 19's
 framed-chancellor premise is superseded); the neutral ending's fate
-of the Pale Queen = THE HUNTER BECOMES THE LEDGER (mortal and
+of the WITCH = THE HUNTER BECOMES THE LEDGER (mortal and
 powerless after the engine breaks; the player's final choice is her
 sentence: execution, exile, wardenship, or freedom); harvest depth
 = FIXED NARRATIVE RESOURCE (story beats, no simulation meter);
@@ -1141,4 +1141,10 @@ This section records the batch.
     fact), the domination web, the underworld alignment doors (7
     factions + Deep Altar destination, with alignment costs), reveal
     beats, supersession edits pending Nicko confirmation, opens 1-6.
-    Status: PROPOSED pending Nicko line-by-line review.
+    Status: reconciliation DELIVERED; naming correction locked same
+    day (the neutral vampire keeps the name PALE QUEEN; she is met
+    at the neutral questline's start as leader of one of the 7
+    underworld factions, uniting the other 6 with the player's help;
+    she was at the signing and knows the Signer was false). The
+    light queen is re-pointed as THE WITCH across docs 36/19/37/39/40.
+    Awaiting Nicko line-by-line review on the doc 44 opens.

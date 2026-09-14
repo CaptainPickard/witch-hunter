@@ -293,7 +293,7 @@ All are STORY band, all obey ruling 5 (not craftable).
 | Relic | Slot/class | Acquisition story hook (PROPOSED) |
 |---|---|---|
 | The Warden's Aegis Cuirass | CHEST, heavy | Warden arc questline terminal reward; cold iron plate faced in Aegis Quintessence |
-| The Pale Queen's Shroud | BACK, light | Pale Queen arc (doc 36): taken from the throne vault |
+| The Pale Queen's Shroud | BACK, light | Pale Queen arc (doc 44: the neutral underworld unifier): taken from her faction's vault |
 | Gravedigger's Iron Hands | HANDS, heavy | the gravedigger's grave (doc 19 grave-whisper trail); the one T1-LOOKING Named piece, doc 06's "Named T2 relics exist as starter-region stories" made real at T5 |
 | The Moor-King's Antlered Helm | HEAD, medium | the moor's wight-bard (doc 03): replayed Fall battles, the king's last stand |
 | The Hexbreaker Charm | TALISMAN | light-court requisition line terminal; burns in evil hands |

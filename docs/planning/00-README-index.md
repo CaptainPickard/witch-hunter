@@ -898,8 +898,11 @@ feature-by-feature implementation against the GDD.
     siphons the altars (the Sun altar is her tap, not a ruin); she
     controls the human king with dark magic; she has played both
     sides for centuries and can be the true final antagonist;
-    working name THE PALE QUEEN; the Signer signed the pact
-    unwittingly, her penance is for a framed crime; the
+    working name THE PALE QUEEN [CORRECTED 2026-09-14: the light
+    queen is THE WITCH; the name PALE QUEEN transfers to the neutral
+    underworld vampire, doc 44]; the Signer signed the pact
+    unwittingly, her penance is for a framed crime [the Signer is
+    the witch's mask, corrected 2026-09-14]; the
     grey-morality doctrine for all major players; three
     allegiance-keyed reveal storylines with the NEUTRAL line as
     the only path to the whole truth, and the neutral ending is
@@ -907,7 +910,10 @@ feature-by-feature implementation against the GDD.
     36-pale-queen.md - the Pale Queen lore spine, grey-morality
     doctrine, three reveals, 7 open questions (dark queen's
     knowledge, comeback event, king rescue, Signer truth, mirror
-    ending, harvest depth, peasant name).
+    ending, harvest depth, peasant name). [IDENTITY NOTE
+    2026-09-14: doc 36's pre-correction "Pale Queen" references
+    now read THE WITCH; the PALE QUEEN is the neutral underworld
+    unifier per doc 44.]
 
 69. PALE QUEEN RULING PASS (2026-09-13, second session, Nicko,
     rulings verbatim in doc 36 RULING PASS): all 7 doc 36 opens
