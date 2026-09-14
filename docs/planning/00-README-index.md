@@ -1067,3 +1067,15 @@ feature-by-feature implementation against the GDD.
     (audience checks are GUARDED-only). All HIGH/MEDIUM/LOW findings
     resolved or assigned as opens 33-40. Open 9 closed (spine
     immunity). Audit docs 37-A/B/C committed on dev.
+
+81. INGREDIENT RECIPE MATRIX (2026-09-14, Nicko, spec in doc 38):
+    doc 38 = recipe matrix only. Exact named ingredients + minimum
+    station tier for every consumable (2 stock potions, 18 daily
+    prep draughts, 6 coatings + payload tips, 5 throwables,
+    Cleansing Draught, 2 T5 legendaries), 10 representative gear
+    recipes (category secondaries stay gear-only), 5 refining
+    chains. Hunter's Components catalog DEFERRED to a separate
+    later doc (12-16 components agreed). Rulings: consumables use
+    exact names, not category slots; catalog deferred. Opens 33-36
+    logged. Status: LOCKED by Nicko, 2026-09-14 (scope confirmed in
+    session).

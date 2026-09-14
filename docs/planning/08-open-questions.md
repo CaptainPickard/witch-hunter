@@ -838,3 +838,31 @@ RECONCILIATION PASS section.
 RESOLVED: doc 37 open 9 (spine immunity answers the vendetta target
 question; doc 20's lock stands). Doc 37's open 12 and open 29 remain
 open as spec assignments. New opens 33-40 logged above and in doc 37.
+
+## INGREDIENT RECIPE MATRIX PASS (2026-09-14, doc 38)
+
+Doc 38-ingredient-recipe-matrix.md baked (Astrabot, IO verified):
+exact named ingredients + minimum station tier for every consumable
+(2 stock potions, all 18 daily prep draughts, 6 coatings + 3 generic
+payload tips, 5 throwables, the Cleansing Draught, the two T5
+legendaries), 10 representative gear recipes with category
+secondaries, and the 5 refining chains. Nicko's rulings this pass:
+doc 38 = recipe matrix only, Hunter's Components catalog DEFERRED to
+a separate later doc; consumables use EXACT named ingredients (not
+category slots), the category-slot model stays gear-only; component
+catalog size 12-16 agreed for when that later pass happens.
+
+New opens from this pass (logged in doc 38 Part 4):
+33. Monster-part names for the bane draughts and coatings
+    (witch-fauna heart, wight-marrow, hag-bile, clatterer chitin,
+    troll blood, thrall marrow, demon ichor) are PROPOSED pending
+    Nicko; also review doc 38's recipe-fit exceptions (mountain
+    herbs, blight defense bases, Farmwife's Cider): doc 38 pass.
+34. Quantities per craft (how many moonbells per flask) and every
+    PROPOSED minimum station tier: GDD tuning.
+35. Whether consumables may later accept category-slot substitution
+    (current ruling: exact names only, gear keeps category slots):
+    GDD fork.
+36. Hunter's Components catalog (12-16 guaranteed-enchant
+    components with biome/monster sources): separate later doc,
+    next crafting pass.
