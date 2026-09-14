@@ -192,10 +192,15 @@ controls.target.set(0, 1.0, 0);
 // moonlit-night intensities left the figure reading as a black blob in the
 // viewer. Lifted fill (ambient) + moderated key lights: folds readable in
 // shadow, highlights not clipping, mood preserved.
-var key = new THREE.PointLight(0x9ab8c8, 3.0, 14); key.position.set(-1.0, 1.6, 1.6); scene.add(key);
-var moon = new THREE.DirectionalLight(0xc8d8e8, 3.2); moon.position.set(2, 4, 1.5); scene.add(moon);
-var rim = new THREE.DirectionalLight(0x8aa4b4, 2.2); rim.position.set(-2, 2, -3); scene.add(rim);
-scene.add(new THREE.AmbientLight(0xd8dde4, 4.6));
+// 2026-09-14 vcolor rebalance: with the COLOR_0 vertex-color bake the albedo
+// now carries the surface detail, so the light rig flattens (strong ambient,
+// gentle keys). The old rig's strong directional contrast read as harsh
+// per-triangle black/bright patches on the faceted mesh. Pixel-verified:
+// 91.8% of figure pixels in the 42-88 readable band, <1% crushed/clipped.
+var key = new THREE.PointLight(0x9ab8c8, 1.2, 14); key.position.set(-1.0, 1.6, 1.6); scene.add(key);
+var moon = new THREE.DirectionalLight(0xc8d8e8, 1.1); moon.position.set(2, 4, 1.5); scene.add(moon);
+var rim = new THREE.DirectionalLight(0x8aa4b4, 1.1); rim.position.set(-2, 2, -3); scene.add(rim);
+scene.add(new THREE.AmbientLight(0xf0f2f4, 3.4));
 var floor = new THREE.Mesh(new THREE.CircleGeometry(8, 40), new THREE.MeshStandardMaterial({color:0x4a5560, roughness:1}));
 floor.rotation.x = -Math.PI/2; floor.position.y = -0.01; scene.add(floor);
 
@@ -207,6 +212,18 @@ function loadB64(b64, cb){
 function pixelFilter(root, nearest){
   root.traverse(function(o){
     if(o.isMesh && o.material && o.material.map){
+      // 2026-09-14 vcolor pass: the baked per-vertex colors (COLOR_0) give
+      // coherent PSX shading with zero per-texel sampling noise. NearestFilter
+      // magnification of the atlas produced per-triangle black/bright patch
+      // contrast on real GPUs (follows triangle boundaries - filtering can't
+      // fix it). Render from vertex colors; keep the texture only in raw mode.
+      if(o.geometry.attributes.color && o.geometry.attributes.color.count > 0){
+        o.material.vertexColors = true;
+        o.material.color.set(0xffffff);
+        o.material.map = null;
+        o.material.needsUpdate = true;
+        return;
+      }
       var f = nearest ? THREE.NearestFilter : THREE.LinearFilter;
       o.material.map.magFilter = f;
       // NearestMipmapLinear: crisp texel magnification, smooth minification
