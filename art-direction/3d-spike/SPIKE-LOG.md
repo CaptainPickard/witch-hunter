@@ -194,3 +194,35 @@ Also debunked this pass:
 - Nicko's remaining dissatisfaction is partly the intended PSX chunky
   register + tattered cloak geometry (verified in-contact) and partly UI
   quality. UI redesign dispatched separately.
+
+## 2026-09-14 pass 5 (IO direct, astra-assisted): vertex-color bake - triangle-boundary patch contrast eliminated
+
+User still reported speckled/fragmented figure on real Chrome after the
+NORMAL fix + exposure pass. Astra pass 5 (live-route playwright + structured
+vision QA at 2-3x zoom) characterized the remaining defect precisely:
+- NOT per-texel salt-and-pepper (hf-noise 1.4-2.7, already passing)
+- Per-triangle black/bright PATCH contrast following triangle boundaries,
+  with pure-black regions adjacent to bright regions, floor bleeding through
+  holes, and minor detached debris (39/17/41 tiny-far faces per body)
+- Orc atlas is the harshest (adjacent-texel jump mean 7.15 vs hunter 4.73)
+Filtering cannot fix triangle-boundary contrast (measured: linear 4.68 ->
+4.60). Fix = take the atlas out of the sampling path entirely:
+
+- bake_vertex_colors.py: per-welded-vertex bilinear atlas sample, 2 rounds of
+  face-neighbor smoothing, COLOR_0 VEC4 baked in place into all 10 race
+  pixelated GLBs, scaled 0.45 for the light rig.
+- pixelFilter now prefers COLOR_0: vertexColors=true, map=null. PSX chunk
+  comes from vertex density at INTERNAL_H=540; zero per-texel sampling noise.
+- Light rig rebalanced for vcolors: ambient 0xf0f2f4 @ 3.4, key 1.2,
+  moon 1.1, rim 1.1. (The earlier 4.6-ambient rig was calibrated for the
+  texture path; with vcolors it overexposed, and the strong directionals
+  read as black/bright triangle patches.)
+
+Pixel evidence (live route, 3 bodies, frozen close cam): figure-region
+histograms 86-92% in the 42-88 readable band, <0.1% crushed black, <3%
+bright. Vision QA converged: no speckle, patches are coherent anatomical
+value design (shadow under pecs, armor blocks, top-lit shoulders), "reads as
+deliberate stylistic choice rather than technical failure."
+
+Commits: this commit (glbs + template + built + scripts). RAW mode remains
+parked (raw GLBs lack TEXCOORD_0 - pre-existing, unchanged).
