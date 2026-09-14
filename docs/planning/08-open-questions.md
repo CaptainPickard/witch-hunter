@@ -1169,3 +1169,20 @@ This section records the batch.
     stable-ID board rules, no separate treatment.
     Status: all opens resolved; doc 44 PROPOSED content awaiting
     line-by-line review as usual.
+
+87. LATE-GAME PRESSURE ARCS (2026-09-14, Nicko, spec in doc 44 Part
+    5B): the three affinity chains' endgame push-back. DARK = THE
+    FORECLOSURE, both engines stacked (the Default Clock: the losing
+    court accelerates to the bankruptcy ritual and may fire it
+    without the player; plus the creditor pressing the player ONLY
+    THROUGH THE COURT, no personal sigils or tithes, ruling: she
+    works through her machine, never her own hands). LIGHT = THE
+    HERESY, the institution turns (Militant declares the player
+    heretic, the compelled king signs the writs himself, Mercy
+    parishes shield where Militant burns); the Blessed Host does
+    NOT cap this arc. BLESSED HOST OWNERSHIP: THE WITCH'S SURGE
+    (called through the Church's rites by a throne she controls;
+    three comebacks, one farmer). CROSS-POLLINATION: SILOED PER
+    AFFINITY, fragments assemble only in the neutral ending; NG+
+    carries player knowledge only. Status: ruled, PROPOSED numbers
+    GDD tuning.

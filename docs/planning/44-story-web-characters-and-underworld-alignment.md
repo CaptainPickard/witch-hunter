@@ -453,6 +453,89 @@ Full arcs live in docs 36/19/20; the corrected sequence:
 
 ## PART 6 - SUPERSESSION EDITS AND OPEN QUESTIONS
 
+## PART 5B - LATE-GAME PRESSURE ARCS (ruled 2026-09-14, Nicko)
+
+The three affinity chains each carry a late-game pressure arc: the
+moment the player's chain progresses far enough, the world pushes
+back. Neutral is locked (doc 36 ruling 2: THE LAST DANCE, the
+undiscovered witch triggers her comeback against the united
+underworld; she also counter-attacks mid-questline per Part 3).
+Ruled below: the dark and light arcs. All are doc 21 spine-chain
+content, PROPOSED numbers stay GDD tuning.
+
+### DARK CHAIN: THE FORECLOSURE (both engines stacked, ruling 1)
+
+Trigger: the debt discovery arc (doc 21 chain D) crossed its
+threshold AND the dark court is losing the war (doc 13 counterweight
+state). Two pressures run together:
+
+- THE DEFAULT CLOCK (the court's desperation): the losing court
+  accelerates toward the bankruptcy ritual (doc 13's locked comeback
+  event). Veil Faithful zealots push the ritual, Veil-Tide fronts
+  pool over the holds (doc 03), tithe demands escalate by age tier
+  (doc 19), the throne's panic becomes legible (chain D beat 3). The
+  court may fire the default WITHOUT the player if they stall: the
+  bankruptcy clock is real.
+- THE COURT AS CONDUIT (ruling 2, locked): the creditor presses the
+  player ONLY THROUGH THE COURT. No personal sigils, no tithe of the
+  player's own memories. The witch's pressure arrives as the court's
+  escalating demands: the throne asks the player to serve the ritual,
+  to surrender allies to the tithe, to prove loyalty as the ledgers
+  empty. She works through her machine, never her own hands (the
+  Undersovran's no-body rule preserved exactly).
+- THE ARC'S CLIMAX: the bankruptcy ritual (chain D beat 5 / chain G):
+  the player lives the debt default they uncovered, and chooses:
+  serve the ritual, stop it, or redirect it (the Lich King chain's
+  escape-the-ledger gambit rides here as the dark apex fork).
+
+### LIGHT CHAIN: THE HERESY (the institution turns, ruling 3)
+
+Trigger: the compulsion evidence nears proof (the Mercy harvest
+pattern, the drained Sun altar reading cold, the king's private
+lists). The light court's own institutions turn on the player:
+
+- THE TURN: the Church Militant declares the player heretic (the
+  accusation: traffick with the dark courts, the evidence the player
+  gathered reads as guilt). Parish standing burns; Militant purge
+  parties hunt the player; safehouses burn; the Overheard Word turns
+  against them (doc 37's whisper economy now spreads THEIR crime).
+- THE KING'S HAND (the tragedy beat): the compelled king signs the
+  writs himself. His conscience is honest and his hand is not his
+  own: the player watches the man they are trying to save condemn
+  them. Breaking the compulsion stays impossible (doc 36 ruling 3:
+  no rescue; the choice is which kingdom you leave him to).
+- THE MERCY MIRROR: the Church of Mercy can shield the player (the
+  sect standing layer, doc 19): a Mercy-held parish hides them where
+  Militant parishes burn them. The court's schism becomes the
+  player's terrain.
+- NO BLESSED HOST CLIMAX (ruling 3): the Heresy arc runs on its own
+  engine; doc 13's Blessed Host comeback stays what ruling 9 made
+  it (the losing court's army) and does not cap this arc.
+
+### WHOSE ARMY IS THE BLESSED HOST (ruling 4, locked)
+
+THE WITCH'S SURGE. When the light court is losing, the Blessed Host
+(doc 13's light comeback: paladins for N days, monarch stays mortal)
+is HER machine surging: the Host is called through the Church's own
+rites by a throne she controls, its salvation is real in effect and
+rotten in purpose, and it feeds the harvest like everything else the
+light court does. The Host is not divine counterweight she cannot
+control; it is the farm defending itself. (The Last Dance is her
+comeback against the neutral world; the demon invasion is the dark
+bankruptcy's flood; the Blessed Host is the light court's surge:
+three comebacks, one farmer.)
+
+### CROSS-POLLINATION (ruling 5, locked)
+
+SILOED PER AFFINITY. The Foreclosure's fragments and the Heresy
+arc's fragments stay single-line until the neutral ending assembles
+them (doc 36's three-reveals structure stands unchanged; the sigils-
+match-court wall stays the dark line's deepest standing, the debt
+ledger stays findable only in its own chain). Cross-playthrough
+knowledge, not single-run assembly, teaches the whole shape; NG+
+carries the player's knowledge, never the character's (doc 36's
+locked NG+ asymmetry).
+
 Supersession edits to apply on Nicko's confirmation (docs 19/36 carry
 provisional notes already):
 1. Doc 36's title and the term "Pale Queen" as used for the light

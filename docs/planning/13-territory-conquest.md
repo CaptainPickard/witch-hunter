@@ -131,3 +131,10 @@ it). No stationed-garrison mechanic; retinue deployment stays doc
    name); remaining: name pool depth, heraldry generation, clan lifecycle
    depth - world GDD item.
 9. Comeback events: RESOLVED (mass demon summon / divine intervention).
+   OWNERSHIP ADDENDUM 2026-09-14 (Nicko, doc 44 Part 5B): both
+   comeback events are THE WITCH'S MACHINE. The demon summon (dark
+   bankruptcy) is her creditor enforcement; the Blessed Host (light
+   divine intervention) is HER SURGE, called through a Church her
+   compelled queen rules: salvation in effect, harvest in purpose.
+   Three comebacks (Last Dance / demon invasion / Blessed Host), one
+   farmer (doc 44).
