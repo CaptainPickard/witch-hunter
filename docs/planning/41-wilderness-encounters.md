@@ -419,6 +419,13 @@ locked in ruling 5 carries PROPOSED.
   the song; owning the tome is not casting Dark Pacts. If playtest
   reads it as too much axis-bypass, that is a GDD-stage revisit,
   logged as open 12.
+  SUPERSEDED (ruling pass 7, 2026-09-14): the axis question was
+  RULED, not deferred to playtest. The hex-song tome is USABLE
+  ONLY BY EVIL-LEANING PLAYERS (doc 12's axis gate reads the
+  bearer). A deep-good party that finds the tome in the deep
+  strata cannot teach it to the bard: the dark payload stays a
+  dark player's tool. The free-for-all reading above is dead
+  text, kept to show what was rejected.
 - SCHOOL-NOTE: fire/Storm/frost are the locked school names
   Pyromancy/Storm Magic/Cryomancy (docs 15/17). His songs are the
   coating channel, not spell casts: the SINGER casts nothing, the
@@ -467,26 +474,70 @@ locked in ruling 5 carries PROPOSED.
   fourth song IS the Dark Pacts hex-song (locked, ruling 6); the
   bard's song roster is complete at four.
 
+## RULING PASS 7 (2026-09-14, Nicko, the open-questions sweep)
+
+All live opens ruled one at a time, options with examples, verbatim
+picks below. Opens 7-8 stay parked (the witch questline is "later",
+ruled 2026-09-14; they belong to the quest GDD pass).
+
+R1 (open 1, dens): HABITAT DRIFT. A cleared den never re-forms as
+the same species (the wound stays), but NEW dens of that species
+can appear at region edges over time. Hunting stays viable forever,
+no wound is ever undone. The Vacuum rule still colonizes cleared
+dens; drift supplies the next generation elsewhere.
+
+R2 (open 2, wayfinding): TERRAIN-FIXED NEUTRAL. Every wayfinding
+site is neutral terrain nobody claims; doc 13's flips never rekey
+shelter. The tower beacon rule works the same under any banner.
+Shelter is weather, never politics.
+
+R3 (open 3, road life): LIGHT TRAFFIC. 1-2 concurrent road parties
+per region, and night raids come FROM doc 34's night-ambush cap,
+not on top of it. The gap stays a journey, not a gauntlet.
+
+R4 (open 4, wanderers): AUTHORED AT GDD. All 15-20 wanderers are
+hand-authored in one dedicated pass at GDD stage, each with a
+fixed identity, haunts, and payoff. Fixed list, fixed quality.
+
+R5 (open 5, blight shelter): PROVISIONING IS THE ANSWER. No special
+blight shelter exists; the blight keeps almost no wayfinding layer
+and crossing it means planning or suffering. Part 3's mix table
+stands as written.
+
+R6 (open 6, witch hut discovery): RUMOR-KEYED, tier 2 confirmed.
+One tavern rumor fragment narrows the hunt without marking it
+("the herb wife past the burned mile"). The finding stays the
+player's; the witch is a hunt, not a lottery and not a gift.
+
+R7 (open 11, bard slot): FULL SLOT COST. The bard occupies one of
+doc 23's four level-gated party slots like any follower; his songs
+must be worth a body. "Powerful if leveled properly" means you
+invested a slot in him.
+
+R8 (open 12, hex-song axis): KEEP, GATED TO EVIL. The hex-song
+tome is usable only by evil-leaning players (doc 12's axis gate
+reads the bearer). The dark payload stays a dark player's tool.
+
 ## Open Questions
-1. Beast den repopulation vs habitat drift: ruling 2 commits cleared
-   dens to Vacuum colonization. Where do NEW dens come from (habitat
-   pressure at region edges?), and can a den's species ever return?
-   Owning doc: 41 with doc 37 open 15.
-2. Wayfinding site ownership: are towers/waystations faction-
-   claimable (doc 13 conquest rekeys them?) or terrain-fixed
-   neutral? Owning doc: 41 with doc 13.
-3. Road-life spawn budgets: how many concurrent road parties per
-   region, and their collision rules with doc 34's night ambush
-   spawn caps. Owning doc: 41 with doc 34.
-4. Wanderer authoring: the 15-20 continent set pieces need a
-   hand-authoring pass at GDD stage. Owning doc: 41.
-5. Blight wayfinding exception: does the blight's near-empty
-   wayfinding layer need ONE special shelter type (a Warden waybone?
-   a camp that holds?), or is provisioning the whole answer? Owning
-   doc: 41 with doc 03.
-6. The witch's name and hut placement keys: name authored at the
-   GDD stage; exact discovery keys (rumor fragment wording, the
-   Last Tender introduction) need a ruling: doc 41.
+1. RESOLVED 2026-09-14 (Nicko, ruling pass 7 R1): HABITAT DRIFT.
+   Cleared dens never re-form as their species; new dens of that
+   species drift in at region edges. Hunting viable forever, wounds
+   stay.
+2. RESOLVED 2026-09-14 (Nicko, ruling pass 7 R2): TERRAIN-FIXED
+   NEUTRAL. Shelters never flip with conquest; shelter is weather,
+   never politics.
+3. RESOLVED 2026-09-14 (Nicko, ruling pass 7 R3): LIGHT TRAFFIC,
+   1-2 concurrent parties per region; night raids draw FROM doc
+   34's ambush cap, not on top of it.
+4. RESOLVED 2026-09-14 (Nicko, ruling pass 7 R4): AUTHORED AT
+   GDD. One dedicated pass, all 15-20 hand-authored with fixed
+   identity, haunts, and payoff.
+5. RESOLVED 2026-09-14 (Nicko, ruling pass 7 R5): PROVISIONING IS
+   THE ANSWER. No special blight shelter; Part 3's mix stands.
+6. PARTIALLY RESOLVED 2026-09-14 (Nicko, ruling pass 7 R6):
+   discovery is RUMOR-KEYED tier 2 (one tavern fragment narrows the
+   hunt, no marker). STILL OPEN: the witch's name and the rumor
+   fragment's exact wording, authored at GDD stage.
 7. The witch hut questline spine: what "played correctly" means,
    the Old Blood storyline shape, the failure states, and the
    resident-offer beat: parked for the quest GDD (doc 20/22 tier),
@@ -500,12 +551,11 @@ locked in ruling 5 carries PROPOSED.
 10. RESOLVED 2026-09-14 (Nicko, ruling 6): PURE SEED LOTTERY, no
     signal of any kind. Yes, he can be missed entirely by a
     playthrough that never visits cemeteries: that is the design.
-11. Bard party slot: he occupies one of doc 23's four party slots
-    like any follower (PROPOSED), vs being a free sixth member;
-    interacts with the level-gated slot thresholds: doc 41 with
-    doc 23.
-12. Hex-song axis-bypass check: the Dark Pacts hex-song tome lets a
-    non-caster party carry a Dark Pacts payload through weapon
-    coatings; playtest reads whether this bypasses doc 17's axis
-    gates too far, revisit at GDD: doc 41 with doc 17.
+11. RESOLVED 2026-09-14 (Nicko, ruling pass 7 R7): FULL SLOT
+    COST. The bard occupies one of doc 23's four level-gated slots
+    like any follower; his songs must be worth a body.
+12. RESOLVED 2026-09-14 (Nicko, ruling pass 7 R8): GATED TO EVIL.
+    The hex-song tome is usable only by evil-leaning players (doc
+    12's axis gate reads the bearer); the dark payload stays a
+    dark player's tool.
 

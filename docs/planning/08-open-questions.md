@@ -930,19 +930,22 @@ light states), Part 3 per-biome family mixes, Part 4 discovery economy
 (tier 0-3). Status: PROPOSED pending Nicko line-by-line review.
 
 New opens from this pass (logged in doc 41):
-43. Beast den repopulation vs habitat drift under the Cleared-Wound
-    rule: where new dens come from, whether a species ever returns:
-    doc 41 with doc 37 open 15.
-44. Wayfinding site ownership (faction-claimable via conquest vs
-    terrain-fixed neutral): doc 41 with doc 13.
-45. Road-life spawn budgets and collision rules with doc 34 night
-    ambush caps: doc 41 with doc 34.
-46. Wanderer authoring pass (the 15-20 continent set pieces) at GDD
-    stage: doc 41.
-47. Blight wayfinding exception (one special shelter type vs
-    provisioning as the whole answer): doc 41 with doc 03.
-48. Witch hut pass additions (doc 41 Part 5, second pass 2026-09-14):
-    the witch's name and exact discovery keys: doc 41.
+43. RESOLVED 2026-09-14 (Nicko, doc 41 ruling pass 7 R1): HABITAT
+    DRIFT. Cleared dens never re-form as their species; new dens of
+    that species drift in at region edges.
+44. RESOLVED 2026-09-14 (Nicko, doc 41 R2): TERRAIN-FIXED
+    NEUTRAL. Shelter never flips with conquest.
+45. RESOLVED 2026-09-14 (Nicko, doc 41 R3): LIGHT TRAFFIC, 1-2
+    concurrent road parties per region; night raids draw FROM doc
+    34's ambush cap, not on top of it.
+46. RESOLVED 2026-09-14 (Nicko, doc 41 R4): AUTHORED AT GDD, one
+    dedicated pass, all 15-20 with fixed identity/haunts/payoff.
+    The authoring pass itself remains a GDD-stage deliverable.
+47. RESOLVED 2026-09-14 (Nicko, doc 41 R5): PROVISIONING IS THE
+    ANSWER. No special blight shelter.
+48. PARTIALLY RESOLVED 2026-09-14 (Nicko, doc 41 R6): discovery
+    is RUMOR-KEYED tier 2. Still open: the witch's name and the
+    rumor fragment's exact wording (GDD-stage authoring).
 49. The witch hut questline spine (what "played correctly" means,
     Old Blood storyline shape, failure states, resident-offer beat):
     parked for the quest GDD: doc 41 Part 5 with doc 20/22.
@@ -954,13 +957,11 @@ New opens from this pass (logged in doc 41):
     whether a third hex-song tome ever exists: doc 41 with doc 06.
 52. Bard spawn odds and check rules (any signal for which cemetery,
     or pure seed lottery; can he be missed entirely): doc 41.
-53. Bard party slot (occupies one of doc 23's four level-gated
-    slots vs free sixth member): doc 41 with doc 23.
-54. Hex-song axis-bypass check (doc 41 fourth pass, ruling 6): the
-    Dark Pacts hex-song tome lets a non-caster party carry a Dark
-    Pacts payload through weapon coatings; playtest reads whether
-    this bypasses doc 17's axis gates too far, revisit at GDD:
-    doc 41 with doc 17.
+53. RESOLVED 2026-09-14 (Nicko, doc 41 R7): FULL SLOT COST, one
+    of doc 23's four level-gated slots like any follower.
+54. RESOLVED 2026-09-14 (Nicko, doc 41 R8): GATED TO EVIL. The
+    hex-song tome is usable only by evil-leaning players (doc 12's
+    axis gate reads the bearer).
 
 RESOLVED by ruling 6 (2026-09-14, Nicko): doc 41 opens 9-10
 (tracker 51-52). Tome count: one lightning + one frost per

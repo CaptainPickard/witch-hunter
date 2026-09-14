@@ -1182,3 +1182,22 @@ feature-by-feature implementation against the GDD.
     spec, progression update.
     Status: ruling 6 LOCKED; hex-song numbers PROPOSED at GDD.
 
+88. DOC 41 OPEN-QUESTIONS SWEEP (2026-09-14, Nicko, ruling pass 7):
+    all live doc 41 opens ruled one at a time with options and
+    examples. R1 HABITAT DRIFT (cleared dens never re-form as their
+    species; new dens drift in at region edges). R2 TERRAIN-FIXED
+    NEUTRAL (shelters never flip with conquest; shelter is weather,
+    never politics). R3 LIGHT TRAFFIC (1-2 concurrent road parties
+    per region; night raids draw FROM doc 34's ambush cap). R4
+    AUTHORED AT GDD (all 15-20 wanderers in one dedicated pass,
+    fixed identity/haunts/payoff). R5 PROVISIONING IS THE ANSWER
+    (no special blight shelter). R6 RUMOR-KEYED tier 2 (the witch
+    hut: one tavern fragment narrows the hunt, no marker). R7 FULL
+    SLOT COST (the bard occupies one of doc 23's four level-gated
+    slots). R8 GATED TO EVIL (the hex-song tome is usable only by
+    evil-leaning players, doc 12's axis gate reads the bearer).
+    Opens resolved in doc 41 + tracker: 43-47, 53, 54 fully; 48
+    partially (witch's name and rumor wording stay GDD authoring);
+    49-50 stay parked for the quest GDD.
+    Status: rulings locked 2026-09-14.
+
