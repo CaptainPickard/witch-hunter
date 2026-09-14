@@ -1056,3 +1056,14 @@ feature-by-feature implementation against the GDD.
     timers, readable from outside, rumor-reported). Four-layer
     design contract: context / depth / faction / memory. Six
     working ideas parked. Opens 30-32 logged.
+
+80. AUDIT RECONCILIATION (2026-09-13, Nicko + IO): Astrabot audit
+    docs 37-A/B/C (46 findings) reconciled into doc 37. Five rulings
+    locked (R16-20): slice 1 is combat-only with doc 37's subset as
+    a post-combat quest integration slice; revenants deferred by
+    design; inhabitants-respawn-on-rest superseded (destruction
+    commits at exit trigger); misdirected vendettas are a feature
+    (comedy vendetta archetype added); heirlessness is PUBLIC
+    (audience checks are GUARDED-only). All HIGH/MEDIUM/LOW findings
+    resolved or assigned as opens 33-40. Open 9 closed (spine
+    immunity). Audit docs 37-A/B/C committed on dev.

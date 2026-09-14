@@ -807,3 +807,34 @@ with assignments:
 32. Cleared-wound persistence budget (how much per-room destruction
     state the save blob carries, doc 35 G11 persistence
     cross-check): slice-systems pass.
+
+## AUDIT RECONCILIATION PASS (2026-09-13, doc 37 third session)
+
+Astrabot audits landed as docs 37-A (internal, 14 findings), 37-B
+(cross-doc, 15 findings), 37-C (feasibility/slice-fit, 17 findings):
+46 total. Nicko ruled on the five HIGH forks (RULINGS 16-20, verbatim
+in doc 37 RULING PASS): slice 1 is combat-only (doc 37's slice subset
+is a PROPOSED post-combat quest integration slice); revenants
+deliberately deferred (slice dig uses the locked Grave Ghoul);
+inhabitants-respawn-on-rest SUPERSEDED for doc 37 dungeons and
+destruction commits at the exit trigger; misdirected vendettas are a
+FEATURE (the comedy vendetta archetype: wrong killer up to three
+times, arguing with a corpse by the second return); heirlessness is
+PUBLIC, audience checks apply to GUARDED facts only.
+
+IO reconciliation applied all 46 findings: HIGHs fixed inline, all
+MEDIUMs resolved or assigned to owners (paid-intel tier interface,
+door strata semantics, CONTESTED authority through the World Ledger,
+claim-vs-occupation split, Named-vs-Relic exclusion, Warden
+non-sovereign licenses, Vendetta cascade ruler predicate, spine
+immunity filter, post-slice labeling, rumor MVP fixed patrons,
+situation overlays on stable IDs, bounded wound budget, versioned
+dungeon-state record, board lifecycle, fact versioning, capture
+transaction, perception-gated subtitles), all LOWs fixed (catalog
+entry 26 added, references corrected, broken sentence completed).
+Doc 37's open list extended to 1-40. Full fix map in doc 37's
+RECONCILIATION PASS section.
+
+RESOLVED: doc 37 open 9 (spine immunity answers the vendetta target
+question; doc 20's lock stands). Doc 37's open 12 and open 29 remain
+open as spec assignments. New opens 33-40 logged above and in doc 37.

@@ -115,9 +115,15 @@ hub). Three rumor tiers:
   thing down there is. Accurate but incomplete.
 - THE LEDGER PAGE. Expensive. Cartographers, smugglers, and the
   Wardens sell structured dungeon dossiers: known enemy type, hazard
-  notes, partial map. The Wardens' pre-Split ruin keys (doc 19,
-  locked) slot in as the endgame tier of rumor: dungeon keys to sites
-  nobody alive has walked.
+  notes, partial map. INTEL TIER INTERFACE (locked with the tier
+  table, 2026-09-13): paid sources SELL only PUBLIC facts and vague
+  leads. GUARDED facts (precise treasure and monster locations) are
+  never sold: they come only from private conversation (the
+  private-conversation rule) or from the dead. A dossier says what
+  kind of thing lairs in a dungeon and how it is entered; it does
+  not say where the strongbox sits. The Wardens' pre-Split ruin
+  keys (doc 19, locked) slot in as the endgame tier of rumor:
+  dungeon keys to sites nobody alive has walked.
 
 Mechanics, locked structure:
 
@@ -133,6 +139,12 @@ Mechanics, locked structure:
 - SOURCE MEMORY: a promoted rumor source remembers what you verified.
   Their next rumor is better. Their grudge (if you abandoned their
   lead) is remembered too.
+- FACT VERSIONING (assigned, open 37): dungeon facts carry version
+  stamps tied to the site's situation epoch. When a named target's
+  situation changes after a rumor or accepted contract, resolution
+  is deterministic FAILS-FORWARD per objective type (migrate,
+  expire, or convert), and a source is never grudge-punished for a
+  war-caused change. Owner: doc 20 fact lifecycle + doc 35 G13.
 
 ## Part 2: The Bounty Board (monster contracts)
 
@@ -161,6 +173,17 @@ tissue layer.
   pays too well. Sometimes a trap, sometimes a desperate patron,
   sometimes the "monster" is the victim. The world lies only when
   someone in it profits.
+- BOARD LIFECYCLE (assigned, open 36): each board and contract gets
+  a stable ID with a posted / accepted / resolved / expired
+  lifecycle and ONE reward-authority record across every surface:
+  the same hunt cannot pay twice at different boards, and resolved
+  postings do not stay advertised. Owner: doc 20 contract
+  lifecycle + doc 35 G13 persistence.
+- PROOF RULES (assigned, open 38): proof provenance is tracked (a
+  trophy harvested before accepting counts; one trophy satisfies
+  one contract; proof is consumed on turn-in; spared and bargained
+  outcomes name their own evidence). Crafting the only proof
+  forfeits the contract. Owner: doc 20 objective attribution.
 
 ## Part 3: The Quiet Parish (the cemetery mechanic)
 
@@ -210,21 +233,36 @@ the Long Agency (doc 19).
      business is an assassination quest: kill the person they are
      bound to. The target is drawn like any other patron (doc 20
      pools): a random procedural NPC in the local area, OR a person
-     of importance, a noble without an heir. Killing a noble with no
-     heir feeds doc 13's regicide-with-heirs rule: an heirless
-     succession triggers, the hold's Sundering and capture can be set
-     into motion, and the war map moves. THE UNINTENDED CONSEQUENCE:
+     of importance, a noble without an heir. THE CASCADE PREDICATE
+     (locked reconciliation, 2026-09-13): the hold cascade fires
+     ONLY when the bound dead targets the CURRENT RULER of a hold
+     and no suitable heir exists (doc 13's exact
+     regicide-with-heirs condition, invasion window included).
+     Heirless minor nobles do NOT cascade: their deaths are tissue
+     consequences only. All vendetta targets and cascade victims
+     are filtered against SPINE IMMUNITY (doc 20: no procedural
+     event may kill a spine NPC; audit B10 resolved, open 9
+     closed). THE UNINTENDED CONSEQUENCE:
      the dead man's justice is a pebble the player drops into the
      war's machinery. A grave-side whisper can topple a hold. The
      player often cannot know in advance which graves hide a vendetta
      that scales that high: the dead ask for justice, the world
      decides what that justice costs. Resolution texture: the player
      can refuse the vendetta (the grave stays restless, the revenant
-     can complete it quietly (the target dies, the deed log
+     keeps returning on night spawns), complete it quietly (the
+     target dies, the deed log
      records an unknown-hand kill), or complete it loudly (witnesses,
      faction consequence, the noble's court remembers). All three are
      legitimate endings per the frame grammar; only the world's
      cascade is not optional.
+   - THE MISDIRECTED VENDETTA (RULING 19, locked 2026-09-13): killer
+     testimony CAN be wrong. Misdirected vendettas are a FEATURE.
+     The comedy vendetta: the dead asks for revenge, the named
+     killer is wrong (up to three times), and the quest turns
+     comedic. Return to the corpse to collect and the dead is still
+     there, still talking. By the second frustrated return the
+     player is arguing with a corpse. Fallible testimony made
+     playable.
    - THE UNKNOWABLE WEIGHT (RULING 4, locked 2026-09-13): the
      unknowable cascade is CONFIRMED as the design intent. The player
      does not and cannot reliably know the gravity of their actions
@@ -299,7 +337,11 @@ Mechanics notes (PROPOSED, for GDD tuning):
   collects the line. Darkness, crowd, elevation, and distance are
   the tools. A detected listener does not just miss the line: the
   speakers may stop, move, or remember the eavesdropper (deed log,
-  a grudge from the paranoid).
+  a grudge from the paranoid). SCOPE CORRECTION (RULING 20, locked
+  2026-09-13): audience checks, withheld lines, and follower
+  liability apply to GUARDED facts only. PUBLIC facts (heirlessness,
+  open feuds, road safety, war talk) ride ordinary chatter with no
+  audience check and no risk.
 - SCHEDULES MAKE IT POSSIBLE: private conversations key off doc 30's
   G17 open (NPC schedules/routines): a noble and his steward argue
   in the study at a certain hour, the miller's widow meets a
@@ -315,6 +357,22 @@ Mechanics notes (PROPOSED, for GDD tuning):
   unknowing (the unknowable weight, RULING 4); a player who
   eavesdrops for weeks holds a map of succession crises. Knowledge
   is earned, never given.
+- DELIVERY (assigned, open 40): overheard lines are delivered as
+  perception-gated subtitles and audio using the SAME earshot and
+  audience predicate (no ungated captions, no auto-populated quest
+  panel, no post-hoc readout of missed facts); replay of heard
+  lines allowed, replay of unheard lines never. Owner: G16 audio
+  + G17 dialogue + doc 35 G11 accessibility.
+- AUDIENCE PREDICATE (assigned, open 33): a suspected-presence
+  threshold DISTINCT from combat aggro decides whether GUARDED
+  speech happens (speaker-belief owner, follower handling,
+  bystander noise, walls and crowds, interruption and retry
+  state). Owner: the G19 stealth specification using doc 34's
+  perception primitives.
+- RUMOR MVP (audit C3 resolved): the slice quest proof uses FIXED
+  tavern patrons with event-triggered lines; G17 daily schedules
+  are explicitly DEFERRED to the post-slice quest integration
+  milestone.
 
 ### The intel tier table (RULING 6, locked 2026-09-13)
 
@@ -414,9 +472,9 @@ names, nothing locked beyond the tier table above:
   holds now charges a toll to the things that live under it, and
   business is good since nobody patrols. PUBLIC (roads) with a
   GUARDED underbelly (what the toll actually buys). Becomes a
-  monster-bounty quest (catalog 2, VERMIN tier) or a smuggler
-  alliance quest: kill the toll, or become the toll's new
-  collector.
+  monster-bounty quest (Part 2, CONTRACT TIERS, VERMIN tier) or a
+  smuggler alliance quest: kill the toll, or become the toll's new
+  collector. Expands into Part 3c, THE WARREN UNDER THE BRIDGE.
 - THE COLD WIDOWS OF THE PASS. Mountain guides, quietly: three
   widows of the pass walk at night and bury travelers who freeze.
   Respect them or do not, but never dig what they bury. GUARDED
@@ -442,11 +500,19 @@ the bridge warren is the first MONSTER FACTION WITH A GRIEVANCE, the
 Vendetta Grave's mechanic turned around, a living monster society
 instead of a dead man holding the grudge. The toll goblin was the
 king's licensed collector, probably kin. Consequence: GOBLIN
-KIDNAPPERS COME FOR YOU. They do not attack on the road: they take
-you ASLEEP (at camp, in the tavern's stable, crossing the bridge at
-dusk). Goblins are cowards by reputation and pragmatists by culture:
+KIDNAPPERS COME FOR YOU. They do not attack on the road and they do
+not fight awake players: they take you ASLEEP (at camp, in the
+tavern's stable, anywhere you sleep). Goblins are cowards by
+reputation and pragmatists by culture:
 they jump you at your worst hour. If they defeat you, you do not die:
 you wake bound in a cave.
+
+CAPTURE TRANSACTION (assigned, open 39): capture/escrow/release is
+an ATOMIC save transaction (audit C15 resolved as a spec): gear
+escrow persists with the capture state, a pre-existing corpse drop
+is preserved untouched, and at least one no-tool release path is
+provable per warren before faction capture generalizes. Owner:
+doc 35 G13/G15 + doc 04 defeat transitions.
 
 CAPTURE REPLACES THE DEATH PENALTY (RULING 7, locked): for this one
 ambush only, the goblin capture REPLACES the normal death penalty
@@ -477,8 +543,9 @@ when the ledger clears. Working jobs:
 
 1. THE NEW COLLECTOR. Stand at the bridge with the king's badge and
    collect from travelers, humans included, until the debt is paid.
-   The loop closes: you become the toll of catalog seed 11, the
-   quest target for the next mercenary who hears kill the toll.
+   The loop closes: you become the toll of Part 3b, THE GOBLIN
+   TOLL, the quest target for the next mercenary who hears kill
+   the toll. This job is a STATE of catalog archetype 26.
 2. THE SNUFF-BOX WAR. A rival warren under the mill claims the
    bridge's territory. Steal their tribute-hoard or their
    champion's ears. Goblins hire outsiders because they will not
@@ -688,6 +755,12 @@ engine and the Quiet Parish.
     can redraw a border. Can surface from any court's territory; the
     dead are not loyal to the living's factions.
 
+26. THE WARREN UNDER THE BRIDGE (full quest-shaped version of the
+    Part 3c hidden chain, see Part 3c for the complete specification).
+    Trigger, capture, four endings, and the catalog's only
+    multi-frame archetype (hunt + supply + escort + relic-hunt +
+    clear-site per the 37-C audit matrix).
+
 Count: 26 working archetypes on top of the 8 locked frame templates
 (doc 21: hunt, escort, clear-site, defense, supply, curse-lift,
 relic-hunt, parish-work). Every archetype is frame-grammar
@@ -736,6 +809,15 @@ tier number (10/20/30/40) and its lock-tier. Two keys open it:
   descends early. The tradeoff is honest: you bypass the level gate
   but the layer's danger does not negotiate.
 
+ACCESS SEMANTICS (locked reconciliation, 2026-09-13): ONE physical
+door per dungeon. Opening the door (by level or by pick) opens it
+PERMANENTLY. Behind the door, EACH stratum still checks its own
+threshold when entered (level 10/20/30/40 or its lock tier):
+reaching layer 2 does not expose layer 3. Faction keys change a
+stratum's CONTENT, never its thresholds. Stratum encounter tables
+are FIXED content per dungeon: level is an access check only, no
+visitor-level scaling, no relocking (audit B9 resolved).
+
 Gate tiers and their layers, one gate per dungeon, four strata:
 
 - GATE I (level 10 / lock Novice-Adept): layer 2 of the dungeon.
@@ -746,7 +828,10 @@ Gate tiers and their layers, one gate per dungeon, four strata:
   (environmental, not just spike-and-pit), rare-material veins.
 - GATE III (level 30 / lock Expert): layer 4. The layer's own
   guardian (a named elite, not the base boss remixed: a new
-  encounter), named-item chance opens.
+  encounter), named-item chance opens. NAMED vs RELIC (audit B3
+  resolved): named-item odds refer to ordinary Named-band loot;
+  Hunter's Relics (doc 06) remain hand-authored T5 story items
+  and are NEVER procedural drops in strata or key overlays.
 - GATE IV (level 40 / lock Grandmaster): layer 5, the deep. The
   dungeon's true content: the reason the place was built. Each
   dungeon TYPE has a different deep (see The Deep Table below).
@@ -757,6 +842,11 @@ Lockpicking-opened gate stays unlocked once picked, so the sneaky
 path does not need repeating.
 
 ### The Deep Table (what waits at gate IV, by dungeon type)
+
+SPINE EXCLUSION (audit B15 resolved): procedural deep layers NEVER
+carry apex powers or mandatory-ending unlocks (doc 21's spine-only
+endgame-power rule stands). Authored spine hooks may use deep sites
+without making tissue completion a prerequisite.
 
 Doc 06's dungeon-type keys become the deep-layer identity. Working
 ideas for what each type's layer 5 holds:
@@ -828,12 +918,18 @@ same dungeon three different operations.
   the dungeon reads as. THE CROSSING RULE STILL HOLDS (ruling 11):
   keys shift flavor and rarity odds within the regional tier band;
   no key crosses the band.
-- CLAIM RULE (working idea): a keyed layer keeps the faction's
-  content until a DIFFERENT faction's key is used. Factions treat a
-  keyed dungeon as a claim: repeated delves under one key deepen
-  that faction's presence (their NPCs, their prices, their
-  quests). This is the conquest system's smallest unit (doc 13
-  texture): you are not taking a hold, you are taking a floor.
+- CLAIM RULE (locked reconciliation, 2026-09-13): a keyed layer
+  keeps the faction's content until a DIFFERENT faction's key is
+  used. CLAIM vs OCCUPATION are separate states: the CLAIM decides
+  which faction's content runs the layers (changes only on a new
+  key); OCCUPATION is who is physically inside now (changes on
+  clears, tenant moves, battle outcomes). WARDEN BOUNDARY (audit
+  B14 resolved): Warden keys are NON-SOVEREIGN excavation licenses:
+  defensive presence only, no conquest ownership, no land grants,
+  no hold-momentum writes (doc 19's non-conquering Wardens stand).
+  Light/dark court keys are the conquest system's smallest unit
+  (doc 13 texture): you are not taking a hold, you are taking a
+  floor.
 
 ### Key tiers (added eighth pass, Nicko idea, 2026-09-13)
 
@@ -936,7 +1032,13 @@ it: cart tracks, war banners, quarantine sigils):
 - INFESTED: something bred up in the deep (vermin, spiders, worse).
 - ABANDONED-RECENTLY: loot-rich, with the tension of WHY it was
   left.
-- CONTESTED: two powers inside, the tier-3 key state.
+- CONTESTED: two powers inside, the tier-3 key state. AUTHORITY
+  RULE (audit B8 resolved): situation rerolls run only through the
+  World Ledger (doc 20's authoritative state, doc 13 war state);
+  a CONTESTED roll happens only when the war makes it credible,
+  and the situation is an outside SIGNAL: entering a tier-3 faction
+  battle still requires the sworn key. No roll or purchase flips
+  hold ownership.
 - CONSECRATED / DESECRATED: court work was done here (light or
   dark), leaving standing effects and faction interest.
 - COLLAPSING: time-limited, dive before it closes for a season.
@@ -951,6 +1053,17 @@ descent gates are the DEPTH layer, the faction keys are the
 FACTION layer, and the cleared-wound rule is the MEMORY layer.
 Four clocks, never all ticking the same way twice: the same
 dungeon is never the same dungeon.
+
+IMPLEMENTATION CONTRACT (assigned, opens 34-35): situations are
+overlays on stable dungeon/layer/room IDs, never topology erasure;
+permanent wounds persist as a bounded sparse-delta record (per-room
+flags, not arbitrary geometry) whose budget is specified in the
+open-32 slice-systems pass (owner: doc 35 G13, audit C8 corrected);
+situation overlays must pass a reachability check against committed
+wounds so no quest actor is stranded. Faction-key state is ONE
+versioned dungeon-state record per gate: key family and tier,
+claim owner, situation epoch, loot state, and faction-clear
+history (audit C10 resolved as an assigned spec).
 
 PARKED WORKING IDEAS from the ninth-pass menu (not baked, for future
 sessions):
@@ -968,6 +1081,10 @@ sessions):
 - Dungeon-type specials: one signature mechanic per type (crypts
   re-bury, mines settle, dens redirect, camps entrench, warrens
   multiply).
+- GHOST-CORPSE GUARD (audit B6 note): ghost corpses, if ever
+  adopted, are NON-LOOT memory actors, never recovery corpses;
+  doc 35 G15's one-corpse rule stands and player drops never gain
+  grave-rep costs.
 
 ### What I would add (working ideas, for review)
 
@@ -988,10 +1105,17 @@ sessions):
   on rest, bosses do not) applies per LAYER: each strata keeps a
   resident boss that stays dead once killed. The deep's resident
   is the dungeon's real boss; the base layer's boss is its
-  doorman.
+  doorman. PRECEDENCE CORRECTION (RULING 18, locked 2026-09-13):
+  inhabitants-respawn-on-rest is SUPERSEDED for doc 37 dungeons.
+  Cleared inhabitants never return as themselves; recolonization
+  comes only from the Vacuum Rule on long timers. Destruction
+  commits at the dungeon EXIT trigger (doc 35's locked exit-only
+  rule); before that commit, reload reverts wounds.
 - SCAVENGER SPOILS: gates mean old cleared dungeons have content
   again, but the base layer should not become trivial trash: base
-  layers keep their own respawn economy (doc 35), and the deep's
+  layers keep their own respawn economy per RULING 18's
+  correction (old tenants never return; vacuum tenants and
+  recolonization are the only refresh), and the deep's
   pull is the rarity bump, not the base layer's leftovers.
 - THE UNDOORABLE: a small set of descent gates that neither level
   nor Lockpicking opens (working name: the Unopenable). Keyed to
@@ -1008,8 +1132,8 @@ sessions):
 ### Open Questions (assigned per tracker rules)
 
 19. Layer generation grammar: how strata reuse the base layout
-    (doc 03 archetype seeding per layer, doc 31 G24 cross-check):
-    world GDD pass.
+    (doc 03 archetype seeding per layer, doc 30 G24 dungeon
+    interior gap cross-check): world GDD pass.
 20. Descent-gate density: which dungeon types carry gates, how many
     gates per dungeon cluster, whether named/special dungeons
     (doc 03 hand-authored) get gates or their own rules: world GDD
@@ -1029,13 +1153,20 @@ The slice carries three systems, not all four parts:
 - IN SLICE: (a) the Rumor Engine at HEARSAY + VETERAN'S ACCOUNT tier
   only (Ledger Page later); (b) the Bounty Board at VERMIN tier only
   (one contract type, one proof grammar); (c) the Quiet Parish's DIG
-  loop only (grave-looting with keeper risk and revenant wake risk;
-  the dead do not speak in the slice, per RULING 2 the class does not
-  exist at slice scale).
-- OUT OF SLICE: dead-speech, the 24-archetype catalog (slice uses 2-3
-  archetypes from the catalog as proof of frame grammar: THE LOST
-  CHILD and THE NIGHT HAUNTER proposed), bounties on the player, the
-  Ledger Page tier, kin messages, witness testimony.
+  loop only (grave-looting with keeper risk and disturbed-grave
+  Grave Ghoul wake risk, the doc 34 locked spawn; the dead do not
+  speak in the slice, per RULING 2 the class does not exist at slice
+  scale; the separate revenant is deferred per RULING 17 until core
+  mechanics are established).
+- SCOPE LABEL (RULING 16, locked 2026-09-13): slice 1 is a COMBAT
+  demo only (doc 31). This slice subset is a PROPOSED post-combat
+  QUEST INTEGRATION SLICE for the UE5 buildout, not a slice-1 claim.
+- OUT OF SLICE: dead-speech, the 26-archetype catalog (this slice
+  uses 2-3 archetypes as proof of frame grammar: THE LOST CHILD and
+  THE MONASTERY MEAL proposed, with a VERMIN wolf contract from
+  Part 2), bounties on the player, the
+  Ledger Page tier, kin messages, witness testimony, the Warren
+  chain, descent gates, faction keys, key tiers, and situations.
 - Slice proof target: the rumor-to-dungeon loop (hear in tavern, find
   the dungeon, delve, return, bounty paid, next rumor reacts) must
   close end to end with World Ledger writes.
@@ -1096,3 +1227,185 @@ The slice carries three systems, not all four parts:
 18. Goblin King procedural or fixed: one Petty Legalist king per
     warren with procedural name and toll-schedule, or fully
     procedural (doc 14 pools GDD pass).
+33. The audience predicate for GUARDED speech (suspected-presence
+    threshold vs combat aggro, speaker-belief owner, follower and
+    bystander handling, interruption/retry): G19 stealth spec
+    (audit C6 assigned).
+34. Situation overlay contract: stable dungeon/layer/room IDs,
+    overlay rules, reachability checks against committed wounds:
+    doc 30 G24 dungeon-generation spec.
+35. Versioned dungeon-state record schema (key family/tier, claim
+    owner, situation epoch, loot state, faction-clear history) and
+    atomic re-key transitions: doc 35 G13 + doc 30 G24.
+27. Faction-key pricing and vendor availability per court family
+    (doc 06 vendor economy + doc 12 axis-gating): GDD tuning.
+28. Whether keyed layers stack with level strata (does a key used
+    at gate II change only its strata or the whole descent): GDD.
+29. Faction-claim consequences beyond the claim rule (rival faction
+    reactions, World Ledger territory texture): doc 13 cross-check.
+30. Situation re-roll timers and transition triggers (clears, war
+    events, blight creep beyond timers): GDD tuning.
+31. Vacuum-tenant draw tables per region and dungeon type (doc 14
+    pools + doc 34 bestiary): world GDD pass.
+32. Cleared-wound persistence budget (per-room destruction state
+    the save blob carries): doc 35 G13 slice-systems pass.
+36. Bounty board and contract lifecycle (stable IDs, posted/
+    accepted/resolved/expired, single reward-authority record):
+    doc 20 contract lifecycle + doc 35 G13.
+37. Dungeon-fact version stamps and deterministic fails-forward
+    resolution when a target's situation changes: doc 20 fact
+    lifecycle + doc 35 G13.
+38. Proof provenance, consumption, and alternative-outcome evidence
+    rules: doc 20 objective attribution + doc 06 item identity.
+39. The capture transaction (atomic capture/escrow/release, prior
+    corpse preservation, provable no-tool release path): doc 35
+    G13/G15 + doc 04 defeat transitions.
+40. Perception-gated subtitle/audio delivery for overheard lines
+    (same earshot predicate, replay policy, accessibility): G16 +
+    G17 + doc 35 G11.
+## RULING PASS (2026-09-13, third session: audit reconciliation)
+
+Nicko ruled on the audit findings (docs 37-A/37-B/37-C) and locked the
+following. Rulings verbatim, then IO reconciliation entries applied
+below.
+
+R16. SLICE SCOPE (Nicko): slice 1 is meant to be just a demo of the
+combat. Doc 31's combat-only boundary stands; do not worry about
+everything else in it. The other PCG elements (quests, the World
+Ledger loop, faction systems) are built out during UE5 development.
+Resolution applied: doc 37's Slice scoping section relabeled as a
+PROPOSED post-combat quest integration slice, not a slice-1 claim.
+R17. REVENANT DEFERRAL (Nicko): the roster hole is a good catch, but
+revenants and the other new enemy types are deliberately deferred
+until other core mechanics are established. They WILL be built out.
+Resolution applied: slice dig risk uses the locked disturbed-grave
+Grave Ghoul spawn; a separate revenant is future roster work.
+R18. RESPAWN PRECEDENCE (Nicko): the Cleared-Wound Rule ("the
+dungeon never respawns its old self") is TRUE and current. Doc 35's
+inhabitants-respawn-on-rest line is now WRONG and STALE for doc 37's
+systems. DESTRUCTION COMMITS AT THE EXIT TRIGGER: that is the rule.
+R19. MISDIRECTED VENDETTAS (Nicko): killer testimony CAN be wrong.
+Misdirected vendettas are a FEATURE. New archetype: the comedy
+vendetta. The dead asking for revenge can be wrong three times, and
+the quest turns comedic: when the player returns to the corpse to
+collect, the dead is still there, still talking. By the second
+frustrated return the player is arguing with a corpse. Resolution
+applied: vendetta killer identity marked fallible in Part 3, comedy
+vendetta added as a working archetype.
+R20. PUBLIC HEIRLESSNESS (Nicko): heirlessness is PUBLIC. Audience
+checks apply to GUARDED facts only. Resolution applied to Part 3b
+mechanics notes.
+
+## IO RECONCILIATION PASS (2026-09-13, third session)
+
+Editorial fixes applied per the audit docs (37-A, 37-B, 37-C). No
+locked text rewritten; stale text marked superseded where required.
+
+- A1/C2 resolved by R20: audience checks and follower liability are
+  GUARDED-fact mechanics only. PUBLIC facts ride ordinary chatter.
+- A2 resolved: the dusk bridge-crossing example removed from the
+  capture trigger; captures occur while ASLEEP (camp, tavern stable,
+  anywhere the player sleeps). No awake captures.
+- A3 resolved by R19: vendetta killer identification is FALLIBLE
+  testimony (can be wrong about who); the comedy vendetta is the
+  designed use of that fallibility. Misdirection is a feature.
+- A8/C9/B5 resolved by R18: inhabitants-respawn-on-rest marked
+  SUPERSEDED for doc 37 dungeons; destruction commits at the exit
+  trigger (doc 35's locked exit-only rule preserved); rest does NOT
+  restore old tenants, recolonization runs on long timers only.
+- B11/C4/C5 resolved by R17: slice dig uses the locked Grave Ghoul
+  disturbed-grave spawn; Night Haunter deferred as a proof archetype
+  in favor of THE MONASTERY MEAL (ghoul clear-site) and a VERMIN
+  wolf contract from Part 2.
+- A10/A12 fixed: catalog entry 26 added pointing to Part 3c; the
+  slice count corrected to 26; toll seed references now cite Part
+  3b by name; collector service identified as a state of archetype
+  26.
+- A11 fixed: the goblin toll bounty reference now cites Part 2,
+  CONTRACT TIERS.
+- A14 fixed: the vendetta refusal sentence completed.
+- A4 (paid intel): the Veteran's Account, Ledger Page, and auction
+  intel obey the intel tier table; paid sources may not sell
+  GUARDED facts (treasure and monster locations) except as vague
+  leads; precise guarded facts come only from private conversation
+  or the dead. The AUCTION HOUSE sells PUBLIC and stale facts, and
+  rumor-true leads, never GUARDED precision.
+- A5 resolved: ONE physical door per dungeon; each stratum behind
+  it carries its own level and lock threshold; opening the gate
+  (level or pick) permanently opens the DOOR, but each stratum
+  still checks its own level or lock when entered; faction keys
+  change content, never thresholds.
+- A6/B8 resolved: CONTESTED as a situation requires war-state
+  authorization through the World Ledger (doc 20's authoritative
+  state); situation rerolls never bypass key requirements or flip
+  hold ownership; the situation is an outside signal, the key
+  purchase is the permission.
+- A7 resolved: CLAIM (which faction's content runs the layers) is
+  separate from OCCUPATION (who is physically inside now). Clears
+  change occupation; claims change only on a new key; battle
+  outcomes in tier-3 write both.
+- B2/B3 fixed: named-item odds refer to ordinary Named-band loot;
+  Hunter's Relics (doc 06) remain hand-authored T5 story items and
+  are NEVER procedural drops in strata or key overlays.
+- B4 fixed: key access uses three separate predicates (axis
+  compatibility, faction standing, allegiance); neutral vendors
+  stay open to every affinity per doc 12; fenced Coven Key resale
+  to light players is coven-knowledgeable smuggler markup, tracked
+  by deed log.
+- B6 fixed (parked idea note): ghost corpses, if ever adopted, are
+  non-loot memory actors, never recovery corpses (doc 35 G15's
+  one-corpse rule stands).
+- B7 resolved: the Vendetta cascade fires only when the bound dead
+  targets the CURRENT RULER of a hold and no suitable heir exists
+  (doc 13's exact regicide-with-heirs condition, invasion window
+  included); heirless minor nobles do NOT cascade.
+- B10 resolved: spine immunity is the binding rule; bound-dead
+  targets and all cascade victims are filtered against spine NPCs;
+  open question 9 CLOSED (answered by doc 20's existing lock).
+- B13/C12 resolved: the Warren chain, descent gates, faction keys,
+  key tiers, and situations are explicitly POST-SLICE systems;
+  goblin society gets its own bestiary and faction-behavior spec
+  in a future doc 34 follow-up; doc 37's "no new systems" claim
+  is replaced by an explicit dependency note (frame labels hold
+  per the 37-C matrix; chain runners and objective verbs are
+  G26 work).
+- B14 resolved: Warden keys are NON-SOVEREIGN excavation licenses
+  (defensive presence, no conquest ownership, no land grants, no
+  hold-momentum writes), consistent with doc 19's non-conquering
+  Wardens.
+- B15 resolved: procedural deep layers NEVER carry apex or
+  mandatory-ending unlocks (doc 21's spine-only endgame-power
+  rule); authored spine hooks may use deep sites without making
+  tissue completion a prerequisite.
+- B9 fixed: stratum encounter tables are FIXED content per
+  dungeon; level is an access check only; no visitor-level
+  scaling, no relocking.
+- C3 resolved: the slice quest proof uses FIXED tavern patrons with
+  event-triggered lines; G17 daily schedules explicitly deferred.
+- C6 assigned: the audience predicate (suspected-presence threshold
+  distinct from combat aggro, speaker-belief owner, follower and
+  bystander handling, interruption/retry state) is a G19 stealth
+  specification requirement, tracked as open 33.
+- C7/C10 assigned: stable dungeon/layer/room IDs, situation overlay
+  contracts, bounded wound budgets, and the versioned dungeon-state
+  record (key family/tier, claim, situation epoch, loot state) are
+  G24/G13 prerequisites, tracked as opens 34-35.
+- C8 fixed: open 32's persistence-budget assignment confirmed as
+  the wound-budget home; doc 35 G13 (not G11) is the owner.
+- C11 assigned: bounty boards get stable IDs, a posted/accepted/
+  resolved/expired lifecycle, and a single reward-authority record;
+  tracked as open 36 (doc 20 contract lifecycle owner).
+- C13 assigned: site facts carry version stamps; accepted quests
+  resolve fails-forward when their target's situation changes;
+  tracked as open 37.
+- C14 assigned: proof provenance (harvested-before-accept, one
+  trophy one contract, consume-on-turn-in, alternative-outcome
+  evidence) is doc 20 objective-attribution work, open 38.
+- C15 assigned: the capture transaction (atomic capture/escrow/
+  release, prior corpse preserved, no-tool release path proven) is
+  a doc 35 G13/G15 + doc 04 transition spec, open 39.
+- C16 assigned: overheard lines delivered as perception-gated
+  subtitles and audio (same earshot predicate, no ungated captions,
+  no auto-quest-panel); replay policy at G16, open 40.
+- C17 fixed: doc 37's open list now carries the full 1-40 sequence;
+  doc 31 G24 reference corrected to doc 30 G24.
