@@ -329,3 +329,23 @@ voids, gritty PSX register. Viewer 24.4MB / 46 assets. Commit 85cb3cb.
 Tri budget note: bodies now 28-32k tris (above the 15k game target) - the
 decimation step is parked until a game-side LOD pass is needed; per user,
 presentation fidelity wins over the budget for the viewer register.
+
+## 2026-09-14 pass 10: crypt display scene (75 credits, 215->140)
+
+User reference: dark crypt lit by ghostly blue chandeliers, skulls, coffins.
+- 5 new prop refs generated + vision-QA PASS (chandelier, pillar,
+  sarcophagus, skull-pile, steps); committed 1c60b96.
+- 5 Meshy image-to-3d submissions at 2k tris, all 5 SUCCEEDED (3.5k-5k faces
+  each). v3-processed (raw mesh + color-pixelated 512px 5-bit tex + normals).
+- build_viewer.py registers crypt/ as 'props' -> 51 assets total.
+- Viewer: buildCrypt() places 20 props procedurally on first body select
+  (pillar rows, archway, chandeliers at height + blue PointLight glows,
+  sarcophagus, 3 skull piles, altar, broken pews, candelabras, rubble,
+  steps). Crypt register: bg 0x0a0e16, FogExp2 0.055, cool rig (key 0x8fb4e8
+  1.4, moon 1.0, rim 1.2, back 1.0, ambient 0x8898b0 2.2), near-black floor.
+- Fixes en route: atob slice offsets (base64, + 7), floor over-brightening
+  (ambient x dark albedo - set floor 0x0b0d12), glow intensities toned.
+
+Verified live-route: 20 crypt props placed, zero load errors, character
+renders center-stage in the crypt. Credits: 140 remaining.
+Commits: 1aea4ba (scene + props + register).
