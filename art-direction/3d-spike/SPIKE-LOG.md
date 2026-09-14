@@ -166,3 +166,31 @@ Verified (playwright + vision QA, /tmp/fix_normals_close.png,
 Remaining (not defects): jagged tattered-cloak hem is intentional concept
 design, geometry verified in-contact (floater_analyze.py). RAW toggle still
 broken-ish (raw GLBs lack TEXCOORD_0 - UV-less textured render); parked.
+
+## 2026-09-14 pass 4 (IO direct): exposure pass after user report of persistent dark render
+
+User hard-refresh still showed a dark shattered figure (00:00 UTC screenshot).
+Pixel analysis decomposed the complaint:
+- Original defect was a FLAT black mass (p10=p50=p90=66, noise 0.0) - unlit.
+- Post-NORMAL-fix render: mean 55-128 with full value range (p90 249-255) -
+  lighting works, but 40-50% of the cloak surface still reads near-black.
+- Root of darkness: the baked atlas is intentionally dark (mean 33/255, 97%
+  of texels in 16-64) under a moonlit-night light rig. Asset is fine; the
+  exposure was wrong for viewer QA.
+
+Fix: lighting/exposure pass in arsenal-viewer.template.html (commit 481227c,
+pushed): ambient 0x8a97a4@1.3 -> 0xd8dde4@4.6 (bright fill), key point
+2.2->3.0, moon 2.2->3.2, rim 1.6->2.2. Verified in headless render
+(/tmp/iso/iso4_litboost2.png) and through the live route
+(/tmp/final_live.png): figure now reads as a high-contrast character
+(30-40% readable midtones), folds visible in shadow, mood preserved.
+
+Also debunked this pass:
+- "Zero triangles drawn" from pass 2's iso harness was a harness artifact.
+- Linear-vs-nearest filtering makes negligible difference on this atlas
+  (noise 4.68 -> 4.60); the register stays PIXELATED + mipmaps.
+- RAW mode is broken by design: raw GLBs lack TEXCOORD_0 entirely
+  (POSITION-only), so "RAW" shows a UV-less single-texel render. Parked.
+- Nicko's remaining dissatisfaction is partly the intended PSX chunky
+  register + tattered cloak geometry (verified in-contact) and partly UI
+  quality. UI redesign dispatched separately.
