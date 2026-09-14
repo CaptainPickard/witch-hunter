@@ -1186,3 +1186,21 @@ This section records the batch.
     AFFINITY, fragments assemble only in the neutral ending; NG+
     carries player knowledge only. Status: ruled, PROPOSED numbers
     GDD tuning.
+
+88. ENDGAME SEQUENCES (2026-09-14, Nicko, spec in doc 44 Part 5C):
+    (1) demon invasion gains a SECOND trigger: sacking the ORC CITY
+    fires the invasion as a consequence of victory; (2) the Blessed
+    Host = THE RESURRECTION OF PALADINS ACROSS THE LAND (the light
+    wildcard: fallen paladins rise continent-wide); (3) CHAOS RULE:
+    during the chaos events, taking holds is unnecessary, the
+    conquest meta pauses; (4) FINAL QUEST = REGICIDE of the opposite
+    side's king and queen: light wins by pushing to the Veil Spire
+    through the streets and killing the vampire elf king in the
+    throne room; dark wins by pushing to the New Capital and killing
+    the human king (extraordinarily strong, propped up by the witch
+    queen); (5) both court endings are SOMBER AND WRONG (the witch
+    wins either way, world thrust into darkness, NG+ starts, the
+    player never knew the whole story); (6) NEUTRAL TRUE ENDING:
+    dark elf king first, then the final stand at the light capital
+    against THE WITCH HERSELF, the real main boss. Status: DESIGN
+    LOCK; beat authoring at quest GDD (docs 20-22).

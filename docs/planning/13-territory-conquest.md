@@ -138,3 +138,13 @@ it). No stationed-garrison mechanic; retinue deployment stays doc
    compelled queen rules: salvation in effect, harvest in purpose.
    Three comebacks (Last Dance / demon invasion / Blessed Host), one
    farmer (doc 44).
+   ENDGAME TRIGGERS ADDENDUM 2026-09-14 (Nicko, doc 44 Part 5C):
+   (1) the demon invasion has a SECOND trigger: SACKING THE ORC CITY
+   (the light player's deep siege cracks the borderlands' pact-seals;
+   the invasion fires as a consequence of victory). (2) The Blessed
+   Host's form: THE RESURRECTION OF PALADINS ACROSS THE LAND (fallen
+   paladins rise in their own barrows and chapels and march).
+   (3) CHAOS RULE: during invasion/Host/Last Dance, TAKING HOLDS IS
+   UNNECESSARY: the conquest meta pauses and the final quest
+   (regicide of the opposite side's king and queen, doc 44 Part 5C)
+   triggers on top of the chaos.

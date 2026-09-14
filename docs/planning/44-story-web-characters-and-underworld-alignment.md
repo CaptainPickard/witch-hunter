@@ -536,6 +536,68 @@ knowledge, not single-run assembly, teaches the whole shape; NG+
 carries the player's knowledge, never the character's (doc 36's
 locked NG+ asymmetry).
 
+## PART 5C - THE ENDGAME SEQUENCES (locked by Nicko, 2026-09-14)
+
+The concrete endgame triggers and final battles per affinity. These
+are the spine chains' final acts (docs 20-22 quest GDD carries the
+beat-by-beat authoring); everything below is DESIGN LOCK.
+
+### CHAOS TRIGGERS (the world breaks before the endings)
+
+- DEMON INVASION TRIGGER, EXPANDED: the debt default fires the
+  invasion (doc 13/19, locked), AND sacking the ORC CITY also
+  triggers it (new trigger, locked): the light player's deep siege
+  (doc 22's debt-default trigger quest) that takes the orc city
+  cracks the old borderlands' pact-seals: the invasion fires as a
+  CONSEQUENCE OF VICTORY. Winning the deep raid summons the flood.
+- THE HOLY BATTLE, LIGHT-SIDE WILDCARD (locked): when the light
+  court's fortunes collapse, the Blessed Host arrives as THE
+  RESURRECTION OF PALADINS ACROSS THE LAND: fallen paladins rise in
+  their own barrows and chapels continent-wide and march. Per Part
+  5B it is the witch's surge (salvation in effect, harvest in
+  purpose), and its form is the dead rising in light: the light
+  court's greatest dead, returned.
+- CHAOS RULE (locked): in these moments of world chaos (invasion,
+  Host, Last Dance), TAKING HOLDS IS UNNECESSARY: the doc 13
+  conquest meta pauses; the map's normal war logic yields to the
+  chaos event. The world is coming apart either way; the final
+  quest triggers on top of it.
+
+### THE FINAL QUEST: REGICIDE (locked)
+
+Once the chaos arc runs its course, the final quest is simple and
+total: KILL THE KING AND QUEEN OF THE OPPOSITE SIDE.
+
+- LIGHT SIDE WIN (sequence): the final push toward the DARK CAPITAL
+  (the Veil Spire): fight your way through the streets (a city-siege
+  gauntlet, doc 13's siege grammar at city scale) until you reach the
+  throne room, and the final battle is with the VAMPIRE ELF KING.
+- DARK SIDE WIN (sequence): the final push toward the LIGHT CAPITAL
+  (the New Capital): fight through the streets to the throne room,
+  and the final battle is the HUMAN KING, an EXTRAORDINARILY STRONG
+  AND POWERFUL BEING PROPPED UP BY THE WITCH QUEEN (the compulsion
+  is also her armor: the puppet is the strongest thing on the board
+  because his puppeteer is). Both court victories are somber and not
+  quite right: either way the witch wins in the end, the world is
+  thrust into darkness, and NG+ begins. The confusion is the design:
+  the player never knew the whole story, and the ending reads wrong
+  without it (doc 36's "a victory that serves her" made mechanical).
+  QUEEN FATES IN THE COURT ENDINGS (PROPOSED for quest GDD): the
+  winning side's queen survives the regicide (the dark queen outlives
+  her king's fall; Queen Maren outlives the New Capital's fall), the
+  machine simply continues under the survivor.
+
+### THE NEUTRAL TRUE ENDING (locked sequence)
+
+The only line where the real final boss is fought: TAKE OUT THE DARK
+ELF KING FIRST (the underworld's united banner does the work the
+player led them to), THEN make the final stand at the LIGHT CAPITAL:
+the fight is with the WITCH HERSELF, unmasked (the game's real main
+boss; doc 36's unmasking, Last Dance response, the sentence choice,
+and the Name in the Grave key all ride this final battle). The court
+paths never see her: their somber endings are the witch's victories
+wearing the player's flag.
+
 Supersession edits to apply on Nicko's confirmation (docs 19/36 carry
 provisional notes already):
 1. Doc 36's title and the term "Pale Queen" as used for the light
