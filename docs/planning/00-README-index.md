@@ -1201,3 +1201,23 @@ feature-by-feature implementation against the GDD.
     49-50 stay parked for the quest GDD.
     Status: rulings locked 2026-09-14.
 
+89. PROJECT-WIDE OPEN-QUESTIONS SWEEP (2026-09-14, Nicko, doc 41
+    eighth pass): every chat-rulable open across the tracker ruled
+    one at a time with options and examples. Catalog confirms: 37
+    anchors to GDD tuning; 38 silver-T2 confirmed; 39 dual-wield
+    pairs one slot; 40 Aegis crafted; 41 gem names confirmed; 42
+    crossbow EXISTS (doc 33 subclass, slow reload, high poise). Doc
+    41 pass 8: the witch is GRANNY THORNWHISTLE (mother's hearth-
+    name, hiding from the Debt), discovery fragment "the herb
+    wife's cat finds travelers before travelers find the hut"
+    (audio-first, follow the cat). Design layer: siege-ladder
+    alignment thresholds (12), event-based hold defense (13),
+    school-keyed apexes (16), party-shared retinue pool +
+    territory-keyed camp tolerance (11), doc 07 numbers to GDD,
+    moderate pool depth (14), one legend per court (06), title
+    kept + trademark search as Nicko action item (01), living 3D
+    mounts (03). Resolved in tracker: 37-42, 48, plus the
+    design-layer block. Parked: witch questline (49-50), production
+    audit opens, GDD tuning blocks, doc 17 (magic session).
+    Status: rulings locked 2026-09-14.
+

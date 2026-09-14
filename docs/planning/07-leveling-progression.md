@@ -43,7 +43,8 @@ Layer 1: Character level (XP-based, "stat points")
   answer is the doc 18 rank curve, not level scaling.
 
 Layer 2: Skill lines (use-based leveling - FULL MECHANICS IN DOC 18)
-- 28 core lines (list in 15-skill-lines.md). Skills level by doing the
+- 29 core lines (list in 15-skill-lines.md; Disassembly added as line
+  29, 2026-09-14). Skills level by doing the
   thing, never by spending points.
 - Ranks 1-100 by use; each line has a primary passive curve (per-rank
   improvements specific to that line - damage/speed for weapons, potency
@@ -97,9 +98,14 @@ level the skill, unlock better items and stronger outputs, push further.
   Knight) set starting skill ranks - but pure playstyle-based growth means
   presets are suggestions, not prisons (Morrowind rule).
 
+## RULING PASS (open-questions sweep, 2026-09-14, Nicko)
+XP BUDGETS, STAT-POINT CAPS, STAMINA/REGEN, PARRY WINDOWS: HAND TO
+GDD TUNING. All stay PROPOSED working numbers, tuned only against a
+playable build. Doc 07's frame stands, numbers wait.
 ## Open Questions (current state - first-draft questions resolved)
 - Stat list and budget: RESOLVED (9 stats, 5 points/level).
-- Skill count: RESOLVED (28 core + specialties upward).
+- Skill count: RESOLVED (29 core + specialties upward; Disassembly
+  added 2026-09-14 as line 29).
 - Level-power coupling: RESOLVED (stats only; level is a point budget).
 - Skill anti-grind: RESOLVED via doc 18 rank curve (diminishing after 50),
   not XP decay.

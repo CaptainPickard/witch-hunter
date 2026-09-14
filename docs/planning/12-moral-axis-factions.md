@@ -190,6 +190,12 @@ F. VAMPIRE/UNDEG patronage has a HIDDEN COST hook (hunger, curses,
    feel slightly cursed, noble gear slightly blessed. Asymmetric flavor,
    balanced power.
 
+## RULING PASS (open-questions sweep, 2026-09-14, Nicko)
+ALIGNMENT THRESHOLDS: SIEGE-LADDER. Deep-good and deep-evil at +80/-80
+points, the courts' favor tiers at +50/-50, neutral band between.
+Axis thresholds mirror the court-standing ladders: one mental model
+covers both. (Numbers PROPOSED working values, exact point values at
+GDD tuning with doc 07's XP block.)
 ## Open Questions (status as of the 2026-09-11 second sweep)
 1. Exact affinity thresholds for trade/dialogue/alignment: GDD-stage
    tuning (tier ladder exists as proposal A).

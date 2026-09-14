@@ -298,17 +298,24 @@ discovery tier 2. Spec below; everything not already locked in
 ruling 4 carries PROPOSED.
 
 ### The site
-- THE WITCH HUT (working name; the witch's name is an authoring-pass
-  open, open question 6): a crooked hut in a Deepwood clearing, the
+- THE WITCH HUT (ruled 2026-09-14, ruling pass 8: the witch's name
+  is GRANNY THORNWHISTLE, a hearth-name she chose herself for
+  shopkeeping because a witch with an unpronounceable true name
+  sells no potions. The name is her MOTHER's, taken so the Debt
+  cannot find the daughter by it: the comedy front hides the
+  tragedy): a crooked hut in a Deepwood clearing, the
   classic shape and none of the cliche inside: tended herbs, a
   still, shelves of stoppered vials, a cat that watches. The hut's
   garden grows herbs from THREE biomes' locked lists (doc 03), the
   visible tell that she is more than a village wisewoman.
 - Placement: deep Darkwood, off any road, tier 2 discovery (no
-  markers). PROPOSED discovery keys: a rumor fragment ("the herb
-  wife past the burned mile"), unusual herb finds no vendor sells,
-  or being sent by the Last Tender (the roster tie: two crones,
-  one faith).
+  markers). DISCOVERY KEY (locked, ruling pass 8): ONE tavern rumor
+  fragment, exact wording locked: "the herb wife's cat finds
+  travelers before travelers find the hut." Audio-first: the cat
+  appears on the path, cries once, walks off; follow it. The
+  burned-mile fragment was rejected. Unusual herb finds and the
+  Last Tender introduction stay as ALTERNATE discovery routes
+  (PROPOSED).
 - Safe ground for dark players per doc 03's biome safety; a good
   player can still trade IF they come clean and unarmed (PROPOSED:
   the hut reads intent, witch magic, doc 17). Neutral players
@@ -474,6 +481,19 @@ locked in ruling 5 carries PROPOSED.
   fourth song IS the Dark Pacts hex-song (locked, ruling 6); the
   bard's song roster is complete at four.
 
+## RULING PASS 8 (2026-09-14, Nicko, the open-questions sweep, second)
+Open 6's remaining halves ruled with options and examples:
+- THE WITCH'S NAME: GRANNY THORNWHISTLE. A hearth-name she chose
+  herself for shopkeeping (an unpronounceable true name sells no
+  potions). The name is her MOTHER's, taken so the Debt cannot find
+  the daughter by it. Comedy front, hidden tragedy.
+- THE RUMOR FRAGMENT: "the herb wife's cat finds travelers before
+  travelers find the hut." Audio-first discovery: the cat appears
+  on the path, cries once, walks off; follow it. The burned-mile
+  wording was rejected in favor of the cat.
+Open 6 is now FULLY RESOLVED (discovery tier 2 ruled in pass 7 R6,
+name + wording ruled here).
+
 ## RULING PASS 7 (2026-09-14, Nicko, the open-questions sweep)
 
 All live opens ruled one at a time, options with examples, verbatim
@@ -534,10 +554,10 @@ reads the bearer). The dark payload stays a dark player's tool.
    identity, haunts, and payoff.
 5. RESOLVED 2026-09-14 (Nicko, ruling pass 7 R5): PROVISIONING IS
    THE ANSWER. No special blight shelter; Part 3's mix stands.
-6. PARTIALLY RESOLVED 2026-09-14 (Nicko, ruling pass 7 R6):
-   discovery is RUMOR-KEYED tier 2 (one tavern fragment narrows the
-   hunt, no marker). STILL OPEN: the witch's name and the rumor
-   fragment's exact wording, authored at GDD stage.
+6. RESOLVED 2026-09-14 (Nicko, ruling passes 7-8): RUMOR-KEYED
+   tier 2; the witch is GRANNY THORNWHISTLE; the fragment reads
+   "the herb wife's cat finds travelers before travelers find the
+   hut" (audio-first, follow the cat).
 7. The witch hut questline spine: what "played correctly" means,
    the Old Blood storyline shape, the failure states, and the
    resident-offer beat: parked for the quest GDD (doc 20/22 tier),

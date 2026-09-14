@@ -898,19 +898,18 @@ percentages; gem drops scale with mining rank + Luck, gem tier gated
 by vein depth and region band; doc 38 locked first.
 
 New opens from this pass (logged in doc 39 Part 6):
-37. Anchor percentages (A2 T4 dungeon drop weight, A3 war-camp steel
-    share, G1-G4 gem base chance/rank curve/Luck/stratum gate): lock
-    exact numbers or hand to GDD tuning: doc 39 pass.
-38. Silver-as-T2 metal (doc 05's five-metal ladder maps 1:1 to
-    T1-T5, silver at T2): confirm: doc 39 pass.
-39. Named dual-wield pairs count as ONE relic slot against doc 06's
-    9-relic working target: confirm: doc 39 pass.
-40. The Aegis Bulwark as a CRAFTED (not dropped) T5 shield terminal
-    item, deep-good exclusivity carries: confirm: doc 39 pass.
-41. Gem names (Chip/Deep/Vein-heart/Veil Star families): working
-    names pending Nicko: doc 39 pass.
-42. Crossbow subclass existence (doc 33 Archery row assumes bows):
-    unaddressed: doc 39 pass.
+37. RESOLVED 2026-09-14 (Nicko, sweep): anchors CONFIRMED AS
+    PROPOSED, handed to GDD tuning (no numbers locked without a
+    playable build).
+38. RESOLVED 2026-09-14 (Nicko): CONFIRMED, silver at T2, the
+    five-metal ladder maps 1:1 to T1-T5.
+39. RESOLVED 2026-09-14 (Nicko): CONFIRMED, one relic slot.
+40. RESOLVED 2026-09-14 (Nicko): CONFIRMED crafted-not-dropped.
+41. RESOLVED 2026-09-14 (Nicko): CONFIRMED as locked working
+    names (Chip/Deep/Vein-heart/Veil Star).
+42. RESOLVED 2026-09-14 (Nicko): CROSSBOW EXISTS, a doc 33 Archery
+    subclass (slow reload, high per-shot poise damage); catalog
+    rows in doc 39 at next touch.
 
 ## WILDERNESS ENCOUNTER PASS (2026-09-14, doc 41)
 
@@ -943,9 +942,11 @@ New opens from this pass (logged in doc 41):
     The authoring pass itself remains a GDD-stage deliverable.
 47. RESOLVED 2026-09-14 (Nicko, doc 41 R5): PROVISIONING IS THE
     ANSWER. No special blight shelter.
-48. PARTIALLY RESOLVED 2026-09-14 (Nicko, doc 41 R6): discovery
-    is RUMOR-KEYED tier 2. Still open: the witch's name and the
-    rumor fragment's exact wording (GDD-stage authoring).
+48. RESOLVED 2026-09-14 (Nicko, doc 41 ruling pass 8): discovery
+    tier 2 confirmed; the witch is GRANNY THORNWHISTLE (hearth-
+    name, her mother's name, taken so the Debt cannot find the
+    daughter by it); the fragment reads "the herb wife's cat finds
+    travelers before travelers find the hut" (audio-first).
 49. The witch hut questline spine (what "played correctly" means,
     Old Blood storyline shape, failure states, resident-offer beat):
     parked for the quest GDD: doc 41 Part 5 with doc 20/22.
@@ -968,3 +969,33 @@ RESOLVED by ruling 6 (2026-09-14, Nicko): doc 41 opens 9-10
 playthrough, plus the optional hex-song tome in later-tier
 dungeons only. Spawn signal: NONE, pure seed lottery, he can be
 missed entirely, that is the design.
+
+## OPEN-QUESTIONS SWEEP PASS (2026-09-14, doc 41 eighth pass + project-wide)
+
+Design-layer opens ruled one at a time with options and examples (owning
+docs got the ruling text appended):
+- Alignment thresholds (doc 12): SIEGE-LADDER, deep tiers at +/-80,
+  favor tiers at +/-50, one mental model for axis and standing.
+- Hold defense (doc 13): EVENT-BASED DEFENSE, triggered siege events
+  with warning windows, no personal garrison mechanic.
+- Apex chains (doc 16): SCHOOL-KEYED, one apex chain per magic school
+  (5 chains), deep tier + Grandmaster + affinity gates.
+- Retinue cap (doc 11): PARTY-SHARED POOL, the cap IS doc 23's
+  party-slot ladder; roster is camp-capped, expedition is slot-capped.
+- Faction reaction to fortified camps (doc 11): TERRITORY-KEYED
+  TOLERANCE, reaction follows the camp's address, not its tier.
+- XP/stat/stamina/parry numbers (doc 07): HAND TO GDD TUNING.
+- Name pool + lifecycle depth (doc 14): MODERATE (Nicko, verbatim
+  "Moderatly").
+- Legendary clue-chains (doc 06): ONE LEGEND PER COURT (3 total),
+  scarcity preserves the pattern's rank.
+- Title (doc 01): KEEP 'WITCH HUNTER'; trademark search logged as a
+  Nicko business-stage action item.
+- Mount visuals (doc 03): LIVING MOUNTS, true 3D models per doc 29's
+  carrier, travel-speed-only lock intact, sprite-mount line superseded.
+
+Still parked (correctly): the witch questline (doc 41 opens 49-50,
+Nicko's "later" ruling), all audit-assigned production opens (UE5
+spike, audio doc, UI/UX art doc, perf budgets, cutscene format,
+transformation-strain plan, boss treatment, rembg replacement),
+GDD-tuning blocks, and the parallel magic session's doc 17 items.

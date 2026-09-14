@@ -163,3 +163,11 @@ confirm with Nicko's locked rulings in 17-magic-system.md first):
    bonuses: the blessed-weapon anti-conversion effect is the light
    court's counterplay against the vampire/undead corruption kits, and
    Witchbane is a natural carrier of this counterplay.
+
+## RULING PASS (open-questions sweep, 2026-09-14, Nicko)
+APEX ARCHITECTURE: SCHOOL-KEYED. One apex chain per magic school (5
+chains), regardless of court. Gates: deep tier + school Grandmaster
++ per-school affinity requirement. The apex IS the mastery fantasy.
+Working names carried: THE ASHEN (Pyromancy), THE GLACIER WARDEN
+(Cryomancy); Storm/Holy/Dark chains working-named at authoring.
+Chain content authored at GDD stage.

@@ -305,3 +305,15 @@ ceiling.
    names pending Nicko pass.
 6. [08 TRACKER] Crossbow: doc 33's Archery row assumes bows; whether a
    crossbow subclass exists (stocks, reload cadence) is unaddressed.
+
+## RULING PASS (open-questions sweep, 2026-09-14, Nicko)
+1. ANCHORS: CONFIRMED AS PROPOSED, HAND TO GDD TUNING. A2 (T4
+   dungeon drop weight), A3 (war-camp steel share), G1-G4 (gem base
+   chance/rank curve/Luck/stratum gates) stay PROPOSED working
+   numbers, tuned against a playable build. Nothing locks a wrong
+   number before a build exists to feel it.
+2. CROSSBOW: ADDED. The Archery class gains a crossbow subclass
+   (ruling on doc 33 above); doc 39's catalog gains crossbow rows
+   across its 5 tiers at the next catalog touch (materials follow
+   the bow ladder's sourcing; identity: slow reload, high poise
+   damage).

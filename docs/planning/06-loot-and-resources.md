@@ -172,6 +172,15 @@ with common junk.
 3. Whether neutral brokers' legendary-station intel is a fixed
    inventory item per broker or a Speechcraft-gated reveal: quests GDD.
 
+## RULING PASS (open-questions sweep, 2026-09-14, Nicko)
+LEGENDARY CLUE-CHAINS: ONE LEGEND PER COURT (3 total). The cumulative-
+redundant clue-chain pattern is used for exactly three legendary
+secrets, one per court, each assembled from overlapping fragments
+(tavern intel, Warden's letter, dungeon find, the witch's tale,
+battlefield find), no markers, deterministic outcome, personal route.
+Scarcity keeps the pattern legendary; the light legend is
+Aegis-adjacent (crafted, ties the Aegis ruling). Chain content
+authored at GDD stage.
 ## Open Questions (current state - first-draft questions resolved)
 - Node respawn: RESOLVED (2-3 days). Inventory system: RESOLVED (weight).
 - Grave-looting consequences: RESOLVED (light-court reputation cost).

@@ -127,6 +127,17 @@ decoration, and retinue affinity tolerance. TROPHY BUFFS
 LOCKED: apex-beast trophies grant a small permanent camp-wide
 buff vs that beast family while displayed.
 
+## RULING PASS (open-questions sweep, 2026-09-14, Nicko)
+RETINUE CAP: PARTY-SHARED POOL. The retinue cap IS the party-slot
+ladder (1/2/3/4 at levels 1/10/20/30, doc 23). Retinue = everyone
+recruited into the camp's resident layer, uncapped except by camp
+capacity; only 4 walk out with you. The cap that matters is
+expedition slots, not roster size.
+FACTION REACTION TO FORTIFIED CAMPS: TERRITORY-KEYED TOLERANCE.
+Reaction is purely by whose territory the camp sits in (doc 13's
+hold overlay), regardless of camp tier: a fortified camp in
+dark-held land raises no eyebrow, the same camp in light land draws
+the Militant's questions immediately.
 ## Open Questions (status as of the 2026-09-11 second sweep)
 1. Relocation: RESOLVED - freely relocatable after the 4-day summon
    cooldown. Multiple camps: not in v1 (one warp camp per character).

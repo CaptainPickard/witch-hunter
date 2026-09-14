@@ -237,3 +237,10 @@ Kill feeds doc 06 layer 1 monster/humanoid parts, XP per doc 07.
 2. Two talisman slots (section 5): LOCKED yes by Nicko, 2026-09-13.
 3. Crit cap 30 percent: LOCKED by Nicko, 2026-09-13.
 4. Stamina-break window 1.50s: PROPOSED, tuning.
+
+## RULING PASS (open-questions sweep, 2026-09-14, Nicko)
+CROSSBOW SUBCLASS: EXISTS. Doc 33's Archery class gains a crossbow
+subclass with its own identity: slower reload cadence, higher
+per-shot poise damage than bows. Same locked hard-number conventions
+(60 fps, doc 33 formulas apply unchanged). Catalog rows go to doc 39;
+verb grammar (doc 04) unchanged.

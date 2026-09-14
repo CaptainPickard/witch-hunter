@@ -135,7 +135,9 @@ senses. No UI meter: reading weather is survival knowledge.
   camping system (doc 09) carry all long-haul logistics, and the rumor
   economy (doc 13) becomes the strategic map's only shortcut: you plan
   at the bar, then you ride.
-- Mounts: travel speed only (locked). Sprite mounts.
+- Mounts: travel speed only (locked). (Visuals: SUPERSEDED by the
+  2026-09-14 mount ruling below; living 3D mounts per doc 29's
+  carrier, "sprite mounts" was pre-pivot text.)
 - The warp camp provides a region anchor but NOT fast travel (locked in
   doc 11: no fast travel through camps).
 
@@ -726,6 +728,14 @@ never coexists with a Pale Tide.
 - Named-storm N values and season length: see Veil-Tide cadence
   above (locked).
 
+## RULING PASS (open-questions sweep, 2026-09-14, Nicko)
+MOUNT VISUALS: LIVING MOUNTS. After the 3D pivot (doc 29), mounts are
+true 3D models like everything else (the 46-asset Meshy pipeline,
+low-poly pixelated, own atlas, riding pose), with doc 03's mount lock
+intact: travel speed only, no mounted combat. The pre-pivot
+"sprite mounts" line above is SUPERSEDED by this ruling (carrier
+change, not a design change). Exact mount asset spec authors with the
+first mount asset run.
 ## Open Questions (current state)
 - Continent size: RESOLVED 2026-09-12 (see SCALE TARGET above). Open
   dependent: exact in-game day length (even day/night halves locked,

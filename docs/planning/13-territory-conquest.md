@@ -102,6 +102,14 @@ H. RETINUE AS ARMY: late-game conquest actions could use the retinue
    (guards, orc mercenaries) as the player's own war party - the retinue
    collection loop pays off in the conquest meta.
 
+## RULING PASS (open-questions sweep, 2026-09-14, Nicko)
+HOLD DEFENSE: EVENT-BASED DEFENSE. The player cannot garrison a hold
+personally; defense plays as triggered events when doc 13's war
+engine targets a hold the player is allied with. Warning window
+(Veil-Tide forecasting, tavern rumors) then choose: defend (a timed
+battle event with the retinue) or skip (the hold may fall, map reads
+it). No stationed-garrison mechanic; retinue deployment stays doc
+23's expedition layer.
 ## Open Questions (status as of the 2026-09-11 second sweep)
 1. Hold count: RESOLVED (20-30 holds, each a real place: noble family,
    tavern, dungeon cluster).

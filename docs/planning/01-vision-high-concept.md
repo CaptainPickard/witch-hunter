@@ -18,7 +18,7 @@ the player aids one court toward total domination, or refuses both six
 times, unites the underworld, and forges the Third Path. Your deeds move a
 single visible moral axis; the axis decides which half of the day is yours,
 which factions will speak to you, which titles you can hold, and how the
-world ends. Around that spine: skill-by-use specialization (28 core skill
+world ends. Around that spine: skill-by-use specialization (29 core skill
 lines plus titled specialties), a living political map (20-30 holds that
 flip between courts), an expedition survival loop (taverns, camps, warp
 camp home base), and a daily food/drink loadout system. One character
@@ -49,7 +49,7 @@ lives; the game has no narrator judging you, only consequences.
 
 ## Target Experience
 - One player, one save, one character build at a time. The build IS the
-  playthrough - now expressed as identity: nine stats, 28 skill lines,
+  playthrough - now expressed as identity: nine stats, 29 skill lines,
   lapable specialty titles, a moral axis, and a retinue that greets you
   by name at your own camp.
 - Exploration is rewarded with loot, resources, faction standing, and XP -
@@ -72,6 +72,12 @@ lives; the game has no narrator judging you, only consequences.
   there are no villagers to govern, no economy to balance, no kingdom
   management. Keep it that way unless a future pass explicitly reopens it.
 
+## RULING PASS (open-questions sweep, 2026-09-14, Nicko)
+TITLE: KEEP 'WITCH HUNTER'. The working title is unchanged. A real
+trademark search is a BUSINESS-STAGE ACTION ITEM for Nicko
+(trademark attorney or search service), logged as a personal action
+item, not a design decision. Docs keep 'Witch Hunter' until the
+search returns.
 ## Open Questions
 - Working title is "Witch Hunter." Keep it, or reserve it (it collides with
   existing IP in the genre)?

@@ -152,6 +152,10 @@ house/clan-like structures, race-mixed:
   create their house banner (and, by extension, design the heraldry their
   clan will be known by).
 
+## RULING PASS (open-questions sweep, 2026-09-14, Nicko)
+NAME POOL + HERALDRY/CLAN LIFECYCLE DEPTH: MODERATE (Nicko, verbatim
+"Moderatly"). Enough stems, states, and churn for variety, not an
+exhaustive atlas; authoring scope stays proportionate.
 ## Open Questions
 1. How deep do personal name pools need to be (per race, per gender)?
 2. Do the neutral court's mixed-race "houses" use their own invented
