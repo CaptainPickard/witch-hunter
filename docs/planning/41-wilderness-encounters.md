@@ -35,8 +35,22 @@ doc 03/06's; settlements remain doc 03's. Nothing here re-authors those.
    TOMES across the world teach him the other elemental weapon
    types (lightning and frost), imbuing party weapons with that
    elemental damage through song. He is a COMEDIC RELIEF character
-   in addition to battle buffs, a rare find, and very useful and
+   comedic relief character, a rare find, and very useful and
    powerful if leveled properly.
+6. BARD TOMES AND SPAWN SIGNAL (locked 2026-09-14, Nicko, resolves
+   doc 41 opens 9-10):
+   - TOME COUNT: ONE lightning tome and ONE frost tome exist per
+     playthrough (one each). Plus a THIRD, optional tome: the Dark
+     Pacts HEX-SONG tome can also drop, but ONLY in later-tier
+     dungeons (the deep strata per doc 37's Descent Gates). The
+     hex-song is the bard's fourth and final song; it is the new
+     ruling Part 6 anticipated.
+   - SPAWN SIGNAL: NONE. The cemetery spawn is a pure seed lottery
+     with no rumor, no keeper gossip, no trail. Design intent
+     (Nicko, verbatim intent): "a pure lottery makes him a legend."
+     A legendary character in a grim dark fantasy world: most
+     players never meet him, the ones who do remember him, and
+     nothing telegraphs where to look.
 
 ## CONVENTIONS (carried from the locked set)
 - Overworld placement is HAND-AUTHORED (doc 03 structure principle):
@@ -360,6 +374,11 @@ locked in ruling 5 carries PROPOSED.
 - Discovery tier 2, rumor-adjacent: cemetery-keepers gossip
   (PROPOSED rumor line: "the warden at [hold] says the dead there
   sing out of tune").
+  SUPERSEDED (ruling 6, spawn signal): NO keeper gossip, no rumor
+  line, no trail. The spawn is a PURE SEED LOTTERY. The rumor line
+  above stays only as dead text showing what was rejected; no
+  in-game channel points at his cemetery. A player who checks
+  cemeteries out of habit may get lucky; nothing tells them to.
 - UNDEAD GRAMMAR (doc 34/04, carries): he does not dodge or parry;
   he is never a combatant anyway (doc 23 bard behavior: stays
   mid-rear, never initiates). Skeleton is his BODY, not his
@@ -379,11 +398,27 @@ locked in ruling 5 carries PROPOSED.
   (doc 06's layer-4 special slot, the find-and-learn spell model,
   doc 17's acquisition lock). One tome per element: the lightning
   tome imbues party weapons with Storm damage, the frost tome
-  with Cryomancy chill. Tome placement follows doc 06's special
-  slot distribution (court vaults, dungeon finds, vendor stock);
-  PROPOSED lean: bard tomes hide in places a BARD would haunt
-  (tavern cellars, drowned shrines, the moor battlefield sites
-  where his old troupe fell).
+  with Cryomancy chill.
+  TOME COUNT (locked, ruling 6): exactly ONE lightning tome and
+  ONE frost tome exist per playthrough, ONE EACH, no dupes. Their
+  placement follows doc 06's special-slot distribution (court
+  vaults, dungeon finds, vendor stock); PROPOSED lean: bard tomes
+  hide in places a BARD would haunt (tavern cellars, drowned
+  shrines, the moor battlefield sites where his old troupe fell).
+- THE HEX-SONG (locked, ruling 6): a THIRD, optional tome exists:
+  the Dark Pacts HEX-SONG tome. It can drop ONLY in later-tier
+  dungeons (doc 37's Descent Gates deep strata, the T3+ dungeon
+  tiers per doc 06's dungeon-weighted tables). The hex-song is the
+  bard's fourth and final song: party weapons carry a Dark Pacts
+  hex (working shape PROPOSED: the weapons' hits apply a low-grade
+  curse stacking with the party's damage, magnitude by his tier;
+  exact hex effect is GDD tuning with doc 23's bard numbers).
+  AXIS NOTE: the hex-song is a WEAPON coating like the other three
+  (the weapons carry the Dark Pacts payload, the bard casts
+  nothing), so the doc 17 axis gate still reads the PLAYER, not
+  the song; owning the tome is not casting Dark Pacts. If playtest
+  reads it as too much axis-bypass, that is a GDD-stage revisit,
+  logged as open 12.
 - SCHOOL-NOTE: fire/Storm/frost are the locked school names
   Pyromancy/Storm Magic/Cryomancy (docs 15/17). His songs are the
   coating channel, not spell casts: the SINGER casts nothing, the
@@ -417,19 +452,20 @@ locked in ruling 5 carries PROPOSED.
   magnitude, duration, and song-change speed scale with his own
   skill tier; per-song numbers are GDD tuning (doc 23 already
   parks bard numbers there).
-- TOMES GATE THE KIT (ruling 5): fire is his birthright; storm
-  and frost songs are unlocked by finding their tomes. A
+- TOMES GATE THE KIT (rulings 5-6): fire is his birthright; storm
+  and frost songs are unlocked by finding their tomes (one each,
+  ruling 6), and the hex-song waits in the deep strata. A
   playthrough's bard ceiling is therefore set by how many bard
   tomes the world gave up: exploration-limited power, the doc 06
   special-slot economy working as designed.
 - CORROSIVE NOTE: the four elemental damage types are Cold/Heat/
   Lightning/Corrosive (Kaiju-era working names) but THIS game's
   locked magic set is Pyromancy/Cryomancy/Storm Magic/Holy Wards/
-  Dark Pacts (docs 15/17). The bard's three songs map to the
+  Dark Pacts (docs 15/17). The bard's songs map to the
   three DAMAGE-carrying schools (fire/storm/frost); no Corrosive
-  song exists here (corrosion is not a school in doc 15). If a
-  fourth song is ever wanted, it is a Dark Pacts hex-song, and
-  that is a NEW ruling, not this one.
+  song exists here (corrosion is not a school in doc 15). The
+  fourth song IS the Dark Pacts hex-song (locked, ruling 6); the
+  bard's song roster is complete at four.
 
 ## Open Questions
 1. Beast den repopulation vs habitat drift: ruling 2 commits cleared
@@ -458,16 +494,18 @@ locked in ruling 5 carries PROPOSED.
 8. Resident-witch camp services scope (what vendor/teaching menus
    move into the warp camp when she joins): parked with the
    questline: doc 41 with doc 23/11.
-9. Bard tome placement count and rarity: how many bard tomes exist
-   per playthrough (working lean: one lightning + one frost, rare
-   drops in bard-haunted places) and whether a third hex-song tome
-   ever exists: doc 41 with doc 06.
-10. Bard spawn odds and check rules: does the player get ANY signal
-    which cemetery holds him (rumor tier, keeper dialogue) or is it
-    pure seed lottery; and can he be missed entirely by a
-    playthrough that never visits cemeteries: doc 41.
+9. RESOLVED 2026-09-14 (Nicko, ruling 6): ONE lightning and ONE
+   frost tome per playthrough (one each), plus the optional Dark
+   Pacts hex-song tome dropping ONLY in later-tier dungeons.
+10. RESOLVED 2026-09-14 (Nicko, ruling 6): PURE SEED LOTTERY, no
+    signal of any kind. Yes, he can be missed entirely by a
+    playthrough that never visits cemeteries: that is the design.
 11. Bard party slot: he occupies one of doc 23's four party slots
     like any follower (PROPOSED), vs being a free sixth member;
     interacts with the level-gated slot thresholds: doc 41 with
     doc 23.
+12. Hex-song axis-bypass check: the Dark Pacts hex-song tome lets a
+    non-caster party carry a Dark Pacts payload through weapon
+    coatings; playtest reads whether this bypasses doc 17's axis
+    gates too far, revisit at GDD: doc 41 with doc 17.
 

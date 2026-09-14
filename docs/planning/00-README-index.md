@@ -39,7 +39,7 @@ structural ambition with a modern atmospheric layer on top.
 - 12-moral-axis-factions.md  - moral axis as faction-alignment gate, two courts
 - 13-territory-conquest.md   - dynamic conquest triggers, the moving map
 - 14-races-houses-naming.md  - race-flavored house generation, chain of command
-- 15-skill-lines.md          - the skill lines (28 core + specialties)
+- 15-skill-lines.md          - the skill lines (29 core + specialties)
 - 16-specialties.md          - titled specialty combos, bonuses, identities
 - 17-magic-system.md         - magic system: five schools, spells, hybrids,
                                taint, corruption kits (LOCKED 2026-09-12)
@@ -528,8 +528,8 @@ structural ambition with a modern atmospheric layer on top.
 8. Stats: NINE total - Health, Stamina, Focus, Carry Weight, Precision,
    Ward, Speed, Luck (item drops/rng rolls), Wisdom (magic damage/mana).
    5 stat points per level.
-9. ~28 core skill lines (9 combat, 5 magic, 5 crafting, 6 gathering, 3
-   utility/social), expandable upward via unlockable specialties like
+9. 29 core skill lines (9 combat, 5 magic, 5 crafting, 6 gathering, 3
+   utility/social, 1 salvage), expandable upward via unlockable specialties like
    Fry Cook. Luck is a stat (drop chance), Speechcraft is the social
    skill. Spec in 15-skill-lines.md.
 33. Specialties with titles (2026-09-11): specialties are COMBINATION
@@ -1122,8 +1122,10 @@ feature-by-feature implementation against the GDD.
     metals, cloth), 3x5x4 catalog, sourcing matrix (region bands,
     dungeon weighting, vendor families), ingredient map, New World
     quality path (tier up = new craft, grade via secondaries, station
-    ceiling, wards), relic armor section, opens 1-6.
-    Status: PROPOSED pending Nicko lock.
+    ceiling, wards), relic armor section, opens 1-7.
+    Status: PROPOSED pending Nicko lock. Rulings 6 (upgrade path:
+    craft-new-only) and 7 (Disassembly: all items salvage, new core
+    skill line 29, spec in doc 05) locked 2026-09-14 in session.
 84. WILDERNESS ENCOUNTER LAYER (2026-09-14, Nicko, spec in doc 41):
     the overworld's notable encounter sites, the living gaps between
     holds. Rulings locked in session 2026-09-14: (1) PATH, full
@@ -1165,4 +1167,18 @@ feature-by-feature implementation against the GDD.
     Part 6 spec (spawn rule, kit, comedy, progression), opens 9-11
     (tracker 51-53).
     Status: ruling 5 LOCKED; Part 6 details PROPOSED pending review.
+87. BARD TOMES + SPAWN SIGNAL (2026-09-14, Nicko, fourth pass on
+    doc 41): ruling 6 added, resolving doc 41 opens 9-10 (tracker
+    51-52). TOME COUNT: ONE lightning tome and ONE frost tome per
+    playthrough, one each, no dupes. THIRD optional tome: the Dark
+    Pacts HEX-SONG tome, the bard's fourth and final song (song
+    roster complete at four), dropping ONLY in later-tier dungeons
+    (doc 37 Descent Gates deep strata). Spawn signal: NONE, pure
+    seed lottery, no rumor, no keeper gossip, no trail; most
+    players never meet him, that is the point (Nicko: "a pure
+    lottery makes him a legend"). New open 12 (tracker 54): the
+    hex-song's axis-bypass check at GDD (doc 17). Parts: ruling 6
+    in session rulings, spawn-rule supersession note, hex-song
+    spec, progression update.
+    Status: ruling 6 LOCKED; hex-song numbers PROPOSED at GDD.
 

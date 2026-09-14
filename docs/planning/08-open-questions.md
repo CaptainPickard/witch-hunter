@@ -16,8 +16,8 @@ checklist for "no holes or gaps."
    (04, 09).
 5. Stats: NINE (Health, Stamina, Focus, Carry Weight, Precision, Ward,
    Speed, Luck, Wisdom); 5 points/level (07).
-6. Skill lines: 28 core (9 combat, 5 magic, 5 crafting, 6 gathering, 3
-   utility/social) + specialty expansion upward (15).
+6. Skill lines: 29 core (9 combat, 5 magic, 5 crafting, 6 gathering, 3
+    utility/social, 1 salvage) + specialty expansion upward (15).
 7. Skill mechanics: ranks 1-100 by use, 5 tiers, permanent technique
    choices (2-3 options), diminishing curve after 50, no decay, no
    respec, gear gates by tier (18).
@@ -956,3 +956,14 @@ New opens from this pass (logged in doc 41):
     or pure seed lottery; can he be missed entirely): doc 41.
 53. Bard party slot (occupies one of doc 23's four level-gated
     slots vs free sixth member): doc 41 with doc 23.
+54. Hex-song axis-bypass check (doc 41 fourth pass, ruling 6): the
+    Dark Pacts hex-song tome lets a non-caster party carry a Dark
+    Pacts payload through weapon coatings; playtest reads whether
+    this bypasses doc 17's axis gates too far, revisit at GDD:
+    doc 41 with doc 17.
+
+RESOLVED by ruling 6 (2026-09-14, Nicko): doc 41 opens 9-10
+(tracker 51-52). Tome count: one lightning + one frost per
+playthrough, plus the optional hex-song tome in later-tier
+dungeons only. Spawn signal: NONE, pure seed lottery, he can be
+missed entirely, that is the design.
