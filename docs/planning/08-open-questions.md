@@ -963,6 +963,10 @@ New opens from this pass (logged in doc 41):
 54. RESOLVED 2026-09-14 (Nicko, doc 41 R8): GATED TO EVIL. The
     hex-song tome is usable only by evil-leaning players (doc 12's
     axis gate reads the bearer).
+55. THE KNOCK AT THE DOOR tuning (doc 11 ruling pass 2): sales
+    threshold that summons investigators, visit cooldown, ambush
+    chance when proof fails, suspicion-flag decay: GDD tuning:
+    doc 11.
 
 RESOLVED by ruling 6 (2026-09-14, Nicko): doc 41 opens 9-10
 (tracker 51-52). Tome count: one lightning + one frost per
@@ -984,6 +988,10 @@ docs got the ruling text appended):
   party-slot ladder; roster is camp-capped, expedition is slot-capped.
 - Faction reaction to fortified camps (doc 11): TERRITORY-KEYED
   TOLERANCE, reaction follows the camp's address, not its tier.
+  REVISED 2026-09-14 (Nicko, same day): deepened into THE KNOCK AT
+  THE DOOR (doc 11 ruling pass 2): the Ledger's receipts summon
+  investigators, the visit is an ambush by design, mirror symmetry
+  across both courts. New tuning open 55.
 - XP/stat/stamina/parry numbers (doc 07): HAND TO GDD TUNING.
 - Name pool + lifecycle depth (doc 14): MODERATE (Nicko, verbatim
   "Moderatly").

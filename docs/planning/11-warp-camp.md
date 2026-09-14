@@ -217,3 +217,41 @@ chooses. The option set is PROGRESSION-GATED:
 Warp-in construction suggests a base-building placement system in Unreal:
 grid or freeform placement, with structure prefabs as sprites/props. This is
 a significant UI and rendering feature - flag it early for the tech plan.
+
+## RULING PASS 2 (2026-09-14, Nicko, revisits territory-keyed tolerance)
+
+THE KNOCK AT THE DOOR (named system, locked 2026-09-14): territory-keyed
+tolerance is REVISED (deepened, not replaced). The camp's address still
+decides WHO watches, and now the courts ACT on what your commerce shows:
+
+- TRIGGER (DEED-LOG EVIDENCE): the World Ledger (doc 20) reads the
+  player's sales receipts. Selling dark-court goods at light-held
+  markets (or light-court goods at dark-held markets) builds a paper
+  trail; enough of it summons investigators to the camp door. The
+  player never knows the exact threshold, only that the wrong markets
+  remember.
+- THE VISIT (HARD AMBUSH RISK): the visit IS the ambush's setup from
+  the start. The knock, the polite questions, the inspection theater:
+  all of it is designed to keep the player at the door while the
+  ring forms. Unless the player proves the holding court's alignment
+  FAST (Ledger evidence of clean deeds, deep tier of the holding
+  court), the investigators draw steel mid-conversation (doc 34's
+  ambush spawn rules; light investigators use the pair grammar,
+  dark enforcers the pack grammar).
+- THE OUT: refusing the door or spotting the ring early (perception,
+  Warden intel, watching the treeline) avoids the ambush but leaves
+  a SUSPICION FLAG on the camp's file: future visits come armed, and
+  the flag decays only with clean time and clean markets.
+- PROOF = REPUTATION: the interrogation tests REPUTATION, not
+  housekeeping. A deep-good player in light land talks their way
+  through (their witnessed deed record is the proof); an evil
+  player's file convicts them whatever they carry. Hiding goods
+  does not help: the receipts already exist.
+- MIRROR SYMMETRY (locked, vice versa literal): light land sells
+  dark goods = paladins knock. Dark land sells light goods = the
+  dark court's enforcers knock (orc enforcers, thrall-catchers, the
+  Undertow's collectors). Same mechanics, mirrored flavor. A neutral
+  player selling court goods in EITHER territory faces both courts'
+  knocks. Symmetric economy risk everywhere.
+- TUNING (tracker 55): sales threshold, visit cooldown, ambush
+  chance, suspicion-flag decay: GDD tuning.

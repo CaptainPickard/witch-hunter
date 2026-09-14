@@ -1221,3 +1221,17 @@ feature-by-feature implementation against the GDD.
     audit opens, GDD tuning blocks, doc 17 (magic session).
     Status: rulings locked 2026-09-14.
 
+90. THE KNOCK AT THE DOOR (2026-09-14, Nicko, doc 11 ruling pass 2):
+    revisits territory-keyed tolerance (entry 88's camp ruling,
+    REVISED/deepened). The World Ledger reads the player's sales
+    receipts: selling dark-court goods at light-held markets (or
+    light goods in dark land) builds a paper trail that summons
+    investigators to the camp door. THE VISIT IS AN AMBUSH BY
+    DESIGN (interrogation theater, steel mid-conversation unless
+    the player proves the holding court's alignment fast; refusal
+    or early spotting avoids it but leaves a suspicion flag; future
+    visits armed). PROOF = REPUTATION (the Ledger testifies, hiding
+    goods does not help). MIRROR SYMMETRY: paladins in light land,
+    dark enforcers in dark land, neutral players face both. Tuning
+    open 55 (threshold/cooldown/ambush odds/flag decay: GDD).
+    Status: system locked; numbers GDD tuning.
