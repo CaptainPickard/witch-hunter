@@ -226,3 +226,29 @@ deliberate stylistic choice rather than technical failure."
 
 Commits: this commit (glbs + template + built + scripts). RAW mode remains
 parked (raw GLBs lack TEXCOORD_0 - pre-existing, unchanged).
+
+## 2026-09-14 pass 6 (IO direct): ground-standing bug + asset quality decision point
+
+User: "the character isn't even there... ground is through all the characters'
+waist." Root causes found this pass:
+1. GROUND BUG (real): setBody scaled by 1.8/size.y but never translated. GLB
+meshes centered at origin (Y -1..+1) -> every body sunk 0.9 units, waist at
+floor level. Fixed: body.position.y = -box.min.y * s.
+2. Presentation: pure-vcolor mode killed all texel detail. Hybrid render:
+texture map (LinearMipmapLinear + anisotropy) x vertex colors x flat light.
+3. Asset truth: Meshy's 2048px atlases are ~2 stops under the concept (orc
+mean 29/255, olive skin/brown leather buried). Regraded in place: gamma 0.42,
+saturation 1.5x, median 3. Materials now distinct at PSX register.
+4. Mesh truth: decimated bodies are open shells (orc 7129 boundary edges);
+background bled through torso/legs. fill_holes plugged small defects (orc
+7129->4742 boundary); large Meshy-authored tatter loops remain.
+
+Commits: d8e8491 (all of the above). Hunter now vision-passes as a PSX-style
+character standing on the disc. Orc/male-noble still show large open loops
+from the Meshy generation itself.
+
+DECISION POINT (for Nicko): the remaining "not a character" quality on some
+bodies is asset-authoring, not presentation. Options: (a) Meshy re-generation
+of the worst bodies (credits reset on the 13th - fresh allowance today),
+with prompt guidance emphasizing bright midtones and closed solid meshes;
+(b) accept the crude PSX register. Recommended: (a) for the worst 3-4 bodies.
