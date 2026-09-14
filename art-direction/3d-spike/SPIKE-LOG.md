@@ -252,3 +252,33 @@ bodies is asset-authoring, not presentation. Options: (a) Meshy re-generation
 of the worst bodies (credits reset on the 13th - fresh allowance today),
 with prompt guidance emphasizing bright midtones and closed solid meshes;
 (b) accept the crude PSX register. Recommended: (a) for the worst 3-4 bodies.
+
+## 2026-09-14 pass 7: full race body re-generation via Meshy (150 credits)
+
+User verdict on the original 10 bodies: "scrap them." Re-generation run:
+- 10 image-to-3d submissions (meshy-5, quad, 15k target, symmetry auto) from
+  the same committed refs. All 10 SUCCEEDED, 3.6-4.6 MB GLBs each with
+  28-32k tris. Credits: 365 -> 215 (150 spent). User vision-QA'd raw outputs
+  (contact sheet) and approved: closed meshes, midtone-correct textures,
+  readable characters across the set.
+
+regen_pipeline.py (new) post-processing per body:
+- UV-preserving decimation to 15k. LESSON: trimesh silently drops
+  TEXCOORD_0 on export when len(uv) != len(vertices); UV must be averaged
+  per decimated vertex (np.add.at over cKDTree mapping).
+- Pixel register: 256px / 48-color mediancut / 5-bit posterize with the
+  midtone regrade baked in (gamma 0.55, saturation 1.4x, median 3).
+- Hole-fill, welded smooth normals, vertex-color bake (4-round diffusion),
+  in-place NORMAL/COLOR_0 GLB surgery (same approach as add_normals.py).
+- Pipeline bugs fixed en route: walrus-operator face remap clobbering,
+  vcolor array sized to welded count instead of vertex count, UV/vertex
+  count mismatch killing uv export.
+
+Viewer rebuilt (95 MB raw / ~67 MB gzipped on the route; raw bodies now
+carry 2048px masters). Live-route verify: hunter/orc/noble coherent,
+standing on disc, PSX register intact. Pixel-audit of orc: enclosed
+background holes = 1.2% of crop area, mostly the A-pose gap + tattered
+loincloth openings (Meshy-authored design); remaining 281 boundary loops
+are intentional tatters.
+
+Commits: regen pipeline + 20 GLBs + rebuilt viewer (this commit) + SPIKE-LOG.
