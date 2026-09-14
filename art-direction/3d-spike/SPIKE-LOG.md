@@ -282,3 +282,28 @@ loincloth openings (Meshy-authored design); remaining 281 boundary loops
 are intentional tatters.
 
 Commits: regen pipeline + 20 GLBs + rebuilt viewer (this commit) + SPIKE-LOG.
+
+## 2026-09-14 pass 8 (v2): minimal post-pipeline - the pipeline was the problem
+
+User verdict: "All of them are messed up again... the problem is your post
+production process. It's ruining the models." Side-by-side raw-vs-processed
+confirmed it. v1 damage, in order:
+1. Regrade (gamma 0.55 + sat 1.4x + median 3): washed the approved dark
+   gritty palette into light plastic midtones.
+2. Vertex-color bake: smoothed the authored surface grain.
+3. 256px pixel register: crushed material detail to mud.
+The RAW Meshy outputs were good. The pipeline over-medicated them.
+
+v2 (regen_pipeline_v2.py): minimal intervention only.
+- KEEP: decimation 15k (UV-preserving), fill_holes, welded smooth normals.
+- DROP: regrade, posterize, denoise, vertex-color bake, 256px quantize.
+- Texture: authored Meshy texture at 512px (only a size downscale).
+- Viewer: texture renders as authored via LinearMipmapLinear + anisotropy;
+  no COLOR_0 in the GLBs, so the pixelFilter vcolor branch skips.
+
+Verified live-route (orc + hunter): match the approved raw look. Orc figure
+histogram mean 88 with full value spread, 0.25% crushed. Vision QA: "dark
+gritty version... matte, heavy, weathered... no plastic artifacts."
+Commit f896173. LESSON: when raw assets are approved, post-processing must
+be additive-minimal: fix only what is actually broken (mesh holes, missing
+normals), never "improve" the look.
