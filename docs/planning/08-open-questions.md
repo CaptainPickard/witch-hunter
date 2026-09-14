@@ -941,3 +941,11 @@ New opens from this pass (logged in doc 41):
     stage: doc 41.
 47. Blight wayfinding exception (one special shelter type vs
     provisioning as the whole answer): doc 41 with doc 03.
+48. Witch hut pass additions (doc 41 Part 5, second pass 2026-09-14):
+    the witch's name and exact discovery keys: doc 41.
+49. The witch hut questline spine (what "played correctly" means,
+    Old Blood storyline shape, failure states, resident-offer beat):
+    parked for the quest GDD: doc 41 Part 5 with doc 20/22.
+50. Resident-witch camp services scope (which vendor/teaching menus
+    move into the warp camp when she joins): parked with the
+    questline: doc 41 with doc 23/11.

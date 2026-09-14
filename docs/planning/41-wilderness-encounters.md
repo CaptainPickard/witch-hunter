@@ -22,6 +22,12 @@ doc 03/06's; settlements remain doc 03's. Nothing here re-authors those.
 3. DENSITY: 8-12 notable sites per hold region (~5.2 km2). A memorable
    thing on most travel gaps, but the land still breathes with empty
    miles.
+4. THE WITCH HUT (locked 2026-09-14, Nicko): add ONE witch hut
+   continent-wide (see Part 5). A witch the player can interact and
+   trade with; she teaches advanced magics and sells potions. A later
+   questline (authored later) can make her a PERMANENT WARP CAMP
+   RESIDENT who travels with the player's journeys, IF her storyline
+   is played correctly.
 
 ## CONVENTIONS (carried from the locked set)
 - Overworld placement is HAND-AUTHORED (doc 03 structure principle):
@@ -263,6 +269,67 @@ Rumor types added to doc 37's engine (PROPOSED): site-state changes,
 road traffic reports, den sightings (a bounty board tie: a den with
 a price on its beast), pilgrim road warnings.
 
+## PART 5 - THE WITCH HUT (ruling 4)
+One hand-authored site continent-wide, family 2 (hidden places),
+discovery tier 2. Spec below; everything not already locked in
+ruling 4 carries PROPOSED.
+
+### The site
+- THE WITCH HUT (working name; the witch's name is an authoring-pass
+  open, open question 6): a crooked hut in a Deepwood clearing, the
+  classic shape and none of the cliche inside: tended herbs, a
+  still, shelves of stoppered vials, a cat that watches. The hut's
+  garden grows herbs from THREE biomes' locked lists (doc 03), the
+  visible tell that she is more than a village wisewoman.
+- Placement: deep Darkwood, off any road, tier 2 discovery (no
+  markers). PROPOSED discovery keys: a rumor fragment ("the herb
+  wife past the burned mile"), unusual herb finds no vendor sells,
+  or being sent by the Last Tender (the roster tie: two crones,
+  one faith).
+- Safe ground for dark players per doc 03's biome safety; a good
+  player can still trade IF they come clean and unarmed (PROPOSED:
+  the hut reads intent, witch magic, doc 17). Neutral players
+  trade freely.
+
+### The witch
+- INTERACT AND TRADE (locked): a full vendor. Sells POTIONS (doc
+  05/38's stock and daily-prep families; her stock skews dark and
+  rare: the blightcap-grade draughts, the coatings others will not
+  make). Buys reagents at honest prices (PROPOSED: honest is her
+  one merchant virtue; she is testing you).
+- TEACHES ADVANCED MAGICS (locked, scope PROPOSED): gate by doc
+  17's school structure. PROPOSED frame: she teaches the DARK-
+  court schools beyond what court trainers offer (advanced Veil
+  and Old Blood tier work, doc 17's tier ladders), one tier above
+  any other teacher on the continent, for her own price: not
+  always coin (favors, reagents, a story's next chapter).
+- AFFINITY NOTE: a deep-good player learning from her is doc 12's
+  axis economy working as designed; the magic is tainted, the
+  choice is the player's.
+
+### The future questline (PARKED, authored later)
+Nicko's ruling, verbatim intent: a later questline, played
+CORRECTLY, ends with her OFFERING to join the warp camp as a
+PERMANENT RESIDENT who accompanies the player's journeys.
+- RESIDENT layer: doc 23's camp-resident layer (not the deployed
+  party layer). As resident she brings the hut's services ON THE
+  ROAD: vendor access and advanced teaching from camp (PROPOSED
+  scope, exact menus at questline authoring).
+- "Played correctly" is the questline's spine question, parked for
+  the quest GDD (doc 20/22 tier when authored). Working shape
+  (PROPOSED, not locked): her story is an Old Blood sect story
+  (doc 22's Old Faith root), and playing it correctly means
+  honoring her faith's terms, not simply being kind to her. The
+  questline can END BADLY several ways; the resident offer is the
+  one good ending.
+- While the questline is UNWRITTEN, the hut still functions (ruling
+  4's trade and teaching stand alone); the resident arc is an
+  ADDITION the questline unlocks later, per doc 23's
+  interactive-expansion pattern.
+- Doc 11 note (warp camp): a resident witch touches the camp's
+  menu/structure; flagged to doc 11 as a cross-reference, no doc 11
+  text changed by this doc.
+
 ## Open Questions
 1. Beast den repopulation vs habitat drift: ruling 2 commits cleared
    dens to Vacuum colonization. Where do NEW dens come from (habitat
@@ -280,3 +347,13 @@ a price on its beast), pilgrim road warnings.
    wayfinding layer need ONE special shelter type (a Warden waybone?
    a camp that holds?), or is provisioning the whole answer? Owning
    doc: 41 with doc 03.
+6. The witch's name and hut placement keys: name authored at the
+   GDD stage; exact discovery keys (rumor fragment wording, the
+   Last Tender introduction) need a ruling: doc 41.
+7. The witch hut questline spine: what "played correctly" means,
+   the Old Blood storyline shape, the failure states, and the
+   resident-offer beat: parked for the quest GDD (doc 20/22 tier),
+   owned by doc 41 Part 5.
+8. Resident-witch camp services scope (what vendor/teaching menus
+   move into the warp camp when she joins): parked with the
+   questline: doc 41 with doc 23/11.

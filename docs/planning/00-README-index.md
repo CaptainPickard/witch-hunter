@@ -1137,4 +1137,17 @@ feature-by-feature implementation against the GDD.
     states), per-biome family mixes, discovery economy (tier 0-3),
     opens 1-5 (tracker 43-47).
     Status: PROPOSED pending Nicko lock.
+85. WITCH HUT ADDITION (2026-09-14, Nicko, second pass on doc 41):
+    ruling 4 added to doc 41. ONE witch hut continent-wide, deep
+    Darkwood, family 2 hidden place at discovery tier 2. A witch the
+    player interacts and trades with: sells potions (doc 05/38
+    families), teaches advanced dark-court magics one tier above any
+    other teacher (PROPOSED scope on doc 17's ladders). Later
+    questline, played correctly, ends with her OFFERING to become a
+    permanent warp camp RESIDENT who travels with the journeys (doc
+    23 resident layer). Locked verbatim: hut count 1, interact/trade,
+    teaches advanced magics, sells potions, resident offer on
+    correct play. Everything else PROPOSED. Parts: Part 5 site spec
+    (hut, witch, parked questline), opens 6-8 (tracker 48-50).
+    Status: ruling 4 LOCKED; Part 5 details PROPOSED pending review.
 
