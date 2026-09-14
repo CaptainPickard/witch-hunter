@@ -1128,3 +1128,17 @@ This section records the batch.
 51. Follower tuning quintet (doc 23): ONE FOLLOWERS GDD PASS owns
     all five (bard types, per-song numbers, UI routing, romance,
     XP share).
+
+86. STORY WEB: CHARACTERS, KNOWLEDGE, UNDERWORLD ALIGNMENT (2026-09-14,
+    Nicko, spec in doc 44): the doc 36/19 reconciliation session,
+    opened with the identity correction baked: the Signer was always
+    the WITCH (who also poses as the light court's queen), and the
+    PALE QUEEN is a separate character (ex-Solar Throne advisor,
+    vampire, dissenting, hiding in the neutral underground, granting
+    the unite-the-factions final-battle quest). Parts: the corrected
+    cast (8 entries with goals/knowledge/surface/domination plans),
+    the knowledge ledger table (who knows/suspects/misses each core
+    fact), the domination web, the underworld alignment doors (7
+    factions + Deep Altar destination, with alignment costs), reveal
+    beats, supersession edits pending Nicko confirmation, opens 1-6.
+    Status: PROPOSED pending Nicko line-by-line review.
