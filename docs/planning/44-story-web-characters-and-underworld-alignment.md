@@ -160,6 +160,10 @@ survive the others.
 - PUBLIC FACE (underworld): a patient, courtly power broker with no
   banner and no demands; the one figure every smuggler, mercenary,
   and thief respects and none can name the limits of.
+- SEAT (locked 2026-09-14): the UNDERWORLD CAPITAL, a massive
+  cavern-city deep in the continent (see Part 4's seat geography).
+  She rules it the way she rules everything: patiently, from a
+  court no surface map carries.
 - TRUE GOAL: stop the madness. She has watched two courts grind the
   continent for four centuries and concluded neither can win and both
   must be stopped by the third thing: the underworld united under one
@@ -310,6 +314,56 @@ granted by the Pale Queen) assembles these factions. Order is
 PROPOSED; each door names what aligning it costs and what it pays.
 The Deep Altar's congregation is the destination: the united faction
 is literally the altar's congregation (doc 19).
+
+SEAT GEOGRAPHY (locked by Nicko, 2026-09-14): the seven factions
+have PHYSICAL SEATS. Four sit in the four Great Cities (doc 03's
+locked diamond): one faction seat per city, each underworld den
+hiding under or beneath the ruling court's city (an underground
+quarter the city's surface politics does not own). The remaining
+three seats are HIDDEN LOCATIONS out in the world: abandoned
+underground caverns and such, found through the doors' trust chains
+and doc 41's rumor tiers, never marked.
+
+THE FOUR CITY SEATS (assignments PROPOSED until the quest GDD pass):
+1. THE NEW CAPITAL (light capital, south-center): the MERCENARY
+   COMPANIES' seat. The young city's mercenary row is the war
+   economy's open secret; the companies work for the light court by
+   day and broker for anyone below street level.
+2. THE VEIL SPIRE (dark capital, north-center): the SMUGGLERS' seat.
+   The old capital's cellars and crypts run smuggling routes in and
+   out of the blight; smugglers are the only traffic the Spire's
+   court does not fully own.
+3. THE UNDERGROUND DWARF CITY (light minor, deep south): the
+   THIEVES' RINGS' seat. Below a city built to be secure, the rings'
+   seat is a professional joke the dwarfs tolerate: what is locked is
+   meant to be picked, and the rings keep the city honest about it.
+4. THE ORC CITY (dark minor, deep north): the BANDIT WAR CAMPS'
+   seat. The old borderlands' raiders broker truce in the orc
+   city's shadow; their feud-mediating (door 6) begins here.
+
+THE THREE HIDDEN SEATS (found, not traveled-to; the underworld's
+deep addresses):
+5. THE HIDDEN COURT's den: already locked (doc 03/19) beneath the
+   eastern massif, at the Deep Altar's threshold. (The wolf den IS
+   the altar's door.)
+6. THE RELIQUARY WARDENS' vault-seat: a cavern archive deep
+   underground, hidden away from every court, the door-2
+   destination (its above-ground chapter houses stay the public
+   face).
+7. THE NEUTRAL BROKERS' true seat: an abandoned cavern market at a
+   crossroads of old imperial tunnels, reachable only by rumor
+   (doc 37's intel tiers); their city stalls are branches, this is
+   the house.
+
+THE PALE QUEEN'S SEAT (locked by Nicko, 2026-09-14): she resides in
+the UNDERWORLD CAPITAL: a massive cavern-city deep in the continent,
+the neutral capital she is building the banner around. It resembles
+a vast natural cavern grown into a city: tiers of dwellings carved
+into the rock walls, the Deep Altar's congregation already forming
+around her court. (Design note: this is the underworld's counter to
+the four surface capitals, and it is where the final battle's
+underworld banner musters.) Its exact map placement and how the
+Deep Altar sits relative to it: PROPOSED at the world GDD pass.
 
 - DOOR 1, THE HIDDEN COURT (the leash problem): they owe the Signer
   their survival and serve her leash. Aligning them requires the

@@ -125,7 +125,12 @@ hold's war, the war generates new contracts and opens new territory.
    run an axis check. Their contracts pay coin only, no standing.
 4. [08 TRACKER] Contract boards physical persistence: war effort
    postings inherit doc 37-C11's stable-ID board rules; confirm
-   no separate treatment needed.
+   no separate treatment needed. RESOLVED 2026-09-14 (Nicko):
+   CONFIRMED, war effort postings inherit doc 37-C11's stable-ID
+   board rules (stable IDs, posted/accepted/resolved/expired
+   lifecycle states, single reward-authority record); the
+   quartermaster's board is the same board system as doc 37's
+   bounty boards, one implementation for all contract types.
 
 ## PART 5 - DEDICATED RICH MINES (ruling 2)
 

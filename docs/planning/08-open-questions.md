@@ -1157,5 +1157,15 @@ This section records the batch.
     EVERYONE at the final battle; (5) the witch notices the
     assembly MID-QUESTLINE and counters with disguised purges;
     (6) SEVEN doors + altar confirmed.
+    SEAT GEOGRAPHY locked same day (Nicko): four faction seats in
+    the four Great Cities (mercenaries under the New Capital,
+    smugglers under the Veil Spire, thieves under the dwarf city,
+    bandit camps under the orc city, assignments PROPOSED until
+    quest GDD), three hidden seats (Hidden Court den as locked,
+    Wardens cavern-archive, brokers' imperial-tunnel market), and
+    the PALE QUEEN'S SEAT: the UNDERWORLD CAPITAL, a massive
+    cavern-city deep in the continent. Doc 42's last open (board
+    persistence) RESOLVED: war effort postings inherit doc 37-C11
+    stable-ID board rules, no separate treatment.
     Status: all opens resolved; doc 44 PROPOSED content awaiting
     line-by-line review as usual.
