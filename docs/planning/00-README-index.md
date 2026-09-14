@@ -1079,3 +1079,29 @@ feature-by-feature implementation against the GDD.
     exact names, not category slots; catalog deferred. Opens 33-36
     logged. Status: LOCKED by Nicko, 2026-09-14 (scope confirmed in
     session).
+
+82. GATHERING FORTUNES (2026-09-14, Nicko, spec in doc 05 + 38):
+    drop/gathering-increase potions requested and ruled: DAILY PREP
+    ONLY (replaces that day's bane/ward, ritual unchanged), ONE PER
+    GATHERING SKILL LINE (6), NODE-KEYED GRAMMAR (key ingredient =
+    byproduct of the boosted resource, self-feeding). No new potion
+    family. Six working names + exact recipes PROPOSED in doc 38
+    Part 5. Recipes are loot per the locked economy. Opens 37-38
+    logged. Status: rulings LOCKED, names/recipes/percentages
+    PROPOSED pending Nicko lock.
+
+82. WEAPON TIER CATALOG AND MATERIAL SOURCING (2026-09-14, Nicko,
+    spec in doc 39): next planning stage after doc 38's ingredient
+    matrix. Rulings locked in session 2026-09-14: (1) FULL CATALOG,
+    all 9 combat classes x 5 tiers with names, primary materials, and
+    sourcing paths, damage derives from doc 33 formulas, no new math,
+    multi-pass authoring; (2) DROP FORMAT, named sources + weighted
+    rarity bands per area/dungeon/vendor, a few anchor percentages
+    locked where exact odds wanted, rest weight-based for GDD tuning;
+    (3) GEM SYSTEM, gem drop chance from mining veins scales with
+    mining rank, Luck stat adds on top, gem TIER gated by vein depth
+    and region band, mountains richest, cut gems socket into gear via
+    Gem Crafting; (4) SEQUENCE, doc 38 locked first (ea263fe), doc 39
+    authored on the locked base. Parts: material ladder, 9x5 catalog,
+    sourcing matrix, gem system, weapon ingredient map, opens 1-6.
+    Status: PROPOSED pending Nicko lock.

@@ -866,3 +866,48 @@ New opens from this pass (logged in doc 38 Part 4):
 36. Hunter's Components catalog (12-16 guaranteed-enchant
     components with biome/monster sources): separate later doc,
     next crafting pass.
+
+## GATHERING FORTUNES PASS (2026-09-14, doc 05 + 38)
+
+Nicko requested drop/gathering-increase potions. Rulings locked in
+session: gathering fortunes are DAILY PREP ONLY (a gathering draught
+replaces that day's bane/ward, morning ritual unchanged), ONE PER
+GATHERING SKILL LINE (six, doc 06), NODE-KEYED GRAMMAR (each key
+ingredient is a byproduct of the resource it boosts, self-feeding
+loop). No new potion family; the daily prep menu grows. Recipes are
+loot per the locked recipe economy (undiscovered = not craftable).
+Six working names + recipes PROPOSED in doc 38 Part 5. Byproduct
+items (ore-dust, raw-gem chips, herb-tallow, sawdust paste,
+render-fat, fish-oil) are PROPOSED additions to doc 06's gather
+tables.
+
+New opens from this pass:
+37. Fortune percentages (drop-odds boost per grade, duration edge
+    cases, byproduct drop rates themselves): GDD tuning.
+38. Byproduct items' placement in doc 06's four-layer loot tables
+    (which layer, which weights, do Luck techniques affect them):
+    doc 06 pass, next loot touch.
+
+## WEAPON TIER CATALOG PASS (2026-09-14, doc 39)
+
+Doc 39-weapon-tier-catalog.md baked (IO, in-session): the full weapon
+tier catalog and material sourcing stage. Nicko's four rulings locked
+in session 2026-09-14 (verbatim intent in doc 39 SESSION RULINGS):
+full 9x5 catalog now; named sources + weighted bands + anchor
+percentages; gem drops scale with mining rank + Luck, gem tier gated
+by vein depth and region band; doc 38 locked first.
+
+New opens from this pass (logged in doc 39 Part 6):
+37. Anchor percentages (A2 T4 dungeon drop weight, A3 war-camp steel
+    share, G1-G4 gem base chance/rank curve/Luck/stratum gate): lock
+    exact numbers or hand to GDD tuning: doc 39 pass.
+38. Silver-as-T2 metal (doc 05's five-metal ladder maps 1:1 to
+    T1-T5, silver at T2): confirm: doc 39 pass.
+39. Named dual-wield pairs count as ONE relic slot against doc 06's
+    9-relic working target: confirm: doc 39 pass.
+40. The Aegis Bulwark as a CRAFTED (not dropped) T5 shield terminal
+    item, deep-good exclusivity carries: confirm: doc 39 pass.
+41. Gem names (Chip/Deep/Vein-heart/Veil Star families): working
+    names pending Nicko: doc 39 pass.
+42. Crossbow subclass existence (doc 33 Archery row assumes bows):
+    unaddressed: doc 39 pass.
