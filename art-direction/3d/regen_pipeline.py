@@ -137,7 +137,11 @@ def post_fix(path, uv, mat, tex, verts, faces):
         sm[mk] = 0.6*sm[mk] + 0.4*(ns[mk]/nc[mk,None])
     vcol = np.clip(sm**0.85, 0, 1)
     # single export with uv+material (trimesh drops NORMAL/COLOR_0 -> inject)
-    m.visual = trimesh.visual.texture.TextureVisuals(uv=uv, material=mat, image=tex)
+    # trimesh exports the MATERIAL's baseColorTexture (2048px master), not
+    # the TextureVisuals image arg. Clone material with the pixelated tex.
+    mat_pix = mat.copy() if hasattr(mat, 'copy') else mat
+    mat_pix.baseColorTexture = tex
+    m.visual = trimesh.visual.texture.TextureVisuals(uv=uv, material=mat_pix, image=tex)
     buf = io.BytesIO(); m.export(buf, file_type='glb')
     data = bytearray(buf.getvalue())
     jl, = struct.unpack_from('<I', data, 12)
