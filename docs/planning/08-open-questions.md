@@ -949,3 +949,10 @@ New opens from this pass (logged in doc 41):
 50. Resident-witch camp services scope (which vendor/teaching menus
     move into the warp camp when she joins): parked with the
     questline: doc 41 with doc 23/11.
+51. Skeleton bard pass additions (doc 41 Part 6, third pass
+    2026-09-14): bard tome count and rarity per playthrough, and
+    whether a third hex-song tome ever exists: doc 41 with doc 06.
+52. Bard spawn odds and check rules (any signal for which cemetery,
+    or pure seed lottery; can he be missed entirely): doc 41.
+53. Bard party slot (occupies one of doc 23's four level-gated
+    slots vs free sixth member): doc 41 with doc 23.

@@ -1150,4 +1150,19 @@ feature-by-feature implementation against the GDD.
     correct play. Everything else PROPOSED. Parts: Part 5 site spec
     (hut, witch, parked questline), opens 6-8 (tracker 48-50).
     Status: ruling 4 LOCKED; Part 5 details PROPOSED pending review.
+86. SKELETON BARD ADDITION (2026-09-14, Nicko, third pass on doc
+    41): ruling 5 added to doc 41. ONE skeleton bard per playthrough
+    spawning at ANY cemetery (seed-rolled which one). Sings battle
+    songs that light ALL party weapons with fire damage; bard-specific
+    TOMES across the world teach lightning (Storm) and frost
+    (Cryomancy) weapon songs. Comedic relief character, rare find,
+    powerful if leveled properly (levels by use, doc 18). Kit maps
+    to doc 23's locked war-singer bard pool slot (fire/frost/storm
+    coatings through song); he is outside doc 17's axis gates (the
+    weapons carry the element, the bard casts nothing). Locked
+    verbatim: 1-per-playthrough cemetery spawn, fire song base,
+    tome-taught lightning and frost, comedic relief, rare. Parts:
+    Part 6 spec (spawn rule, kit, comedy, progression), opens 9-11
+    (tracker 51-53).
+    Status: ruling 5 LOCKED; Part 6 details PROPOSED pending review.
 

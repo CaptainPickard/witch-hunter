@@ -28,6 +28,15 @@ doc 03/06's; settlements remain doc 03's. Nothing here re-authors those.
    questline (authored later) can make her a PERMANENT WARP CAMP
    RESIDENT who travels with the player's journeys, IF her storyline
    is played correctly.
+5. THE SKELETON BARD (locked 2026-09-14, Nicko): ONE skeleton bard
+   can spawn at ANY cemetery across the map, once per playthrough
+   (see Part 6). He sings songs in battle that light all party
+   weapons with fire damage (setting them ablaze). Bard-specific
+   TOMES across the world teach him the other elemental weapon
+   types (lightning and frost), imbuing party weapons with that
+   elemental damage through song. He is a COMEDIC RELIEF character
+   in addition to battle buffs, a rare find, and very useful and
+   powerful if leveled properly.
 
 ## CONVENTIONS (carried from the locked set)
 - Overworld placement is HAND-AUTHORED (doc 03 structure principle):
@@ -330,6 +339,98 @@ PERMANENT RESIDENT who accompanies the player's journeys.
   menu/structure; flagged to doc 11 as a cross-reference, no doc 11
   text changed by this doc.
 
+## PART 6 - THE SKELETON BARD (ruling 5)
+One skeleton bard per playthrough, spawning at any cemetery, with a
+tome-hunt that widens his kit. Spec below; everything not already
+locked in ruling 5 carries PROPOSED.
+
+### The spawn rule
+- CEMETERY SPAWN (locked shape): exactly ONE skeleton bard can spawn
+  per playthrough, and the cemetery is ANY cemetery on the map,
+  rolled once at playthrough seed. Cemeteries are doc 03's
+  semi-procedural surface sites attached to most settlements, so
+  the rule is: every playthrough has one, but WHICH one is a
+  lottery. A player who knows cemeteries can check them; nobody
+  knows which one in advance.
+- PROPOSED spawn shape: found sitting on his own gravestone,
+  playing a lute with no strings' worth of fingers to spare,
+  mid-rehearsal for an audience that died centuries ago. The
+  graveyard's keeper (doc 03's cemetery-keeper NPC slot) either
+  tolerates him or charges him rent, depending on the keeper.
+- Discovery tier 2, rumor-adjacent: cemetery-keepers gossip
+  (PROPOSED rumor line: "the warden at [hold] says the dead there
+  sing out of tune").
+- UNDEAD GRAMMAR (doc 34/04, carries): he does not dodge or parry;
+  he is never a combatant anyway (doc 23 bard behavior: stays
+  mid-rear, never initiates). Skeleton is his BODY, not his
+  faction: he belongs to no court and holds no grudge (doc 37
+  open 15's beast rule applies: he is a person, not a faction).
+
+### The kit (song = weapon imbue)
+- FIRE SONG (locked as ruling 5's base): his signature battle song
+  lights ALL party weapons with fire damage, setting them ablaze.
+  Maps to the war-singer slot in doc 23's locked bard song pool
+  (EVIL-affinity bards coat/ignite weapons with Fire/Frost/Storm
+  through song). The skeleton bard is that kit's named
+  personification; his fire song is the pool's fire coating
+  delivered as one named character's kit.
+- LIGHTNING AND FROST SONGS (locked as ruling 5's base, numbers
+  PROPOSED): taught by bard-specific TOMES found across the world
+  (doc 06's layer-4 special slot, the find-and-learn spell model,
+  doc 17's acquisition lock). One tome per element: the lightning
+  tome imbues party weapons with Storm damage, the frost tome
+  with Cryomancy chill. Tome placement follows doc 06's special
+  slot distribution (court vaults, dungeon finds, vendor stock);
+  PROPOSED lean: bard tomes hide in places a BARD would haunt
+  (tavern cellars, drowned shrines, the moor battlefield sites
+  where his old troupe fell).
+- SCHOOL-NOTE: fire/Storm/frost are the locked school names
+  Pyromancy/Storm Magic/Cryomancy (docs 15/17). His songs are the
+  coating channel, not spell casts: the SINGER casts nothing, the
+  WEAPONS carry the element. This keeps him outside doc 17's
+  axis gates (a deep-good player with a bard in the party is not
+  casting Dark Pacts; the bard is equipment-that-sings, and doc
+  23's affinity-keyed pool already made this cut).
+- ONE SONG AT A TIME (PROPOSED): the imbue is a stance the bard
+  holds in battle (fire default; switching to lightning or frost
+  is a song change with a cast-time beat). Party-wide, duration
+  by encounter, magnitude by HIS level.
+
+### The comedy
+- COMEDIC RELIEF (locked): his dialogue runs gallows humor and
+  showbiz vanity: he complains about acoustics in a crypt, rates
+  the party's killing as "a tough room", dedicates ballads to
+  enemies mid-fight, and mourns instruments more than people.
+  Comedy is CHARACTER, not a mechanical buff lane; his songs stay
+  the war-singer kit. (Doc 37's comedy-played-straight doctrine
+  applies: the joke is written straight, never winking.)
+- PROPOSED texture: he remembers every party member's death IF
+  the party wipes while he lives (doc 23's mourning system reads
+  him as a mourner), and he has written unflattering songs about
+  living bards (the tavern-recruited bards, doc 23: they HATE
+  him; professional jealousy across the mortal line).
+
+### Progression
+- LEVELS BY USE (locked pattern, doc 18): his song skill levels
+  by singing in battle, like any follower line. "Very useful and
+  powerful if you level him properly" (ruling 5): his song
+  magnitude, duration, and song-change speed scale with his own
+  skill tier; per-song numbers are GDD tuning (doc 23 already
+  parks bard numbers there).
+- TOMES GATE THE KIT (ruling 5): fire is his birthright; storm
+  and frost songs are unlocked by finding their tomes. A
+  playthrough's bard ceiling is therefore set by how many bard
+  tomes the world gave up: exploration-limited power, the doc 06
+  special-slot economy working as designed.
+- CORROSIVE NOTE: the four elemental damage types are Cold/Heat/
+  Lightning/Corrosive (Kaiju-era working names) but THIS game's
+  locked magic set is Pyromancy/Cryomancy/Storm Magic/Holy Wards/
+  Dark Pacts (docs 15/17). The bard's three songs map to the
+  three DAMAGE-carrying schools (fire/storm/frost); no Corrosive
+  song exists here (corrosion is not a school in doc 15). If a
+  fourth song is ever wanted, it is a Dark Pacts hex-song, and
+  that is a NEW ruling, not this one.
+
 ## Open Questions
 1. Beast den repopulation vs habitat drift: ruling 2 commits cleared
    dens to Vacuum colonization. Where do NEW dens come from (habitat
@@ -357,3 +458,16 @@ PERMANENT RESIDENT who accompanies the player's journeys.
 8. Resident-witch camp services scope (what vendor/teaching menus
    move into the warp camp when she joins): parked with the
    questline: doc 41 with doc 23/11.
+9. Bard tome placement count and rarity: how many bard tomes exist
+   per playthrough (working lean: one lightning + one frost, rare
+   drops in bard-haunted places) and whether a third hex-song tome
+   ever exists: doc 41 with doc 06.
+10. Bard spawn odds and check rules: does the player get ANY signal
+    which cemetery holds him (rumor tier, keeper dialogue) or is it
+    pure seed lottery; and can he be missed entirely by a
+    playthrough that never visits cemeteries: doc 41.
+11. Bard party slot: he occupies one of doc 23's four party slots
+    like any follower (PROPOSED), vs being a free sixth member;
+    interacts with the level-gated slot thresholds: doc 41 with
+    doc 23.
+
