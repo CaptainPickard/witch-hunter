@@ -70,10 +70,15 @@ sizeRenderer(); addEventListener('resize', sizeRenderer);
 var controls = new THREE.OrbitControls(camera, canvas);
 controls.target.set(0, 1.0, 0);
 
-var key = new THREE.PointLight(0x9ab8c8, 2.2, 14); key.position.set(-1.0, 1.6, 1.6); scene.add(key);
-var moon = new THREE.DirectionalLight(0xc8d8e8, 2.2); moon.position.set(2, 4, 1.5); scene.add(moon);
-var rim = new THREE.DirectionalLight(0x8aa4b4, 1.6); rim.position.set(-2, 2, -3); scene.add(rim);
-scene.add(new THREE.AmbientLight(0x8a97a4, 1.3));
+// 2026-09-14 exposure pass: the baked atlas is intentionally dark (mean ~33/255,
+// 97% of texels in 16-64) for the tattered dark-cloak design. The original
+// moonlit-night intensities left the figure reading as a black blob in the
+// viewer. Lifted fill (ambient) + moderated key lights: folds readable in
+// shadow, highlights not clipping, mood preserved.
+var key = new THREE.PointLight(0x9ab8c8, 3.0, 14); key.position.set(-1.0, 1.6, 1.6); scene.add(key);
+var moon = new THREE.DirectionalLight(0xc8d8e8, 3.2); moon.position.set(2, 4, 1.5); scene.add(moon);
+var rim = new THREE.DirectionalLight(0x8aa4b4, 2.2); rim.position.set(-2, 2, -3); scene.add(rim);
+scene.add(new THREE.AmbientLight(0xd8dde4, 4.6));
 var floor = new THREE.Mesh(new THREE.CircleGeometry(8, 40), new THREE.MeshStandardMaterial({color:0x4a5560, roughness:1}));
 floor.rotation.x = -Math.PI/2; floor.position.y = -0.01; scene.add(floor);
 
