@@ -307,3 +307,25 @@ gritty version... matte, heavy, weathered... no plastic artifacts."
 Commit f896173. LESSON: when raw assets are approved, post-processing must
 be additive-minimal: fix only what is actually broken (mesh holes, missing
 normals), never "improve" the look.
+
+## 2026-09-14 pass 9 (v3): ZERO geometry post-processing - user directive
+
+User: "get rid of your post processing completely... unless it's purely
+pixelation of the colors on the skin." Even v2's minimal pipeline left
+empty-space voids (decimation was dropping surface on the open-shell raw
+meshes; fill_holes only closes small loops).
+
+v3 (regen_pipeline_v3.py): the raw Meshy mesh ships AS-IS.
+- NO decimation, NO UV changes, NO hole-fill, NO vertex colors.
+- Color pixelation ONLY: 512px NEAREST + 5-bit posterize (the requested
+  "pixelation of the colors on the skin").
+- NORMAL injection kept (invisible; lighting requirement).
+- Viewer DoubleSide handles the open-shell geometry exactly as the
+  user-approved raw previews did.
+
+Verified: 10/10 GLBs (original face counts 28-32k, original UVs, 512px
+5-bit textures), live-route render of orc + hunter: complete figures, no
+voids, gritty PSX register. Viewer 24.4MB / 46 assets. Commit 85cb3cb.
+Tri budget note: bodies now 28-32k tris (above the 15k game target) - the
+decimation step is parked until a game-side LOD pass is needed; per user,
+presentation fidelity wins over the budget for the viewer register.
