@@ -1,4 +1,4 @@
-# 15 - The Skill Lines (28 core + specialty expansions)
+# 15 - The Skill Lines (29 core + specialty expansions)
 
 Drafted 2026-09-11, EXPANDED same day per Nicko's direction: the ~25 budget
 was a floor, not a ceiling. Nicko wants MORE specialties, not fewer - the
@@ -59,12 +59,22 @@ learn/attune light magic; deep-evil only dark. (From 12-moral-axis.)
     persuasion, rumor brokering. Charisma is its parent stat; Speechcraft
     is the trainable social skill (resolves the stat-only concern).
 
+## SALVAGE (1, added 2026-09-14)
+29. Disassembly - breaking items down into raw materials at the
+    Workbench. ALL items disassemble (armor, weapons, charms, decor,
+    camp goods). Levels by use: higher rank yields MORE raw materials
+    per item and raises the chance of RARE-material recovery
+    (higher-tier category members, catalysts, Hunter's Components at
+    high ranks). Full mechanic spec: 05-crafting-system.md DISASSEMBLY.
+    Also the recipe-discovery channel (05's reverse-engineering),
+    relocated here as its own line's skill check.
+
 ## LUCK (stat + passive luck systems, no skill line)
 Luck (stat) governs drop chances and rng rolls (locked in the stat list).
 It is a STAT, not a skill: nothing to train, invest points and gear toward
 it. (Nicko confirmed: luck = better drop chance.)
 
-## Count: 28 core skill lines. Open-ended upward via SPECIALTIES.
+## Count: 29 core skill lines (28 + Disassembly, added 2026-09-14). Open-ended upward via SPECIALTIES.
 
 ## Design Notes
 - Dual Wielding levels all THREE of its contributing skills (e.g. dagger +

@@ -280,8 +280,10 @@ scourge (Nicko ruling above).
 
 ## Open Questions (assigned per tracker rules)
 1. Vampire/undead line stage-by-stage detail (dialogue, set pieces):
-   quests GDD authoring.
+   RESOLVED 2026-09-14 (Nicko): DEDICATED DOC 22 AUTHORING PASS (next
+   quests-content session writes the six stage beats for both lines).
 2. Race-origin deep detail (dwarven altar-masons, coven
    Veil-Altar-tender prehistory): world GDD.
 3. The rot-window timer length and debuff set for the undead line:
-   GDD tuning.
+   GDD tuning. RESOLVED 2026-09-14 (Nicko): rides the dedicated
+   doc 22 authoring pass.

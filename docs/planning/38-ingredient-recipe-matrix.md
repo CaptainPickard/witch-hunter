@@ -102,7 +102,7 @@ PROPOSED model, not a catalog: primary sets tier, two category secondaries use d
 | T5 blacksteel blade | Blacksteel ingot | Handle wood: blackwood; grip leather: ghoul-hide | Quench salts, arcane ash, sealant, tanning liquor | S5 forge | No automatic Dark enchant |
 | T1 light armor set | Doe leather | Binding: common bones; trim hide: wolf | Tanning liquor | S1 armory+ | None |
 | T3 medium armor set | Boar-tusk leather | Binding: troll sinew; lining hide: cattle-hide | Tanning liquor | S2 armory+ | None |
-| T4 heavy armor set | Wyrm-leather from wyrm-scale | Reinforcement metal: cold iron; lining hide: ibex | Tanning liquor, quench salts, arcane ash | S4 armory+ | None |
+| T4 heavy armor set | Steel plate | Reinforcement metal: cold iron; lining hide: ibex | Tanning liquor, quench salts, arcane ash | S4 armory+ | None |
 | T2 bow | Yew lumber | Binding sinew: troll sinew; grip leather: doe | Sealant, tanning liquor | S1 weapons bench+ | None |
 | T4 holy charm | Consecrated silver | Holy reagent: Sanctified Essence; mounting wood: river-ash | Sealant; silver supplied consecrated | S4 enchanting altar+ | Deep-good, recipe burns outside axis |
 | T3 dark charm | Blackwood lumber | Dark reagent: Crypt Wisp; bone: barrow-bone | Sealant | S2 enchanting altar+ | Deep-evil; taint on activation PROPOSED |
@@ -155,7 +155,34 @@ Holy/Dark axis attunement persists. Rare nodes respawn in 2-3 days; no ordinary 
 
 Flagged for 08 tracker, not written to 08 here.
 
-1. [08 TRACKER] Monster-part names are PROPOSED pending Nicko; review Part 1 recipe-fit exceptions too.
+1. [08 TRACKER] RESOLVED 2026-09-14 (Nicko): all seven monster-part
+   names CONFIRMED as locked working names (witch-fauna heart,
+   wight-marrow, hag-bile, clatterer chitin, troll blood, thrall
+   marrow, demon ichor). Doc 38's recipe-fit exceptions stand as
+   written.
 2. [08 TRACKER] Quantities per craft, including moonbells per flask, are GDD tuning; validate PROPOSED minima and fiber processing.
-3. [08 TRACKER] Consumable category substitution may be revisited at GDD. Today's ruling: exact names only.
-4. [08 TRACKER] Hunter's Components catalog is a separate later doc. No catalog here.
+3. [08 TRACKER] RESOLVED 2026-09-14 (Nicko): consumable substitution
+   is ALLOWED WITH DEGRADATION COST. A category-appropriate substitute
+   may fill a consumable slot when the exact named ingredient is
+   missing, but the output takes a grade/magnitude degradation (exact
+   recipe = full grade odds; substitute = shifted odds and/or reduced
+   magnitude, numbers GDD tuning). Gear keeps the category-slot model
+   unchanged.
+4. [08 TRACKER] RESOLVED 2026-09-14 (Nicko): Hunter's Components
+   catalog becomes doc 43, authored next crafting pass, full catalog
+   (12-16 components) with biome/monster sources.
+
+## PART 5 - GATHERING FORTUNES (slot/spread/grammar LOCKED 2026-09-14, Nicko; recipes PROPOSED)
+
+Six daily-prep fortunes, one per gathering skill line (doc 06). Node-keyed grammar: each key ingredient is a small byproduct of the resource it boosts (byproducts are PROPOSED additions to 06's gather tables). Secondary herbs from 03's lists. Grade scales magnitude, duration stays the day. Stack rule: separate source from Luck stat and techniques, stacks with both. Discovery: normal recipe economy (05, locked), recipes are loot, not default-known.
+
+| Fortune | Line boosted | Exact ingredients, PROPOSED | Minimum station tier | Effect (PROPOSED) |
+|---|---|---|---|---|
+| Prospector's Draught | Mining | ore-dust (byproduct) + bog-myrtle + quench salts | S1 Field Kit+ | more ore per vein, more gem-bearing veins flagged |
+| Faceter's Eye | Gem Crafting | raw-gem chips (byproduct) + blightcap | S2 Village+ | better raw-gem yields from veins and monster drops |
+| Tiller's Green | Herbalism | herb-tallow (byproduct) + comfrey + yarrow | S1 Field Kit+ | rarer specimens, higher herb yields |
+| Sawyer's Tonic | Woodcutting | sawdust paste (byproduct) + sealant | S1 Field Kit+ | better wood cuts, more special-tree finds |
+| Tracker's Draught | Hunting/Skinning | render-fat (byproduct) + bog-myrtle + crow-garlic | S1 Field Kit+ | richer pelts, parts, ichors per kill |
+| Stillwater Chum | Fishing | fish-oil (byproduct) + marsh heliotrope | S2 Village+ | better catches, more rare fish |
+
+Recipe-fit notes, PROPOSED: ore-dust, raw-gem chips, herb-tallow, sawdust paste, render-fat, fish-oil are new byproduct items (06 table additions). Quench salts and sealant double as catalysts here, bought or Workbench-made. Faceter's Eye uses blightcap, the locked grade-shifter herb. Stillwater Chum echoes the Still-Water Draught's marsh-heliotrope pairing.

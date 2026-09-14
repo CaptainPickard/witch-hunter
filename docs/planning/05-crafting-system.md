@@ -162,6 +162,39 @@ a Grandmaster forge beats a village forge by TWO grade-steps of ceiling.
   One sword recipe + blacksteel = a higher-tier sword than the same
   recipe in iron, IF the crafter's skill tier supports it.
 
+### DISASSEMBLY (LOCKED 2026-09-14, Nicko: all items break down; own skill line)
+- ALL ITEMS disassemble into raw materials at the Workbench: gear,
+  charms, decorations, camp goods, vendor junk. Nothing is
+  unsalvageable except the two All-Craftable exceptions (Hunter's
+  Relics Reforge-only, spine-story items) and axis-gated gear in the
+  wrong hands (it burns, same rule as recipes/tomes).
+- DISASSEMBLY IS CORE SKILL LINE 29 (doc 15 SALVAGE): ranks 1-100 by
+  use, five tiers, technique choices at tier-ups (doc 18 mechanics),
+  same as every other line. Levels ONLY by disassembling.
+- YIELD MODEL: base yield = a fraction of the item's own recipe
+  inputs (the primaries and secondaries the item was made from, raw
+  form: hides, bones, wood, ore-not-ingots). Higher rank yields MORE
+  raw materials per item.
+- RARE RECOVERY: rank-scaled chance to recover RARE materials beyond
+  the base yield: higher-tier category members than the item's own
+  tier, refined supplies, catalysts (tanning liquor, quench salts,
+  arcane ash), and at high ranks Hunter's Components (doc 05). Luck
+  adds on top (same stack rule as the fortune/Luck pairing).
+- RELIC EXCEPTION: disassembling a Hunter's Relic is NEVER possible;
+  its salvage path is Reforge only (doc 18), per the locked relic
+  protection. Attempting it is refused by the station.
+- RECIPE DISCOVERY (relocated from reverse-engineering, doc 05 locked
+  economy): disassembling gear has a rank-weighted chance to learn its
+  recipe (or a variant), now rolled as THIS line's skill check instead
+  of the crafting line's. NAMED items can still never be reverse-
+  engineered. Success rates and failed-disassembly outcomes stay GDD
+  tuning (open question 3 above unchanged).
+- ANTI-EXPLOIT: disassembly returns RAW materials, never a net gain of
+  refined supplies, so buy-refine-disassemble loops lose money against
+  vendor prices. T5 craftables disassemble at a reduced yield
+  (negative base bonus, same grammar as refining's anti-stockpile
+  rule).
+
 ### INGREDIENT SYSTEM: New World adaptation (LOCKED 2026-09-12, Nicko: "I like the ingredients system, lock it in for now")
 
 Research basis: New World (Amazon) crafting splits every recipe into a
@@ -205,7 +238,8 @@ Every gear recipe = ONE PRIMARY SLOT + TWO OR THREE SECONDARY SLOTS.
 - Raw gathered materials must be REFINED before crafting (ore to ingot,
   hide to leather, raw gem to cut stone). Refining happens at the
   station of the target crafting line and levels THAT line (no separate
-  refining skills; keeps the 28-line structure intact).
+  refining skills; keeps the 29-line structure intact, Disassembly
+  included).
 - REFINING REAGENTS: some refine steps need a catalyst (quench salts for
   ingots, tanning liquor for leather, arcane ash for cold iron and
   blacksteel). Catalysts are crafted (Alchemy) or bought. This makes
@@ -613,3 +647,20 @@ Comfort/Prestige value (fed by every decoration category, doc
 - New World ingredient-system adaptation (1 primary + category
   secondaries, refining with catalysts, arcane reagent ladders,
   Hunter's Components): LOCKED 2026-09-12 (Nicko, "for now").
+
+## GATHERING FORTUNES (slot + spread + grammar rulings LOCKED 2026-09-14, Nicko; names and effects PROPOSED)
+
+Nicko requested drop/gathering-increase potions. Ruled in session:
+- SLOT: DAILY PREP ONLY. A gathering fortune replaces that day's bane/ward draught. The morning ritual is unchanged (one meal, one potion, one day). No new potion family; the daily prep's menu grows.
+- SPREAD: ONE FORTUNE PER GATHERING SKILL LINE (doc 06's six lines): Herbalism, Woodcutting, Mining, Gem Crafting (acquisition side), Hunting/Skinning, Fishing.
+- GRAMMAR: NODE-KEYED. Each fortune's key ingredient is a small byproduct of the very resource it boosts, so the loop is self-feeding: gather the byproduct, brew the fortune, the fortune helps gather more. Byproduct items are PROPOSED additions to doc 06's gather tables.
+- EFFECT (PROPOSED): for the rest of the day, raises that line's drop odds and rare-resource rolls, the same rolls the Luck stat and the Rare Sight / Seam Sense techniques already move (doc 06/15). They stack with Luck and techniques because they are separate sources; exact percentages are GDD tuning.
+- DISCOVERY: normal recipe economy (doc 05, locked): recipes are loot, found in dungeons, bought from faction vendors, or reverse-engineered. An undiscovered recipe is invisible, not craftable.
+
+The six (working names PROPOSED):
+1. PROSPECTOR'S DRAUGHT (Mining): more ore per vein, more gem-bearing veins flagged.
+2. FACETER'S EYE (Gem Crafting): better raw-gem yields from veins and monster drops.
+3. TILLER'S GREEN (Herbalism): rarer specimens, higher herb yields.
+4. SAWYER'S TONIC (Woodcutting): better wood cuts, more special-tree finds.
+5. TRACKER'S DRAUGHT (Hunting/Skinning): richer pelts, parts, and ichors per kill.
+6. STILLWATER CHUM (Fishing): better catches, more rare fish.

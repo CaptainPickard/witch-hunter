@@ -43,7 +43,7 @@ Allegiance Gambit) and forges the Third Path by re-kindling the Deep Altar
   tier-up technique menus LOCKED (108 techniques), enemy grammar rule
   ("enemies use the player's verbs"), court forces as magic schools made
   hostile.
-- **Progression** (07, 15, 16, 18): 9 stats, 5 points/level; 28 core skill
+- **Progression** (07, 15, 16, 18): 9 stats, 5 points/level; 29 core skill
   lines ranked 1-100 by use, 5 tiers, permanent technique choices, no
   decay, no respec; lapable specialty titles; level number is a point
   budget, not a damage stat.

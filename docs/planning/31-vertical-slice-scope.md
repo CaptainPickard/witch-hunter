@@ -179,7 +179,16 @@ these):
 
 - Rot-Mother boss IN at slice 1, locked by Nicko, 2026-09-13; the M4
   checkpoint can still cut it for scope (decision at M4 by Nicko).
+  RECONFIRMED 2026-09-14 (Nicko): keep unless the UE5 spike proves
+  the rig budget heavy; the spike can kill it before M4.
 - Arena placement inside the future full Darkwood: world-GDD concern,
   not a slice blocker.
-- GAS adoption gate result: recorded at slice exit.
-- Perf budget revision after M6 numbers land.
+- GAS adoption gate: DECIDED AT THE UE5 SPIKE (Nicko, 2026-09-14):
+  the spike runs real GAS test code alongside plain C++ gameplay code
+  and the result is recorded at slice exit.
+- UE5 SPIKE PREREQUISITES (Nicko, 2026-09-14): Nicko provisions the
+  Meshy/Tripo API key and machine access with UE5; doc 29's remaining
+  validation stages then run. This is the critical-path blocker for
+  the slice's 3D pipeline work.
+- Perf budget revision after M6 numbers land; the budget itself is a
+  spike deliverable (Nicko, 2026-09-14).

@@ -162,6 +162,16 @@ the memory of what was lost.
   believes; the mask's true identity, the unmasking as the neutral
   ending's climax, and the Wardens' crisis are locked in doc 36.
   Her placement under the underworld questlines stands unchanged.
+- SUPERSEDED AGAIN 2026-09-14 (Nicko identity correction, doc 36
+  RULING PASS 2026-09-14): the 09-13 ruling above is itself
+  superseded. THE SIGNER WAS ALWAYS THE WITCH, posing as the good
+  court's queen in the present day. The PALE QUEEN is a SEPARATE
+  character hiding among the neutral underground (ex-Solar Throne
+  advisor, turned vampire 400 years prior, dissented and hid; she
+  grants the unite-the-neutral-factions quest for the final
+  battle). The doc 36/19 reconciliation session (pending) re-derives
+  the Signer/Witch's masquerade, the Pale Queen's history, and the
+  mask behaviors' ownership; all doc 36 opens roll into it.
 
 ## THE HIDDEN COURT (LOCKED 2026-09-12, Nicko directive; LORE REVISITED
 2026-09-12, second ruling, see below)

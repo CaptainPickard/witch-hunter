@@ -427,6 +427,8 @@ pending Nicko lock). One line per proposal:
   painted cannot reach; final call pending (doc 24).
 - Equipment silhouette QA as a qa_gate.py check (docs 24, 27).
 - Combat animation cost model + prove-or-kill artifact gate (doc 25).
+  RESOLVED 2026-09-14 (Nicko): tied to the UE5 spike, kill or prove
+  there (no separate animation-cost session).
 - Cloth flicker mitigation extended to combat poses (doc 25).
 - Named-character LoRA costing/tooling/fallback carried open (doc 25).
 - Human approval gate throughput model carried open (doc 25).
@@ -456,7 +458,10 @@ All OPEN, none resolved:
 - Cutscene format beyond portraits (docs 02, 08).
 - Hold defense + specialty catalog sessions (already listed above,
   confirm cross-ref).
-- Rembg replacement (tools).
+- Rembg replacement (tools). RESOLVED 2026-09-14 (Nicko): SUPERSEDED
+  BY THE 3D PIVOT, open deleted (the sprite-pipeline background-
+  removal need died with the sprite pipeline; 2D prop texture work
+  does not resurrect it).
 - Title IP check (doc 01).
 
 ## ART-STYLE FORK (2026-09-13, Nicko)
@@ -1007,3 +1012,119 @@ Nicko's "later" ruling), all audit-assigned production opens (UE5
 spike, audio doc, UI/UX art doc, perf budgets, cutscene format,
 transformation-strain plan, boss treatment, rembg replacement),
 GDD-tuning blocks, and the parallel magic session's doc 17 items.
+
+## OPEN-QUESTIONS RULING CHAIN (2026-09-14, docs 37/38/40/41/42, Nicko interactive pass)
+
+Ruled one by one, 5 at a time, in chat. Rulings baked into owning docs
+same day; this section records the batch.
+
+1. War effort surplus carry (doc 42): CARRIES AT HALF VALUE into the
+   re-posted contract's quota.
+2. Neutral quartermasters (doc 42): CONFIRMED. Neutral/bandit holds
+   run war effort contracts at slightly lower pay, buy ANY piece, no
+   axis check, coin only (no standing).
+3. Relic armor split (doc 40): CONFIRMED 4 armor + 2 talismans.
+4. Anchor percentages AR2/AR3 (doc 40): handed to GDD tuning per the
+   doc 39 anchor precedent.
+5. Hunter's Components catalog (doc 38): becomes DOC 43, authored
+   next crafting pass, full 12-16 catalog with biome/monster sources.
+6. Monster-part names (doc 38): all seven CONFIRMED as locked working
+   names.
+7. Consumable substitution (doc 38): ALLOWED WITH DEGRADATION COST.
+   A category-appropriate substitute fills a consumable slot when the
+   exact ingredient is missing, at a grade/magnitude degradation
+   cost (numbers GDD tuning). Gear keeps category slots unchanged.
+8. War effort pay bands (doc 42): handed to GDD tuning per precedent.
+9. Disassembly tuning (doc 40): IO drafts a concrete first-pass curve
+   next session for Nicko approval.
+10. Hidden specializations roster (doc 37): dedicated specialties
+    session next.
+11. Slice proof archetypes (doc 37): THE VENDETTA GRAVE + THE BOUNTY
+    BOARD pair.
+12. Grudges-as-factions (doc 37): WARRENS ONLY IN SLICE; others at
+    the bestiary pass; beasts never carry faction grudges.
+13. Goblin warren map + king (doc 37): world GDD owns placement;
+    Petty Legalist FIXED per warren with procedural name-flavor.
+14. Descent layer grammar (doc 37): FRESH GENERATION PER STRATUM
+    (custom ruling, supersedes the rooms-not-numbers working idea).
+15. Unopenable door list (doc 37): IO cross-check pass against
+    doc 20/21 spine chains.
+16. Warden door-inspection (doc 37): CHEAP STANDING COST, WARDEN
+    CAMPS ONLY.
+17. PUBLIC-vs-GUARDED boundary (doc 37): PER-TERRITORY TIER TABLE at
+    the world GDD pass.
+18. Overheard Word trio (doc 37 opens 10/11/14): stealth GDD pass
+    owns all three (per-territory fact list is a world GDD input).
+19. Faction keys (doc 37 opens 24/25/26): KEYS CHANGE ONLY MATCHING
+    STRATA; pricing GDD; Ledger tracks claims.
+20. Tier-3 dungeon wars (doc 37 opens 28/29): outcomes feed the
+    Ledger as TERRITORY TEXTURE, never flip a hold alone.
+21. Situation system trio (doc 37 opens 30/31/32): timers + tenant
+    tables to GDD/world pass, blob budget to slice-systems pass
+    (assignments verified unchanged).
+22. Keeper-catch memory (doc 37): DEED-LOG MEMORY WITHIN THE SAME
+    COURT FAMILY.
+23. Witch hut questline spine (doc 41): STAYS PARKED until quest GDD.
+24. Resident-witch camp services (doc 41): FULL VENDOR + ADVANCED
+    MAGIC TEACHING at the warp camp when she joins.
+25. Transformation stage detail (doc 22): DEDICATED DOC 22 AUTHORING
+    PASS next quests-content session.
+
+## OPEN-QUESTIONS RULING CHAIN, SECOND ARC (2026-09-14, items 26-51, Nicko interactive pass)
+
+Ruled one by one in chat, same day; owners baked into owning docs.
+This section records the batch.
+
+26. Pale Queen aftermath (doc 36): NICKO IDENTITY CORRECTION. The
+    Signer was always the Witch (posing as the good court's queen
+    today); the Pale Queen is a SEPARATE character hiding in the
+    neutral underground (ex-Solar Throne advisor, vampire for 400
+    years, dissented and hid, grants the unite-the-neutral-factions
+    final-battle quest). Supersedes doc 36's "Signer IS the Pale
+    Queen" ruling. DOC 36/19 RECONCILIATION SESSION PENDING (after
+    the chain); all doc 36 opens roll into it.
+27. Quest GDD triple (docs 19/20/06): quests/factions GDD session
+    owns all three (Third Altar locations, debt payment schedule,
+    broker intel delivery).
+28. Legendary clue-chains content: world GDD authors biome-side,
+    quest GDD the chain structure (split stands, confirmed).
+29. Alignment ceremonies and rewards (doc 12): quests GDD (current
+    assignment confirmed).
+30. Audio direction: DEDICATED AUDIO GDD DOC (new doc, own pass).
+31. Dialogue system depth (G17): DEDICATED DIALOGUE GDD SESSION.
+32. Stealth depth (G19): folds into the stealth/dialogue GDD pass.
+33. Ammo economy (G29): small append to doc 39 at the crossbow
+    catalog touch.
+34. Day-night content parity (G18): world GDD pass item.
+35. Localization/accessibility (G33): ENGLISH-ONLY for production;
+    accessibility floor logged post-slice (subtitle options only).
+36. UE5 spike prerequisites: Nicko provisions Meshy/Tripo key +
+    machine with UE5, then doc 29 validation runs (critical path).
+37. Vertical-slice scope (doc 01): RATIFIED = combat loop + one hold
+    region + Gravedigger bandit/ghoul rotation, no quest frames, no
+    crafting depth.
+38. Combat animation cost (doc 25): tied to the UE5 spike, kill or
+    prove there.
+39. Runtime perf budget (G23): UE5 spike deliverable.
+40. Cutscene format: in-engine camera script format after the spike.
+41. Boss/colossal treatment (G30): bestiary/art pass with the M4
+    decision.
+42. Transformation-strain gear transfer (G21): SIMPLE RULE NOW: gear
+    stats persist, visuals dissolve (custom ruling; author later).
+43. UI/UX art direction: DEDICATED UI DOC after the audio decision.
+44. Rembg replacement: SUPERSEDED BY THE 3D PIVOT, open deleted.
+45. GAS adoption (doc 31): decided at the UE5 spike with real test
+    code; recorded at slice exit.
+46. Save-edge trio (doc 35 G13/G15): one slice-systems pass resolves
+    all three (NG+ preserve-list, squire-overflow save location,
+    camp-raid corpse edge).
+47. Dark-vendor currency (doc 35 G14): SINGLE CURRENCY, Marks
+    everywhere, dark goods just cost more.
+48. M4 Rot-Mother (doc 31): keep unless the UE5 spike proves the rig
+    budget heavy (spike can kill it before M4).
+49. Combat tuning leftovers (docs 32/33/34): all to GDD tuning
+    blocks (confirmed).
+50. Magic session items (doc 17): no action, parallel session owns.
+51. Follower tuning quintet (doc 23): ONE FOLLOWERS GDD PASS owns
+    all five (bard types, per-song numbers, UI routing, romance,
+    XP share).

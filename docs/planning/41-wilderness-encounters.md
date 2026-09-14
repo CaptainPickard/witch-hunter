@@ -211,6 +211,14 @@ is the destination tier you plan a day around):
 - Riches sites deplete on harvest and recover on long timers (doc
   06's node rules govern; the notable site is the DENSE version,
   not a different mechanic).
+- RICH MINES (ruling 9, locked 2026-09-14, Nicko; economy spec in
+  doc 42 Part 5): dedicated mine SITES with LARGE ore quantities,
+  the ore-side extension of this family. Dense vein clusters worth
+  many trips, deplete/recover per doc 06 timers, worked sites with
+  light states (garrison-held, dwarf-worked, haunted, contested).
+  Mountains deepest (steel/cold iron/gems), moors silver, blight
+  ore-scars (blacksteel), farmland one safe starter quarry. Tier 1
+  rumor-revealable.
 
 ### Family 7: ONE-OFF WANDERS
 The memory tier. Hand-authored, rare, no markers, each carrying a
@@ -561,10 +569,12 @@ reads the bearer). The dark payload stays a dark player's tool.
 7. The witch hut questline spine: what "played correctly" means,
    the Old Blood storyline shape, the failure states, and the
    resident-offer beat: parked for the quest GDD (doc 20/22 tier),
-   owned by doc 41 Part 5.
+   owned by doc 41 Part 5. RESOLVED 2026-09-14 (Nicko): STAYS
+   PARKED until quest GDD.
 8. Resident-witch camp services scope (what vendor/teaching menus
-   move into the warp camp when she joins): parked with the
-   questline: doc 41 with doc 23/11.
+   move into the warp camp when she joins): RESOLVED 2026-09-14
+   (Nicko): FULL VENDOR + ADVANCED MAGIC TEACHING move into the
+   warp camp when she becomes a resident; nothing stays hut-only.
 9. RESOLVED 2026-09-14 (Nicko, ruling 6): ONE lightning and ONE
    frost tome per playthrough (one each), plus the optional Dark
    Pacts hex-song tome dropping ONLY in later-tier dungeons.
@@ -578,4 +588,10 @@ reads the bearer). The dark payload stays a dark player's tool.
     The hex-song tome is usable only by evil-leaning players (doc
     12's axis gate reads the bearer); the dark payload stays a
     dark player's tool.
+13. RICH MINES (locked 2026-09-14, Nicko): dedicated mine sites
+   across the map with LARGE quantities of minerals and ores,
+   mineable at volume. Authored as a Family 6 (Riches Sites)
+   extension, Part 1's Riches block; full economy spec lives in
+   doc 42 Part 5 (the mines-to-muster loop into war effort
+   contracts).
 

@@ -370,6 +370,33 @@ New opens surfaced by the rulings:
    light/dark-line echoes (a light player can find the grave
    and not understand it)? Assignment: world GDD item.
 
+## RULING PASS (2026-09-14, Nicko: identity correction, reconciliation session PENDING)
+
+Nicko's correction (verbatim intent): THE SIGNER WAS ALWAYS THE WITCH,
+posing as the GOOD COURT'S QUEEN in the present day. The PALE QUEEN is
+a separate character currently hiding among the neutral underground:
+an advisor to the Solar Throne 400 years prior, turned into a VAMPIRE
+at that time, who dissented and went into hiding. Her goal: unite the
+various neutral factions under one banner to stop the madness, because
+she sees that neither the good court nor the bad court can win,
+although she herself does not know how it all started. She is the one
+who gives the neutral quest to unite all underground factions for the
+final battle.
+
+- This SUPERSEDES ruling 4 above ("THE SIGNER IS THE PALE QUEEN, the
+  penitent is the pen"): the Signer/Witch identity and the Pale
+  Queen's identity are SEPARATE characters again.
+- The doc 36/19 reconciliation session (pending, after the current
+  ruling chain) re-derives: the Signer/Witch's good-court-queen
+  masquerade and its tell-tale trail, the Pale Queen's vampire
+  dissent-and-hide history, her unite-the-neutral-factions questline
+  as the neutral path's spine (this quest grant was always hers),
+  which doc 19 Signer behaviors belong to the Witch versus the Pale
+  Queen, and the fates of BOTH queens in the neutral ending under
+  the corrected identities.
+- All doc 36 opens 1-6 above and the doc 19 mask re-derivation roll
+  into this reconciliation session; none are ruled until then.
+
 ## THE THREE VERSIONS (coherence pass, 2026-09-13; written from
 the locked rulings above; the world's public story is doc 19's
 inherited myth, one world, one truth, three vantage points)

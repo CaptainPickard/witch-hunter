@@ -227,9 +227,15 @@ party is who you CHOOSE to walk out with. Two distinct layers:
 
 ## Open Questions (remaining, assigned per tracker rules)
 1. Bard type list (the named bard archetypes per affinity) and
-   per-song numbers: GDD tuning + authoring.
+   per-song numbers: GDD tuning + authoring. RESOLVED 2026-09-14
+   (Nicko): ONE FOLLOWERS GDD PASS owns this (quintet ruling: opens
+   1-4 all ride the followers GDD pass; UI details route through it
+   to the UI art doc when authored).
 2. Follower UI details (party screen layout, field command
-   prompts): art/tech plan.
+   prompts): art/tech plan. RESOLVED 2026-09-14 (Nicko): rides the
+   followers GDD pass, which hands UI specs to the UI art doc.
 3. Romance buffs for expedition followers (doc 11 romance
-   role): retinue GDD item, carried.
-4. Follower XP share of the party stream: GDD tuning.
+   role): retinue GDD item, carried. RESOLVED 2026-09-14 (Nicko):
+   rides the followers GDD pass.
+4. Follower XP share of the party stream: GDD tuning. RESOLVED
+   2026-09-14 (Nicko): rides the followers GDD pass.

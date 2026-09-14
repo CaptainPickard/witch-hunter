@@ -398,6 +398,48 @@ bake-in) make two accessibility decisions design-coupled.
 - Are difficulty modifiers non-goals (doc 04's fixed-difficulty lock suggests yes, but say so)?
 - Any localization ambition at all?
 
+## RULING PASS (2026-09-14, Nicko interactive chain, docs 30-gap items)
+
+Rulings from the open-questions chain, recorded here and in doc 08.
+Each gap keeps its full question list as the owning pass's brief; the
+ruling below assigns the owner and locks what Nicko locked.
+
+- G16 AUDIO DESIGN: RESOLVED (Nicko): DEDICATED AUDIO GDD DOC. New
+  doc to be authored as its own pass; owns music register, combat
+  stingers, verb audio, ambush/stealth cue grammar (Darkbread timing
+  feeds from it), the skeleton bard's four-song audio identity, and
+  the slice-1 audio minimum. Owner: audio GDD session.
+- G17 DIALOGUE SYSTEMS: RESOLVED (Nicko): DEDICATED DIALOGUE GDD
+  SESSION. Owns conversation data format, patron instantiation,
+  disposition model, NPC schedules, subtitle grammar, paranoid-
+  speaker memory severity (doc 37 open 12 rides here).
+- G18 DAY-NIGHT BEHAVIORAL CONTENT: RESOLVED (Nicko): WORLD GDD PASS
+  ITEM (rides the world GDD pass with per-biome night spawn tables
+  and town hours).
+- G19 STEALTH/LOCKPICKING: RESOLVED (Nicko): FOLDS INTO THE
+  STEALTH/DIALOGUE GDD PASS (G17's session covers both; the reward
+  economy beyond the Overheard Word is part of the detection model
+  spec: backstab, theft, undetected grave-digging, patrol bypass).
+- G21 TRANSFORMATION BODIES/GEAR TRANSFER: RESOLVED (Nicko): SIMPLE
+  RULE NOW, AUTHOR LATER. GEAR STATS PERSIST ACROSS STRAINS; VISUALS
+  DISSOLVE (strain bodies replace equipment visuals; no plated-wolf
+  canon). Visual authoring stays an art+systems item; the simple rule
+  is the design lock.
+- G23 PERFORMANCE BUDGET: RESOLVED (Nicko): UE5 SPIKE DELIVERABLE
+  (draw calls, instancing, LOD thresholds, the slice-1 perf test and
+  pass bar are all proven at the doc 29 spike).
+- G29 AMMO ECONOMY: RESOLVED (Nicko): SMALL APPEND TO DOC 39 at the
+  crossbow-catalog touch (quiver capacity, stack sizes, recovery
+  rates, batch craft costs, weight per arrow ride with the weapon
+  catalog).
+- G30 BOSS/COLOSSAL TREATMENT: RESOLVED (Nicko): BESTIARY/ART PASS
+  WITH THE M4 DECISION (Rot-Mother stays in unless the spike proves
+  it heavy; its rig/scale budget band is ruled at that pass).
+- G33 OPTIONS/ACCESSIBILITY/LOCALIZATION: RESOLVED (Nicko):
+  ENGLISH-ONLY FOR PRODUCTION; accessibility floor logged post-slice
+  (subtitle size/scaling is the only floor for now; difficulty
+  modifiers remain non-goals per doc 04's fixed-difficulty lock).
+
 ## Prototype readiness verdict
 
 The doc set is unusually deep on systems, world, lore, and art direction,

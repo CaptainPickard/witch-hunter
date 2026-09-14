@@ -1126,6 +1126,24 @@ feature-by-feature implementation against the GDD.
     Status: PROPOSED pending Nicko lock. Rulings 6 (upgrade path:
     craft-new-only) and 7 (Disassembly: all items salvage, new core
     skill line 29, spec in doc 05) locked 2026-09-14 in session.
+
+85. WAR EFFORT CONTRACTS AND RICH MINES (2026-09-14, Nicko, spec in
+    doc 42): crafting-economy layer on top of docs 39/40/41. Rulings
+    locked in session 2026-09-14: (1) WAR EFFORT CONTRACTS,
+    hold-level supply contracts: deliver N finished armors/weapons of
+    a named class, tier bar, and grade bar to the local hold for
+    substantial coin; more made and brought pays escalating per-item
+    rates, repeat ladders raise quotas and pay, standing gates
+    repeat tiers, doc 13 war state doubles quotas and pay during
+    siege prep; inherits doc 05 requisitions (small tier stays);
+    (2) DEDICATED RICH MINES, dedicated map-wide mine sites with
+    large ore quantities, authored as doc 41 Family 6 extension
+    (ruling 9 there), mountains deepest/moors silver/blight
+    blacksteel/farmland starter quarry, doc 06 node timers, tier 1
+    rumor discovery; the supply chain into the contracts. Parts:
+    contract anatomy, reward ladder, sourcing synergy (incl.
+    Disassembly grade-reroll role), rich mines spec, opens 1-4.
+    Status: PROPOSED pending Nicko review.
 84. WILDERNESS ENCOUNTER LAYER (2026-09-14, Nicko, spec in doc 41):
     the overworld's notable encounter sites, the living gaps between
     holds. Rulings locked in session 2026-09-14: (1) PATH, full

@@ -1131,18 +1131,22 @@ sessions):
 
 ### Open Questions (assigned per tracker rules)
 
-19. Layer generation grammar: how strata reuse the base layout
-    (doc 03 archetype seeding per layer, doc 30 G24 dungeon
-    interior gap cross-check): world GDD pass.
+19. Layer generation grammar: RESOLVED 2026-09-14 (Nicko): FRESH
+    GENERATION PER STRATUM. Each stratum generates its own layout
+    (doc 03 archetype seeding per layer applies per stratum); strata
+    are separate dungeons below the one gate, not re-used floors.
 20. Descent-gate density: which dungeon types carry gates, how many
     gates per dungeon cluster, whether named/special dungeons
     (doc 03 hand-authored) get gates or their own rules: world GDD
     pass.
 21. The Unopenable door list: which keys (spine chains, court
-    standing, quest items) open which Unopenables: doc 20/21 spine
-    cross-check.
-22. Warden door-inspection service standing cost and availability
-    (any player or standing-gated): doc 19 Warden GDD pass.
+    standing, quest items) open which Unopenables: RESOLVED
+    2026-09-14 (Nicko): IO cross-check pass against doc 20/21 spine
+    chains (next IO doc pass).
+22. Warden door-inspection service: RESOLVED 2026-09-14 (Nicko):
+    CHEAP STANDING COST, WARDEN CAMPS ONLY (a Warden at any Warden
+    camp reads a descent door's tier and lock-tier for a small
+    standing fee; the service lives where Wardens live).
 23. Whether layer-5 deep bosses carry named-item guaranteed drops
     (doc 06 named-item economy cross-check): GDD tuning.
 
@@ -1174,8 +1178,8 @@ The slice carries three systems, not all four parts:
 ## Open Questions (assigned per tracker rules)
 
 1. Which hidden specializations beyond the graverobber enter the
-   family first, and their mechanics (doc 16 follow-up, next
-   specialties session).
+   family first, and their mechanics (doc 16 follow-up): RESOLVED
+   2026-09-14 (Nicko): DEDICATED SPECIALTIES SESSION NEXT.
 2. Rumor-trap frequency and detection grammar (how often planted
    rumors appear, what telegraphs them): GDD tuning.
 3. Bounty proof grammar details (trophy-specific vs generic part
@@ -1189,9 +1193,13 @@ The slice carries three systems, not all four parts:
 5. Keeper mini-faction standing ladder and rite-service prices: GDD
    tuning.
 6. Which 2-3 archetypes prove the frame grammar in the slice beyond
-   THE LOST CHILD and THE NIGHT HAUNTER: slice scoping pass.
-7. Quiet Parish keeper-catch consequences beyond standing loss (does
-   the keeper remember across holds): world GDD pass.
+   THE LOST CHILD and THE NIGHT HAUNTER: RESOLVED 2026-09-14 (Nicko):
+   THE VENDETTA GRAVE + THE BOUNTY BOARD pair.
+7. Quiet Parish keeper-catch consequences beyond standing loss:
+   RESOLVED 2026-09-14 (Nicko): DEED-LOG MEMORY WITHIN THE SAME COURT
+   FAMILY. A keeper who catches you remembers you at every hold of
+   that court family; other court families' keepers do not carry the
+   memory.
 8. Vendetta Grave spawn weights: what share of graves carry a
    vendetta, and the noble-without-heir draw rate (GDD tuning).
 9. Whether the killer of a bound dead can be a spine NPC (spine
@@ -1200,33 +1208,40 @@ The slice carries three systems, not all four parts:
    SPINE IMMUNITY.
 10. Overheard Word audience-check tuning: detection radius vs speech
     volume bands, line-withheld vs conversation-defers behavior
-    weights (stealth GDD, G19 owner).
+    weights (stealth GDD, G19 owner). RESOLVED 2026-09-14 (Nicko):
+    ownership CONFIRMED to the stealth GDD pass (all three
+    overheard-word opens 10/11/14 ride together).
 11. Which world facts are Overheard-Word seeded vs rumor-tier only
     (heirlessness confirmed in-world; feuds, debts, illegitimate
-    children proposed): world GDD pass.
+    children proposed): stealth GDD pass (confirmed 2026-09-14,
+    Nicko, trio ruling; the per-territory fact list remains a world
+    GDD input to that pass).
 12. Paranoid-speaker behavior: which NPC dispositions remember an
     eavesdropper and at what severity (deed log entry, grudge,
     hostile): G17 dialogue GDD.
 13. PUBLIC-vs-GUARDED boundary cases beyond heirlessness (which other
     facts are territory-common vs guarded, e.g. famine scares,
-    coven memberships): world GDD pass, per-territory tier table.
+    coven memberships): RESOLVED 2026-09-14 (Nicko): PER-TERRITORY
+    TIER TABLE at the world GDD pass (a per-territory table decides
+    which facts are common knowledge where; no global category
+    ruling).
 14. Overheard-seed spawn density: how many seeds per hold, per
-    schedule slot, and their respawn rules (G17 schedules GDD).
-15. GRUDGES AS FACTIONS scope (Part 3c): which monster societies
-    hold faction grudges and get capture mechanics (goblin warrens
-    confirmed by RULING 7; the Cold Widows, the coven, the marsh
-    thing proposed), which are beasts that do not; capture-ambush
-    grammar per faction; whether faction captures share the one
-    non-death defeat state: doc 34 bestiary + doc 04 cross-check,
-    IO reconciliation pass.
-16. Goblin warren map: how many warrens per region, which bridges
-    have them, whether the toll seed can spawn in holds without a
-    bridge territory (doc 03 world GDD pass).
+    schedule slot, and their respawn rules (G17 schedules GDD):
+    stealth GDD pass (confirmed 2026-09-14, Nicko, with opens 10/11).
+15. GRUDGES AS FACTIONS scope (Part 3c): RESOLVED 2026-09-14 (Nicko):
+    WARRENS ONLY IN SLICE. Goblin warrens carry the capture mechanic
+    in the slice; the Cold Widows, coven, and marsh-thing rosters are
+    authored at the bestiary pass (doc 34), beasts never carry
+    faction grudges.
+16. Goblin warren map: RESOLVED 2026-09-14 (Nicko): WORLD GDD OWNS
+    PLACEMENT (warrens per region, which bridges). The Petty Legalist
+    king is FIXED per warren with procedural name-flavor (not fully
+    procedural).
 17. The pit-gamble ruleset (bone dice, riddle-duel, champion fight,
     wager ladder, house edge): GDD tuning.
-18. Goblin King procedural or fixed: one Petty Legalist king per
-    warren with procedural name and toll-schedule, or fully
-    procedural (doc 14 pools GDD pass).
+18. Goblin King procedural or fixed: RESOLVED 2026-09-14 (Nicko, with
+    open 16): FIXED per warren (one Petty Legalist per warren) with
+    procedural name-flavor.
 33. The audience predicate for GUARDED speech (suspected-presence
     threshold vs combat aggro, speaker-belief owner, follower and
     bystander handling, interruption/retry): G19 stealth spec
@@ -1239,16 +1254,23 @@ The slice carries three systems, not all four parts:
     atomic re-key transitions: doc 35 G13 + doc 30 G24.
 27. Faction-key pricing and vendor availability per court family
     (doc 06 vendor economy + doc 12 axis-gating): GDD tuning.
-28. Whether keyed layers stack with level strata (does a key used
-    at gate II change only its strata or the whole descent): GDD.
-29. Faction-claim consequences beyond the claim rule (rival faction
-    reactions, World Ledger territory texture): doc 13 cross-check.
+28. Whether keyed layers stack with level strata: RESOLVED 2026-09-14
+    (Nicko): KEYS CHANGE ONLY MATCHING STRATA (a Warden key used at
+    gate II alters only that key's strata, not the whole descent).
+    Pricing stays GDD tuning; the Ledger tracks claims.
+29. Faction-claim consequences beyond the claim rule: RESOLVED
+    2026-09-14 (Nicko): dungeon war outcomes feed the Ledger as
+    TERRITORY TEXTURE ONLY, never flip a hold alone. Rival-faction
+    reaction texture stays a doc 13 GDD item.
 30. Situation re-roll timers and transition triggers (clears, war
     events, blight creep beyond timers): GDD tuning.
 31. Vacuum-tenant draw tables per region and dungeon type (doc 14
     pools + doc 34 bestiary): world GDD pass.
 32. Cleared-wound persistence budget (per-room destruction state
     the save blob carries): doc 35 G13 slice-systems pass.
+    RESOLVED 2026-09-14 (Nicko, trio ruling): timers + tenant tables
+    confirmed to GDD/world pass, blob budget confirmed to the
+    slice-systems pass (assignments unchanged, ownership verified).
 36. Bounty board and contract lifecycle (stable IDs, posted/
     accepted/resolved/expired, single reward-authority record):
     doc 20 contract lifecycle + doc 35 G13.

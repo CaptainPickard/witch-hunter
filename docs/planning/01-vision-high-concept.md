@@ -86,4 +86,8 @@ search returns.
   answered by the allegiance system: the Guild/Church are one of several
   allegiances, not the premise. Still worth settling for the fiction.)
 - Rough target scope for the first vertical slice (one biome, one dungeon
-  chain, one faction)?
+  chain, one faction)? RESOLVED 2026-09-14 (Nicko): SLICE 1 RATIFIED =
+  combat loop + one hold region + the Gravedigger bandit/ghoul
+  rotation, NO quest frames, NO crafting depth (matches doc 31's
+  combat-loop vertical slice and doc 37's combat-only ruling; full
+  spec in 31-vertical-slice-scope.md).

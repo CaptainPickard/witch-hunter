@@ -158,6 +158,9 @@ trigger, never at camp saves. Remaining open:
 2. Does the squire overflow pool save with party state or player inventory?
 3. NG+ world reset (07, 12) needs a preserve-list; proposed: warp camp,
    follower rosters, ledger deed log. Confirm.
+TRIO RULING 2026-09-14 (Nicko): opens 2 and 3 are resolved by ONE
+SLICE-SYSTEMS PASS (next slice-systems session resolves squire-overflow
+save location and the NG+ preserve-list together; no inline ruling).
 
 ## G14. CURRENCY AND ECONOMY
 
@@ -200,6 +203,9 @@ scrip), and camp construction is the primary late-game money sink, no
 new sink doc. Remaining open:
 3. Do dark vendors refuse light-tainted currency, or is one currency
    universal (proposal: universal)?
+RESOLVED 2026-09-14 (Nicko): SINGLE CURRENCY CONFIRMED. Marks
+everywhere, including dark vendors; dark goods simply cost more. No
+shadow scrip.
 
 ## G15. DEATH AND RESPAWN EDGE RULES
 
@@ -254,6 +260,9 @@ permanently) and the death penalty is currency plus 25 percent of
 current-level XP. Remaining open:
 3. Does a camp-raid death also dissolve a corpse outside the camp, or
    does camp-center drop replace it?
+TRIO RULING 2026-09-14 (Nicko): open 3 rides the same ONE SLICE-SYSTEMS
+PASS as G13's opens 2-3 (save-edge trio resolved together next
+slice-systems session).
 
 ## Verification hooks
 Slice-1 acceptance: HUD reads bars, buffs, quick slots, one prompt line;
