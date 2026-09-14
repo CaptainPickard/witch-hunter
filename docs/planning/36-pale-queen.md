@@ -32,6 +32,17 @@ darkness: the elf king and his elven queen were cursed to
 immortality, vampires ruling the dark throne forever, and the
 continent split along the scar of her working.
 
+IDENTITY TEXTURE (locked by Nicko, 2026-09-14): the witch's TRUE
+face is OLD AND TWISTED, a real witch's face. The young and
+beautiful woman the light court crowns is a MASK held by magic and
+manipulation; her real face never appears at court. No living soul
+can connect the radiant Queen Maren to a hag's face by sight: the
+only human key to her past is her true name, buried on the unmarked
+grave (ruling 7 below). COROLLARY (same ruling): the PALE QUEEN
+NEVER MET the peasant girl. She was at the signing and knows the
+Signer was false, but she never stood beside the girl at court.
+She cannot recognize the witch's face today; nobody can.
+
 The two queens mirror each other across the whole war (the light
 queen is THE WITCH; the PALE QUEEN is the separate neutral vampire,
 see RULING PASS 2026-09-14):
@@ -79,7 +90,8 @@ final antagonist)
 
 Public architecture:
 
-- To the light court she is the Queen: beloved, gracious, the
+- To the light court she is QUEEN MAREN OF THE DAWN (regnal name
+  locked 2026-09-14): beloved, gracious, the
   counterweight to a king whose strength fails him. Her elegance is
   real. Nothing about her surface reads as false.
 - To the dark court she is the creditor: a specter reached only
@@ -175,7 +187,7 @@ allegiance itself decides how much of the truth is reachable:
   wrongness from inside: the king's deterioration, the Mercy
   harvest pattern, the altars' wrongness (the Sun altar is not
   ruined, it is drained). The light reveal can expose THAT the
-  queen is a witch and the king is controlled. It cannot expose
+  queen (QUEEN MAREN) is a witch and the king is controlled. It cannot expose
   the creditor truth or the Fall. The light ending is a victory
   that serves her: the player who swears to the light may end the
   war with the witch's machine intact and herself enthroned over
@@ -213,11 +225,13 @@ allegiance itself decides how much of the truth is reachable:
 
 SUPERSEDED 2026-09-14 (Nicko): the name THE PALE QUEEN now belongs
 to the neutral underground vampire (doc 44), a SEPARATE character.
-The light queen is THE WITCH (working title THE WITCH QUEEN for
-docs). The echo device survives differently now: the player who
-learns in the underworld that "a witch broke the world" and later
-stands before the beloved light queen holds both halves of one
-truth without the world ever saying so.
+The light queen is THE WITCH: her regnal name is QUEEN MAREN OF THE
+DAWN (locked 2026-09-14). The echo device survives differently now:
+the player who learns in the underworld that "a witch broke the
+world" and later stands before the beloved Queen Maren holds both
+halves of one truth without the world ever saying so. And her
+beautiful face is itself the disguise: the true face is old and
+twisted, seen by no living soul who could name it.
 
 ## OPEN QUESTIONS (per 08 rules: added to 08 in the same pass)
 
@@ -457,7 +471,8 @@ the other two make sense.
   only here, as the neutral finale's climax: the unmasking (the
   Signer is the WITCH; the girl, the witch, the invented
   devil, the debt, the beloved queen: one soul wearing two
-  kingdoms as a mask). Then the locked sequence runs: the dark
+  kingdoms as a mask: beneath Queen Maren's young face, an old and
+  twisted hag). Then the locked sequence runs: the dark
   queen's mid-ritual choice beat, the Last Dance, the Deep
   Altar against the engine, the Hunter Becomes the Ledger
   sentence, the Name in the Grave as the optional key spoken

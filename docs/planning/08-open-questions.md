@@ -1147,4 +1147,15 @@ This section records the batch.
     underworld factions, uniting the other 6 with the player's help;
     she was at the signing and knows the Signer was false). The
     light queen is re-pointed as THE WITCH across docs 36/19/37/39/40.
-    Awaiting Nicko line-by-line review on the doc 44 opens.
+    Nicko review pass 2026-09-14, all six doc 44 opens RESOLVED:
+    (1) the witch's regnal name is QUEEN MAREN OF THE DAWN; (2) her
+    true face is OLD AND TWISTED (masked as young/beautiful by
+    magic), and the Pale Queen NEVER MET the peasant girl, so
+    face-recognition cannot expose her (the Name in the Grave is the
+    only human key); (3) Door 1 keeps BOTH routes (expose or re-key),
+    player's choice; (4) unresolved leash = Hidden Court HOSTILE TO
+    EVERYONE at the final battle; (5) the witch notices the
+    assembly MID-QUESTLINE and counters with disguised purges;
+    (6) SEVEN doors + altar confirmed.
+    Status: all opens resolved; doc 44 PROPOSED content awaiting
+    line-by-line review as usual.

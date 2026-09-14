@@ -35,10 +35,11 @@ Each entry: identity and role, public face, true goal, what they know,
 what they let on, what they hide, and their plan to dominate or
 survive the others.
 
-### 1. THE WITCH (the light court's queen / the Signer / the "Undersovran")
+### 1. THE WITCH (Queen Maren of the Dawn / the Signer / the "Undersovran")
 
 - IDENTITY: the peasant girl from the Fall (doc 36's truth). Four
-  hundred years later she wears three masks: QUEEN of the light
+  hundred years later she wears three masks: QUEEN MAREN OF THE
+  DAWN of the light
   court (beloved, gracious, the realm's moral center), the SIGNER
   inside the Reliquary Wardens (the authority that authenticates
   relics and guards the memory of the Fall), and the UNDERSOVRAN (the
@@ -46,6 +47,14 @@ survive the others.
   contracts and sigils, never a body).
 - PUBLIC FACE: the perfect queen. Genuinely protective of mortals in
   effect; rotten in purpose (doc 36's bad-in-the-good).
+- HER TRUE FACE (locked by Nicko, 2026-09-14): OLD AND TWISTED, a
+  real witch's face. The young and beautiful queen the light court
+  loves is a MASK held by magic and manipulation; the real face
+  never appears at court. Recognition cannot expose her: no living
+  soul connects the radiant queen to a hag's face, and the one
+  person who could have (the Pale Queen) NEVER MET the peasant
+  girl. The Name in the Grave (doc 36 ruling 7) is therefore the
+  only human key to her past that survives; her face is not.
 - TRUE GOAL: keep the harvest running forever. The war is her farm:
   both courts' tithes, purges, cures, and grief feed her immortality
   through the siphoned altars. She does not want either court to WIN.
@@ -163,8 +172,10 @@ survive the others.
   signing before it all broke, and she smelled the plot under the
   hood; the world's official story of the Fall is wrong, and a
   powerful witch is behind the world's broken state. She does NOT
-  know: who that witch is in the modern day (the light queen's face
-  and the Signer's mask do not connect for her), the witch's guilt,
+  know: who that witch is in the modern day (and face-recognition
+  would not help: the witch masks as young and beautiful at court;
+  the Pale Queen also NEVER MET the peasant girl, ruling locked
+  2026-09-14), the witch's guilt,
   or that the creditor and the witch and the queen are one. Her
   blindness is the story's cruelest engine: she is organizing the
   one force that could end the war, carrying the one true clue (the
@@ -269,7 +280,8 @@ How each plan collides:
   Court leash); the Pale Queen is assembling the underworld's BODY.
   If the Pale Queen ever unites the rings AND breaks the leash, the
   witch loses both her blindfold on the underworld and her spare
-  army. PROPOSED: the witch's counter-move, once she notices, is to
+  army. RULED 2026-09-14 (Nicko): the witch DOES notice
+  mid-questline and counters: her counter-move is to
   send the light court after underworld strongholds (purges of
   neutral dens) disguised as anti-monster campaigns, forcing the
   underworld to spend itself defending rather than assembling.
@@ -306,7 +318,8 @@ is literally the altar's congregation (doc 19).
   Route: earn the Court's trial-law trust (doc 19), witness the
   leash's proof, choose: expose the Signer to the Court (they defect;
   the witch learns she is being hunted) or secretly re-key the leash
-  (quiet, but the Court remains a double agent's card). Cost: deep
+  (quiet, but the Court remains a double agent's card). RULED
+  2026-09-14 (Nicko): BOTH ROUTES EXIST, THE PLAYER'S CHOICE. Cost: deep
   wolf standing + one mid-quest reveal. Pays: the ace deploys for the
   Third Path at the final battle instead of against it.
 - DOOR 2, THE RELIQUARY WARDENS (the Signer trap): the institution
@@ -346,7 +359,8 @@ is literally the altar's congregation (doc 19).
 - DESTINATION, THE DEEP ALTAR: the united faction is the altar's
   congregation. The six refusals (Allegiance Gambit, doc 12) are the
   ceremonial qualification; the unite-quest is the congregation's
-  formation. The final battle: the underworld's banner against both
+  formation. SEVEN DOORS CONFIRMED (2026-09-14, Nicko; brokers keep
+  their own door for their unique intel role). The final battle: the underworld's banner against both
   courts while the player re-kindles the Deep Altar (doc 19), with
   the corrected cast positioned per Parts 1-3.
 
@@ -402,17 +416,26 @@ provisional notes already):
    the standing text once doc 44 is locked.
 
 Open questions:
-1. [08 TRACKER] The light queen's regnal name (edit 1): give her one,
-   or use "the Witch" everywhere?
-2. [08 TRACKER] The Pale Queen's prior relationship to the witch and
-   the court (advisor vs peasant girl: did they know each other's
-   faces?): PROPOSED yes-face recognition as the seed of her arc;
-   confirm.
-3. [08 TRACKER] Door 1's two routes (expose vs re-key the leash):
-   both, or one?
-4. [08 TRACKER] The Hidden Court at the final battle when the leash
-   was never resolved: default hostile to everyone, or absent?
-5. [08 TRACKER] Does the witch ever learn of the Pale Queen's
-   assembly before the endgame (her counter-move timing)?
-6. [08 TRACKER] The unite-quest's door count: seven doors + altar,
-   or fold brokers into smugglers (six + altar)?
+1. [08 TRACKER] RESOLVED 2026-09-14 (Nicko): the light queen's
+   regnal name is QUEEN MAREN OF THE DAWN. The witch's public
+   persona carries this name in dialogue, quest text, and the
+   unmasking beat.
+2. [08 TRACKER] RESOLVED 2026-09-14 (Nicko): NO FACE RECOGNITION IS
+   POSSIBLE. The witch's true face is OLD AND TWISTED (a real
+   witch's face); she presents as the young, beautiful Queen Maren
+   through her magics and manipulation. The Pale Queen NEVER MET
+   the peasant girl (she was at the signing, but the girl was not
+   at court in her presence). Face-recognition cannot expose the
+   witch; the Name in the Grave is the only human key to her past.
+3. [08 TRACKER] RESOLVED 2026-09-14 (Nicko): Door 1 keeps BOTH
+   routes (expose or re-key), the player's choice.
+4. [08 TRACKER] RESOLVED 2026-09-14 (Nicko): if the leash was never
+   resolved, the Hidden Court deploys HOSTILE TO EVERYONE at the
+   final battle (the witch spends her ace indiscriminately).
+5. [08 TRACKER] RESOLVED 2026-09-14 (Nicko): the witch DOES notice
+   the Pale Queen's assembly MID-QUESTLINE and counters (the
+   disguised purges of neutral dens fire during the quest, not only
+   at the endgame).
+6. [08 TRACKER] RESOLVED 2026-09-14 (Nicko): SEVEN DOORS + altar
+   confirmed (brokers keep their own door; their unique intel role
+   justifies it).
