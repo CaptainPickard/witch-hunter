@@ -154,6 +154,13 @@ confirm with Nicko's locked rulings in 17-magic-system.md first):
    Wards Grandmaster + clean hands + deep-good, working name), THE
    PARAGON OF BALANCE (neutral: two elemental Grandmasters + survived
    the Allegiance Gambit, working name).
+   LICH KING DERIVATION (locked 2026-09-14, Nicko, story audit doc 45
+   finding D2): the Dark Pacts apex chain's content IS the Old Blood's
+   escape-the-ledger gambit: the lichdom working is the
+   proof-of-concept (a soul that holds no future for the ledger to
+   collect), and the throne-scale version attempted in the
+   Foreclosure (doc 44 Part 5B) fails or half-fails; the realm pact
+   stays unvoidable (doc 19). One name, two scales, one failure mode.
 3. WITCHBANE / CORPSE-SMITH / GRAVEROBBER lapability confirmed from the
    magic side (doc 17 question 11): Witchbane lapses on deep-good drift,
    Corpse-Smith lapses on dark-court betrayal, Graverobber lapses on

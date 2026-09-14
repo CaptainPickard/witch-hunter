@@ -342,3 +342,27 @@ on. It does not supersede docs 03/12/13/14; it EXPLAINS them:
 - Doc 17's Dark Pacts = the mortal tier of the same contract the
   throne signed; the Aegis rule = the counter-pact (the Church runs on
   the opposite currency: service, not dominion).
+
+## STORY-AUDIT NOTES (2026-09-14, doc 45; append-only)
+
+- Demon invasion end condition (line 327's summary, full text in doc
+  08): SUPERSEDED FOR THE SACK-TRIGGER PATH. Doc 44 Part 5C adds
+  sacking the ORC CITY as a second invasion trigger; a pact-seal
+  invasion has no ritual site and cannot be ended by conquest, so it
+  burns out on its own N-day clock. The "ends when a Great City
+  falls OR the ritual site is destroyed" condition survives only for
+  the debt-default invasion.
+- Orc origin (doc 22's "Devil's early creation"): reattributed by
+  Nicko ruling (story audit D3): the orc lore is in-world myth the
+  witch manufactured or absorbed; there is no pre-witch specter.
+  Orcs predate the Fall as a race, not the pact.
+- The dark court's doctrine of the creditor (added, story audit D6):
+  the Undersovran is the god under the world whose collections are
+  purgation; the default is his host claiming his own; the invasion
+  VALIDATES the Veil Faithful and confirms (for the Old Blood) a
+  predator that can be starved. One doctrine, two sects.
+- Collections mechanism (added, story audit D11): the pact was a
+  real working (her soul-for-power ritual cursed the court); its
+  terms are self-executing; the "Undersovran" persona is her
+  administration layer, the sigils the instruments by which she
+  steers a curse she no longer fully commands.

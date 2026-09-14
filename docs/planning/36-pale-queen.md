@@ -485,4 +485,27 @@ the other two make sense.
   the player, not the character, is the one who knows what the
   sigils mean. The asymmetry is the design: the reveal is a
   reward for the player's journey across playthroughs, and the
-  world stays honest by never telling.
+
+## STORY-AUDIT NOTES (2026-09-14, doc 45; append-only)
+
+- LIGHT-LINE ALTAR RULE (audit L12): the light line's Sun-altar
+  evidence stays PHENOMENOLOGICAL ONLY (reads cold, reads wrong; the
+  Wardens call it ruined and the player can prove them wrong); no
+  light-line source ever states transfer or purpose. The siphon
+  inference is player-knowledge (NG+), never character-knowledge.
+- NAMING (audit L13): "the unmasking" is reserved for the neutral
+  finale; the light line's queen-confrontation beat is "THE
+  CONFRONTATION" (also readable as "the unveiling" in prose).
+- DARK ENDING GOVERNING TEXT (audit D13): the dark ending's two
+  options above (refuse the payments / the bankruptcy ritual) are
+  governed by doc 44 Parts 5B-5C (the Foreclosure fork: serve, stop,
+  or redirect; the regicide sequence; the miss mechanism: the
+  sigil-match points at institutions, the queen slips out of the
+  falling city). Do not re-derive the fork from this doc's summary.
+- SEQUENCING (audit L3): in the light line the HERESY arc fires
+  FIRST (it IS the suppression) and the confrontation follows as the
+  disgraced player's last audience.
+- AGELESS QUEEN (audit L5, ruled): the regnal identity is a ROTATING
+  MASK (doc 44 Part 7): "Queen Maren of the Dawn" is re-inherited
+  generation to generation, each Maren the same woman, court records
+  manipulated to paper the seams.

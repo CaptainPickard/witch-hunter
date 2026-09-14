@@ -1187,6 +1187,32 @@ This section records the batch.
     carries player knowledge only. Status: ruled, PROPOSED numbers
     GDD tuning.
 
+89. STORY AUDIT (2026-09-14, Astrabot three-vantage review, findings
+    + resolutions in docs 45/44): 38 findings (13 light, 13 dark, 12
+    neutral), all HIGHs resolved same day. Nicko's five rulings: (1)
+    AGELESS QUEEN = ROTATING MASK (the title Queen Maren re-inherited
+    generation to generation, records manipulated); (2) LICH KING =
+    the Dark Pacts apex chain IS the escape-gambit (lichdom
+    proof-of-concept, throne-scale attempt fails/half-fails, realm
+    pact unvoidable, doc 16 note); (3) ORC ORIGIN RETCON: orcs
+    predate the Fall but NOT the pact; the "Devil's creation" lore is
+    in-world myth the witch manufactured (doc 22 note); (4) THE PALE
+    QUEEN LEADS THE BROKERS: six doors for the player, brokers'
+    alignment IS the questline's introduction, underworld capital
+    stays the eighth seat; (5) SILO AMENDED: court-line apexes stay
+    single-line, the neutral run reads the chains' shadows through
+    the underworld doors. Baked clarifications include: chain H THE
+    SANCTIFIED DOUBT (light discovery chain, doc 21), Heresy
+    attributed + sequenced, governance two-layer reading, light-win
+    darkness = harvest goes industrial, Signer's Alternative = the
+    snare, chain C/F re-derived, dark queen's bargain channel = the
+    Signer, Foreclosure fires on war-state + time fuse, dark-court
+    creditor doctrine, miss mechanism for the somber dark ending,
+    why-now for the Pale Queen, player-as-front intent, Sun-altar
+    venue derivation, Last Dance two-stage trigger, compulsion
+    persists through the engine's fall. Status: all 38 findings
+    resolved; audit complete.
+
 88. ENDGAME SEQUENCES (2026-09-14, Nicko, spec in doc 44 Part 5C):
     (1) demon invasion gains a SECOND trigger: sacking the ORC CITY
     fires the invasion as a consequence of victory; (2) the Blessed

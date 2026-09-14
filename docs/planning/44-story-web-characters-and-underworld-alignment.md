@@ -152,6 +152,17 @@ survive the others.
   Throne, turned vampire in the Fall's corruption 400 years ago, who
   dissented from both emerging courts and vanished into the neutral
   underworld. The underworld's unifier. UPDATE (Nicko, 2026-09-14):
+  HER OWN FACTION (ruled 2026-09-14, story audit): she LEADS THE
+  NEUTRAL BROKERS, one of the seven. Their true seat (the abandoned
+  cavern market at the imperial-tunnel crossroads, Part 4) is her
+  base of operations, and their city stalls are her web's
+  fingertips. The unite-quest therefore has SIX DOORS for the player
+  (Hidden Court, Wardens, mercenaries, smugglers, thieves, bandit
+  camps): the brokers' door is HERS, folded into her introduction
+  (aligning the brokers IS meeting the Pale Queen; their standing
+  IS her trust ladder). The underworld capital remains the eighth
+  SEAT (her residence and the banner's muster), not an eighth
+  faction. She grants the Third Path unite-quest.
   she keeps the name THE PALE QUEEN, and when the player meets her
   toward the START of the main neutral questline she is the leader
   of ONE of the seven underground factions (Part 4's roster); her
@@ -408,13 +419,21 @@ Deep Altar sits relative to it: PROPOSED at the world GDD pass.
   supply.
 - DOOR 7, THE NEUTRAL BROKERS: already alignable; their standing
   (doc 06) deepens stock and lowers prices through the whole quest.
-  Cost: trade volume. Pays: the legendary-station clue intel (doc
-  05/06), recipe trade, the Overheard Word network (doc 37).
+  Cost: trade volume. SUPERSEDED 2026-09-14 (story audit, Nicko):
+  there is no separate brokers' door: THE BROKERS ARE THE PALE
+  QUEEN'S OWN FACTION (Part 1 entry 5). Aligning the brokers IS the
+  unite-quest's introduction: meeting her, earning the brokers'
+  standing, and taking the grant are one act. The door roster is
+  SIX: Hidden Court, Wardens, mercenaries, smugglers, thieves,
+  bandit camps. Pays: the legendary-station clue intel (doc 05/06),
+  recipe trade, the Overheard Word network (doc 37), and the
+  questline's launch.
 - DESTINATION, THE DEEP ALTAR: the united faction is the altar's
   congregation. The six refusals (Allegiance Gambit, doc 12) are the
   ceremonial qualification; the unite-quest is the congregation's
-  formation. SEVEN DOORS CONFIRMED (2026-09-14, Nicko; brokers keep
-  their own door for their unique intel role). The final battle: the underworld's banner against both
+  formation. SIX DOORS + the brokers' folded introduction CONFIRMED
+  (2026-09-14, story audit ruling: the Pale Queen leads the brokers;
+  supersedes the same-day seven-door note). The final battle: the underworld's banner against both
   courts while the player re-kindles the Deep Altar (doc 19), with
   the corrected cast positioned per Parts 1-3.
 
@@ -597,6 +616,77 @@ boss; doc 36's unmasking, Last Dance response, the sentence choice,
 and the Name in the Grave key all ride this final battle). The court
 paths never see her: their somber endings are the witch's victories
 wearing the player's flag.
+
+## PART 7 - STORY-AUDIT RESOLUTIONS (Astrabot three-vantage audit, 2026-09-14)
+
+Full findings record: doc 45-story-audit.md (38 findings: 13 light,
+13 dark, 12 neutral; every one carried a doc cite and proposed
+clarification). Thirty-three were clarification-grade and are BAKED
+into their owning docs per the resolutions recorded in doc 45; the
+five design forks were ruled by Nicko in session. The rulings as
+locked:
+
+1. THE AGELESS QUEEN (light audit HIGH 5): ROTATING MASK. "Queen
+   Maren of the Dawn" is a TITLE re-inherited generation to
+   generation; each generation's beloved young queen is the same
+   woman, and court memory/record manipulation papers the seams.
+   Consequence: the Name in the Grave gains extra teeth (the title
+   has been worn by faces no chronicler can cross-reference); the
+   eldest courtiers' suspicions have nowhere to point.
+2. LICH KING DERIVATION (dark audit HIGH 2): THE DARK PACTS APEX
+   CHAIN IS THE ESCAPE-GAMBIT. The lichdom working is the Old
+   Blood's proof-of-concept (a soul that holds no future for the
+   ledger to collect); the throne-scale version the Old Blood
+   attempt in the Foreclosure is that working scaled to the court,
+   which fails or half-fails; the realm pact stays unvoidable (doc
+   19's lock intact). One name, two scales, one failure mode.
+3. THE DEVIL THE ORCS ANSWER TO (dark audit HIGH 3): DOC 22 RETCON
+   (Nicko's choice): orcs predate the Fall but NOT the witch's pact.
+   The orc city's old-borderland religion, the scourge's
+   "first hand of the Undersovran" theology: all of it is the witch's
+   manufactured history (or absorbed from the debt's paperwork).
+   There is no older specter: doc 36's "she invented him" stands
+   absolute; the orc lore is in-world myth the correction quietly
+   reattributes. (The demon invasion still works: the demons are the
+   bankruptcy ritual's summons, the enforcement agents of the debt's
+   terms, not a pre-witch god's host.)
+4. THE PALE QUEEN'S FACTION COUNT (neutral audit HIGH 1): SHE LEADS
+   THE BROKERS. Their true seat (the imperial-tunnel cavern market)
+   is her base; the six remaining doors are Hidden Court, Wardens,
+   mercenaries, smugglers, thieves, bandit camps; aligning the
+   brokers IS the questline's introduction. The underworld capital
+   stays the eighth SEAT, not an eighth faction. (Supersedes the
+   same-day seven-door note in Part 4.)
+5. FRAGMENT ASSEMBLY vs THE SILO (neutral audit HIGH 4): SILO
+   AMENDED. Court-line APEX chains stay single-line (the dark
+   player's sigil-wall and the light player's confrontation remain
+   their own chains' content); the neutral run reads the other
+   chains' SHADOWS through the underworld doors: the dark fragment
+   from smuggler/broker intel plus the debt's underworld economics
+   (the Pale Queen's SUSPECTS row made diegetic), the light fragment
+   from the Warden archive's contradictory versions plus
+   compulsion evidence a hunted outsider can gather (the king's
+   lists, the cold Sun altar reading). Doc 36's one-run assembly
+   stands; the silo now describes where each fragment's ROUTE lives.
+
+### Light-chain additions from the audit (BAKED, summary pointers)
+
+- Doc 21 gains chain H, THE SANCTIFIED DOUBT (PROPOSED): the light
+  discovery chain, five beats (a cure that leaves no taint / the
+  Mercy ledger that does not add up / the Sun altar reading drained
+  / the king's private lists / the Heresy arc as climax).
+- The Heresy arc is attributed (the witch assembles and feeds the
+  evidence packet) and sequenced (Heresy first = the suppression;
+  the confrontation follows as the disgraced player's last
+  audience).
+- Governance: the court functions BECAUSE the queen runs it; the
+  compulsion is episodic; the "strongest being" reading is her
+  direct spend, rare and deniable.
+- Light-victory darkness mechanism: the harvest goes industrial
+  (no dark court left to tax, no Militant left to justify
+  containment).
+- The light line executes her underworld purges unknowingly (tissue
+  quests); the neutral playthrough reveals them.
 
 Supersession edits to apply on Nicko's confirmation (docs 19/36 carry
 provisional notes already):

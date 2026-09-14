@@ -1259,3 +1259,27 @@ feature-by-feature implementation against the GDD.
     dark enforcers in dark land, neutral players face both. Tuning
     open 55 (threshold/cooldown/ambush odds/flag decay: GDD).
     Status: system locked; numbers GDD tuning.
+
+91. STORY WEB DOC + STORY AUDIT DOC (2026-09-14): new docs
+    44-story-web-characters-and-underworld-alignment.md (the corrected
+    cast, knowledge ledger, domination web, underworld alignment
+    doors, seat geography, pressure arcs, endgame sequences) and
+    45-story-audit.md (the Astrabot three-vantage story review:
+    38 findings). See tracker 86-89 and doc 44 Part 7.
+
+92. STORY AUDIT RESOLUTIONS (2026-09-14, Nicko, spec in doc 45 +
+    doc 44 Part 7): the five fork rulings: (1) ageless queen =
+    ROTATING MASK; (2) Lich King = the Dark Pacts apex chain IS the
+    escape-gambit (throne-scale attempt fails, realm pact
+    unvoidable); (3) orc origin retcon: orcs predate the Fall but not
+    the pact (the Devil lore is the witch's manufactured myth);
+    (4) the Pale Queen leads the BROKERS: six doors, brokers'
+    alignment is the questline's introduction; (5) silo amended:
+    court-line apexes single-line, the neutral run reads the chains'
+    shadows through the underworld doors. Plus 33 baked
+    clarifications incl. chain H THE SANCTIFIED DOUBT, chain C/F
+    re-derivations, the invasion end-condition supersession for the
+    sack path, the dark-court creditor doctrine, and the
+    collections mechanism (the pact is a real self-executing working;
+    the Undersovran persona is her administration layer). Status:
+    all 38 findings resolved; audit complete.

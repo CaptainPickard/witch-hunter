@@ -67,9 +67,13 @@ corruption-kit model; the 36-menu ladder idea is SUPERSEDED)
    Path; the player builds the third faction).
 3. The Dead Altars: find Sun and Veil altars' ruins (world GDD
    sites), learn what was broken.
-4. The Signer's Confession: the doc 19 debt-arc crossover; she tells
-   the truth of the Fall for the price of an honest grave-robbery
-   (her own tomb).
+4. THE WARDEN FRAGMENT BEAT (re-derived 2026-09-14, story audit,
+   doc 45 finding N9; supersedes the old "Signer's Confession" text):
+   the player walks the archive's contradictory versions and extracts
+   the Fall's true history at the cost of springing the Signer's
+   alarm: the trap walked, not a confession given (doc 36 ruling 4's
+   trap mechanism, post-correction ownership: the trap is the
+   WITCH's, planted through the Signer persona).
 5. The Deep Altar: re-kindling; the endgame war flips to the player's
    third faction (doc 12/19's true ending machinery).
 
@@ -98,10 +102,17 @@ in the underworld web)
   06), the Warden relationship begins.
 - The Grave That Waits: the Signer asks the player to rob a specific
   grave: her own (the one she dug empty the night she was turned).
-- The Unsigning: endgame chain to unmake HER pact (distinct from the
-  realm's pact; her personal debt) and what it costs (IO proposal
-  parked: it costs the player the Signer, who dies mortal at the end
-  of it).
+- The Unsigning: RETIRED 2026-09-14 (story audit, doc 45 finding N9)
+  as a standalone chain; the image survives in the wardenship
+  sentence branch of the neutral ending (doc 44 Part 5C: the
+  sentence choice), and the Signer's mask-discard replaces the
+  mortal-death-of-a-penitent reading. The "grave that waits" image
+  (a grave dug empty the night of a turning) re-homes to the PALE
+  QUEEN's turning, kept distinct from the witch's Name in the Grave.
+  Also re-derived (dark audit finding D1): chain D beat 4's
+  "Signer's Alternative" is the Signer's SNARE (the Wardens archive
+  fragment, the truth-shaped trap): the helpful intermediary is the
+  con's author.
 
 ### G. The Demon Invasion Event Chain (doc 13 comeback event; doc 19
 debt default)
@@ -111,6 +122,19 @@ debt default)
   or break it (any player).
 - The Aftermath: what the world looks like after a defaulted debt
   (blight blooms, creditor sigils burned into fields).
+
+### H. The Sanctified Doubt (light court; ADDED 2026-09-14, story
+audit doc 45 finding L6; the light discovery chain, mirrors D's shape)
+1. A Cure That Leaves No Taint: the Mercy harvest pattern's first
+   diegetic crack (the cure works; nothing burns away).
+2. The Mercy Ledger That Does Not Add Up: the extracted taint
+   vanishes on paper.
+3. The Cold Altar: the Sun altar reads drained rather than ruined
+   (phenomenological only, per doc 44 Part 7's light-line siphon
+   rule).
+4. The King's Private Lists: the compulsion's documented tremors.
+5. THE HERESY: the arc fires as the chain's climax (the witch's
+   machine turns on the player: doc 44 Part 5B).
 
 ## Frame Library First Pass (RESOLVED 2026-09-12, Nicko)
 8 templates at first pass: hunt, escort, clear-site, defense,

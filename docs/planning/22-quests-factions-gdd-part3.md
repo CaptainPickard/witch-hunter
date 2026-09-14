@@ -62,6 +62,13 @@ court you before they will spend the Embrace.
    your elder carries (doc 19 debt arc crossover: this is where a
    dark player can first learn the throne's secret). You sign the
    mortal waiver: your human life is the entry payment.
+   [RE-POINT 2026-09-14, story audit doc 45 finding D12: the stage-3
+   disclosure is an UNKNOWING CLUE, not a discovery door (doc 20's
+   one-door rule for chain D stands): the house shows the elder's
+   tithe LEDGER but the player reads it UNREAD (a glimpse, not an
+   explanation); the debt's understanding still arrives only through
+   chain D beat 1-2, which this stage now feeds as its
+   transformation-line trigger.]
 4. THE EMBRACE: doc 17's The Embrace, administered by the house
    elder while your heart still beats. You die mortal and rise
    vampire. (Mechanical note: the player's first vampire death
@@ -156,6 +163,14 @@ legion-breed proposal above):
   the mortal world. (They predate the pact: the Undersovran's first
   hand on the world, older than the Fall, the proof of what the
   thing beyond the Veil wanted all along.)
+  [RETCON 2026-09-14, Nicko, story audit doc 45 finding D3: orcs
+  predate the Fall but NOT the witch's pact. The "Devil's early
+  creation" origin is IN-WORLD MYTH the witch manufactured or
+  absorbed into the debt's paperwork: the orc city's old-borderland
+  religion is her history. Doc 36's "she invented him" stands
+  absolute; the demons are the debt's enforcement agents, not a
+  pre-witch god's host. Orcs still predate the Fall as a race; only
+  the creditor's authorship is reattributed.]
 - POST-FALL: orcs naturally sided with the dark court, and now have
   their own rulers under the elf-vampire court. Since the Fall orcs
   have become MORE SOPHISTICATED: they now build their own towns,
