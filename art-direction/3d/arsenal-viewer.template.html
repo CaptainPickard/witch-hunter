@@ -212,15 +212,18 @@ function loadB64(b64, cb){
 function pixelFilter(root, nearest){
   root.traverse(function(o){
     if(o.isMesh && o.material && o.material.map){
-      // 2026-09-14 vcolor pass: the baked per-vertex colors (COLOR_0) give
-      // coherent PSX shading with zero per-texel sampling noise. NearestFilter
-      // magnification of the atlas produced per-triangle black/bright patch
-      // contrast on real GPUs (follows triangle boundaries - filtering can't
-      // fix it). Render from vertex colors; keep the texture only in raw mode.
+      // 2026-09-14 v2 HYBRID: keep BOTH the texture map (LinearMipmapLinear -
+      // smooth, keeps authored texel detail; Nearest was producing harsh
+      // triangle-boundary speckle on real GPUs) AND the baked vertex colors.
+      // vcolors give coherent base shading, the map restores PSX texel grain.
       if(o.geometry.attributes.color && o.geometry.attributes.color.count > 0){
         o.material.vertexColors = true;
         o.material.color.set(0xffffff);
-        o.material.map = null;
+        o.material.map.magFilter = THREE.LinearFilter;
+        o.material.map.minFilter = THREE.LinearMipmapLinearFilter;
+        o.material.map.generateMipmaps = true;
+        o.material.map.anisotropy = renderer.capabilities.getMaxAnisotropy();
+        o.material.map.needsUpdate = true;
         o.material.needsUpdate = true;
         return;
       }
@@ -318,6 +321,10 @@ function setBody(name){
     var size = box.getSize(new THREE.Vector3());
     var s = 1.8/size.y;
     body.scale.set(s,s,s);
+    // 2026-09-14 ground fix: the GLB mesh is centered at origin (Y spans
+    // -1..+1). Scaling alone left the body sunk 0.9 units into the floor disc
+    // (waist at ground level). Lift so the feet rest on the floor.
+    body.position.y = -box.min.y * s;
     scene.add(body);
     // anchors relative to the normalized 1.8 figure: head ~1.63, hands ~0.9
     anchors.headSlot = new THREE.Group();
