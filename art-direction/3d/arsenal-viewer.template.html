@@ -1,45 +1,162 @@
 <!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>Witch Hunter 3D - Arsenal & Character Viewer</title>
+<html><head><meta charset="utf-8"><title>Witch Hunter 3D - Arsenal &amp; Character Viewer</title>
 <style>
- body{margin:0;background:#39424c;color:#b8c0c8;font-family:monospace;overflow:hidden}
- #c{width:100vw;height:100vh;display:block}
- .hud{position:fixed;top:10px;left:12px;font-size:11px;line-height:1.5;z-index:5;text-shadow:0 1px 2px rgba(0,0,0,.5)}
- .hud b{color:#e8ece8}
- .panel{position:fixed;z-index:5;display:flex;flex-direction:column;gap:4px;max-height:96vh;overflow-y:auto;background:rgba(20,24,28,.85);border:1px solid #4a545e;padding:8px;border-radius:4px}
- #leftPanel{top:10px;right:10px;width:250px}
- #rightPanel{bottom:10px;left:10px;width:250px}
- .panel h3{margin:2px 0 6px;font-size:11px;color:#9aa8b4;letter-spacing:1px}
- .panel .row{display:flex;gap:4px;align-items:center;margin:2px 0}
- .panel select{flex:1;background:#1a2026;color:#c8d0d8;border:1px solid #4a545e;font-family:monospace;font-size:11px;padding:3px}
- .panel button{background:#e8e4da;border:1px solid #6a7480;color:#2a323a;padding:5px 8px;font-family:monospace;cursor:pointer;font-size:10px;font-weight:bold}
- .panel button:hover{background:#ffffff}
- .panel button.on{background:#7a8a5a;color:#0a0c08}
- .panel label{font-size:10px;color:#8a97a4;min-width:52px}
- #err{position:fixed;bottom:2px;right:270px;color:#c86060;font-size:10px;z-index:9;white-space:pre-wrap;max-width:40vw}
- #stat{position:fixed;top:10px;left:50%;transform:translateX(-50%);font-size:10px;color:#8a949e;z-index:5}
+:root{
+  --glass:rgba(17,21,27,.78);
+  --glass-border:rgba(255,255,255,.09);
+  --line:rgba(255,255,255,.06);
+  --text:#c9d1d9;
+  --text-bright:#e8eef4;
+  --text-dim:#8a94a0;
+  --text-faint:#6a7480;
+  --accent:#4fb3a4;
+  --accent-soft:rgba(79,179,164,.14);
+  --accent-line:rgba(79,179,164,.55);
+  --font:system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:#39424c;color:var(--text);font-family:var(--font);font-size:12.5px;line-height:1.45;overflow:hidden}
+#c{width:100vw;height:100vh;display:block}
+
+/* ---- glass panels ---- */
+.panel{
+  position:fixed;z-index:10;display:flex;flex-direction:column;
+  background:var(--glass);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  border:1px solid var(--glass-border);border-radius:10px;
+  box-shadow:0 16px 40px rgba(0,0,0,.45),0 2px 8px rgba(0,0,0,.35);
+  animation:panelIn .45s cubic-bezier(.2,.7,.3,1) both;
+}
+@keyframes panelIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+#leftPanel{top:16px;left:16px;bottom:16px;width:296px;padding:14px 16px;overflow-y:auto;overflow-x:hidden}
+#rightPanel{right:16px;bottom:16px;width:300px;padding:12px 14px 14px;animation-delay:.08s}
+
+#leftPanel::-webkit-scrollbar{width:9px}
+#leftPanel::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:5px;border:2px solid transparent;background-clip:content-box}
+#leftPanel::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.24);border:2px solid transparent;background-clip:content-box}
+#leftPanel::-webkit-scrollbar-track{background:transparent}
+
+/* ---- title header ---- */
+.hd{margin:0 0 4px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.hd h1{margin:0;font-size:13px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--text-bright)}
+.hd .sub{margin:3px 0 0;font-size:10.5px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint)}
+
+/* ---- sections ---- */
+.sec{padding:12px 0;border-bottom:1px solid var(--line)}
+.sec:last-child{border-bottom:none;padding-bottom:2px}
+.sec h3{margin:0 0 8px;font-size:10.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--text-dim);display:flex;align-items:center;gap:8px}
+.sec h3::before{content:'';width:3px;height:11px;border-radius:2px;background:var(--accent);opacity:.85;flex:0 0 auto}
+
+/* ---- rows / labels / selects ---- */
+.row{display:flex;gap:8px;align-items:center;margin:6px 0}
+.row label{flex:0 0 80px;font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim)}
+.row select{
+  flex:1;min-width:0;appearance:none;-webkit-appearance:none;
+  background-color:rgba(255,255,255,.045);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238a94a0' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 9px center;background-size:10px 6px;
+  border:1px solid rgba(255,255,255,.1);border-radius:6px;
+  color:var(--text);font-family:var(--font);font-size:12px;
+  padding:7px 26px 7px 10px;cursor:pointer;outline:none;
+  transition:border-color .15s ease,box-shadow .15s ease,background-color .15s ease;
+}
+.row select:hover{border-color:rgba(255,255,255,.22);background-color:rgba(255,255,255,.07)}
+.row select:focus-visible{border-color:var(--accent-line);box-shadow:0 0 0 3px var(--accent-soft)}
+
+/* ---- buttons ---- */
+.panel .row button,.panel .seg button{
+  flex:1;min-width:0;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:6px;
+  color:var(--text);font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:.02em;
+  padding:7px 10px;cursor:pointer;outline:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  transition:background-color .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease;
+}
+.panel .row button:hover,.panel .seg button:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.24);color:var(--text-bright)}
+.panel .row button:focus-visible,.panel .seg button:focus-visible{border-color:var(--accent-line);box-shadow:0 0 0 3px var(--accent-soft)}
+.panel button:active{transform:translateY(1px)}
+.panel button.on{
+  background:var(--accent-soft);border-color:var(--accent-line);color:#bfe8e0;
+  box-shadow:inset 0 0 0 1px rgba(79,179,164,.12),0 0 12px rgba(79,179,164,.08);
+}
+
+/* ---- segmented view toggles ---- */
+.seg{display:grid;grid-template-columns:auto 1fr;margin-top:2px}
+.seg button{border-radius:0;font-size:11.5px;padding:7px 8px}
+.seg button:first-child{border-radius:6px 0 0 6px;border-right-color:rgba(255,255,255,.07)}
+.seg button:last-child{border-radius:0 6px 6px 0;border-left:none}
+.seg button.on:first-child{border-right-color:var(--accent-line)}
+
+/* ---- keyboard hint chips ---- */
+.hint{display:flex;align-items:center;gap:9px;margin:5px 0;color:var(--text-faint);font-size:11.5px}
+.hint kbd{
+  min-width:20px;text-align:center;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-bottom-width:2px;border-radius:4px;
+  padding:2px 6px;font-family:var(--font);font-size:9.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);
+}
+.hint span{letter-spacing:.02em}
+
+/* ---- bottom status bar ---- */
+#stat{
+  position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:10;
+  background:var(--glass);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  border:1px solid var(--glass-border);border-radius:999px;
+  box-shadow:0 6px 20px rgba(0,0,0,.35);
+  padding:7px 18px;font-size:10.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--text-dim);white-space:nowrap;
+}
+
+/* ---- error toast (console line) ---- */
+#err{
+  position:fixed;bottom:58px;left:50%;transform:translateX(-50%);z-index:20;max-width:60vw;
+  background:rgba(38,18,21,.88);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  border:1px solid rgba(200,96,96,.35);border-left:3px solid #c86060;border-radius:6px;
+  box-shadow:0 10px 28px rgba(0,0,0,.45);
+  padding:8px 14px;font-family:ui-monospace,'SF Mono',Menlo,Consolas,'Liberation Mono',monospace;
+  font-size:11px;line-height:1.5;color:#e2a4a4;white-space:pre-wrap;
+  animation:panelIn .3s ease both;
+}
+#err:empty{display:none}
 </style></head>
 <body>
 <canvas id="c"></canvas>
-<div class="hud"><b>WITCH HUNTER 3D - ARSENAL &amp; CHARACTER VIEWER</b><br>
-drag orbit / scroll zoom / rotate toggle<br>
-equip weapons (right hand), shields (left hand), helm/hood/chest on body slots</div>
-<div id="stat">loading assets...</div>
 <div class="panel" id="leftPanel">
- <h3>CHARACTER</h3>
- <div class="row"><label>body</label><select id="selBody"><option value="">- none -</option></select></div>
- <h3>ARMOR SLOTS</h3>
- <div class="row"><label>head</label><select id="selHead"><option value="">- none -</option></select></div>
- <div class="row"><label>chest</label><select id="selChest"><option value="">- none -</option></select></div>
- <div class="row"><button id="btnHead">equip</button><button id="btnChest">equip</button></div>
+ <header class="hd">
+  <h1>Witch Hunter 3D</h1>
+  <p class="sub">Arsenal &amp; Character Viewer</p>
+ </header>
+ <section class="sec">
+  <h3>Character</h3>
+  <div class="row"><label>body</label><select id="selBody"><option value="">- none -</option></select></div>
+ </section>
+ <section class="sec">
+  <h3>Armor Slots</h3>
+  <div class="row"><label>head</label><select id="selHead"><option value="">- none -</option></select></div>
+  <div class="row"><label>chest</label><select id="selChest"><option value="">- none -</option></select></div>
+  <div class="row"><button id="btnHead">equip</button><button id="btnChest">equip</button></div>
+ </section>
+ <section class="sec">
+  <h3>Weapons</h3>
+  <div class="row"><label>right hand</label><select id="selRH"><option value="">- empty -</option></select></div>
+  <div class="row"><label>left hand</label><select id="selLH"><option value="">- empty -</option></select></div>
+  <div class="row"><button id="btnRH">equip</button><button id="btnLH">equip</button></div>
+ </section>
+ <section class="sec">
+  <h3>Controls</h3>
+  <div class="hint"><kbd>drag</kbd><span>orbit the camera</span></div>
+  <div class="hint"><kbd>scroll</kbd><span>zoom in / out</span></div>
+  <div class="hint"><kbd>view</kbd><span>toggle auto-rotate &amp; texel filter</span></div>
+ </section>
 </div>
 <div class="panel" id="rightPanel">
- <h3>WEAPONS</h3>
- <div class="row"><label>right hand</label><select id="selRH"><option value="">- empty -</option></select></div>
- <div class="row"><label>left hand</label><select id="selLH"><option value="">- empty -</option></select></div>
- <div class="row"><button id="btnRH">equip</button><button id="btnLH">equip</button></div>
- <h3>VIEW</h3>
- <div class="row"><button id="btnRot">rotation ON</button><button id="btnRaw">texture: PIXELATED</button></div>
+ <section class="sec" style="border-bottom:none;padding:0">
+  <h3>View</h3>
+  <div class="seg">
+   <button id="btnRot" class="on">rotation ON</button><button id="btnRaw" class="on">texture: PIXELATED</button>
+  </div>
+ </section>
 </div>
+<div id="stat">loading assets...</div>
 <div id="err"></div>
 <script>/*THREE_JS_PLACEHOLDER*/</script>
 <script>/*ORBIT_CONTROLS_PLACEHOLDER*/</script>
@@ -219,10 +336,11 @@ document.getElementById('btnHead').onclick = function(){ equipTo('head', documen
 document.getElementById('btnChest').onclick = function(){ equipTo('chest', document.getElementById('selChest').value); };
 document.getElementById('btnRH').onclick = function(){ equipTo('rh', document.getElementById('selRH').value); };
 document.getElementById('btnLH').onclick = function(){ equipTo('lh', document.getElementById('selLH').value); };
-document.getElementById('btnRot').onclick = function(){ autoRot = !autoRot; this.textContent = 'rotation ' + (autoRot ? 'ON' : 'OFF'); };
+document.getElementById('btnRot').onclick = function(){ autoRot = !autoRot; this.textContent = 'rotation ' + (autoRot ? 'ON' : 'OFF'); this.classList.toggle('on', autoRot); };
 document.getElementById('btnRaw').onclick = function(){
   texMode = texMode === 'pixelated' ? 'raw' : 'pixelated';
   this.textContent = 'texture: ' + texMode.toUpperCase();
+  this.classList.toggle('on', texMode === 'pixelated');
   loaded = {};
   setBody(bodyName);
   // re-equip current selections in new texture mode
