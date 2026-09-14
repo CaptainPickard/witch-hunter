@@ -911,3 +911,33 @@ New opens from this pass (logged in doc 39 Part 6):
     names pending Nicko: doc 39 pass.
 42. Crossbow subclass existence (doc 33 Archery row assumes bows):
     unaddressed: doc 39 pass.
+
+## WILDERNESS ENCOUNTER PASS (2026-09-14, doc 41)
+
+Doc 41-wilderness-encounters.md authored (IO, in-session): the overworld's
+notable encounter layer, the living gaps between holds. Nicko's three
+rulings locked in session 2026-09-14: full concept doc authored now with
+all eight families PROPOSED (doc 37 pattern, line-by-line review); site
+state inherits doc 37's Cleared-Wound and Vacuum rules wholesale with a
+light state readable from outside; density 8-12 notable sites per hold
+region.
+
+Parts: session rulings, conventions, density and distribution, Part 1
+eight families (dens and lairs, hidden holy and tainted places,
+wayfinding threads, road life, ruins and pre-Fall landmarks, riches
+sites, one-off wanders, war scars), Part 2 site state (five overworld
+light states), Part 3 per-biome family mixes, Part 4 discovery economy
+(tier 0-3). Status: PROPOSED pending Nicko line-by-line review.
+
+New opens from this pass (logged in doc 41):
+43. Beast den repopulation vs habitat drift under the Cleared-Wound
+    rule: where new dens come from, whether a species ever returns:
+    doc 41 with doc 37 open 15.
+44. Wayfinding site ownership (faction-claimable via conquest vs
+    terrain-fixed neutral): doc 41 with doc 13.
+45. Road-life spawn budgets and collision rules with doc 34 night
+    ambush caps: doc 41 with doc 34.
+46. Wanderer authoring pass (the 15-20 continent set pieces) at GDD
+    stage: doc 41.
+47. Blight wayfinding exception (one special shelter type vs
+    provisioning as the whole answer): doc 41 with doc 03.

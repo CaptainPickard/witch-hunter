@@ -1105,3 +1105,36 @@ feature-by-feature implementation against the GDD.
     authored on the locked base. Parts: material ladder, 9x5 catalog,
     sourcing matrix, gem system, weapon ingredient map, opens 1-6.
     Status: PROPOSED pending Nicko lock.
+
+83. ARMOR TIER CATALOG AND MATERIAL SOURCING (2026-09-14, Nicko,
+    spec in doc 40): armor-side catalog parallel to doc 39. Rulings
+    locked in session 2026-09-14: (1) FULL CATALOG, 3 weight classes x
+    5 tiers x 4 slots authored now, 60 per-piece names (New World
+    style, not set names), armor values derive from doc 33 formulas,
+    no new math; (2) HEAVY LADDER, heavy primary is the metal plate
+    ladder (iron/silvered/steel/cold iron/blacksteel), doc 38's T4
+    wyrm-leather heavy row superseded, wyrm-leather PROPOSED as T4-T5
+    light/medium alternative; (3) NAMING, per-piece; (4) DROP FORMAT,
+    mirrors doc 39 (bands + named sources + anchors AR1-AR3, AR1 = 0
+    percent random Named); (5) ALL-CRAFTABLE CHECK: craftable armor
+    spans T1-T5 (doc 05 principle + doc 38 T5 precedent), relic armor
+    pieces are the Named exceptions. Parts: material ladders (hides,
+    metals, cloth), 3x5x4 catalog, sourcing matrix (region bands,
+    dungeon weighting, vendor families), ingredient map, New World
+    quality path (tier up = new craft, grade via secondaries, station
+    ceiling, wards), relic armor section, opens 1-6.
+    Status: PROPOSED pending Nicko lock.
+84. WILDERNESS ENCOUNTER LAYER (2026-09-14, Nicko, spec in doc 41):
+    the overworld's notable encounter sites, the living gaps between
+    holds. Rulings locked in session 2026-09-14: (1) PATH, full
+    concept doc authored now, all eight families PROPOSED, line-by-
+    line review (doc 37 pattern); (2) SITE STATE, inherits doc 37's
+    Cleared-Wound and Vacuum rules wholesale, light state readable
+    from outside; (3) DENSITY, 8-12 notable sites per hold region.
+    Parts: session rulings, conventions, density/distribution, eight
+    families (dens, hidden places, wayfinding, road life, ruins,
+    riches, one-off wanders, war scars), site state (five light
+    states), per-biome family mixes, discovery economy (tier 0-3),
+    opens 1-5 (tracker 43-47).
+    Status: PROPOSED pending Nicko lock.
+
