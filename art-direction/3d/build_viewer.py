@@ -34,7 +34,7 @@ assert 'THREE.GLTFLoader = GLTFLoader' in gltf, 'gltf loader not found'
 
 # 2. build ASSETS registry with base64 pixelated GLBs
 # cat = the category the UI selects filter on; slots = equip destinations
-CATS = {'races': 'races', 'weapons': 'weapons', 'armor': 'armor', 'church-kit': 'props', 'graveyard': 'props'}
+CATS = {'races': 'races', 'weapons': 'weapons', 'armor': 'armor', 'church-kit': 'props', 'graveyard': 'props', 'crypt': 'props'}
 HEAD_PIECES = {'light-court-helm', 'dark-court-helm', 'shadow-court-hood'}
 CHEST_PIECES = {'light-court-chest', 'dark-court-breastplate', 'undead-husk-armor'}
 HAND_PIECES = {'longsword', 'greatsword', 'hand-axe', 'war-mace', 'halberd', 'dagger',

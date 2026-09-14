@@ -179,8 +179,9 @@ function sizeRenderer(){
   if(camera){ camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix(); }
 }
 var scene = new THREE.Scene();
-scene.background = new THREE.Color(0x39424c);
-scene.fog = new THREE.FogExp2(0x39424c, 0.018);
+// crypt register (2026-09-14): midnight-blue void + blue fog per reference
+scene.background = new THREE.Color(0x0a0e16);
+scene.fog = new THREE.FogExp2(0x0a0e16, 0.055);
 var camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.05, 100);
 camera.position.set(1.6, 1.4, 3.2);
 sizeRenderer(); addEventListener('resize', sizeRenderer);
@@ -197,12 +198,98 @@ controls.target.set(0, 1.0, 0);
 // gentle keys). The old rig's strong directional contrast read as harsh
 // per-triangle black/bright patches on the faceted mesh. Pixel-verified:
 // 91.8% of figure pixels in the 42-88 readable band, <1% crushed/clipped.
-var key = new THREE.PointLight(0x9ab8c8, 1.2, 14); key.position.set(-1.0, 1.6, 1.6); scene.add(key);
-var moon = new THREE.DirectionalLight(0xc8d8e8, 1.1); moon.position.set(2, 4, 1.5); scene.add(moon);
-var rim = new THREE.DirectionalLight(0x8aa4b4, 1.1); rim.position.set(-2, 2, -3); scene.add(rim);
-scene.add(new THREE.AmbientLight(0xf0f2f4, 3.4));
-var floor = new THREE.Mesh(new THREE.CircleGeometry(8, 40), new THREE.MeshStandardMaterial({color:0x4a5560, roughness:1}));
+// crypt light rig: ghostly blue chandelier glows + cool ambient fill
+var key = new THREE.PointLight(0x8fb4e8, 1.4, 14); key.position.set(-1.0, 1.6, 1.6); scene.add(key);
+var moon = new THREE.DirectionalLight(0xa8c0e8, 1.0); moon.position.set(2, 4, 1.5); scene.add(moon);
+var rim = new THREE.DirectionalLight(0x6a8ab8, 1.2); rim.position.set(-2, 2, -3); scene.add(rim);
+var back = new THREE.DirectionalLight(0xb8d0f0, 1.0); back.position.set(0.5, 2.5, -4); scene.add(back);
+scene.add(new THREE.AmbientLight(0x8898b0, 2.2));
+var floor = new THREE.Mesh(new THREE.CircleGeometry(12, 40), new THREE.MeshStandardMaterial({color:0x0b0d12, roughness:1, metalness:0}));
 floor.rotation.x = -Math.PI/2; floor.position.y = -0.01; scene.add(floor);
+
+// CRYPT SCENE (2026-09-14): dark crypt diorama behind/around the character,
+// per user reference - ghostly blue chandeliers, carved pillars, sarcophagi,
+// skull piles, stone steps. Props are regular ASSETS entries (cat 'props')
+// loaded via the same data-URI path and placed procedurally. The crypt
+// replaces the plain floor disc visually but keeps it as the ground plane
+// (the character stands at origin on it either way).
+var CRYPT_PROPS = ['gothic-chandelier','carved-pillar','stone-sarcophagus','skull-pile','stone-steps',
+                   'church-archway','church-altar','church-corner-buttress','church-pew-broken',
+                   'candelabra','rubble-pile','buried-coffin','gravestone-obelisk','iron-fence-section'];
+var cryptGroup = new THREE.Group();
+var cryptPending = 0;
+function placeCryptProp(name, pos, rotY, scale, cb){
+  if(!ASSETS[name]){ return; }
+  loadB64(ASSETS[name].url.slice(ASSETS[name].url.indexOf('base64,') + 7), function(scene_){
+    scene_.traverse(function(o){
+      if(o.isMesh && o.material){ o.material.side = THREE.DoubleSide; }
+    });
+    var box = new THREE.Box3().setFromObject(scene_);
+    var size = box.getSize(new THREE.Vector3());
+    var s = (scale || 1) * (size.y > 0 ? 1/size.y : 1);
+    scene_.scale.set(s, s, s);
+    var center = box.getCenter(new THREE.Vector3());
+    scene_.position.set(-center.x*s, -box.min.y*s, -center.z*s);
+    var wrap = new THREE.Group();
+    wrap.add(scene_);
+    wrap.position.set(pos[0], 0, pos[2] || 0);
+    if(rotY) wrap.rotation.y = rotY;
+    cryptGroup.add(wrap);
+    if(cb) cb();
+  });
+}
+function buildCrypt(){
+  if(cryptBuilt) return; cryptBuilt = true;
+  // pillars flanking a center aisle (2 pairs, tall ~4.5 scaled)
+  placeCryptProp('carved-pillar', [ 2.6, 0, -2.5], 0, 4.5);
+  placeCryptProp('carved-pillar', [-2.6, 0, -2.5], 0, 4.5);
+  placeCryptProp('carved-pillar', [ 3.4, 0, -5.5], 0, 4.5);
+  placeCryptProp('carved-pillar', [-3.4, 0, -5.5], 0, 4.5);
+  // grand archway at the back center
+  placeCryptProp('church-archway', [0, 0, -7.5], 0, 3.2);
+  // chandeliers hanging above the aisle (y set after load)
+  placeCryptProp('gothic-chandelier', [ 1.5, 0, -3.2], 0.4, 1.4, function(){
+    var c = cryptGroup.children[cryptGroup.children.length-1];
+    c.position.y = 3.4; c.scale.set(0.9,0.9,0.9);
+    var glow = new THREE.PointLight(0x7aa0d8, 1.1, 9); glow.position.set(1.5, 3.4, -3.2); scene.add(glow);
+  });
+  placeCryptProp('gothic-chandelier', [-1.5, 0, -6.0], 0.9, 1.4, function(){
+    var c = cryptGroup.children[cryptGroup.children.length-1];
+    c.position.y = 3.6; c.scale.set(0.9,0.9,0.9);
+    var glow = new THREE.PointLight(0x7aa0d8, 1.1, 9); glow.position.set(-1.5, 3.6, -6.0); scene.add(glow);
+  });
+  // sarcophagus + coffin flanking, skull piles near the base
+  placeCryptProp('stone-sarcophagus', [-3.9, 0, -1.2], 0.5, 1.0);
+  placeCryptProp('buried-coffin', [ 3.9, 0, -1.4], -0.4, 0.9);
+  placeCryptProp('skull-pile', [ 2.3, 0, -0.9], 0.2, 0.35);
+  placeCryptProp('skull-pile', [-2.0, 0, -1.6], 1.2, 0.3);
+  placeCryptProp('skull-pile', [ 0.0, 0, -2.2], 2.2, 0.25);
+  // church accents: altar at back, broken pews, rubble, candelabra
+  placeCryptProp('church-altar', [0, 0, -10.5], 0, 2.0);
+  placeCryptProp('church-pew-broken', [-4.6, 0, -3.0], 1.57, 1.2);
+  placeCryptProp('church-pew-broken', [ 4.6, 0, -3.2], 1.57, 1.2);
+  placeCryptProp('candelabra', [ 3.2, 0, -6.4], 0, 0.9, function(){
+    var glow = new THREE.PointLight(0x7aa0d8, 0.8, 5); glow.position.set(3.2, 1.2, -6.4); scene.add(glow);
+  });
+  placeCryptProp('candelabra', [-3.2, 0, -8.6], 0, 0.9, function(){
+    var glow = new THREE.PointLight(0x7aa0d8, 0.8, 9); glow.position.set(-3.2, 1.2, -8.6); scene.add(glow);
+  });
+  placeCryptProp('rubble-pile', [ 4.6, 0, -5.8], 0.7, 0.8);
+  placeCryptProp('rubble-pile', [-4.8, 0, -4.6], 2.1, 0.7);
+  // stone steps up to the archway
+  placeCryptProp('stone-steps', [0, 0, -8.8], 0, 2.4);
+  scene.add(cryptGroup);
+}
+var cryptBuilt = false;
+var cryptLoaded = 0;
+function loadCrypt(){
+  if(cryptLoading) return; cryptLoading = true;
+  var pending = CRYPT_PROPS.filter(function(n){ return ASSETS[n]; }).length;
+  CRYPT_PROPS.forEach(function(n){ if(!ASSETS[n]) return;
+    loadB64(ASSETS[n].url.slice(ASSETS[n].url.indexOf('base64,') + 7), function(){ cryptLoaded++; if(cryptLoaded >= pending){ buildCrypt(); } });
+  });
+}
+var cryptLoading = false;
 
 function loadB64(b64, cb){
   var bin = Uint8Array.from(atob(b64), function(c){ return c.charCodeAt(0); });
@@ -355,7 +442,7 @@ function fillSelect(sel, cats){
   });
 }
 
-document.getElementById('selBody').onchange = function(){ setBody(this.value); };
+document.getElementById('selBody').onchange = function(){ setBody(this.value); loadCrypt(); };
 document.getElementById('btnHead').onclick = function(){ equipTo('head', document.getElementById('selHead').value); };
 document.getElementById('btnChest').onclick = function(){ equipTo('chest', document.getElementById('selChest').value); };
 document.getElementById('btnRH').onclick = function(){ equipTo('rh', document.getElementById('selRH').value); };
