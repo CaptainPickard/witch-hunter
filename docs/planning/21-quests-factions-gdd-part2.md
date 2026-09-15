@@ -90,6 +90,13 @@ corruption-kit model; the 36-menu ladder idea is SUPERSEDED)
 3. The Default Notice: the throne's own panic becomes legible.
 4. The Signer's Alternative (cross-path hook; Mercy sect route exists
    for light players who befriend the Wardens).
+   [RE-DERIVED 2026-09-14, story audit D1: the "alternative" is the
+   Signer's SNARE in the dark line too: the Wardens' archive
+   fragment, the truth-shaped trap, offered by the con's author to a
+   debt-aware player. Full text and the Unsigning re-frame live in
+   chain F below; chain G's mid-ritual reveal can catch her off
+   guard because this is the one bridge the con's author personally
+   baited. Beat content unchanged; framing corrected post-identity.]
 5. THE BANKRUPTCY: the doc 13 comeback event fires; the player lives
    the debt default they uncovered.
 
@@ -164,6 +171,11 @@ supply, curse-lift, relic-hunt, parish-work. Expanded later.
 - Every spine chain has a FAILURE STATE that continues the game
   (a failed court line closes that court's unique rewards, never the
   game; a failed wolf trial can be retried after a season).
+  [AMENDED 2026-09-14, story audit N2, baked in doc 44 Part 4: DOOR
+  1 of the unite-quest is the one exception: its refusal changes the
+  PATH (siege re-kindling or hostile deployment), not just the
+  payoff; the neutral line's progression-safety sentence names that
+  exception.]
 
 ## Open Questions (assigned per tracker rules)
 

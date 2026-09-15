@@ -163,11 +163,19 @@ survive the others.
   IS her trust ladder). The underworld capital remains the eighth
   SEAT (her residence and the banner's muster), not an eighth
   faction. She grants the Third Path unite-quest.
-  she keeps the name THE PALE QUEEN, and when the player meets her
-  toward the START of the main neutral questline she is the leader
-  of ONE of the seven underground factions (Part 4's roster); her
-  plan is to unite the other SIX under one banner, and she needs the
-  player's help to do it. She grants the Third Path unite-quest.
+  WHY-NOW (BAKED 2026-09-14, story audit N5): her trigger is the
+  debt's escalation cycle nearing another terminal band: she can
+  read the war's economics bending toward a default or a forced
+  victory, either ending in a continent neither court survives.
+  Layered with the guilt engine (she was in the room, she said
+  nothing for 400 years, the unite-quest is her late repayment).
+  The quest fires now because the player, a six-times-refused
+  unknown whose hands are clean of both courts, is the first actor
+  her four-century-old clue ever fit.
+  [SUPERSEDED 2026-09-14, story audit N1 / Part 7 ruling 4: the
+  "leader of ONE of the seven / unite the other SIX" framing that
+  stood here is superseded by the UPDATE paragraph above; retained
+  in doc 45 for provenance only.]
 - PUBLIC FACE (underworld): a patient, courtly power broker with no
   banner and no demands; the one figure every smuggler, mercenary,
   and thief respects and none can name the limits of.
@@ -378,8 +386,14 @@ Deep Altar sits relative to it: PROPOSED at the world GDD pass.
 
 - DOOR 1, THE HIDDEN COURT (the leash problem): they owe the Signer
   their survival and serve her leash. Aligning them requires the
-  player to learn the leash's holder is the light queen, which is a
-  MID-QUEST TRUTH (the unite-quest forces the first big reveal).
+  player to learn the leash's holder serves the lie (BAKED
+  2026-09-14, story audit N3, two-stage reveal): mid-quest the
+  player proves the Signer is false and the underworld's ace is
+  held by the Fall's author, enough for the Court's trial-law trust
+  and the expose/re-key choice; the identity link (Signer = Queen
+  Maren = the witch) stays locked to the neutral finale's
+  unmasking. The first big reveal is the mask's falsity, not its
+  face.
   Route: earn the Court's trial-law trust (doc 19), witness the
   leash's proof, choose: expose the Signer to the Court (they defect;
   the witch learns she is being hunted) or secretly re-key the leash
@@ -443,7 +457,13 @@ standing generalized); each door has a trust chain of 3-5 beats
 (quest-GDD authored); each door's final beat is a CHOICE that costs
 something real (a reveal, a betrayal, a payment, a protection);
 refusing a door's cost closes that door's unique contribution at the
-final battle but never the game (progression-safety, doc 21). The
+final battle but never the game (progression-safety, doc 21), with
+ONE exception named by the story audit (BAKED 2026-09-14, finding
+N2): DOOR 1, whose refusal changes the PATH, not just the payoff.
+Door 1's two failure flavors: cost refused but leash truth known =
+the ace fights the player at the altar threshold (a siege version
+of the re-kindling); leash truth never learned = the Court deploys
+hostile at the re-kindling itself (open question 4's ruling). The
 doors are orderable in play except Door 1 (Hidden Court), which
 requires the leash truth, which requires either Door 2's archive
 progress or a dark-court debt discovery arc.
@@ -484,9 +504,13 @@ content, PROPOSED numbers stay GDD tuning.
 
 ### DARK CHAIN: THE FORECLOSURE (both engines stacked, ruling 1)
 
-Trigger: the debt discovery arc (doc 21 chain D) crossed its
-threshold AND the dark court is losing the war (doc 13 counterweight
-state). Two pressures run together:
+Trigger (AMENDED 2026-09-14, story audit D4): the debt discovery
+arc (doc 21 chain D) crossed its threshold AND the default clock
+runs on doc 20's FULL FUSE (war state AND elapsed time): the
+arrears escalate on a schedule the player's victories only slow.
+A competent dark player still hits the Foreclosure in the late
+window: conquest pays but never catches the clock (the whole
+court's tragedy in one mechanic). Two pressures run together:
 
 - THE DEFAULT CLOCK (the court's desperation): the losing court
   accelerates toward the bankruptcy ritual (doc 13's locked comeback
@@ -506,6 +530,11 @@ state). Two pressures run together:
   the player lives the debt default they uncovered, and chooses:
   serve the ritual, stop it, or redirect it (the Lich King chain's
   escape-the-ledger gambit rides here as the dark apex fork).
+  STOP-RITUAL DEFINED (BAKED 2026-09-14, story audit D4): halting
+  the default dooms the court's war effort; the dark player's
+  endgame becomes a FIGHTING-RETREAT ENDING, not the New Capital
+  regicide, the chain's authored failure state (doc 21
+  progression-safety addendum).
 
 ### LIGHT CHAIN: THE HERESY (the institution turns, ruling 3)
 
@@ -544,13 +573,24 @@ comeback against the neutral world; the demon invasion is the dark
 bankruptcy's flood; the Blessed Host is the light court's surge:
 three comebacks, one farmer.)
 
-### CROSS-POLLINATION (ruling 5, locked)
+### CROSS-POLLINATION (ruling 5, locked; AMENDED 2026-09-14, story
+audit N4, Nicko: SILO AMENDED)
 
-SILOED PER AFFINITY. The Foreclosure's fragments and the Heresy
-arc's fragments stay single-line until the neutral ending assembles
-them (doc 36's three-reveals structure stands unchanged; the sigils-
-match-court wall stays the dark line's deepest standing, the debt
-ledger stays findable only in its own chain). Cross-playthrough
+SILOED PER AFFINITY, WITH THE AMENDED READING BAKED HERE: court-line
+APEX chains stay single-line (the dark player's sigil-wall and the
+light player's confrontation remain their own chains' content); the
+neutral run reads the other chains' SHADOWS through the underworld
+doors: the dark fragment from smuggler/broker intel plus the debt's
+underworld economics (the Pale Queen's SUSPECTS row made diegetic),
+the light fragment from the Warden archive's contradictory versions
+plus compulsion evidence a hunted outsider can gather (the king's
+lists, the cold Sun altar reading). The Foreclosure's fragments and
+the Heresy arc's fragments stay single-line until the neutral ending
+assembles them (doc 36's three-reveals structure stands unchanged;
+the sigils-match-court wall stays the dark line's deepest standing;
+the debt ledger's apex route stays its own chain, while its
+UNDERWORLD-ECONOMICS shadow is the neutral line's route to the dark
+fragment). Cross-playthrough
 knowledge, not single-run assembly, teaches the whole shape; NG+
 carries the player's knowledge, never the character's (doc 36's
 locked NG+ asymmetry).
@@ -569,8 +609,8 @@ beat-by-beat authoring); everything below is DESIGN LOCK.
   (doc 22's debt-default trigger quest) that takes the orc city
   cracks the old borderlands' pact-seals: the invasion fires as a
   CONSEQUENCE OF VICTORY. Winning the deep raid summons the flood.
-- THE HOLY BATTLE, LIGHT-SIDE WILDCARD (locked): when the light
-  court's fortunes collapse, the Blessed Host arrives as THE
+- BLESSED HOST TRIGGER (ruling 4): the light court's fortunes
+  collapse, the Blessed Host arrives as THE
   RESURRECTION OF PALADINS ACROSS THE LAND: fallen paladins rise in
   their own barrows and chapels continent-wide and march. Per Part
   5B it is the witch's surge (salvation in effect, harvest in
@@ -601,12 +641,26 @@ total: KILL THE KING AND QUEEN OF THE OPPOSITE SIDE.
   thrust into darkness, and NG+ begins. The confusion is the design:
   the player never knew the whole story, and the ending reads wrong
   without it (doc 36's "a victory that serves her" made mechanical).
-  QUEEN FATES IN THE COURT ENDINGS (PROPOSED for quest GDD): the
-  winning side's queen survives the regicide (the dark queen outlives
+  QUEEN FATES IN THE COURT ENDINGS (PROPOSED for quest GDD; scope
+  clarified 2026-09-14, story audit L1): the outlives-the-fall line
+  describes only the UNEXPOSED PATH (the majority light run where
+  the reveal arc's evidence never clears her wards): the winning
+  side's queen survives the regicide (the dark queen outlives
   her king's fall; Queen Maren outlives the New Capital's fall), the
-  machine simply continues under the survivor.
+  machine simply continues under the survivor. The light reveal
+  arc's expose/depose/kill outcomes are the light ending's CHOICE
+  BEATS, each with its own consequence line (quest GDD); the
+  constant is that in every fork the machine survives her (the
+  Church's hands carry it, doc 36's "changes nothing" ruling); only
+  the face differs.
 
 ### THE NEUTRAL TRUE ENDING (locked sequence)
+
+Last Dance trigger (BAKED 2026-09-14, story audit N11): TWO-STAGE,
+stated once: the altar's lighting (the Deep Altar's re-kindling)
+STARTS the working; the dark king's death COMMITS her to it. Both
+source rulings (doc 36 ruling 2's altar trigger and Part 5C's
+rides-the-final-battle placement) survive; the order is authored.
 
 The only line where the real final boss is fought: TAKE OUT THE DARK
 ELF KING FIRST (the underworld's united banner does the work the
@@ -786,6 +840,10 @@ Open questions:
    the Pale Queen's assembly MID-QUESTLINE and counters (the
    disguised purges of neutral dens fire during the quest, not only
    at the endgame).
-6. [08 TRACKER] RESOLVED 2026-09-14 (Nicko): SEVEN DOORS + altar
-   confirmed (brokers keep their own door; their unique intel role
-   justifies it).
+6. [08 TRACKER] SUPERSEDED 2026-09-14 (story audit N1, Nicko ruling
+   4): SEVEN DOORS is superseded; the door roster is SIX (Hidden
+   Court, Wardens, mercenaries, smugglers, thieves, bandit camps),
+   the brokers are the Pale Queen's own faction (Part 1 entry 5's
+   UPDATE), and the underworld capital stays the eighth SEAT, not an
+   eighth faction. The brokers' unique intel role now pays through
+   her introduction rather than a separate door.

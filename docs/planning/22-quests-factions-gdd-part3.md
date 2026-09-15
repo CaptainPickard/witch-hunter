@@ -217,13 +217,17 @@ ruling above; for discussion with Nicko; not locked)
 The pre-Fall state answers what each race WAS when there was one
 crown (doc 19: the Solar Throne, sole ruler of the continent), with
 the pre-Fall MAIN CONFLICT being the realm's war against the orc
-scourge (Nicko ruling above).
+scourge. (The "Devil's early creation" framing in the ruling above
+is IN-WORLD MYTH per the 2026-09-14 retcon, story audit D3; see the
+bracket there.)
 
 - THE AGE OF THE SUN: the elven Solar Throne reigned; the three
   altars (Sun, Veil, Deep, doc 19) kept ceremonial balance. DEATH
   WAS FINAL: no undead existed. NO VAMPIRES existed. The world's
-  dangers were the ORC SCOURGE (doc 19 ruling: the Devil's early
-  creation, nearly mindless brutes, the pre-Fall enemy) plus
+  dangers were the ORC SCOURGE (origin reattributed 2026-09-14,
+  story audit D3: the "Devil's early creation" doctrine is the
+  witch's manufactured myth; the scourge itself is real and
+  pre-Fall), plus
   natural dangers (beasts, the wild wolf strain, war).
 - ELVES: the throne's race: court, priesthood, and altar-wardens.
   The Fall split the elven race into the Veil lines (who drank the
@@ -244,8 +248,10 @@ scourge (Nicko ruling above).
   a dwarven foundation warm. Post-Fall: their UNDERGROUND CITY
   (locked above) is the light court's minor city, the forge-city
   that anchors the light court's war industry.
-- ORCS: REVISED (Nicko ruling above): the Devil's early creation,
-  nearly mindless brutes made to conquer the mortal world, the
+- ORCS: REVISED (Nicko ruling above) then RETCONNED 2026-09-14
+  (story audit D3): the "Devil's early creation" origin is in-world
+  myth the witch manufactured or absorbed (see the bracket in the
+  Great Cities section); the race itself is real, pre-Fall, and the
   pre-Fall main enemy of men, elves, and dwarfs. Post-Fall they
   sided with the dark court and have become more sophisticated:
   their own towns, trade, cities (the orc city, locked above),
@@ -289,9 +295,12 @@ scourge (Nicko ruling above).
   ruling: since no cure exists, a strain is exited only by dying
   into the next line, so re-taking the SAME strain means dying back
   into it, which is allowed but costs the exit event each time.
-- Orc origin: RESOLVED (Great Cities section above): the Devil's
-  early creation, the pre-Fall scourge, now civilized under the
-  dark court.
+- Orc origin: RESOLVED (Great Cities section above) then
+  RETCONNED 2026-09-14 (Nicko, story audit D3, bracket in the Great
+  Cities section): the "Devil's early creation" origin is IN-WORLD
+  MYTH the witch manufactured or absorbed; orcs predate the Fall as
+  a race but NOT the pact. See the RETCON bracket there; this
+  resolution line survives as provenance.
 
 ## Open Questions (assigned per tracker rules)
 1. Vampire/undead line stage-by-stage detail (dialogue, set pieces):
