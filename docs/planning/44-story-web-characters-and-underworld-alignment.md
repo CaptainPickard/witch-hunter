@@ -688,6 +688,67 @@ locked:
 - The light line executes her underworld purges unknowingly (tissue
   quests); the neutral playthrough reveals them.
 
+## PART 8 - THE ALTAR DELVES (locked by Nicko, 2026-09-14)
+
+The complexity correction. The altars were carrying the story's
+heaviest lore weight and the least gameplay weight; this section
+gives them their body. THE THREE ALTARS ARE THE ENDGAME DUNGEONS,
+one per affinity: long, perilous, multi-strata descents whose final
+chamber holds the altar itself. Completing the delve IS reaching the
+endgame's lever; what the player does at the bottom is the chain's
+true final act.
+
+### The delves
+
+- SUN ALTAR DELVE (light chain): beneath the New Capital. The
+  Sanctified Doubt chain's climax (chain H beat 3's cold altar is
+  the entry hook: the altar chamber reads wrong, the delve proves
+  why). Strata descend from the city's underbelly into the siphon
+  works: her machinery made physical, harvest lines, the taint
+  cisterns, the altar at the bottom, ALIVE and humming. THE ACT:
+  the player DESTROYS it (or severs it; final beat at quest GDD).
+- VEIL ALTAR DELVE (dark chain): the ruin beneath the Veil Spire,
+  ground zero of the Fall. The pact-scar's terms are legible in the
+  stone; the delve reads the debt the player already discovered.
+  THE ACT: destroying what remains of the Veil working at the
+  bottom, the court's one act of open defiance against the
+  creditor's machine.
+- DEEP ALTAR DELVE (neutral chain): the longest and most perilous
+  of the three, behind the Hidden Court's den (the wolf den IS its
+  door, doc 19). THE RE-KINDLING IS THE FINAL CHAMBER: fight your
+  way down, light the altar at the bottom. No abstract ceremony;
+  the delve replaces it.
+
+### THE LEVER RULE (locked: what the altar acts do)
+
+The altars are the witch's power taps. Destroying (light/dark) or
+re-kindling (neutral) one STRIPS HER HARVEST at its source, and
+striking the heart of the machine FORCES HER HAND:
+
+- LIGHT PATH: destroying the Sun altar cuts her tap at the light
+  capital. She cannot husband the farm quietly anymore: her forced
+  response is the machine's retaliation, the chaos escalation
+  (Part 5B/5C), and the regicide push proceeds under her hand.
+- DARK PATH: destroying the Veil ruin's remains angers her openly:
+  the creditor's mask drops its patience, the tithe escalation goes
+  brutal, the bankruptcy ritual's fork arrives early and hot.
+- NEUTRAL PATH: when the Deep Altar is found and re-kindled, THE
+  PALE QUEEN USES IT IN SOME CAPACITY TO RIVAL THE WITCH (locked):
+  the underworld finally has a counter-engine, a working altar
+  neither court can drain, and that rival power is what forces the
+  witch's last hand: the Last Dance (doc 36 ruling 2) fires because
+  the player's alliance holds a counter-engine and she can no
+  longer wait. Re-kindling and rivalling are one event: the delve's
+  final chamber is where the underworld's banner becomes the third
+  power in the war.
+
+Design contract: every affinity's chain now ends in a delve and a
+forced hand; the altars are no longer abstract lore, they are the
+physical endgame. Peril, layout, and boss-wardens per delve are
+quest/world GDD content; what is locked here is the SHAPE (each
+altar = a unique long dungeon = the chain's lever; lever pulled =
+witch's hand forced).
+
 Supersession edits to apply on Nicko's confirmation (docs 19/36 carry
 provisional notes already):
 1. Doc 36's title and the term "Pale Queen" as used for the light

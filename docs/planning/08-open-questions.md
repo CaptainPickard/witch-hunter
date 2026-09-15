@@ -1230,3 +1230,18 @@ This section records the batch.
     dark elf king first, then the final stand at the light capital
     against THE WITCH HERSELF, the real main boss. Status: DESIGN
     LOCK; beat authoring at quest GDD (docs 20-22).
+
+93. ALTAR DELVES (2026-09-14, Nicko, spec in doc 44 Part 8): the
+    complexity correction. The three altars are now the ENDGAME
+    DUNGEONS, one per affinity: long, perilous, multi-strata
+    descents, the altar chamber at the bottom. SUN under the New
+    Capital (light chain: the siphon works made physical; destroy or
+    sever the altar), VEIL ruin beneath the Veil Spire (dark chain:
+    destroy the Veil working's remains, the court's open defiance),
+    DEEP behind the Hidden Court's den (neutral chain: the
+    re-kindling IS the final chamber; the Pale Queen uses the
+    re-kindled altar to RIVAL the witch). LEVER RULE: the altar acts
+    strip her harvest at the source and FORCE HER HAND (retaliation
+    on light/dark, the Last Dance on neutral). Replaces the abstract
+    "Dead Altars"/re-kindling ceremony beats. Status: shape locked;
+    delve layouts/bosses at quest/world GDD.

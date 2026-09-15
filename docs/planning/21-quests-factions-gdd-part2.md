@@ -75,7 +75,12 @@ corruption-kit model; the 36-menu ladder idea is SUPERSEDED)
    trap mechanism, post-correction ownership: the trap is the
    WITCH's, planted through the Signer persona).
 5. The Deep Altar: re-kindling; the endgame war flips to the player's
-   third faction (doc 12/19's true ending machinery).
+   third faction (doc 12/19's true ending machinery). RE-ROLLED
+   (doc 44 Part 8): the re-kindling IS the final chamber of the DEEP
+   ALTAR DELVE, the longest and most perilous of the three altars,
+   behind the Hidden Court's den. Fight down, light the altar at the
+   bottom: no abstract ceremony. The Pale Queen uses the re-kindled
+   altar to rival the witch, which forces her last hand.
 
 ### D. The Debt Discovery Arc (dark court; doc 19's hidden truth)
 1. The Ugly Requisition: a dark-court contract visibly costs MORE
@@ -135,6 +140,13 @@ audit doc 45 finding L6; the light discovery chain, mirrors D's shape)
 4. The King's Private Lists: the compulsion's documented tremors.
 5. THE HERESY: the arc fires as the chain's climax (the witch's
    machine turns on the player: doc 44 Part 5B).
+6. THE SUN ALTAR DELVE (added 2026-09-14, doc 44 Part 8): the
+   chain's true final act. Descend beneath the New Capital into the
+   siphon works (long, perilous, multi-strata), the altar chamber at
+   the bottom, ALIVE and humming. Destroy or sever the Sun altar:
+   the lever that forces the witch's hand (doc 44 Part 8's lever
+   rule). The Heresy arc's aftermath and the delve are sequenced at
+   quest GDD.
 
 ## Frame Library First Pass (RESOLVED 2026-09-12, Nicko)
 8 templates at first pass: hunt, escort, clear-site, defense,
