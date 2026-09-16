@@ -272,7 +272,8 @@ every faction's protection.
 
 | Consequence line | Value (status) |
 |---|---|
-| Post-ending world state | The scar stays (doc 36 ruling 2, as 2.1). Free of the creditor, the curse's terms are hers to survive (doc 36 ruling 5): she walks outside every faction's protection, a mortal 400-year-old woman with all her memories. NG+ read PROPOSED: the exile is a world-seed with a walking 400-year-old mortal NPC in the population. |
+| Post-ending world state | The scar stays (doc 36 ruling 2, as 2.1). Free of the creditor, the curse's terms are hers to survive (doc 36 ruling 5): she walks outside every faction's protection, a mortal 400-year-old woman with all her memories. |
+| NG+ read | PROPOSED: the exile is a world-seed with a walking 400-year-old mortal NPC in the population. |
 | Faction standings | Wardens: discover their saint never existed AND the woman who deceived them walks free; their crisis doubles (doc 36 open 1). Militant: PROPOSED reads the spared life as unfinished business and a standing target. Mercy: PROPOSED flavor, records the sentence without comment. Dark court: PROPOSED post-war rump, queenless if her king fell first (he does; doc 44 Part 5C sequence), creditor-free and directionless. Her whereabouts stays a player-side secret (the sentence's secret rule stands). |
 | Who inherits the altars | PROPOSED: same disposition as 2.1's joint custody, the three altars dark-sealed under joint Warden-Hidden Court custody, neither faction trusting the other enough to hold them alone; the Sun altar stays the light court's relic site, the Veil ruin stays the dark court's defiance site, the Deep Altar stays behind the Hidden Court's den. No faction re-lights anything (re-kindling is dead content post-ending, PROPOSED). |
 | Spawn-table shifts | PROPOSED: chaos-aftermath colonizers per doc 37 vacuum rule (bandits, refugees, necromancers) settle the siege-scarred capitals at normal vacuum rates; no special endgame spawns; the scar regions read one doc 37 situation-state darker than their pre-siege baseline, as 2.1. |
@@ -289,7 +290,8 @@ distinct from the witch's Name in the Grave (doc 46 chain F block).
 
 | Consequence line | Value (status) |
 |---|---|
-| Post-ending world state | The scar stays (doc 36 ruling 2, as 2.1). She is handed to the Wardens' keeping, mortal and powerless, a charge of the order she deceived (locked, doc 36 ruling 5). NG+ read PROPOSED: the wardenship is a world-seed with her as a Warden-held mortal NPC. |
+| Post-ending world state | The scar stays (doc 36 ruling 2, as 2.1). She is handed to the Wardens' keeping, mortal and powerless, a charge of the order she deceived (locked, doc 36 ruling 5). |
+| NG+ read | PROPOSED: the wardenship is a world-seed with her as a Warden-held mortal NPC. |
 | Faction standings | Wardens: discover their saint never existed AND receive her as their charge; their crisis doubles (doc 36 open 1). Militant: PROPOSED reads a living witch in Warden hands as a captured prize and presses for escalation. Mercy: PROPOSED flavor, records the sentence without comment. Dark court: PROPOSED post-war rump, queenless if her king fell first (he does; doc 44 Part 5C sequence), creditor-free and directionless. |
 | Who inherits the altars | PROPOSED: the three altars go dark-sealed under joint Warden-Hidden Court custody as 2.1, the Wardens' half now also holding the sentence's custodian question; PROPOSED per doc 06 open question: the authentication office survives under re-founded authority, relic-gating disrupted in the aftermath season. No faction re-lights anything. |
 | Spawn-table shifts | PROPOSED: chaos-aftermath colonizers per doc 37 vacuum rule at normal vacuum rates; no special endgame spawns; PROPOSED: Warden-held regions read one doc 37 situation-state steadier than 2.1's scar baseline while the order re-founds itself. |
@@ -304,7 +306,8 @@ with all her memories; the debt is dead and nothing collects.
 
 | Consequence line | Value (status) |
 |---|---|
-| Post-ending world state | The scar stays (doc 36 ruling 2, as 2.1). She is a mortal in the world's population with all her memories; the debt is dead, nothing collects (doc 36 ruling 5). PROPOSED: she carries the one living memory of the Fall's author side, ledger-safe: she knows everything (doc 44 Part 2) and the world does not believe her. NG+ read PROPOSED: a wandering NPC the NG+ player recognizes. |
+| Post-ending world state | The scar stays (doc 36 ruling 2, as 2.1). She is a mortal in the world's population with all her memories; the debt is dead, nothing collects (doc 36 ruling 5). PROPOSED: she carries the one living memory of the Fall's author side, ledger-safe: she knows everything (doc 44 Part 2) and the world does not believe her. |
+| NG+ read | PROPOSED: a wandering NPC the NG+ player recognizes. |
 | Faction standings | Wardens: discover their saint never existed AND the woman who deceived them lives unnamed among the population; their crisis doubles (doc 36 open 1). Militant: PROPOSED reads an unclaimed ending as unfinished business. Mercy: PROPOSED flavor, records the sentence without comment. Dark court: PROPOSED post-war rump, queenless if her king fell first (he does; doc 44 Part 5C sequence), creditor-free and directionless. Her whereabouts stays a player-side secret (the sentence's secret rule stands). |
 | Who inherits the altars | PROPOSED: same disposition as 2.1's joint custody, the three altars dark-sealed under joint Warden-Hidden Court custody; the Sun altar stays the light court's relic site, the Veil ruin stays the dark court's defiance site, the Deep Altar stays behind the Hidden Court's den. No faction re-lights anything (re-kindling is dead content post-ending, PROPOSED). |
 | Spawn-table shifts | PROPOSED: chaos-aftermath colonizers per doc 37 vacuum rule at normal vacuum rates; no special endgame spawns; the freed sentence registers no faction flag, so no spawn table reads her (PROPOSED). |
