@@ -13,7 +13,7 @@ from PIL import Image
 
 SRC = 'art-direction/3d/assets/biome_library/raw'
 OUT = 'art-direction/3d/assets/biome_library'
-IDS = ['m1', 'm2', 'm3', 'm4']
+IDS = ['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'm9']
 
 
 def posterize512(img):
@@ -88,7 +88,7 @@ def export(path, mesh, tex):
 
 
 def main():
-    os.chdir('/workspace/witch-hunter')
+    os.chdir('/root/projects/witch-hunter')
     for mid in IDS:
         src = os.path.join(SRC, mid + '.glb')
         scene = trimesh.load(src)
