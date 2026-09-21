@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Witch Hunter - Playable Concept v1</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="wh-root">
+  <canvas id="wh-canvas"></canvas>
+  <div id="wh-hud">
+    <div id="wh-bars">
+      <div class="bar-label" id="wh-hp-label">HP</div>
+      <div class="bar-outer" id="wh-hp-bar-outer"><div class="bar-fill hp" id="wh-hp-bar"></div></div>
+      <div class="bar-label">Stamina</div>
+      <div class="bar-outer" id="wh-stam-bar-outer"><div class="bar-fill stam" id="wh-stam-bar"></div></div>
+    </div>
+    <div id="wh-fps">FPS: 0</div>
+    <div id="wh-region-name"></div>
+    <div id="wh-gate-hint">Enter the Darkwood</div>
+    <div id="wh-death-overlay"><div id="wh-death-text">You died</div><div id="wh-death-sub">Respawning...</div></div>
+    <div id="wh-load-note">Loading assets...</div>
+  </div>
+</div>
+<script src="vendor/three.classic.js"></script>
+<script src="vendor/gltf-loader.classic.js"></script>
+<script src="js/CONFIG.js"></script>
+<script src="js/region-defs.js"></script>
+<script src="js/assets.js"></script>
+<script src="js/player.js"></script>
+<script src="js/enemy.js"></script>
+<script src="js/region-manager.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>

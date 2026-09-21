@@ -1283,3 +1283,12 @@ feature-by-feature implementation against the GDD.
     collections mechanism (the pact is a real self-executing working;
     the Undersovran persona is her administration layer). Status:
     all 38 findings resolved; audit complete.
+93. BIOME OBJECT LIBRARY (2026-09-21, Nicko rulings + IO authoring, doc 59):
+    Nicko ruled Meshy for all 3D objects, art passes organized BY BIOME
+    TYPE with region instances populated from the library afterward.
+    Doc 59 catalogs Region A (Hold Outskirts graveyard: 13 rows, 3
+    MISSING) and Region B (Darkwood Edge: 16 rows, 14 MISSING), grounded
+    in doc 03's locked per-biome ingredient category lists. First Meshy
+    batch fires only after the Three.js v1 prototype is playable and
+    validated. Status: PROPOSED pending Nicko lock; open questions on
+    candidate list and herb-pickup meshing.
