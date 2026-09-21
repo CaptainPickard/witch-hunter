@@ -70,7 +70,8 @@
       gateHint: document.getElementById('wh-gate-hint'),
       fps: document.getElementById('wh-fps'),
       death: document.getElementById('wh-death-overlay'),
-      loadNote: document.getElementById('wh-load-note')
+      loadNote: document.getElementById('wh-load-note'),
+      reticle: document.getElementById('wh-lock-reticle')
     };
   }
 
@@ -110,6 +111,7 @@
     // death flow
     if (p.state === 'dying' || p.state === 'dead') {
       setDeathOverlay(true);
+      if (p.lockTarget) breakLockOn();   // lock breaks on player death
       if (p.state === 'dead') respawnPlayer();
     } else {
       setDeathOverlay(false);
@@ -119,8 +121,95 @@
   function respawnPlayer() {
     var rid = game.regionManager.logic.activeId;
     var region = window.WH_REGION_DEFS.regions[rid];
+    breakLockOn();
     game.player.respawnAt(region.spawn.x, region.spawn.z);
     setDeathOverlay(false);
+  }
+
+  // ---- lock-on (D3) ------------------------------------------------------------
+
+  // Best candidate: nearest alive enemy of the ACTIVE region within
+  // maxDistance and inside a facing cone around the CAMERA forward direction.
+  function pickLockTarget() {
+    var L = CFG.lockOn;
+    var p = game.player;
+    var enemies = game.regionManager.getEnemies(game.regionManager.logic.activeId);
+    // camera forward projected on xz
+    var fx = Math.sin(p.camYaw + Math.PI), fz = Math.cos(p.camYaw + Math.PI);
+    var halfCone = (L.facingConeDeg / 2) * Math.PI / 180;
+    var best = null, bestDist = Infinity;
+    for (var i = 0; i < enemies.length; i++) {
+      var e = enemies[i];
+      if (e.fsm === 'dead') continue;
+      var dx = e.pos.x - p.pos.x, dz = e.pos.z - p.pos.z;
+      var dist = Math.sqrt(dx * dx + dz * dz);
+      if (dist > L.maxDistance || dist < 0.001) continue;
+      var ang = Math.atan2(dx, dz);
+      var dyaw = ang - Math.atan2(fx, fz);
+      while (dyaw > Math.PI) dyaw -= Math.PI * 2;
+      while (dyaw < -Math.PI) dyaw += Math.PI * 2;
+      if (Math.abs(dyaw) > halfCone) continue;
+      if (dist < bestDist) { bestDist = dist; best = e; }
+    }
+    return best;
+  }
+
+  function toggleLockOn() {
+    if (game.player.lockTarget) breakLockOn();
+    else engageLockOn();
+  }
+
+  function engageLockOn() {
+    var p = game.player;
+    if (p.state !== 'alive' || !game.regionManager) return;
+    var t = pickLockTarget();
+    if (!t) return;   // no candidate: do not engage
+    p.lockTarget = t;
+    // snap camera behind the player relative to the target immediately
+    var dx = t.pos.x - p.pos.x, dz = t.pos.z - p.pos.z;
+    if (dx * dx + dz * dz > 0.0001) p.camYaw = Math.atan2(dx, dz) + Math.PI;
+  }
+
+  function breakLockOn() {
+    game.player.lockTarget = null;
+  }
+
+  // Break conditions: target death, range hysteresis, region change.
+  function updateLockOn() {
+    var p = game.player;
+    if (!p.lockTarget) { setReticleVisible(false); return; }
+    var t = p.lockTarget;
+    var L = CFG.lockOn;
+    var activeId = game.regionManager.logic.activeId;
+    var dead = t.fsm === 'dead' || t.hp <= 0;
+    var wrongRegion = t.homeRegionId !== activeId;
+    var dx = t.pos.x - p.pos.x, dz = t.pos.z - p.pos.z;
+    var dist = Math.sqrt(dx * dx + dz * dz);
+    if (dead || wrongRegion || dist > L.maxDistance * L.hysteresis) {
+      breakLockOn();
+      setReticleVisible(false);
+      return;
+    }
+    setReticleVisible(true);
+    updateReticle(t);
+  }
+
+  // Project the target to screen space and position the reticle div.
+  function updateReticle(target) {
+    var v = new THREE.Vector3(
+      target.pos.x, target.pos.y + CFG.lockOn.reticleOffsetY, target.pos.z);
+    v.project(game.camera);
+    var el = game.hud.reticle;
+    if (v.z > 1 || v.z < -1) { el.style.display = 'none'; return; }
+    var sx = (v.x * 0.5 + 0.5) * window.innerWidth;
+    var sy = (-v.y * 0.5 + 0.5) * window.innerHeight;
+    el.style.display = 'block';
+    el.style.left = Math.round(sx) + 'px';
+    el.style.top = Math.round(sy) + 'px';
+  }
+
+  function setReticleVisible(visible) {
+    game.hud.reticle.style.display = visible ? 'block' : 'none';
   }
 
   // ---- boundary / region flow ------------------------------------------------
@@ -185,6 +274,19 @@
       forceTick: function () { /* rAF runs continuously; no-op for compat */ },
       getStamina: function () { return game.player.stamina; },
       setStamina: function (v) { game.player.stamina = v; },
+      // D3 lock-on hooks
+      getLockTarget: function () {
+        var t = game.player.lockTarget;
+        if (!t) return null;
+        return { type: t.type, fsm: t.fsm, hp: t.hp,
+                 x: t.pos.x, z: t.pos.z, homeRegionId: t.homeRegionId };
+      },
+      isLocked: function () { return !!game.player.lockTarget; },
+      setCameraYaw: function (deg) {
+        game.player.camYaw = deg * Math.PI / 180;
+      },
+      engageLockOn: function () { engageLockOn(); },
+      breakLockOn: function () { breakLockOn(); },
       getConfig: function () { return CFG; }
     };
   }
@@ -201,6 +303,8 @@
 
     game.player = new window.WH_Player(game.scene, game.camera);
     game.scene.add(game.player.root);
+    // D3: player delegates the F-key toggle to the game's lock-on logic
+    game.player.onLockToggle = toggleLockOn;
 
     setupDebugHooks();
 
@@ -273,6 +377,9 @@
         e.takeDamage(dmg);
       }
     }
+
+    // lock-on break conditions + reticle (D3)
+    updateLockOn();
 
     game.player.updateCamera(dt);
     updateHud(dt);

@@ -148,6 +148,21 @@ html, body {
   letter-spacing: 2px;
 }
 
+/* --- lock-on reticle (D3) --- */
+#wh-lock-reticle {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  left: -100px;
+  top: -100px;
+  display: none;
+  pointer-events: none;
+  transform: translate(-50%, -50%) rotate(45deg);
+  border: 2px solid #d8b24a;
+  box-shadow: 0 0 8px rgba(216, 178, 74, 0.8), inset 0 0 4px rgba(216, 178, 74, 0.5);
+  border-radius: 2px;
+}
+
 /* --- load note --- */
 #wh-load-note {
   position: absolute;

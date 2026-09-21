@@ -1,13 +1,23 @@
-// Witch Hunter prototype v1 - third-person player controller.
-// Transform-only procedural animation (assets are unrigged): walk bob, attack
-// swing rotation, roll tumble. All tunables from CONFIG.
+// Witch Hunter prototype v2 - third-person player controller.
+// D2: movement basis is CAMERA yaw (W = camera forward on screen, S = back,
+// A/D = strafe). v1 had the strafe right-vector inverted; fixed.
+// D3: souls-style lock-on: hard yaw track to target, camera follow, strafe.
+// Transform-only procedural animation (assets are unrigged). All tunables
+// from CONFIG.
 
 (function () {
   'use strict';
 
   var CFG = window.WH_CONFIG.player;
+  var LOCK = window.WH_CONFIG.lockOn;
 
   function deg2rad(d) { return d * Math.PI / 180; }
+
+  function shortestAngle(a) {
+    while (a > Math.PI) a -= Math.PI * 2;
+    while (a < -Math.PI) a += Math.PI * 2;
+    return a;
+  }
 
   function Player(scene, camera) {
     this.scene = scene;
@@ -26,6 +36,7 @@
     this.velY = 0;
     this.yaw = 0;                     // body facing (radians)
     this.moveInput = { x: 0, z: 0 };  // camera-relative, set by game input
+    this.moveDirWorld = { x: 0, z: 0 }; // last world-space move dir (roll basis)
     this.sprinting = false;
     this.rolling = false;
     this.rollTimer = 0;
@@ -42,6 +53,9 @@
     this.dragging = false;
     this.lastDragX = 0;
     this.lastDragY = 0;
+
+    // lock-on state (D3)
+    this.lockTarget = null;           // enemy object or null
 
     // visual root (body added by game after assets load)
     this.root = new THREE.Group();
@@ -66,6 +80,10 @@
         e.preventDefault();
         self.tryRoll();
       }
+      if (e.code === 'KeyF' && !e.repeat) {
+        e.preventDefault();
+        if (self.onLockToggle) self.onLockToggle();  // game.js decides engage/break
+      }
     });
     document.addEventListener('keyup', function (e) {
       self.keys[e.code] = false;
@@ -73,16 +91,18 @@
     document.addEventListener('mousedown', function (e) {
       if (e.button === 0) {
         self.tryAttack();
-        self.dragging = true;
-        self.lastDragX = e.clientX;
-        self.lastDragY = e.clientY;
+        if (!self.lockTarget) {
+          self.dragging = true;
+          self.lastDragX = e.clientX;
+          self.lastDragY = e.clientY;
+        }
       }
     });
     document.addEventListener('mouseup', function (e) {
       if (e.button === 0) self.dragging = false;
     });
     document.addEventListener('mousemove', function (e) {
-      if (!self.dragging) return;
+      if (!self.dragging || self.lockTarget) return;   // mouse cam disabled while locked
       var dx = e.clientX - self.lastDragX;
       var dy = e.clientY - self.lastDragY;
       self.lastDragX = e.clientX;
@@ -117,7 +137,7 @@
     this.rollTimer = CFG.rollDuration;
     this.iframes = CFG.rollIFrameWindow;
     // roll direction: current move input direction, or facing if idle
-    var dir = new THREE.Vector3(this.moveInput.x, 0, this.moveInput.z);
+    var dir = new THREE.Vector3(this.moveDirWorld.x, 0, this.moveDirWorld.z);
     if (dir.lengthSq() < 0.01) {
       dir.set(Math.sin(this.yaw), 0, Math.cos(this.yaw));
     }
@@ -132,8 +152,8 @@
     this.attacking = true;
     this.attackTimer = CFG.attackDuration;
     this.attackDidHit = false;
-    // face camera direction on attack
-    this.yaw = this.camYaw + Math.PI;
+    // face camera direction on attack (unless locked: hard track handles it)
+    if (!this.lockTarget) this.yaw = this.camYaw + Math.PI;
   };
 
   Player.prototype.spendStamina = function (amount) {
@@ -168,6 +188,16 @@
     };
   };
 
+  // D3: hard yaw track toward the lock target each frame while locked.
+  Player.prototype.updateLockTracking = function () {
+    if (!this.lockTarget || this.state !== 'alive') return;
+    var t = this.lockTarget;
+    var dx = t.pos.x - this.pos.x;
+    var dz = t.pos.z - this.pos.z;
+    if (dx * dx + dz * dz < 0.0001) return;
+    this.yaw = Math.atan2(dx, dz);
+  };
+
   Player.prototype.update = function (dt, clampToBounds) {
     this.stateTime += dt;
 
@@ -190,6 +220,9 @@
       this.attackTimer -= dt;
       if (this.attackTimer <= 0) this.attacking = false;
     }
+
+    // D3: while locked, body yaw hard-tracks the target
+    this.updateLockTracking();
 
     var displacement = new THREE.Vector3(0, 0, 0);
 
@@ -215,19 +248,26 @@
           this.spendStamina(CFG.sprintStaminaPerSec * dt);
         }
         if (this.attacking) speed *= 0.3;   // slow while swinging
-        // camera yaw basis: forward = camera forward projected on xz
+        // camera yaw basis: camera forward projected on xz plane.
+        // Camera sits at yaw = camYaw BEHIND the player, so camera forward
+        // (what W moves toward) is (sin(camYaw + PI), cos(camYaw + PI)).
         var fx = Math.sin(this.camYaw + Math.PI), fz = Math.cos(this.camYaw + Math.PI);
-        var rx = Math.cos(this.camYaw + Math.PI), rz = -Math.sin(this.camYaw + Math.PI);
-        // forward is -z input; right is +x input
-        this.pos.x += (fx * (-mz) + rx * mx) * speed * dt;
-        this.pos.z += (fz * (-mz) + rz * mx) * speed * dt;
-        // turn body toward movement direction
-        var targetYaw = Math.atan2(fx * (-mz) + rx * mx, fz * (-mz) + rz * mx);
-        var maxTurn = deg2rad(CFG.turnLerpDegPerSec) * dt;
-        var dyaw = targetYaw - this.yaw;
-        while (dyaw > Math.PI) dyaw -= Math.PI * 2;
-        while (dyaw < -Math.PI) dyaw += Math.PI * 2;
-        this.yaw += Math.max(-maxTurn, Math.min(maxTurn, dyaw));
+        // screen-right = cross(up, cameraBack) = (-fz, fx)
+        var rx = -fz, rz = fx;
+        var wx = fx * (-mz) + rx * mx;
+        var wz = fz * (-mz) + rz * mx;
+        this.pos.x += wx * speed * dt;
+        this.pos.z += wz * speed * dt;
+        // remember world move dir (roll basis)
+        this.moveDirWorld.x = wx;
+        this.moveDirWorld.z = wz;
+        // turn body toward movement direction (skip while locked: hard track)
+        if (!this.lockTarget) {
+          var targetYaw = Math.atan2(wx, wz);
+          var maxTurn = deg2rad(CFG.turnLerpDegPerSec) * dt;
+          var dyaw = shortestAngle(targetYaw - this.yaw);
+          this.yaw += Math.max(-maxTurn, Math.min(maxTurn, dyaw));
+        }
         // walk bob
         this.bobPhase += dt * (this.sprinting ? 14 : 9);
         if (this.body) {
@@ -235,6 +275,8 @@
           this.body.rotation.z = Math.sin(this.bobPhase) * 0.04;
         }
       } else {
+        this.moveDirWorld.x = 0;
+        this.moveDirWorld.z = 0;
         if (this.body) { this.body.position.y = 0; this.body.rotation.z = 0; }
       }
     }
@@ -268,8 +310,35 @@
       Math.cos(this.camYaw) * Math.cos(this.camPitch)
     ).multiplyScalar(this.camDist);
     var want = target.clone().add(offset);
-    var lerp = 1 - Math.exp(-CFG.camFollowLerp * dt);
-    this.camera.position.lerp(want, lerp);
+
+    if (this.lockTarget && this.state === 'alive') {
+      // D3: camera follows so the target stays framed. Aim camera yaw so the
+      // target is straight ahead of the player; pull back a bit for framing.
+      var t = this.lockTarget;
+      var dx = t.pos.x - this.pos.x;
+      var dz = t.pos.z - this.pos.z;
+      var dist = Math.sqrt(dx * dx + dz * dz);
+      // camera should sit opposite the target relative to the player
+      var wantYaw = dist > 0.001 ? Math.atan2(dx, dz) + Math.PI : this.camYaw;
+      var wantDist = Math.min(CFG.camMaxDistance,
+        Math.max(this.camDist, dist + LOCK.camExtraDistance));
+      var lerp = 1 - Math.exp(-LOCK.camLerp * dt);
+      this.camYaw += shortestAngle(wantYaw - this.camYaw) * lerp;
+      // frame slightly above midpoint between player and target
+      target.x = (this.pos.x + t.pos.x) / 2;
+      target.z = (this.pos.z + t.pos.z) / 2;
+      var midDist = dist / 2;
+      offset.set(
+        Math.sin(this.camYaw) * Math.cos(this.camPitch),
+        Math.sin(this.camPitch),
+        Math.cos(this.camYaw) * Math.cos(this.camPitch)
+      ).multiplyScalar(Math.max(CFG.camMinDistance, midDist + LOCK.camExtraDistance));
+      want = target.clone().add(offset);
+      this.camera.position.lerp(want, lerp);
+    } else {
+      var lerp2 = 1 - Math.exp(-CFG.camFollowLerp * dt);
+      this.camera.position.lerp(want, lerp2);
+    }
     this.camera.lookAt(target);
   };
 
@@ -283,6 +352,7 @@
     this.attacking = false;
     this.iframes = 0;
     this.deathTilt = 0;
+    this.lockTarget = null;
     if (this.body) { this.body.rotation.x = 0; this.body.rotation.y = this.yaw; }
   };
 

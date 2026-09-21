@@ -179,6 +179,15 @@ window.WH_CONFIG = {
     fpsUpdateInterval: 0.5
   },
 
+  lockOn: {
+    maxDistance: 18.0,              // engage range (world units)
+    hysteresis: 1.25,               // break at maxDistance * hysteresis
+    facingConeDeg: 140,             // total cone around CAMERA forward
+    camLerp: 6.0,                   // per-second lerp for lock camera follow
+    camExtraDistance: 3.5,           // camera pulls back this much past target dist
+    reticleOffsetY: 0.9             // reticle aim height above enemy feet
+  },
+
   loop: {
     maxDt: 1 / 20,                    // clamp dt (tab-blur / hitch protection)
     fixedTickHz: 60                   // nominal update rate reference

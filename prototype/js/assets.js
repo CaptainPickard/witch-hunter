@@ -1,38 +1,67 @@
-// Witch Hunter prototype v1 - asset manifest + GLB loading.
-// Paths are absolute under the served repo root (server.py serves the repo
-// root, so /art-direction/... URLs resolve). Prefer -pixelated variants for
-// props; races_regen characters have no pixelated variants (D4b-3), raw mesh
-// is accepted for characters.
+// Witch Hunter prototype v2 - asset manifest + GLB loading.
+// D1 fix: manifest paths are RELATIVE (no leading slash) and are resolved
+// against document.baseURI at load time via new URL(...).href, so the game
+// works identically served at / and under any proxy prefix such as
+// /witchhunter/ (tailnet path). Do not hardcode proxy prefixes here.
+// Prefer -pixelated variants for props; races_regen characters have no
+// pixelated variants (D4b-3), raw mesh is accepted for characters.
 
 (function () {
   'use strict';
 
   var CFG = window.WH_CONFIG;
 
-  // ---- Manifest: logical name -> served path --------------------------------
+  // ---- Manifest: logical name -> relative path (NO leading slash) -----------
   var MANIFEST = {
     // graveyard props (pixelated variants preferred)
-    gravestoneObelisk: '/art-direction/3d/assets/graveyard/gravestone-obelisk-pixelated.glb',
-    stoneCrossTilted: '/art-direction/3d/assets/graveyard/stone-cross-tilted-pixelated.glb',
-    graveMound: '/art-direction/3d/assets/graveyard/grave-mound-pixelated.glb',
-    buriedCoffin: '/art-direction/3d/assets/graveyard/buried-coffin-pixelated.glb',
+    gravestoneObelisk: 'art-direction/3d/assets/graveyard/gravestone-obelisk-pixelated.glb',
+    stoneCrossTilted: 'art-direction/3d/assets/graveyard/stone-cross-tilted-pixelated.glb',
+    graveMound: 'art-direction/3d/assets/graveyard/grave-mound-pixelated.glb',
+    buriedCoffin: 'art-direction/3d/assets/graveyard/buried-coffin-pixelated.glb',
 
     // church-kit props + trees
-    lanternPost: '/art-direction/3d/assets/church-kit/lantern-post-pixelated.glb',
-    deadTree: '/art-direction/3d/assets/church-kit/dead-tree-pixelated.glb',
-    rubblePile: '/art-direction/3d/assets/church-kit/rubble-pile-pixelated.glb',
-    churchArchway: '/art-direction/3d/assets/church-kit/church-archway-pixelated.glb',
-    churchCornerButtress: '/art-direction/3d/assets/church-kit/church-corner-buttress-pixelated.glb',
-    churchPewBroken: '/art-direction/3d/assets/church-kit/church-pew-broken-pixelated.glb',
+    lanternPost: 'art-direction/3d/assets/church-kit/lantern-post-pixelated.glb',
+    deadTree: 'art-direction/3d/assets/church-kit/dead-tree-pixelated.glb',
+    rubblePile: 'art-direction/3d/assets/church-kit/rubble-pile-pixelated.glb',
+    churchArchway: 'art-direction/3d/assets/church-kit/church-archway-pixelated.glb',
+    churchCornerButtress: 'art-direction/3d/assets/church-kit/church-corner-buttress-pixelated.glb',
+    churchPewBroken: 'art-direction/3d/assets/church-kit/church-pew-broken-pixelated.glb',
 
     // characters (races_regen, raw meshes, no pixelated variants exist)
-    playerBody: '/art-direction/3d/assets/races_regen/human-hunter-male.glb',
-    banditBody: '/art-direction/3d/assets/races_regen/orc-male-warrior.glb',
-    ghoulBody: '/art-direction/3d/assets/races_regen/undead-ghoul-male.glb',
+    playerBody: 'art-direction/3d/assets/races_regen/human-hunter-male.glb',
+    banditBody: 'art-direction/3d/assets/races_regen/orc-male-warrior.glb',
+    ghoulBody: 'art-direction/3d/assets/races_regen/undead-ghoul-male.glb',
 
     // weapons (pixelated)
-    longsword: '/art-direction/3d/assets/weapons/longsword-pixelated.glb'
+    longsword: 'art-direction/3d/assets/weapons/longsword-pixelated.glb'
   };
+
+  // Resolve a manifest-relative path against the document base URL, falling
+  // back to the parent directory when the page lives in a subdirectory
+  // (e.g. builds/v2-playable.html must resolve art-direction/... at the
+  // repo root, not at builds/art-direction/...).
+  // Page at http://host/          -> http://host/art-direction/...
+  // Page at http://host/witchhunter/ -> http://host/witchhunter/art-direction/...
+  // Page at http://host/builds/x.html -> http://host/art-direction/...
+  function resolveUrl(relPath) {
+    try {
+      var base = document.baseURI;
+      var pageDir = base.slice(0, base.lastIndexOf('/') + 1);
+      if (/\/builds\//.test(pageDir)) {
+        pageDir = pageDir.replace(/\/builds\/$/, '/');
+      }
+      return new URL(relPath, pageDir).href;
+    } catch (e) {
+      // Extremely defensive: strip leading slash and fall back.
+      return relPath.replace(/^\//, '');
+    }
+  }
+
+  // Final resolved URL per logical name (populated at load time).
+  var RESOLVED = {};
+  Object.keys(MANIFEST).forEach(function (name) {
+    RESOLVED[name] = resolveUrl(MANIFEST[name]);
+  });
 
   // ---- Loading ---------------------------------------------------------------
 
@@ -83,14 +112,14 @@
     return group;
   }
 
-  function loadOne(name, path, isPixelated) {
+  function loadOne(name, url, isPixelated) {
     return new Promise(function (resolve) {
       var loader = new window.WHGLTFLoader();
       var done = false;
       var timer = setTimeout(function () {
         if (!done) { done = true; resolve(makeStandIn(name)); }
       }, CFG.assets.timeoutMs);
-      loader.load(path, function (gltf) {
+      loader.load(url, function (gltf) {
         if (done) return;
         done = true;
         clearTimeout(timer);
@@ -103,7 +132,7 @@
         if (done) return;
         done = true;
         clearTimeout(timer);
-        console.warn('[WH assets] load failed for ' + name + ' at ' + path + ': ' + err);
+        console.warn('[WH assets] load failed for ' + name + ' at ' + url + ': ' + err);
         resolve(makeStandIn(name));
       });
     });
@@ -114,8 +143,8 @@
   function preloadAll() {
     var jobs = [];
     Object.keys(MANIFEST).forEach(function (name) {
-      var path = MANIFEST[name];
-      jobs.push(loadOne(name, path, path.indexOf('-pixelated') !== -1));
+      var url = RESOLVED[name];
+      jobs.push(loadOne(name, url, url.indexOf('-pixelated') !== -1));
     });
     return Promise.all(jobs).then(function () {
       console.log('[WH assets] loaded ' + loadedCount + ' assets, ' +
@@ -133,6 +162,8 @@
 
   window.WH_ASSETS = {
     MANIFEST: MANIFEST,
+    RESOLVED: RESOLVED,
+    resolveUrl: resolveUrl,
     preloadAll: preloadAll,
     instance: instance,
     isLoaded: function (name) { return !!cache[name]; },
