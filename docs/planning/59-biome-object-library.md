@@ -97,3 +97,19 @@ task id, vision-QA verdict, tri count, pixelated commit path.
    via palette variant per doc 27, or separate meshes)?
 3. Do herb pickups need a shared base mesh scaled/recolored, or one mesh
    per herb (one mesh each assumed in the matrix)?
+## SESSION RULINGS (2026-09-21, Nicko)
+
+R1 CANDIDATE LIST: ALL of M1-M18 CONFIRMED for generation, across two
+   batches (~270 credits total, within the 700/session cap across resets).
+R2 LIVING TREES: 3 DISTINCT MESHES (M4 oak, M5 yew, M6 witchwood), one
+   Meshy run each. Silhouette variety rules; no palette re-tint variants.
+R3 HERBS: ONE MESH EACH (M11-M14), no shared base. Each herb reads as its
+   own distinct plant per doc 03's distinct herb identities.
+
+Open questions 2 and 3 RESOLVED by R2/R3. Open question 1 RESOLVED by R1.
+
+## BATCH PLAN
+
+Batch 1 (this session, budget-capped): M1-M9 (9 assets, ~135 credits).
+Batch 2 (after next credit reset on the 13th): M10-M18 (9 assets).
+Run log entries go in Part 4 as each batch lands.
