@@ -5,6 +5,13 @@ LOCKED and Rot-Mother boss IN at slice 1 (M4 checkpoint may cut), both by
 Nicko, 2026-09-13. Remaining numbers PROPOSED.
 Engine: Unreal Engine 5.8 (locked by Nicko, 2026-09-13).
 
+SUPERSEDED NOTE (2026-09-21, Nicko, index entry 94): the UE5 buildout is
+SHELVED, not cancelled. The game concept develops in the Three.js browser
+prototype (prototype/); engine choice revisited later. This doc's engine
+plan remains the reference if UE5 is revived; do not continue the 52-58
+spec-set buildout without a new ruling.
+Engine: Unreal Engine 5.8 (locked by Nicko, 2026-09-13).
+
 Closes 30-prototype-gap-analysis.md G1 (slice scope) and G2 (engine version
 and pipeline completion), and answers 01-vision-high-concept.md's standing
 open question "Rough target scope for the first vertical slice". Resolves

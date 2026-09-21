@@ -1292,3 +1292,15 @@ feature-by-feature implementation against the GDD.
     batch fires only after the Three.js v1 prototype is playable and
     validated. Status: PROPOSED pending Nicko lock; open questions on
     candidate list and herb-pickup meshing.
+94. ENGINE PIVOT: UE5 SHELVED, THREE.JS PROTOTYPE TRACK (2026-09-21, Nicko):
+    Nicko ruled the UE5 buildout (docs 52-58) is SHELVED, not cancelled;
+    the whole game concept now develops in the Three.js browser prototype
+    (prototype/, commit 5ca53b2) and the engine choice is revisited later.
+    v1 validated: instance regions (entrances/exits only where paths cross
+    boundaries), single-active + prewarm + hysteresis + persistence,
+    direction-agnostic chokepoint crossing, combat v1 (walk/attack/roll/
+    stamina), Testerbot 33/33 PASS. Rulings: Meshy for all 3D objects,
+    art passes organized by biome type (doc 59), region instances
+    populated from the biome library afterward, Meshy batches only after
+    v1 validation. UE5 spec set (52-58) remains as reference; do not
+    continue its buildout without a new Nicko ruling.
