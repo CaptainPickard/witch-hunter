@@ -68,6 +68,7 @@
   var cache = {};      // logical name -> cloned THREE.Group template
   var failed = {};     // logical name -> true (stand-in substituted)
   var loadedCount = 0;
+  var GROUND_META = {}; // template uuid -> {height, width} measured bbox
 
   function makeStandIn(name) {
     // Procedural box/cone stand-in per spec hard constraint 5. Logged.
@@ -84,6 +85,24 @@
     mesh.name = 'standin-' + name;
     group.add(mesh);
     return group;
+  }
+
+  // Ground-align a loaded GLB template. Meshy meshes ship with a CENTERED
+  // pivot (bounds span y=-1..+1), so an instance placed at y=0 sinks half
+  // its height into the ground. Measure the template's world bbox once and
+  // shift the template's inner root so minY sits at y=0. Instances then
+  // inherit the correction via clone(true). Store the measured height for
+  // scale normalization by callers.
+  function groundAlign(group) {
+    var box = new THREE.Box3().setFromObject(group);
+    if (!isFinite(box.min.y) || !isFinite(box.max.y)) return;
+    var minY = box.min.y;
+    group.position.y -= minY;          // shift so feet/minY = 0
+    group.updateMatrixWorld(true);
+    GROUND_META[group.uuid] = {
+      height: box.max.y - box.min.y,
+      width: box.max.x - box.min.x
+    };
   }
 
   function prepTemplate(group, isPixelated) {
@@ -125,6 +144,7 @@
         clearTimeout(timer);
         var root = gltf.scene;
         prepTemplate(root, isPixelated);
+        groundAlign(root);
         cache[name] = root;
         loadedCount++;
         resolve(root);
@@ -166,6 +186,12 @@
     resolveUrl: resolveUrl,
     preloadAll: preloadAll,
     instance: instance,
+    groundHeight: function (name) {
+      var tmpl = cache[name];
+      if (!tmpl) return 1.8;
+      var meta = GROUND_META[tmpl.uuid];
+      return meta ? meta.height : 1.8;
+    },
     isLoaded: function (name) { return !!cache[name]; },
     isFailed: function (name) { return !!failed[name]; },
     loadedCount: function () { return loadedCount; }

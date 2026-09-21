@@ -85240,7 +85240,8 @@ window.WH_CONFIG = {
     groundColorA: 0x4a5240,           // hold outskirts grass-dirt
     groundColorB: 0x2c3230,           // darkwood floor
     fogNearFactor: 0.25,              // fog near = radius * factor
-    fogFarFactor: 1.5                 // fog far = radius * factor
+    fogFarFactor: 1.5,                // fog far = radius * factor
+    characterHeight: 1.8              // normalized character height (POC)
   },
 
   regionA: {
@@ -85603,6 +85604,7 @@ window.WH_CONFIG = {
   var cache = {};      // logical name -> cloned THREE.Group template
   var failed = {};     // logical name -> true (stand-in substituted)
   var loadedCount = 0;
+  var GROUND_META = {}; // template uuid -> {height, width} measured bbox
 
   function makeStandIn(name) {
     // Procedural box/cone stand-in per spec hard constraint 5. Logged.
@@ -85619,6 +85621,24 @@ window.WH_CONFIG = {
     mesh.name = 'standin-' + name;
     group.add(mesh);
     return group;
+  }
+
+  // Ground-align a loaded GLB template. Meshy meshes ship with a CENTERED
+  // pivot (bounds span y=-1..+1), so an instance placed at y=0 sinks half
+  // its height into the ground. Measure the template's world bbox once and
+  // shift the template's inner root so minY sits at y=0. Instances then
+  // inherit the correction via clone(true). Store the measured height for
+  // scale normalization by callers.
+  function groundAlign(group) {
+    var box = new THREE.Box3().setFromObject(group);
+    if (!isFinite(box.min.y) || !isFinite(box.max.y)) return;
+    var minY = box.min.y;
+    group.position.y -= minY;          // shift so feet/minY = 0
+    group.updateMatrixWorld(true);
+    GROUND_META[group.uuid] = {
+      height: box.max.y - box.min.y,
+      width: box.max.x - box.min.x
+    };
   }
 
   function prepTemplate(group, isPixelated) {
@@ -85660,6 +85680,7 @@ window.WH_CONFIG = {
         clearTimeout(timer);
         var root = gltf.scene;
         prepTemplate(root, isPixelated);
+        groundAlign(root);
         cache[name] = root;
         loadedCount++;
         resolve(root);
@@ -85701,6 +85722,12 @@ window.WH_CONFIG = {
     resolveUrl: resolveUrl,
     preloadAll: preloadAll,
     instance: instance,
+    groundHeight: function (name) {
+      var tmpl = cache[name];
+      if (!tmpl) return 1.8;
+      var meta = GROUND_META[tmpl.uuid];
+      return meta ? meta.height : 1.8;
+    },
     isLoaded: function (name) { return !!cache[name]; },
     isFailed: function (name) { return !!failed[name]; },
     loadedCount: function () { return loadedCount; }
@@ -85778,7 +85805,18 @@ window.WH_CONFIG = {
   Player.prototype.setBody = function (meshRoot) {
     if (this.body) this.root.remove(this.body);
     this.body = meshRoot;
+    // Bob/tilt animation writes body.position.y absolutely; wrap the
+    // ground-aligned template in an inner holder so animation only moves
+    // the holder and the template's own ground offset is preserved.
+    this.bodyBaseY = meshRoot.position.y || 0;
     this.root.add(this.body);
+  };
+
+  // Bob offset: call from the walk animation in place of absolute writes.
+  Player.prototype.setBodyBob = function (bobY, tiltZ) {
+    if (!this.body) return;
+    this.body.position.y = this.bodyBaseY + bobY;
+    if (tiltZ !== undefined) this.body.rotation.z = tiltZ;
   };
 
   Player.prototype.bindInput = function () {
@@ -85981,13 +86019,13 @@ window.WH_CONFIG = {
         // walk bob
         this.bobPhase += dt * (this.sprinting ? 14 : 9);
         if (this.body) {
-          this.body.position.y = Math.abs(Math.sin(this.bobPhase)) * 0.12;
-          this.body.rotation.z = Math.sin(this.bobPhase) * 0.04;
+          this.setBodyBob(Math.abs(Math.sin(this.bobPhase)) * 0.12,
+                          Math.sin(this.bobPhase) * 0.04);
         }
       } else {
         this.moveDirWorld.x = 0;
         this.moveDirWorld.z = 0;
-        if (this.body) { this.body.position.y = 0; this.body.rotation.z = 0; }
+        if (this.body) { this.setBodyBob(0, 0); }
       }
     }
 
@@ -86441,7 +86479,11 @@ window.WH_CONFIG = {
       var e = regionCfg.enemies[j];
       var enemy = new window.WH_Enemy(e.type, this.scene, regionId, e.x, e.z);
       var bodyName = e.type === 'bandit' ? 'banditBody' : 'ghoulBody';
-      enemy.setBody(window.WH_ASSETS.instance(bodyName));
+      var eBody = window.WH_ASSETS.instance(bodyName);
+      var eScale = CFG.world.characterHeight /
+        (window.WH_ASSETS.groundHeight(bodyName) || CFG.world.characterHeight);
+      eBody.scale.setScalar(eScale);
+      enemy.setBody(eBody);
       this.enemies[regionId].push(enemy);
       group.add(enemy.root);
     }
@@ -86876,8 +86918,14 @@ window.WH_CONFIG = {
     setupDebugHooks();
 
     window.WH_ASSETS.preloadAll().then(function () {
-      // player body + weapon
-      game.player.setBody(window.WH_ASSETS.instance('playerBody'));
+      // player body + weapon. Normalize to CFG.world.characterHeight
+      // (raw Meshy characters are 2.0 tall; the pixelated variants of some
+      // props differ, so normalize by measured height).
+      var pBody = window.WH_ASSETS.instance('playerBody');
+      var pScale = CFG.world.characterHeight /
+        (window.WH_ASSETS.groundHeight('playerBody') || CFG.world.characterHeight);
+      pBody.scale.setScalar(pScale);
+      game.player.setBody(pBody);
       var sword = window.WH_ASSETS.instance('longsword');
       sword.scale.setScalar(0.9);
       game.player.root.add(sword);

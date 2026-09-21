@@ -28,7 +28,8 @@ window.WH_CONFIG = {
     groundColorA: 0x4a5240,           // hold outskirts grass-dirt
     groundColorB: 0x2c3230,           // darkwood floor
     fogNearFactor: 0.25,              // fog near = radius * factor
-    fogFarFactor: 1.5                 // fog far = radius * factor
+    fogFarFactor: 1.5,                // fog far = radius * factor
+    characterHeight: 1.8              // normalized character height (POC)
   },
 
   regionA: {

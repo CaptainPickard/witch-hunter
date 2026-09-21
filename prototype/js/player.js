@@ -68,7 +68,18 @@
   Player.prototype.setBody = function (meshRoot) {
     if (this.body) this.root.remove(this.body);
     this.body = meshRoot;
+    // Bob/tilt animation writes body.position.y absolutely; wrap the
+    // ground-aligned template in an inner holder so animation only moves
+    // the holder and the template's own ground offset is preserved.
+    this.bodyBaseY = meshRoot.position.y || 0;
     this.root.add(this.body);
+  };
+
+  // Bob offset: call from the walk animation in place of absolute writes.
+  Player.prototype.setBodyBob = function (bobY, tiltZ) {
+    if (!this.body) return;
+    this.body.position.y = this.bodyBaseY + bobY;
+    if (tiltZ !== undefined) this.body.rotation.z = tiltZ;
   };
 
   Player.prototype.bindInput = function () {
@@ -271,13 +282,13 @@
         // walk bob
         this.bobPhase += dt * (this.sprinting ? 14 : 9);
         if (this.body) {
-          this.body.position.y = Math.abs(Math.sin(this.bobPhase)) * 0.12;
-          this.body.rotation.z = Math.sin(this.bobPhase) * 0.04;
+          this.setBodyBob(Math.abs(Math.sin(this.bobPhase)) * 0.12,
+                          Math.sin(this.bobPhase) * 0.04);
         }
       } else {
         this.moveDirWorld.x = 0;
         this.moveDirWorld.z = 0;
-        if (this.body) { this.body.position.y = 0; this.body.rotation.z = 0; }
+        if (this.body) { this.setBodyBob(0, 0); }
       }
     }
 

@@ -309,8 +309,14 @@
     setupDebugHooks();
 
     window.WH_ASSETS.preloadAll().then(function () {
-      // player body + weapon
-      game.player.setBody(window.WH_ASSETS.instance('playerBody'));
+      // player body + weapon. Normalize to CFG.world.characterHeight
+      // (raw Meshy characters are 2.0 tall; the pixelated variants of some
+      // props differ, so normalize by measured height).
+      var pBody = window.WH_ASSETS.instance('playerBody');
+      var pScale = CFG.world.characterHeight /
+        (window.WH_ASSETS.groundHeight('playerBody') || CFG.world.characterHeight);
+      pBody.scale.setScalar(pScale);
+      game.player.setBody(pBody);
       var sword = window.WH_ASSETS.instance('longsword');
       sword.scale.setScalar(0.9);
       game.player.root.add(sword);

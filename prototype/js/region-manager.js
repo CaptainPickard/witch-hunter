@@ -194,7 +194,11 @@
       var e = regionCfg.enemies[j];
       var enemy = new window.WH_Enemy(e.type, this.scene, regionId, e.x, e.z);
       var bodyName = e.type === 'bandit' ? 'banditBody' : 'ghoulBody';
-      enemy.setBody(window.WH_ASSETS.instance(bodyName));
+      var eBody = window.WH_ASSETS.instance(bodyName);
+      var eScale = CFG.world.characterHeight /
+        (window.WH_ASSETS.groundHeight(bodyName) || CFG.world.characterHeight);
+      eBody.scale.setScalar(eScale);
+      enemy.setBody(eBody);
       this.enemies[regionId].push(enemy);
       group.add(enemy.root);
     }
