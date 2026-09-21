@@ -60,6 +60,7 @@
     this.dragging = false;
     this.lastDragX = 0;
     this.lastDragY = 0;
+    this.lastManualCamT = -1e9;       // timestamp of last manual camera drag
 
     // lock-on state (D3)
     this.lockTarget = null;           // enemy object or null
@@ -152,6 +153,7 @@
       var dy = e.clientY - self.lastDragY;
       self.lastDragX = e.clientX;
       self.lastDragY = e.clientY;
+      if (dx !== 0 || dy !== 0) self.lastManualCamT = performance.now() / 1000;
       self.camYaw -= dx * deg2rad(CFG.mouseSensDegPerPx);
       self.camPitch += dy * deg2rad(CFG.mouseSensDegPerPx);
       self.camPitch = Math.max(deg2rad(CFG.camPitchMinDeg), Math.min(deg2rad(CFG.camPitchMaxDeg), self.camPitch));
@@ -493,6 +495,18 @@
       want = target.clone().add(offset);
       this.camera.position.lerp(want, lerp);
     } else {
+      // v3.1: souls-style auto-follow. While moving (and not within the
+      // manual-override window after a mouse drag), ease camera yaw toward
+      // the player's facing so A/D strafing orbits the camera with you.
+      // Idle and lock-on are untouched.
+      var nowT = performance.now() / 1000;
+      var manualOverride = (nowT - this.lastManualCamT) < CFG.camAutoFollowDelay;
+      var moving = (this.moveDirWorld.x !== 0 || this.moveDirWorld.z !== 0);
+      if (moving && !manualOverride) {
+        var followYaw = Math.atan2(this.moveDirWorld.x, this.moveDirWorld.z) + Math.PI;
+        var lerpF = 1 - Math.exp(-CFG.camAutoFollowRate * dt);
+        this.camYaw += shortestAngle(followYaw - this.camYaw) * lerpF;
+      }
       var lerp2 = 1 - Math.exp(-CFG.camFollowLerp * dt);
       this.camera.position.lerp(want, lerp2);
     }

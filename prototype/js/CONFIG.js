@@ -138,6 +138,8 @@ window.WH_CONFIG = {
     camPitchMaxDeg: 65,
     camHeight: 2.6,
     camFollowLerp: 12.0,              // per-second lerp factor
+    camAutoFollowDelay: 1.2,          // seconds after manual drag before auto-follow resumes
+    camAutoFollowRate: 2.5,           // per-second exp lerp for auto yaw follow
     mouseSensDegPerPx: 0.25,
     respawnDelay: 2.2                 // seconds on death screen before respawn
   },
