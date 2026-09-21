@@ -20,7 +20,9 @@
     fpsFrames: 0,
     fpsTime: 0,
     fpsValue: 0,
-    transitionFlash: 0
+    transitionFlash: 0,
+    shakeTimer: 0,                    // v3 camera shake remaining seconds
+    shakeSeed: 0                      // per-pulse random phase
   };
   window.WH_GAME = game;
 
@@ -227,6 +229,25 @@
     setGateHint(nearBoundary && distGate < CFG.chokepoint.width * 2);
   }
 
+  // ---- camera shake (v3 D4) ---------------------------------------------------
+
+  // Subtle shake pulse while locked-on; amplitude decays over shake duration.
+  function triggerShake() {
+    game.shakeTimer = CFG.anim.shake.duration;
+    game.shakeSeed = Math.random() * Math.PI * 2;
+  }
+
+  function applyCameraShake(dt) {
+    if (game.shakeTimer <= 0) return;
+    var S = CFG.anim.shake;
+    game.shakeTimer = Math.max(0, game.shakeTimer - dt);
+    var k = game.shakeTimer / S.duration;          // 1 -> 0 linear decay
+    var amp = S.amplitude * k;
+    var t = performance.now() / 1000 + game.shakeSeed;
+    game.camera.position.x += Math.sin(t * 47) * amp;
+    game.camera.position.y += Math.cos(t * 53) * amp * 0.6;
+  }
+
   function canDamagePlayer(amount) {
     game.player.takeDamage(amount);
   }
@@ -287,7 +308,19 @@
       },
       engageLockOn: function () { engageLockOn(); },
       breakLockOn: function () { breakLockOn(); },
-      getConfig: function () { return CFG; }
+      getConfig: function () { return CFG; },
+      // v3 animation hooks
+      getAttackStage: function () { return game.player.getAttackStage(); },
+      triggerAttack: function () { game.player.tryAttack(); },
+      isRolling: function () { return game.player.rolling; },
+      getEnemy: function (idx) {
+        var list = game.regionManager.getEnemies(game.regionManager.logic.activeId);
+        var e = list[idx];
+        if (!e) return null;
+        return { type: e.type, fsm: e.fsm, hp: e.hp,
+                 x: e.pos.x, y: e.root.position.y, z: e.pos.z,
+                 staggerTimer: e.staggerTimer, ref: e };
+      }
     };
   }
 
@@ -320,6 +353,8 @@
       var sword = window.WH_ASSETS.instance('longsword');
       sword.scale.setScalar(0.9);
       game.player.root.add(sword);
+      // v3: register the sword with the player so attack stages drive its pose
+      game.player.setWeapon(sword);
 
       // initial region A
       game.regionManager = new window.WH_RegionManager(game.scene);
@@ -380,7 +415,11 @@
         while (dyaw < -Math.PI) dyaw += Math.PI * 2;
         if (Math.abs(dyaw) > sweep.halfAngle) continue;
         var dmg = sweep.damage * (e.type === 'ghoul' ? CFG.player.attackDamageGhoulBonus : 1);
-        e.takeDamage(dmg);
+        // v3: pass hit direction (player -> enemy) for stagger knockback
+        var hitDir = dist > 0.001 ? { x: dx / dist, z: dz / dist } : null;
+        e.takeDamage(dmg, hitDir);
+        // v3 D4: shake pulse on landed melee hits, while locked-on only
+        if (game.player.lockTarget) triggerShake();
       }
     }
 
@@ -388,6 +427,7 @@
     updateLockOn();
 
     game.player.updateCamera(dt);
+    applyCameraShake(dt);
     updateHud(dt);
     game.renderer.render(game.scene, game.camera);
   }

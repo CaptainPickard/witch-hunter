@@ -7,6 +7,7 @@
   'use strict';
 
   var CFG = window.WH_CONFIG.enemy;
+  var ANIM = window.WH_CONFIG.anim;
 
   function cfgFor(type) {
     return CFG[type] || CFG.bandit;
@@ -28,11 +29,17 @@
     this.root = new THREE.Group();
     this.body = null;
     this.deadFall = 0;                 // death fall-over progress
+    this.settleTime = -1;              // death settle bounce timer (-1 = off)
+    this.staggerTimer = 0;             // v3 hit-stagger visual timer
+    this.hopTimer = -1;                // ghoul lunge hop timer (-1 = off)
+    this.hopDir = { x: 0, z: 0 };      // hop direction at takeoff
+    this.hopOriginY = 0;               // root y at takeoff (for arc baseline)
   }
 
   Enemy.prototype.setBody = function (meshRoot) {
     if (this.body) this.root.remove(this.body);
     this.body = meshRoot;
+    this.bodyBaseY = meshRoot.position.y || 0;
     this.root.add(this.body);
   };
 
@@ -77,10 +84,20 @@
       if (!playerAlive || distToPlayer > this.cfg.leashRadius || distToSpawn > this.cfg.leashRadius) {
         this.setFsm('idle');           // leash: disengage, walk home
       } else if (distToPlayer <= this.cfg.attackRange) {
+        // v3: ghoul telegraphs the strike with a short forward hop
+        if (this.type === 'ghoul' && ANIM.ghoulHop.duration > 0) {
+          this.hopTimer = 0;
+          this.hopDir = distToPlayer > 0.001
+            ? { x: toPlayerX / distToPlayer, z: toPlayerZ / distToPlayer }
+            : { x: 0, z: 0 };
+        }
         this.setFsm('attack');
         this.attackTimer = 0;
       }
     }
+
+    // v3: hit-stagger visual timer runs down regardless of FSM
+    if (this.staggerTimer > 0) this.staggerTimer = Math.max(0, this.staggerTimer - dt);
 
     // ---- movement per state ----
     var moveSpeed = 0;
@@ -108,6 +125,22 @@
       this.pos.z += dirZ * moveSpeed * dt;
       this.yaw = Math.atan2(dirX, dirZ);
       this.bobPhase += dt * (moveSpeed > this.cfg.moveSpeed ? 11 : 7);
+    } else {
+      // decay toward 0 so the layered cycle does not freeze mid-pose
+      this.bobPhase += dt * 3;
+    }
+
+    // v3: ghoul lunge hop progress (0.25 over 0.25s, fired at chase->attack)
+    if (this.hopTimer >= 0) {
+      this.hopTimer += dt;
+      if (this.hopTimer >= ANIM.ghoulHop.duration) {
+        this.hopTimer = -1;
+      } else {
+        // horizontal drift along takeoff direction
+        var hopSpeed = ANIM.ghoulHop.height * 1.6 / ANIM.ghoulHop.duration; // ~reach
+        this.pos.x += this.hopDir.x * hopSpeed * dt;
+        this.pos.z += this.hopDir.z * hopSpeed * dt;
+      }
     }
 
     // ---- boundary hold: enemies never cross into the other region ----
@@ -120,11 +153,57 @@
       this.root.position.copy(this.pos);
       this.body.rotation.y = this.yaw;
       if (this.fsm === 'dead') {
-        this.deadFall = Math.min(1, this.deadFall + dt * 2.5);
-        this.body.rotation.x = -this.deadFall * Math.PI / 2;
-        this.root.position.y = -this.deadFall * 0.3;
+        if (this.settleTime < 0 && this.deadFall >= 1) {
+          this.settleTime = 0;           // fall finished: start settle bounce
+        }
+        if (this.settleTime < 0) {
+          this.deadFall = Math.min(1, this.deadFall + dt * 2.5);
+          this.body.rotation.x = -this.deadFall * Math.PI / 2;
+          this.root.position.y = -this.deadFall * 0.3;
+        } else {
+          // v3: settle bounce - overshoot above final sink, then settle
+          this.settleTime += dt;
+          var sp = Math.min(1, this.settleTime / ANIM.death.settleDuration);
+          var decay = Math.exp(-sp * 5);
+          var bounce = Math.sin(sp * Math.PI * 2) * ANIM.death.settleOvershoot * decay;
+          this.body.rotation.x = -Math.PI / 2;
+          this.root.position.y = -0.3 + bounce;
+        }
       } else {
-        this.root.position.y = Math.abs(Math.sin(this.bobPhase)) * 0.08;
+        // v3 D3: layered walk cycle with per-type amplitude multipliers
+        var mult = ANIM.enemyWalk[this.type] ||
+                   { bob: 1, sway: 1, lean: 1, yawOsc: 1 };
+        var movingNow = moveSpeed > 0;
+        var eBob = Math.abs(Math.sin(this.bobPhase)) * 0.09 * mult.bob;
+        eBob += Math.abs(Math.sin(this.bobPhase * 2)) * 0.04 * mult.bob;
+        var eSway = movingNow ? Math.sin(this.bobPhase * 0.5) * 0.05 * mult.sway : 0;
+        var eRoll = movingNow ? Math.sin(this.bobPhase * 0.5) * -0.05 * mult.sway : 0;
+        var eYawOsc = movingNow ? Math.sin(this.bobPhase) * 0.06 * mult.yawOsc : 0;
+        var eLean = 0;
+        if (movingNow) {
+          eLean = (moveSpeed > this.cfg.moveSpeed ? 0.16 : 0.08) * mult.lean;
+        }
+        // ghoul hop arc: parabolic root y above ground baseline
+        var hopY = 0;
+        if (this.hopTimer >= 0) {
+          var hp = this.hopTimer / ANIM.ghoulHop.duration;
+          hopY = 4 * hp * (1 - hp) * ANIM.ghoulHop.height;
+        }
+        // hit stagger: lean-back + slight crouch while staggerTimer is active
+        var stagT = this.staggerTimer > 0
+          ? this.staggerTimer / ANIM.stagger.visualDuration : 0;
+        var stagLean = stagT > 0 ? ANIM.stagger.leanBack * stagT : 0;
+        this.root.position.y = hopY + eBob * 0.4;
+        this.body.rotation.x = eLean + stagLean;
+        this.body.rotation.z = eRoll;
+        this.body.position.x = eSway;
+        this.body.rotation.y = this.yaw + eYawOsc;
+        if (stagT > 0) {
+          // crouch dip proportional to stagger intensity
+          this.body.position.y = (this.bodyBaseY || 0) - 0.06 * stagT;
+        } else {
+          this.body.position.y = this.bodyBaseY || 0;
+        }
       }
     }
   };
@@ -135,13 +214,23 @@
     this.fsmTime = 0;
   };
 
-  Enemy.prototype.takeDamage = function (amount) {
+  Enemy.prototype.takeDamage = function (amount, fromDir) {
     if (this.fsm === 'dead') return false;
     this.hp -= amount;
     if (this.hp <= 0) {
       this.hp = 0;
       this.setFsm('dead');
       return true;
+    }
+    // v3: hit stagger visual (0.15s lean-back + knockback)
+    this.staggerTimer = ANIM.stagger.visualDuration;
+    if (ANIM.stagger.knockback > 0 && fromDir) {
+      var kLen = Math.sqrt(fromDir.x * fromDir.x + fromDir.z * fromDir.z);
+      if (kLen > 0.001) {
+        var kPush = ANIM.stagger.knockback * ANIM.stagger.visualDuration;
+        this.pos.x += (fromDir.x / kLen) * kPush;
+        this.pos.z += (fromDir.z / kLen) * kPush;
+      }
     }
     this.setFsm('stagger');
     return false;

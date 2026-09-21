@@ -85401,6 +85401,62 @@ window.WH_CONFIG = {
     reticleOffsetY: 0.9             // reticle aim height above enemy feet
   },
 
+  // v3: procedural animation feel (transform-only; assets are unrigged).
+  // Stage fractions are of CONFIG.player.attackDuration and sum to 1.
+  anim: {
+    attack: {
+      windupFrac: 0.30,             // of attackDuration
+      strikeFrac: 0.25,             // of attackDuration (recover = remainder)
+      windupLean: -0.25,            // rad, body rotation.x lean back
+      windupCrouch: 0.06,           // root dip (units) during windup
+      windupSwordRaise: 0.9,        // rad, sword rotation.z lift in windup
+      strikeYawSweepDeg: 140,       // total body yaw sweep through strike
+      strikeLunge: 0.25,            // forward units along facing during strike
+      strikeSwordSweepDeg: 160,     // sword arc through strike
+      recoverLean: 0.10             // rad, forward-lean settle in recover
+    },
+    walk: {
+      bobAmp: 0.09,                 // primary vertical bob
+      bobFreqWalk: 9,               // rad/s phase rate
+      bobFreqSprint: 14,
+      leanWalk: 0.08,               // rad forward lean at walk speed
+      leanSprint: 0.16,             // rad forward lean at sprint speed
+      swayAmp: 0.05,                // lateral sway (position.x in body space)
+      swayFreqMult: 0.5,            // half the bob frequency
+      counterRollAmp: 0.05,         // rad rotation.z counter-roll
+      yawOscAmp: 0.06,              // rad yaw oscillation at bob frequency
+      footDipAmp: 0.04,             // secondary vertical sine
+      footDipFreqMult: 2,           // 2x bob frequency (two dips per cycle)
+      sprintAmpMult: 1.5,           // multiplies all layer amplitudes
+      idleDelay: 0.5,               // seconds of no movement before idle anim
+      idleBobAmp: 0.02,             // breathing bob amplitude
+      idlePeriod: 1.2,              // seconds per breath
+      idleYawAmp: 0.02              // rad tiny yaw drift
+    },
+    // Per-type enemy walk amplitude multipliers (layered cycle parity).
+    enemyWalk: {
+      bandit: { bob: 1.0, sway: 1.0, lean: 1.0, yawOsc: 1.0 },
+      ghoul:  { bob: 1.1, sway: 1.6, lean: 1.2, yawOsc: 1.3 }
+    },
+    ghoulHop: {
+      height: 0.25,                 // root y arc height (units)
+      duration: 0.25                // seconds, fired at chase -> attack
+    },
+    stagger: {
+      visualDuration: 0.15,         // seconds of lean-back/knockback visual
+      leanBack: 0.25,               // rad body rotation.x lean back
+      knockback: 1.2                // units/s push away from attacker
+    },
+    death: {
+      settleOvershoot: 0.05,        // bounce above final sink at end of fall
+      settleDuration: 0.45          // seconds for the settle bounce
+    },
+    shake: {
+      amplitude: 0.05,              // camera shake pulse (units)
+      duration: 0.15                // seconds decay
+    }
+  },
+
   loop: {
     maxDt: 1 / 20,                    // clamp dt (tab-blur / hitch protection)
     fixedTickHz: 60                   // nominal update rate reference
@@ -85747,8 +85803,12 @@ window.WH_CONFIG = {
 
   var CFG = window.WH_CONFIG.player;
   var LOCK = window.WH_CONFIG.lockOn;
+  var ANIM = window.WH_CONFIG.anim;
+  var AW = ANIM.attack;
+  var WL = ANIM.walk;
 
   function deg2rad(d) { return d * Math.PI / 180; }
+  function smooth(p) { return p * p * (3 - 2 * p); }   // smoothstep ease
 
   function shortestAngle(a) {
     while (a > Math.PI) a -= Math.PI * 2;
@@ -85782,6 +85842,9 @@ window.WH_CONFIG = {
     this.attackTimer = 0;
     this.attackDidHit = false;
     this.bobPhase = 0;
+    this.idleTime = 0;                // seconds without movement input
+    this.idlePhase = 0;               // breathing phase
+    this.lungeLeft = 0;               // strike lunge distance remaining
 
     // camera orbit state
     this.camYaw = Math.PI;            // looking toward -z (into region A)
@@ -85809,14 +85872,41 @@ window.WH_CONFIG = {
     // ground-aligned template in an inner holder so animation only moves
     // the holder and the template's own ground offset is preserved.
     this.bodyBaseY = meshRoot.position.y || 0;
+    this.bodyBaseX = meshRoot.position.x || 0;
     this.root.add(this.body);
   };
 
+  // Weapon attach (v3): the sword is driven as a separate child so body lean
+  // and sword arc read together. game.js calls this after preload.
+  Player.prototype.setWeapon = function (mesh) {
+    this.sword = mesh;
+    this.swordBase = {
+      x: mesh.position.x || 0,
+      y: mesh.position.y || 0,
+      z: mesh.position.z || 0,
+      rz: mesh.rotation.z || 0,
+      ry: mesh.rotation.y || 0
+    };
+  };
+
+  Player.prototype.resetWeaponPose = function () {
+    if (!this.sword) return;
+    this.sword.position.set(this.swordBase.x, this.swordBase.y, this.swordBase.z);
+    this.sword.rotation.z = this.swordBase.rz;
+    this.sword.rotation.y = this.swordBase.ry;
+  };
+
   // Bob offset: call from the walk animation in place of absolute writes.
-  Player.prototype.setBodyBob = function (bobY, tiltZ) {
+  // Composes with groundAlign: only ever ADDS offsets to the stored base.
+  // leanX: body.rotation.x (forward+). yawAdd: added to body yaw (yaw osc).
+  // swayX: lateral body.position.x offset (body space).
+  Player.prototype.setBodyBob = function (bobY, tiltZ, leanX, yawAdd, swayX) {
     if (!this.body) return;
     this.body.position.y = this.bodyBaseY + bobY;
+    this.body.position.x = (this.bodyBaseX || 0) + (swayX || 0);
     if (tiltZ !== undefined) this.body.rotation.z = tiltZ;
+    if (leanX !== undefined) this.body.rotation.x = leanX;
+    if (yawAdd !== undefined) this.body.rotation.y = this.yaw + yawAdd;
   };
 
   Player.prototype.bindInput = function () {
@@ -85877,8 +85967,17 @@ window.WH_CONFIG = {
     this.sprinting = !!(k['ShiftLeft'] || k['ShiftRight']);
   };
 
+  // v3: roll cancels attack during WINDUP only (souls-like); attack cannot
+  // start during roll.
   Player.prototype.tryRoll = function () {
-    if (this.state !== 'alive' || this.rolling || this.attacking) return;
+    if (this.state !== 'alive' || this.rolling) return;
+    if (this.attacking) {
+      if (this.getAttackStage() !== 'windup') return;   // strike/recover locked
+      this.attacking = false;                           // cancel in windup
+      this.attackTimer = 0;
+      this.lungeLeft = 0;
+      this.resetWeaponPose();
+    }
     if (this.stamina < CFG.rollStaminaCost) return;
     this.spendStamina(CFG.rollStaminaCost);
     this.rolling = true;
@@ -85900,8 +85999,20 @@ window.WH_CONFIG = {
     this.attacking = true;
     this.attackTimer = CFG.attackDuration;
     this.attackDidHit = false;
+    this.lungeLeft = AW.strikeLunge;
     // face camera direction on attack (unless locked: hard track handles it)
     if (!this.lockTarget) this.yaw = this.camYaw + Math.PI;
+  };
+
+  // v3 D1: attack stage from elapsed time. 'windup' | 'strike' | 'recover' | null.
+  Player.prototype.getAttackStage = function () {
+    if (!this.attacking) return null;
+    var elapsed = CFG.attackDuration - this.attackTimer;
+    var windupEnd = CFG.attackDuration * AW.windupFrac;
+    var strikeEnd = CFG.attackDuration * (AW.windupFrac + AW.strikeFrac);
+    if (elapsed < windupEnd) return 'windup';
+    if (elapsed < strikeEnd) return 'strike';
+    return 'recover';
   };
 
   Player.prototype.spendStamina = function (amount) {
@@ -85920,11 +86031,11 @@ window.WH_CONFIG = {
   };
 
   // Returns attack sweep state for the combat layer: null or {origin, dir,
-  // range, halfAngle, damage}.
+  // range, halfAngle, damage}. v3: the active window is the whole STRIKE
+  // stage (hit lands midway through the swing; the sweep consumes once).
   Player.prototype.consumeAttackSweep = function () {
     if (!this.attacking || this.attackDidHit) return null;
-    // hit lands midway through the swing
-    if (this.attackTimer > CFG.attackDuration * 0.5) return null;
+    if (this.getAttackStage() !== 'strike') return null;
     this.attackDidHit = true;
     var halfAngle = deg2rad(CFG.attackArcHalfAngleDeg);
     return {
@@ -85973,26 +86084,35 @@ window.WH_CONFIG = {
     this.updateLockTracking();
 
     var displacement = new THREE.Vector3(0, 0, 0);
+    var moving = false;
+    var sprintingNow = false;
 
     if (this.rolling) {
       this.rollTimer -= dt;
-      // roll = quick translation + tumble
+      // roll = quick translation + eased full tumble (v3)
       var step = this.rollDir.clone().multiplyScalar(CFG.rollSpeed * dt);
       this.pos.add(step);
-      if (this.body) this.body.rotation.x = (1 - this.rollTimer / CFG.rollDuration) * Math.PI * 2;
+      if (this.body) {
+        var rp = 1 - this.rollTimer / CFG.rollDuration;
+        this.body.rotation.x = smooth(rp) * Math.PI * 2;
+        this.body.rotation.z = 0;
+      }
       if (this.rollTimer <= 0) {
         this.rolling = false;
-        if (this.body) this.body.rotation.x = 0;
+        if (this.body) { this.body.rotation.x = 0; this.body.rotation.z = 0; }
+        this.resetWeaponPose();
       }
     } else {
       // camera-relative movement
       this.collectMoveInput();
       var mx = this.moveInput.x, mz = this.moveInput.z;
       if (mx !== 0 || mz !== 0) {
+        moving = true;
+        sprintingNow = this.sprinting && this.stamina > 0;
         var len = Math.sqrt(mx * mx + mz * mz);
         mx /= len; mz /= len;
-        var speed = (this.sprinting && this.stamina > 0) ? CFG.sprintSpeed : CFG.walkSpeed;
-        if (this.sprinting && this.stamina > 0) {
+        var speed = sprintingNow ? CFG.sprintSpeed : CFG.walkSpeed;
+        if (sprintingNow) {
           this.spendStamina(CFG.sprintStaminaPerSec * dt);
         }
         if (this.attacking) speed *= 0.3;   // slow while swinging
@@ -86016,34 +86136,116 @@ window.WH_CONFIG = {
           var dyaw = shortestAngle(targetYaw - this.yaw);
           this.yaw += Math.max(-maxTurn, Math.min(maxTurn, dyaw));
         }
-        // walk bob
-        this.bobPhase += dt * (this.sprinting ? 14 : 9);
+        // ---- v3 D2: layered walk/sprint cycle ----
+        this.idleTime = 0;
+        this.bobPhase += dt * (sprintingNow ? WL.bobFreqSprint : WL.bobFreqWalk);
         if (this.body) {
-          this.setBodyBob(Math.abs(Math.sin(this.bobPhase)) * 0.12,
-                          Math.sin(this.bobPhase) * 0.04);
+          var amp = sprintingNow ? WL.sprintAmpMult : 1;
+          var bob = Math.abs(Math.sin(this.bobPhase)) * WL.bobAmp * amp;
+          // foot-phase dip: 2x freq, smaller (two dips per cycle)
+          bob += Math.abs(Math.sin(this.bobPhase * WL.footDipFreqMult)) * WL.footDipAmp * amp;
+          // forward lean proportional to speed (walk vs sprint)
+          var lean = (sprintingNow ? WL.leanSprint : WL.leanWalk) * (this.attacking ? 0.5 : 1);
+          // lateral sway at half bob frequency + counter-roll
+          var sway = Math.sin(this.bobPhase * WL.swayFreqMult) * WL.swayAmp * amp;
+          var roll = Math.sin(this.bobPhase * WL.swayFreqMult) * -WL.counterRollAmp * amp;
+          // yaw oscillation at bob frequency (arm-swing substitute)
+          var yawOsc = Math.sin(this.bobPhase) * WL.yawOscAmp * amp;
+          this.setBodyBob(bob, roll, lean, yawOsc, sway);
         }
       } else {
         this.moveDirWorld.x = 0;
         this.moveDirWorld.z = 0;
-        if (this.body) { this.setBodyBob(0, 0); }
+        // ---- v3 D2: idle breathing after idleDelay ----
+        this.idleTime += dt;
+        if (this.body) {
+          if (this.idleTime >= WL.idleDelay) {
+            this.idlePhase += dt * (Math.PI * 2 / WL.idlePeriod);
+            this.setBodyBob(
+              (Math.sin(this.idlePhase) * 0.5 + 0.5) * WL.idleBobAmp, 0,
+              0, Math.sin(this.idlePhase * 0.5) * WL.idleYawAmp, 0);
+          } else {
+            this.setBodyBob(0, 0, 0, 0, 0);
+          }
+        }
       }
     }
 
     if (clampToBounds) clampToBounds(this);
 
-    // attack swing rotation (procedural)
+    // ---- v3 D1: three-stage attack pose + strike lunge ----
     if (this.body) {
       if (this.attacking) {
-        var t = 1 - this.attackTimer / CFG.attackDuration;   // 0..1
-        var swing = Math.sin(t * Math.PI) * deg2rad(110);
-        this.body.rotation.y = this.yaw;
-        // arm-swing approximated by whole-body pitch/roll nudge
-        this.body.rotation.x = -swing * 0.25;
+        var stage = this.getAttackStage();
+        var yawBase = this.yaw;
+        if (stage === 'windup') {
+          var wp = (CFG.attackDuration - this.attackTimer) /
+                   (CFG.attackDuration * AW.windupFrac);       // 0..1
+          var we = smooth(wp);
+          this.body.rotation.x = AW.windupLean * we;           // lean back
+          this.body.rotation.y = yawBase;
+          this.body.rotation.z = 0;
+          this.body.position.y = this.bodyBaseY - AW.windupCrouch * we;  // crouch
+          this.body.position.x = this.bodyBaseX || 0;
+          if (this.sword) {
+            this.sword.rotation.z = this.swordBase.rz + AW.windupSwordRaise * we;
+          }
+        } else if (stage === 'strike') {
+          var sp = (CFG.attackDuration * AW.windupFrac + CFG.attackDuration * AW.strikeFrac
+                    - this.attackTimer) /
+                   (CFG.attackDuration * AW.strikeFrac);        // 0..1
+          var se = 1 - (1 - sp) * (1 - sp);                     // ease-out
+          // horizontal yaw sweep through the stage (start behind right shoulder)
+          this.body.rotation.y = yawBase - deg2rad(AW.strikeYawSweepDeg) * 0.5
+                                 + deg2rad(AW.strikeYawSweepDeg) * se;
+          this.body.rotation.x = 0;
+          this.body.rotation.z = 0;
+          this.body.position.y = this.bodyBaseY;
+          this.body.position.x = this.bodyBaseX || 0;
+          if (this.sword) {
+            // raise -> level then sweep through the horizontal arc
+            this.sword.rotation.z = this.swordBase.rz +
+              AW.windupSwordRaise * (1 - se) +
+              deg2rad(AW.strikeSwordSweepDeg) * se - deg2rad(AW.strikeSwordSweepDeg) * 0.5 * se;
+          }
+          // forward lunge along facing: velocity model. The old target-delta
+          // formula (strikeLunge * se - (strikeLunge - lungeLeft)) strands
+          // the remainder whenever the STRIKE stage spans few frames
+          // (hitches clamped at maxDt), leaving the lunge at ~0.09 of 0.25.
+          // A dt-scaled velocity drains the full lunge at any frame rate.
+          if (this.lungeLeft > 0) {
+            var strikeSpan = CFG.attackDuration * AW.strikeFrac;
+            var lungeVel = AW.strikeLunge / strikeSpan;
+            var lungeStep = Math.min(lungeVel * dt, this.lungeLeft);
+            this.pos.x += Math.sin(this.yaw) * lungeStep;
+            this.pos.z += Math.cos(this.yaw) * lungeStep;
+            this.lungeLeft -= lungeStep;
+          }
+        } else {                                                // recover
+          var rEnd = CFG.attackDuration * (AW.windupFrac + AW.strikeFrac);
+          var rp2 = Math.min(1, Math.max(0,
+            (CFG.attackDuration - this.attackTimer - rEnd) /
+            (CFG.attackDuration - rEnd)));                      // 0..1
+          var re = smooth(rp2);
+          var swing = deg2rad(AW.strikeYawSweepDeg) * 0.5;      // sweep end offset
+          this.body.rotation.y = yawBase + swing * (1 - re);    // ease back to neutral
+          this.body.rotation.x = AW.recoverLean * re;           // forward-lean settle
+          this.body.rotation.z = 0;
+          this.body.position.y = this.bodyBaseY;
+          this.body.position.x = this.bodyBaseX || 0;
+          if (this.sword) {
+            this.sword.rotation.z = this.swordBase.rz + AW.windupSwordRaise * (1 - re);
+          }
+        }
       } else if (!this.rolling) {
         this.body.rotation.x = 0;
         this.body.rotation.y = this.yaw;
+        this.body.rotation.z = 0;
+        this.body.position.x = this.bodyBaseX || 0;
+        if (this.sword) this.resetWeaponPose();
       }
     }
+    if (!this.attacking) this.lungeLeft = 0;
 
     this.root.position.copy(this.pos);
   };
@@ -86117,6 +86319,7 @@ window.WH_CONFIG = {
   'use strict';
 
   var CFG = window.WH_CONFIG.enemy;
+  var ANIM = window.WH_CONFIG.anim;
 
   function cfgFor(type) {
     return CFG[type] || CFG.bandit;
@@ -86138,11 +86341,17 @@ window.WH_CONFIG = {
     this.root = new THREE.Group();
     this.body = null;
     this.deadFall = 0;                 // death fall-over progress
+    this.settleTime = -1;              // death settle bounce timer (-1 = off)
+    this.staggerTimer = 0;             // v3 hit-stagger visual timer
+    this.hopTimer = -1;                // ghoul lunge hop timer (-1 = off)
+    this.hopDir = { x: 0, z: 0 };      // hop direction at takeoff
+    this.hopOriginY = 0;               // root y at takeoff (for arc baseline)
   }
 
   Enemy.prototype.setBody = function (meshRoot) {
     if (this.body) this.root.remove(this.body);
     this.body = meshRoot;
+    this.bodyBaseY = meshRoot.position.y || 0;
     this.root.add(this.body);
   };
 
@@ -86187,10 +86396,20 @@ window.WH_CONFIG = {
       if (!playerAlive || distToPlayer > this.cfg.leashRadius || distToSpawn > this.cfg.leashRadius) {
         this.setFsm('idle');           // leash: disengage, walk home
       } else if (distToPlayer <= this.cfg.attackRange) {
+        // v3: ghoul telegraphs the strike with a short forward hop
+        if (this.type === 'ghoul' && ANIM.ghoulHop.duration > 0) {
+          this.hopTimer = 0;
+          this.hopDir = distToPlayer > 0.001
+            ? { x: toPlayerX / distToPlayer, z: toPlayerZ / distToPlayer }
+            : { x: 0, z: 0 };
+        }
         this.setFsm('attack');
         this.attackTimer = 0;
       }
     }
+
+    // v3: hit-stagger visual timer runs down regardless of FSM
+    if (this.staggerTimer > 0) this.staggerTimer = Math.max(0, this.staggerTimer - dt);
 
     // ---- movement per state ----
     var moveSpeed = 0;
@@ -86218,6 +86437,22 @@ window.WH_CONFIG = {
       this.pos.z += dirZ * moveSpeed * dt;
       this.yaw = Math.atan2(dirX, dirZ);
       this.bobPhase += dt * (moveSpeed > this.cfg.moveSpeed ? 11 : 7);
+    } else {
+      // decay toward 0 so the layered cycle does not freeze mid-pose
+      this.bobPhase += dt * 3;
+    }
+
+    // v3: ghoul lunge hop progress (0.25 over 0.25s, fired at chase->attack)
+    if (this.hopTimer >= 0) {
+      this.hopTimer += dt;
+      if (this.hopTimer >= ANIM.ghoulHop.duration) {
+        this.hopTimer = -1;
+      } else {
+        // horizontal drift along takeoff direction
+        var hopSpeed = ANIM.ghoulHop.height * 1.6 / ANIM.ghoulHop.duration; // ~reach
+        this.pos.x += this.hopDir.x * hopSpeed * dt;
+        this.pos.z += this.hopDir.z * hopSpeed * dt;
+      }
     }
 
     // ---- boundary hold: enemies never cross into the other region ----
@@ -86230,11 +86465,57 @@ window.WH_CONFIG = {
       this.root.position.copy(this.pos);
       this.body.rotation.y = this.yaw;
       if (this.fsm === 'dead') {
-        this.deadFall = Math.min(1, this.deadFall + dt * 2.5);
-        this.body.rotation.x = -this.deadFall * Math.PI / 2;
-        this.root.position.y = -this.deadFall * 0.3;
+        if (this.settleTime < 0 && this.deadFall >= 1) {
+          this.settleTime = 0;           // fall finished: start settle bounce
+        }
+        if (this.settleTime < 0) {
+          this.deadFall = Math.min(1, this.deadFall + dt * 2.5);
+          this.body.rotation.x = -this.deadFall * Math.PI / 2;
+          this.root.position.y = -this.deadFall * 0.3;
+        } else {
+          // v3: settle bounce - overshoot above final sink, then settle
+          this.settleTime += dt;
+          var sp = Math.min(1, this.settleTime / ANIM.death.settleDuration);
+          var decay = Math.exp(-sp * 5);
+          var bounce = Math.sin(sp * Math.PI * 2) * ANIM.death.settleOvershoot * decay;
+          this.body.rotation.x = -Math.PI / 2;
+          this.root.position.y = -0.3 + bounce;
+        }
       } else {
-        this.root.position.y = Math.abs(Math.sin(this.bobPhase)) * 0.08;
+        // v3 D3: layered walk cycle with per-type amplitude multipliers
+        var mult = ANIM.enemyWalk[this.type] ||
+                   { bob: 1, sway: 1, lean: 1, yawOsc: 1 };
+        var movingNow = moveSpeed > 0;
+        var eBob = Math.abs(Math.sin(this.bobPhase)) * 0.09 * mult.bob;
+        eBob += Math.abs(Math.sin(this.bobPhase * 2)) * 0.04 * mult.bob;
+        var eSway = movingNow ? Math.sin(this.bobPhase * 0.5) * 0.05 * mult.sway : 0;
+        var eRoll = movingNow ? Math.sin(this.bobPhase * 0.5) * -0.05 * mult.sway : 0;
+        var eYawOsc = movingNow ? Math.sin(this.bobPhase) * 0.06 * mult.yawOsc : 0;
+        var eLean = 0;
+        if (movingNow) {
+          eLean = (moveSpeed > this.cfg.moveSpeed ? 0.16 : 0.08) * mult.lean;
+        }
+        // ghoul hop arc: parabolic root y above ground baseline
+        var hopY = 0;
+        if (this.hopTimer >= 0) {
+          var hp = this.hopTimer / ANIM.ghoulHop.duration;
+          hopY = 4 * hp * (1 - hp) * ANIM.ghoulHop.height;
+        }
+        // hit stagger: lean-back + slight crouch while staggerTimer is active
+        var stagT = this.staggerTimer > 0
+          ? this.staggerTimer / ANIM.stagger.visualDuration : 0;
+        var stagLean = stagT > 0 ? ANIM.stagger.leanBack * stagT : 0;
+        this.root.position.y = hopY + eBob * 0.4;
+        this.body.rotation.x = eLean + stagLean;
+        this.body.rotation.z = eRoll;
+        this.body.position.x = eSway;
+        this.body.rotation.y = this.yaw + eYawOsc;
+        if (stagT > 0) {
+          // crouch dip proportional to stagger intensity
+          this.body.position.y = (this.bodyBaseY || 0) - 0.06 * stagT;
+        } else {
+          this.body.position.y = this.bodyBaseY || 0;
+        }
       }
     }
   };
@@ -86245,13 +86526,23 @@ window.WH_CONFIG = {
     this.fsmTime = 0;
   };
 
-  Enemy.prototype.takeDamage = function (amount) {
+  Enemy.prototype.takeDamage = function (amount, fromDir) {
     if (this.fsm === 'dead') return false;
     this.hp -= amount;
     if (this.hp <= 0) {
       this.hp = 0;
       this.setFsm('dead');
       return true;
+    }
+    // v3: hit stagger visual (0.15s lean-back + knockback)
+    this.staggerTimer = ANIM.stagger.visualDuration;
+    if (ANIM.stagger.knockback > 0 && fromDir) {
+      var kLen = Math.sqrt(fromDir.x * fromDir.x + fromDir.z * fromDir.z);
+      if (kLen > 0.001) {
+        var kPush = ANIM.stagger.knockback * ANIM.stagger.visualDuration;
+        this.pos.x += (fromDir.x / kLen) * kPush;
+        this.pos.z += (fromDir.z / kLen) * kPush;
+      }
     }
     this.setFsm('stagger');
     return false;
@@ -86629,7 +86920,9 @@ window.WH_CONFIG = {
     fpsFrames: 0,
     fpsTime: 0,
     fpsValue: 0,
-    transitionFlash: 0
+    transitionFlash: 0,
+    shakeTimer: 0,                    // v3 camera shake remaining seconds
+    shakeSeed: 0                      // per-pulse random phase
   };
   window.WH_GAME = game;
 
@@ -86836,6 +87129,25 @@ window.WH_CONFIG = {
     setGateHint(nearBoundary && distGate < CFG.chokepoint.width * 2);
   }
 
+  // ---- camera shake (v3 D4) ---------------------------------------------------
+
+  // Subtle shake pulse while locked-on; amplitude decays over shake duration.
+  function triggerShake() {
+    game.shakeTimer = CFG.anim.shake.duration;
+    game.shakeSeed = Math.random() * Math.PI * 2;
+  }
+
+  function applyCameraShake(dt) {
+    if (game.shakeTimer <= 0) return;
+    var S = CFG.anim.shake;
+    game.shakeTimer = Math.max(0, game.shakeTimer - dt);
+    var k = game.shakeTimer / S.duration;          // 1 -> 0 linear decay
+    var amp = S.amplitude * k;
+    var t = performance.now() / 1000 + game.shakeSeed;
+    game.camera.position.x += Math.sin(t * 47) * amp;
+    game.camera.position.y += Math.cos(t * 53) * amp * 0.6;
+  }
+
   function canDamagePlayer(amount) {
     game.player.takeDamage(amount);
   }
@@ -86896,7 +87208,19 @@ window.WH_CONFIG = {
       },
       engageLockOn: function () { engageLockOn(); },
       breakLockOn: function () { breakLockOn(); },
-      getConfig: function () { return CFG; }
+      getConfig: function () { return CFG; },
+      // v3 animation hooks
+      getAttackStage: function () { return game.player.getAttackStage(); },
+      triggerAttack: function () { game.player.tryAttack(); },
+      isRolling: function () { return game.player.rolling; },
+      getEnemy: function (idx) {
+        var list = game.regionManager.getEnemies(game.regionManager.logic.activeId);
+        var e = list[idx];
+        if (!e) return null;
+        return { type: e.type, fsm: e.fsm, hp: e.hp,
+                 x: e.pos.x, y: e.root.position.y, z: e.pos.z,
+                 staggerTimer: e.staggerTimer, ref: e };
+      }
     };
   }
 
@@ -86929,6 +87253,8 @@ window.WH_CONFIG = {
       var sword = window.WH_ASSETS.instance('longsword');
       sword.scale.setScalar(0.9);
       game.player.root.add(sword);
+      // v3: register the sword with the player so attack stages drive its pose
+      game.player.setWeapon(sword);
 
       // initial region A
       game.regionManager = new window.WH_RegionManager(game.scene);
@@ -86989,7 +87315,11 @@ window.WH_CONFIG = {
         while (dyaw < -Math.PI) dyaw += Math.PI * 2;
         if (Math.abs(dyaw) > sweep.halfAngle) continue;
         var dmg = sweep.damage * (e.type === 'ghoul' ? CFG.player.attackDamageGhoulBonus : 1);
-        e.takeDamage(dmg);
+        // v3: pass hit direction (player -> enemy) for stagger knockback
+        var hitDir = dist > 0.001 ? { x: dx / dist, z: dz / dist } : null;
+        e.takeDamage(dmg, hitDir);
+        // v3 D4: shake pulse on landed melee hits, while locked-on only
+        if (game.player.lockTarget) triggerShake();
       }
     }
 
@@ -86997,6 +87327,7 @@ window.WH_CONFIG = {
     updateLockOn();
 
     game.player.updateCamera(dt);
+    applyCameraShake(dt);
     updateHud(dt);
     game.renderer.render(game.scene, game.camera);
   }

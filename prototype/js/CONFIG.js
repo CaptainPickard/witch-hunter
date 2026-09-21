@@ -189,6 +189,62 @@ window.WH_CONFIG = {
     reticleOffsetY: 0.9             // reticle aim height above enemy feet
   },
 
+  // v3: procedural animation feel (transform-only; assets are unrigged).
+  // Stage fractions are of CONFIG.player.attackDuration and sum to 1.
+  anim: {
+    attack: {
+      windupFrac: 0.30,             // of attackDuration
+      strikeFrac: 0.25,             // of attackDuration (recover = remainder)
+      windupLean: -0.25,            // rad, body rotation.x lean back
+      windupCrouch: 0.06,           // root dip (units) during windup
+      windupSwordRaise: 0.9,        // rad, sword rotation.z lift in windup
+      strikeYawSweepDeg: 140,       // total body yaw sweep through strike
+      strikeLunge: 0.25,            // forward units along facing during strike
+      strikeSwordSweepDeg: 160,     // sword arc through strike
+      recoverLean: 0.10             // rad, forward-lean settle in recover
+    },
+    walk: {
+      bobAmp: 0.09,                 // primary vertical bob
+      bobFreqWalk: 9,               // rad/s phase rate
+      bobFreqSprint: 14,
+      leanWalk: 0.08,               // rad forward lean at walk speed
+      leanSprint: 0.16,             // rad forward lean at sprint speed
+      swayAmp: 0.05,                // lateral sway (position.x in body space)
+      swayFreqMult: 0.5,            // half the bob frequency
+      counterRollAmp: 0.05,         // rad rotation.z counter-roll
+      yawOscAmp: 0.06,              // rad yaw oscillation at bob frequency
+      footDipAmp: 0.04,             // secondary vertical sine
+      footDipFreqMult: 2,           // 2x bob frequency (two dips per cycle)
+      sprintAmpMult: 1.5,           // multiplies all layer amplitudes
+      idleDelay: 0.5,               // seconds of no movement before idle anim
+      idleBobAmp: 0.02,             // breathing bob amplitude
+      idlePeriod: 1.2,              // seconds per breath
+      idleYawAmp: 0.02              // rad tiny yaw drift
+    },
+    // Per-type enemy walk amplitude multipliers (layered cycle parity).
+    enemyWalk: {
+      bandit: { bob: 1.0, sway: 1.0, lean: 1.0, yawOsc: 1.0 },
+      ghoul:  { bob: 1.1, sway: 1.6, lean: 1.2, yawOsc: 1.3 }
+    },
+    ghoulHop: {
+      height: 0.25,                 // root y arc height (units)
+      duration: 0.25                // seconds, fired at chase -> attack
+    },
+    stagger: {
+      visualDuration: 0.15,         // seconds of lean-back/knockback visual
+      leanBack: 0.25,               // rad body rotation.x lean back
+      knockback: 1.2                // units/s push away from attacker
+    },
+    death: {
+      settleOvershoot: 0.05,        // bounce above final sink at end of fall
+      settleDuration: 0.45          // seconds for the settle bounce
+    },
+    shake: {
+      amplitude: 0.05,              // camera shake pulse (units)
+      duration: 0.15                // seconds decay
+    }
+  },
+
   loop: {
     maxDt: 1 / 20,                    // clamp dt (tab-blur / hitch protection)
     fixedTickHz: 60                   // nominal update rate reference
