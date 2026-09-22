@@ -235,6 +235,25 @@ window.WH_CONFIG = {
     respawnDelay: 2.2                 // seconds on death screen before respawn
   },
 
+  // v6: block and parry (defense layer v1, HUD/DOM cues only)
+  block: {
+    parryWindow: 0.25,            // s, RMB-down parry window
+    parryStaminaCost: 5,          // stamina spent on a successful parry
+    absorb: 0.8,                  // fraction of damage negated on block (chip = 20%)
+    staminaCostMult: 0.9,         // blocked hit drains damage * this
+    blockArcHalfAngleDeg: 90,     // half-angle of the block/parry arc
+    moveMult: 0.5,                // movement speed multiplier while blocking
+    blockingRegenMult: 0.5,       // stamina regen rate multiplier while blocking
+    guardBreakStun: 0.8,          // s, stun after guard break
+    guardBreakMinStamina: 30,     // cannot block again until stamina >= this
+    riposteMult: 1.75,            // next hit on a staggered enemy
+    riposteStaggerDur: 1.25,      // s, enemy stagger after a parry
+    parryFlashSeconds: 0.15,      // HUD white flash duration
+    blockFlashSeconds: 0.12,      // HUD gray flash duration
+    guardBreakFlashSeconds: 0.5,  // HUD red flash duration
+    guardBreakTextSeconds: 1.4    // GUARD BROKEN text pulse duration
+  },
+
   enemy: {
     // All senses/combat numbers are POC-scaled; doc 33 has no sight values (D4b-1).
     bandit: {

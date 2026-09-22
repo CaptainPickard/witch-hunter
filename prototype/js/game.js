@@ -75,6 +75,41 @@
       loadNote: document.getElementById('wh-load-note'),
       reticle: document.getElementById('wh-lock-reticle')
     };
+    // v6: block/parry feedback cues, DOM only. The stamina bar already exists
+    // in index.html and reflects the drain via updateHud.
+    var flash = document.createElement('div');
+    flash.id = 'wh-block-flash';
+    document.getElementById('wh-hud').appendChild(flash);
+    game.hud.blockFlash = flash;
+    var gbText = document.createElement('div');
+    gbText.id = 'wh-guard-break-text';
+    gbText.textContent = 'GUARD BROKEN';
+    document.getElementById('wh-hud').appendChild(gbText);
+    game.hud.guardBreakText = gbText;
+    game.hud.flashTimer = 0;
+    game.hud.flashTimerMax = 0;
+  }
+
+  // v6: HUD screen-edge flash pulse (DOM opacity, no WebGL work).
+  function flashScreen(durationSec, kind) {
+    var el = game.hud.blockFlash;
+    el.classList.remove('parry', 'block', 'guardbreak');
+    void el.offsetWidth;                     // restart the CSS transition
+    el.classList.add(kind);
+    game.hud.flashTimer = durationSec;
+    game.hud.flashTimerMax = durationSec;
+    el.style.opacity = '1';
+  }
+
+  function updateBlockHud(dt) {
+    if (game.hud.flashTimer > 0) {
+      game.hud.flashTimer = Math.max(0, game.hud.flashTimer - dt);
+      var el = game.hud.blockFlash;
+      var frac = game.hud.flashTimerMax > 0
+        ? game.hud.flashTimer / game.hud.flashTimerMax : 0;
+      el.style.opacity = String(frac);
+      if (game.hud.flashTimer <= 0) el.style.opacity = '0';
+    }
   }
 
   function showRegionName(name) {
@@ -99,6 +134,7 @@
     var p = game.player;
     game.hud.hpBar.style.width = (p.hp / p.hpMax * 100) + '%';
     game.hud.stamBar.style.width = (p.stamina / p.staminaMax * 100) + '%';
+    updateBlockHud(dt);   // v6: flash decay
 
     // fps
     game.fpsFrames++;
@@ -252,6 +288,11 @@
     game.player.takeDamage(amount);
   }
 
+  // v6: all enemy damage routes through the block/parry choke point.
+  function damagePlayerFromEnemy(amount, attacker) {
+    game.player.resolveIncomingHit(amount, attacker);
+  }
+
   function applyRegionLighting(regionId) {
     var region = window.WH_REGION_DEFS.regions[regionId];
     game.scene.background = new THREE.Color(region.fogColor);
@@ -325,7 +366,40 @@
         return { type: e.type, fsm: e.fsm, hp: e.hp,
                  x: e.pos.x, y: e.root.position.y, z: e.pos.z,
                  staggerTimer: e.staggerTimer, ref: e };
-      }
+      },
+      // v6 block/parry hooks
+      isBlocking: function () { return game.player.blocking; },
+      getParryWindowRemaining: function () {
+        return game.player.getParryWindowRemaining();
+      },
+      forceGuardBreak: function () {
+        var p = game.player;
+        p.guardBroken = true;
+        p.guardBreakTimer = CFG.block.guardBreakStun;
+        p.endBlock();
+        p.stamina = 0;
+        if (p.onGuardBreak) p.onGuardBreak();
+      },
+      isGuardBroken: function () { return game.player.guardBroken; },
+      forceStagger: function (idx, dur) {
+        var list = game.regionManager.getEnemies(game.regionManager.logic.activeId);
+        var e = list[idx];
+        if (!e) return false;
+        e.enterStagger(dur || CFG.block.riposteStaggerDur);
+        return true;
+      },
+      isEnemyStaggered: function (idx) {
+        var list = game.regionManager.getEnemies(game.regionManager.logic.activeId);
+        var e = list[idx];
+        return !!(e && e.isStaggered && e.isStaggered());
+      },
+      getEnemyRiposteArmed: function (idx) {
+        var list = game.regionManager.getEnemies(game.regionManager.logic.activeId);
+        var e = list[idx];
+        return !!(e && e.riposteArmed);
+      },
+      tryBlock: function () { game.player.tryBlock(); },
+      endBlock: function () { game.player.endBlock(); }
     };
   }
 
@@ -343,6 +417,24 @@
     game.scene.add(game.player.root);
     // D3: player delegates the F-key toggle to the game's lock-on logic
     game.player.onLockToggle = toggleLockOn;
+
+    // v6: block/parry HUD feedback callbacks (player must exist first)
+    game.player.onParry = function () {
+      flashScreen(CFG.block.parryFlashSeconds, 'parry');
+    };
+    game.player.onBlock = function () {
+      flashScreen(CFG.block.blockFlashSeconds, 'block');
+    };
+    game.player.onGuardBreak = function () {
+      flashScreen(CFG.block.guardBreakFlashSeconds, 'guardbreak');
+      var el = game.hud.guardBreakText;
+      el.classList.add('visible');
+      clearTimeout(game._guardBreakTimer);
+      game._guardBreakTimer = setTimeout(function () {
+        el.classList.remove('visible');
+      }, CFG.block.guardBreakTextSeconds * 1000);
+      triggerShake();   // v3 shake hook exists, spec asks for it on guard break
+    };
 
     setupDebugHooks();
 
@@ -401,7 +493,8 @@
 
     // enemies (active region only)
     rm.updateEnemies(dt, game.player.pos, game.player.state === 'alive',
-      canDamagePlayer, rm.logic.activeId);
+      function (amount, attacker) { damagePlayerFromEnemy(amount, attacker); },
+      rm.logic.activeId);
 
     // attack sweep vs enemies
     var sweep = game.player.consumeAttackSweep();
@@ -420,6 +513,11 @@
         while (dyaw < -Math.PI) dyaw += Math.PI * 2;
         if (Math.abs(dyaw) > sweep.halfAngle) continue;
         var dmg = sweep.damage * (e.type === 'ghoul' ? CFG.player.attackDamageGhoulBonus : 1);
+        // v6: riposte - staggered enemies take bonus damage, flag consumed
+        if (e.riposteArmed && e.isStaggered && e.isStaggered()) {
+          dmg *= CFG.block.riposteMult;
+          e.riposteArmed = false;
+        }
         // v3: pass hit direction (player -> enemy) for stagger knockback
         var hitDir = dist > 0.001 ? { x: dx / dist, z: dz / dist } : null;
         e.takeDamage(dmg, hitDir);

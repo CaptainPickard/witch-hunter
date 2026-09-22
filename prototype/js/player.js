@@ -56,6 +56,12 @@
     this.comboQueued = false;         // v5: next chain input buffered in recover
     this.recoverFullyElapsed = false; // v5: attack fully finished flag
 
+    // v6: block / parry state
+    this.blocking = false;            // RMB held and block accepted
+    this.parryTimer = 0;              // seconds left in the parry window
+    this.guardBroken = false;         // guard break active (cannot block)
+    this.guardBreakTimer = 0;         // seconds left of guard-break stun
+
     // camera orbit state
     this.camYaw = Math.PI;            // looking toward -z (into region A)
     this.camPitch = deg2rad(22);
@@ -144,9 +150,22 @@
           self.lastDragY = e.clientY;
         }
       }
+      // v6: RMB hold to block (opens the parry window)
+      if (e.button === 2) {
+        e.preventDefault();
+        self.tryBlock();
+      }
     });
     document.addEventListener('mouseup', function (e) {
       if (e.button === 0) self.dragging = false;
+      // v6: RMB release ends block
+      if (e.button === 2) self.endBlock();
+    });
+    // v6: RMB must not open the browser context menu
+    document.addEventListener('contextmenu', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
     });
     document.addEventListener('mousemove', function (e) {
       if (!self.dragging || self.lockTarget) return;   // mouse cam disabled while locked
@@ -193,6 +212,7 @@
     this.rolling = true;
     this.rollTimer = CFG.rollDuration;
     this.iframes = CFG.rollIFrameWindow;
+    this.endBlock();                        // v6: roll takes priority over block
     // roll direction: current move input direction, or facing if idle
     var dir = new THREE.Vector3(this.moveDirWorld.x, 0, this.moveDirWorld.z);
     if (dir.lengthSq() < 0.01) {
@@ -202,11 +222,103 @@
     this.rollDir.copy(dir);
   };
 
+  // v6: RMB down. Refused while rolling, attacking (any stage), staggered
+  // (dying/dead), or guard-broken. On success opens the parry window.
+  // Cannot re-block until stamina has recovered past guardBreakMinStamina.
+  Player.prototype.tryBlock = function () {
+    if (this.state !== 'alive' || this.rolling || this.attacking) return;
+    if (this.guardBroken) return;
+    if (this.stamina < window.WH_CONFIG.block.guardBreakMinStamina) return;
+    this.blocking = true;
+    this.parryTimer = window.WH_CONFIG.block.parryWindow;
+  };
+
+  Player.prototype.endBlock = function () {
+    this.blocking = false;
+    this.parryTimer = 0;
+  };
+
+  Player.prototype.isBlocking = function () {
+    return this.blocking;
+  };
+
+  Player.prototype.getParryWindowRemaining = function () {
+    return Math.max(0, this.parryTimer);
+  };
+
+  Player.prototype.isGuardBroken = function () {
+    return this.guardBroken;
+  };
+
+  // v6: single choke point for ALL incoming enemy damage. Order:
+  // 1. roll i-frames win (handled in takeDamage below)
+  // 2. parry window open -> enemy attack canceled, enemy staggered
+  // 3. blocking + attacker in block arc -> chip damage + stamina drain,
+  //    guard break when stamina empties
+  // 4. otherwise full damage
+  Player.prototype.resolveIncomingHit = function (damage, attacker) {
+    if (this.state !== 'alive') return false;
+    if (this.iframes > 0) return false;      // roll i-frames win (existing)
+    var BLK = window.WH_CONFIG.block;
+
+    // v6 fix round 1: attacker angle computed once, reused by both the parry
+    // and block arc gates (spec: parry, like block, is front-arc only).
+    var attackerInArc = false;
+    if (attacker && attacker.pos) {
+      var dx = attacker.pos.x - this.pos.x;
+      var dz = attacker.pos.z - this.pos.z;
+      if (dx * dx + dz * dz > 0.0001) {
+        var ang = Math.atan2(dx, dz);
+        var dyaw = ang - this.yaw;
+        while (dyaw > Math.PI) dyaw -= Math.PI * 2;
+        while (dyaw < -Math.PI) dyaw += Math.PI * 2;
+        var halfAngle = BLK.blockArcHalfAngleDeg * Math.PI / 180;
+        attackerInArc = Math.abs(dyaw) <= halfAngle;
+      }
+    }
+
+    // 2. parry: timing window open AND attacker in the block arc (spec:
+    // attacker behind + blocking = full damage, no parry).
+    if (this.blocking && this.parryTimer > 0 && attacker &&
+        attacker.enterStagger && attackerInArc) {
+      this.spendStamina(BLK.parryStaminaCost);
+      attacker.enterStagger(BLK.riposteStaggerDur);
+      attacker.riposteArmed = true;          // next player hit does bonus damage
+      this.endBlock();
+      if (this.onParry) this.onParry(attacker);
+      return false;                          // zero damage
+    }
+
+    // 3. block: only if attacker is within the block arc of player facing
+    if (this.blocking && attacker && attacker.pos && attackerInArc) {
+      var staminaCost = Math.max(1, Math.round(damage * BLK.staminaCostMult));
+      this.stamina = Math.max(0, this.stamina - staminaCost);
+      this.staminaRegenBlock = CFG.staminaRegenDelay;
+      var chip = damage * (1 - BLK.absorb);
+      var dead = this.takeDamage(chip);
+      if (this.stamina <= 0 && !dead) {
+        // guard break: stun, block disabled until stamina recovers
+        this.guardBroken = true;
+        this.guardBreakTimer = BLK.guardBreakStun;
+        this.endBlock();
+        this.stamina = 0;
+        if (this.onGuardBreak) this.onGuardBreak();
+      } else if (this.onBlock) {
+        this.onBlock(attacker, chip);
+      }
+      return !dead;                          // blocked (or killed by chip)
+    }
+
+    // 4. full damage (existing path)
+    return this.takeDamage(damage);
+  };
+
   // v5: combo chain. A press during 'recover' buffers the next chain move
   // (comboQueued) without restarting; a fresh press after a full recovery
   // resets the chain, a press during windup/strike increments the chain.
   Player.prototype.tryAttack = function () {
     if (this.state !== 'alive' || this.rolling) return;
+    if (this.blocking) return;              // v6: must release RMB to attack
     if (this.attacking) {
       if (this.getAttackStage() === 'recover' &&
           this.comboIndex < window.WH_CONFIG.moveset.comboChainCap) {
@@ -287,10 +399,20 @@
 
     // timers
     if (this.iframes > 0) this.iframes = Math.max(0, this.iframes - dt);
+    // v6: block/parry timers. Blocking ends on roll or on state loss.
+    if (this.parryTimer > 0) this.parryTimer = Math.max(0, this.parryTimer - dt);
+    if (this.guardBroken) {
+      this.guardBreakTimer -= dt;
+      if (this.guardBreakTimer <= 0) this.guardBroken = false;
+    }
+    if (this.blocking && (this.rolling || this.state !== 'alive')) this.endBlock();
     if (this.staminaRegenBlock > 0) {
       this.staminaRegenBlock -= dt;
     } else if (this.stamina < this.staminaMax) {
-      this.stamina = Math.min(this.staminaMax, this.stamina + CFG.staminaRegenPerSec * dt);
+      // v6: regen continues while blocking at a reduced rate
+      var regenMult = this.blocking ? window.WH_CONFIG.block.blockingRegenMult : 1;
+      this.stamina = Math.min(this.staminaMax,
+        this.stamina + CFG.staminaRegenPerSec * regenMult * dt);
     }
 
     if (this.state === 'dying') {
@@ -343,7 +465,8 @@
       var mx = this.moveInput.x, mz = this.moveInput.z;
       if (mx !== 0 || mz !== 0) {
         moving = true;
-        sprintingNow = this.sprinting && this.stamina > 0;
+        // v6: blocking forces walk pace (sprint not allowed while blocking)
+        sprintingNow = this.sprinting && this.stamina > 0 && !this.blocking;
         var len = Math.sqrt(mx * mx + mz * mz);
         mx /= len; mz /= len;
         var speed = sprintingNow ? CFG.sprintSpeed : CFG.walkSpeed;
@@ -351,6 +474,7 @@
           this.spendStamina(CFG.sprintStaminaPerSec * dt);
         }
         if (this.attacking) speed *= 0.3;   // slow while swinging
+        if (this.blocking) speed *= window.WH_CONFIG.block.moveMult;  // v6
         // camera yaw basis: camera forward projected on xz plane.
         // Camera sits at yaw = camYaw BEHIND the player, so camera forward
         // (what W moves toward) is (sin(camYaw + PI), cos(camYaw + PI)).
@@ -547,6 +671,9 @@
     this.rolling = false;
     this.attacking = false;
     this.iframes = 0;
+    this.endBlock();                        // v6: clear block state
+    this.guardBroken = false;
+    this.guardBreakTimer = 0;
     this.deathTilt = 0;
     this.lockTarget = null;
     if (this.body) { this.body.rotation.x = 0; this.body.rotation.y = this.yaw; }

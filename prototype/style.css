@@ -181,3 +181,41 @@ html, body {
   opacity: 0;
   pointer-events: none;
 }
+/* --- v6 block / parry cues (DOM only) --- */
+#wh-block-flash {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.05s linear;
+}
+#wh-block-flash.parry {
+  /* white screen-edge flash on parry */
+  box-shadow: inset 0 0 80px 20px rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.08);
+}
+#wh-block-flash.block {
+  /* small dim gray flash on block */
+  box-shadow: inset 0 0 60px 10px rgba(160, 160, 160, 0.35);
+}
+#wh-block-flash.guardbreak {
+  /* red flash on guard break */
+  box-shadow: inset 0 0 100px 30px rgba(200, 40, 40, 0.6);
+  background: rgba(180, 30, 30, 0.12);
+}
+#wh-guard-break-text {
+  position: absolute;
+  left: 50%;
+  top: 22%;
+  transform: translate(-50%, -50%);
+  font-size: 26px;
+  letter-spacing: 6px;
+  color: #d84040;
+  text-shadow: 0 0 8px rgba(216, 64, 64, 0.8);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+#wh-guard-break-text.visible {
+  opacity: 1;
+}

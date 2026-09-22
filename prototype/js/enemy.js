@@ -36,6 +36,9 @@
     this.hopTimer = -1;                // ghoul lunge hop timer (-1 = off)
     this.hopDir = { x: 0, z: 0 };      // hop direction at takeoff
     this.hopOriginY = 0;               // root y at takeoff (for arc baseline)
+    // v6: parry stagger / riposte state
+    this.riposteStaggerTimer = 0;      // > 0 = staggered and vulnerable
+    this.riposteArmed = false;         // next player hit does riposte damage
   }
 
   Enemy.prototype.setBody = function (meshRoot) {
@@ -64,8 +67,8 @@
   };
 
   // FSM sense/aggression update. playerPos: THREE.Vector3, canDamagePlayer:
-  // callback(amount) applies damage through the combat layer if player is
-  // vulnerable (returns true if it landed). boundary: {z, holdMargin} clamps
+  // callback(amount, attacker) applies damage through the combat layer if the
+  // player is vulnerable (returns true if it landed). boundary: {z, holdMargin} clamps
   // movement to home side.
   Enemy.prototype.update = function (dt, playerPos, playerAlive, canDamagePlayer, boundary, regionManager) {
     if (this.fsm === 'dead') return;
@@ -80,6 +83,19 @@
     );
 
     // ---- transitions ----
+    // v6: parry stagger. Full lockdown while riposteStaggerTimer runs: no FSM
+    // transitions, no movement, no attacks, no turn. Return to chase (or idle
+    // if the player is far) when it expires.
+    if (this.riposteStaggerTimer > 0) {
+      this.riposteStaggerTimer = Math.max(0, this.riposteStaggerTimer - dt);
+      if (this.riposteStaggerTimer <= 0) {
+        this.setFsm(distToPlayer <= this.cfg.sightRadius ? 'chase' : 'idle');
+      } else {
+        // decay bob so the layered cycle does not freeze mid-pose
+        this.bobPhase += dt * 3;
+        return;              // frozen: no transitions, no movement, no attacks
+      }
+    }
     if (this.fsm === 'stagger') {
       if (this.fsmTime >= this.cfg.staggerTime) this.setFsm('chase');
     } else if (this.fsm === 'attack') {
@@ -87,7 +103,7 @@
       if (distToPlayer > this.cfg.attackRange * 1.4) {
         this.setFsm('chase');
       } else if (this.attackTimer <= 0 && playerAlive) {
-        canDamagePlayer(this.cfg.attackDamage);
+        canDamagePlayer(this.cfg.attackDamage, this);
         this.attackTimer = this.cfg.attackCooldown;
       }
       if (!playerAlive) this.setFsm('idle');
@@ -247,6 +263,20 @@
     if (this.fsm === next) return;
     this.fsm = next;
     this.fsmTime = 0;
+  };
+
+  // v6: parry stagger. Cancels the current attack state entirely (bandit and
+  // ghoul share this base class), locks the enemy in place for the duration,
+  // and arms the riposte flag on the next player hit.
+  Enemy.prototype.enterStagger = function (duration) {
+    this.riposteStaggerTimer = duration;
+    this.riposteArmed = true;
+    this.hopTimer = -1;                  // cancel any mid-hop lunge
+    this.setFsm('stagger');
+  };
+
+  Enemy.prototype.isStaggered = function () {
+    return this.riposteStaggerTimer > 0;
   };
 
   Enemy.prototype.takeDamage = function (amount, fromDir) {
