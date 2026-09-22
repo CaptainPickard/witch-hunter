@@ -113,3 +113,35 @@ Open questions 2 and 3 RESOLVED by R2/R3. Open question 1 RESOLVED by R1.
 Batch 1 (this session, budget-capped): M1-M9 (9 assets, ~135 credits).
 Batch 2 (after next credit reset on the 13th): M10-M18 (9 assets).
 Run log entries go in Part 4 as each batch lands.
+
+## PART 4: Meshy run log
+
+2026-09-21 (batch 1, landed commit 59b3b52):
+| ID | Asset | Credits | Vision-QA | Tris | Path |
+|----|-------|---------|-----------|------|------|
+| M1 | Cemetery gate | 15 | PASS | ~30k | biome_library/m1-pixelated.glb |
+| M2 | Picket fence | 15 | PASS | ~30k | biome_library/m2-pixelated.glb |
+| M3 | Mourning statue | 15 | PASS | ~30k | biome_library/m3-pixelated.glb |
+| M4 | Living oak | 15 | PASS | ~30k | biome_library/m4-pixelated.glb |
+| M5 | Yew | 15 | PASS | ~30k | biome_library/m5-pixelated.glb |
+| M6 | Witchwood | 15 | PASS | ~30k | biome_library/m6-pixelated.glb |
+| M7 | Fallen log | 15 | PASS | ~30k | biome_library/m7-pixelated.glb |
+| M8 | Tree stump | 15 | PASS | ~30k | biome_library/m8-pixelated.glb |
+| M9 | Moss boulder | 15 | PASS | ~30k | biome_library/m9-pixelated.glb |
+Total: 135 credits. All 9 SUCCEEDED first try, pixelation v3 pass applied.
+
+2026-09-22 (darkwood dressing session, IO):
+- Canon biome reference saved: refs/darkwood-concept.jpeg (commit 43cb90b).
+- Concept refs generated + vision-QAed + pushed (same commit):
+  M10-bramble-thicket-ref.png (PASS),
+  M19-hanging-moss-drape-ref.png (PASS; drape includes its host branch
+  by design - the branch IS the mount point),
+  M20-mud-puddle-ref.png (PASS),
+  M21-gnarled-root-cluster-ref.png (PASS).
+- MESHY 402 BLOCKED: credit probe submit of M10 returned HTTP 402
+  Payment Required. Credits exhausted. ZERO new meshes generated this
+  session. Retry M10/M19/M20/M21 (4 x 15 = 60 credits) at the next
+  credit window; refs are on dev and verified 200 on raw.githubusercontent.
+- Scene dressing proceeded with EXISTING inventory: M4-M9 are on disk
+  and unused by the prototype; region re-skin used m1-m9 + graveyard +
+  church-kit props only (see spec specs/astrabot-spec-darkwood-dressing.md).

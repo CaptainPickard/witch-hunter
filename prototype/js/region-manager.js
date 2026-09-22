@@ -177,6 +177,27 @@
     ground.name = 'ground';
     group.add(ground);
 
+    // Cheap mist layer (CONFIG.mistPlane): one large flat semi-transparent
+    // plane at low height. Visual only, no collider. Region-gated by id.
+    var mistCfg = CFG.mistPlane;
+    if (mistCfg && mistCfg.enabled && regionId === mistCfg.regionId) {
+      var mistMat = new THREE.MeshBasicMaterial({
+        color: mistCfg.colorHex,
+        transparent: true,
+        opacity: mistCfg.opacityX100 / 100,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      });
+      var mist = new THREE.Mesh(
+        new THREE.PlaneGeometry(CFG.world.groundRadius * 2, CFG.world.groundRadius * 2),
+        mistMat
+      );
+      mist.rotation.x = -Math.PI / 2;
+      mist.position.y = mistCfg.y;
+      mist.name = 'mist-plane';
+      group.add(mist);
+    }
+
     // props from manifest
     var regionCfg = region.cfg;
     for (var i = 0; i < regionCfg.props.length; i++) {

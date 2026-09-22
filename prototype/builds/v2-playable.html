@@ -85288,8 +85288,8 @@ window.WH_CONFIG = {
 
   world: {
     groundRadius: 90,                 // playable disc radius per region
-    groundColorA: 0x4a5240,           // hold outskirts grass-dirt
-    groundColorB: 0x2c3230,           // darkwood floor
+    groundColorA: 0x3d3a2c,           // dark mud/olive (darkwood canon palette)
+    groundColorB: 0x232620,           // near-charcoal mud (darkwood canon palette)
     fogNearFactor: 0.25,              // fog near = radius * factor
     fogFarFactor: 1.5,                // fog far = radius * factor
     characterHeight: 1.8              // normalized character height (POC)
@@ -85300,8 +85300,8 @@ window.WH_CONFIG = {
     name: 'Hold Outskirts',
     spawn: { x: 0, z: 45 },           // south of center, boundary is north (z = -25)
     gravityY: -22,
-    fogColor: 0x7b8394,
-    fogDensity: 0.006,
+    fogColor: 0x9aa0a3,               // pale ash grey, whiter (darkwood canon)
+    fogDensity: 0.012,                // heavier, lower fog (darkwood canon)
     ambientLightLevel: 1.0,           // multiplier on base lighting
     enemies: [
       { type: 'bandit', x: -6, z: -8 },
@@ -85319,9 +85319,40 @@ window.WH_CONFIG = {
       { asset: 'buriedCoffin', x: -18, z: 5, rotY: 0.9, scale: 1.7 },
       { asset: 'lanternPost', x: -2, z: 30, rotY: 0.0, scale: 2.4 },
       { asset: 'lanternPost', x: 4, z: -2, rotY: 0.0, scale: 2.4 },
-      { asset: 'deadTree', x: -22, z: -2, rotY: 0.5, scale: 3.0 },
-      { asset: 'deadTree', x: 20, z: 18, rotY: -0.8, scale: 2.6 },
-      { asset: 'deadTree', x: -16, z: -18, rotY: 2.1, scale: 2.8 }
+      { asset: 'deadTree', x: -22, z: -2, rotY: 0.5, scale: 6.5 },
+      { asset: 'deadTree', x: 20, z: 18, rotY: -0.8, scale: 6.5 },
+      { asset: 'deadTree', x: -16, z: -18, rotY: 2.1, scale: 6.5 },
+      { asset: 'picketFence', x: 15.4, z: 13.2, rotY: 0.0, scale: 1.63 },
+      { asset: 'picketFence', x: 12.2, z: 12.2, rotY: 0.0, scale: 1.55 },
+      { asset: 'picketFence', x: -19.1, z: 10.8, rotY: 1.57, scale: 1.59 },
+      { asset: 'picketFence', x: -19.8, z: 7.6, rotY: 1.57, scale: 1.67 },
+      { asset: 'picketFence', x: -20.8, z: 13.3, rotY: 1.57, scale: 1.57 },
+      { asset: 'ironFenceSection', x: -5.6, z: 28.9, rotY: 1.65, scale: 1.33 },
+      { asset: 'ironFenceSection', x: -7.6, z: 31.1, rotY: 3.54, scale: 1.36 },
+      { asset: 'deadTree', x: 26.0, z: 9.0, rotY: 4.24, scale: 6.5 },
+      { asset: 'livingOak', x: -27.8, z: -19.9, rotY: 1.8, scale: 6.5 },
+      { asset: 'yewTree', x: 29.4, z: 1.3, rotY: 3.03, scale: 6.5 },
+      { asset: 'mossBoulder', x: 17.2, z: -9.0, rotY: 5.46, scale: 1.37 },
+      { asset: 'mossBoulder', x: -24.4, z: 23.0, rotY: 0.73, scale: 1.34 },
+      { asset: 'treeStump', x: 7.2, z: 18.4, rotY: 6.18, scale: 1.14 },
+      { asset: 'treeStump', x: -8.4, z: 8.3, rotY: 5.43, scale: 1.21 },
+      { asset: 'fallenLog', x: -13.0, z: -7.1, rotY: 0.8, scale: 1.52 },
+      { asset: 'mourningStatue', x: -11.4, z: 12.7, rotY: 2.43, scale: 1.72 },
+      { asset: 'mossBoulder', x: 5.5, z: 8.5, rotY: 1.1, scale: 1.1 },
+      { asset: 'mossBoulder', x: -2.5, z: -6.5, rotY: 3.9, scale: 1.05 },
+      { asset: 'mossBoulder', x: 10.5, z: -14.5, rotY: 5.2, scale: 1.2 },
+      { asset: 'treeStump', x: -15.5, z: 3.5, rotY: 2.2, scale: 1.15 },
+      { asset: 'treeStump', x: 15.5, z: -2.5, rotY: 0.9, scale: 1.18 },
+      { asset: 'graveMound', x: -4.5, z: -12.5, rotY: 0.6, scale: 1.6 },
+      { asset: 'fallenLog', x: 12.5, z: 2.5, rotY: 2.4, scale: 1.45 },
+      { asset: 'gravestoneObelisk', x: 16.5, z: 10.5, rotY: 0.8, scale: 1.3 },
+      { asset: 'stoneCrossTilted', x: 18.5, z: 14.5, rotY: 2.1, scale: 1.25 },
+      { asset: 'graveMound', x: 20.5, z: 11.5, rotY: 1.3, scale: 1.7 },
+      { asset: 'gravestoneObelisk', x: -14.5, z: 20.5, rotY: 1.9, scale: 1.35 },
+      { asset: 'graveMound', x: -17.5, z: 24.5, rotY: 2.4, scale: 1.55 },
+      { asset: 'buriedCoffin', x: 6.5, z: 12.5, rotY: 0.4, scale: 1.5 },
+      { asset: 'mossBoulder', x: -20.5, z: -12.5, rotY: 4.4, scale: 1.15 },
+      { asset: 'treeStump', x: 20.5, z: 2.5, rotY: 3.1, scale: 1.1 }
     ]
   },
 
@@ -85330,8 +85361,8 @@ window.WH_CONFIG = {
     name: 'Darkwood Edge',
     spawn: { x: 0, z: -45 },          // north of center, boundary is south (z = +25)
     gravityY: -22,
-    fogColor: 0x232830,
-    fogDensity: 0.02,                 // R5: denser + darker fog than region A
+    fogColor: 0x6f7477,               // pale grey sea of mist (darkwood canon)
+    fogDensity: 0.024,                // denser midground mist (darkwood canon)
     ambientLightLevel: 0.55,          // darker ambient
     enemies: [
       { type: 'ghoul', x: -8, z: -38 },
@@ -85339,16 +85370,66 @@ window.WH_CONFIG = {
       { type: 'bandit', x: 0, z: -60 }
     ],
     props: [
-      { asset: 'deadTree', x: -12, z: -40, rotY: 0.2, scale: 3.4 },
-      { asset: 'deadTree', x: 14, z: -44, rotY: -1.0, scale: 3.2 },
-      { asset: 'deadTree', x: -20, z: -55, rotY: 1.7, scale: 3.6 },
-      { asset: 'deadTree', x: 22, z: -58, rotY: 0.6, scale: 3.0 },
-      { asset: 'deadTree', x: 2, z: -66, rotY: -0.4, scale: 3.5 },
-      { asset: 'deadTree', x: -30, z: -48, rotY: 2.4, scale: 3.1 },
+      { asset: 'livingOak', x: 6.2, z: -46.4, rotY: 0.44, scale: 7.25 },
+      { asset: 'witchwoodTree', x: -31.2, z: -50.3, rotY: 3.15, scale: 8.6 },
+      { asset: 'livingOak', x: 25.2, z: -73.8, rotY: 2.69, scale: 7.45 },
+      { asset: 'livingOak', x: -31.1, z: -68.7, rotY: 5.13, scale: 8.43 },
+      { asset: 'witchwoodTree', x: 19.0, z: -54.7, rotY: 4.18, scale: 8.28 },
+      { asset: 'witchwoodTree', x: -10.9, z: -55.8, rotY: 4.43, scale: 10.43 },
+      { asset: 'livingOak', x: -22.3, z: -59.2, rotY: 1.82, scale: 9.0 },
+      { asset: 'deadTree', x: 35.5, z: -52.1, rotY: 2.09, scale: 9.85 },
+      { asset: 'witchwoodTree', x: -18.1, z: -35.6, rotY: 0.99, scale: 7.38 },
+      { asset: 'deadTree', x: -9.1, z: -35.8, rotY: 2.13, scale: 8.0 },
+      { asset: 'yewTree', x: 21.9, z: -55.6, rotY: 5.57, scale: 8.38 },
+      { asset: 'deadTree', x: 28.8, z: -55.3, rotY: 0.33, scale: 7.62 },
+      { asset: 'yewTree', x: -31.3, z: -43.3, rotY: 3.91, scale: 10.4 },
+      { asset: 'deadTree', x: 31.4, z: -48.7, rotY: 0.61, scale: 7.33 },
+      { asset: 'yewTree', x: 19.4, z: -66.5, rotY: 1.34, scale: 9.18 },
+      { asset: 'deadTree', x: -23.0, z: -47.8, rotY: 0.13, scale: 8.45 },
+      { asset: 'witchwoodTree', x: -29.1, z: -72.5, rotY: 4.72, scale: 6.78 },
+      { asset: 'yewTree', x: 13.4, z: -70.9, rotY: 4.67, scale: 9.43 },
+      { asset: 'deadTree', x: -20.5, z: -42.5, rotY: 4.19, scale: 8.05 },
+      { asset: 'livingOak', x: -23.0, z: -39.2, rotY: 5.43, scale: 6.92 },
+      { asset: 'yewTree', x: -37.4, z: -47.4, rotY: 3.99, scale: 8.12 },
+      { asset: 'livingOak', x: 23.5, z: -37.4, rotY: 4.81, scale: 7.55 },
+      { asset: 'deadTree', x: 36.4, z: -37.1, rotY: 3.3, scale: 7.05 },
+      { asset: 'witchwoodTree', x: -7.4, z: -41.5, rotY: 5.92, scale: 10.02 },
+      { asset: 'yewTree', x: 27.7, z: -49.3, rotY: 2.97, scale: 9.75 },
+      { asset: 'yewTree', x: 24.0, z: -61.4, rotY: 3.8, scale: 9.7 },
+      { asset: 'witchwoodTree', x: 7.8, z: -38.4, rotY: 2.24, scale: 8.0 },
+      { asset: 'yewTree', x: 15.1, z: -49.5, rotY: 4.85, scale: 7.45 },
+      { asset: 'deadTree', x: -31.1, z: -74.8, rotY: 0.61, scale: 8.68 },
+      { asset: 'livingOak', x: -22.9, z: -71.1, rotY: 0.72, scale: 7.82 },
+      { asset: 'witchwoodTree', x: 29.8, z: -76.9, rotY: 0.5, scale: 9.68 },
+      { asset: 'witchwoodTree', x: -28.4, z: -79.9, rotY: 4.96, scale: 9.8 },
+      { asset: 'deadTree', x: -16.0, z: -76.7, rotY: 3.09, scale: 9.45 },
       { asset: 'churchArchway', x: 8, z: -58, rotY: 0.9, scale: 2.2 },
       { asset: 'churchCornerButtress', x: -14, z: -62, rotY: 0.3, scale: 2.0 },
       { asset: 'churchPewBroken', x: 16, z: -52, rotY: -0.7, scale: 1.8 },
-      { asset: 'rubblePile', x: -6, z: -48, rotY: 0.0, scale: 1.9 }
+      { asset: 'rubblePile', x: -6, z: -48, rotY: 0.0, scale: 1.9 },
+      { asset: 'mossBoulder', x: 32.3, z: -55.2, rotY: 1.89, scale: 1.33 },
+      { asset: 'mossBoulder', x: 17.1, z: -52.8, rotY: 4.82, scale: 0.9 },
+      { asset: 'mossBoulder', x: -27.1, z: -69.5, rotY: 2.43, scale: 0.95 },
+      { asset: 'mossBoulder', x: 32.2, z: -52.2, rotY: 6.24, scale: 1.01 },
+      { asset: 'mossBoulder', x: 11.0, z: -50.6, rotY: 3.81, scale: 1.57 },
+      { asset: 'mossBoulder', x: 25.0, z: -64.4, rotY: 2.36, scale: 1.46 },
+      { asset: 'mossBoulder', x: -23.0, z: -51.6, rotY: 2.49, scale: 0.91 },
+      { asset: 'fallenLog', x: 28.2, z: -59.0, rotY: 0.0, scale: 1.34 },
+      { asset: 'fallenLog', x: -28.6, z: -63.7, rotY: 1.57, scale: 1.61 },
+      { asset: 'fallenLog', x: -29.1, z: -45.6, rotY: 1.57, scale: 1.58 },
+      { asset: 'fallenLog', x: -10.1, z: -62.1, rotY: 3.14, scale: 1.59 },
+      { asset: 'treeStump', x: 13.4, z: -58.7, rotY: 0.72, scale: 1.43 },
+      { asset: 'treeStump', x: -11.1, z: -44.1, rotY: 3.43, scale: 1.04 },
+      { asset: 'treeStump', x: 13.0, z: -55.5, rotY: 5.02, scale: 1.23 },
+      { asset: 'treeStump', x: -25.4, z: -46.9, rotY: 1.05, scale: 1.24 },
+      { asset: 'cemeteryGate', x: 25.8, z: -42.0, rotY: 0.3, scale: 1.53 },
+      { asset: 'cemeteryGate', x: 20.1, z: -50.4, rotY: 1.2, scale: 1.71 },
+      { asset: 'picketFence', x: 22.1, z: -53.0, rotY: 1.57, scale: 1.46 },
+      { asset: 'picketFence', x: -27.4, z: -51.6, rotY: 2.2, scale: 1.29 },
+      { asset: 'gravestoneObelisk', x: 13.1, z: -41.5, rotY: 3.73, scale: 1.38 },
+      { asset: 'gravestoneObelisk', x: 20.1, z: -40.0, rotY: 0.14, scale: 1.38 },
+      { asset: 'stoneCrossTilted', x: -13.5, z: -36.6, rotY: 5.5, scale: 1.22 },
+      { asset: 'stoneCrossTilted', x: 18.0, z: -43.1, rotY: 6.16, scale: 1.6 }
     ]
   },
 
@@ -85370,6 +85451,16 @@ window.WH_CONFIG = {
   preWarm: {
     distance: 30,                     // build neighbor when player is this close to boundary
     hysteresis: 20                    // dispose pre-warm when player is this much farther away
+  },
+
+  // Darkwood dressing pass: cheap ground mist layer, built by region-manager
+  // buildRegion for region B only (y ~ 1.5, double-sided, no collider).
+  mistPlane: {
+    enabled: true,
+    regionId: 'darkwood_edge',        // build only for this region id
+    colorHex: 0xc5c9cc,               // pale ash highlight fog (canon)
+    y: 1.5,                           // plane height above ground
+    opacityX100: 14                   // opacity 0.14 (within 0.12-0.18 band)
   },
 
   player: {
@@ -85671,6 +85762,17 @@ window.WH_CONFIG.moveset = {
     graveMound: 'art-direction/3d/assets/graveyard/grave-mound-pixelated.glb',
     buriedCoffin: 'art-direction/3d/assets/graveyard/buried-coffin-pixelated.glb',
 
+    // biome library (darkwood dressing pass, all pixelated)
+    cemeteryGate: 'art-direction/3d/assets/biome_library/m1-pixelated.glb',
+    picketFence: 'art-direction/3d/assets/biome_library/m2-pixelated.glb',
+    mourningStatue: 'art-direction/3d/assets/biome_library/m3-pixelated.glb',
+    livingOak: 'art-direction/3d/assets/biome_library/m4-pixelated.glb',
+    yewTree: 'art-direction/3d/assets/biome_library/m5-pixelated.glb',
+    witchwoodTree: 'art-direction/3d/assets/biome_library/m6-pixelated.glb',
+    fallenLog: 'art-direction/3d/assets/biome_library/m7-pixelated.glb',
+    treeStump: 'art-direction/3d/assets/biome_library/m8-pixelated.glb',
+    mossBoulder: 'art-direction/3d/assets/biome_library/m9-pixelated.glb',
+
     // church-kit props + trees
     lanternPost: 'art-direction/3d/assets/church-kit/lantern-post-pixelated.glb',
     deadTree: 'art-direction/3d/assets/church-kit/dead-tree-pixelated.glb',
@@ -85678,6 +85780,8 @@ window.WH_CONFIG.moveset = {
     churchArchway: 'art-direction/3d/assets/church-kit/church-archway-pixelated.glb',
     churchCornerButtress: 'art-direction/3d/assets/church-kit/church-corner-buttress-pixelated.glb',
     churchPewBroken: 'art-direction/3d/assets/church-kit/church-pew-broken-pixelated.glb',
+    ironFenceSection: 'art-direction/3d/assets/church-kit/iron-fence-section-pixelated.glb',
+    ironFenceCorner: 'art-direction/3d/assets/church-kit/iron-fence-corner-pixelated.glb',
 
     // characters (races_regen, raw meshes, no pixelated variants exist)
     playerBody: 'art-direction/3d/assets/races_regen/human-hunter-male.glb',
@@ -86887,6 +86991,27 @@ window.WH_CONFIG.moveset = {
     ground.rotation.x = -Math.PI / 2;
     ground.name = 'ground';
     group.add(ground);
+
+    // Cheap mist layer (CONFIG.mistPlane): one large flat semi-transparent
+    // plane at low height. Visual only, no collider. Region-gated by id.
+    var mistCfg = CFG.mistPlane;
+    if (mistCfg && mistCfg.enabled && regionId === mistCfg.regionId) {
+      var mistMat = new THREE.MeshBasicMaterial({
+        color: mistCfg.colorHex,
+        transparent: true,
+        opacity: mistCfg.opacityX100 / 100,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      });
+      var mist = new THREE.Mesh(
+        new THREE.PlaneGeometry(CFG.world.groundRadius * 2, CFG.world.groundRadius * 2),
+        mistMat
+      );
+      mist.rotation.x = -Math.PI / 2;
+      mist.position.y = mistCfg.y;
+      mist.name = 'mist-plane';
+      group.add(mist);
+    }
 
     // props from manifest
     var regionCfg = region.cfg;

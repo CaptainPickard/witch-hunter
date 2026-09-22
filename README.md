@@ -211,6 +211,25 @@ locked with concept frames approved. Sprite production pipeline
 piloted and proven end-to-end on one character (the gravedigger
 undead), retained as reference after the 3D pivot.
 
+## Playable Prototype (Three.js)
+
+prototype/ hosts the playable Three.js r185 prototype (classic scripts,
+no build tooling; fully inlined bundle at prototype/builds/v2-playable.html,
+served by prototype/server.py on :8791 and publicly at
+/witchhunter/ via Tailscale Serve).
+
+Controls: WASD move (camera-relative), mouse drag orbit, Shift sprint,
+Space roll, Left click attack (3-hit combo, v5 moveset), F lock-on.
+Walk/attack/roll, bandit + ghoul enemies, Region A (Hold Outskirts
+graveyard) and Region B (Darkwood Edge forest) with one chokepoint
+crossing. All props are Meshy-generated GLBs with the v3 pixelation
+pass; canon biome reference:
+art-direction/3d/assets/biome_library/refs/darkwood-concept.jpeg.
+Darkwood dressing pass 2026-09-22: both regions re-skinned to the
+canon reference (mud/olive grounds, heavy pale fog, dense tree wall in
+B, fenced graveyard clusters in A); region tunables all live in
+prototype/js/CONFIG.js (window.WH_CONFIG).
+
 ## Note
 
 All AI-generated art in this repo was produced for the Witch Hunter
