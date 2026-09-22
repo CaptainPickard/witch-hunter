@@ -9,6 +9,8 @@
   var CFG = window.WH_CONFIG.enemy;
   var ANIM = window.WH_CONFIG.anim;
 
+  function smooth(p) { return p * p * (3 - 2 * p); }   // smoothstep ease
+
   function cfgFor(type) {
     return CFG[type] || CFG.bandit;
   }
@@ -41,6 +43,24 @@
     this.body = meshRoot;
     this.bodyBaseY = meshRoot.position.y || 0;
     this.root.add(this.body);
+    // v5: bandits carry a hand axe on a weapon pivot (idle pose, 1.1x scale)
+    if (this.type === 'bandit' && window.WH_ASSETS &&
+        window.WH_ASSETS.instance && window.WH_CONFIG.moveset) {
+      var axe = window.WH_ASSETS.instance('handAxe');
+      if (axe) {
+        axe.scale.setScalar(0.8);
+        this.weaponPivot = new THREE.Group();
+        this.root.add(this.weaponPivot);
+        this.weaponPivot.add(axe);
+        var ip = window.WH_CONFIG.moveset.idlePose;
+        this.axeIdle = { pos: [ip.pos[0] * 1.1, ip.pos[1] * 1.1, ip.pos[2] * 1.1],
+                         rot: [ip.rot[0], ip.rot[1], ip.rot[2]] };
+        this.weaponPivot.position.set(
+          this.axeIdle.pos[0], this.axeIdle.pos[1], this.axeIdle.pos[2]);
+        this.weaponPivot.rotation.set(
+          this.axeIdle.rot[0], this.axeIdle.rot[1], this.axeIdle.rot[2]);
+      }
+    }
   };
 
   // FSM sense/aggression update. playerPos: THREE.Vector3, canDamagePlayer:
@@ -203,6 +223,21 @@
           this.body.position.y = (this.bodyBaseY || 0) - 0.06 * stagT;
         } else {
           this.body.position.y = this.bodyBaseY || 0;
+        }
+        // v5: bandit axe swing. attackTimer counts down the cooldown; sweep
+        // rotation.y 90deg early in the cooldown window (the strike window).
+        if (this.weaponPivot && this.axeIdle) {
+          if (this.fsm === 'attack' && this.attackTimer > 0 &&
+              this.attackTimer <= this.cfg.attackCooldown) {
+            var cd = this.cfg.attackCooldown || 1;
+            var swingT = 1 - this.attackTimer / cd;        // 0..1 since strike
+            var sw = Math.min(1, swingT / 0.4);            // 90deg sweep in first 40%
+            var back = smooth(Math.min(1, Math.max(0, (swingT - 0.4) / 0.6)));
+            this.weaponPivot.rotation.y = this.axeIdle.rot[1] -
+              (Math.PI / 2) * sw + (Math.PI / 2) * back;
+          } else {
+            this.weaponPivot.rotation.y = this.axeIdle.rot[1];
+          }
         }
       }
     }

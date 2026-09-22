@@ -312,6 +312,11 @@
       // v3 animation hooks
       getAttackStage: function () { return game.player.getAttackStage(); },
       triggerAttack: function () { game.player.tryAttack(); },
+      getComboIndex: function () { return game.player.comboIndex; },
+      getCurrentMove: function () {
+        var MS = window.WH_MOVESET;
+        return [MS.m1, MS.m2, MS.m3][game.player.comboIndex] || MS.m1;
+      },
       isRolling: function () { return game.player.rolling; },
       getEnemy: function (idx) {
         var list = game.regionManager.getEnemies(game.regionManager.logic.activeId);

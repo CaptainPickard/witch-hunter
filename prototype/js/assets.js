@@ -33,7 +33,8 @@
     ghoulBody: 'art-direction/3d/assets/races_regen/undead-ghoul-male.glb',
 
     // weapons (pixelated)
-    longsword: 'art-direction/3d/assets/weapons/longsword-pixelated.glb'
+    longsword: 'art-direction/3d/assets/weapons/longsword-pixelated.glb',
+    handAxe: 'art-direction/3d/assets/weapons/hand-axe-pixelated.glb'
   };
 
   // Resolve a manifest-relative path against the document base URL, falling

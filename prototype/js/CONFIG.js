@@ -257,3 +257,9 @@ window.WH_CONFIG = {
     standInColor: 0x777777
   }
 };
+window.WH_CONFIG.moveset = {
+  idlePose: { pos: [0.7, 1.0, -0.3], rot: [2.2, -0.7, 0.6] },
+  comboChainCap: 3,
+  banditStageMult: 1.6,
+  enemyWeapon: { bandit: 'handAxe' }
+};

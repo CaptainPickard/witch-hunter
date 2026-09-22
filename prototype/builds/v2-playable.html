@@ -85210,6 +85210,57 @@ function addPrimitiveAttributes( geometry, primitiveDef, parser ) {
 
 </script>
 <script>
+// Witch Hunter v5 sword moveset: keyframed weapon-pivot poses for player sword combos.
+window.WH_MOVESET = {
+  idle: { pos: [0.7, 1.0, -0.3], rot: [2.2, -0.7, 0.6] },
+  m1: {
+    name: 'slash-l2r',
+    windup:  { pos: [0.55, 1.35, 0.1],   rot: [-0.4, 0.8, 0.9] },
+    strike:  { pos: [0.25, 0.95, -0.45], rot: [0.1, -0.6, -0.9] },
+    recover: { pos: [0.42, 0.9, -0.18],  rot: [0.35, -0.5, 0.25] },
+    bodyLean: 0.18, crouch: 0.03, lunge: 0.25
+  },
+  m2: {
+    name: 'slash-r2l',
+    windup:  { pos: [-0.1, 1.35, 0.15], rot: [-0.4, -0.8, 0.9] },
+    strike:  { pos: [0.5, 0.95, -0.4],  rot: [0.1, 0.6, -0.9] },
+    recover: { pos: [0.7, 1.0, -0.3], rot: [2.2, -0.7, 0.6] },
+    bodyLean: 0.18, crouch: 0.03, lunge: 0.25
+  },
+  m3: {
+    name: 'overhead',
+    windup:  { pos: [0.1, 1.7, 0.05],  rot: [-1.2, 0, 0.15] },
+    strike:  { pos: [0.3, 0.35, -0.3], rot: [0.9, 0, 0.1] },
+    recover: { pos: [0.7, 1.0, -0.3], rot: [2.2, -0.7, 0.6] },
+    bodyLean: 0.25, crouch: 0.09, lunge: 0.3
+  },
+  m4: {
+    name: 'thrust',
+    windup:  { pos: [0.35, 1.1, 0.35], rot: [0, 0.15, 0.05] },
+    strike:  { pos: [0.15, 1.05, -0.7], rot: [0, 0, 0] },
+    recover: { pos: [0.7, 1.0, -0.3], rot: [2.2, -0.7, 0.6] },
+    bodyLean: 0.12, crouch: 0.02, lunge: 0.4
+  },
+  claw: {
+    name: 'claw',
+    windup:  { pos: [0.3, 1.2, 0.2],  rot: [-0.3, 0.4, 0.4] },
+    strike:  { pos: [0.35, 1.0, -0.4], rot: [0.2, 0, 0] },
+    recover: { pos: [0.3, 1.2, 0.2],   rot: [0.2, 0.4, 0.4] },
+    bodyLean: 0.15, crouch: 0.03, lunge: 0.2
+  }
+};
+window.WH_MOVESET.chainCap = 3;
+window.WH_MOVESET.interpPose = function (a, b, t) {
+  var T = Math.max(0, Math.min(1, t));
+  var out = { pos: [0, 0, 0], rot: [0, 0, 0] };
+  for (var i = 0; i < 3; i++) {
+    out.pos[i] = a.pos[i] + (b.pos[i] - a.pos[i]) * T;
+    out.rot[i] = a.rot[i] + (b.rot[i] - a.rot[i]) * T;
+  }
+  return out;
+};
+</script>
+<script>
 // Witch Hunter prototype v1 - global tunables.
 // All tuned values live here; logic files must reference CONFIG, not literals.
 // Sources: docs/planning/33-equipment-and-formulas.md where straightforward,
@@ -85469,6 +85520,13 @@ window.WH_CONFIG = {
     standInColor: 0x777777
   }
 };
+window.WH_CONFIG.moveset = {
+  idlePose: { pos: [0.7, 1.0, -0.3], rot: [2.2, -0.7, 0.6] },
+  comboChainCap: 3,
+  banditStageMult: 1.6,
+  enemyWeapon: { bandit: 'handAxe' }
+};
+
 </script>
 <script>
 // Witch Hunter prototype v1 - region layout + boundary/transition data.
@@ -85627,7 +85685,8 @@ window.WH_CONFIG = {
     ghoulBody: 'art-direction/3d/assets/races_regen/undead-ghoul-male.glb',
 
     // weapons (pixelated)
-    longsword: 'art-direction/3d/assets/weapons/longsword-pixelated.glb'
+    longsword: 'art-direction/3d/assets/weapons/longsword-pixelated.glb',
+    handAxe: 'art-direction/3d/assets/weapons/hand-axe-pixelated.glb'
   };
 
   // Resolve a manifest-relative path against the document base URL, falling
@@ -85847,6 +85906,9 @@ window.WH_CONFIG = {
     this.idleTime = 0;                // seconds without movement input
     this.idlePhase = 0;               // breathing phase
     this.lungeLeft = 0;               // strike lunge distance remaining
+    this.comboIndex = 0;              // v5: which chain move comes next
+    this.comboQueued = false;         // v5: next chain input buffered in recover
+    this.recoverFullyElapsed = false; // v5: attack fully finished flag
 
     // camera orbit state
     this.camYaw = Math.PI;            // looking toward -z (into region A)
@@ -85879,24 +85941,22 @@ window.WH_CONFIG = {
     this.root.add(this.body);
   };
 
-  // Weapon attach (v3): the sword is driven as a separate child so body lean
-  // and sword arc read together. game.js calls this after preload.
+  // Weapon attach (v5): the mesh lives on a dedicated pivot Group whose pose
+  // (position + rotation) is keyframed by WH_MOVESET during attacks.
   Player.prototype.setWeapon = function (mesh) {
+    this.weaponPivot = new THREE.Group();
+    this.root.add(this.weaponPivot);
+    this.weaponPivot.add(mesh);
     this.sword = mesh;
-    this.swordBase = {
-      x: mesh.position.x || 0,
-      y: mesh.position.y || 0,
-      z: mesh.position.z || 0,
-      rz: mesh.rotation.z || 0,
-      ry: mesh.rotation.y || 0
-    };
+    this.swordBase = window.WH_CONFIG.moveset.idlePose;
+    this.resetWeaponPose();
   };
 
   Player.prototype.resetWeaponPose = function () {
-    if (!this.sword) return;
-    this.sword.position.set(this.swordBase.x, this.swordBase.y, this.swordBase.z);
-    this.sword.rotation.z = this.swordBase.rz;
-    this.sword.rotation.y = this.swordBase.ry;
+    if (!this.weaponPivot || !this.swordBase) return;
+    var p = this.swordBase;
+    this.weaponPivot.position.set(p.pos[0], p.pos[1], p.pos[2]);
+    this.weaponPivot.rotation.set(p.rot[0], p.rot[1], p.rot[2]);
   };
 
   // Bob offset: call from the walk animation in place of absolute writes.
@@ -85996,14 +86056,29 @@ window.WH_CONFIG = {
     this.rollDir.copy(dir);
   };
 
+  // v5: combo chain. A press during 'recover' buffers the next chain move
+  // (comboQueued) without restarting; a fresh press after a full recovery
+  // resets the chain, a press during windup/strike increments the chain.
   Player.prototype.tryAttack = function () {
-    if (this.state !== 'alive' || this.rolling || this.attacking) return;
+    if (this.state !== 'alive' || this.rolling) return;
+    if (this.attacking) {
+      if (this.getAttackStage() === 'recover' &&
+          this.comboIndex < window.WH_CONFIG.moveset.comboChainCap) {
+        this.comboQueued = true;          // buffer: do NOT restart the swing
+      }
+      return;
+    }
     if (this.stamina < CFG.attackStaminaCost) return;
     this.spendStamina(CFG.attackStaminaCost);
     this.attacking = true;
     this.attackTimer = CFG.attackDuration;
     this.attackDidHit = false;
     this.lungeLeft = AW.strikeLunge;
+    // chain index: reset after a fully elapsed attack, else advance (capped)
+    this.comboIndex = this.recoverFullyElapsed
+      ? 0 : Math.min(this.comboIndex + 1, window.WH_CONFIG.moveset.comboChainCap);
+    this.comboQueued = false;
+    this.recoverFullyElapsed = false;
     // face camera direction on attack (unless locked: hard track handles it)
     if (!this.lockTarget) this.yaw = this.camYaw + Math.PI;
   };
@@ -86081,7 +86156,17 @@ window.WH_CONFIG = {
 
     if (this.attacking) {
       this.attackTimer -= dt;
-      if (this.attackTimer <= 0) this.attacking = false;
+      if (this.attackTimer <= 0) {
+        this.attacking = false;
+        this.recoverFullyElapsed = true;  // v5: full swing done -> chain resets
+        // consume a buffered chain input as the next combo move
+        if (this.comboQueued && this.comboIndex < window.WH_CONFIG.moveset.comboChainCap) {
+          this.comboIndex += 1;
+        } else {
+          this.comboIndex = 0;
+        }
+        this.comboQueued = false;
+      }
     }
 
     // D3: while locked, body yaw hard-tracks the target
@@ -86177,11 +86262,13 @@ window.WH_CONFIG = {
 
     if (clampToBounds) clampToBounds(this);
 
-    // ---- v3 D1: three-stage attack pose + strike lunge ----
+    // ---- v5: three-stage attack pose + weapon-pivot keyframe interpolation ----
     if (this.body) {
       if (this.attacking) {
         var stage = this.getAttackStage();
         var yawBase = this.yaw;
+        var MS = window.WH_MOVESET;
+        var move = [MS.m1, MS.m2, MS.m3][this.comboIndex] || MS.m1;
         if (stage === 'windup') {
           var wp = (CFG.attackDuration - this.attackTimer) /
                    (CFG.attackDuration * AW.windupFrac);       // 0..1
@@ -86191,9 +86278,9 @@ window.WH_CONFIG = {
           this.body.rotation.z = 0;
           this.body.position.y = this.bodyBaseY - AW.windupCrouch * we;  // crouch
           this.body.position.x = this.bodyBaseX || 0;
-          if (this.sword) {
-            this.sword.rotation.z = this.swordBase.rz + AW.windupSwordRaise * we;
-          }
+          var pw = MS.interpPose(MS.idle, move.windup, we);
+          this.weaponPivot.position.set(pw.pos[0], pw.pos[1], pw.pos[2]);
+          this.weaponPivot.rotation.set(pw.rot[0], pw.rot[1], pw.rot[2]);
         } else if (stage === 'strike') {
           var sp = (CFG.attackDuration * AW.windupFrac + CFG.attackDuration * AW.strikeFrac
                     - this.attackTimer) /
@@ -86206,12 +86293,9 @@ window.WH_CONFIG = {
           this.body.rotation.z = 0;
           this.body.position.y = this.bodyBaseY;
           this.body.position.x = this.bodyBaseX || 0;
-          if (this.sword) {
-            // raise -> level then sweep through the horizontal arc
-            this.sword.rotation.z = this.swordBase.rz +
-              AW.windupSwordRaise * (1 - se) +
-              deg2rad(AW.strikeSwordSweepDeg) * se - deg2rad(AW.strikeSwordSweepDeg) * 0.5 * se;
-          }
+          var ps = MS.interpPose(move.windup, move.strike, se);
+          this.weaponPivot.position.set(ps.pos[0], ps.pos[1], ps.pos[2]);
+          this.weaponPivot.rotation.set(ps.rot[0], ps.rot[1], ps.rot[2]);
           // forward lunge along facing: velocity model. The old target-delta
           // formula (strikeLunge * se - (strikeLunge - lungeLeft)) strands
           // the remainder whenever the STRIKE stage spans few frames
@@ -86237,9 +86321,9 @@ window.WH_CONFIG = {
           this.body.rotation.z = 0;
           this.body.position.y = this.bodyBaseY;
           this.body.position.x = this.bodyBaseX || 0;
-          if (this.sword) {
-            this.sword.rotation.z = this.swordBase.rz + AW.windupSwordRaise * (1 - re);
-          }
+          var pr = MS.interpPose(move.strike, MS.idle, re);
+          this.weaponPivot.position.set(pr.pos[0], pr.pos[1], pr.pos[2]);
+          this.weaponPivot.rotation.set(pr.rot[0], pr.rot[1], pr.rot[2]);
         }
       } else if (!this.rolling) {
         this.body.rotation.x = 0;
@@ -86337,6 +86421,8 @@ window.WH_CONFIG = {
   var CFG = window.WH_CONFIG.enemy;
   var ANIM = window.WH_CONFIG.anim;
 
+  function smooth(p) { return p * p * (3 - 2 * p); }   // smoothstep ease
+
   function cfgFor(type) {
     return CFG[type] || CFG.bandit;
   }
@@ -86369,6 +86455,24 @@ window.WH_CONFIG = {
     this.body = meshRoot;
     this.bodyBaseY = meshRoot.position.y || 0;
     this.root.add(this.body);
+    // v5: bandits carry a hand axe on a weapon pivot (idle pose, 1.1x scale)
+    if (this.type === 'bandit' && window.WH_ASSETS &&
+        window.WH_ASSETS.instance && window.WH_CONFIG.moveset) {
+      var axe = window.WH_ASSETS.instance('handAxe');
+      if (axe) {
+        axe.scale.setScalar(0.8);
+        this.weaponPivot = new THREE.Group();
+        this.root.add(this.weaponPivot);
+        this.weaponPivot.add(axe);
+        var ip = window.WH_CONFIG.moveset.idlePose;
+        this.axeIdle = { pos: [ip.pos[0] * 1.1, ip.pos[1] * 1.1, ip.pos[2] * 1.1],
+                         rot: [ip.rot[0], ip.rot[1], ip.rot[2]] };
+        this.weaponPivot.position.set(
+          this.axeIdle.pos[0], this.axeIdle.pos[1], this.axeIdle.pos[2]);
+        this.weaponPivot.rotation.set(
+          this.axeIdle.rot[0], this.axeIdle.rot[1], this.axeIdle.rot[2]);
+      }
+    }
   };
 
   // FSM sense/aggression update. playerPos: THREE.Vector3, canDamagePlayer:
@@ -86531,6 +86635,21 @@ window.WH_CONFIG = {
           this.body.position.y = (this.bodyBaseY || 0) - 0.06 * stagT;
         } else {
           this.body.position.y = this.bodyBaseY || 0;
+        }
+        // v5: bandit axe swing. attackTimer counts down the cooldown; sweep
+        // rotation.y 90deg early in the cooldown window (the strike window).
+        if (this.weaponPivot && this.axeIdle) {
+          if (this.fsm === 'attack' && this.attackTimer > 0 &&
+              this.attackTimer <= this.cfg.attackCooldown) {
+            var cd = this.cfg.attackCooldown || 1;
+            var swingT = 1 - this.attackTimer / cd;        // 0..1 since strike
+            var sw = Math.min(1, swingT / 0.4);            // 90deg sweep in first 40%
+            var back = smooth(Math.min(1, Math.max(0, (swingT - 0.4) / 0.6)));
+            this.weaponPivot.rotation.y = this.axeIdle.rot[1] -
+              (Math.PI / 2) * sw + (Math.PI / 2) * back;
+          } else {
+            this.weaponPivot.rotation.y = this.axeIdle.rot[1];
+          }
         }
       }
     }
@@ -87228,6 +87347,11 @@ window.WH_CONFIG = {
       // v3 animation hooks
       getAttackStage: function () { return game.player.getAttackStage(); },
       triggerAttack: function () { game.player.tryAttack(); },
+      getComboIndex: function () { return game.player.comboIndex; },
+      getCurrentMove: function () {
+        var MS = window.WH_MOVESET;
+        return [MS.m1, MS.m2, MS.m3][game.player.comboIndex] || MS.m1;
+      },
       isRolling: function () { return game.player.rolling; },
       getEnemy: function (idx) {
         var list = game.regionManager.getEnemies(game.regionManager.logic.activeId);

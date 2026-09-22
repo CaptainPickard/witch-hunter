@@ -52,6 +52,9 @@
     this.idleTime = 0;                // seconds without movement input
     this.idlePhase = 0;               // breathing phase
     this.lungeLeft = 0;               // strike lunge distance remaining
+    this.comboIndex = 0;              // v5: which chain move comes next
+    this.comboQueued = false;         // v5: next chain input buffered in recover
+    this.recoverFullyElapsed = false; // v5: attack fully finished flag
 
     // camera orbit state
     this.camYaw = Math.PI;            // looking toward -z (into region A)
@@ -84,24 +87,22 @@
     this.root.add(this.body);
   };
 
-  // Weapon attach (v3): the sword is driven as a separate child so body lean
-  // and sword arc read together. game.js calls this after preload.
+  // Weapon attach (v5): the mesh lives on a dedicated pivot Group whose pose
+  // (position + rotation) is keyframed by WH_MOVESET during attacks.
   Player.prototype.setWeapon = function (mesh) {
+    this.weaponPivot = new THREE.Group();
+    this.root.add(this.weaponPivot);
+    this.weaponPivot.add(mesh);
     this.sword = mesh;
-    this.swordBase = {
-      x: mesh.position.x || 0,
-      y: mesh.position.y || 0,
-      z: mesh.position.z || 0,
-      rz: mesh.rotation.z || 0,
-      ry: mesh.rotation.y || 0
-    };
+    this.swordBase = window.WH_CONFIG.moveset.idlePose;
+    this.resetWeaponPose();
   };
 
   Player.prototype.resetWeaponPose = function () {
-    if (!this.sword) return;
-    this.sword.position.set(this.swordBase.x, this.swordBase.y, this.swordBase.z);
-    this.sword.rotation.z = this.swordBase.rz;
-    this.sword.rotation.y = this.swordBase.ry;
+    if (!this.weaponPivot || !this.swordBase) return;
+    var p = this.swordBase;
+    this.weaponPivot.position.set(p.pos[0], p.pos[1], p.pos[2]);
+    this.weaponPivot.rotation.set(p.rot[0], p.rot[1], p.rot[2]);
   };
 
   // Bob offset: call from the walk animation in place of absolute writes.
@@ -201,14 +202,29 @@
     this.rollDir.copy(dir);
   };
 
+  // v5: combo chain. A press during 'recover' buffers the next chain move
+  // (comboQueued) without restarting; a fresh press after a full recovery
+  // resets the chain, a press during windup/strike increments the chain.
   Player.prototype.tryAttack = function () {
-    if (this.state !== 'alive' || this.rolling || this.attacking) return;
+    if (this.state !== 'alive' || this.rolling) return;
+    if (this.attacking) {
+      if (this.getAttackStage() === 'recover' &&
+          this.comboIndex < window.WH_CONFIG.moveset.comboChainCap) {
+        this.comboQueued = true;          // buffer: do NOT restart the swing
+      }
+      return;
+    }
     if (this.stamina < CFG.attackStaminaCost) return;
     this.spendStamina(CFG.attackStaminaCost);
     this.attacking = true;
     this.attackTimer = CFG.attackDuration;
     this.attackDidHit = false;
     this.lungeLeft = AW.strikeLunge;
+    // chain index: reset after a fully elapsed attack, else advance (capped)
+    this.comboIndex = this.recoverFullyElapsed
+      ? 0 : Math.min(this.comboIndex + 1, window.WH_CONFIG.moveset.comboChainCap);
+    this.comboQueued = false;
+    this.recoverFullyElapsed = false;
     // face camera direction on attack (unless locked: hard track handles it)
     if (!this.lockTarget) this.yaw = this.camYaw + Math.PI;
   };
@@ -286,7 +302,17 @@
 
     if (this.attacking) {
       this.attackTimer -= dt;
-      if (this.attackTimer <= 0) this.attacking = false;
+      if (this.attackTimer <= 0) {
+        this.attacking = false;
+        this.recoverFullyElapsed = true;  // v5: full swing done -> chain resets
+        // consume a buffered chain input as the next combo move
+        if (this.comboQueued && this.comboIndex < window.WH_CONFIG.moveset.comboChainCap) {
+          this.comboIndex += 1;
+        } else {
+          this.comboIndex = 0;
+        }
+        this.comboQueued = false;
+      }
     }
 
     // D3: while locked, body yaw hard-tracks the target
@@ -382,11 +408,13 @@
 
     if (clampToBounds) clampToBounds(this);
 
-    // ---- v3 D1: three-stage attack pose + strike lunge ----
+    // ---- v5: three-stage attack pose + weapon-pivot keyframe interpolation ----
     if (this.body) {
       if (this.attacking) {
         var stage = this.getAttackStage();
         var yawBase = this.yaw;
+        var MS = window.WH_MOVESET;
+        var move = [MS.m1, MS.m2, MS.m3][this.comboIndex] || MS.m1;
         if (stage === 'windup') {
           var wp = (CFG.attackDuration - this.attackTimer) /
                    (CFG.attackDuration * AW.windupFrac);       // 0..1
@@ -396,9 +424,9 @@
           this.body.rotation.z = 0;
           this.body.position.y = this.bodyBaseY - AW.windupCrouch * we;  // crouch
           this.body.position.x = this.bodyBaseX || 0;
-          if (this.sword) {
-            this.sword.rotation.z = this.swordBase.rz + AW.windupSwordRaise * we;
-          }
+          var pw = MS.interpPose(MS.idle, move.windup, we);
+          this.weaponPivot.position.set(pw.pos[0], pw.pos[1], pw.pos[2]);
+          this.weaponPivot.rotation.set(pw.rot[0], pw.rot[1], pw.rot[2]);
         } else if (stage === 'strike') {
           var sp = (CFG.attackDuration * AW.windupFrac + CFG.attackDuration * AW.strikeFrac
                     - this.attackTimer) /
@@ -411,12 +439,9 @@
           this.body.rotation.z = 0;
           this.body.position.y = this.bodyBaseY;
           this.body.position.x = this.bodyBaseX || 0;
-          if (this.sword) {
-            // raise -> level then sweep through the horizontal arc
-            this.sword.rotation.z = this.swordBase.rz +
-              AW.windupSwordRaise * (1 - se) +
-              deg2rad(AW.strikeSwordSweepDeg) * se - deg2rad(AW.strikeSwordSweepDeg) * 0.5 * se;
-          }
+          var ps = MS.interpPose(move.windup, move.strike, se);
+          this.weaponPivot.position.set(ps.pos[0], ps.pos[1], ps.pos[2]);
+          this.weaponPivot.rotation.set(ps.rot[0], ps.rot[1], ps.rot[2]);
           // forward lunge along facing: velocity model. The old target-delta
           // formula (strikeLunge * se - (strikeLunge - lungeLeft)) strands
           // the remainder whenever the STRIKE stage spans few frames
@@ -442,9 +467,9 @@
           this.body.rotation.z = 0;
           this.body.position.y = this.bodyBaseY;
           this.body.position.x = this.bodyBaseX || 0;
-          if (this.sword) {
-            this.sword.rotation.z = this.swordBase.rz + AW.windupSwordRaise * (1 - re);
-          }
+          var pr = MS.interpPose(move.strike, MS.idle, re);
+          this.weaponPivot.position.set(pr.pos[0], pr.pos[1], pr.pos[2]);
+          this.weaponPivot.rotation.set(pr.rot[0], pr.rot[1], pr.rot[2]);
         }
       } else if (!this.rolling) {
         this.body.rotation.x = 0;
