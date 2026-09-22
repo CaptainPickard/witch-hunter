@@ -27,6 +27,13 @@ window.WH_CONFIG = {
     groundRadius: 90,                 // playable disc radius per region
     groundColorA: 0x3d3a2c,           // dark mud/olive (darkwood canon palette)
     groundColorB: 0x232620,           // near-charcoal mud (darkwood canon palette)
+    groundTexture: {                  // procedural pixel-art ground canvas (region-manager.js)
+      size: 256,                      // canvas px per side (one per region, boot-time)
+      repeat: 12,                     // texture repeats across the ground disc
+      blotchCount: 140,               // noise blotch clusters per canvas
+      mossDensity: 0.06,              // pale sickly moss accent, pixel fraction
+      puddleDensity: 0.03             // near-black wet puddle specks, pixel fraction
+    },
     fogNearFactor: 0.25,              // fog near = radius * factor
     fogFarFactor: 1.5,                // fog far = radius * factor
     characterHeight: 1.8              // normalized character height (POC)

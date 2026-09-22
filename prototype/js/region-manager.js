@@ -132,6 +132,125 @@
     return clamped;
   };
 
+  // ---- Procedural pixel-art ground texture (darkwood palette) ----------------
+  // Boot-time cost only: one 256x256 canvas per region, cached on the canvas
+  // element (region dispose throws away the CanvasTexture wrapper, the canvas
+  // itself is reused on rebuild). No per-frame work.
+
+  var GROUND_CANVAS_CACHE = {};
+
+  function whRng(seed) {
+    // mulberry32: small deterministic PRNG so each region's texture is stable.
+    return function () {
+      seed |= 0;
+      seed = (seed + 0x6D2B79F5) | 0;
+      var t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function whHexToRgb(hex) {
+    return [(hex >> 16) & 255, (hex >> 8) & 255, hex & 255];
+  }
+
+  function whCss(rgb, jitter, rand) {
+    var j = Math.round(jitter * (rand() * 2 - 1));
+    var r = Math.max(0, Math.min(255, rgb[0] + j));
+    var g = Math.max(0, Math.min(255, rgb[1] + j));
+    var b = Math.max(0, Math.min(255, rgb[2] + j));
+    return 'rgb(' + r + ',' + g + ',' + b + ')';
+  }
+
+  function buildGroundCanvas(regionId) {
+    if (GROUND_CANVAS_CACHE[regionId]) return GROUND_CANVAS_CACHE[regionId];
+    var gtc = CFG.world.groundTexture ||
+      { size: 256, repeat: 12, blotchCount: 140, mossDensity: 0.06, puddleDensity: 0.03 };
+    var size = gtc.size;
+    var canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    var ctx = canvas.getContext('2d');
+
+    // Darkwood canon palette. Dominant tone per region (A olive, B charcoal);
+    // the other region's tone is the secondary for tonal cross-blend.
+    var isA = regionId === CFG.regionA.id;
+    var dominant = whHexToRgb(isA ? CFG.world.groundColorA : CFG.world.groundColorB);
+    var secondary = whHexToRgb(isA ? CFG.world.groundColorB : CFG.world.groundColorA);
+    var umber = whHexToRgb(0x4a3f2a);
+    var moss = whHexToRgb(0x56583a);
+    var puddle = whHexToRgb(0x15171a);
+    var rand = whRng(isA ? 1013904223 : 2040042217);
+
+    // Base: dominant tone.
+    ctx.fillStyle = whCss(dominant, 0, rand);
+    ctx.fillRect(0, 0, size, size);
+
+    // Noise blotch clusters: secondary mud and burnt umber blobs in pixel-art
+    // sized cells (1 to 2 px) so NearestFilter keeps hard edges.
+    var blotchCount = gtc.blotchCount;
+    for (var i = 0; i < blotchCount; i++) {
+      var cx = Math.floor(rand() * size);
+      var cy = Math.floor(rand() * size);
+      var cells = 4 + Math.floor(rand() * 12);
+      var tone = rand() < 0.6 ? secondary : umber;
+      var jitter = 6 + rand() * 10;
+      for (var c = 0; c < cells; c++) {
+        var px = (cx + Math.floor(rand() * 7) - 3 + size) % size;
+        var py = (cy + Math.floor(rand() * 7) - 3 + size) % size;
+        var w = rand() < 0.5 ? 1 : 2;
+        ctx.fillStyle = whCss(tone, jitter, rand);
+        ctx.fillRect(px, py, w, w);
+      }
+    }
+
+    // Fine grain: scattered single pixels of both tones so no area reads as
+    // one flat color.
+    var grainCount = Math.floor(size * size * 0.10);
+    for (var g = 0; g < grainCount; g++) {
+      ctx.fillStyle = whCss(rand() < 0.5 ? dominant : secondary, 14, rand);
+      ctx.fillRect(Math.floor(rand() * size), Math.floor(rand() * size), 1, 1);
+    }
+
+    // Moss accents: pale sickly yellow-green specks, low density.
+    var mossCount = Math.floor(size * size * gtc.mossDensity);
+    for (var m = 0; m < mossCount; m++) {
+      var mw = rand() < 0.3 ? 2 : 1;
+      ctx.fillStyle = whCss(moss, 10, rand);
+      ctx.fillRect(Math.floor(rand() * size), Math.floor(rand() * size), mw, mw);
+    }
+
+    // Wet puddle specks: near-black, slightly clustered.
+    var puddleCount = Math.floor(size * size * gtc.puddleDensity);
+    for (var p = 0; p < puddleCount; p++) {
+      var sx = Math.floor(rand() * size);
+      var sy = Math.floor(rand() * size);
+      var specks = 1 + Math.floor(rand() * 3);
+      for (var s = 0; s < specks; s++) {
+        var px2 = (sx + Math.floor(rand() * 4) - 2 + size) % size;
+        var py2 = (sy + Math.floor(rand() * 4) - 2 + size) % size;
+        ctx.fillStyle = whCss(puddle, 4, rand);
+        ctx.fillRect(px2, py2, 1, 1);
+      }
+    }
+
+    GROUND_CANVAS_CACHE[regionId] = canvas;
+    return canvas;
+  }
+
+  function makeGroundTexture(regionId) {
+    var gtc = CFG.world.groundTexture || { repeat: 12 };
+    var tex = new THREE.CanvasTexture(buildGroundCanvas(regionId));
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.magFilter = THREE.NearestFilter;
+    tex.minFilter = THREE.NearestFilter;
+    tex.generateMipmaps = false;
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.repeat.set(gtc.repeat, gtc.repeat);
+    return tex;
+  }
+
   // ---- Live region manager (THREE scene wiring) ------------------------------
 
   function RegionManager(scene, enemyStateRestoreCb) {
@@ -164,9 +283,11 @@
     group.name = 'region-' + regionId;
     this.buildCounter++;
 
-    // ground disc
+    // ground disc: procedural pixel-art canvas texture (boot-time, cached),
+    // region-biased blotch mix (A olive-dominant, B charcoal-dominant)
     var groundMat = new THREE.MeshStandardMaterial({
       color: regionId === CFG.regionA.id ? CFG.world.groundColorA : CFG.world.groundColorB,
+      map: makeGroundTexture(regionId),
       roughness: 1.0, metalness: 0.0, side: THREE.DoubleSide
     });
     var ground = new THREE.Mesh(

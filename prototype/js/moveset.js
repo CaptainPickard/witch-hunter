@@ -4,28 +4,28 @@ window.WH_MOVESET = {
   m1: {
     name: 'slash-l2r',
     windup:  { pos: [0.55, 1.35, 0.1],   rot: [-0.4, 0.8, 0.9] },
-    strike:  { pos: [0.25, 0.95, -0.45], rot: [0.1, -0.6, -0.9] },
-    recover: { pos: [0.42, 0.9, -0.18],  rot: [0.35, -0.5, 0.25] },
+    strike:  { pos: [0.25, 0.95, -0.45], rot: [1.57, -0.35, 0.15] },
+    recover: { pos: [0.42, 0.9, -0.18],  rot: [1.9, -0.6, 0.35] },
     bodyLean: 0.18, crouch: 0.03, lunge: 0.25
   },
   m2: {
     name: 'slash-r2l',
     windup:  { pos: [-0.1, 1.35, 0.15], rot: [-0.4, -0.8, 0.9] },
-    strike:  { pos: [0.5, 0.95, -0.4],  rot: [0.1, 0.6, -0.9] },
+    strike:  { pos: [0.5, 0.95, -0.4],  rot: [1.57, 0.35, -0.15] },
     recover: { pos: [0.7, 1.0, -0.3], rot: [2.2, -0.7, 0.6] },
     bodyLean: 0.18, crouch: 0.03, lunge: 0.25
   },
   m3: {
     name: 'overhead',
-    windup:  { pos: [0.1, 1.7, 0.05],  rot: [-1.2, 0, 0.15] },
-    strike:  { pos: [0.3, 0.35, -0.3], rot: [0.9, 0, 0.1] },
+    windup:  { pos: [0.1, 1.7, 0.05],  rot: [2.9, 0, 0.1] },
+    strike:  { pos: [0.3, 0.35, -0.3], rot: [1.35, 0, 0.08] },
     recover: { pos: [0.7, 1.0, -0.3], rot: [2.2, -0.7, 0.6] },
     bodyLean: 0.25, crouch: 0.09, lunge: 0.3
   },
   m4: {
     name: 'thrust',
-    windup:  { pos: [0.35, 1.1, 0.35], rot: [0, 0.15, 0.05] },
-    strike:  { pos: [0.15, 1.05, -0.7], rot: [0, 0, 0] },
+    windup:  { pos: [0.35, 1.1, 0.35], rot: [1.4, 0.5, 0] },
+    strike:  { pos: [0.15, 1.05, -0.7], rot: [1.57, 0, 0] },
     recover: { pos: [0.7, 1.0, -0.3], rot: [2.2, -0.7, 0.6] },
     bodyLean: 0.12, crouch: 0.02, lunge: 0.4
   },
