@@ -230,6 +230,18 @@ canon reference (mud/olive grounds, heavy pale fog, dense tree wall in
 B, fenced graveyard clusters in A); region tunables all live in
 prototype/js/CONFIG.js (window.WH_CONFIG).
 
+Running the test suites (repo root, both origins 8791 and
+8792/witchhunter/ must be up):
+
+    python3 tests/wh_v2_verify.py     # movement, lock-on, region, asset audit
+    python3 tests/wh_v3_anim_probes.py  # attack stages, cancel rules, walk, hop
+
+Both suites use Playwright headless chromium (swiftshader) and exit 0
+only when every probe passes on both origins with zero page/console
+errors. The v2 base URLs can be overridden with the WH_BASE_ROOT and
+WH_BASE_PROXY env vars. The suites originally lived in /tmp; tests/ is
+canonical now.
+
 ## Note
 
 All AI-generated art in this repo was produced for the Witch Hunter
