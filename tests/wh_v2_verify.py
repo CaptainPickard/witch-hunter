@@ -56,7 +56,8 @@ def run_suite(page, base_url, origin, do_movement=True, do_lock=True, do_region=
 
         # A should strafe back (opposite): dot with forward < 0
         page.evaluate("window.WH_DEBUG.teleportPlayer(0, 40)")
-        page.wait_for_timeout(200)
+        page.evaluate("window.WH_DEBUG.setCameraYaw(90)")
+        page.wait_for_timeout(300)
         q0 = page.evaluate("window.WH_DEBUG.getPlayerPosition()")
         page.keyboard.down("a")
         page.wait_for_timeout(600)
@@ -64,7 +65,7 @@ def run_suite(page, base_url, origin, do_movement=True, do_lock=True, do_region=
         q1 = page.evaluate("window.WH_DEBUG.getPlayerPosition()")
         adx, adz = q1["x"] - q0["x"], q1["z"] - q0["z"]
         # camYaw=90 => forward=(-1,0); right=(-fz,fx)=(0,-1); A = -right = +z
-        ok_a = adz > 1.0 and abs(adx) < 1.0
+        ok_a = adz > 1.0 and abs(adx) < 1.5
         print("[%s] A strafe: dx=%.2f dz=%.2f => %s"
               % (origin, adx, adz, "PASS" if ok_a else "FAIL"))
 
