@@ -1,0 +1,33 @@
+{
+  "setup": {
+    "network": "testnet",
+    "cli_version": "sui 1.81.0-bf0c491c17b8",
+    "suiup_version": "suiup 0.0.14",
+    "install_method": "official suiup installer, suiup install sui, suiup switch sui@testnet",
+    "package_id": null,
+    "publish_digest": null,
+    "publish_sui_digest": null,
+    "publish_status": "skipped_faucet",
+    "publish_attempt": "sui client publish . --json compiled, then failed gas selection: address balance 0 MIST; estimated budget 83152800 MIST",
+    "faucet_status": "skipped_faucet",
+    "faucet_attempts": [
+      { "attempt": 1, "method": "sui client faucet --json", "outcome": "exit 1; CLI redirects testnet funding to https://faucet.sui.io/; gas balance 0" },
+      { "attempt": 2, "method": "POST https://faucet.testnet.sui.io/gas FixedAmountRequest", "outcome": "HTTP 404 Cannot POST /gas; gas balance 0" },
+      { "attempt": 3, "method": "sui client faucet --url https://faucet.testnet.sui.io --json", "outcome": "exit 1; CLI redirects to Web UI; gas balance 0" }
+    ],
+    "browser_faucet": "Browser helper unavailable: no supported Chromium-family browser running",
+    "funding_balance_mist": "0",
+    "move_test": "13 passed, 0 failed; local simulated_e2e_roll_math passed",
+    "ts_runtime": "review_only_no_node_on_vps",
+    "reason": "No testnet gas after three documented faucet attempts. Publish and dependent transactions were not executed."
+  },
+  "steps": {
+    "mint": { "ok": false, "status": "skipped_faucet", "digest": null },
+    "craft": { "ok": false, "status": "skipped_faucet", "digest": null },
+    "serial": { "ok": false, "status": "skipped_faucet", "digest": null },
+    "kiosk_list": { "ok": false, "status": "skipped_faucet", "digest": null },
+    "kiosk_purchase": { "ok": false, "status": "skipped_faucet", "digest": null },
+    "royalty": { "ok": false, "status": "skipped_faucet", "digest": null },
+    "provenance": { "ok": false, "status": "skipped_faucet", "digest": null }
+  }
+}

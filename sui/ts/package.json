@@ -1,0 +1,20 @@
+{
+  "name": "wh-econ-spike1-testnet",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "e2e": "tsx e2e.ts",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@mysten/bcs": "1.9.2",
+    "@mysten/sui": "1.45.2"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.30",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3"
+  }
+}
