@@ -9,7 +9,9 @@ Usage:
 """
 import sys, time, json, os, urllib.request
 
-KEY = os.environ.get('MESHY_KEY', 'msy_6oKKj0yUMxMepbwqx0OHJH2p0pnUu23QE2dT')
+KEY = os.environ.get('MESHY_KEY')
+if not KEY:
+    raise SystemExit("MESHY_KEY environment variable not set (removed hardcoded fallback for secret hygiene, 2026-09-30)")
 BASE = 'https://api.meshy.ai/openapi/v1/image-to-3d'
 
 def req(url, data=None, method=None):
