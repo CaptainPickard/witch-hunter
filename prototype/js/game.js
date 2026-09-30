@@ -329,6 +329,7 @@
       },
       getPlayer: function () { return game.player; },
       getRegionManager: function () { return game.regionManager; },
+      getAssetMeta: function (name) { return window.WH_ASSETS.getMeta(name); },
       // test helpers
       teleportPlayer: function (x, z) { game.player.pos.set(x, 0, z); },
       killPlayer: function () { game.player.hp = 0; game.player.takeDamage(1); },
@@ -446,6 +447,9 @@
       var pScale = CFG.world.characterHeight /
         (window.WH_ASSETS.groundHeight('playerBody') || CFG.world.characterHeight);
       pBody.scale.setScalar(pScale);
+      pBody.position.y = -(window.WH_ASSETS.groundMinY('playerBody') * pScale);
+      // The animated holder owns this scaled lift; do not apply it twice.
+      pBody.children[0].position.y += window.WH_ASSETS.groundMinY('playerBody');
       game.player.setBody(pBody);
       var sword = window.WH_ASSETS.instance('longsword');
       sword.scale.setScalar(0.9);

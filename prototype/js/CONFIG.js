@@ -323,7 +323,7 @@ window.WH_CONFIG = {
       recoverLean: 0.10             // rad, forward-lean settle in recover
     },
     walk: {
-      bobAmp: 0.09,                 // primary vertical bob
+      bobAmp: 0.02,                 // primary vertical bob (R1 feet contact)
       bobFreqWalk: 9,               // rad/s phase rate
       bobFreqSprint: 14,
       leanWalk: 0.08,               // rad forward lean at walk speed
@@ -332,7 +332,7 @@ window.WH_CONFIG = {
       swayFreqMult: 0.5,            // half the bob frequency
       counterRollAmp: 0.05,         // rad rotation.z counter-roll
       yawOscAmp: 0.06,              // rad yaw oscillation at bob frequency
-      footDipAmp: 0.04,             // secondary vertical sine
+      footDipAmp: 0.005,            // secondary vertical sine (R1 contact)
       footDipFreqMult: 2,           // 2x bob frequency (two dips per cycle)
       sprintAmpMult: 1.5,           // multiplies all layer amplitudes
       idleDelay: 0.5,               // seconds of no movement before idle anim

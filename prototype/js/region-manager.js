@@ -244,8 +244,11 @@
     tex.wrapS = THREE.RepeatWrapping;
     tex.wrapT = THREE.RepeatWrapping;
     tex.magFilter = THREE.NearestFilter;
-    tex.minFilter = THREE.NearestFilter;
-    tex.generateMipmaps = false;
+    tex.minFilter = THREE.NearestMipmapLinearFilter;
+    tex.generateMipmaps = true;
+    var caps = window.WH_GAME && window.WH_GAME.renderer &&
+      window.WH_GAME.renderer.capabilities;
+    tex.anisotropy = Math.min(4, caps ? caps.getMaxAnisotropy() : 4);
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.repeat.set(gtc.repeat, gtc.repeat);
     return tex;
@@ -286,7 +289,7 @@
     // ground disc: procedural pixel-art canvas texture (boot-time, cached),
     // region-biased blotch mix (A olive-dominant, B charcoal-dominant)
     var groundMat = new THREE.MeshStandardMaterial({
-      color: regionId === CFG.regionA.id ? CFG.world.groundColorA : CFG.world.groundColorB,
+      color: 0xffffff,
       map: makeGroundTexture(regionId),
       roughness: 1.0, metalness: 0.0, side: THREE.DoubleSide
     });
@@ -324,7 +327,7 @@
     for (var i = 0; i < regionCfg.props.length; i++) {
       var p = regionCfg.props[i];
       var obj = window.WH_ASSETS.instance(p.asset);
-      obj.position.set(p.x, 0, p.z);
+      obj.position.set(p.x, p.y || 0, p.z);
       obj.rotation.y = p.rotY;
       obj.scale.setScalar(p.scale);
       group.add(obj);
@@ -340,6 +343,9 @@
       var eScale = CFG.world.characterHeight /
         (window.WH_ASSETS.groundHeight(bodyName) || CFG.world.characterHeight);
       eBody.scale.setScalar(eScale);
+      eBody.position.y = -(window.WH_ASSETS.groundMinY(bodyName) * eScale);
+      // Enemy bob writes the holder position; keep the lift on one level.
+      eBody.children[0].position.y += window.WH_ASSETS.groundMinY(bodyName);
       enemy.setBody(eBody);
       this.enemies[regionId].push(enemy);
       group.add(enemy.root);
