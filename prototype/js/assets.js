@@ -29,6 +29,9 @@
     fallenLog: 'art-direction/3d/assets/biome_library/m7-pixelated.glb',
     treeStump: 'art-direction/3d/assets/biome_library/m8-pixelated.glb',
     mossBoulder: 'art-direction/3d/assets/biome_library/m9-pixelated.glb',
+    // R2: darkwood light-socket props (doc 61 batches B2/B3)
+    banditCampfire: 'art-direction/3d/assets/biome_library/m15-bandit-campfire-pixelated.glb',
+    lanternWaymarker: 'art-direction/3d/assets/biome_library/b3-waymarker-pixelated.glb',
 
     // church-kit props + trees
     lanternPost: 'art-direction/3d/assets/church-kit/lantern-post-pixelated.glb',

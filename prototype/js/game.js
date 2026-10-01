@@ -38,7 +38,13 @@
     if (CFG.renderer.outputColorSpaceSRGB && THREE.SRGBColorSpace) {
       renderer.outputColorSpace = THREE.SRGBColorSpace;
     }
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    // R2 P0-3: Neutral tonemap so fog stays brightest; ACES fallback for
+    // older/no Neutral builds (vanilla var function only).
+    if (THREE.NeutralToneMapping) {
+      renderer.toneMapping = THREE.NeutralToneMapping;   // r185 property exists (verified)
+    } else if (THREE.ACESFilmicToneMapping) {
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    }
     renderer.toneMappingExposure = CFG.renderer.toneMappingExposure;
     renderer.shadowMap.enabled = CFG.renderer.shadowMapEnabled;
     return renderer;
@@ -51,16 +57,79 @@
     return scene;
   }
 
+  // R2 P0-3: moon-and-lantern night rig. AmbientLight removed - the hemisphere
+  // is now the only fill. Pool creation (R2-3) slots into this function later;
+  // no pool code lives here in this chunk.
   function setupLights() {
     var L = CFG.lighting;
-    var amb = new THREE.AmbientLight(L.ambientColor, L.ambientIntensity);
-    game.scene.add(amb);
-    var hemi = new THREE.HemisphereLight(L.hemiSkyColor, L.hemiGroundColor, L.hemiIntensity);
+    var hemi = new THREE.HemisphereLight(L.hemiSkyColor, L.hemiGroundColor,
+      L.hemiBaseIntensity);
     game.scene.add(hemi);
-    var key = new THREE.DirectionalLight(L.keyColor, L.keyIntensity);
-    key.position.set(30, 60, 20);
-    game.scene.add(key);
-    game.keyLight = key;
+    game.hemiLight = hemi;
+
+    // Moon: directional clamped to the -z side (azimuth from +/-z axis, deg),
+    // elevation 25-35 deg. Aimed via target at world origin.
+    var az = (L.moonAzimuthDeg || 0) * Math.PI / 180;
+    var el = (L.moonElevationDeg || 30) * Math.PI / 180;
+    var dir = L.moonDirectionDistance || 60;
+    var moon = new THREE.DirectionalLight(L.moonColor, L.moonIntensity);
+    moon.position.set(
+      Math.round(Math.sin(az) * Math.cos(el) * dir * 10) / 10,
+      Math.round(Math.sin(el) * dir * 10) / 10,
+      -Math.round(Math.cos(az) * Math.cos(el) * dir * 10) / 10
+    );
+    moon.target.position.set(0, 0, 0);
+    game.scene.add(moon);
+    game.scene.add(moon.target);
+    game.moonLight = moon;
+
+    // Player lantern: PointLight parented into the player chain. Attach target
+    // is game.player.yawFrame when available, else game.player.root (boot order
+    // note: setupLights runs before the player exists; the lantern lights the
+    // scene rig at boot and re-parents below).
+    var lantern = new THREE.PointLight(L.lanternColor, L.lanternIntensity,
+      L.lanternDistance, L.lanternDecay);
+    var attach = (game.player && (game.player.yawFrame || game.player.root)) ||
+      game.scene;
+    var off = L.lanternAnchorOffset;
+    lantern.position.set(off[0], off[1], off[2]);
+    attach.add(lantern);
+    game.lantern = lantern;
+
+    // R2 P1-8: fixed pool of 4 PointLights + flame cards, created ONCE at boot
+    // BEFORE the first render so the shader light count never changes (M-19).
+    var P = CFG.lightPool;
+    game.lightPool = [];
+    game.flameCards = [];
+    game.lightPoolT = 0;
+    var texLoader = new THREE.TextureLoader();
+    var emberTex = texLoader.load(window.WH_ASSETS.resolveUrl(
+      'art-direction/3d/assets/textures/particles/particle-ember.png'));
+    for (var pi = 0; pi < P.size; pi++) {
+      var pl = new THREE.PointLight(P.color, 0, P.distance, P.decay);
+      game.scene.add(pl);
+      game.lightPool.push(pl);
+      var cardMat = new THREE.SpriteMaterial({ map: emberTex,
+        blending: THREE.AdditiveBlending, transparent: true, depthWrite: false });
+      var card = new THREE.Sprite(cardMat);
+      card.scale.set(0.55, 0.77, 1);
+      card.visible = false;
+      game.scene.add(card);
+      game.flameCards.push(card);
+    }
+  }
+
+  // R2 P0-3: re-parent the lantern into the player's yawFrame once the player
+  // body exists (left-hip anchor = left side of the character, yawFrame space,
+  // so the light turns with the player). Called from boot after setBody().
+  function attachPlayerLantern() {
+    var L = CFG.lighting;
+    if (!game.lantern || !game.player || !game.player.yawFrame) return;
+    if (game.lantern.parent !== game.player.yawFrame) {
+      game.player.yawFrame.add(game.lantern);
+    }
+    var off = L.lanternAnchorOffset;
+    game.lantern.position.set(off[0], off[1], off[2]);
   }
 
   // ---- HUD -------------------------------------------------------------------
@@ -419,13 +488,18 @@
     game.player.resolveIncomingHit(amount, attacker);
   }
 
+  // R2 P0-3: region lighting = fog swap + hemi fill scaled to the region's
+  // ambientLightLevel (fill = hemiBaseIntensity * ambientLightLevel). The old
+  // keyLight is gone; moon and lantern are region-independent.
   function applyRegionLighting(regionId) {
     var region = window.WH_REGION_DEFS.regions[regionId];
     game.scene.background = new THREE.Color(region.fogColor);
     game.scene.fog.color = new THREE.Color(region.fogColor);
     game.scene.fog.density = region.fogDensity;
-    if (game.keyLight) {
-      game.keyLight.intensity = CFG.lighting.keyIntensity * region.ambientLightLevel;
+    if (game.hemiLight) {
+      var fill = CFG.lighting.hemiBaseIntensity * region.ambientLightLevel;
+      // Flicker is the lantern's job, not the region fill: keep it clean.
+      game.hemiLight.intensity = fill;
     }
   }
 
@@ -456,6 +530,13 @@
       getPlayer: function () { return game.player; },
       getRegionManager: function () { return game.regionManager; },
       getAssetMeta: function (name) { return window.WH_ASSETS.getMeta(name); },
+      getLightPool: function () {
+        return (game.lightPool || []).map(function (l, i) {
+          return { i: i, intensity: l.intensity, socketId: l.whSocketId || null,
+                   x: l.position.x, y: l.position.y, z: l.position.z };
+        });
+      },
+      getLightSockets: function () { return game.lastSockets || []; },
       getAnimState: function (entity) {
         var target = entity === undefined || entity === 'player' ? game.player : entity;
         if (typeof entity === 'number') target = game.regionManager.getEnemies(
@@ -636,6 +717,7 @@
       // The animated holder owns this scaled lift; do not apply it twice.
       pBody.children[0].position.y += window.WH_ASSETS.groundMinY('playerBody');
       game.player.setBody(pBody);
+      attachPlayerLantern();   // R2 P0-3: lantern now player-parented (left-hip anchor)
       var sword = window.WH_ASSETS.instance('longsword');
       sword.scale.setScalar(0.9);
       game.player.root.add(sword);
@@ -655,6 +737,74 @@
       game.lastFrame = performance.now();
       requestAnimationFrame(loop);
     });
+  }
+
+  // R2 P1-8: light socket registry. Static sockets come from the CONFIG props
+  // of the ACTIVE region only (pre-warmed groups excluded by definition);
+  // firebolts contribute dynamic sockets. IO amendments: sockets derive from
+  // CONFIG tables (no scene walk; region-manager.js untouched) and bolt y
+  // comes from the bolt's own pos (Vector3).
+  function computeSockets() {
+    var out = [];
+    var rm = game.regionManager;
+    if (!rm) return out;
+    var reg = window.WH_REGION_DEFS.regions[rm.logic.activeId];
+    var props = reg && reg.cfg && reg.cfg.props ? reg.cfg.props : [];
+    var S = CFG.lightSockets;
+    for (var i = 0; i < props.length; i++) {
+      var p = props[i];
+      var sd = S[p.asset];
+      if (!sd) continue;
+      var h = window.WH_ASSETS.groundHeight(p.asset) * p.scale * sd.heightFraction;
+      out.push({ id: p.asset + '@' + p.x + ',' + p.z, x: p.x, y: h, z: p.z,
+                 intensity: sd.intensity, weight: 1 });
+    }
+    var bolts = game.firebolts || [];
+    for (var j = 0; j < bolts.length; j++) {
+      var b = bolts[j];
+      if (!b || !b.alive) continue;
+      out.push({ id: 'firebolt#' + j, x: b.pos.x, y: b.pos.y, z: b.pos.z,
+                 intensity: 1.8, weight: 0.6 });
+    }
+    return out;
+  }
+
+  // R2 P1-8: nearest-socket handoff. One pass per frame: sort sockets by
+  // weighted distance to the player, take the first 4, fade each pool slot
+  // toward its target (faster rate on target change = handoff).
+  function poolTick(dt) {
+    if (!game.lightPool) return;
+    game.lightPoolT += dt;
+    var sockets = computeSockets();
+    game.lastSockets = sockets;
+    var px = game.player ? game.player.pos.x : 0;
+    var pz = game.player ? game.player.pos.z : 0;
+    for (var s = 0; s < sockets.length; s++) {
+      var sk = sockets[s];
+      var dx = sk.x - px, dz = sk.z - pz;
+      sk.d = Math.sqrt(dx * dx + dz * dz) / sk.weight;
+    }
+    sockets.sort(function (a, b) { return a.d - b.d; });
+    var chosen = sockets.slice(0, CFG.lightPool.size);
+    for (var i = 0; i < game.lightPool.length; i++) {
+      var l = game.lightPool[i];
+      var tgt = chosen[i];
+      var want = tgt ? tgt.intensity : 0;
+      var changed = (l.whSocketId || '') !== (tgt ? tgt.id : '');
+      var k = 1 - Math.exp(-dt / (changed ? 0.12 : CFG.lightPool.handoffFadeSec));
+      l.intensity += (want - l.intensity) * k;
+      if (tgt) {
+        l.position.set(tgt.x, tgt.y, tgt.z);
+        l.whSocketId = tgt.id;
+      }
+      var card = game.flameCards[i];
+      if (card) {
+        var on = !!tgt && l.intensity > 0.06;
+        card.visible = on;
+        if (on) card.position.set(tgt.x,
+          tgt.y + 0.06 * Math.sin(2.1 * game.lightPoolT + i * 1.7), tgt.z);
+      }
+    }
   }
 
   // ---- main loop ----------------------------------------------------------------
@@ -765,6 +915,7 @@
 
     game.player.updateCamera(dt);
     applyCameraShake(dt);
+    poolTick(dt);   // R2: fixed light pool nearest-socket handoff
     updateHud(dt);
     game.renderer.render(game.scene, game.camera);
   }

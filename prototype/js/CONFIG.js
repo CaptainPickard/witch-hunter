@@ -7,20 +7,51 @@ window.WH_CONFIG = {
   renderer: {
     // r185 colorspace + dark-albedo exposure (per validated Witch Hunter 3D settings)
     outputColorSpaceSRGB: true,       // renderer.outputColorSpace = SRGBColorSpace
-    toneMappingExposure: 1.6,         // lifted for dark Meshy albedo (POC)
+    toneMappingName: 'Neutral',       // R2 P0-3: Neutral tonemap (ACES fallback in game.js)
+    toneMappingExposure: 1.15,        // R2 P0-3: re-set so fog stays the brightest large area (audit)
     maxPixelRatio: 2,
     shadowMapEnabled: false           // v1: swiftshader software render, shadows off (POC)
   },
 
   lighting: {
-    // R4: ambient fill high, keys moderate (dark albedo needs big fill)
-    ambientColor: 0x8a8fa8,
-    ambientIntensity: 4.0,            // bright ambient fill (POC, validated setting)
-    keyColor: 0xfff2dd,
-    keyIntensity: 1.2,                // moderate key
-    hemiSkyColor: 0x6b7fa8,
-    hemiGroundColor: 0x3a3a44,
-    hemiIntensity: 1.5
+    // R2 P0-3 moon-and-lantern night rig: AmbientLight removed entirely - the
+    // hemisphere is the only fill, and region.ambientLightLevel scales it
+    // (region fill = hemiBaseIntensity * ambientLightLevel). Moon = cool
+    // directional on the -z side backlighting the A->B main path. Lantern =
+    // warm PointLight parented into the player's yawFrame (left-hip anchor).
+    ambientIntensity: 0,              // P0-3: AmbientLight removed (kept for backward-compat readers; must stay 0)
+    hemiSkyColor: 0x4a5a80,           // indigo-slate sky (audit 5.3)
+    hemiGroundColor: 0x16181e,        // near-black ground (audit 5.3)
+    hemiBaseIntensity: 1.35,          // fill at ambientLightLevel 1.0; region fill = base * level
+    moonColor: 0xa8bce6,              // cool moon (audit 5.3)
+    moonIntensity: 0.45,              // moon:fill (vertical faces) 3-5:1
+    moonAzimuthDeg: 0,                // -z side, backlights A->B main path
+    moonElevationDeg: 30,             // audit: 25-35 deg
+    lanternColor: 0xffb060,           // warm amber (audit 5.3; canon accent)
+    lanternIntensity: 6.5,            // audit 5.3: 6-8 cd class
+    lanternDistance: 12,              // audit: distance ~12
+    lanternDecay: 2,                  // physical falloff
+    lanternFlickerPct: 5,             // +-5% flicker band
+    lanternAnchor: 'left-hip',        // yawFrame-space anchor
+    lanternAnchorOffset: [-0.32, 0.95, 0.08] // tuned starting anchor
+  },
+
+  // R2: fixed pool of PointLights (P1-8) - nearest-socket handoff, no per-frame allocation.
+  lightPool: {
+    size: 4,
+    color: 0xffc27a,
+    distance: 11,
+    decay: 2,
+    handoffFadeSec: 0.35,   // intensity fade time constant on handoff
+    minIntensityFloor: 0.0  // unused slot = 0 intensity, never removed
+  },
+  // P1-8: CONFIG assets whose props host a light socket (fixed pool hooks
+  // these, nearest to the player wins). heightFraction is up the prop's
+  // native height; intensity is the pool target when hosting the socket.
+  lightSockets: {
+    lanternPost: { heightFraction: 0.85, intensity: 1.6 },
+    banditCampfire: { heightFraction: 0.55, intensity: 2.4 },
+    lanternWaymarker: { heightFraction: 0.80, intensity: 1.8 }
   },
 
   world: {
@@ -173,7 +204,10 @@ window.WH_CONFIG = {
       { asset: 'gravestoneObelisk', x: 13.1, z: -41.5, rotY: 3.73, scale: 1.38 },
       { asset: 'gravestoneObelisk', x: 20.1, z: -40.0, rotY: 0.14, scale: 1.38 },
       { asset: 'stoneCrossTilted', x: -13.5, z: -36.6, rotY: 5.5, scale: 1.22 },
-      { asset: 'stoneCrossTilted', x: 18.0, z: -43.1, rotY: 6.16, scale: 1.6 }
+      { asset: 'stoneCrossTilted', x: 18.0, z: -43.1, rotY: 6.16, scale: 1.6 },
+      // R2: darkwood light-socket props (doc 61 batches B2/B3)
+      { asset: 'banditCampfire', x: 2.5, z: -52, rotY: 0.0, scale: 1.8 },
+      { asset: 'lanternWaymarker', x: -6.5, z: -47, rotY: 1.1, scale: 1.9 }
     ]
   },
 
