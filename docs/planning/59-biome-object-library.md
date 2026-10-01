@@ -169,3 +169,19 @@ Notes:
 - Branch note: assets committed to feat/world-visuals (worktree; dev
   checkout owned by the blender-anim session). Runtime dressing with
   these assets rides the world code rounds (R2 onward).
+
+2026-10-01 (B6 scatter kit, PARTIAL 5/6, commit 72752ef
+on feat/world-visuals):
+| ID | Asset | Credits | Vision-QA | Tris | Path |
+|----|-------|---------|-----------|------|------|
+| B6-bones | Bone scatter | 15 | PASS | 10.9k | biome_library/b6-bones-pixelated.glb |
+| B6-leaves | Leaf litter mat | 15 | PASS | 5.3k | biome_library/b6-leaves-pixelated.glb |
+| B6-pebbles | Pebble scatter | 15 | PASS | 3.7k | biome_library/b6-pebbles-pixelated.glb |
+| B6-stonefrags | Headstone fragments | 15 | PASS | 3.0k | biome_library/b6-stonefrags-pixelated.glb |
+| B6-mushrooms | Mushroom cluster | 15 | PASS | 3.2k | biome_library/b6-mushrooms-pixelated.glb |
+| B6-bracken | Withered bracken | 15 | FAIL-retry | (r2 in flight) | — |
+Total: 75 spent (bracken credits consumed on failed mesh; retry ref
+B6-bracken-ref-r2.png vision-QA PASS, resubmit follow-up). Retry rule:
+one retry max per doc 59 conventions.
+Refs note: B6 + B2 + B3 reference art generated this session
+(parented on darkwood-concept.jpeg), QA PASS 100%.
