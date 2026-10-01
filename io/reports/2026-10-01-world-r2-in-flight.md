@@ -72,6 +72,9 @@ NEXT TICK ORDER:
 1. Re-dispatch Testerbot harness authoring (profile testerbot, no model
    override). If the lane dies again with provider timeouts, log it in the
    lane-failure report and stop - do not author the harness as IO.
+   TICK 09:42Z EXECUTED: deleg_c0b7cc03 write-only chunk (full method
+   table inline) died again - provider 90s non-streaming timeout, zero
+   tool calls, see lane-failure report UPDATE 09:46Z. That is 5 deaths.
 2. When the harness exists: run it via /root/whpw-venv/bin/python,
    WH_R2_PORT=8792. Judge verdict per valspec protocol.
 3. On PASS: IO commits the 3 code files + harness as the R2 commit
@@ -79,3 +82,17 @@ NEXT TICK ORDER:
    pushes feat/world-visuals:feat/world-visuals, then proceeds to R3.
 4. On FAIL-RETUNE-PENDING: return numbers to Devbot for one retune round.
 5. On lane death: STOP per standing law.
+
+ENV RE-VERIFIED 09:40Z this tick (all green):
+- /root/whpw-venv/bin/python 3.12.3 + playwright import OK,
+  ms-playwright chromium-1243 + headless shell present.
+- WIP 8765ded verified live in worktree: WH_DEBUG.getLightPool at
+  game.js:533, getLightSockets at :539, absent from parent 46454c5.
+- Remote hygiene verified: origin/feat/world-visuals = c37a9f7 (R2 WIP
+  8765ded NOT on remote - good), origin/dev = dc697ce.
+- Docs-only commits accumulate LOCALLY on feat/world-visuals atop the
+  WIP (a6fc24d, then this tick's 5th-death report). They ride along to
+  the remote only when the validated R2 commit follows the WIP - keep
+  the WIP marker law until then.
+
+— IO, job 2c7556f7f609, 08:30Z, updated 09:47Z (tick 3)

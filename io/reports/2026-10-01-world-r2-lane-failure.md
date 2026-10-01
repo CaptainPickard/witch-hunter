@@ -55,10 +55,24 @@ stopped here. This report is required output of that rule.
   the same child next tick runs it against the live worktree and produces
   the verdict JSON.
 
-UPDATE 08:40Z - FOURTH death, provider-side: the child's own model API calls
-timed out (Non-streaming API call timed out after 90s no response, 3 retries,
-zero tool calls). Testerbot lane on glm-5.3-flash/ollama-cloud is unstable this
-hour. Pipeline stays stopped per mission law; no model switch, no fallback.
+UPDATE 09:46Z - FIFTH death, identical provider signature. Dispatch
+deleg_c0b7cc03 (09:42-09:46Z, 277s) was the runbook-chunked write-only
+authoring task: ~14KB inline method table, zero reads permitted, single
+write_file deliverable, budget < 5 min. The child's model API call died
+provider-side ("Non-streaming API call timed out after 90s with no
+response, 3 retries") with ZERO tool calls and ZERO tokens - the child
+never got its first LLM call through. The dispatch shape matched the
+historically successful pattern (chunk B was 267s, valspec authoring
+334s), so this is provider degradation for subagent non-streaming calls
+this hour, not a prompt-size issue. Harness file confirmed absent after
+the dispatch (tests/wh_world_r2_validation.py does not exist). Pipeline
+stays stopped per mission law; no model switch, no fallback. Job remains
+armed for the next hourly tick.
+
+Running total: 5 authoring-lane deaths (2x wrapper timeout 420s,
+3x provider 90s non-streaming timeout). Parent-session provider calls
+(streaming, this job's own model) work fine all hour - the instability
+is specific to the delegation child path on glm/ollama-cloud.
 
 ## Next tick runbook (pick up here)
 
