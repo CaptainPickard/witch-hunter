@@ -103,3 +103,53 @@ Dispatch log: /root/.hermes/profiles/io/cache/delegation/live/deleg_1199c263/tas
 5. R1 floor harness must run green (A1-A8) before PASS is final.
 
 — IO, auto-finisher job 2c7556f7f609, 2026-10-01 08:30Z
+
+UPDATE 12:30Z - SEVENTH + EIGHTH deaths, and the root cause is now PROVEN.
+
+#7 deleg_a5b26400 (12:09:18-12:17:08, 470s): FIRST child to ever reach the
+tool phase. It searched for, found, and read the IO-authored 28KB blueprint
+goaltile (/tmp/whr2_author7_goal.txt) at 12:09:29 (read_file ok 0.1s) - then
+its NEXT LLM call died: "Non-streaming API call timed out after 150s with no
+response (threshold: 150s)" x3 retries. Zero generation. The child had a tiny
+next-response to produce (a short lead-in + a ~130-line part file); it never
+got a single token through. exit_reason mislabeled "max_iterations" but the
+lifetime is exactly 3x150s+overhead: pure provider retry exhaustion.
+
+#8 deleg_3220d4c5 (12:19:21-12:27:01, 460s): same dispatch shape with a
+9-part streaming-safe generation law (each child response emits <=130 lines
+into one part file; cat + py_compile at the end). The child read the 31KB
+blueprint at 12:19:23 and died on the immediately following LLM call with
+the identical 150s x3 signature, zero tokens, no part files written.
+
+DIAGNOSIS (final for this era): child-path NON-STREAMING LLM calls to
+glm-5.3/ollama-cloud have returned zero tokens with escalating timeouts
+(90s x3 at 08:xx-10:58, 150s x3 by 12:xx) since ~08:00Z - 4.5h+ of era
+degradation specific to the delegation child route. Parent-streaming calls
+on the SAME provider+model (this job's own calls) are healthy all day. Both
+remaining theories are disproven: (a) "one-shot 27KB write too large" -
+#7 died on a small response; (b) "blueprint ingest too large" - #8 died on
+the post-read call with a 9-part plan requiring only short responses.
+Threshold creep (90->150s) shows the provider raising its own timeout while
+still timing out. No dispatch-shape variable remains.
+
+Running total: 8 authoring-lane deaths (2x wrapper 420s, 6x provider
+non-streaming timeout, all zero-token).
+
+## Next-tick protocol v2 (canary-gated)
+
+1. Dispatch a MINIMAL canary child first (profile testerbot, no overrides):
+   goal ~= "write_file the single line 'canary ok <utc hh:mm>' to
+   /tmp/whr2_canary.txt, nothing else". Budget: expect < 120s.
+   - Canary dead (provider timeout, no file) => era still dead: append one
+     line "death #N canary <id> <time>", STOP, exit silently. Do not burn
+     the real authoring dispatch.
+   - Canary alive => immediately dispatch author #9 with the UNCHANGED
+     blueprint /tmp/whr2_author7_goal.txt (9-part generation law is
+     already embedded; keep it even with a healthy era - it removes the
+     giant-write risk class entirely).
+2. If author #9 lands the parts + cat + py_compile + secrets grep: IO
+   smoke-verifies compile and the check coverage, then stage 2 = run the
+   harness (WH_R2_PORT=8792) and continue the original runbook (verdict
+   JSON, IO commit, R1 floor, PASS gate, WIP-marker-drop commit, push feat).
+3. This blueprint survives /tmp wipes only via worktree docs; a /tmp wipe
+   requires re-inlining - see git history of this report.

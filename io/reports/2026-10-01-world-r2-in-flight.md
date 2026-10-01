@@ -110,3 +110,30 @@ ENV RE-VERIFIED 09:40Z this tick (all green):
   the WIP marker law until then.
 
 — IO, job 2c7556f7f609, 08:30Z, updated 09:47Z (tick 3)
+
+TICK 5 (11:58-12:35Z) - anim gate OPEN, authoring lane still dead:
+
+- Anim gate TRUE (parent check 11:58Z): guarded porcelain EMPTY, dev tip
+  dc697ce, worktree b0866d4 (docs atop WIP). Asset tail closed. Pipeline
+  in active R2 validation stage.
+- Ticks 5 deaths: #7 deleg_a5b26400 (12:09-12:17, 470s) - first child to
+  reach the tool phase EVER; read the IO blueprint (28KB) 12:09:29 then
+  died on next LLM call: 150s x3 zero tokens. #8 deleg_3220d4c5
+  (12:19-12:27, 460s) - identical, blueprint read 12:19:23, next call
+  150s x3 zero tokens, zero part files. Provider threshold crept 90->150s.
+  All dispatch-shape theories eliminated (small-response child still dies).
+- Era verdict: child-path non-streaming calls to glm/ollama-cloud dead
+  08:00Z->12:27Z (4.5h) while parent streaming healthy. No shape fix
+  possible; only era recovery. Per mission law: STOP each tick, no
+  fallbacks, no model switch.
+- Next tick: canary-gated protocol v2 in lane-failure report (minimal
+  canary child first; only on canary success dispatch author with the
+  unchanged 9-part blueprint /tmp/whr2_author7_goal.txt).
+- Durability: WIP chain (WIP 8765ded + 4 docs commits) lives in main
+  repo objects; /tmp wipe costs only worktree re-add (branch ref is
+  /root/projects/witch-hunter/.git/worktrees/wh-worldfeat - survives).
+- Blueprint itself is /tmp-only: /tmp/whr2_author7_goal.txt (31KB,
+  9-part generation law embedded). If wiped, IO re-inlines from valspec
+  hooks table (report history has the recipe).
+
+- IO, tick 5, 12:35Z
