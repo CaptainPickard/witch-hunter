@@ -204,3 +204,29 @@ additive blending at runtime (R2+ wiring); skylines are alpha-masked
 RGBA layers for fog-wall composition. Ground decals DEFERRED to the
 code rounds: their blending (alpha vs additive vs multiply) is an R3
 render-pipeline decision per doc 61 B-tex row.
+
+2026-10-01 (B2 batch, commit e8cf53a):
+| ID | Asset | Credits | Vision-QA | Tris | Path |
+|----|-------|---------|-----------|------|------|
+| M11 | Moonbell herb | 15 | FAIL->retry r2 | 13.0k | retry ref armed |
+| M12 | Grave-moss clod | 15 | PASS | 4.1k | biome_library/m12-grave-moss-pixelated.glb |
+| M13 | Hemlock | 15 | PASS | 16.8k | biome_library/m13-hemlock-pixelated.glb |
+| M14 | Blightcap | 15 | PASS | 5.8k | biome_library/m14-blightcap-pixelated.glb |
+| M15 | Bandit campfire (LIGHT SOCKET) | 15 | PASS | 3.8k | biome_library/m15-bandit-campfire-pixelated.glb |
+| M16 | Bandit bedroll | 15 | PASS | 4.7k | biome_library/m16-bandit-bedroll-pixelated.glb |
+| M17 | Coven witch totem | 15 | PASS | 5.0k | biome_library/m17-witch-totem-pixelated.glb |
+| M18 | Glade mote shrine (EMISSIVE) | 15 | PASS | 5.3k | biome_library/m18-mote-shrine-pixelated.glb |
+(bracken retry r2: PASS, landed in same commit, 14.0k total incl.)
+M11 FAIL note: conversion shattered stem into shards + detached bell
+(ref had "faint dew" -> floating droplets). Retry ref r2 built with
+connected-structure constraints, QA PASS, submit pending.
+
+PROVIDER QUIRK (2026-10-01 ~05:20Z, meshy image-to-3d): rapid-succession
+submits in a spaced bash loop (65-70s) return HTTP 400 Bad Request with
+empty body; a SINGLE cold manual attempt moments later succeeds with
+identical payload. Evidence: chain3 fired 6 submits at 2000 target, all
+400; manual resubmit earlier succeeded first try. 19 tasks in ~50min
+preceded the failures. Rule for future batches: submit ONE task, wait
+for its pipeline to finish (or >=5 min), then submit the next; never
+queue-loop submits back-to-back. No credits consumed on 400s
+(consumed_credits stays 0 / task never created).
