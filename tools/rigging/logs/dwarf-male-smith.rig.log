@@ -1,0 +1,30 @@
+RIG tools/rigging/scripts/bl.sh --python tools/rigging/scripts/rig_wh_humanoid.py -- art-direction/3d/assets/races_regen/dwarf-male-smith.glb art-direction/3d/assets/races_regen/rigged/dwarf-male-smith.rigged.glb --save-blend tools/rigging/blends/dwarf-male-smith.rigged.blend 
+02:37:39 | INFO: Data are loaded, start creating Blender stuff
+02:37:39 | INFO: Blender create Mesh node 0
+02:37:39 | INFO: glTF import finished in 0.09s
+[WH] bounds z0=-1.000 z1=1.000 H=2.000 shoulder_top=0.825H arm angle from vertical L=25.5 R=25.8 deg (~0=arms down, 20-50=A-pose, ~90=T-pose)
+Info: Removed 2727 vertices
+[WH] heat weights on proxy: 0 / 13954 proxy vertices unweighted
+[WH] transferred weights: 0 / 16681 vertices unweighted
+[WH] arm radius clamp removed 5481 arm-bone weights
+[WH] nearest-bone fill assigned 612 vertices
+Info: 1759 vertex weights limited
+[WH] final weights: 0 unweighted; per-bone vertex counts: {'Hips': 4763, 'Spine': 3371, 'Chest': 2098, 'Neck': 1122, 'Head': 702, 'L_Shoulder': 1544, 'L_UpperArm': 478, 'L_Forearm': 521, 'L_Hand': 307, 'R_Shoulder': 1434, 'R_UpperArm': 618, 'R_Forearm': 636, 'R_Hand': 288, 'L_Thigh': 7608, 'L_Shin': 3981, 'L_Foot': 648, 'R_Thigh': 7934, 'R_Shin': 4556, 'R_Foot': 697}
+[WH] clip WH_Idle: 61 keys @ 30 fps = 2.000s loop=True
+[WH] clip WH_Walk: 31 keys @ 30 fps = 1.000s loop=True
+[WH] clip WH_Run: 19 keys @ 30 fps = 0.600s loop=True
+[WH] clip WH_Attack1: 16 keys @ 30 fps = 0.500s loop=False
+[WH] clip WH_Hit: 11 keys @ 30 fps = 0.333s loop=False
+[WH] clip WH_Death: 37 keys @ 30 fps = 1.200s loop=False
+Info: Saved "dwarf-male-smith.rigged.blend"
+[WH] saved /workspace/witch-hunter/tools/rigging/blends/dwarf-male-smith.rigged.blend
+ERROR Draco mesh compression is not available because library could not be found at /usr/bin/4.3/python/lib/python3.13/site-packages/libextern_draco.so
+02:37:40 | INFO: Starting glTF 2.0 export
+02:37:40 | INFO: Extracting primitive: Mesh_0
+02:37:41 | INFO: Primitives created: 1
+02:37:41 | INFO: Finished glTF 2.0 export in 1.0521728992462158 s
+
+[WH] exported /workspace/witch-hunter/art-direction/3d/assets/races_regen/rigged/dwarf-male-smith.rigged.glb (4.28 MB)
+Blender 4.3.2
+
+Blender quit

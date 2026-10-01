@@ -1,0 +1,31 @@
+RIG tools/rigging/scripts/bl.sh --python tools/rigging/scripts/rig_wh_humanoid.py -- art-direction/3d/assets/races_regen/dwarf-female.glb art-direction/3d/assets/races_regen/rigged/dwarf-female.rigged.glb --save-blend tools/rigging/blends/dwarf-female.rigged.blend 
+02:32:25 | INFO: Data are loaded, start creating Blender stuff
+02:32:25 | INFO: Blender create Mesh node 0
+02:32:25 | INFO: glTF import finished in 0.08s
+[WH] bounds z0=-1.000 z1=1.000 H=2.000 shoulder_top=0.838H arm angle from vertical L=23.1 R=22.5 deg (~0=arms down, 20-50=A-pose, ~90=T-pose)
+Info: Removed 9721 vertices
+Warning: Bone Heat Weighting: failed to find solution for one or more bones
+[WH] heat weights on proxy: 15756 / 15756 proxy vertices unweighted
+[WH] transferred weights: 25477 / 25477 vertices unweighted
+[WH] arm radius clamp removed 0 arm-bone weights
+[WH] WARNING bones with no weighted vertices: ['Hips', 'Spine', 'Chest', 'Neck', 'Head', 'L_Shoulder', 'L_UpperArm', 'L_Forearm', 'L_Hand', 'L_Thigh', 'L_Shin', 'L_Foot', 'R_Shoulder', 'R_UpperArm', 'R_Forearm', 'R_Hand', 'R_Thigh', 'R_Shin', 'R_Foot']
+[WH] nearest-bone fill assigned 25477 vertices
+[WH] final weights: 0 unweighted; per-bone vertex counts: {'Hips': 182, 'Spine': 2834, 'Chest': 859, 'Neck': 336, 'Head': 346, 'L_Shoulder': 1334, 'L_UpperArm': 579, 'L_Forearm': 403, 'L_Hand': 369, 'R_Shoulder': 1457, 'R_UpperArm': 417, 'R_Forearm': 422, 'R_Hand': 394, 'L_Thigh': 3307, 'L_Shin': 3628, 'L_Foot': 262, 'R_Thigh': 4414, 'R_Shin': 3672, 'R_Foot': 262}
+[WH] clip WH_Idle: 61 keys @ 30 fps = 2.000s loop=True
+[WH] clip WH_Walk: 31 keys @ 30 fps = 1.000s loop=True
+[WH] clip WH_Run: 19 keys @ 30 fps = 0.600s loop=True
+[WH] clip WH_Attack1: 16 keys @ 30 fps = 0.500s loop=False
+[WH] clip WH_Hit: 11 keys @ 30 fps = 0.333s loop=False
+[WH] clip WH_Death: 37 keys @ 30 fps = 1.200s loop=False
+Info: Saved "dwarf-female.rigged.blend"
+[WH] saved /workspace/witch-hunter/tools/rigging/blends/dwarf-female.rigged.blend
+ERROR Draco mesh compression is not available because library could not be found at /usr/bin/4.3/python/lib/python3.13/site-packages/libextern_draco.so
+02:32:26 | INFO: Starting glTF 2.0 export
+02:32:26 | INFO: Extracting primitive: Mesh_0
+02:32:27 | INFO: Primitives created: 1
+02:32:27 | INFO: Finished glTF 2.0 export in 0.7987284660339355 s
+
+[WH] exported /workspace/witch-hunter/art-direction/3d/assets/races_regen/rigged/dwarf-female.rigged.glb (5.11 MB)
+Blender 4.3.2
+
+Blender quit

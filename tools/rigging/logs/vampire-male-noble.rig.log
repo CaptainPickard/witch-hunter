@@ -1,0 +1,30 @@
+RIG tools/rigging/scripts/bl.sh --python tools/rigging/scripts/rig_wh_humanoid.py -- art-direction/3d/assets/races_regen/vampire-male-noble.glb art-direction/3d/assets/races_regen/rigged/vampire-male-noble.rigged.glb --save-blend tools/rigging/blends/vampire-male-noble.rigged.blend 
+02:47:09 | INFO: Data are loaded, start creating Blender stuff
+02:47:09 | INFO: Blender create Mesh node 0
+02:47:09 | INFO: glTF import finished in 0.13s
+[WH] bounds z0=-1.000 z1=1.000 H=2.000 shoulder_top=0.863H arm angle from vertical L=11.7 R=13.8 deg (~0=arms down, 20-50=A-pose, ~90=T-pose)
+Info: Removed 9463 vertices
+[WH] heat weights on proxy: 5 / 16131 proxy vertices unweighted
+[WH] transferred weights: 5 / 25594 vertices unweighted
+[WH] arm radius clamp removed 17900 arm-bone weights
+[WH] nearest-bone fill assigned 22 vertices
+Info: 8767 vertex weights limited
+[WH] final weights: 0 unweighted; per-bone vertex counts: {'Hips': 5467, 'Spine': 5750, 'Chest': 2954, 'Neck': 856, 'Head': 681, 'L_Shoulder': 1159, 'L_UpperArm': 783, 'L_Forearm': 629, 'L_Hand': 334, 'R_Shoulder': 1332, 'R_UpperArm': 1011, 'R_Forearm': 971, 'R_Hand': 430, 'L_Thigh': 9514, 'L_Shin': 9923, 'L_Foot': 6085, 'R_Thigh': 11094, 'R_Shin': 10630, 'R_Foot': 6844}
+[WH] clip WH_Idle: 61 keys @ 30 fps = 2.000s loop=True
+[WH] clip WH_Walk: 31 keys @ 30 fps = 1.000s loop=True
+[WH] clip WH_Run: 19 keys @ 30 fps = 0.600s loop=True
+[WH] clip WH_Attack1: 16 keys @ 30 fps = 0.500s loop=False
+[WH] clip WH_Hit: 11 keys @ 30 fps = 0.333s loop=False
+[WH] clip WH_Death: 37 keys @ 30 fps = 1.200s loop=False
+Info: Saved "vampire-male-noble.rigged.blend"
+[WH] saved /workspace/witch-hunter/tools/rigging/blends/vampire-male-noble.rigged.blend
+ERROR Draco mesh compression is not available because library could not be found at /usr/bin/4.3/python/lib/python3.13/site-packages/libextern_draco.so
+02:47:12 | INFO: Starting glTF 2.0 export
+02:47:12 | INFO: Extracting primitive: Mesh_0
+02:47:12 | INFO: Primitives created: 1
+02:47:13 | INFO: Finished glTF 2.0 export in 1.3470196723937988 s
+
+[WH] exported /workspace/witch-hunter/art-direction/3d/assets/races_regen/rigged/vampire-male-noble.rigged.glb (4.33 MB)
+Blender 4.3.2
+
+Blender quit

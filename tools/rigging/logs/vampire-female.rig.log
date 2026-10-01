@@ -1,0 +1,29 @@
+RIG tools/rigging/scripts/bl.sh --python tools/rigging/scripts/rig_wh_humanoid.py -- art-direction/3d/assets/races_regen/vampire-female.glb art-direction/3d/assets/races_regen/rigged/vampire-female.rigged.glb --save-blend tools/rigging/blends/vampire-female.rigged.blend 
+02:45:53 | INFO: Data are loaded, start creating Blender stuff
+02:45:53 | INFO: Blender create Mesh node 0
+02:45:53 | INFO: glTF import finished in 0.10s
+[WH] bounds z0=-1.000 z1=1.000 H=2.000 shoulder_top=0.850H arm angle from vertical L=18.1 R=17.4 deg (~0=arms down, 20-50=A-pose, ~90=T-pose)
+Info: Removed 4367 vertices
+[WH] heat weights on proxy: 0 / 15613 proxy vertices unweighted
+[WH] transferred weights: 0 / 19980 vertices unweighted
+[WH] arm radius clamp removed 3152 arm-bone weights
+Info: 8670 vertex weights limited
+[WH] final weights: 0 unweighted; per-bone vertex counts: {'Hips': 2569, 'Spine': 2088, 'Chest': 587, 'Neck': 424, 'Head': 726, 'L_Shoulder': 314, 'L_UpperArm': 488, 'L_Forearm': 699, 'L_Hand': 263, 'R_Shoulder': 372, 'R_UpperArm': 553, 'R_Forearm': 732, 'R_Hand': 360, 'L_Thigh': 8052, 'L_Shin': 10992, 'L_Foot': 5634, 'R_Thigh': 8236, 'R_Shin': 11099, 'R_Foot': 5751}
+[WH] clip WH_Idle: 61 keys @ 30 fps = 2.000s loop=True
+[WH] clip WH_Walk: 31 keys @ 30 fps = 1.000s loop=True
+[WH] clip WH_Run: 19 keys @ 30 fps = 0.600s loop=True
+[WH] clip WH_Attack1: 16 keys @ 30 fps = 0.500s loop=False
+[WH] clip WH_Hit: 11 keys @ 30 fps = 0.333s loop=False
+[WH] clip WH_Death: 37 keys @ 30 fps = 1.200s loop=False
+Info: Saved "vampire-female.rigged.blend"
+[WH] saved /workspace/witch-hunter/tools/rigging/blends/vampire-female.rigged.blend
+ERROR Draco mesh compression is not available because library could not be found at /usr/bin/4.3/python/lib/python3.13/site-packages/libextern_draco.so
+02:45:56 | INFO: Starting glTF 2.0 export
+02:45:56 | INFO: Extracting primitive: Mesh_0
+02:45:56 | INFO: Primitives created: 1
+02:45:57 | INFO: Finished glTF 2.0 export in 1.5320446491241455 s
+
+[WH] exported /workspace/witch-hunter/art-direction/3d/assets/races_regen/rigged/vampire-female.rigged.glb (4.16 MB)
+Blender 4.3.2
+
+Blender quit

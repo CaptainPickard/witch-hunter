@@ -1,0 +1,30 @@
+RIG tools/rigging/scripts/bl.sh --python tools/rigging/scripts/rig_wh_humanoid.py -- art-direction/3d/assets/races_regen/human-hunter-male.glb art-direction/3d/assets/races_regen/rigged/human-hunter-male.rigged.glb --save-blend tools/rigging/blends/human-hunter-male.rigged.blend 
+02:41:07 | INFO: Data are loaded, start creating Blender stuff
+02:41:07 | INFO: Blender create Mesh node 0
+02:41:07 | INFO: glTF import finished in 0.07s
+[WH] bounds z0=-1.000 z1=1.000 H=2.000 shoulder_top=0.813H arm angle from vertical L=19.2 R=18.6 deg (~0=arms down, 20-50=A-pose, ~90=T-pose)
+Info: Removed 9494 vertices
+[WH] heat weights on proxy: 20 / 16251 proxy vertices unweighted
+[WH] transferred weights: 108 / 25745 vertices unweighted
+[WH] arm radius clamp removed 23216 arm-bone weights
+[WH] nearest-bone fill assigned 108 vertices
+Info: 1744 vertex weights limited
+[WH] final weights: 0 unweighted; per-bone vertex counts: {'Hips': 9342, 'Spine': 5659, 'Chest': 3750, 'Neck': 1447, 'Head': 1515, 'L_Shoulder': 2007, 'L_UpperArm': 1013, 'L_Forearm': 554, 'L_Hand': 458, 'R_Shoulder': 2081, 'R_UpperArm': 1088, 'R_Forearm': 584, 'R_Hand': 475, 'L_Thigh': 15539, 'L_Shin': 511, 'L_Foot': 216, 'R_Thigh': 15093, 'R_Shin': 745, 'R_Foot': 485}
+[WH] clip WH_Idle: 61 keys @ 30 fps = 2.000s loop=True
+[WH] clip WH_Walk: 31 keys @ 30 fps = 1.000s loop=True
+[WH] clip WH_Run: 19 keys @ 30 fps = 0.600s loop=True
+[WH] clip WH_Attack1: 16 keys @ 30 fps = 0.500s loop=False
+[WH] clip WH_Hit: 11 keys @ 30 fps = 0.333s loop=False
+[WH] clip WH_Death: 37 keys @ 30 fps = 1.200s loop=False
+Info: Saved "human-hunter-male.rigged.blend"
+[WH] saved /workspace/witch-hunter/tools/rigging/blends/human-hunter-male.rigged.blend
+ERROR Draco mesh compression is not available because library could not be found at /usr/bin/4.3/python/lib/python3.13/site-packages/libextern_draco.so
+02:41:09 | INFO: Starting glTF 2.0 export
+02:41:09 | INFO: Extracting primitive: Mesh_0
+02:41:10 | INFO: Primitives created: 1
+02:41:11 | INFO: Finished glTF 2.0 export in 1.3681113719940186 s
+
+[WH] exported /workspace/witch-hunter/art-direction/3d/assets/races_regen/rigged/human-hunter-male.rigged.glb (4.46 MB)
+Blender 4.3.2
+
+Blender quit

@@ -1,0 +1,30 @@
+RIG tools/rigging/scripts/bl.sh --python tools/rigging/scripts/rig_wh_humanoid.py -- art-direction/3d/assets/races_regen/orc-male-warrior.glb art-direction/3d/assets/races_regen/rigged/orc-male-warrior.rigged.glb --save-blend tools/rigging/blends/orc-male-warrior.rigged.blend 
+02:43:31 | INFO: Data are loaded, start creating Blender stuff
+02:43:31 | INFO: Blender create Mesh node 0
+02:43:31 | INFO: glTF import finished in 0.06s
+[WH] bounds z0=-1.000 z1=1.000 H=2.000 shoulder_top=0.850H arm angle from vertical L=24.0 R=24.0 deg (~0=arms down, 20-50=A-pose, ~90=T-pose)
+Info: Removed 8960 vertices
+[WH] heat weights on proxy: 88 / 14080 proxy vertices unweighted
+[WH] transferred weights: 318 / 23040 vertices unweighted
+[WH] arm radius clamp removed 9967 arm-bone weights
+[WH] nearest-bone fill assigned 1666 vertices
+Info: 2789 vertex weights limited
+[WH] final weights: 0 unweighted; per-bone vertex counts: {'Hips': 8396, 'Spine': 7772, 'Chest': 6904, 'Neck': 2571, 'Head': 1952, 'L_Shoulder': 2834, 'L_UpperArm': 608, 'L_Forearm': 479, 'L_Hand': 421, 'R_Shoulder': 5407, 'R_UpperArm': 886, 'R_Forearm': 592, 'R_Hand': 433, 'L_Thigh': 9552, 'L_Shin': 1559, 'L_Foot': 651, 'R_Thigh': 7829, 'R_Shin': 1425, 'R_Foot': 635}
+[WH] clip WH_Idle: 61 keys @ 30 fps = 2.000s loop=True
+[WH] clip WH_Walk: 31 keys @ 30 fps = 1.000s loop=True
+[WH] clip WH_Run: 19 keys @ 30 fps = 0.600s loop=True
+[WH] clip WH_Attack1: 16 keys @ 30 fps = 0.500s loop=False
+[WH] clip WH_Hit: 11 keys @ 30 fps = 0.333s loop=False
+[WH] clip WH_Death: 37 keys @ 30 fps = 1.200s loop=False
+Info: Saved "orc-male-warrior.rigged.blend"
+[WH] saved /workspace/witch-hunter/tools/rigging/blends/orc-male-warrior.rigged.blend
+ERROR Draco mesh compression is not available because library could not be found at /usr/bin/4.3/python/lib/python3.13/site-packages/libextern_draco.so
+02:43:33 | INFO: Starting glTF 2.0 export
+02:43:33 | INFO: Extracting primitive: Mesh_0
+02:43:33 | INFO: Primitives created: 1
+02:43:34 | INFO: Finished glTF 2.0 export in 1.1312973499298096 s
+
+[WH] exported /workspace/witch-hunter/art-direction/3d/assets/races_regen/rigged/orc-male-warrior.rigged.glb (4.83 MB)
+Blender 4.3.2
+
+Blender quit

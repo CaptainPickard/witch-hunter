@@ -1,0 +1,31 @@
+RIG tools/rigging/scripts/bl.sh --python tools/rigging/scripts/rig_wh_humanoid.py -- art-direction/3d/assets/races_regen/human-hunter-female.glb art-direction/3d/assets/races_regen/rigged/human-hunter-female.rigged.glb --save-blend tools/rigging/blends/human-hunter-female.rigged.blend 
+02:39:56 | INFO: Data are loaded, start creating Blender stuff
+02:39:56 | INFO: Blender create Mesh node 0
+02:39:56 | INFO: glTF import finished in 0.07s
+[WH] bounds z0=-1.000 z1=1.000 H=2.000 shoulder_top=0.813H arm angle from vertical L=17.7 R=18.1 deg (~0=arms down, 20-50=A-pose, ~90=T-pose)
+Info: Removed 9172 vertices
+Warning: Bone Heat Weighting: failed to find solution for one or more bones
+[WH] heat weights on proxy: 15047 / 15047 proxy vertices unweighted
+[WH] transferred weights: 24219 / 24219 vertices unweighted
+[WH] arm radius clamp removed 0 arm-bone weights
+[WH] WARNING bones with no weighted vertices: ['Hips', 'Spine', 'Chest', 'Neck', 'Head', 'L_Shoulder', 'L_UpperArm', 'L_Forearm', 'L_Hand', 'L_Thigh', 'L_Shin', 'L_Foot', 'R_Shoulder', 'R_UpperArm', 'R_Forearm', 'R_Hand', 'R_Thigh', 'R_Shin', 'R_Foot']
+[WH] nearest-bone fill assigned 24219 vertices
+[WH] final weights: 0 unweighted; per-bone vertex counts: {'Hips': 1754, 'Spine': 1688, 'Chest': 584, 'Neck': 649, 'Head': 1098, 'L_Shoulder': 367, 'L_UpperArm': 1120, 'L_Forearm': 562, 'L_Hand': 430, 'R_Shoulder': 469, 'R_UpperArm': 1157, 'R_Forearm': 234, 'R_Hand': 367, 'L_Thigh': 6222, 'L_Shin': 1563, 'L_Foot': 243, 'R_Thigh': 4412, 'R_Shin': 1061, 'R_Foot': 239}
+[WH] clip WH_Idle: 61 keys @ 30 fps = 2.000s loop=True
+[WH] clip WH_Walk: 31 keys @ 30 fps = 1.000s loop=True
+[WH] clip WH_Run: 19 keys @ 30 fps = 0.600s loop=True
+[WH] clip WH_Attack1: 16 keys @ 30 fps = 0.500s loop=False
+[WH] clip WH_Hit: 11 keys @ 30 fps = 0.333s loop=False
+[WH] clip WH_Death: 37 keys @ 30 fps = 1.200s loop=False
+Info: Saved "human-hunter-female.rigged.blend"
+[WH] saved /workspace/witch-hunter/tools/rigging/blends/human-hunter-female.rigged.blend
+ERROR Draco mesh compression is not available because library could not be found at /usr/bin/4.3/python/lib/python3.13/site-packages/libextern_draco.so
+02:39:58 | INFO: Starting glTF 2.0 export
+02:39:58 | INFO: Extracting primitive: Mesh_0
+02:39:58 | INFO: Primitives created: 1
+02:39:59 | INFO: Finished glTF 2.0 export in 0.9773101806640625 s
+
+[WH] exported /workspace/witch-hunter/art-direction/3d/assets/races_regen/rigged/human-hunter-female.rigged.glb (4.24 MB)
+Blender 4.3.2
+
+Blender quit

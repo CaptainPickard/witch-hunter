@@ -1,0 +1,30 @@
+RIG tools/rigging/scripts/bl.sh --python tools/rigging/scripts/rig_wh_humanoid.py -- art-direction/3d/assets/races_regen/orc-female.glb art-direction/3d/assets/races_regen/rigged/orc-female.rigged.glb --save-blend tools/rigging/blends/orc-female.rigged.blend 
+02:42:20 | INFO: Data are loaded, start creating Blender stuff
+02:42:20 | INFO: Blender create Mesh node 0
+02:42:20 | INFO: glTF import finished in 0.10s
+[WH] bounds z0=-1.000 z1=1.000 H=2.000 shoulder_top=0.825H arm angle from vertical L=23.2 R=23.9 deg (~0=arms down, 20-50=A-pose, ~90=T-pose)
+Info: Removed 10536 vertices
+[WH] heat weights on proxy: 50 / 15598 proxy vertices unweighted
+[WH] transferred weights: 120 / 26134 vertices unweighted
+[WH] arm radius clamp removed 9024 arm-bone weights
+[WH] nearest-bone fill assigned 195 vertices
+Info: 6099 vertex weights limited
+[WH] final weights: 0 unweighted; per-bone vertex counts: {'Hips': 7985, 'Spine': 7372, 'Chest': 11404, 'Neck': 7952, 'Head': 6408, 'L_Shoulder': 5514, 'L_UpperArm': 598, 'L_Forearm': 480, 'L_Hand': 605, 'R_Shoulder': 9212, 'R_UpperArm': 1393, 'R_Forearm': 543, 'R_Hand': 474, 'L_Thigh': 8117, 'L_Shin': 2971, 'L_Foot': 588, 'R_Thigh': 7982, 'R_Shin': 1338, 'R_Foot': 585}
+[WH] clip WH_Idle: 61 keys @ 30 fps = 2.000s loop=True
+[WH] clip WH_Walk: 31 keys @ 30 fps = 1.000s loop=True
+[WH] clip WH_Run: 19 keys @ 30 fps = 0.600s loop=True
+[WH] clip WH_Attack1: 16 keys @ 30 fps = 0.500s loop=False
+[WH] clip WH_Hit: 11 keys @ 30 fps = 0.333s loop=False
+[WH] clip WH_Death: 37 keys @ 30 fps = 1.200s loop=False
+Info: Saved "orc-female.rigged.blend"
+[WH] saved /workspace/witch-hunter/tools/rigging/blends/orc-female.rigged.blend
+ERROR Draco mesh compression is not available because library could not be found at /usr/bin/4.3/python/lib/python3.13/site-packages/libextern_draco.so
+02:42:22 | INFO: Starting glTF 2.0 export
+02:42:22 | INFO: Extracting primitive: Mesh_0
+02:42:23 | INFO: Primitives created: 1
+02:42:24 | INFO: Finished glTF 2.0 export in 1.596817970275879 s
+
+[WH] exported /workspace/witch-hunter/art-direction/3d/assets/races_regen/rigged/orc-female.rigged.glb (4.84 MB)
+Blender 4.3.2
+
+Blender quit

@@ -1,0 +1,57 @@
+== A. raw glTF checks: /workspace/witch-hunter/art-direction/3d/assets/races_regen/rigged/dwarf-female.rigged.glb
+  ok   exactly 1 mesh (found 1)
+  ok   exactly 1 skin (found 1)
+  ok   skin joints == 20 WH bones (found 20: missing set(), extra set())
+  ok   single primitive (found 1)
+  ok   JOINTS_0/WEIGHTS_0 present
+  ok   triangle count unchanged (31517 vs source 31517)
+  ok   vertex count within +0.5% of source (25570 vs 25477, +93)
+  ok   distinct (position, uv) pairs identical to source (25471 vs 25471)
+  ok   every vertex weighted, sums≈1 (min 1.0000, max 1.0000, zero=0)
+  ok   bind-pose bounds unchanged (src [-0.573 -1.    -0.403]..[0.573 1.    0.403])
+  ok   image count 1 == source
+  ok   image 0 bytes bit-identical (image/jpeg, sha256 1bee6630a79f… vs 1bee6630a79f…)
+  ok   sampler magFilter preserved (src 9729, out 9729; 9728=NEAREST 9729=LINEAR)
+  ok   required clips present ['WH_Idle', 'WH_Walk', 'WH_Run', 'WH_Attack1', 'WH_Hit', 'WH_Death'] (found ['WH_Attack1', 'WH_Death', 'WH_Hit', 'WH_Idle', 'WH_Run', 'WH_Walk'])
+  ok   WH_Attack1: 0.500s, 60 channels, Root static (3 Root channels)
+  ok   WH_Death: 1.200s, 60 channels, Root static (3 Root channels)
+  ok   WH_Hit: 0.333s, 60 channels, Root static (3 Root channels)
+  ok   WH_Idle: 2.000s, 60 channels, Root static (3 Root channels)
+  ok   WH_Idle: loop closes (Hips translation first==last, drift 0.00e+00)
+  ok   WH_Run: 0.600s, 60 channels, Root static (3 Root channels)
+  ok   WH_Run: loop closes (Hips translation first==last, drift 0.00e+00)
+  ok   WH_Walk: 1.000s, 60 channels, Root static (3 Root channels)
+  ok   WH_Walk: loop closes (Hips translation first==last, drift 0.00e+00)
+  EXCURSION WH_Attack1: L_Thigh=0.2430rad R_Thigh=0.2081rad L_UpperArm=1.0720rad R_UpperArm=1.8470rad Spine=0.1712rad
+  EXCURSION WH_Death: L_Thigh=0.6106rad R_Thigh=0.3489rad L_UpperArm=0.9744rad R_UpperArm=0.9357rad Spine=0.2616rad
+  EXCURSION WH_Hit: L_Thigh=0.0000rad R_Thigh=0.0000rad L_UpperArm=0.4300rad R_UpperArm=0.5013rad Spine=0.1723rad
+  EXCURSION WH_Idle: L_Thigh=0.0000rad R_Thigh=0.0000rad L_UpperArm=0.0262rad R_UpperArm=0.0262rad Spine=0.0140rad
+  EXCURSION WH_Run: L_Thigh=0.7386rad R_Thigh=0.7386rad L_UpperArm=0.5909rad R_UpperArm=0.5909rad Spine=0.0630rad
+  EXCURSION WH_Walk: L_Thigh=0.4475rad R_Thigh=0.4475rad L_UpperArm=0.2486rad R_UpperArm=0.2486rad Spine=0.0140rad
+== B. Blender re-import checks
+02:49:26 | INFO: Data are loaded, start creating Blender stuff
+02:49:26 | INFO: Blender create Mesh node Mesh_0
+02:49:26 | INFO: glTF import finished in 0.24s
+  ok   1 armature + 1 mesh (got 1 + 1)
+  ok   armature has the 20 WH bones (20)
+  ok   mesh skinned to armature (Armature modifier)
+  ok   vertex groups for all 19 deform bones (missing set())
+  ok   every vertex in >=1 vertex group (0 unweighted of 25570)
+  ok   no empty deform bone (weight>0.05 counts: {'Root': 0, 'Hips': 182, 'Spine': 2841, 'Chest': 859, 'Neck': 356, 'Head': 351, 'L_Shoulder': 1338, 'L_UpperArm': 579, 'L_Forearm': 404, 'L_Hand': 370, 'R_Shoulder': 1459, 'R_UpperArm': 418, 'R_Forearm': 423, 'R_Hand': 394, 'L_Thigh': 3320, 'L_Shin': 3639, 'L_Foot': 262, 'R_Thigh': 4429, 'R_Shin': 3684, 'R_Foot': 262})
+  ok   Blender triangle count 31517 == source 31517
+  Blender action names: ['WH_Attack1_WH_Armature', 'WH_Death_WH_Armature', 'WH_Hit_WH_Armature', 'WH_Idle_WH_Armature', 'WH_Run_WH_Armature', 'WH_Walk_WH_Armature']
+  ok   re-imported actions cover ['WH_Idle', 'WH_Walk', 'WH_Run', 'WH_Attack1', 'WH_Hit', 'WH_Death']
+  ok   WH_Attack1: Root world position constant over clip (max drift 0.00e+00)
+  ok   WH_Death: Root world position constant over clip (max drift 0.00e+00)
+  ok   WH_Hit: Root world position constant over clip (max drift 0.00e+00)
+  ok   WH_Idle: Root world position constant over clip (max drift 0.00e+00)
+  ok   WH_Idle: Hips returns to start (0.00e+00); horizontal sway 0.000 (<0.05 expected)
+  ok   WH_Idle: Hips horizontal sway 0.000 < 0.05 (in place)
+  ok   WH_Run: Root world position constant over clip (max drift 0.00e+00)
+  ok   WH_Run: Hips returns to start (0.00e+00); horizontal sway 0.000 (<0.05 expected)
+  ok   WH_Run: Hips horizontal sway 0.000 < 0.05 (in place)
+  ok   WH_Walk: Root world position constant over clip (max drift 0.00e+00)
+  ok   WH_Walk: Hips returns to start (0.00e+00); horizontal sway 0.000 (<0.05 expected)
+  ok   WH_Walk: Hips horizontal sway 0.000 < 0.05 (in place)
+Blender 4.3.2
+VERIFY PASS
