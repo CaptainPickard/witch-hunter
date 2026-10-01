@@ -51,8 +51,20 @@
     this.body = meshRoot;
     this.bodyBaseY = meshRoot.position.y || 0;
     this.yawFrame.add(this.body);
-    // v5: bandits carry a hand axe on a weapon pivot (idle pose, 1.1x scale)
-    if (this.type === 'bandit' && window.WH_ASSETS &&
+    var bodyName = this.type === 'bandit' ? 'banditBody' : 'ghoulBody';
+    if (window.WH_ASSETS.getClips(bodyName).length) {
+      this.anim = new window.WH_CharacterAnim(meshRoot, window.WH_ASSETS.getClips(bodyName));
+    }
+    // Rigged bandits carry the axe on the animated hand, not a world pivot.
+    var hand = meshRoot.getObjectByName('R_Hand');
+    if (this.type === 'bandit' && hand) {
+      var heldAxe = window.WH_ASSETS.instance('handAxe');
+      heldAxe.scale.setScalar(0.8);
+      hand.add(heldAxe);
+      heldAxe.position.set(0, 0, 0);
+    }
+    // Rigid stand-in fallback retains its original weapon pivot.
+    if (!hand && this.type === 'bandit' && window.WH_ASSETS &&
         window.WH_ASSETS.instance && window.WH_CONFIG.moveset) {
       var axe = window.WH_ASSETS.instance('handAxe');
       if (axe) {
@@ -74,6 +86,24 @@
   // The FSM stops on death, but the visual fall must continue to settle.
   Enemy.prototype.updateDeathVisual = function (dt) {
     if (!this.body) return;
+    if (this.anim) {
+      this.anim.death();
+      this.root.position.copy(this.pos);
+      this.yawFrame.rotation.y = this.yaw;
+      var deathAction = this.anim.actions.death;
+      if (this.corpseFinalY === null &&
+          deathAction.time >= deathAction.getClip().duration - 0.001) {
+        this.root.position.y = 0;
+        this.root.updateMatrixWorld(true);
+        var finalMinY = new THREE.Box3().setFromObject(this.root).min.y;
+        this.corpseFinalY = isFinite(finalMinY) ? -finalMinY + 0.01 : 0;
+      }
+      if (this.corpseFinalY !== null) {
+        this.root.position.y = this.corpseFinalY;
+        this.deadFall = 1;
+      }
+      return;
+    }
     if (this.corpseFinalY === null) {
       this.root.position.copy(this.pos);
       this.yawFrame.rotation.y = this.yaw;
@@ -260,9 +290,21 @@
     }
 
     // ---- visual ----
+    this.animMoveSpeed = moveSpeed;
     if (this.body) {
       this.root.position.copy(this.pos);
       this.yawFrame.rotation.y = this.yaw;
+      if (this.anim) {
+        // The clip supplies gait, sway, crouch and hit poses. The existing
+        // ghoul hop is a gameplay telegraph and stays on the world root.
+        var hopYAnim = 0;
+        if (this.hopTimer >= 0) {
+          var hopFraction = this.hopTimer / ANIM.ghoulHop.duration;
+          hopYAnim = 4 * hopFraction * (1 - hopFraction) * ANIM.ghoulHop.height;
+        }
+        this.root.position.y = hopYAnim;
+        return;
+      }
       this.body.rotation.y = 0;
       // v3 D3: layered walk cycle with per-type amplitude multipliers
       if (this.fsm !== 'dead') {
@@ -358,8 +400,10 @@
     if (this.hp <= 0) {
       this.hp = 0;
       this.setFsm('dead');
+      if (this.anim) this.anim.death();
       return true;
     }
+    if (this.anim) this.anim.hit();
     // v3: hit stagger visual (0.15s lean-back + knockback)
     this.staggerTimer = ANIM.stagger.visualDuration;
     if (ANIM.stagger.knockback > 0 && fromDir) {

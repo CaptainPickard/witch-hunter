@@ -138,23 +138,21 @@ def probe_cancel_rules(page):
     return ok1 and ok2 and ok3
 
 def probe_walk_layers(page):
-    """Hold W: body.position.y p2p > 0.1 and > 2 local maxima.
-    D2-WEAVE-W3 (2026-09-30): the old 16ms-WALL cadence covers under one bob
-    cycle when SwiftShader dilates sim time 2-5x, so maxima under-read.
-    Page-clock instead: a page-side rAF collector buffers body.position.y
-    while W is held (every sim frame), python reads the buffer back. Same
-    bars (p2p, maxima), no wall cadence."""
+    """D-A12-1: skinned gait replaces retired procedural body-bob evidence.
+    Collect mixer state on the page clock while real W input is held.
+    WH_Walk must contribute pose and its clip clock must advance."""
     page.evaluate("window.WH_DEBUG.teleportPlayer(0, 40)")
     page.evaluate("window.WH_DEBUG.setCameraYaw(0)")
     page.evaluate("window.WH_DEBUG.breakLockOn()")
     page.evaluate("window.WH_DEBUG.setStamina(100)")
     page.evaluate("""(() => {
-      window.__IO_WALK = {ys: [], stop: false};
+      window.__IO_WALK = {rows: [], stop: false};
       function tick(){
         if (window.__IO_WALK.stop) return;
         try {
-          var p = window.WH_DEBUG.getPlayer();
-          if (p && p.body) window.__IO_WALK.ys.push(p.body.position.y);
+          var state = window.WH_DEBUG.getAnimState('player');
+          if (state) window.__IO_WALK.rows.push({clip: state.clip,
+            weight: state.weights.WH_Walk || 0, time: state.time});
         } catch (x) {}
         requestAnimationFrame(tick);
       }
@@ -162,28 +160,16 @@ def probe_walk_layers(page):
       return true;
     })()""")
     page.keyboard.down("w")
-    page.wait_for_timeout(8000)   # wall window; partial cycles accepted (W5b)
+    page.wait_for_timeout(8000)
     page.keyboard.up("w")
     page.evaluate("window.__IO_WALK.stop = true;")
-    ys = page.evaluate("window.__IO_WALK.ys") or []
-    p2p = max(ys) - min(ys) if len(ys) > 2 else 0
-    maxima = sum(1 for i in range(1, len(ys) - 1)
-                 if ys[i] > ys[i-1] and ys[i] >= ys[i+1])
-    # D2-WEAVE-W5 (2026-09-30): the p2p > 0.1 bar was authored pre-R1.
-    # The committed R1 feet-contact retune sets bobAmp 0.02 + footDipAmp
-    # 0.005 (CONFIG.anim.walk) => designed p2p span ~2x(0.02+0.005)=0.05.
-    # The 0.1 bar fails the DESIGNED amplitude forever. Sim-coverage note:
-    # under SwiftShader dilation the window may cover a partial cycle
-    # (measured 0.0218/24 rows). Bars: bob EXISTs at designed scale
-    # (p2p > 0.015), oscillates (maxima >= 2), and never exceeds the
-    # designed span + slop. CONFIG-anchored, not wall-anchored.
-    # D2-WEAVE-W5b (probe v3-order 2026-09-30): predecessor probes leave
-    # camera/roll state that costs fps; a 4s wall window covers a PARTIAL
-    # bob cycle (10 rows = 0.5s sim = 0.7 cycle => maxima 1). Bars:
-    # designed amplitude span + >= 1 witnessed oscillation.
-    ok = p2p > 0.015 and maxima >= 1 and p2p <= 0.06
-    print("  walk p2p=%.3f maxima=%d samples=%d => %s"
-          % (p2p, maxima, len(ys), "PASS" if ok else "FAIL"))
+    rows = page.evaluate("window.__IO_WALK.rows") or []
+    walk = [row for row in rows if row["clip"] == "WH_Walk" and row["weight"] > 0]
+    advancing = any(b["time"] > a["time"] + 0.001
+                    for a, b in zip(walk, walk[1:]))
+    ok = len(walk) >= 2 and advancing
+    print("  walk skinned gait: weighted=%d advancing=%s samples=%d => %s"
+          % (len(walk), advancing, len(rows), "PASS" if ok else "FAIL"))
     return ok
 
 def probe_ghoul_hop(page):
@@ -221,16 +207,49 @@ def probe_ghoul_hop(page):
     return ok
 
 def probe_ground_align(page):
+    """D-A12-2: measure the posed character, not its hand-held sword.
+    Bone landmarks identify foot/head; skinned vertices give sole/crown extents
+    because bone origins lie inside the corresponding geometry.
+    """
     res = page.evaluate("""
 () => {
   const p = window.WH_DEBUG.getPlayer();
-  const box = new THREE.Box3().setFromObject(p.root);
-  return { minY: box.min.y, height: box.max.y - box.min.y };
+  p.root.updateMatrixWorld(true);
+  const rootBox = new THREE.Box3().setFromObject(p.root);
+  let mesh = null;
+  p.body.traverse(o => { if (o.isSkinnedMesh) mesh = o; });
+  if (!mesh) return { error: 'missing skinned player body' };
+  const boneY = name => {
+    const bone = mesh.skeleton.bones.find(b => b.name === name);
+    return bone ? bone.getWorldPosition(new THREE.Vector3()).y : null;
+  };
+  const feet = [boneY('L_Foot'), boneY('R_Foot')];
+  const head = boneY('Head');
+  const position = mesh.geometry.attributes.position;
+  const vertex = new THREE.Vector3();
+  let minY = Infinity, maxY = -Infinity;
+  for (let i = 0; i < position.count; i++) {
+    vertex.fromBufferAttribute(position, i);
+    mesh.applyBoneTransform(i, vertex);
+    mesh.localToWorld(vertex);
+    minY = Math.min(minY, vertex.y);
+    maxY = Math.max(maxY, vertex.y);
+  }
+  return { minY, height: maxY - minY, headY: head, feetY: feet,
+    rootBoxHeight: rootBox.max.y - rootBox.min.y };
 }
 """)
-    ok = res["minY"] >= -0.05 and 1.7 <= res["height"] <= 1.9
-    print("  ground align minY=%.3f height=%.3f => %s"
-          % (res["minY"], res["height"], "PASS" if ok else "FAIL"))
+    landmarks = (res.get("headY") is not None and
+                 all(y is not None for y in res.get("feetY", [])) and
+                 len(res.get("feetY", [])) == 2)
+    ok = (landmarks and res["minY"] >= -0.05 and
+          1.7 <= res["height"] <= 1.9 and
+          all(res["minY"] <= y <= res["minY"] + 0.2 for y in res["feetY"]) and
+          res["minY"] + res["height"] - 0.35 <= res["headY"] <= res["minY"] + res["height"])
+    print("  ground align posed minY=%.3f height=%.3f feet=%s head=%.3f rootBox=%.3f => %s"
+          % (res.get("minY", float('nan')), res.get("height", float('nan')),
+             res.get("feetY"), res.get("headY", float('nan')),
+             res.get("rootBoxHeight", float('nan')), "PASS" if ok else "FAIL"))
     return ok
 
 def run(page, origin):

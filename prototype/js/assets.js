@@ -40,10 +40,10 @@
     ironFenceSection: 'art-direction/3d/assets/church-kit/iron-fence-section-pixelated.glb',
     ironFenceCorner: 'art-direction/3d/assets/church-kit/iron-fence-corner-pixelated.glb',
 
-    // characters (races_regen, raw meshes, no pixelated variants exist)
-    playerBody: 'art-direction/3d/assets/races_regen/human-hunter-male.glb',
-    banditBody: 'art-direction/3d/assets/races_regen/orc-male-warrior.glb',
-    ghoulBody: 'art-direction/3d/assets/races_regen/undead-ghoul-male.glb',
+    // characters (whanim1 rigged exports; props below stay rigid)
+    playerBody: 'art-direction/3d/assets/races_regen/rigged/human-hunter-male.rigged.glb',
+    banditBody: 'art-direction/3d/assets/races_regen/rigged/orc-male-warrior.rigged.glb',
+    ghoulBody: 'art-direction/3d/assets/races_regen/rigged/undead-ghoul-male.rigged.glb',
 
     // weapons (pixelated)
     longsword: 'art-direction/3d/assets/weapons/longsword-pixelated.glb',
@@ -79,7 +79,9 @@
 
   // ---- Loading ---------------------------------------------------------------
 
-  var cache = {};      // logical name -> cloned THREE.Group template
+  var cache = {};      // logical name -> ground-aligned THREE.Group template
+  var clips = {};      // logical character name -> shared AnimationClip objects
+  var CHARACTERS = { playerBody: true, banditBody: true, ghoulBody: true };
   var failed = {};     // logical name -> true (stand-in substituted)
   var loadedCount = 0;
   var GROUND_META = {}; // holder uuid -> measured height, width, raw groundMinY
@@ -124,6 +126,7 @@
     // DoubleSide for safety (R3), NearestFilter on pixelated textures (R2).
     group.traverse(function (obj) {
       if (!obj.isMesh) return;
+      if (obj.isSkinnedMesh) obj.frustumCulled = false;
       obj.castShadow = false;
       obj.receiveShadow = false;
       var mats = Array.isArray(obj.material) ? obj.material : [obj.material];
@@ -161,6 +164,12 @@
         done = true;
         clearTimeout(timer);
         var root = gltf.scene;
+        if (CHARACTERS[name]) {
+          clips[name] = gltf.animations || [];
+          if (clips[name].length !== 6) {
+            console.warn('[WH assets] expected 6 clips for ' + name + ', got ' + clips[name].length);
+          }
+        }
         prepTemplate(root, isPixelated);
         cache[name] = groundAlign(root);
         loadedCount++;
@@ -191,10 +200,13 @@
     });
   }
 
-  // Instance a fresh copy from the cache (Scene.clone(true) clones meshes).
+  // Rigged characters need independently rebound bones; props remain rigid.
   function instance(name) {
     var tmpl = cache[name];
     if (!tmpl) return makeStandIn(name);
+    if (CHARACTERS[name] && clips[name] && clips[name].length) {
+      return window.WHSkeletonUtils.clone(tmpl);
+    }
     return tmpl.clone(true);
   }
 
@@ -204,6 +216,8 @@
     resolveUrl: resolveUrl,
     preloadAll: preloadAll,
     instance: instance,
+    getClips: function (name) { return clips[name] || []; },
+    getTemplate: function (name) { return cache[name] || null; },
     groundHeight: function (name) {
       var tmpl = cache[name];
       if (!tmpl) return 1.8;
