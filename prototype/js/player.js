@@ -119,15 +119,27 @@
     this.bodyBaseY = meshRoot.position.y || 0;
     this.bodyBaseX = meshRoot.position.x || 0;
     this.yawFrame.add(this.body);
+    if (window.WH_ASSETS.getClips('playerBody').length) {
+      this.anim = new window.WH_CharacterAnim(meshRoot, window.WH_ASSETS.getClips('playerBody'));
+    }
   };
 
-  // Weapon attach (v5): the mesh lives on a dedicated pivot Group whose pose
-  // (position + rotation) is keyframed by WH_MOVESET during attacks.
+  // The skinned hand is the socket. Only stand-ins retain the old rigid pivot.
   Player.prototype.setWeapon = function (mesh) {
+    var hand = this.body && this.body.getObjectByName('R_Hand');
+    this.sword = mesh;
+    if (hand) {
+      this.weaponHand = hand;
+      hand.add(mesh);
+      mesh.position.set(0, 0, 0);
+      // Sword asset points +Y along the blade; reverse it in the hand. At the
+      // strike pose the animated hand's +Y aims +Z, so the tip leads -Z.
+      mesh.rotation.set(0, 0, Math.PI);
+      return;
+    }
     this.weaponPivot = new THREE.Group();
     this.yawFrame.add(this.weaponPivot);
     this.weaponPivot.add(mesh);
-    this.sword = mesh;
     this.swordBase = window.WH_CONFIG.moveset.idlePose;
     this.resetWeaponPose();
   };
@@ -144,7 +156,7 @@
   // leanX: body.rotation.x (forward+). yawAdd: added to body yaw (yaw osc).
   // swayX: lateral body.position.x offset (body space).
   Player.prototype.setBodyBob = function (bobY, tiltZ, leanX, yawAdd, swayX) {
-    if (!this.body) return;
+    if (!this.body || this.anim) return;
     this.body.position.y = this.bodyBaseY + bobY;
     this.body.position.x = (this.bodyBaseX || 0) + (swayX || 0);
     if (tiltZ !== undefined) this.body.rotation.z = tiltZ;
@@ -569,6 +581,7 @@
   Player.prototype.takeDamage = function (amount) {
     if (this.iframes > 0 || this.state !== 'alive') return false;
     this.hp = Math.max(0, this.hp - amount);
+    if (this.anim) this.anim.hit();
     // v7: hp loss during castWindup fizzles the cast (no focus spent)
     this.cancelCastFizzle();
     if (this.hp <= 0) {
@@ -669,7 +682,8 @@
 
     if (this.state === 'dying') {
       this.deathTilt = Math.min(Math.PI / 2, this.deathTilt + dt * 3);
-      if (this.body) this.body.rotation.x = -this.deathTilt;
+      if (this.body && !this.anim) this.body.rotation.x = -this.deathTilt;
+      if (this.anim) this.anim.death();
       if (this.stateTime >= CFG.respawnDelay) this.state = 'dead';
       return;
     }
@@ -698,13 +712,15 @@
     var displacement = new THREE.Vector3(0, 0, 0);
     var moving = false;
     var sprintingNow = false;
+    this.animMoveSpeed = 0;
 
     if (this.rolling) {
       this.rollTimer -= dt;
       // roll = quick translation + eased full tumble (v3)
       var step = this.rollDir.clone().multiplyScalar(CFG.rollSpeed * dt);
       this.pos.add(step);
-      if (this.body) {
+      this.animMoveSpeed = CFG.rollSpeed;
+      if (this.body && !this.anim) {
         var rp = 1 - this.rollTimer / CFG.rollDuration;
         this.body.rotation.x = smooth(rp) * Math.PI * 2;
         this.body.rotation.z = 0;
@@ -730,6 +746,7 @@
         }
         if (this.attacking) speed *= this.getAttackStage() === 'windup' ? 0.3 : 0;
         if (this.blocking) speed *= window.WH_CONFIG.block.moveMult;  // v6
+        this.animMoveSpeed = speed;
         // camera yaw basis: camera forward projected on xz plane.
         // Camera sits at yaw = camYaw BEHIND the player, so camera forward
         // (what W moves toward) is (sin(camYaw + PI), cos(camYaw + PI)).
@@ -755,7 +772,7 @@
         // ---- v3 D2: layered walk/sprint cycle ----
         this.idleTime = 0;
         this.bobPhase += dt * (sprintingNow ? WL.bobFreqSprint : WL.bobFreqWalk);
-        if (this.body) {
+        if (this.body && !this.anim) {
           var amp = sprintingNow ? WL.sprintAmpMult : 1;
           var bob = Math.abs(Math.sin(this.bobPhase)) * WL.bobAmp * amp;
           // foot-phase dip: 2x freq, smaller (two dips per cycle)
@@ -774,7 +791,7 @@
         this.moveDirWorld.z = 0;
         // ---- v3 D2: idle breathing after idleDelay ----
         this.idleTime += dt;
-        if (this.body) {
+        if (this.body && !this.anim) {
           if (this.idleTime >= WL.idleDelay) {
             this.idlePhase += dt * (Math.PI * 2 / WL.idlePeriod);
             this.setBodyBob(
@@ -790,8 +807,8 @@
     if (clampToBounds) clampToBounds(this);
     this.yawFrame.rotation.y = this.yaw;
 
-    // ---- v5: three-stage attack pose + weapon-pivot keyframe interpolation ----
-    if (this.body) {
+    // Legacy pivot poses remain only for the rigid stand-in fallback.
+    if (this.body && !this.anim) {
       if (this.attacking) {
         var stage = this.getAttackStage();
         var MS = window.WH_MOVESET;
@@ -862,6 +879,14 @@
         this.body.position.x = this.bodyBaseX || 0;
         if (this.sword) this.resetWeaponPose();
       }
+    }
+    // Lunge displacement remains FSM-owned even when the clip supplies the pose.
+    if (this.anim && this.attacking && this.getAttackStage() === 'strike' && this.lungeLeft > 0) {
+      var lungeVel = AW.strikeLunge / (CFG.attackDuration * AW.strikeFrac);
+      var lungeStep = Math.min(lungeVel * dt, this.lungeLeft);
+      this.pos.x += Math.sin(this.yaw) * lungeStep;
+      this.pos.z += Math.cos(this.yaw) * lungeStep;
+      this.lungeLeft -= lungeStep;
     }
     if (!this.attacking) this.lungeLeft = 0;
 
@@ -949,7 +974,8 @@
     this.crossArmed = false;
     this.atkYawOffset = 0;
     this.yawFrame.rotation.y = this.yaw;
-    if (this.body) { this.body.rotation.x = 0; this.body.rotation.y = this.atkYawOffset; }
+    if (this.anim) this.anim.revive();
+    if (this.body && !this.anim) { this.body.rotation.x = 0; this.body.rotation.y = this.atkYawOffset; }
   };
 
   window.WH_Player = Player;

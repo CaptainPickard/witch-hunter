@@ -371,6 +371,13 @@ window.WH_CONFIG = {
     reticleOffsetY: 0.9             // reticle aim height above enemy feet
   },
 
+  animRt: {
+    crossfadeSeconds: 0.18,
+    oneShotFadeSeconds: 0.08,
+    walkMetersPerCycle: 6,
+    runMetersPerCycle: 6,
+    attackClipStrikeFraction: 0.25
+  },
   // v3: procedural animation feel (transform-only; assets are unrigged).
   // Stage fractions are of CONFIG.player.attackDuration and sum to 1.
   anim: {

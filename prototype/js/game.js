@@ -456,6 +456,13 @@
       getPlayer: function () { return game.player; },
       getRegionManager: function () { return game.regionManager; },
       getAssetMeta: function (name) { return window.WH_ASSETS.getMeta(name); },
+      getAnimState: function (entity) {
+        var target = entity === undefined || entity === 'player' ? game.player : entity;
+        if (typeof entity === 'number') target = game.regionManager.getEnemies(
+          game.regionManager.logic.activeId)[entity];
+        if (target && target.ref) target = target.ref;
+        return target && target.anim ? target.anim.getState() : null;
+      },
       // test helpers
       teleportPlayer: function (x, z) { game.player.pos.set(x, 0, z); },
       killPlayer: function () { game.player.hp = 0; game.player.takeDamage(1); },
@@ -739,6 +746,17 @@
         }
         // v3 D4: shake pulse on landed melee hits, while locked-on only
         if (game.player.lockTarget) triggerShake();
+      }
+    }
+
+    // Animation is presentation-only: sample the FSM after combat has consumed
+    // its strike window, then advance every mixer before rendering.
+    if (game.player.anim) game.player.anim.syncPlayer(game.player, dt);
+    var animRegions = Object.keys(rm.enemies);
+    for (var ar = 0; ar < animRegions.length; ar++) {
+      var animList = rm.enemies[animRegions[ar]];
+      for (var ae = 0; ae < animList.length; ae++) {
+        if (animList[ae].anim) animList[ae].anim.syncEnemy(animList[ae], dt);
       }
     }
 
