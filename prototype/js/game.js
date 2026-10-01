@@ -769,6 +769,23 @@
     return out;
   }
 
+  // R2 P0-3 (fix during validation): lantern flicker — the CONFIG band
+  // (lanternFlickerPct 5) was previously unused; apply the audit's
+  // deterministic two-sine wobble (no Math.random per spec) to the lantern.
+  // Game-time driven via performance.now so it advances even at SwiftShader
+  // low fps. Amplitude = lanternIntensity * flickerPct/100 (±0.325 @6.5).
+  function lanternTick() {
+    if (!game.lantern) return;
+    var LT = CFG.lighting;
+    var pct = LT.lanternFlickerPct !== undefined
+      ? LT.lanternFlickerPct : 0;
+    if (!pct) return;
+    var t = performance.now() / 1000;
+    var w = 0.6 * Math.sin(7.3 * t) + 0.4 * Math.sin(3.1 * t + 1.7);
+    var base = LT.lanternIntensity !== undefined ? LT.lanternIntensity : 6.5;
+    game.lantern.intensity = base * (1 + w * pct / 100);
+  }
+
   // R2 P1-8: nearest-socket handoff. One pass per frame: sort sockets by
   // weighted distance to the player, take the first 4, fade each pool slot
   // toward its target (faster rate on target change = handoff).
@@ -916,6 +933,7 @@
     game.player.updateCamera(dt);
     applyCameraShake(dt);
     poolTick(dt);   // R2: fixed light pool nearest-socket handoff
+    lanternTick();  // R2: lantern wobble (CONFIG lanternFlickerPct)
     updateHud(dt);
     game.renderer.render(game.scene, game.camera);
   }
