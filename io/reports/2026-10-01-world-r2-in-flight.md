@@ -56,3 +56,26 @@ testerbot-spec-wh-world-r2.md + lane-failure report), then run + verdict.
 If Testerbot lane dies again: STOP, update lane-failure report, stay armed.
 
 — IO, job 2c7556f7f609, 08:30Z
+ENV REBUILD 08:38Z (this tick, verified live):
+- Playwright never existed on this box post-wipe (R1-era env lost). Installed:
+  /root/whpw-venv (durable, python3.12 + playwright 1.63.0; /tmp/whpw-venv
+  also exists). Chromium binary already present (ms-playwright 1243).
+- Live smoke PASSED against the WIP build: server 8792 -> HTTP 200,
+  WH_DEBUG ready, getLightPool().length == 4 at boot, getLightSockets()
+  returns lanternPost@-2,30 and lanternPost@4,-2 with intensities 1.60.
+  The R2 relight+pool code boots clean.
+- Server invocation: python3 prototype/server.py <port> (positional arg,
+  NOT --port). Harness env: WH_BASE_ROOT / WH_R2_PORT.
+- Validation run command: /root/whpw-venv/bin/python tests/wh_world_r2_validation.py
+
+NEXT TICK ORDER:
+1. Re-dispatch Testerbot harness authoring (profile testerbot, no model
+   override). If the lane dies again with provider timeouts, log it in the
+   lane-failure report and stop - do not author the harness as IO.
+2. When the harness exists: run it via /root/whpw-venv/bin/python,
+   WH_R2_PORT=8792. Judge verdict per valspec protocol.
+3. On PASS: IO commits the 3 code files + harness as the R2 commit
+   (surgical commit rules; specs commit 46454c5 already holds the gate docs),
+   pushes feat/world-visuals:feat/world-visuals, then proceeds to R3.
+4. On FAIL-RETUNE-PENDING: return numbers to Devbot for one retune round.
+5. On lane death: STOP per standing law.
