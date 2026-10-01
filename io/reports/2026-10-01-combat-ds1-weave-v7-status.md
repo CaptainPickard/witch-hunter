@@ -114,4 +114,19 @@ at eacff4a).
 
 ## COMMITS
 
-- See the final commit section appended below after IO stages and pushes.
+- Commit: 02ca0ac (feat: combat-ds1-A + weave-v7) on dev; 23 files, +5096/-127.
+  Includes: player/enemy/game/CONFIG combat+weave hunks, spells.js (new),
+  index.html script-tag + style.css HUD blocks (weave-owned), rebuilt
+  v7-playable.html (byte-identical rebuild verified - build already carried
+  the inlined sources), ds1+weave harnesses, v2/v3 regression repairs, 4
+  specs of record + amendment logs, io/reports x2.
+- Push verification: git ls-remote (HTTPS) refs/heads/dev = 02ca0ac82529...
+  (GitHub-side ground truth; the local origin remote uses the read-only SSH
+  deploy key so its local ref lags - pushes go via HTTPS credential store to
+  dev:dev, the standing route).
+- Excluded from the commit (deliberate): io/ probe debris (46 untracked
+  io/*.py work files), harness_corrupt backup. These are session scratch,
+  not round artifacts.
+- HEAD before commit: 6e447d8 (whanim1 validation report; HEAD advanced past
+  eacff4a during the session from the parallel whanim1 round - all hunks in
+  this commit verified combat/weave-owned).
