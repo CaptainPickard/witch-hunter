@@ -8,10 +8,13 @@ the final commit step (Testerbot verdicts landed first per the gate).
 
 - WEAVE v7: TESTERBOT VERDICT PASS (deleg_e92df0e5, sa-0-a5d83904, glm-5.3,
   902s). Independent run: 18/18 checks PASS, regress=True (v2 VERIFY PASS,
-  v3 PASS), V7 WEAVE: PASS, exit 0. Harness shas verified by Testerbot:
-  tests/wh_v7_weave.py f07dec10e58f... , tests/wh_v2_verify.py c3bf4b1e0d22...,
-  tests/wh_v3_anim_probes.py 7aa5af94b771... Tree unchanged by Testerbot
-  (hygiene pass, census 69 dirty = pre-commit expected).
+  v3 PASS), V7 WEAVE: PASS, exit 0. Verdict-time harness freeze CONFIRMED:
+  the committed tests/wh_v7_weave.py hashes f07dec10e58f (git blob
+  c8b53daf58c5, HEAD == worktree); Testerbot's independent run validated
+  exactly this file and its verdict hygiene note flags the dispatch
+  context's 'bcdd4c32' as a STALE expected-sha from the dispatch text —
+  superseded by the commit-time freeze recorded here. Testerbot verified
+  the v2/v3 repair shas (c3bf4b1e0d22, 7aa5af94b771) and touched nothing.
 - COMBAT DS1 Round A: TESTERBOT VERDICT PASS (deleg_de86322d, lean-mode
   attempt 3 after two API-finalize lane deaths with complete evidence;
   glm-5.3, no model overrides). Testerbot's own isolated suite run:
