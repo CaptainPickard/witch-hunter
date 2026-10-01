@@ -145,3 +145,27 @@ Total: 135 credits. All 9 SUCCEEDED first try, pixelation v3 pass applied.
 - Scene dressing proceeded with EXISTING inventory: M4-M9 are on disk
   and unused by the prototype; region re-skin used m1-m9 + graveyard +
   church-kit props only (see spec specs/astrabot-spec-darkwood-dressing.md).
+
+2026-10-01 (batch retry — doc 59 ordered batch, landed commit 71dae10
+on feat/world-visuals):
+| ID | Asset | Credits | Vision-QA | Tris | Path |
+|----|-------|---------|-----------|------|------|
+| M10 | Bramble thicket | 15 | PASS | 46.7k | biome_library/m10-pixelated.glb |
+| M19 | Hanging moss drape | 15 | PASS | 15.2k | biome_library/m19-pixelated.glb |
+| M20 | Mud puddle decal | 15 | PASS | 2.5k | biome_library/m20-pixelated.glb |
+| M21 | Gnarled root cluster | 15 | PASS | 5.2k | biome_library/m21-pixelated.glb |
+Total: 60 credits. All 4 SUCCEEDED first try, pixelation v3 pass applied
+(512px NEAREST + 5-bit posterize verified byte-level, normals injected).
+Notes:
+- 402 unblocked: Nicko rotated the Meshy key (now env/file-only, old
+  exposed key superseded) and topped the account to 3000 credits.
+- Submit targets (doc 61 s6 rule 2): 2000 tris M10/M19/M21, 1200 M20;
+  meshy-5 quad topology returns raw counts above (soft target).
+- Atlas-level numeric scan: 0 cyan/magenta strays, 0 white holes across
+  all four atlases; thumbnail QA 4/4 PASS (grimdark coherence check).
+- Task IDs: M10 01a0f5c2-72f5-7074-81e1-8bdb271e607e, M19 01a0f5c3-7708-
+  7416-aa6f-751c4a9632a9, M20 01a0f5c4-7974-7149-8666-e8ee889a7ca7,
+  M21 01a0f5c5-7c8b-77ae-ab84-bd094919fac6.
+- Branch note: assets committed to feat/world-visuals (worktree; dev
+  checkout owned by the blender-anim session). Runtime dressing with
+  these assets rides the world code rounds (R2 onward).
