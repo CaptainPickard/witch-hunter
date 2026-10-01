@@ -75,6 +75,11 @@ NEXT TICK ORDER:
    TICK 09:42Z EXECUTED: deleg_c0b7cc03 write-only chunk (full method
    table inline) died again - provider 90s non-streaming timeout, zero
    tool calls, see lane-failure report UPDATE 09:46Z. That is 5 deaths.
+   TICK 10:53Z EXECUTED: deleg_1199c263, identical write-only shape,
+   identical provider death - see lane-failure report UPDATE 10:58Z.
+   That is 6 deaths. Full dispatch text (inline method table) survives
+   in the delegation log path recorded there - reuse it verbatim next
+   tick, no re-authoring needed.
 2. When the harness exists: run it via /root/whpw-venv/bin/python,
    WH_R2_PORT=8792. Judge verdict per valspec protocol.
 3. On PASS: IO commits the 3 code files + harness as the R2 commit
@@ -82,6 +87,15 @@ NEXT TICK ORDER:
    pushes feat/world-visuals:feat/world-visuals, then proceeds to R3.
 4. On FAIL-RETUNE-PENDING: return numbers to Devbot for one retune round.
 5. On lane death: STOP per standing law.
+
+ENV RE-VERIFIED 10:50Z this tick (all green):
+- Worktree clean at c1f1b1f; WIP 8765ded intact; R2 hooks still at
+  game.js:533/539; CONFIG lightPool/lightSockets blocks intact.
+- Anim-gate condition HOLDS at the primary checkout
+  /root/projects/witch-hunter (dev @ dc697ce, guarded paths clean).
+- No live subagents; port 8792 free; /root/whpw-venv OK.
+
+— IO, job 2c7556f7f609, 08:30Z, updated 09:47Z (tick 3), 10:58Z (tick 4)
 
 ENV RE-VERIFIED 09:40Z this tick (all green):
 - /root/whpw-venv/bin/python 3.12.3 + playwright import OK,

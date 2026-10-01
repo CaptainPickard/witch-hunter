@@ -69,10 +69,20 @@ the dispatch (tests/wh_world_r2_validation.py does not exist). Pipeline
 stays stopped per mission law; no model switch, no fallback. Job remains
 armed for the next hourly tick.
 
-Running total: 5 authoring-lane deaths (2x wrapper timeout 420s,
-3x provider 90s non-streaming timeout). Parent-session provider calls
+UPDATE 10:58Z - SIXTH death, identical provider signature. Dispatch
+deleg_1199c263 (10:53-10:58Z, 277s) again the runbook-chunked write-only
+authoring task: ~12.4KB inline method table, zero reads permitted, single
+write_file deliverable. Child's first LLM call died provider-side
+("Non-streaming API call timed out after 90s with no response, 3 retries"),
+zero tool calls, zero tokens, harness file confirmed absent in worktree
+after the dispatch. Same shape as deleg_c0b7cc03. Now 3 consecutive
+provider-timeout deaths on this exact dispatch shape.
+
+Running total: 6 authoring-lane deaths (2x wrapper timeout 420s,
+4x provider 90s non-streaming timeout). Parent-session provider calls
 (streaming, this job's own model) work fine all hour - the instability
 is specific to the delegation child path on glm/ollama-cloud.
+Dispatch log: /root/.hermes/profiles/io/cache/delegation/live/deleg_1199c263/task-0.log
 
 ## Next tick runbook (pick up here)
 
