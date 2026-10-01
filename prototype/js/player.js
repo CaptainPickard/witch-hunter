@@ -13,6 +13,7 @@
   var ANIM = window.WH_CONFIG.anim;
   var AW = ANIM.attack;
   var WL = ANIM.walk;
+  var V7 = window.WH_CONFIG;          // v7 sections: spell/belt/loadout/armed/consumable
 
   function deg2rad(d) { return d * Math.PI / 180; }
   function smooth(p) { return p * p * (3 - 2 * p); }   // smoothstep ease
@@ -39,6 +40,7 @@
     this.pos = new THREE.Vector3(0, 0, 0);
     this.velY = 0;
     this.yaw = 0;                     // body facing (radians)
+    this.atkYawOffset = 0;            // combat-ds1 P0-1: pose yaw relative to facing frame
     this.moveInput = { x: 0, z: 0 };  // camera-relative, set by game input
     this.moveDirWorld = { x: 0, z: 0 }; // last world-space move dir (roll basis)
     this.sprinting = false;
@@ -54,13 +56,37 @@
     this.lungeLeft = 0;               // strike lunge distance remaining
     this.comboIndex = 0;              // v5: which chain move comes next
     this.comboQueued = false;         // v5: next chain input buffered in recover
-    this.recoverFullyElapsed = false; // v5: attack fully finished flag
+    this.recoverFullyElapsed = true;  // combat-ds1 P0-3: first swing starts at m1
 
     // v6: block / parry state
     this.blocking = false;            // RMB held and block accepted
     this.parryTimer = 0;              // seconds left in the parry window
     this.guardBroken = false;         // guard break active (cannot block)
     this.guardBreakTimer = 0;         // seconds left of guard-break stun
+
+    // v7: focus pool (mirrors the stamina pattern)
+    this.focus = CFG.focusMax;
+    this.focusMax = CFG.focusMax;
+    this.focusRegenBlock = 0;         // seconds until focus regen resumes
+
+    // v7: weave / loadout state. activeLoadout 1 = weapon+spell,
+    // 2 = weapon+shield. The offhand implement is derived from it.
+    this.activeLoadout = 1;
+    this.offhand = 'spell';           // 'spell' | 'shield' (derived)
+    this.toggling = false;            // loadout toggle busy window
+    this.toggleTimer = 0;
+    this.castWindup = 0;              // seconds left of cast windup
+    this.castCooldown = 0;            // seconds left of cast cooldown
+    this.regripTimer = 0;             // belt re-grip busy window
+    this.selectedBeltSlot = 0;        // 0-based index into the 5 belt slots
+    this.belt = ['firebolt', null, null, null, null];   // spell ids / null
+    this.consumables = [{ id: 'healthPotion', charges: V7.consumable.healthPotion.charges }, null];
+    this.offhandGlow = null;          // emissive sphere mesh at the left anchor
+
+    // v7: armed finisher state (doc 04 ruling part A)
+    this.armedTimer = 0;              // > 0 = armed finisher ready
+    this.crossArmed = false;          // cross-finisher ready (armed at toggle)
+    this.chainHits = 0;              // v7: hits landed in current chain (for arming)
 
     // camera orbit state
     this.camYaw = Math.PI;            // looking toward -z (into region A)
@@ -76,6 +102,8 @@
 
     // visual root (body added by game after assets load)
     this.root = new THREE.Group();
+    this.yawFrame = new THREE.Group();
+    this.root.add(this.yawFrame);
     this.body = null;
     this.deathTilt = 0;
 
@@ -83,21 +111,21 @@
   }
 
   Player.prototype.setBody = function (meshRoot) {
-    if (this.body) this.root.remove(this.body);
+    if (this.body) this.yawFrame.remove(this.body);
     this.body = meshRoot;
     // Bob/tilt animation writes body.position.y absolutely; wrap the
     // ground-aligned template in an inner holder so animation only moves
     // the holder and the template's own ground offset is preserved.
     this.bodyBaseY = meshRoot.position.y || 0;
     this.bodyBaseX = meshRoot.position.x || 0;
-    this.root.add(this.body);
+    this.yawFrame.add(this.body);
   };
 
   // Weapon attach (v5): the mesh lives on a dedicated pivot Group whose pose
   // (position + rotation) is keyframed by WH_MOVESET during attacks.
   Player.prototype.setWeapon = function (mesh) {
     this.weaponPivot = new THREE.Group();
-    this.root.add(this.weaponPivot);
+    this.yawFrame.add(this.weaponPivot);
     this.weaponPivot.add(mesh);
     this.sword = mesh;
     this.swordBase = window.WH_CONFIG.moveset.idlePose;
@@ -121,7 +149,7 @@
     this.body.position.x = (this.bodyBaseX || 0) + (swayX || 0);
     if (tiltZ !== undefined) this.body.rotation.z = tiltZ;
     if (leanX !== undefined) this.body.rotation.x = leanX;
-    if (yawAdd !== undefined) this.body.rotation.y = this.yaw + yawAdd;
+    if (yawAdd !== undefined) this.body.rotation.y = (yawAdd || 0) + (this.atkYawOffset || 0);
   };
 
   Player.prototype.bindInput = function () {
@@ -137,6 +165,16 @@
         e.preventDefault();
         if (self.onLockToggle) self.onLockToggle();  // game.js decides engage/break
       }
+      // v7: Q = loadout toggle (busy window, resets chain, keeps armed)
+      if (e.code === 'KeyQ' && !e.repeat) self.toggleLoadout();
+      // v7: Digit1-5 = belt spell selection (never touches chain/armed)
+      if (e.code.indexOf('Digit') === 0 && !e.repeat) {
+        var n = parseInt(e.code.slice(5), 10);
+        if (n >= 1 && n <= V7.belt.slots) self.selectBeltSlot(n - 1);
+      }
+      // v7: R / T = consumable belt slots 1 / 2
+      if (e.code === 'KeyR' && !e.repeat) self.useConsumable(0);
+      if (e.code === 'KeyT' && !e.repeat) self.useConsumable(1);
     });
     document.addEventListener('keyup', function (e) {
       self.keys[e.code] = false;
@@ -153,13 +191,15 @@
       // v6: RMB hold to block (opens the parry window)
       if (e.button === 2) {
         e.preventDefault();
-        self.tryBlock();
+        // v7: RMB routes by offhand implement: spell -> cast, shield -> block
+        if (self.offhand === 'spell') self.tryCast();
+        else self.tryBlock();
       }
     });
     document.addEventListener('mouseup', function (e) {
       if (e.button === 0) self.dragging = false;
-      // v6: RMB release ends block
-      if (e.button === 2) self.endBlock();
+      // v7: RMB release ends block only when the implement is a shield
+      if (e.button === 2 && self.offhand === 'shield') self.endBlock();
     });
     // v6: RMB must not open the browser context menu
     document.addEventListener('contextmenu', function (e) {
@@ -197,9 +237,9 @@
   };
 
   // v3: roll cancels attack during WINDUP only (souls-like); attack cannot
-  // start during roll.
+  // start during roll. v7: also refused during the loadout toggle busy window.
   Player.prototype.tryRoll = function () {
-    if (this.state !== 'alive' || this.rolling) return;
+    if (this.state !== 'alive' || this.rolling || this.toggling) return;
     if (this.attacking) {
       if (this.getAttackStage() !== 'windup') return;   // strike/recover locked
       this.attacking = false;                           // cancel in windup
@@ -248,6 +288,159 @@
 
   Player.prototype.isGuardBroken = function () {
     return this.guardBroken;
+  };
+
+  // ====================== v7 WEAVE SLICE ======================================
+
+  // v7: guard-break choke point (called from resolveIncomingHit via
+  // onGuardBreak and by game debug hooks). Clears armed/cross state.
+  Player.prototype.guardBreak = function () {
+    this.guardBroken = true;
+    this.guardBreakTimer = window.WH_CONFIG.block.guardBreakStun;
+    this.endBlock();
+    this.stamina = 0;
+    this.armedTimer = 0;                 // counterplay: stagger clears armed
+    this.crossArmed = false;
+    if (this.onGuardBreak) this.onGuardBreak();
+  };
+
+  // v7: loadout toggle I <-> II. Busy window blocks attack/cast/block/roll.
+  // Resets the combo chain; KEEPS the armedTimer running; if armed at the
+  // toggle moment, banks the cross-finisher.
+  Player.prototype.toggleLoadout = function () {
+    if (this.state !== 'alive' || this.toggling) return;
+    this.endBlock();                     // shield grip is dropped by the swap
+    this.toggling = true;
+    this.toggleTimer = V7.loadout.toggleSeconds;
+    // chain reset (spec: toggle resets the active chain)
+    this.comboIndex = 0;
+    this.comboQueued = false;
+    this.recoverFullyElapsed = false;
+    // armed survives the toggle inside its window; cross-finisher banks
+    if (this.armedTimer > 0) this.crossArmed = true;
+  };
+
+  Player.prototype.getActiveLoadout = function () {
+    return this.activeLoadout;
+  };
+
+  // v7: belt spell selection (Digit1-5). Swaps the bound spell, starts the
+  // regrip window. NEVER touches the combo chain or armed state.
+  Player.prototype.selectBeltSlot = function (i) {
+    if (this.state !== 'alive') return;
+    if (i < 0 || i >= V7.belt.slots) return;
+    if (!this.belt[i]) {
+      // empty slot refused: HUD flash via callback
+      if (this.onCastRefusal) this.onCastRefusal('empty-slot');
+      return;
+    }
+    this.selectedBeltSlot = i;
+    this.regripTimer = V7.belt.regripSeconds;
+    // glow color follows the selection (mesh owned by game.js visuals)
+    if (this.onSpellSelected) this.onSpellSelected(this.belt[i]);
+  };
+
+  Player.prototype.getSelectedSpellId = function () {
+    return this.belt[this.selectedBeltSlot];
+  };
+
+  // v7: RMB-cast refusal conditions (AC: roll/attacking-strike/toggle/regrip/
+  // guard break/dead/focus). Windup-stage attacks ALLOW the weave cast.
+  Player.prototype.canCast = function () {
+    if (this.state !== 'alive') return false;
+    if (this.rolling || this.toggling || this.regripTimer > 0) return false;
+    if (this.guardBroken) return false;
+    if (this.offhand !== 'spell') return false;
+    if (this.attacking && this.getAttackStage() !== 'windup') return false;
+    if (this.castCooldown > 0 || this.castWindup > 0) return false;
+    var spellId = this.getSelectedSpellId();
+    if (!spellId) return false;
+    var S = V7.spell[spellId];
+    return this.focus >= S.focusCost * CFG.castFocusTaxMult;
+  };
+
+  // v7: cast entry (RMB with spell implement). Refusal = HUD flash.
+  // CASTING NEVER RESETS THE CHAIN: comboIndex/comboQueued untouched.
+  Player.prototype.tryCast = function () {
+    if (!this.canCast()) {
+      if (this.onCastRefusal) this.onCastRefusal('cast-refused');
+      return;
+    }
+    var spellId = this.getSelectedSpellId();
+    var S = V7.spell[spellId];
+    this.castWindup = S.castWindup;      // fizzle check runs during windup
+    this.pendingSpellId = spellId;
+  };
+
+  // v7: windup completion -> spawn the Firebolt, spend focus WITH the
+  // one-hand tax (weapon in main hand = tax always in this slice),
+  // start the cast cooldown. Called by game.js (which owns projectiles).
+  // Returns the spawn request or null.
+  Player.prototype.completeCast = function () {
+    var spellId = this.pendingSpellId;
+    this.pendingSpellId = null;
+    if (!spellId) return null;
+    var S = V7.spell[spellId];
+    var cost = S.focusCost * CFG.castFocusTaxMult;
+    this.spendFocus(cost);
+    this.castCooldown = S.castCooldown;
+    // aim at the lock target, else straight ahead of facing
+    var dx = Math.sin(this.yaw), dz = Math.cos(this.yaw);
+    if (this.lockTarget) {
+      var tdx = this.lockTarget.pos.x - this.pos.x;
+      var tdz = this.lockTarget.pos.z - this.pos.z;
+      var d = Math.sqrt(tdx * tdx + tdz * tdz);
+      if (d > 0.001) { dx = tdx / d; dz = tdz / d; }
+    }
+    return { spellId: spellId, origin: this.pos, dirX: dx, dirZ: dz };
+  };
+
+  // v7: damage during castWindup fizzles the cast: NO focus spent,
+  // no projectile. HUD fizzle flash via callback.
+  Player.prototype.cancelCastFizzle = function () {
+    if (this.castWindup > 0) {
+      this.castWindup = 0;
+      this.pendingSpellId = null;
+      if (this.onFizzle) this.onFizzle();
+      return true;
+    }
+    return false;
+  };
+
+  Player.prototype.spendFocus = function (amount) {
+    this.focus = Math.max(0, this.focus - amount);
+    this.focusRegenBlock = CFG.focusRegenDelay;
+  };
+
+  // v7: consumable belt slots (R = slot 0 health potion, T = slot 1 empty).
+  Player.prototype.useConsumable = function (slot) {
+    if (this.state !== 'alive') return;
+    var c = this.consumables[slot];
+    if (!c || c.charges <= 0) {
+      if (this.onCastRefusal) this.onCastRefusal('no-consumable');
+      return;
+    }
+    if (c.id === 'healthPotion') {
+      var P = V7.consumable.healthPotion;
+      if (this.hp >= this.hpMax) {
+        if (this.onCastRefusal) this.onCastRefusal('hp-full');
+        return;
+      }
+      this.hp = Math.min(this.hpMax, this.hp + P.heal);
+      c.charges -= 1;
+      if (this.onPotion) this.onPotion();
+    }
+  };
+
+  Player.prototype.getConsumables = function () {
+    return this.consumables.map(function (c) {
+      return c ? { id: c.id, charges: c.charges } : null;
+    });
+  };
+
+  // v7: belt accessor for HUD/debug (array of 5 spell ids / null)
+  Player.prototype.getBelt = function () {
+    return this.belt.slice();
   };
 
   // v6: single choke point for ALL incoming enemy damage. Order:
@@ -313,32 +506,48 @@
     return this.takeDamage(damage);
   };
 
-  // v5: combo chain. A press during 'recover' buffers the next chain move
-  // (comboQueued) without restarting; a fresh press after a full recovery
-  // resets the chain, a press during windup/strike increments the chain.
+  // combat-ds1 P0-3: only recover presses queue; the chain starts at the
+  // recover point instead of waiting for the entire recovery to elapse.
   Player.prototype.tryAttack = function () {
-    if (this.state !== 'alive' || this.rolling) return;
+    if (this.state !== 'alive' || this.rolling || this.toggling) return;
     if (this.blocking) return;              // v6: must release RMB to attack
     if (this.attacking) {
-      if (this.getAttackStage() === 'recover' &&
-          this.comboIndex < window.WH_CONFIG.moveset.comboChainCap) {
-        this.comboQueued = true;          // buffer: do NOT restart the swing
-      }
-      return;
+      if (this.getAttackStage() === 'recover') this.comboQueued = true;
+      return;                                // windup/strike buffer is Round B
     }
-    if (this.stamina < CFG.attackStaminaCost) return;
+    this.startAttack();
+  };
+
+  Player.prototype.startAttack = function (nextIndex) {
+    if (this.stamina < CFG.attackStaminaCost) return false;
     this.spendStamina(CFG.attackStaminaCost);
     this.attacking = true;
     this.attackTimer = CFG.attackDuration;
     this.attackDidHit = false;
     this.lungeLeft = AW.strikeLunge;
-    // chain index: reset after a fully elapsed attack, else advance (capped)
-    this.comboIndex = this.recoverFullyElapsed
-      ? 0 : Math.min(this.comboIndex + 1, window.WH_CONFIG.moveset.comboChainCap);
+    // v7: armed finisher consumption (armedTimer > 0 = attack at 1.5x;
+    // crossArmed = cross-finisher at 2.0x; both consumed on this attack)
+    this.pendingArmedMult = 1;
+    if (this.armedTimer > 0 && this.crossArmed) {
+      this.pendingDamageMult = V7.armed.crossDamageMult;
+      this.crossArmed = false;
+      this.armedTimer = 0;
+    } else if (this.armedTimer > 0) {
+      this.pendingDamageMult = V7.armed.damageMult;
+      this.armedTimer = 0;
+    } else {
+      this.pendingDamageMult = 1;
+    }
+    var cap = window.WH_CONFIG.moveset.comboChainCap;
+    this.comboIndex = (typeof nextIndex === 'number') ? nextIndex :
+      (this.recoverFullyElapsed ? 0 : Math.min(this.comboIndex + 1, cap));
+    if (this.comboIndex === 0) this.chainHits = 0;  // v7: reset hit counter on chain reset
+    else this.chainHits = Math.max(this.chainHits, this.comboIndex);  // sync with chain position
     this.comboQueued = false;
     this.recoverFullyElapsed = false;
-    // face camera direction on attack (unless locked: hard track handles it)
+    // face camera direction on attack (unless locked: windup tracking handles it)
     if (!this.lockTarget) this.yaw = this.camYaw + Math.PI;
+    return true;
   };
 
   // v3 D1: attack stage from elapsed time. 'windup' | 'strike' | 'recover' | null.
@@ -360,9 +569,14 @@
   Player.prototype.takeDamage = function (amount) {
     if (this.iframes > 0 || this.state !== 'alive') return false;
     this.hp = Math.max(0, this.hp - amount);
+    // v7: hp loss during castWindup fizzles the cast (no focus spent)
+    this.cancelCastFizzle();
     if (this.hp <= 0) {
       this.state = 'dying';
       this.stateTime = 0;
+      // v7: dying/dead clears armed state
+      this.armedTimer = 0;
+      this.crossArmed = false;
     }
     return true;
   };
@@ -380,18 +594,28 @@
       dir: new THREE.Vector3(Math.sin(this.yaw), 0, Math.cos(this.yaw)),
       range: CFG.attackRange,
       halfAngle: halfAngle,
-      damage: CFG.attackDamage
+      damage: CFG.attackDamage * (this.pendingDamageMult || 1)
     };
   };
 
-  // D3: hard yaw track toward the lock target each frame while locked.
-  Player.prototype.updateLockTracking = function () {
+  // combat-ds1 P0-4: lock yaw is rate-limited in windup and fixed through
+  // strike/recover; idle lock still faces the target directly.
+  Player.prototype.updateLockTracking = function (dt) {
     if (!this.lockTarget || this.state !== 'alive') return;
+    var stage = this.getAttackStage();
+    if (stage === 'strike' || stage === 'recover') return;
     var t = this.lockTarget;
     var dx = t.pos.x - this.pos.x;
     var dz = t.pos.z - this.pos.z;
     if (dx * dx + dz * dz < 0.0001) return;
-    this.yaw = Math.atan2(dx, dz);
+    var targetYaw = Math.atan2(dx, dz);
+    if (stage === 'windup') {
+      var maxTurn = deg2rad(LOCK.trackWindupDegPerSec) * dt;
+      var delta = shortestAngle(targetYaw - this.yaw);
+      this.yaw += Math.max(-maxTurn, Math.min(maxTurn, delta));
+    } else {
+      this.yaw = targetYaw;
+    }
   };
 
   Player.prototype.update = function (dt, clampToBounds) {
@@ -415,6 +639,34 @@
         this.stamina + CFG.staminaRegenPerSec * regenMult * dt);
     }
 
+    // ---- v7: focus regen (mirrors the stamina pattern) ----
+    if (this.focusRegenBlock > 0) {
+      this.focusRegenBlock -= dt;
+    } else if (this.focus < this.focusMax) {
+      this.focus = Math.min(this.focusMax,
+        this.focus + CFG.focusRegenPerSec * dt);
+    }
+
+    // ---- v7: weave timers ----
+    if (this.toggling) {
+      this.toggleTimer -= dt;
+      if (this.toggleTimer <= 0) {
+        this.toggling = false;
+        this.activeLoadout = 3 - this.activeLoadout;  // v7: flip 1<->2 on toggle complete
+        this.offhand = this.activeLoadout === 2 ? 'shield' : 'spell';
+      }
+    }
+    if (this.regripTimer > 0) this.regripTimer = Math.max(0, this.regripTimer - dt);
+    if (this.castCooldown > 0) this.castCooldown = Math.max(0, this.castCooldown - dt);
+    // armed finisher window decays; expiry clears armed AND crossArmed
+    if (this.armedTimer > 0) {
+      this.armedTimer = Math.max(0, this.armedTimer - dt);
+      if (this.armedTimer <= 0) this.crossArmed = false;
+    }
+    // offhand implement derived from the active loadout (1 = spell, 2 = shield)
+    this.offhand = this.activeLoadout === 2 ? 'shield' : 'spell';
+    if (this.blocking && this.offhand !== 'shield') this.endBlock();
+
     if (this.state === 'dying') {
       this.deathTilt = Math.min(Math.PI / 2, this.deathTilt + dt * 3);
       if (this.body) this.body.rotation.x = -this.deathTilt;
@@ -424,21 +676,24 @@
 
     if (this.attacking) {
       this.attackTimer -= dt;
+      // combat-ds1 P0-3: consume on every recover frame, including the
+      // final one; an accepted press immediately starts the next windup.
+      if (this.getAttackStage() === 'recover' && this.comboQueued) {
+        var cap = window.WH_CONFIG.moveset.comboChainCap;
+        var next = (this.comboIndex >= cap - 1) ? 0 : this.comboIndex + 1;
+        this.startAttack(next);
+      }
       if (this.attackTimer <= 0) {
         this.attacking = false;
-        this.recoverFullyElapsed = true;  // v5: full swing done -> chain resets
-        // consume a buffered chain input as the next combo move
-        if (this.comboQueued && this.comboIndex < window.WH_CONFIG.moveset.comboChainCap) {
-          this.comboIndex += 1;
-        } else {
-          this.comboIndex = 0;
-        }
+        this.recoverFullyElapsed = true;
+        this.comboIndex = 0;
+        this.chainHits = 0;
         this.comboQueued = false;
       }
     }
 
-    // D3: while locked, body yaw hard-tracks the target
-    this.updateLockTracking();
+    this.updateLockTracking(dt);
+    this.atkYawOffset = 0;
 
     var displacement = new THREE.Vector3(0, 0, 0);
     var moving = false;
@@ -473,7 +728,7 @@
         if (sprintingNow) {
           this.spendStamina(CFG.sprintStaminaPerSec * dt);
         }
-        if (this.attacking) speed *= 0.3;   // slow while swinging
+        if (this.attacking) speed *= this.getAttackStage() === 'windup' ? 0.3 : 0;
         if (this.blocking) speed *= window.WH_CONFIG.block.moveMult;  // v6
         // camera yaw basis: camera forward projected on xz plane.
         // Camera sits at yaw = camYaw BEHIND the player, so camera forward
@@ -491,7 +746,9 @@
         // turn body toward movement direction (skip while locked: hard track)
         if (!this.lockTarget) {
           var targetYaw = Math.atan2(wx, wz);
-          var maxTurn = deg2rad(CFG.turnLerpDegPerSec) * dt;
+          var maxTurn = deg2rad(this.attacking
+            ? (this.getAttackStage() === 'windup' ? CFG.turnLerpDegPerSecAttackWindup : 0)
+            : CFG.turnLerpDegPerSec) * dt;
           var dyaw = shortestAngle(targetYaw - this.yaw);
           this.yaw += Math.max(-maxTurn, Math.min(maxTurn, dyaw));
         }
@@ -531,20 +788,21 @@
     }
 
     if (clampToBounds) clampToBounds(this);
+    this.yawFrame.rotation.y = this.yaw;
 
     // ---- v5: three-stage attack pose + weapon-pivot keyframe interpolation ----
     if (this.body) {
       if (this.attacking) {
         var stage = this.getAttackStage();
-        var yawBase = this.yaw;
         var MS = window.WH_MOVESET;
-        var move = [MS.m1, MS.m2, MS.m3][this.comboIndex] || MS.m1;
+        var move = [MS.m1, MS.m2, MS.m3][this.comboIndex];
         if (stage === 'windup') {
           var wp = (CFG.attackDuration - this.attackTimer) /
                    (CFG.attackDuration * AW.windupFrac);       // 0..1
           var we = smooth(wp);
           this.body.rotation.x = AW.windupLean * we;           // lean back
-          this.body.rotation.y = yawBase;
+          this.atkYawOffset = 0;
+          this.body.rotation.y = this.atkYawOffset;
           this.body.rotation.z = 0;
           this.body.position.y = this.bodyBaseY - AW.windupCrouch * we;  // crouch
           this.body.position.x = this.bodyBaseX || 0;
@@ -557,8 +815,9 @@
                    (CFG.attackDuration * AW.strikeFrac);        // 0..1
           var se = 1 - (1 - sp) * (1 - sp);                     // ease-out
           // horizontal yaw sweep through the stage (start behind right shoulder)
-          this.body.rotation.y = yawBase - deg2rad(AW.strikeYawSweepDeg) * 0.5
-                                 + deg2rad(AW.strikeYawSweepDeg) * se;
+          this.atkYawOffset = -deg2rad(AW.strikeYawSweepDeg) * 0.5
+                              + deg2rad(AW.strikeYawSweepDeg) * se;
+          this.body.rotation.y = this.atkYawOffset;
           this.body.rotation.x = 0;
           this.body.rotation.z = 0;
           this.body.position.y = this.bodyBaseY;
@@ -586,7 +845,8 @@
             (CFG.attackDuration - rEnd)));                      // 0..1
           var re = smooth(rp2);
           var swing = deg2rad(AW.strikeYawSweepDeg) * 0.5;      // sweep end offset
-          this.body.rotation.y = yawBase + swing * (1 - re);    // ease back to neutral
+          this.atkYawOffset = swing * (1 - re);                 // ease back to neutral
+          this.body.rotation.y = this.atkYawOffset;
           this.body.rotation.x = AW.recoverLean * re;           // forward-lean settle
           this.body.rotation.z = 0;
           this.body.position.y = this.bodyBaseY;
@@ -597,7 +857,7 @@
         }
       } else if (!this.rolling) {
         this.body.rotation.x = 0;
-        this.body.rotation.y = this.yaw;
+        this.body.rotation.y = this.atkYawOffset;
         this.body.rotation.z = 0;
         this.body.position.x = this.bodyBaseX || 0;
         if (this.sword) this.resetWeaponPose();
@@ -676,7 +936,20 @@
     this.guardBreakTimer = 0;
     this.deathTilt = 0;
     this.lockTarget = null;
-    if (this.body) { this.body.rotation.x = 0; this.body.rotation.y = this.yaw; }
+    // v7: clear weave/armed transient state on respawn
+    this.focus = this.focusMax;
+    this.focusRegenBlock = 0;
+    this.toggling = false;
+    this.toggleTimer = 0;
+    this.castWindup = 0;
+    this.castCooldown = 0;
+    this.regripTimer = 0;
+    this.pendingSpellId = null;
+    this.armedTimer = 0;
+    this.crossArmed = false;
+    this.atkYawOffset = 0;
+    this.yawFrame.rotation.y = this.yaw;
+    if (this.body) { this.body.rotation.x = 0; this.body.rotation.y = this.atkYawOffset; }
   };
 
   window.WH_Player = Player;

@@ -1245,3 +1245,11 @@ This section records the batch.
     on light/dark, the Last Dance on neutral). Replaces the abstract
     "Dead Altars"/re-kindling ceremony beats. Status: shape locked;
     delve layouts/bosses at quest/world GDD.
+- [2026-09-22 combat-architecture ruling] Armed finishers + spell-in-hand
+  + magic belt LOCKED (doc 04 parts A-D, doc 33, doc 17 cross-ref, doc 27
+  bake-in). OPEN: (1) armed persistence window + partial-charge percentages
+  -> GDD tuning; (2) weave Focus tax + spell/spell caster trade numbers ->
+  GDD tuning; (3) cross-finisher authored-pair catalog -> new doc at next
+  combat-doc touch; (4) belt/consumable keybinds (which two keys) -> UI
+  pass; (5) prototype slice (Short Blade + Firebolt weave, keys 1-5, two
+  loadouts, stagger-interrupts-cast) -> spec pending before the gate.

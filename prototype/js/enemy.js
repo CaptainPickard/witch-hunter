@@ -24,13 +24,18 @@
     this.hpMax = this.cfg.hpMax;
     this.fsm = 'idle';                 // idle | aggro | chase | attack | stagger | dead
     this.fsmTime = 0;
-    this.attackTimer = 0;              // cooldown remaining
+    this.attackTimer = 0;              // legacy cooldown field (phase FSM owns cadence)
+    this.attackPhase = 'idle';         // combat-ds1 P0-6: windup | active | recover | idle
+    this.attackPhaseT = 0;
     this.pos = new THREE.Vector3(spawnX, 0, spawnZ);
     this.yaw = Math.random() * Math.PI * 2;
     this.bobPhase = Math.random() * Math.PI * 2;
     this.root = new THREE.Group();
+    this.yawFrame = new THREE.Group();
+    this.root.add(this.yawFrame);
     this.body = null;
     this.deadFall = 0;                 // death fall-over progress
+    this.corpseFinalY = null;          // measured once at death start
     this.settleTime = -1;              // death settle bounce timer (-1 = off)
     this.staggerTimer = 0;             // v3 hit-stagger visual timer
     this.hopTimer = -1;                // ghoul lunge hop timer (-1 = off)
@@ -42,10 +47,10 @@
   }
 
   Enemy.prototype.setBody = function (meshRoot) {
-    if (this.body) this.root.remove(this.body);
+    if (this.body) this.yawFrame.remove(this.body);
     this.body = meshRoot;
     this.bodyBaseY = meshRoot.position.y || 0;
-    this.root.add(this.body);
+    this.yawFrame.add(this.body);
     // v5: bandits carry a hand axe on a weapon pivot (idle pose, 1.1x scale)
     if (this.type === 'bandit' && window.WH_ASSETS &&
         window.WH_ASSETS.instance && window.WH_CONFIG.moveset) {
@@ -53,7 +58,7 @@
       if (axe) {
         axe.scale.setScalar(0.8);
         this.weaponPivot = new THREE.Group();
-        this.root.add(this.weaponPivot);
+        this.yawFrame.add(this.weaponPivot);
         this.weaponPivot.add(axe);
         var ip = window.WH_CONFIG.moveset.idlePose;
         this.axeIdle = { pos: [ip.pos[0] * 1.1, ip.pos[1] * 1.1, ip.pos[2] * 1.1],
@@ -66,12 +71,43 @@
     }
   };
 
+  // The FSM stops on death, but the visual fall must continue to settle.
+  Enemy.prototype.updateDeathVisual = function (dt) {
+    if (!this.body) return;
+    if (this.corpseFinalY === null) {
+      this.root.position.copy(this.pos);
+      this.yawFrame.rotation.y = this.yaw;
+      this.body.position.y = this.bodyBaseY || 0;
+      this.body.rotation.set(-Math.PI / 2, 0, 0);
+      // Include the equipped axe: the validation box spans the whole corpse.
+      var minY = new THREE.Box3().setFromObject(this.root).min.y;
+      // A root translation has the opposite sign to the measured minimum.
+      this.corpseFinalY = isFinite(minY) ? -minY + 0.01 : 0;
+    }
+    if (this.settleTime < 0 && this.deadFall >= 1) this.settleTime = 0;
+    if (this.settleTime < 0) {
+      this.deadFall = Math.min(1, this.deadFall + dt * 2.5);
+      this.body.rotation.x = -this.deadFall * Math.PI / 2;
+      this.root.position.y = this.deadFall * this.corpseFinalY;
+    } else {
+      this.settleTime += dt;
+      var sp = Math.min(1, this.settleTime / ANIM.death.settleDuration);
+      var decay = Math.exp(-sp * 5);
+      var bounce = Math.sin(sp * Math.PI * 2) * ANIM.death.settleOvershoot * decay;
+      this.body.rotation.x = -Math.PI / 2;
+      this.root.position.y = this.corpseFinalY + bounce;
+    }
+  };
+
   // FSM sense/aggression update. playerPos: THREE.Vector3, canDamagePlayer:
   // callback(amount, attacker) applies damage through the combat layer if the
   // player is vulnerable (returns true if it landed). boundary: {z, holdMargin} clamps
   // movement to home side.
   Enemy.prototype.update = function (dt, playerPos, playerAlive, canDamagePlayer, boundary, regionManager) {
-    if (this.fsm === 'dead') return;
+    if (this.fsm === 'dead') {
+      this.updateDeathVisual(dt);
+      return;
+    }
     this.fsmTime += dt;
 
     var toPlayerX = playerPos.x - this.pos.x;
@@ -99,14 +135,52 @@
     if (this.fsm === 'stagger') {
       if (this.fsmTime >= this.cfg.staggerTime) this.setFsm('chase');
     } else if (this.fsm === 'attack') {
-      this.attackTimer -= dt;
-      if (distToPlayer > this.cfg.attackRange * 1.4) {
-        this.setFsm('chase');
-      } else if (this.attackTimer <= 0 && playerAlive) {
-        canDamagePlayer(this.cfg.attackDamage, this);
-        this.attackTimer = this.cfg.attackCooldown;
+      if (!playerAlive) {
+        this.setFsm('idle');
+        this.attackPhase = 'idle';
+        this.attackPhaseT = 0;
+      } else {
+        var phase = this.cfg.attackPhase;
+        this.attackPhaseT += dt;
+        if (this.attackPhase === 'windup') {
+          // combat-ds1 P0-6: only windup may track; freeze facing for the hit.
+          if (distToPlayer > 0.001) {
+            var wantYaw = Math.atan2(toPlayerX, toPlayerZ);
+            var deltaYaw = wantYaw - this.yaw;
+            while (deltaYaw > Math.PI) deltaYaw -= Math.PI * 2;
+            while (deltaYaw < -Math.PI) deltaYaw += Math.PI * 2;
+            var maxYaw = phase.trackDegPerSec * Math.PI / 180 * dt;
+            this.yaw += Math.max(-maxYaw, Math.min(maxYaw, deltaYaw));
+          }
+          if (this.attackPhaseT >= phase.windup) {
+            this.attackPhase = 'active';
+            this.attackPhaseT = 0;
+            // One damage opportunity at active entry; range and facing must
+            // both hold after tracking ends. The callback owns parry/i-frames.
+            var hitYaw = Math.atan2(toPlayerX, toPlayerZ) - this.yaw;
+            while (hitYaw > Math.PI) hitYaw -= Math.PI * 2;
+            while (hitYaw < -Math.PI) hitYaw += Math.PI * 2;
+            if (distToPlayer <= this.cfg.attackRange + window.WH_CONFIG.player.radius &&
+                Math.abs(hitYaw) <= phase.hitArcDeg * Math.PI / 360) {
+              canDamagePlayer(this.cfg.attackDamage, this);
+            }
+          }
+        } else if (this.attackPhase === 'active') {
+          if (this.attackPhaseT >= phase.active) {
+            this.attackPhase = 'recover';
+            this.attackPhaseT = 0;
+          }
+        } else if (this.attackPhase === 'recover' && this.attackPhaseT >= phase.recover) {
+          if (distToPlayer <= this.cfg.attackRange * 1.4) {
+            this.attackPhase = 'windup';
+            this.attackPhaseT = 0;
+          } else {
+            this.setFsm('chase');
+            this.attackPhase = 'idle';
+            this.attackPhaseT = 0;
+          }
+        }
       }
-      if (!playerAlive) this.setFsm('idle');
     } else if (this.fsm === 'idle' || this.fsm === 'aggro') {
       if (playerAlive && distToPlayer <= this.cfg.sightRadius) {
         this.setFsm(this.fsm === 'idle' ? 'aggro' : 'aggro');
@@ -128,7 +202,8 @@
             : { x: 0, z: 0 };
         }
         this.setFsm('attack');
-        this.attackTimer = 0;
+        this.attackPhase = 'windup';
+        this.attackPhaseT = 0;
       }
     }
 
@@ -187,26 +262,10 @@
     // ---- visual ----
     if (this.body) {
       this.root.position.copy(this.pos);
-      this.body.rotation.y = this.yaw;
-      if (this.fsm === 'dead') {
-        if (this.settleTime < 0 && this.deadFall >= 1) {
-          this.settleTime = 0;           // fall finished: start settle bounce
-        }
-        if (this.settleTime < 0) {
-          this.deadFall = Math.min(1, this.deadFall + dt * 2.5);
-          this.body.rotation.x = -this.deadFall * Math.PI / 2;
-          this.root.position.y = -this.deadFall * 0.3;
-        } else {
-          // v3: settle bounce - overshoot above final sink, then settle
-          this.settleTime += dt;
-          var sp = Math.min(1, this.settleTime / ANIM.death.settleDuration);
-          var decay = Math.exp(-sp * 5);
-          var bounce = Math.sin(sp * Math.PI * 2) * ANIM.death.settleOvershoot * decay;
-          this.body.rotation.x = -Math.PI / 2;
-          this.root.position.y = -0.3 + bounce;
-        }
-      } else {
-        // v3 D3: layered walk cycle with per-type amplitude multipliers
+      this.yawFrame.rotation.y = this.yaw;
+      this.body.rotation.y = 0;
+      // v3 D3: layered walk cycle with per-type amplitude multipliers
+      if (this.fsm !== 'dead') {
         var mult = ANIM.enemyWalk[this.type] ||
                    { bob: 1, sway: 1, lean: 1, yawOsc: 1 };
         var movingNow = moveSpeed > 0;
@@ -233,28 +292,40 @@
         this.body.rotation.x = eLean + stagLean;
         this.body.rotation.z = eRoll;
         this.body.position.x = eSway;
-        this.body.rotation.y = this.yaw + eYawOsc;
+        this.body.rotation.y = eYawOsc;
         if (stagT > 0) {
           // crouch dip proportional to stagger intensity
           this.body.position.y = (this.bodyBaseY || 0) - 0.06 * stagT;
         } else {
           this.body.position.y = this.bodyBaseY || 0;
         }
-        // v5: bandit axe swing. attackTimer counts down the cooldown; sweep
-        // rotation.y 90deg early in the cooldown window (the strike window).
+        if (this.type === 'ghoul' && this.fsm === 'attack' &&
+            this.attackPhase === 'windup') {
+          // The hop stays on the root; the crouch telegraphs the hit below it.
+          var dip = Math.min(1, this.attackPhaseT / this.cfg.attackPhase.windup);
+          this.body.position.y -= 0.08 * dip;
+        }
+        // combat-ds1 P0-6: slow windup raise, fast active sweep, recover.
         if (this.weaponPivot && this.axeIdle) {
-          if (this.fsm === 'attack' && this.attackTimer > 0 &&
-              this.attackTimer <= this.cfg.attackCooldown) {
-            var cd = this.cfg.attackCooldown || 1;
-            var swingT = 1 - this.attackTimer / cd;        // 0..1 since strike
-            var sw = Math.min(1, swingT / 0.4);            // 90deg sweep in first 40%
-            var back = smooth(Math.min(1, Math.max(0, (swingT - 0.4) / 0.6)));
-            this.weaponPivot.rotation.y = this.axeIdle.rot[1] -
-              (Math.PI / 2) * sw + (Math.PI / 2) * back;
+          if (this.fsm === 'attack' && this.attackPhase === 'windup') {
+            var raise = Math.min(1, this.attackPhaseT / this.cfg.attackPhase.windup);
+            this.weaponPivot.rotation.y = this.axeIdle.rot[1] + (Math.PI / 8) * raise;
+          } else if (this.fsm === 'attack' && this.attackPhase === 'active') {
+            var sweep = Math.min(1, this.attackPhaseT / this.cfg.attackPhase.active);
+            this.weaponPivot.rotation.y = this.axeIdle.rot[1] + Math.PI / 8 -
+              (Math.PI * 5 / 8) * sweep;
+          } else if (this.fsm === 'attack' && this.attackPhase === 'recover') {
+            var recovery = smooth(Math.min(1, this.attackPhaseT / this.cfg.attackPhase.recover));
+            this.weaponPivot.rotation.y = this.axeIdle.rot[1] - (Math.PI / 2) * (1 - recovery);
           } else {
             this.weaponPivot.rotation.y = this.axeIdle.rot[1];
           }
         }
+      }
+      // Idle patrol poses can tilt the low mesh below or above the floor.
+      if (this.fsm === 'idle' && this.hopTimer < 0) {
+        var idleMinY = new THREE.Box3().setFromObject(this.root).min.y;
+        if (isFinite(idleMinY)) this.root.position.y -= idleMinY;
       }
     }
   };
@@ -272,6 +343,8 @@
     this.riposteStaggerTimer = duration;
     this.riposteArmed = true;
     this.hopTimer = -1;                  // cancel any mid-hop lunge
+    this.attackPhase = 'idle';          // combat-ds1 P0-6: no phase leaks after parry
+    this.attackPhaseT = 0;
     this.setFsm('stagger');
   };
 

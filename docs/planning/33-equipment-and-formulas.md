@@ -26,7 +26,7 @@ gorget) are never slots and never carry stats, per the doc 27 amendment.
 | BACK | cloak armor value (light only), quiver if archer | BACK layer |
 | MAIN HAND | weapon | WEAPON layer, right anchor |
 | OFF HAND | weapon or shield or empty | WEAPON layer, left anchor |
-| BELT | potions/consumables, no stats | new slot, no doc 27 layer (hidden) |
+| BELT | 5 ability slots (bound spells, keys 1-5) + 2 consumable slots (active combat potions, dedicated keys); no stats | new slot, no doc 27 layer (hidden); REDEFINED 2026-09-22 ruling pass, doc 04 |
 | TALISMAN x2 | charms/trinkets | new slots, no doc 27 layer (see 6) |
 
 The HANDS slot always exists mechanically even though doc 27 marks the ARM
@@ -244,3 +244,34 @@ subclass with its own identity: slower reload cadence, higher
 per-shot poise damage than bows. Same locked hard-number conventions
 (60 fps, doc 33 formulas apply unchanged). Catalog rows go to doc 39;
 verb grammar (doc 04) unchanged.
+
+## RULING PASS (combat-architecture session, 2026-09-22, Nicko)
+
+1. BELT REDEFINED (section 1 table updated above): the belt is the ABILITY
+   BELT - 5 bound-spell slots mapped to keys 1-5 plus 2 consumable slots
+   mapped to dedicated keys, carrying ACTIVE COMBAT POTIONS ONLY. Other
+   potions are daily buffs consumed with food (cooking system, doc 10/19).
+   No passive or stat items on the belt.
+2. HAND IMPLEMENT GRAMMAR (amends section 4): each hand holds an
+   IMPLEMENT - weapon, shield, or BOUND SPELL. New combination
+   weapon+spell = BATTLE-MAGE WEAVE: off-hand input casts the bound spell,
+   main-hand input swings the weapon; bound spell pays +25 percent Focus
+   cost when the other hand holds a weapon (PROPOSED); casting never
+   interrupts or resets the weapon chain. spell+spell = true caster,
+   +25 percent magnitude at +40 percent Focus cost (PROPOSED). Weapon+weapon
+   (Dual Wield), weapon+shield, and two-hand rules above are UNCHANGED.
+   Bows/crossbows remain inherently two-handed.
+3. LOADOUTS: exactly TWO loadouts, each = one full hand-implement row plus
+   its own belt (5 ability + 2 consumable slots). Loadout toggle is a
+   deliberate ~0.6-0.8s commit (no attack/cast during it); toggling resets
+   the active chain but keeps a banked armed finisher in its persistence
+   window. Binding happens in menus, out of combat only. Full ruling in
+   doc 04 (2026-09-22 ruling pass, parts A-D).
+4. RESOURCE SPLIT UNCHANGED: weapons spend Stamina, spells spend Focus;
+   spells and weapons share one health scale by construction (section 6
+   stands). Hybrid weaves gain flexibility, not power - fairness floor
+   holds.
+5. STAGGER interrupts casting: a poise hit fizzles the active cast.
+   Poise grammar (doc 04) owns this counterplay; no new system.
+6. Numbers marked PROPOSED here and in doc 04 are GDD tuning until a
+   playable build exists to feel them.

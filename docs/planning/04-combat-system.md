@@ -496,3 +496,99 @@ Status line per item: PROPOSED (Astrabot bake-in from 26-A analysis,
   light, not particle realism). PROPOSED.
 - Roll direction: 16-view player recommendation (spec and the 8-view
   alternative in doc 28, PROPOSED). PROPOSED.
+
+## RULING PASS (combat-architecture session, 2026-09-22, Nicko - ARMED FINISHERS + SPELL-IN-HAND + THE MAGIC BELT)
+
+LOCKED by Nicko this session. Three amendments that together form the
+combat rhythm layer. Status: LOCKED as design; numbers below are PROPOSED
+tuning until a playable build exists to feel them.
+
+### A. ARMED FINISHERS (techniques become the combat loop)
+
+- SPLIT RULE: OFFENSIVE techniques are ARMED FINISHERS - gated behind
+  completing the weapon's attack chain. UTILITY and SPECIALIST techniques
+  stay passive/conditional perks (state-based, not move-based). The three
+  menu columns keep their identity: Offensive = what you DO at the end of
+  a chain, Utility = how you survive and move, Specialist = how your build
+  bends the rules.
+- CHAIN BANKING: finishing a weapon's attack chain ARMS that weapon's
+  chosen OFFENSIVE technique for a short persistence window (~3-4s,
+  tuning). The armed state survives a weapon swap and a loadout toggle.
+- PARTIAL CHARGE: finishing HALF the chain banks a weaker charge (~60
+  percent effect); full chain banks 100 percent. Tuning target.
+- CROSS-FINISHERS: swapping to weapon B while A is armed and finishing
+  B's chain triggers a combined cross-technique. Cross-finishers are
+  AUTHORED PAIRS, not all 36 x 36 combinations (animation budget).
+- PER-LINE ACTIVATION GRAMMAR: melee lines bank via chains; Archery banks
+  via consecutive hits without a miss (streak); Shield/Defense banks via
+  block/parry/bash sequences. One mechanic family, three grammars.
+- COUNTERPLAY: stagger interrupts the armed state (no new system; poise
+  grammar already owns this). Armed state is VISIBLE (weapon glow, VFX
+  intensity language per doc 27).
+- PERMANENCE HOLDS: technique picks stay permanent (doc 18 lock); the
+  activation rule changes HOW techniques fire, not WHAT they are.
+
+### B. HAND IMPLEMENT GRAMMAR (doc 33 sec 4 amendment)
+
+- Each hand holds an IMPLEMENT: weapon, shield, or BOUND SPELL.
+  Main/Off combinations: weapon+weapon = Dual Wield (locked, unchanged);
+  weapon+shield = classic (locked, unchanged); weapon+spell = BATTLE-MAGE
+  WEAVE (new); spell+spell = true caster (+25 percent magnitude at +40
+  percent Focus cost, PROPOSED); two-hand grip = locked +25 percent rule,
+  unchanged. Bows/crossbows stay inherently two-handed (never weave).
+- WEAVE RULES: off-hand input casts the bound spell; main-hand input
+  swings the weapon. A bound spell pays +25 percent Focus cost when the
+  other hand holds a weapon ("fighting with one hand" tax, PROPOSED).
+  Casting does NOT interrupt or reset the main-hand weapon chain.
+- RESOURCE SPLIT: weapons spend Stamina, spells spend Focus (doc 33
+  unchanged); the weave self-regulates via the two pools. Spells and
+  weapons share one health scale (doc 33 by construction) - hybrid gets
+  flexibility, not power. Fairness floor holds.
+- CHARGE-UP SPELLS (Ember Lance, Immolate, Meteor Call) already cannot
+  cast while moving (locked): instant T1/T2 bolts weave between rush
+  attacks; T3+ is stationary commitment. The locked caster trade-off IS
+  the weave rhythm.
+- STAGGER interrupts casting (poise hit = cast fizzles). Counterplay
+  already exists in the poise grammar; no new system.
+
+### C. THE MAGIC BELT (5 abilities + 2 consumables) and LOADOUTS
+
+- THE BELT: 5 ability slots mapped to keyboard keys 1-5. Pressing 1-5
+  swaps the spell bound in the off hand: instant, short regrip (~0.3s,
+  tuning), does NOT reset the main-hand weapon chain. Selected spell
+  shows as the off-hand glow (school-colored, doc 27 layer).
+- CONSUMABLE SLOTS: 2 additional belt slots map to dedicated keyboard
+  buttons and carry ACTIVE COMBAT POTIONS ONLY (consumables). Other
+  potions are DAILY BUFFS consumed with food (doc 10/19 cooking system,
+  unchanged). The belt carries only active-use items; no passive items,
+  no stat items on the belt.
+- LOADOUTS: exactly TWO loadouts, both always carried. Each loadout = one
+  full hand-implement row (main hand + off hand per section B) PLUS its
+  own belt of 5 ability slots + 2 consumable slots. Loadout is the
+  COMMITMENT layer; spell selection is the fast layer.
+- TOGGLE: swapping loadout I <-> II is a deliberate action: sheathe/regrip
+  animation (~0.6-0.8s, tuning) during which the player cannot attack or
+  cast. This commit window is the anti-Morrowind lever: no mid-fight
+  menu time, only two heavy-swap keys.
+- BINDING: rebinding slots or loadouts happens in the menu, out of
+  combat. In combat: select (1-5, consumable keys) and toggle only.
+- BELT SPELLS OFF-WEAPON: belt spells are always SELECTABLE in any
+  loadout, but casting requires the off hand to be spell-or-empty. A
+  shield loadout can pre-select a spell for after the toggle.
+- LOADOUT TOGGLE vs STATE: toggle resets the active chain but KEEPS a
+  banked armed finisher inside its persistence window (capstone play:
+  chain A, arm, toggle, finisher lands from loadout B). Dual Wield's
+  Weapon Swap Flow (locked menu) is the training-wheel version of this.
+- HUD: belt = 5 ability slots + 2 consumable slots + 2 loadout pips on
+  the HUD, monospace/dark theme per doc 04 HUD conventions.
+
+### D. DOC TOUCH LIST
+- 04: this ruling (verbs, aiming, counterplay) - DONE HERE.
+- 17: bound spell is a CASTING MODE; no change to spell lists, tiers,
+  acquisition, or axis gating. (Cross-ref note there.)
+- 27: off-hand spell glow replaces shield/weapon on the left anchor when
+  the implement is a spell.
+- 33: sec 1 BELT slot redefinition (below), sec 4 implement grammar (part
+  B above), stamina/focus split unchanged.
+- NEW DOC: cross-finisher authored-pair catalog at the next combat-doc
+  touch.

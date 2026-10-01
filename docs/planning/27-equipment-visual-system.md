@@ -156,3 +156,11 @@ Tension 3, Part 3 gap 2.
 - Human body canon dependency: the paper-doll system currently lacks
   body canon for the human player body; blocked on doc 26's proposed
   human cards (doc 26 bake-in, PROPOSED). PROPOSED.
+
+## BAKE-IN (2026-09-22, doc 04 ruling pass - PROPOSED)
+OFF-HAND SPELL GLOW: when the off-hand implement is a BOUND SPELL, the
+left weapon anchor renders the spell's school-colored glow instead of a
+shield/weapon visual. Belt selection (keys 1-5) swaps the glow color per
+school. Armed-finisher state renders as a weapon glow (VFX intensity
+language consistent with attunement-scaled effects). Loadout toggle plays
+the sheathe/regrip animation between implement visuals.

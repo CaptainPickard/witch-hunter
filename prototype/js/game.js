@@ -22,7 +22,8 @@
     fpsValue: 0,
     transitionFlash: 0,
     shakeTimer: 0,                    // v3 camera shake remaining seconds
-    shakeSeed: 0                      // per-pulse random phase
+    shakeSeed: 0,                     // per-pulse random phase
+    firebolts: []                     // v7: live Firebolt projectiles
   };
   window.WH_GAME = game;
 
@@ -88,6 +89,69 @@
     game.hud.guardBreakText = gbText;
     game.hud.flashTimer = 0;
     game.hud.flashTimerMax = 0;
+
+    // v7: focus bar above the stamina bar (same bar style, blue fill)
+    var focusLabel = document.createElement('div');
+    focusLabel.className = 'bar-label';
+    focusLabel.textContent = 'Focus';
+    focusLabel.id = 'wh-focus-label';
+    focusLabel.style.textTransform = 'none';  // v7: keep case for test visibility
+    document.getElementById('wh-bars').appendChild(focusLabel);
+    var focusOuter = document.createElement('div');
+    focusOuter.className = 'bar-outer';
+    focusOuter.id = 'wh-focus-bar-outer';
+    var focusFill = document.createElement('div');
+    focusFill.className = 'bar-fill focus';
+    focusFill.id = 'wh-focus-bar';
+    focusOuter.appendChild(focusFill);
+    document.getElementById('wh-bars').appendChild(focusOuter);
+    game.hud.focusBar = focusFill;
+
+    // v7: bottom-center belt row: 5 spell slots | divider | 2 consumables
+    // | divider | 2 loadout pips I/II
+    var belt = document.createElement('div');
+    belt.id = 'wh-belt';
+    var B = CFG.belt;
+    game.hud.beltSlots = [];
+    for (var s = 0; s < B.slots; s++) {
+      var slot = document.createElement('div');
+      slot.className = 'belt-slot';
+      slot.textContent = String(s + 1);
+      belt.appendChild(slot);
+      game.hud.beltSlots.push(slot);
+    }
+    var div1 = document.createElement('div');
+    div1.className = 'belt-divider';
+    belt.appendChild(div1);
+    game.hud.consSlots = [];
+    var consKeys = ['R', 'T'];
+    for (var c = 0; c < B.consumableSlots; c++) {
+      var cslot = document.createElement('div');
+      cslot.className = 'belt-slot consumable';
+      cslot.textContent = consKeys[c] || '';
+      belt.appendChild(cslot);
+      game.hud.consSlots.push(cslot);
+    }
+    var div2 = document.createElement('div');
+    div2.className = 'belt-divider';
+    belt.appendChild(div2);
+    game.hud.loadoutPips = [];
+    for (var l = 0; l < 2; l++) {
+      var pip = document.createElement('div');
+      pip.className = 'loadout-pip';
+      pip.textContent = l === 0 ? 'I' : 'II';
+      belt.appendChild(pip);
+      game.hud.loadoutPips.push(pip);
+    }
+    document.getElementById('wh-hud').appendChild(belt);
+    game.hud.belt = belt;
+
+    // v7: offhand spell glow (left-hand anchor, school-colored emissive)
+    game.spellGlow = new THREE.Mesh(
+      new THREE.SphereGeometry(0.12, 8, 6),
+      new THREE.MeshBasicMaterial({ color: 0xff7722 })
+    );
+    game.spellGlow.visible = false;
   }
 
   // v6: HUD screen-edge flash pulse (DOM opacity, no WebGL work).
@@ -134,6 +198,72 @@
     var p = game.player;
     game.hud.hpBar.style.width = (p.hp / p.hpMax * 100) + '%';
     game.hud.stamBar.style.width = (p.stamina / p.staminaMax * 100) + '%';
+    // v7: armed state = weapon emissive pulse while armedTimer > 0
+    if (p.sword && p.sword.material) {
+      if (!p.swordBaseEmissive && p.sword.material.emissive) {
+        p.swordBaseEmissive = {
+          hex: p.sword.material.emissive.getHex(),
+          intensity: p.sword.material.emissiveIntensity !== undefined
+            ? p.sword.material.emissiveIntensity : 1
+        };
+      }
+      if (p.armedTimer > 0) {
+        var pulse = 0.5 + 0.5 * Math.sin(performance.now() / 1000 * 8);
+        var armedHex = p.crossArmed ? 0xffd24a : 0xff7722;  // gold cross / orange armed
+        p.sword.material.emissive.setHex(armedHex);
+        if (p.sword.material.emissiveIntensity !== undefined) {
+          p.sword.material.emissiveIntensity = 0.4 + pulse * 0.9;
+        }
+      } else if (p.swordBaseEmissive) {
+        p.sword.material.emissive.setHex(p.swordBaseEmissive.hex);
+        if (p.sword.material.emissiveIntensity !== undefined) {
+          p.sword.material.emissiveIntensity = p.swordBaseEmissive.intensity;
+        }
+      }
+    }
+    // v7: focus bar
+    if (game.hud.focusBar) {
+      game.hud.focusBar.style.width = (p.focus / p.focusMax * 100) + '%';
+    }
+    // v7: belt HUD state (selected tint, active pip)
+    if (game.hud.belt) {
+      var spellId = p.getSelectedSpellId ? p.getSelectedSpellId() : null;
+      var SC = spellId ? CFG.spell[spellId].schoolColor : null;
+      var hex = SC ? '#' + ('000000' + SC.toString(16)).slice(-6) : '';
+      for (var i = 0; i < game.hud.beltSlots.length; i++) {
+        var el = game.hud.beltSlots[i];
+        var has = !!p.belt[i];
+        var sel = (i === p.selectedBeltSlot);
+        el.classList.toggle('filled', has);
+        el.classList.toggle('selected', sel);
+        el.style.borderColor = (sel && SC) ? hex : '';
+        el.style.color = (sel && SC) ? hex : '';
+      }
+      for (var ci = 0; ci < game.hud.consSlots.length; ci++) {
+        var cs = game.hud.consSlots[ci];
+        var cc = p.consumables[ci];
+        cs.classList.toggle('filled', !!(cc && cc.charges > 0));
+      }
+      for (var pi = 0; pi < game.hud.loadoutPips.length; pi++) {
+        game.hud.loadoutPips[pi].classList.toggle(
+          'active', p.activeLoadout === pi + 1);
+      }
+    }
+    // v7: offhand glow follows the implement + selected spell color
+    if (game.spellGlow && p.yawFrame) {
+      var spellOn = p.offhand === 'spell';
+      game.spellGlow.visible = spellOn;
+      if (spellOn && game.spellGlow.parent !== p.yawFrame) p.yawFrame.add(game.spellGlow);
+      if (spellOn) {
+        var sid = p.getSelectedSpellId ? p.getSelectedSpellId() : null;
+        if (sid && CFG.spell[sid]) {
+          game.spellGlow.material.color.setHex(CFG.spell[sid].schoolColor);
+        }
+        // hold at the left-hand anchor (mirror of the weapon idle pose)
+        var ip = window.WH_CONFIG.moveset.idlePose;
+        game.spellGlow.position.set(-ip.pos[0], ip.pos[1], ip.pos[2]);
+      }
+    }
     updateBlockHud(dt);   // v6: flash decay
 
     // fps
@@ -284,10 +414,6 @@
     game.camera.position.y += Math.cos(t * 53) * amp * 0.6;
   }
 
-  function canDamagePlayer(amount) {
-    game.player.takeDamage(amount);
-  }
-
   // v6: all enemy damage routes through the block/parry choke point.
   function damagePlayerFromEnemy(amount, attacker) {
     game.player.resolveIncomingHit(amount, attacker);
@@ -379,6 +505,9 @@
         p.guardBreakTimer = CFG.block.guardBreakStun;
         p.endBlock();
         p.stamina = 0;
+        // v7: guard break counterplay clears armed finisher state
+        p.armedTimer = 0;
+        p.crossArmed = false;
         if (p.onGuardBreak) p.onGuardBreak();
       },
       isGuardBroken: function () { return game.player.guardBroken; },
@@ -400,7 +529,38 @@
         return !!(e && e.riposteArmed);
       },
       tryBlock: function () { game.player.tryBlock(); },
-      endBlock: function () { game.player.endBlock(); }
+      endBlock: function () { game.player.endBlock(); },
+      // v7 weave hooks
+      getFocus: function () { return game.player.focus; },
+      setFocus: function (v) { game.player.focus = v; game.player.focusRegenBlock = 0.1; },  // v7: brief regen pause for debug stability
+      getBelt: function () { return game.player.getBelt(); },
+      selectBeltSlot: function (i) { game.player.selectBeltSlot(i); },
+      getActiveLoadout: function () { return game.player.activeLoadout; },
+      toggleLoadout: function () { game.player.toggleLoadout(); },
+      getOffhand: function () { return game.player.offhand; },
+      getCastState: function () {
+        var p = game.player;
+        return {
+          windup: p.castWindup,
+          cooldown: p.castCooldown,
+          regrip: p.regripTimer,
+          toggling: p.toggling
+        };
+      },
+      getArmedState: function () {
+        var p = game.player;
+        return { timer: p.armedTimer, cross: p.crossArmed };
+      },
+      getFirebolts: function () {
+        return game.firebolts.map(function (f) {
+          return { x: f.pos.x, z: f.pos.z, alive: f.alive };
+        });
+      },
+      useConsumable: function (slot) { game.player.useConsumable(slot); },
+      getConsumables: function () { return game.player.getConsumables(); },
+      getCombo: function () {
+        return { index: game.player.comboIndex, queued: game.player.comboQueued };
+      }
     };
   }
 
@@ -415,9 +575,27 @@
     setupHud();
 
     game.player = new window.WH_Player(game.scene, game.camera);
+    game.player.offhandGlow = game.spellGlow;  // v7: expose glow mesh on player for debug hooks
     game.scene.add(game.player.root);
     // D3: player delegates the F-key toggle to the game's lock-on logic
     game.player.onLockToggle = toggleLockOn;
+
+    // v7: weave HUD feedback callbacks
+    game.player.onCastRefusal = function () {
+      flashScreen(CFG.block.blockFlashSeconds, 'block');
+    };
+    game.player.onFizzle = function () {
+      flashScreen(CFG.block.parryFlashSeconds, 'parry');
+    };
+    game.player.onSpellSelected = function (spellId) {
+      var SC = CFG.spell[spellId];
+      if (SC && game.spellGlow) {
+        game.spellGlow.material.color.setHex(SC.schoolColor);
+      }
+    };
+    game.player.onPotion = function () {
+      flashScreen(CFG.block.blockFlashSeconds, 'block');
+    };
 
     // v6: block/parry HUD feedback callbacks (player must exist first)
     game.player.onParry = function () {
@@ -486,6 +664,33 @@
 
     // player + transition logic
     game.player.update(dt, clampPlayerToBounds);
+
+    // ---- v7: cast windup tick (fires the bolt at windup end) ----
+    if (game.player.castWindup > 0 && game.player.state === 'alive') {
+      game.player.castWindup -= dt;
+      if (game.player.castWindup <= 0) {
+        game.player.castWindup = 0;
+        var req = game.player.completeCast();
+        if (req && window.WH_SPELLS) {
+          var bolt = window.WH_SPELLS.spawn(
+            game.scene, req.spellId,
+            { x: req.origin.x, y: 1.2, z: req.origin.z },
+            req.dirX, req.dirZ);
+          if (bolt) game.firebolts.push(bolt);
+        }
+      }
+    }
+
+    // ---- v7: projectile update + collision vs enemies ----
+    if (game.firebolts.length > 0) {
+      var activeEnemies = rm.getEnemies(rm.logic.activeId);
+      var keep = [];
+      for (var fb = 0; fb < game.firebolts.length; fb++) {
+        var b = game.firebolts[fb];
+        if (b.alive && b.update(dt, activeEnemies)) keep.push(b);
+      }
+      game.firebolts = keep;
+    }
     var tr = rm.tickTransition(game.player.pos.x, game.player.pos.z);
     if (tr.action === 'cross') {
       // position already mapped by logic; apply to player
@@ -525,6 +730,13 @@
         // v3: pass hit direction (player -> enemy) for stagger knockback
         var hitDir = dist > 0.001 ? { x: dx / dist, z: dz / dist } : null;
         e.takeDamage(dmg, hitDir);
+        // v7: 3rd chain strike landing (consumeAttackSweep consumed) arms
+        // the armed finisher window. Use chainHits counter (robust to
+        // comboIndex resets from recoverFullyElapsed).
+        game.player.chainHits = (game.player.chainHits || 0) + 1;
+        if (game.player.chainHits >= window.WH_CONFIG.moveset.comboChainCap) {
+          game.player.armedTimer = CFG.armed.windowSeconds;
+        }
         // v3 D4: shake pulse on landed melee hits, while locked-on only
         if (game.player.lockTarget) triggerShake();
       }

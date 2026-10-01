@@ -207,6 +207,7 @@ window.WH_CONFIG = {
     opacityX100: 14                   // opacity 0.14 (within 0.12-0.18 band)
   },
 
+  // v7 "Weave Slice": focus pool, spells, belt, loadouts, armed finishers.
   player: {
     // (POC) scale: character model is ~2 units tall
     walkSpeed: 6.0,
@@ -228,6 +229,7 @@ window.WH_CONFIG = {
     hpMax: 100.0,
     hpRegenPerSec: 0.0,               // no passive regen in v1
     turnLerpDegPerSec: 720.0,         // body yaw turn rate toward move dir
+    turnLerpDegPerSecAttackWindup: 720, // combat-ds1 P0-4: free turn during windup only
     radius: 0.7,                      // collision circle
     camDistance: 7.0,
     camMinDistance: 3.0,
@@ -239,7 +241,53 @@ window.WH_CONFIG = {
     camAutoFollowDelay: 1.2,          // seconds after manual drag before auto-follow resumes
     camAutoFollowRate: 2.5,           // per-second exp lerp for auto yaw follow
     mouseSensDegPerPx: 0.25,
-    respawnDelay: 2.2                 // seconds on death screen before respawn
+    respawnDelay: 2.2,                 // seconds on death screen before respawn
+    // v7: focus pool (spells spend Focus, weapons spend Stamina)
+    focusMax: 100,                    // max focus
+    focusRegenPerSec: 8,              // focus regen per second after delay
+    focusRegenDelay: 0.5,             // seconds after spend before regen resumes
+    castFocusTaxMult: 1.25            // spell focus tax while weapon in main hand
+  },
+
+  // v7: bound spells (spell-in-hand battle-mage weave, ONE spell in slice)
+  spell: {
+    firebolt: {
+      focusCost: 8,                   // base focus cost (tax applied by player)
+      damage: 12,                     // hp removed on enemy hit
+      speed: 40,                      // projectile speed (units/s)
+      hitRadius: 0.5,                 // collision circle radius vs enemy
+      maxRange: 30,                   // lifetime = maxRange / speed
+      castWindup: 0.25,               // seconds before the bolt spawns
+      castCooldown: 0.3,              // seconds after cast before next cast
+      schoolColor: 0xff7722           // fire school color (offhand glow, HUD tint)
+    }
+  },
+
+  // v7: the magic belt (5 abilities + 2 consumables, doc 04 ruling part C)
+  belt: {
+    slots: 5,                         // spell ability slots (keys 1-5)
+    regripSeconds: 0.3,               // re-grip busy window after selection
+    consumableSlots: 2                // consumable slots (keys R / T)
+  },
+
+  // v7: loadout toggle (commit window, doc 04 ruling part C)
+  loadout: {
+    toggleSeconds: 0.8                // cannot attack/cast/block/roll during toggle
+  },
+
+  // v7: armed finishers (doc 04 ruling part A, slice simplification)
+  armed: {
+    windowSeconds: 3.5,               // armed state persistence window
+    damageMult: 1.5,                  // armed finisher damage multiplier
+    crossDamageMult: 2.0              // cross-finisher damage multiplier
+  },
+
+  // v7: belt consumables (active combat potions only, doc 04 ruling part C)
+  consumable: {
+    healthPotion: {
+      heal: 40,                       // hp restored (never above hpMax)
+      charges: 3                      // uses per refill
+    }
   },
 
   // v6: block and parry (defense layer v1, HUD/DOM cues only)
@@ -274,7 +322,14 @@ window.WH_CONFIG = {
       leashRadius: 34.0,              // beyond this from spawn, disengage
       staggerTime: 0.4,
       radius: 0.7,
-      aggroPingInterval: 0.2          // seconds between sense checks
+      aggroPingInterval: 0.2,          // seconds between sense checks
+      attackPhase: {                   // combat-ds1 P0-6: bandit telegraph and strike
+        windup: 0.7,                   // combat-ds1 P0-6
+        active: 0.12,                  // combat-ds1 P0-6
+        recover: 0.8,                  // combat-ds1 P0-6
+        hitArcDeg: 50,                 // combat-ds1 P0-6
+        trackDegPerSec: 180            // combat-ds1 P0-6
+      }
     },
     ghoul: {
       hpMax: 45.0,
@@ -287,7 +342,14 @@ window.WH_CONFIG = {
       leashRadius: 36.0,
       staggerTime: 0.35,
       radius: 0.6,
-      aggroPingInterval: 0.2
+      aggroPingInterval: 0.2,
+      attackPhase: {                   // combat-ds1 P0-6: ghoul telegraph and strike
+        windup: 0.45,                  // combat-ds1 P0-6
+        active: 0.12,                  // combat-ds1 P0-6
+        recover: 0.5,                  // combat-ds1 P0-6
+        hitArcDeg: 50,                 // combat-ds1 P0-6
+        trackDegPerSec: 180            // combat-ds1 P0-6
+      }
     },
     separationPush: 6.0,              // circle push-out strength
     holdAtBoundaryMargin: 1.5         // enemies stop this far before the boundary
@@ -304,6 +366,7 @@ window.WH_CONFIG = {
     hysteresis: 1.25,               // break at maxDistance * hysteresis
     facingConeDeg: 140,             // total cone around CAMERA forward
     camLerp: 6.0,                   // per-second lerp for lock camera follow
+    trackWindupDegPerSec: 240,      // combat-ds1 P0-4: lock-on turn rate during attack windup
     camExtraDistance: 3.5,           // camera pulls back this much past target dist
     reticleOffsetY: 0.9             // reticle aim height above enemy feet
   },

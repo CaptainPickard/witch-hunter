@@ -436,3 +436,11 @@ Sunfire in Church vaults). Tuning detail, GDD stage.
     Corpse-Smith lapses on dark-court betrayal; Graverobber lapses on
     swearing allegiance AND its undead-patron Dark Pacts bonus is VOID
     per question 3's strict-gating ruling.
+
+## CROSS-REF (2026-09-22, doc 04 ruling pass)
+BOUND SPELL is a CASTING MODE, not a new spell category: the off hand can
+hold a bound spell (implement grammar, doc 33/04). Spell lists, tiers,
+acquisition, and axis gating are UNCHANGED. Belt selection (keys 1-5)
+swaps which spell is bound; casting rules above (dual-mode aim, charge-up
+stationarity, Focus costs) apply unchanged. Weave tax: +25 percent Focus
+cost when the other hand holds a weapon (PROPOSED, doc 04/33).
