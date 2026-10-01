@@ -230,3 +230,34 @@ preceded the failures. Rule for future batches: submit ONE task, wait
 for its pipeline to finish (or >=5 min), then submit the next; never
 queue-loop submits back-to-back. No credits consumed on 400s
 (consumed_credits stays 0 / task never created).
+
+2026-10-01 (B3 landmarks batch, commits 695efbd + 9a178f5):
+| ID | Asset | Credits | Vision-QA | Tris | Path |
+|----|-------|---------|-----------|------|------|
+| B3-spire | Ruined spire (skyline hero) | 15 | PASS | (see commit) | biome_library/b3-spire-pixelated.glb |
+| B3-gate | Mausoleum gate (chokepoint) | 15 | PASS | 9.0k | biome_library/b3-gate-pixelated.glb |
+| B3-gallows | Gallows | 15 | PASS | 6.7k | biome_library/b3-gallows-pixelated.glb |
+| B3-stones | Standing stones RING | 15 | FAIL-fused | - | UNSHIPPED (fused blob) |
+| B3-waymarker | Lantern waymarker (LIGHT SOCKET) | 15 | PASS | 7.4k | biome_library/b3-waymarker-pixelated.glb |
+| B3-shelter | Rest shelter (P1-10 anchor) | 15 | PASS | 5.8k | biome_library/b3-shelter-pixelated.glb |
+| B3-stone-single | Standing stone SINGLE (retry; ring
+     instanced at runtime 4-6x) | 15 | PASS | 4.8k | biome_library/b3-stone-single-pixelated.glb |
+Total: 105 credits (6 batch + 15 retry). 5/6 batch items pass + retry
+item passes (runtime instancing replaces the failed ring mesh).
+
+== 2026-10-01 SESSION TOTALS (asset half) ==
+- B1 retry 60cr | B6 90cr | B2 135cr (incl. retries) | B3 105cr
+  | B-tex 0cr | ref art ~20 images 0cr. Grand total: 390 credits.
+- Mesh QA record: 33 meshes/textures processed, 22 mesh sets + 10
+  B-tex landed (all v3 pixelation verified byte-level), 3 FAILs caught
+  by thumbnail QA and resolved via retry refs (bracken, moonbell) or
+  redesign+unship (stones ring -> single-stone instancing).
+- Branch: feat/world-visuals (worktree /tmp/wh-worldfeat), all pushed
+  and remote-verified through 9a178f5.
+- PARKED for next windows: B4 camp decor (240cr) + B5 gear (90cr)
+  await BOTH (a) the locked rest-space round P1-10 landing and
+  (b) Nicko's session-window ruling (their 330cr + a normal batch
+  would brush the 700/session cap).
+- Runtime wire-in of ALL landed assets = the world code rounds
+  (R2 onward), driven by the hourly finisher job once the anim
+  session lands dev.
