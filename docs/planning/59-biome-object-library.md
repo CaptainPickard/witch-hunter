@@ -185,3 +185,22 @@ B6-bracken-ref-r2.png vision-QA PASS, resubmit follow-up). Retry rule:
 one retry max per doc 59 conventions.
 Refs note: B6 + B2 + B3 reference art generated this session
 (parented on darkwood-concept.jpeg), QA PASS 100%.
+
+2026-10-01 (B-tex batch, zero credits, commit 4294bef):
+| Asset | Kind | Size | Vision-QA | Path |
+|-------|------|------|-----------|------|
+| particle-ember | sprite | 70x128 | PASS | textures/particles/particle-ember.png |
+| particle-mote | sprite | 128x128 | PASS | textures/particles/particle-mote.png |
+| particle-firefly | sprite | 128x126 | PASS (retry 1; v1 had extra wisps) | textures/particles/particle-firefly.png |
+| particle-ash | sprite | 97x128 | PASS | textures/particles/particle-ash.png |
+| particle-fogpuff | sprite | 128x112 | PASS | textures/particles/particle-fogpuff.png |
+| particle-leaf | sprite | 109x128 | PASS | textures/particles/particle-leaf.png |
+| skyline-keep-ruin | alpha layer | 2048x682 | PASS (41.1% cover) | textures/skyline/skyline-keep-ruin.png |
+| skyline-ridge-watchtower | alpha layer | 2048x682 | PASS (48.1%) | textures/skyline/skyline-ridge-watchtower.png |
+| skyline-dead-treeline | alpha layer | 2048x682 | PASS (37.4%) | textures/skyline/skyline-dead-treeline.png |
+| skyline-monolith-field | alpha layer | 2048x682 | PASS (38.0%) | textures/skyline/skyline-monolith-field.png |
+Total: 0 credits (image-gen only). Particles are RGB-on-black for
+additive blending at runtime (R2+ wiring); skylines are alpha-masked
+RGBA layers for fog-wall composition. Ground decals DEFERRED to the
+code rounds: their blending (alpha vs additive vs multiply) is an R3
+render-pipeline decision per doc 61 B-tex row.
