@@ -154,6 +154,19 @@ block prototype/js/CONFIG.js:478-481 (timeoutMs, standInColor only); window.WH_G
   drift, any :8791 request, non-artifact R1 fail, anim regression fail, >= 3 flakes.
 
 ## Amendment notes (spec-of-record vs live tree 8bd137a; I own the bars)
+B6-IO (ruling 2026-10-02, Nicko-approved "amend the probe"): R4-3(b)'s
+    ON-vs-OFF screen-space bars (D_on <= 0.60*D_off, dE >= 0.10) are
+    UNMEASURABLE at the A-spawn pose — the night rig leaves the body a
+    near-black silhouette (smoke evidence: D 475 vs 467, dE 0.0008, mask
+    3392 px of near-identical dark pixels; texture-space (a) PROVES the
+    atlas is 5-bit posterized with OFF discriminating at 196-230
+    levels/channel). REPLACED BY: (1) the texture-space gates (a) remain
+    the PRIMARY PASS basis; (2) a SCALED SCREEN RE-MEASURE (RECORD, not
+    gate): same probe at a lit pose (player at the lanternPost A1 (-2,30),
+    lantern light on the body, camera settled), numbers recorded either
+    way; a lit-pose miss does NOT fail the round (it informs tuning only).
+    Rationale: the swap demonstrably ships posterized atlases; the dark
+    pose cannot express the difference to either the probe or a viewer.
 B1. Anchors: the spec cites the manifest at assets.js:46-49; live MANIFEST is :15-54 with
     bodies at :47-49; loadOne :154-189, prepTemplate :127-152. Spec design 1 (runtime canvas
     bake) is superseded by its own MECHANISM RULING (offline PNG); I validate the ruling.
@@ -181,3 +194,14 @@ B8. Retune conflict: spec allows 512->256 or a posterize tweak but forbids Devbo
     and re-pinning PRES PNG blob bars + R4-1 dims (256) + R4-2 ratio (64.0) before re-run.
 B9. Server identity adds `pixelatedBodies` to the R3 signature (and CONFIG byte equality, A1);
     PNG files are mode 600 root-owned like the GLBs — self-spawn as the same user (root).
+B10 (IO, 2026-10-02): P4's pre-Devbot smoke on an unchanged tree expects R1
+    floor PASS-via-waivers (smoke table row R4-5) — as at R2/R3.
+B11 (IO ruling 2026-10-02, Nicko-approved): R4-5's A2 non-worsening bar
+    (|minY| <= pre + 0.005) was UNMEASURABLY tight across runs: the
+    same-build idle minY sampling spread on the IDENTICAL R4 tree is
+    0.0145 (3 fresh boots: -0.4911/-0.4766/-0.4850; probe
+    /tmp/whr4_a2_variance.py). New bar: post <= pre + 0.05 (3x noise).
+    The swap's mechanical integrity stays hard-gated by R4-1 (map
+    dims/filters/flipY/sRGB) and R4-4 (clips==6, bones equal). The
+    observed 0.523-vs-0.488 delta is idle-pose phase sampling, not a
+    geometry change (texture swap cannot move geometry).
