@@ -3,8 +3,9 @@
 // against document.baseURI at load time via new URL(...).href, so the game
 // works identically served at / and under any proxy prefix such as
 // /witchhunter/ (tailnet path). Do not hardcode proxy prefixes here.
-// Prefer -pixelated variants for props; races_regen characters have no
-// pixelated variants (D4b-3), raw mesh is accepted for characters.
+// Prefer -pixelated variants for props; rigged characters keep their raw mesh
+// and swap in a pre-baked pixelated atlas PNG at postload (R4, kill switch
+// CONFIG.assets.pixelatedBodies).
 
 (function () {
   'use strict';
@@ -51,6 +52,13 @@
     // weapons (pixelated)
     longsword: 'art-direction/3d/assets/weapons/longsword-pixelated.glb',
     handAxe: 'art-direction/3d/assets/weapons/hand-axe-pixelated.glb'
+  };
+
+  // R4: rigged body -> offline-baked atlas (512 NEAREST + 5-bit posterize).
+  var BODY_PNG = {
+    playerBody: 'art-direction/3d/assets/races_regen/rigged/human-hunter-male.rigged.pixelated.png',
+    banditBody: 'art-direction/3d/assets/races_regen/rigged/orc-male-warrior.rigged.pixelated.png',
+    ghoulBody: 'art-direction/3d/assets/races_regen/rigged/undead-ghoul-male.rigged.pixelated.png'
   };
 
   // Resolve a manifest-relative path against the document base URL, falling
@@ -151,6 +159,40 @@
     return group;
   }
 
+  // R4 postload swap: replace the body's atlas map with its pixelated PNG
+  // (the template map is shared by every clone). TextureLoader defaults are
+  // wrong for glTF UVs (flipY true, no colour space), so set state explicitly.
+  // Kill switch off, no PNG entry, or a PNG load error keeps the original.
+  function swapBodyMap(name, root, done) {
+    var rel = CFG.assets.pixelatedBodies && BODY_PNG[name];
+    if (!rel) { done(); return; }
+    new THREE.TextureLoader().load(resolveUrl(rel), function (tex) {
+      root.traverse(function (obj) {
+        if (!obj.isMesh) return;
+        var mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+        mats.forEach(function (m) {
+          if (!m || !m.map || m.map === tex) return;
+          var old = m.map;
+          tex.flipY = false;
+          tex.colorSpace = THREE.SRGBColorSpace;
+          tex.wrapS = old.wrapS;
+          tex.wrapT = old.wrapT;
+          tex.magFilter = THREE.NearestFilter;
+          tex.minFilter = THREE.LinearMipmapLinearFilter;
+          tex.generateMipmaps = true;
+          tex.needsUpdate = true;
+          m.map = tex;
+          m.needsUpdate = true;
+          old.dispose();
+        });
+      });
+      done();
+    }, undefined, function (err) {
+      console.warn('[WH assets] pixelated atlas failed for ' + name + ', keeping original: ' + err);
+      done();
+    });
+  }
+
   function loadOne(name, url, isPixelated) {
     return new Promise(function (resolve) {
       var loader = new window.WHGLTFLoader();
@@ -175,8 +217,10 @@
         }
         prepTemplate(root, isPixelated);
         cache[name] = groundAlign(root);
-        loadedCount++;
-        resolve(cache[name]);
+        swapBodyMap(name, root, function () {
+          loadedCount++;
+          resolve(cache[name]);
+        });
       }, undefined, function (err) {
         if (done) return;
         done = true;

@@ -477,6 +477,9 @@ window.WH_CONFIG = {
 
   assets: {
     timeoutMs: 20000,                 // per-asset load timeout before stand-in substitution
+    // R4 kill switch: true swaps the 3 rigged body atlases for the committed
+    // 512px pixelated PNGs at postload; false = original 2048 atlas path.
+    pixelatedBodies: true,
     standInColor: 0x777777
   }
 };
