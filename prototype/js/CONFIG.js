@@ -378,8 +378,10 @@ window.WH_CONFIG = {
     runMetersPerCycle: 6,
     attackClipStrikeFraction: 0.25
   },
-  // v3: procedural animation feel (transform-only; assets are unrigged).
-  // Stage fractions are of CONFIG.player.attackDuration and sum to 1.
+  // v3: procedural animation feel. Since whanim2 the pose values drive only the
+  // rigid stand-in fallback (skinned bodies play animRt clips); the stage
+  // fractions are the combat FSM clock for both paths. Fractions are of
+  // CONFIG.player.attackDuration (recover = 1 - windupFrac - strikeFrac).
   anim: {
     attack: {
       windupFrac: 0.30,             // of attackDuration

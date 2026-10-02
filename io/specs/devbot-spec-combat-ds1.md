@@ -741,3 +741,36 @@ game defects; 14/18 non-weapon-readers pass unchanged on the B1/B2 tree.
   produced with stand-in-geometry offsets (degraded-asset pass) — its
   A1-4 PASS is vacuous on this metric and is superseded by the D4/D5
   readers; the honest post-whanim2 floor requires the socket readers.
+
+## AMENDMENT A1+A2 (2026-10-02, IO — combat integrity review rulings)
+
+Source: independent Opus integrity review (/tmp/cc_review_* → repo copy
+io/reports/2026-10-02-combat-integrity-review-round.md). Two spec-literal
+lines produced defects; IO rules as follows (implemented in the same round,
+all four suites re-run green after the rulings):
+
+- A-1 (finding F-06): toggleLoadout's "recoverFullyElapsed=false" (weave
+  FILE PLAN §3) + ds1 P0-3 item 6 "keep as-is (verify only)" together made
+  an IDLE Q toggle start the next chain at m2 (comboIndex 1, chainHits 1
+  pre-synced), so the finisher re-armed after 2 lands instead of 3 —
+  inconsistent with a toggle DURING a swing (recoverFullyElapsed=true there,
+  giving m1). RULING: the toggle ends the chain: toggleLoadout now calls
+  endCombo() (recoverFullyElapsed=true, comboIndex=0, chainHits=0,
+  comboQueued=false — identical bookkeeping to a full recover). Armed/cross
+  banking is untouched (armedTimer survives the toggle; crossArm fires after
+  the reset line). Weave AC6 reads only {index, queued} and is unaffected.
+  The two spec-literal lines are thereby AMENDED: "keep as-is" is vacated;
+  recoverFullyElapsed=true on toggle.
+- A-2 (finding F-07): the audit of record (docs/planning/60-combat-audit-
+  dark-souls.md L221) specified arcHalfDeg (50) i.e. a HALF-angle (±50°);
+  D1 renamed the key to hitArcDeg without changing the /360 (full-arc)
+  arithmetic, so the enemy hit cone ran at ±25° — half the audited cone.
+  RULING: hitArcDeg is a HALF-angle. enemy.js active-entry gate now uses
+  hitArcDeg * Math.PI / 180 (±50°). The CONFIG value 50 is UNCHANGED
+  (spec-pinned); only its semantics resolve to the audit reading. A3-6
+  (rear-arc teleport probe) passes under either reading, unaffected.
+- Deferred (not ruled this round): A-3 corpse sink fix MUST ship together
+  with an IO-owned precise-box update of the wh_world_r1 A3 reader; A-4
+  (spell hit-stagger scope) and A-5 (cast vs toggle/roll fizzling) go to
+  the Round B spec. IO interim calls: spells deal damage WITHOUT hit-
+  stagger; in-flight casts survive toggle/roll.

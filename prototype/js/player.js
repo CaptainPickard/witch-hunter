@@ -1,9 +1,10 @@
 // Witch Hunter prototype v2 - third-person player controller.
 // D2: movement basis is CAMERA yaw (W = camera forward on screen, S = back,
 // A/D = strafe). v1 had the strafe right-vector inverted; fixed.
-// D3: souls-style lock-on: hard yaw track to target, camera follow, strafe.
-// Transform-only procedural animation (assets are unrigged). All tunables
-// from CONFIG.
+// D3: souls-style lock-on: camera follow, strafe; idle lock faces the target
+// (combat-ds1 P0-4: windup tracking is rate-limited, strike/recover frozen).
+// whanim2: skinned bodies are posed by WH_CharacterAnim clips; the procedural
+// pose code below is the rigid stand-in fallback. All tunables from CONFIG.
 
 (function () {
   'use strict';
@@ -113,9 +114,8 @@
   Player.prototype.setBody = function (meshRoot) {
     if (this.body) this.yawFrame.remove(this.body);
     this.body = meshRoot;
-    // Bob/tilt animation writes body.position.y absolutely; wrap the
-    // ground-aligned template in an inner holder so animation only moves
-    // the holder and the template's own ground offset is preserved.
+    // meshRoot is the assets.js ground-align holder; stand-in bob/tilt
+    // writes are offsets from its placement, so keep that base.
     this.bodyBaseY = meshRoot.position.y || 0;
     this.bodyBaseX = meshRoot.position.x || 0;
     this.yawFrame.add(this.body);
@@ -261,14 +261,15 @@
   // start during roll. v7: also refused during the loadout toggle busy window.
   Player.prototype.tryRoll = function () {
     if (this.state !== 'alive' || this.rolling || this.toggling) return;
+    if (this.attacking && this.getAttackStage() !== 'windup') return;  // strike/recover locked
+    if (this.stamina < CFG.rollStaminaCost) return;   // a refused roll keeps the swing
     if (this.attacking) {
-      if (this.getAttackStage() !== 'windup') return;   // strike/recover locked
       this.attacking = false;                           // cancel in windup
       this.attackTimer = 0;
       this.lungeLeft = 0;
+      this.endCombo();                                  // the cancelled swing ends the chain
       this.resetWeaponPose();
     }
-    if (this.stamina < CFG.rollStaminaCost) return;
     this.spendStamina(CFG.rollStaminaCost);
     this.rolling = true;
     this.rollTimer = CFG.rollDuration;
@@ -313,8 +314,9 @@
 
   // ====================== v7 WEAVE SLICE ======================================
 
-  // v7: guard-break choke point (called from resolveIncomingHit via
-  // onGuardBreak and by game debug hooks). Clears armed/cross state.
+  // v7: guard-break choke point (called from resolveIncomingHit when a
+  // blocked hit empties stamina, and by game debug hooks). Clears
+  // armed/cross state.
   Player.prototype.guardBreak = function () {
     this.guardBroken = true;
     this.guardBreakTimer = window.WH_CONFIG.block.guardBreakStun;
@@ -333,10 +335,11 @@
     this.endBlock();                     // shield grip is dropped by the swap
     this.toggling = true;
     this.toggleTimer = V7.loadout.toggleSeconds;
-    // chain reset (spec: toggle resets the active chain)
-    this.comboIndex = 0;
-    this.comboQueued = false;
-    this.recoverFullyElapsed = false;
+    // chain reset (spec: toggle resets the active chain; A-1 ruling
+    // 2026-10-02: a full reset also ENDS the chain, so an idle toggle no
+    // longer starts the next chain at m2 — same bookkeeping as a full
+    // recover, without touching the armedTimer/cross banking below)
+    this.endCombo();
     // armed survives the toggle inside its window; cross-finisher banks
     if (this.armedTimer > 0) this.crossArmed = true;
   };
@@ -470,6 +473,7 @@
   // 3. blocking + attacker in block arc -> chip damage + stamina drain,
   //    guard break when stamina empties
   // 4. otherwise full damage
+  // Returns true when hp damage (full or chip) was applied.
   Player.prototype.resolveIncomingHit = function (damage, attacker) {
     if (this.state !== 'alive') return false;
     if (this.iframes > 0) return false;      // roll i-frames win (existing)
@@ -482,12 +486,8 @@
       var dx = attacker.pos.x - this.pos.x;
       var dz = attacker.pos.z - this.pos.z;
       if (dx * dx + dz * dz > 0.0001) {
-        var ang = Math.atan2(dx, dz);
-        var dyaw = ang - this.yaw;
-        while (dyaw > Math.PI) dyaw -= Math.PI * 2;
-        while (dyaw < -Math.PI) dyaw += Math.PI * 2;
-        var halfAngle = BLK.blockArcHalfAngleDeg * Math.PI / 180;
-        attackerInArc = Math.abs(dyaw) <= halfAngle;
+        var dyaw = shortestAngle(Math.atan2(dx, dz) - this.yaw);
+        attackerInArc = Math.abs(dyaw) <= deg2rad(BLK.blockArcHalfAngleDeg);
       }
     }
 
@@ -509,18 +509,15 @@
       this.stamina = Math.max(0, this.stamina - staminaCost);
       this.staminaRegenBlock = CFG.staminaRegenDelay;
       var chip = damage * (1 - BLK.absorb);
-      var dead = this.takeDamage(chip);
-      if (this.stamina <= 0 && !dead) {
-        // guard break: stun, block disabled until stamina recovers
-        this.guardBroken = true;
-        this.guardBreakTimer = BLK.guardBreakStun;
-        this.endBlock();
-        this.stamina = 0;
-        if (this.onGuardBreak) this.onGuardBreak();
+      // takeDamage() reports whether hp was applied, not whether the chip
+      // killed; the guard break keys off the post-hit state instead.
+      var applied = this.takeDamage(chip);
+      if (this.stamina <= 0 && this.state === 'alive') {
+        this.guardBreak();                   // stun, block off, armed cleared
       } else if (this.onBlock) {
         this.onBlock(attacker, chip);
       }
-      return !dead;                          // blocked (or killed by chip)
+      return applied;
     }
 
     // 4. full damage (existing path)
@@ -548,7 +545,6 @@
     this.lungeLeft = AW.strikeLunge;
     // v7: armed finisher consumption (armedTimer > 0 = attack at 1.5x;
     // crossArmed = cross-finisher at 2.0x; both consumed on this attack)
-    this.pendingArmedMult = 1;
     if (this.armedTimer > 0 && this.crossArmed) {
       this.pendingDamageMult = V7.armed.crossDamageMult;
       this.crossArmed = false;
@@ -569,6 +565,16 @@
     // face camera direction on attack (unless locked: windup tracking handles it)
     if (!this.lockTarget) this.yaw = this.camYaw + Math.PI;
     return true;
+  };
+
+  // A swing that ends without chaining (full recover, windup roll-cancel,
+  // respawn) closes the chain: the next press is a fresh m1 with no carried
+  // chain hits, so comboIndex stays inside 0..cap-1.
+  Player.prototype.endCombo = function () {
+    this.recoverFullyElapsed = true;
+    this.comboIndex = 0;
+    this.chainHits = 0;
+    this.comboQueued = false;
   };
 
   // v3 D1: attack stage from elapsed time. 'windup' | 'strike' | 'recover' | null.
@@ -604,8 +610,8 @@
   };
 
   // Returns attack sweep state for the combat layer: null or {origin, dir,
-  // range, halfAngle, damage}. v3: the active window is the whole STRIKE
-  // stage (hit lands midway through the swing; the sweep consumes once).
+  // range, halfAngle, damage}. The sweep is consumed once, on the first
+  // STRIKE-stage frame (a multi-tick active window is Round B P0-7).
   Player.prototype.consumeAttackSweep = function () {
     if (!this.attacking || this.attackDidHit) return null;
     if (this.getAttackStage() !== 'strike') return null;
@@ -638,6 +644,20 @@
     } else {
       this.yaw = targetYaw;
     }
+  };
+
+  // Strike root motion along facing: velocity model. The old target-delta
+  // formula (strikeLunge * se - (strikeLunge - lungeLeft)) stranded the
+  // remainder whenever the STRIKE stage spanned few frames (hitches clamped
+  // at maxDt), leaving the lunge at ~0.09 of 0.25. A dt-scaled velocity
+  // drains the full lunge at any frame rate, on the clip and stand-in paths.
+  Player.prototype.applyStrikeLunge = function (dt) {
+    if (this.lungeLeft <= 0) return;
+    var lungeVel = AW.strikeLunge / (CFG.attackDuration * AW.strikeFrac);
+    var lungeStep = Math.min(lungeVel * dt, this.lungeLeft);
+    this.pos.x += Math.sin(this.yaw) * lungeStep;
+    this.pos.z += Math.cos(this.yaw) * lungeStep;
+    this.lungeLeft -= lungeStep;
   };
 
   Player.prototype.update = function (dt, clampToBounds) {
@@ -708,10 +728,7 @@
       }
       if (this.attackTimer <= 0) {
         this.attacking = false;
-        this.recoverFullyElapsed = true;
-        this.comboIndex = 0;
-        this.chainHits = 0;
-        this.comboQueued = false;
+        this.endCombo();
       }
     }
 
@@ -822,9 +839,16 @@
         var stage = this.getAttackStage();
         var MS = window.WH_MOVESET;
         var move = [MS.m1, MS.m2, MS.m3][this.comboIndex];
+        // Stage progress 0..1 from the FSM clock on getAttackStage()'s
+        // boundaries. Strike progress was once measured from
+        // windupEnd + strikeSpan - attackTimer ([-0.6, 0.4) with these
+        // fractions): the sweep left the +-strikeYawSweepDeg/2 bound (D2
+        // item 6) and the strike keyframe was never reached.
+        var elapsed = CFG.attackDuration - this.attackTimer;
+        var windupEnd = CFG.attackDuration * AW.windupFrac;
+        var strikeEnd = CFG.attackDuration * (AW.windupFrac + AW.strikeFrac);
         if (stage === 'windup') {
-          var wp = (CFG.attackDuration - this.attackTimer) /
-                   (CFG.attackDuration * AW.windupFrac);       // 0..1
+          var wp = elapsed / windupEnd;                         // 0..1
           var we = smooth(wp);
           this.body.rotation.x = AW.windupLean * we;           // lean back
           this.atkYawOffset = 0;
@@ -836,9 +860,7 @@
           this.weaponPivot.position.set(pw.pos[0], pw.pos[1], pw.pos[2]);
           this.weaponPivot.rotation.set(pw.rot[0], pw.rot[1], pw.rot[2]);
         } else if (stage === 'strike') {
-          var sp = (CFG.attackDuration * AW.windupFrac + CFG.attackDuration * AW.strikeFrac
-                    - this.attackTimer) /
-                   (CFG.attackDuration * AW.strikeFrac);        // 0..1
+          var sp = (elapsed - windupEnd) / (CFG.attackDuration * AW.strikeFrac);   // 0..1
           var se = 1 - (1 - sp) * (1 - sp);                     // ease-out
           // horizontal yaw sweep through the stage (start behind right shoulder)
           this.atkYawOffset = -deg2rad(AW.strikeYawSweepDeg) * 0.5
@@ -851,24 +873,9 @@
           var ps = MS.interpPose(move.windup, move.strike, se);
           this.weaponPivot.position.set(ps.pos[0], ps.pos[1], ps.pos[2]);
           this.weaponPivot.rotation.set(ps.rot[0], ps.rot[1], ps.rot[2]);
-          // forward lunge along facing: velocity model. The old target-delta
-          // formula (strikeLunge * se - (strikeLunge - lungeLeft)) strands
-          // the remainder whenever the STRIKE stage spans few frames
-          // (hitches clamped at maxDt), leaving the lunge at ~0.09 of 0.25.
-          // A dt-scaled velocity drains the full lunge at any frame rate.
-          if (this.lungeLeft > 0) {
-            var strikeSpan = CFG.attackDuration * AW.strikeFrac;
-            var lungeVel = AW.strikeLunge / strikeSpan;
-            var lungeStep = Math.min(lungeVel * dt, this.lungeLeft);
-            this.pos.x += Math.sin(this.yaw) * lungeStep;
-            this.pos.z += Math.cos(this.yaw) * lungeStep;
-            this.lungeLeft -= lungeStep;
-          }
         } else {                                                // recover
-          var rEnd = CFG.attackDuration * (AW.windupFrac + AW.strikeFrac);
           var rp2 = Math.min(1, Math.max(0,
-            (CFG.attackDuration - this.attackTimer - rEnd) /
-            (CFG.attackDuration - rEnd)));                      // 0..1
+            (elapsed - strikeEnd) / (CFG.attackDuration - strikeEnd)));   // 0..1
           var re = smooth(rp2);
           var swing = deg2rad(AW.strikeYawSweepDeg) * 0.5;      // sweep end offset
           this.atkYawOffset = swing * (1 - re);                 // ease back to neutral
@@ -890,13 +897,7 @@
       }
     }
     // Lunge displacement remains FSM-owned even when the clip supplies the pose.
-    if (this.anim && this.attacking && this.getAttackStage() === 'strike' && this.lungeLeft > 0) {
-      var lungeVel = AW.strikeLunge / (CFG.attackDuration * AW.strikeFrac);
-      var lungeStep = Math.min(lungeVel * dt, this.lungeLeft);
-      this.pos.x += Math.sin(this.yaw) * lungeStep;
-      this.pos.z += Math.cos(this.yaw) * lungeStep;
-      this.lungeLeft -= lungeStep;
-    }
+    if (this.body && this.attacking && this.getAttackStage() === 'strike') this.applyStrikeLunge(dt);
     if (!this.attacking) this.lungeLeft = 0;
 
     this.root.position.copy(this.pos);
@@ -964,6 +965,10 @@
     this.stateTime = 0;
     this.rolling = false;
     this.attacking = false;
+    this.attackTimer = 0;
+    this.attackDidHit = false;
+    this.lungeLeft = 0;
+    this.endCombo();                        // a death mid-chain must not carry comboIndex/chainHits
     this.iframes = 0;
     this.endBlock();                        // v6: clear block state
     this.guardBroken = false;

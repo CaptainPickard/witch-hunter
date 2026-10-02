@@ -7,6 +7,12 @@
 
   var CFG = window.WH_CONFIG;
 
+  function wrapAngle(a) {
+    while (a > Math.PI) a -= Math.PI * 2;
+    while (a < -Math.PI) a += Math.PI * 2;
+    return a;
+  }
+
   var game = {
     renderer: null,
     scene: null,
@@ -198,26 +204,30 @@
     var p = game.player;
     game.hud.hpBar.style.width = (p.hp / p.hpMax * 100) + '%';
     game.hud.stamBar.style.width = (p.stamina / p.staminaMax * 100) + '%';
-    // v7: armed state = weapon emissive pulse while armedTimer > 0
-    if (p.sword && p.sword.material) {
-      if (!p.swordBaseEmissive && p.sword.material.emissive) {
-        p.swordBaseEmissive = {
-          hex: p.sword.material.emissive.getHex(),
-          intensity: p.sword.material.emissiveIntensity !== undefined
-            ? p.sword.material.emissiveIntensity : 1
-        };
+    // v7: armed state = weapon emissive pulse while armedTimer > 0. p.sword is
+    // the ground-align holder Group, so pulse the materials of its meshes.
+    if (p.sword) {
+      if (!p.swordEmissives) {
+        p.swordEmissives = [];
+        p.sword.traverse(function (obj) {
+          if (!obj.isMesh) return;
+          var mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+          mats.forEach(function (m) {
+            if (m && m.emissive) {
+              p.swordEmissives.push({ mat: m, hex: m.emissive.getHex(),
+                intensity: m.emissiveIntensity !== undefined ? m.emissiveIntensity : 1 });
+            }
+          });
+        });
       }
-      if (p.armedTimer > 0) {
-        var pulse = 0.5 + 0.5 * Math.sin(performance.now() / 1000 * 8);
-        var armedHex = p.crossArmed ? 0xffd24a : 0xff7722;  // gold cross / orange armed
-        p.sword.material.emissive.setHex(armedHex);
-        if (p.sword.material.emissiveIntensity !== undefined) {
-          p.sword.material.emissiveIntensity = 0.4 + pulse * 0.9;
-        }
-      } else if (p.swordBaseEmissive) {
-        p.sword.material.emissive.setHex(p.swordBaseEmissive.hex);
-        if (p.sword.material.emissiveIntensity !== undefined) {
-          p.sword.material.emissiveIntensity = p.swordBaseEmissive.intensity;
+      var armedOn = p.armedTimer > 0;
+      var pulse = 0.5 + 0.5 * Math.sin(performance.now() / 1000 * 8);
+      var armedHex = p.crossArmed ? 0xffd24a : 0xff7722;  // gold cross / orange armed
+      for (var se = 0; se < p.swordEmissives.length; se++) {
+        var sm = p.swordEmissives[se];
+        sm.mat.emissive.setHex(armedOn ? armedHex : sm.hex);
+        if (sm.mat.emissiveIntensity !== undefined) {
+          sm.mat.emissiveIntensity = armedOn ? 0.4 + pulse * 0.9 : sm.intensity;
         }
       }
     }
@@ -312,10 +322,7 @@
       var dx = e.pos.x - p.pos.x, dz = e.pos.z - p.pos.z;
       var dist = Math.sqrt(dx * dx + dz * dz);
       if (dist > L.maxDistance || dist < 0.001) continue;
-      var ang = Math.atan2(dx, dz);
-      var dyaw = ang - Math.atan2(fx, fz);
-      while (dyaw > Math.PI) dyaw -= Math.PI * 2;
-      while (dyaw < -Math.PI) dyaw += Math.PI * 2;
+      var dyaw = wrapAngle(Math.atan2(dx, dz) - Math.atan2(fx, fz));
       if (Math.abs(dyaw) > halfCone) continue;
       if (dist < bestDist) { bestDist = dist; best = e; }
     }
@@ -506,17 +513,8 @@
       getParryWindowRemaining: function () {
         return game.player.getParryWindowRemaining();
       },
-      forceGuardBreak: function () {
-        var p = game.player;
-        p.guardBroken = true;
-        p.guardBreakTimer = CFG.block.guardBreakStun;
-        p.endBlock();
-        p.stamina = 0;
-        // v7: guard break counterplay clears armed finisher state
-        p.armedTimer = 0;
-        p.crossArmed = false;
-        if (p.onGuardBreak) p.onGuardBreak();
-      },
+      // v7: the player's guard-break choke point also clears armed state
+      forceGuardBreak: function () { game.player.guardBreak(); },
       isGuardBroken: function () { return game.player.guardBroken; },
       forceStagger: function (idx, dur) {
         var list = game.regionManager.getEnemies(game.regionManager.logic.activeId);
@@ -639,7 +637,7 @@
       var sword = window.WH_ASSETS.instance('longsword');
       sword.scale.setScalar(0.9);
       game.player.root.add(sword);
-      // v3: register the sword with the player so attack stages drive its pose
+      // mounts on the skinned R_Hand socket, else on the stand-in pose pivot
       game.player.setWeapon(sword);
 
       // initial region A
@@ -723,10 +721,7 @@
         var dz = e.pos.z - sweep.origin.z;
         var dist = Math.sqrt(dx * dx + dz * dz);
         if (dist > sweep.range) continue;
-        var ang = Math.atan2(dx, dz);
-        var dyaw = ang - game.player.yaw;
-        while (dyaw > Math.PI) dyaw -= Math.PI * 2;
-        while (dyaw < -Math.PI) dyaw += Math.PI * 2;
+        var dyaw = wrapAngle(Math.atan2(dx, dz) - game.player.yaw);
         if (Math.abs(dyaw) > sweep.halfAngle) continue;
         var dmg = sweep.damage * (e.type === 'ghoul' ? CFG.player.attackDamageGhoulBonus : 1);
         // v6: riposte - staggered enemies take bonus damage, flag consumed

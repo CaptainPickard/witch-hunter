@@ -176,3 +176,12 @@ Per-AC adjudication (probes 2026-09-30, live tree, worktree builds state):
 Standing-law note: all of the above are validation-harness-real catches
 fixed BY IO; implementation files remain untouched by this amendment.
 Verdict-time harness-freeze shas must be taken AFTER these fixes.
+
+## AMENDMENT A1 (2026-10-02, IO — cross-reference; full text in devbot-spec-combat-ds1.md)
+
+Weave FILE PLAN §3's "recoverFullyElapsed=false" for toggleLoadout is
+AMENDED by ruling A-1 (2026-10-02): the toggle now calls endCombo()
+(recoverFullyElapsed=true, comboIndex=0, chainHits=0, comboQueued=false),
+so an idle toggle starts the next chain at m1 and the 3-hit arming rule
+holds across toggles. AC6 reads only {index, queued} — unaffected
+(re-validated in the 2026-10-02 integrity-review ladder: weave 18/18).
