@@ -1,7 +1,5 @@
-# DEVBOT SPEC (DRAFT v0 — NOT DISPATCHED until prior round lands; finalize then)
-
 # DEVBOT SPEC — Witch Hunter World R5: collision + world bounds (P0-5 + P1-4 camera half)
-Branch: feat/world-visuals. Authority: doc 61 P0-5 (audit :312-321), M-13/M-15/M-16;
+Branch: feat/world-visuals. Base: R4 validated marker 818d8bc. Authority: doc 61 P0-5 (audit :312-321), M-13/M-15/M-16;
 P1-4 (:382-405) camera occlusion HALF only (M-14) — the post pass / camera occlusion
 raycast may defer per dispatch-time audit re-read; P0-5's camera ground clamp is in.
 
