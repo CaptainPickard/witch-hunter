@@ -153,3 +153,9 @@ non-streaming timeout, all zero-token).
    JSON, IO commit, R1 floor, PASS gate, WIP-marker-drop commit, push feat).
 3. This blueprint survives /tmp wipes only via worktree docs; a /tmp wipe
    requires re-inlining - see git history of this report.
+
+## 2026-10-02 addendum: R3 valspec lane death #10
+- Dispatch: profile=testerbot, R3 valspec authoring (lean contract, chunked-write law in the steering).
+- Transcript: /home/hermeswebui/.hermes/profiles/io/cache/delegation/live/deleg_559b38fd/task-0.log — child read audit P0-4 + R2 harness machinery successfully (21:44-21:48), then froze twice mid-generation; steer#2 queued but the finalize call hit "API call failed after 3 retries: Non-streaming API call timed out" (492.86s run, exit_reason=max_iterations). NO valspec file written.
+- Same finalize-death signature as R2 deaths 1-9. Standing order honored: no model switch, no silent retry loop; STOP + surface to Nicko in-session.
+- Fallback state: carrier-req ruling pre-authorizes IO-authored valspec + harness WITH the loud "Testerbot revalidates on lane recovery" note; R4-R6 drafts + bake/settle evidence staged in io/specs/*-DRAFT + *-tool.py (handoff-safe).
