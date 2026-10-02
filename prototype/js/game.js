@@ -29,11 +29,24 @@
 
   // ---- renderer / scene ------------------------------------------------------
 
+  // R3 P0-4: internal-pixel law - drawing buffer = window px / div; style.css
+  // keeps the displayed size (pixel-locked upscale). Boot + resize share it.
+  function internalSize() {
+    var div = CFG.renderer.internalResDiv || 1;
+    return {
+      w: Math.max(1, Math.round(window.innerWidth / div)),
+      h: Math.max(1, Math.round(window.innerHeight / div))
+    };
+  }
+
   function setupRenderer() {
     var canvas = document.getElementById('wh-canvas');
     var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: false });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, CFG.renderer.maxPixelRatio));
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    // R3 P0-4: pixelation requires dpr 1 (supersedes maxPixelRatio);
+    // updateStyle=false so CSS drives the display size.
+    var isz = internalSize();
+    renderer.setPixelRatio(1);
+    renderer.setSize(isz.w, isz.h, false);
     // R1: sRGB output (validated Witch Hunter 3D setting)
     if (CFG.renderer.outputColorSpaceSRGB && THREE.SRGBColorSpace) {
       renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -942,7 +955,8 @@
     if (!game.renderer) return;
     game.camera.aspect = window.innerWidth / window.innerHeight;
     game.camera.updateProjectionMatrix();
-    game.renderer.setSize(window.innerWidth, window.innerHeight);
+    var isz = internalSize();   // R3 P0-4: same internal-pixel law as boot
+    game.renderer.setSize(isz.w, isz.h, false);
   });
 
   if (document.readyState === 'loading') {

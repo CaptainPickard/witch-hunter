@@ -9,7 +9,9 @@ window.WH_CONFIG = {
     outputColorSpaceSRGB: true,       // renderer.outputColorSpace = SRGBColorSpace
     toneMappingName: 'Neutral',       // R2 P0-3: Neutral tonemap (ACES fallback in game.js)
     toneMappingExposure: 1.15,        // R2 P0-3: re-set so fog stays the brightest large area (audit)
+    // R3 P0-4: maxPixelRatio superseded by internalResDiv (setPixelRatio(1)); legacy key kept
     maxPixelRatio: 2,
+    internalResDiv: 2,                // R3 P0-4: buffer = window px / 2 (960x540 at 1080p), CSS upscales
     shadowMapEnabled: false           // v1: swiftshader software render, shadows off (POC)
   },
 
