@@ -121,7 +121,14 @@ harness laws 1-8 + floor waiver classes are inherited verbatim.
   toneMappingName 'Neutral', toneMappingExposure 1.15, maxPixelRatio 2,
   shadowMapEnabled false unchanged; style.css diff = exactly +2 lines inside
   #wh-canvas (`pixelated` then `crisp-edges`, that order). Any other hunk = FAIL.
-- index.html sha256 == cec75217eb37...2b637 (R1 FREEZE). v7 rebuild clean (amendment
+- index.html sha256 == worktree 0406e64 (9ad39b809bc4...) AND == 0406e64's
+  blob. IO AMENDMENT A10 (2026-10-02, granted on Devbot's smoke evidence):
+  the valspec's R1-FREEZE index.html sha pin (cec75217eb37...) is STALE --
+  pre-dates anim/combat rounds; the file at 0406e64 is already the pinned
+  content (diff empty, sha 9ad39b809bc4...). New bar: index.html byte-
+  identity vs CODE BASE 0406e64 (full stop). The A4 style.css waiver reads
+  "index.html identical to 0406e64 AND the exact P5 hunk" in place of the
+  frozen-sha read. v7 rebuild clean (amendment
   A8): run tools/build_v7.py against a temp copy of prototype/+tools/, load result,
   0 console/page errors; prototype/builds/ must NOT appear in the dirty set.
 - Secrets: `git diff 0406e64` grep msy_[A-Za-z0-9]{8} + key/token/secret/password
@@ -173,3 +180,11 @@ A7. Spec design 3 mandates an internalSize() helper, which P5's "setupRenderer +
 A8. "v7 build rebuild clean" would dirty prototype/builds/ (outside P5's surface);
     rebuild runs on a temp copy, builds/ must stay clean.
 A9. P6 "(record)" hardened: key presence/value gates; comment stays RECORD.
+A10 (IO ruling 2026-10-02): P5's index.html bar changed from the stale R1
+    FREEZE sha to byte-identity vs CODE BASE 0406e64 (sha 9ad39b809bc4...).
+    Evidence: diff 0406e64..HEAD index.html = empty; the frozen pin
+    pre-dated the anim/combat rounds. A4's waiver gate reads the same new
+    bar. P1(b) control-gap bar REPLACED per IO ruling 2: primary bar =
+    edge_on_grid >= 0.80 (Devbot's record-only field, grid-adjacency of
+    colour edges; scene-flat misaligned control is unreliable here);
+    aligned bars unchanged. No retune of div occurred or was needed.
