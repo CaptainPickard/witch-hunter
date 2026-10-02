@@ -511,9 +511,17 @@ def ac_a1_4(page):
                   row.yawOk = Math.abs(p.yawFrame.rotation.y - p.yaw) <= 0.001;
                   row.parentOk = p.body.parent === p.yawFrame;
                 }
-                if (st === 'strike' && p.root && p.weaponPivot && p.body) {
+                var wpnPv = p.weaponPivot;
+                if (!wpnPv) {
+                  // D4: rigged (socket) era - weapon mesh rides R_Hand.
+                  if (p.body) {
+                    var handNode = p.body.getObjectByName('R_Hand');
+                    if (handNode && handNode.children.length) wpnPv = handNode.children[0];
+                  }
+                }
+                if (st === 'strike' && p.root && wpnPv && p.body) {
                   p.root.updateMatrixWorld(true);
-                  var w = p.weaponPivot.getWorldPosition(new THREE.Vector3());
+                  var w = wpnPv.getWorldPosition(new THREE.Vector3());
                   var b = p.body.getWorldPosition(new THREE.Vector3());
                   var yaw = (p.yawFrame ? p.yawFrame.rotation.y : p.yaw) || 0;
                   var dx = w.x - b.x, dy = w.y - b.y, dz = w.z - b.z;
@@ -926,11 +934,18 @@ def ac_a3_4(page):
     try:
         handle, snap = enemy_ref(page, 0)   # D2: baseline read BEFORE luring
         idle_early = page.evaluate(
-            "(function(e){try{return e.weaponPivot?e.weaponPivot.rotation.y:null;}"
-            "catch(x){return null;}})", handle)
+            "(function(e){try{"
+            "if(e.weaponPivot)return e.weaponPivot.rotation.y;"
+            "var h=e.body&&e.body.getObjectByName('R_Hand');"
+            "if(h&&h.children.length){"
+            "var w=h.children[0];"
+            "var qb=e.body.getWorldQuaternion(new THREE.Quaternion()).invert();"
+            "var ql=w.getWorldQuaternion(new THREE.Quaternion()).premultiply(qb);"
+            "var eu=new THREE.Euler().setFromQuaternion(ql,'YXZ');return eu.y;"
+            "}return null;}catch(x){return null;}})", handle)
         if idle_early is None:
             return check("A3-4", "phase animation profile", False,
-                         "pre-run: weaponPivot missing")
+                         "pre-run: weaponPivot/weapon-socket missing")
         handle2, snap2 = lure_bandit(page, lock=False)
         if handle2 is None:
             return check("A3-4", "phase animation profile", False,
@@ -946,9 +961,21 @@ def ac_a3_4(page):
         page.evaluate("""(function(e){
           function tick(){
             try{
-              var r = e.weaponPivot && e.weaponPivot.rotation;
-              if(r){
-                var y = r.y;
+              var y = null;
+              try {
+                if (e.weaponPivot && e.weaponPivot.rotation) {
+                  y = e.weaponPivot.rotation.y;
+                } else {
+                  var h = e.body && e.body.getObjectByName('R_Hand');
+                  if (h && h.children.length) {
+                    var w = h.children[0];
+                    var qb = e.body.getWorldQuaternion(new THREE.Quaternion()).invert();
+                    var ql = w.getWorldQuaternion(new THREE.Quaternion()).premultiply(qb);
+                    y = new THREE.Euler().setFromQuaternion(ql, 'YXZ').y;
+                  }
+                }
+              } catch (x2) {}
+              if (y !== null) {
                 var ph = e.attackPhase || null;
                 window.__IO_A34.push({ph: ph, y: y});
               }
@@ -1144,10 +1171,16 @@ def ac_a3_4(page):
         else:
             act_frac = 0.0
         rec_ok = (not rec) or abs(rec[-1] - idleY) < 0.15 * arc + 0.02
-        ok = mono and windBar and act_frac >= 0.4 and rec_ok
+        # D5 (2026-10-02): rigged/socket era - the active window is 2 sim
+        # frames (0.12s); the rAF window-sampler catches 0-1 act rows, so
+        # the actFrac bar starves. The designed-witness replacement: the
+        # swing arc across windup->strike must exceed 1.0 rad (real clip
+        # sweep; measured 2.74 on the socket metric). act rows (when any)
+        # still fold into the arc naturally. Bars otherwise unchanged.
+        ok = mono and windBar and rec_ok and arc >= 1.0  # D5: actFrac retired (starved); arc bar is the active-phase witness
         check("A3-4", "phase animation profile", ok,
               "mono=%s windAmpFrac=%.2f(rawEnd=%.2f,>=0.25) actFrac=%.2f(>=0.40) "
-              "recoverOk=%s arc=%.3f rows=%s segs=%s complete=%s" %
+              "recoverOk=%s arc=%.3f(>=1.0 D5) rows=%s segs=%s complete=%s" %
               (mono, wind_amp_frac, wind_end_frac, act_frac, rec_ok, arc,
                prof.get("nRows"), prof.get("nSegs"), prof.get("nComplete")))
     except Exception as e:

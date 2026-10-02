@@ -148,9 +148,85 @@
     return group;
   }
 
+  // The manager modifier is synchronous; populate it before the parser starts
+  // resolving texture URLs. GLB image bufferViews are converted only once.
+  var embeddedDataUris = new Map();
+
   function loadOne(name, url, isPixelated) {
     return new Promise(function (resolve) {
-      var loader = new window.WHGLTFLoader();
+      var mgr = new THREE.LoadingManager();
+      var loader = new window.WHGLTFLoader(mgr);
+      var imageUrls = [];
+      mgr.setURLModifier(function (resourceUrl) {
+        return resourceUrl.indexOf('blob:') === 0 && embeddedDataUris.has(resourceUrl) ?
+          embeddedDataUris.get(resourceUrl) : resourceUrl;
+      });
+      // CSP forbids even an attempted fetch(blob:) on /playtest/. Read the
+      // response policy, not the route name, before choosing the fetch path.
+      if (!loadOne.blobPolicy) {
+        loadOne.blobPolicy = fetch(document.baseURI, { credentials: 'same-origin' }).then(function (response) {
+          var csp = response.headers.get('content-security-policy');
+          if (!csp) return true;
+          var match = csp.match(/(?:^|;)\s*connect-src\s+([^;]+)/i);
+          return !match || /(?:^|\s)blob:(?:\s|$)/i.test(match[1]);
+        }).catch(function (err) {
+          console.warn('[WH assets] cannot inspect CSP; using FileReader for embedded images:', err);
+          return false;
+        });
+      }
+      function asDataUri(blob) {
+        return new Promise(function (accept, reject) {
+          var reader = new FileReader();
+          reader.onload = function () { accept(reader.result); };
+          reader.onerror = function () { reject(reader.error || new Error('image FileReader failed')); };
+          reader.readAsDataURL(blob);
+        });
+      }
+      function releaseImageUrls() {
+        imageUrls.forEach(function (imageUrl) {
+          URL.revokeObjectURL(imageUrl);
+          embeddedDataUris.delete(imageUrl);
+        });
+        imageUrls.length = 0;
+      }
+      loader.register(function (parser) {
+        return {
+          name: 'WH_embedded_image_data',
+          beforeRoot: function () {
+            var sources = parser.json.images || [];
+            return loadOne.blobPolicy.then(function (canFetchBlob) {
+              // ImageBitmapLoader decodes via fetch(data:), also forbidden by
+              // connect-src on CSP origins. ImageLoader uses img-src instead.
+              if (!canFetchBlob) parser.textureLoader = new THREE.TextureLoader(mgr);
+              return Promise.all(sources.map(function (source) {
+                if (source.bufferView === undefined || !/^image\//.test(source.mimeType || '')) {
+                  return Promise.resolve();
+                }
+                return parser.getDependency('bufferView', source.bufferView).then(function (bytes) {
+                  var blob = new Blob([bytes], { type: source.mimeType });
+                  var imageUrl = URL.createObjectURL(blob);
+                  imageUrls.push(imageUrl);
+                  // Fetch on permissive origins; a blocked origin must go
+                  // straight to FileReader to avoid a CSP violation event.
+                  var conversion = canFetchBlob ? fetch(imageUrl).then(function (response) {
+                    if (!response.ok) throw new Error('image fetch status ' + response.status);
+                    return response.blob();
+                  }).then(asDataUri).catch(function () { return asDataUri(blob); }) : asDataUri(blob);
+                  return conversion.then(function (dataUri) {
+                    embeddedDataUris.set(imageUrl, dataUri);
+                    source.uri = imageUrl;
+                    delete source.bufferView;
+                  });
+                });
+              }));
+            }).catch(function (err) {
+              releaseImageUrls();
+              throw err;
+            });
+          },
+          afterRoot: function () { releaseImageUrls(); }
+        };
+      });
       var done = false;
       var timer = setTimeout(function () {
         if (!done) {

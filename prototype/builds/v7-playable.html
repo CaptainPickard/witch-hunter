@@ -85322,6 +85322,506 @@ function addPrimitiveAttributes( geometry, primitiveDef, parser ) {
 
 </script>
 <script>
+// SkeletonUtils, three.js r185 examples/jsm/utils/SkeletonUtils.js (MIT).
+// Classic conversion: imports from window.THREE; exports window.WHSkeletonUtils.
+(function () {
+'use strict';
+const {
+	AnimationClip,
+	AnimationMixer,
+	Matrix4,
+	Quaternion,
+	QuaternionKeyframeTrack,
+	SkeletonHelper,
+	Vector3,
+	VectorKeyframeTrack
+} = window.THREE;
+
+/**
+ * @module SkeletonUtils
+ * @three_import import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
+ */
+
+function getBoneName( bone, options ) {
+
+	if ( options.getBoneName !== undefined ) {
+
+		return options.getBoneName( bone );
+
+	}
+
+	return options.names[ bone.name ];
+
+}
+
+/**
+ * Retargets the skeleton from the given source to the target.
+ *
+ * Both `target` and `source` can be a 3D object with a skeleton property (e.g. a skinned mesh)
+ * or a {@link Skeleton} directly.
+ *
+ * @param {Object3D|Skeleton} target - The target object.
+ * @param {Object3D|Skeleton} source - The source object.
+ * @param {module:SkeletonUtils~RetargetOptions} options - The options.
+ */
+function retarget( target, source, options = {} ) {
+
+	const quat = new Quaternion(),
+		scale = new Vector3(),
+		relativeMatrix = new Matrix4(),
+		globalMatrix = new Matrix4();
+
+	options.preserveBoneMatrix = options.preserveBoneMatrix !== undefined ? options.preserveBoneMatrix : true;
+	options.preserveBonePositions = options.preserveBonePositions !== undefined ? options.preserveBonePositions : true;
+	options.useTargetMatrix = options.useTargetMatrix !== undefined ? options.useTargetMatrix : false;
+	options.hip = options.hip !== undefined ? options.hip : 'hip';
+	options.hipInfluence = options.hipInfluence !== undefined ? options.hipInfluence : new Vector3( 1, 1, 1 );
+	options.scale = options.scale !== undefined ? options.scale : 1;
+	options.names = options.names || {};
+
+	const sourceBones = source.isObject3D ? source.skeleton.bones : getBones( source ),
+		bones = target.isObject3D ? target.skeleton.bones : getBones( target );
+
+	let bone, name, boneTo,
+		bonesPosition;
+
+	// reset bones
+
+	if ( target.isObject3D ) {
+
+		target.skeleton.pose();
+
+	} else {
+
+		options.useTargetMatrix = true;
+		options.preserveBoneMatrix = false;
+
+	}
+
+	if ( options.preserveBonePositions ) {
+
+		bonesPosition = [];
+
+		for ( let i = 0; i < bones.length; i ++ ) {
+
+			bonesPosition.push( bones[ i ].position.clone() );
+
+		}
+
+	}
+
+	if ( options.preserveBoneMatrix ) {
+
+		// reset matrix
+
+		target.updateMatrixWorld();
+
+		target.matrixWorld.identity();
+
+		// reset children matrix
+
+		for ( let i = 0; i < target.children.length; ++ i ) {
+
+			target.children[ i ].updateMatrixWorld( true );
+
+		}
+
+	}
+
+	for ( let i = 0; i < bones.length; ++ i ) {
+
+		bone = bones[ i ];
+		name = getBoneName( bone, options );
+
+		boneTo = getBoneByName( name, sourceBones );
+
+		globalMatrix.copy( bone.matrixWorld );
+
+		if ( boneTo ) {
+
+			boneTo.updateMatrixWorld();
+
+			if ( options.useTargetMatrix ) {
+
+				relativeMatrix.copy( boneTo.matrixWorld );
+
+			} else {
+
+				relativeMatrix.copy( target.matrixWorld ).invert();
+				relativeMatrix.multiply( boneTo.matrixWorld );
+
+			}
+
+			// ignore scale to extract rotation
+
+			scale.setFromMatrixScale( relativeMatrix );
+			relativeMatrix.scale( scale.set( 1 / scale.x, 1 / scale.y, 1 / scale.z ) );
+
+			// apply to global matrix
+
+			globalMatrix.makeRotationFromQuaternion( quat.setFromRotationMatrix( relativeMatrix ) );
+
+			if ( target.isObject3D ) {
+
+				if ( options.localOffsets ) {
+
+					if ( options.localOffsets[ bone.name ] ) {
+
+						globalMatrix.multiply( options.localOffsets[ bone.name ] );
+
+					}
+
+				}
+
+			}
+
+			globalMatrix.copyPosition( relativeMatrix );
+
+		}
+
+		if ( name === options.hip ) {
+
+			globalMatrix.elements[ 12 ] *= options.scale * options.hipInfluence.x;
+			globalMatrix.elements[ 13 ] *= options.scale * options.hipInfluence.y;
+			globalMatrix.elements[ 14 ] *= options.scale * options.hipInfluence.z;
+
+			if ( options.hipPosition !== undefined ) {
+
+				globalMatrix.elements[ 12 ] += options.hipPosition.x * options.scale;
+				globalMatrix.elements[ 13 ] += options.hipPosition.y * options.scale;
+				globalMatrix.elements[ 14 ] += options.hipPosition.z * options.scale;
+
+			}
+
+		}
+
+		if ( bone.parent ) {
+
+			bone.matrix.copy( bone.parent.matrixWorld ).invert();
+			bone.matrix.multiply( globalMatrix );
+
+		} else {
+
+			bone.matrix.copy( globalMatrix );
+
+		}
+
+		bone.matrix.decompose( bone.position, bone.quaternion, bone.scale );
+
+		bone.updateMatrixWorld();
+
+	}
+
+	if ( options.preserveBonePositions ) {
+
+		for ( let i = 0; i < bones.length; ++ i ) {
+
+			bone = bones[ i ];
+			name = getBoneName( bone, options ) || bone.name;
+
+			if ( name !== options.hip ) {
+
+				bone.position.copy( bonesPosition[ i ] );
+
+			}
+
+		}
+
+	}
+
+	if ( options.preserveBoneMatrix ) {
+
+		// restore matrix
+
+		target.updateMatrixWorld( true );
+
+	}
+
+}
+
+/**
+ * Retargets the animation clip of the source to the target 3D object.
+ *
+ * The `source` can be a 3D object with a skeleton property (e.g. a skinned mesh)
+ * or a {@link Skeleton} directly.
+ *
+ * @param {Object3D} target - The target 3D object. Must have a `skeleton` property.
+ * @param {Object3D|Skeleton} source - The source object.
+ * @param {AnimationClip} clip - The animation clip.
+ * @param {module:SkeletonUtils~RetargetOptions} options - The options.
+ * @return {AnimationClip} The retargeted animation clip.
+ */
+function retargetClip( target, source, clip, options = {} ) {
+
+	options.useFirstFramePosition = options.useFirstFramePosition !== undefined ? options.useFirstFramePosition : false;
+
+	// Calculate the fps from the source clip based on the track with the most frames, unless fps is already provided.
+	options.fps = options.fps !== undefined ? options.fps : ( Math.max( ...clip.tracks.map( track => track.times.length ) ) / clip.duration );
+	options.names = options.names || [];
+
+	if ( ! source.isObject3D ) {
+
+		source = getHelperFromSkeleton( source );
+
+	}
+
+	const numFrames = Math.round( clip.duration * ( options.fps / 1000 ) * 1000 ),
+		delta = clip.duration / ( numFrames - 1 ),
+		convertedTracks = [],
+		mixer = new AnimationMixer( source ),
+		bones = getBones( target.skeleton ),
+		boneDatas = [];
+
+	let positionOffset,
+		bone, boneTo, boneData,
+		name;
+
+	mixer.clipAction( clip ).play();
+
+	// trim
+
+	let start = 0, end = numFrames;
+
+	if ( options.trim !== undefined ) {
+
+		start = Math.round( options.trim[ 0 ] * options.fps );
+		end = Math.min( Math.round( options.trim[ 1 ] * options.fps ), numFrames ) - start;
+
+		mixer.update( options.trim[ 0 ] );
+
+	} else {
+
+		mixer.update( 0 );
+
+	}
+
+	source.updateMatrixWorld();
+
+	//
+
+	for ( let frame = 0; frame < end; ++ frame ) {
+
+		const time = frame * delta;
+
+		retarget( target, source, options );
+
+		for ( let j = 0; j < bones.length; ++ j ) {
+
+			bone = bones[ j ];
+			name = getBoneName( bone, options ) || bone.name;
+			boneTo = getBoneByName( name, source.skeleton );
+
+			if ( boneTo ) {
+
+				boneData = boneDatas[ j ] = boneDatas[ j ] || { bone: bone };
+
+				if ( options.hip === name ) {
+
+					if ( ! boneData.pos ) {
+
+						boneData.pos = {
+							times: new Float32Array( end ),
+							values: new Float32Array( end * 3 )
+						};
+
+					}
+
+					if ( options.useFirstFramePosition ) {
+
+						if ( frame === 0 ) {
+
+							positionOffset = bone.position.clone();
+
+						}
+
+						bone.position.sub( positionOffset );
+
+					}
+
+					boneData.pos.times[ frame ] = time;
+
+					bone.position.toArray( boneData.pos.values, frame * 3 );
+
+				}
+
+				if ( ! boneData.quat ) {
+
+					boneData.quat = {
+						times: new Float32Array( end ),
+						values: new Float32Array( end * 4 )
+					};
+
+				}
+
+				boneData.quat.times[ frame ] = time;
+
+				bone.quaternion.toArray( boneData.quat.values, frame * 4 );
+
+			}
+
+		}
+
+		if ( frame === end - 2 ) {
+
+			// last mixer update before final loop iteration
+			// make sure we do not go over or equal to clip duration
+			mixer.update( delta - 0.0000001 );
+
+		} else {
+
+			mixer.update( delta );
+
+		}
+
+		source.updateMatrixWorld();
+
+	}
+
+	for ( let i = 0; i < boneDatas.length; ++ i ) {
+
+		boneData = boneDatas[ i ];
+
+		if ( boneData ) {
+
+			if ( boneData.pos ) {
+
+				convertedTracks.push( new VectorKeyframeTrack(
+					'.bones[' + boneData.bone.name + '].position',
+					boneData.pos.times,
+					boneData.pos.values
+				) );
+
+			}
+
+			convertedTracks.push( new QuaternionKeyframeTrack(
+				'.bones[' + boneData.bone.name + '].quaternion',
+				boneData.quat.times,
+				boneData.quat.values
+			) );
+
+		}
+
+	}
+
+	mixer.uncacheAction( clip );
+
+	return new AnimationClip( clip.name, - 1, convertedTracks );
+
+}
+
+/**
+ * Clones the given 3D object and its descendants, ensuring that any `SkinnedMesh` instances are
+ * correctly associated with their bones. Bones are also cloned, and must be descendants of the
+ * object passed to this method. Other data, like geometries and materials, are reused by reference.
+ *
+ * @param {Object3D} source - The 3D object to clone.
+ * @return {Object3D} The cloned 3D object.
+ */
+function clone( source ) {
+
+	const sourceLookup = new Map();
+	const cloneLookup = new Map();
+
+	const clone = source.clone();
+
+	parallelTraverse( source, clone, function ( sourceNode, clonedNode ) {
+
+		sourceLookup.set( clonedNode, sourceNode );
+		cloneLookup.set( sourceNode, clonedNode );
+
+	} );
+
+	clone.traverse( function ( node ) {
+
+		if ( ! node.isSkinnedMesh ) return;
+
+		const clonedMesh = node;
+		const sourceMesh = sourceLookup.get( node );
+		const sourceBones = sourceMesh.skeleton.bones;
+
+		clonedMesh.skeleton = sourceMesh.skeleton.clone();
+		clonedMesh.bindMatrix.copy( sourceMesh.bindMatrix );
+
+		clonedMesh.skeleton.bones = sourceBones.map( function ( bone ) {
+
+			return cloneLookup.get( bone );
+
+		} );
+
+		clonedMesh.bind( clonedMesh.skeleton, clonedMesh.bindMatrix );
+
+	} );
+
+	return clone;
+
+}
+
+// internal helper
+
+function getBoneByName( name, skeleton ) {
+
+	for ( let i = 0, bones = getBones( skeleton ); i < bones.length; i ++ ) {
+
+		if ( name === bones[ i ].name )
+
+			return bones[ i ];
+
+	}
+
+}
+
+function getBones( skeleton ) {
+
+	return Array.isArray( skeleton ) ? skeleton : skeleton.bones;
+
+}
+
+
+function getHelperFromSkeleton( skeleton ) {
+
+	const source = new SkeletonHelper( skeleton.bones[ 0 ] );
+	source.skeleton = skeleton;
+
+	return source;
+
+}
+
+function parallelTraverse( a, b, callback ) {
+
+	callback( a, b );
+
+	for ( let i = 0; i < a.children.length; i ++ ) {
+
+		parallelTraverse( a.children[ i ], b.children[ i ], callback );
+
+	}
+
+}
+
+/**
+ * Retarget options of `SkeletonUtils`.
+ *
+ * @typedef {Object} module:SkeletonUtils~RetargetOptions
+ * @property {boolean} [useFirstFramePosition=false] - Whether to use the position of the first frame or not.
+ * @property {number} [fps] - The FPS of the clip.
+ * @property {Object<string,string>} [names] - A dictionary for mapping target to source bone names.
+ * @property {function(string):string} [getBoneName] - A function for mapping bone names. Alternative to `names`.
+ * @property {Array<number>} [trim] - Whether to trim the clip or not. If set the array should hold two values for the start and end.
+ * @property {boolean} [preserveBoneMatrix=true] - Whether to preserve bone matrices or not.
+ * @property {boolean} [preserveBonePositions=true] - Whether to preserve bone positions or not.
+ * @property {boolean} [useTargetMatrix=false] - Whether to use the target matrix or not.
+ * @property {string} [hip='hip'] - The name of the source's hip bone.
+ * @property {Vector3} [hipInfluence=(1,1,1)] - The hip influence.
+ * @property {number} [scale=1] - The scale.
+ * @property {Object<string,Matrix4>} [localOffsets] - Per-bone local offset matrices, keyed by bone name.
+ * @property {Vector3} [hipPosition] - An additional position offset applied to the hip bone.
+ **/
+
+window.WHSkeletonUtils = { retarget: retarget, retargetClip: retargetClip, clone: clone };
+})();
+
+</script>
+<script>
 // Witch Hunter v5 sword moveset: keyframed weapon-pivot poses for player sword combos.
 window.WH_MOVESET = {
   idle: { pos: [0.7, 1.0, -0.3], rot: [2.2, -0.7, 0.6] },
@@ -85746,6 +86246,13 @@ window.WH_CONFIG = {
     reticleOffsetY: 0.9             // reticle aim height above enemy feet
   },
 
+  animRt: {
+    crossfadeSeconds: 0.18,
+    oneShotFadeSeconds: 0.08,
+    walkMetersPerCycle: 6,
+    runMetersPerCycle: 6,
+    attackClipStrikeFraction: 0.25
+  },
   // v3: procedural animation feel (transform-only; assets are unrigged).
   // Stage fractions are of CONFIG.player.attackDuration and sum to 1.
   anim: {
@@ -85984,10 +86491,10 @@ window.WH_CONFIG.moveset = {
     ironFenceSection: 'art-direction/3d/assets/church-kit/iron-fence-section-pixelated.glb',
     ironFenceCorner: 'art-direction/3d/assets/church-kit/iron-fence-corner-pixelated.glb',
 
-    // characters (races_regen, raw meshes, no pixelated variants exist)
-    playerBody: 'art-direction/3d/assets/races_regen/human-hunter-male.glb',
-    banditBody: 'art-direction/3d/assets/races_regen/orc-male-warrior.glb',
-    ghoulBody: 'art-direction/3d/assets/races_regen/undead-ghoul-male.glb',
+    // characters (whanim1 rigged exports; props below stay rigid)
+    playerBody: 'art-direction/3d/assets/races_regen/rigged/human-hunter-male.rigged.glb',
+    banditBody: 'art-direction/3d/assets/races_regen/rigged/orc-male-warrior.rigged.glb',
+    ghoulBody: 'art-direction/3d/assets/races_regen/rigged/undead-ghoul-male.rigged.glb',
 
     // weapons (pixelated)
     longsword: 'art-direction/3d/assets/weapons/longsword-pixelated.glb',
@@ -86023,7 +86530,9 @@ window.WH_CONFIG.moveset = {
 
   // ---- Loading ---------------------------------------------------------------
 
-  var cache = {};      // logical name -> cloned THREE.Group template
+  var cache = {};      // logical name -> ground-aligned THREE.Group template
+  var clips = {};      // logical character name -> shared AnimationClip objects
+  var CHARACTERS = { playerBody: true, banditBody: true, ghoulBody: true };
   var failed = {};     // logical name -> true (stand-in substituted)
   var loadedCount = 0;
   var GROUND_META = {}; // holder uuid -> measured height, width, raw groundMinY
@@ -86068,6 +86577,7 @@ window.WH_CONFIG.moveset = {
     // DoubleSide for safety (R3), NearestFilter on pixelated textures (R2).
     group.traverse(function (obj) {
       if (!obj.isMesh) return;
+      if (obj.isSkinnedMesh) obj.frustumCulled = false;
       obj.castShadow = false;
       obj.receiveShadow = false;
       var mats = Array.isArray(obj.material) ? obj.material : [obj.material];
@@ -86089,9 +86599,85 @@ window.WH_CONFIG.moveset = {
     return group;
   }
 
+  // The manager modifier is synchronous; populate it before the parser starts
+  // resolving texture URLs. GLB image bufferViews are converted only once.
+  var embeddedDataUris = new Map();
+
   function loadOne(name, url, isPixelated) {
     return new Promise(function (resolve) {
-      var loader = new window.WHGLTFLoader();
+      var mgr = new THREE.LoadingManager();
+      var loader = new window.WHGLTFLoader(mgr);
+      var imageUrls = [];
+      mgr.setURLModifier(function (resourceUrl) {
+        return resourceUrl.indexOf('blob:') === 0 && embeddedDataUris.has(resourceUrl) ?
+          embeddedDataUris.get(resourceUrl) : resourceUrl;
+      });
+      // CSP forbids even an attempted fetch(blob:) on /playtest/. Read the
+      // response policy, not the route name, before choosing the fetch path.
+      if (!loadOne.blobPolicy) {
+        loadOne.blobPolicy = fetch(document.baseURI, { credentials: 'same-origin' }).then(function (response) {
+          var csp = response.headers.get('content-security-policy');
+          if (!csp) return true;
+          var match = csp.match(/(?:^|;)\s*connect-src\s+([^;]+)/i);
+          return !match || /(?:^|\s)blob:(?:\s|$)/i.test(match[1]);
+        }).catch(function (err) {
+          console.warn('[WH assets] cannot inspect CSP; using FileReader for embedded images:', err);
+          return false;
+        });
+      }
+      function asDataUri(blob) {
+        return new Promise(function (accept, reject) {
+          var reader = new FileReader();
+          reader.onload = function () { accept(reader.result); };
+          reader.onerror = function () { reject(reader.error || new Error('image FileReader failed')); };
+          reader.readAsDataURL(blob);
+        });
+      }
+      function releaseImageUrls() {
+        imageUrls.forEach(function (imageUrl) {
+          URL.revokeObjectURL(imageUrl);
+          embeddedDataUris.delete(imageUrl);
+        });
+        imageUrls.length = 0;
+      }
+      loader.register(function (parser) {
+        return {
+          name: 'WH_embedded_image_data',
+          beforeRoot: function () {
+            var sources = parser.json.images || [];
+            return loadOne.blobPolicy.then(function (canFetchBlob) {
+              // ImageBitmapLoader decodes via fetch(data:), also forbidden by
+              // connect-src on CSP origins. ImageLoader uses img-src instead.
+              if (!canFetchBlob) parser.textureLoader = new THREE.TextureLoader(mgr);
+              return Promise.all(sources.map(function (source) {
+                if (source.bufferView === undefined || !/^image\//.test(source.mimeType || '')) {
+                  return Promise.resolve();
+                }
+                return parser.getDependency('bufferView', source.bufferView).then(function (bytes) {
+                  var blob = new Blob([bytes], { type: source.mimeType });
+                  var imageUrl = URL.createObjectURL(blob);
+                  imageUrls.push(imageUrl);
+                  // Fetch on permissive origins; a blocked origin must go
+                  // straight to FileReader to avoid a CSP violation event.
+                  var conversion = canFetchBlob ? fetch(imageUrl).then(function (response) {
+                    if (!response.ok) throw new Error('image fetch status ' + response.status);
+                    return response.blob();
+                  }).then(asDataUri).catch(function () { return asDataUri(blob); }) : asDataUri(blob);
+                  return conversion.then(function (dataUri) {
+                    embeddedDataUris.set(imageUrl, dataUri);
+                    source.uri = imageUrl;
+                    delete source.bufferView;
+                  });
+                });
+              }));
+            }).catch(function (err) {
+              releaseImageUrls();
+              throw err;
+            });
+          },
+          afterRoot: function () { releaseImageUrls(); }
+        };
+      });
       var done = false;
       var timer = setTimeout(function () {
         if (!done) {
@@ -86105,6 +86691,12 @@ window.WH_CONFIG.moveset = {
         done = true;
         clearTimeout(timer);
         var root = gltf.scene;
+        if (CHARACTERS[name]) {
+          clips[name] = gltf.animations || [];
+          if (clips[name].length !== 6) {
+            console.warn('[WH assets] expected 6 clips for ' + name + ', got ' + clips[name].length);
+          }
+        }
         prepTemplate(root, isPixelated);
         cache[name] = groundAlign(root);
         loadedCount++;
@@ -86135,10 +86727,13 @@ window.WH_CONFIG.moveset = {
     });
   }
 
-  // Instance a fresh copy from the cache (Scene.clone(true) clones meshes).
+  // Rigged characters need independently rebound bones; props remain rigid.
   function instance(name) {
     var tmpl = cache[name];
     if (!tmpl) return makeStandIn(name);
+    if (CHARACTERS[name] && clips[name] && clips[name].length) {
+      return window.WHSkeletonUtils.clone(tmpl);
+    }
     return tmpl.clone(true);
   }
 
@@ -86148,6 +86743,8 @@ window.WH_CONFIG.moveset = {
     resolveUrl: resolveUrl,
     preloadAll: preloadAll,
     instance: instance,
+    getClips: function (name) { return clips[name] || []; },
+    getTemplate: function (name) { return cache[name] || null; },
     groundHeight: function (name) {
       var tmpl = cache[name];
       if (!tmpl) return 1.8;
@@ -86170,6 +86767,198 @@ window.WH_CONFIG.moveset = {
     loadedCount: function () { return loadedCount; }
   };
 })();
+</script>
+<script>
+// whanim2: presentation-only animation; the combat FSM owns every timing edge.
+(function () {
+  'use strict';
+
+  var CFG = window.WH_CONFIG.animRt;
+  var NAMES = {
+    idle: 'WH_Idle', walk: 'WH_Walk', run: 'WH_Run',
+    attack: 'WH_Attack1', hit: 'WH_Hit', death: 'WH_Death'
+  };
+
+  function CharacterAnim(body, clips) {
+    this.body = body;
+    this.clips = clips;
+    this.mixer = new THREE.AnimationMixer(body);
+    this.actions = {};
+    this.clip = null;
+    this.locomotion = 'idle';
+    this.hitActive = false;
+    this.dead = false;
+    this.attackPhase = null;
+    this.attackSerial = 0;
+    var self = this;
+    Object.keys(NAMES).forEach(function (state) {
+      var clip = THREE.AnimationClip.findByName(clips, NAMES[state]);
+      if (!clip) {
+        console.warn('[WH anim] missing ' + NAMES[state]);
+        return;
+      }
+      var action = self.mixer.clipAction(clip);
+      if (state === 'hit' || state === 'attack' || state === 'death') {
+        action.setLoop(THREE.LoopOnce, 1);
+        action.clampWhenFinished = true;
+      }
+      self.actions[state] = action;
+    });
+    this.mixer.addEventListener('finished', function (event) {
+      if (event.action === self.actions.hit && !self.dead) {
+        self.hitActive = false;
+        self.transition(self.locomotion, CFG.oneShotFadeSeconds);
+      }
+    });
+    this.transition('idle', 0);
+  }
+
+  CharacterAnim.prototype.transition = function (state, seconds, restart) {
+    if (!this.actions[state] || this.dead && state !== 'death') return;
+    if (this.clip === state && !restart) return;
+    var prev = this.actions[this.clip];
+    var next = this.actions[state];
+    // Interrupting a fade must not leave an older third action contributing
+    // pose/weight when the next transition begins.
+    var actions = this.actions;
+    Object.keys(actions).forEach(function (key) {
+      if (actions[key] !== prev && actions[key] !== next) actions[key].stop();
+    });
+    if (prev && prev !== next) prev.fadeOut(seconds);
+    next.stopFading();
+    next.reset();
+    next.enabled = true;
+    next.setEffectiveWeight(1);
+    if (seconds) next.fadeIn(seconds);
+    next.play();
+    this.clip = state;
+  };
+
+  CharacterAnim.prototype.setLocomotion = function (speed, running) {
+    if (this.dead) return;
+    var state = speed <= 0.01 ? 'idle' : (running ? 'run' : 'walk');
+    this.locomotion = state;
+    // syncPlayer/syncEnemy only call this after their FSM attack branch ends.
+    // A finished attack action remains named 'attack'; transition out of it
+    // rather than leaving all clip weights at zero during locomotion.
+    if (!this.hitActive) this.transition(state, CFG.crossfadeSeconds);
+    if (state === 'walk' || state === 'run') {
+      var action = this.actions[state];
+      if (action) {
+        var cycleMeters = state === 'walk' ? CFG.walkMetersPerCycle : CFG.runMetersPerCycle;
+        action.timeScale = speed * action.getClip().duration / cycleMeters;
+      }
+    }
+  };
+
+  CharacterAnim.prototype.hit = function () {
+    if (this.dead || !this.actions.hit) return;
+    this.hitActive = true;
+    this.transition('hit', CFG.oneShotFadeSeconds, true);
+  };
+
+  CharacterAnim.prototype.death = function (alreadyDead) {
+    if (this.dead || !this.actions.death) return;
+    this.dead = true;
+    this.hitActive = false;
+    this.transition('death', CFG.oneShotFadeSeconds);
+    if (alreadyDead) {
+      this.actions.death.time = this.actions.death.getClip().duration;
+      this.actions.death.paused = true;
+    }
+  };
+
+  CharacterAnim.prototype.playerAttack = function (elapsed, duration) {
+    if (this.dead || !this.actions.attack) return;
+    if (this.clip !== 'attack') this.transition('attack', CFG.oneShotFadeSeconds, true);
+    // Seeking to the FSM clock also handles chained/restarted attacks without
+    // allowing mixer drift or a render hitch to move the damage window.
+    this.actions.attack.timeScale = 1;
+    this.actions.attack.time = Math.min(this.actions.attack.getClip().duration,
+      Math.max(0, elapsed * this.actions.attack.getClip().duration / duration));
+  };
+
+  CharacterAnim.prototype.enemyAttack = function (phase, phaseTime, durations) {
+    if (this.dead || !this.actions.attack) return;
+    if (phase === 'windup' && this.attackPhase !== 'windup') {
+      this.transition('attack', CFG.oneShotFadeSeconds, true);
+      this.attackSerial++;
+    }
+    this.attackPhase = phase;
+    var clip = this.actions.attack.getClip();
+    var strike = clip.duration * CFG.attackClipStrikeFraction;
+    var part = phase === 'windup' ? { start: 0, span: strike, duration: durations.windup } :
+      phase === 'active' ? { start: strike, span: strike, duration: durations.active } :
+      { start: strike * 2, span: clip.duration - strike * 2, duration: durations.recover };
+    this.actions.attack.timeScale = part.span / part.duration;
+    this.actions.attack.time = Math.min(clip.duration, part.start +
+      Math.max(0, phaseTime) * this.actions.attack.timeScale);
+  };
+
+  CharacterAnim.prototype.syncPlayer = function (player, dt) {
+    if (player.state !== 'alive') {
+      this.death();
+    } else if (player.attacking) {
+      this.playerAttack(window.WH_CONFIG.player.attackDuration - player.attackTimer,
+        window.WH_CONFIG.player.attackDuration);
+    } else {
+      this.attackPhase = null;
+      this.setLocomotion(player.animMoveSpeed || 0, !!player.sprinting || player.rolling);
+    }
+    this.update(dt);
+  };
+
+  CharacterAnim.prototype.syncEnemy = function (enemy, dt) {
+    if (enemy.fsm === 'dead') {
+      this.death();
+    } else if (enemy.fsm === 'attack') {
+      this.enemyAttack(enemy.attackPhase, enemy.attackPhaseT, enemy.cfg.attackPhase);
+    } else {
+      this.attackPhase = null;
+      this.setLocomotion(enemy.animMoveSpeed || 0,
+        (enemy.animMoveSpeed || 0) > enemy.cfg.moveSpeed);
+    }
+    this.update(dt);
+  };
+
+  CharacterAnim.prototype.revive = function () {
+    this.mixer.stopAllAction();
+    this.dead = false;
+    this.hitActive = false;
+    this.attackPhase = null;
+    this.clip = null;
+    this.transition('idle', 0);
+    this.mixer.update(0);
+  };
+
+  CharacterAnim.prototype.update = function (dt) {
+    this.mixer.update(dt);
+    if (this.dead && this.actions.death && this.actions.death.paused) {
+      this.actions.death.time = this.actions.death.getClip().duration;
+    }
+  };
+
+  CharacterAnim.prototype.getState = function () {
+    var action = this.actions[this.clip];
+    var time = action ? action.time : 0;
+    var duration = action ? action.getClip().duration : 1;
+    var weights = {};
+    var self = this;
+    Object.keys(NAMES).forEach(function (state) {
+      var act = self.actions[state];
+      weights[NAMES[state]] = act && (act.isRunning() ||
+        (self.dead && state === 'death' && self.clip === 'death')) ?
+        act.getEffectiveWeight() : 0;
+    });
+    return { clip: NAMES[this.clip] || null, time: time,
+      phase: duration ? time / duration : 0, weights: weights,
+      timeScale: action ? action.timeScale : 0,
+      locomotion: NAMES[this.locomotion], attackSerial: this.attackSerial };
+  };
+
+  window.WH_CharacterAnim = CharacterAnim;
+})();
+
 </script>
 <script>
 // Witch Hunter prototype v7 "Weave Slice" - spell registry + projectiles.
@@ -86393,15 +87182,36 @@ window.WH_CONFIG.moveset = {
     this.bodyBaseY = meshRoot.position.y || 0;
     this.bodyBaseX = meshRoot.position.x || 0;
     this.yawFrame.add(this.body);
+    if (window.WH_ASSETS.getClips('playerBody').length) {
+      this.anim = new window.WH_CharacterAnim(meshRoot, window.WH_ASSETS.getClips('playerBody'));
+    }
   };
 
-  // Weapon attach (v5): the mesh lives on a dedicated pivot Group whose pose
-  // (position + rotation) is keyframed by WH_MOVESET during attacks.
+  // The skinned hand is the socket. Only stand-ins retain the old rigid pivot.
   Player.prototype.setWeapon = function (mesh) {
+    var hand = this.body && this.body.getObjectByName('R_Hand');
+    this.sword = mesh;
+    if (hand) {
+      this.weaponHand = hand;
+      hand.add(mesh);
+      mesh.position.set(0, 0, 0);
+      // The GLB's narrow blade tip is at -Y, not +Y. The measured
+      // WH_Attack1 hand basis needs a small +X/+Z cant for the tip to lead
+      // throughout strike and early recover; keep this in the rest socket.
+      hand.updateWorldMatrix(true, false);
+      var handRest = hand.getWorldQuaternion(new THREE.Quaternion());
+      var oldTipWorld = new THREE.Vector3(0, 1, 0).applyQuaternion(handRest);
+      var cantWorld = new THREE.Vector3(0.12, 0, 0.12).applyQuaternion(handRest);
+      var desiredWorld = oldTipWorld.negate().add(cantWorld).normalize();
+      var desiredLocal = desiredWorld.applyQuaternion(handRest.clone().invert());
+      var mountRotation = new THREE.Quaternion().setFromUnitVectors(
+        new THREE.Vector3(0, -1, 0), desiredLocal);
+      mesh.quaternion.copy(mountRotation);
+      return;
+    }
     this.weaponPivot = new THREE.Group();
     this.yawFrame.add(this.weaponPivot);
     this.weaponPivot.add(mesh);
-    this.sword = mesh;
     this.swordBase = window.WH_CONFIG.moveset.idlePose;
     this.resetWeaponPose();
   };
@@ -86418,7 +87228,7 @@ window.WH_CONFIG.moveset = {
   // leanX: body.rotation.x (forward+). yawAdd: added to body yaw (yaw osc).
   // swayX: lateral body.position.x offset (body space).
   Player.prototype.setBodyBob = function (bobY, tiltZ, leanX, yawAdd, swayX) {
-    if (!this.body) return;
+    if (!this.body || this.anim) return;
     this.body.position.y = this.bodyBaseY + bobY;
     this.body.position.x = (this.bodyBaseX || 0) + (swayX || 0);
     if (tiltZ !== undefined) this.body.rotation.z = tiltZ;
@@ -86843,6 +87653,7 @@ window.WH_CONFIG.moveset = {
   Player.prototype.takeDamage = function (amount) {
     if (this.iframes > 0 || this.state !== 'alive') return false;
     this.hp = Math.max(0, this.hp - amount);
+    if (this.anim) this.anim.hit();
     // v7: hp loss during castWindup fizzles the cast (no focus spent)
     this.cancelCastFizzle();
     if (this.hp <= 0) {
@@ -86943,7 +87754,8 @@ window.WH_CONFIG.moveset = {
 
     if (this.state === 'dying') {
       this.deathTilt = Math.min(Math.PI / 2, this.deathTilt + dt * 3);
-      if (this.body) this.body.rotation.x = -this.deathTilt;
+      if (this.body && !this.anim) this.body.rotation.x = -this.deathTilt;
+      if (this.anim) this.anim.death();
       if (this.stateTime >= CFG.respawnDelay) this.state = 'dead';
       return;
     }
@@ -86972,13 +87784,15 @@ window.WH_CONFIG.moveset = {
     var displacement = new THREE.Vector3(0, 0, 0);
     var moving = false;
     var sprintingNow = false;
+    this.animMoveSpeed = 0;
 
     if (this.rolling) {
       this.rollTimer -= dt;
       // roll = quick translation + eased full tumble (v3)
       var step = this.rollDir.clone().multiplyScalar(CFG.rollSpeed * dt);
       this.pos.add(step);
-      if (this.body) {
+      this.animMoveSpeed = CFG.rollSpeed;
+      if (this.body && !this.anim) {
         var rp = 1 - this.rollTimer / CFG.rollDuration;
         this.body.rotation.x = smooth(rp) * Math.PI * 2;
         this.body.rotation.z = 0;
@@ -87004,6 +87818,7 @@ window.WH_CONFIG.moveset = {
         }
         if (this.attacking) speed *= this.getAttackStage() === 'windup' ? 0.3 : 0;
         if (this.blocking) speed *= window.WH_CONFIG.block.moveMult;  // v6
+        this.animMoveSpeed = speed;
         // camera yaw basis: camera forward projected on xz plane.
         // Camera sits at yaw = camYaw BEHIND the player, so camera forward
         // (what W moves toward) is (sin(camYaw + PI), cos(camYaw + PI)).
@@ -87029,7 +87844,7 @@ window.WH_CONFIG.moveset = {
         // ---- v3 D2: layered walk/sprint cycle ----
         this.idleTime = 0;
         this.bobPhase += dt * (sprintingNow ? WL.bobFreqSprint : WL.bobFreqWalk);
-        if (this.body) {
+        if (this.body && !this.anim) {
           var amp = sprintingNow ? WL.sprintAmpMult : 1;
           var bob = Math.abs(Math.sin(this.bobPhase)) * WL.bobAmp * amp;
           // foot-phase dip: 2x freq, smaller (two dips per cycle)
@@ -87048,7 +87863,7 @@ window.WH_CONFIG.moveset = {
         this.moveDirWorld.z = 0;
         // ---- v3 D2: idle breathing after idleDelay ----
         this.idleTime += dt;
-        if (this.body) {
+        if (this.body && !this.anim) {
           if (this.idleTime >= WL.idleDelay) {
             this.idlePhase += dt * (Math.PI * 2 / WL.idlePeriod);
             this.setBodyBob(
@@ -87064,8 +87879,8 @@ window.WH_CONFIG.moveset = {
     if (clampToBounds) clampToBounds(this);
     this.yawFrame.rotation.y = this.yaw;
 
-    // ---- v5: three-stage attack pose + weapon-pivot keyframe interpolation ----
-    if (this.body) {
+    // Legacy pivot poses remain only for the rigid stand-in fallback.
+    if (this.body && !this.anim) {
       if (this.attacking) {
         var stage = this.getAttackStage();
         var MS = window.WH_MOVESET;
@@ -87136,6 +87951,14 @@ window.WH_CONFIG.moveset = {
         this.body.position.x = this.bodyBaseX || 0;
         if (this.sword) this.resetWeaponPose();
       }
+    }
+    // Lunge displacement remains FSM-owned even when the clip supplies the pose.
+    if (this.anim && this.attacking && this.getAttackStage() === 'strike' && this.lungeLeft > 0) {
+      var lungeVel = AW.strikeLunge / (CFG.attackDuration * AW.strikeFrac);
+      var lungeStep = Math.min(lungeVel * dt, this.lungeLeft);
+      this.pos.x += Math.sin(this.yaw) * lungeStep;
+      this.pos.z += Math.cos(this.yaw) * lungeStep;
+      this.lungeLeft -= lungeStep;
     }
     if (!this.attacking) this.lungeLeft = 0;
 
@@ -87223,7 +88046,8 @@ window.WH_CONFIG.moveset = {
     this.crossArmed = false;
     this.atkYawOffset = 0;
     this.yawFrame.rotation.y = this.yaw;
-    if (this.body) { this.body.rotation.x = 0; this.body.rotation.y = this.atkYawOffset; }
+    if (this.anim) this.anim.revive();
+    if (this.body && !this.anim) { this.body.rotation.x = 0; this.body.rotation.y = this.atkYawOffset; }
   };
 
   window.WH_Player = Player;
@@ -87283,8 +88107,20 @@ window.WH_CONFIG.moveset = {
     this.body = meshRoot;
     this.bodyBaseY = meshRoot.position.y || 0;
     this.yawFrame.add(this.body);
-    // v5: bandits carry a hand axe on a weapon pivot (idle pose, 1.1x scale)
-    if (this.type === 'bandit' && window.WH_ASSETS &&
+    var bodyName = this.type === 'bandit' ? 'banditBody' : 'ghoulBody';
+    if (window.WH_ASSETS.getClips(bodyName).length) {
+      this.anim = new window.WH_CharacterAnim(meshRoot, window.WH_ASSETS.getClips(bodyName));
+    }
+    // Rigged bandits carry the axe on the animated hand, not a world pivot.
+    var hand = meshRoot.getObjectByName('R_Hand');
+    if (this.type === 'bandit' && hand) {
+      var heldAxe = window.WH_ASSETS.instance('handAxe');
+      heldAxe.scale.setScalar(0.8);
+      hand.add(heldAxe);
+      heldAxe.position.set(0, 0, 0);
+    }
+    // Rigid stand-in fallback retains its original weapon pivot.
+    if (!hand && this.type === 'bandit' && window.WH_ASSETS &&
         window.WH_ASSETS.instance && window.WH_CONFIG.moveset) {
       var axe = window.WH_ASSETS.instance('handAxe');
       if (axe) {
@@ -87306,6 +88142,24 @@ window.WH_CONFIG.moveset = {
   // The FSM stops on death, but the visual fall must continue to settle.
   Enemy.prototype.updateDeathVisual = function (dt) {
     if (!this.body) return;
+    if (this.anim) {
+      this.anim.death();
+      this.root.position.copy(this.pos);
+      this.yawFrame.rotation.y = this.yaw;
+      var deathAction = this.anim.actions.death;
+      if (this.corpseFinalY === null &&
+          deathAction.time >= deathAction.getClip().duration - 0.001) {
+        this.root.position.y = 0;
+        this.root.updateMatrixWorld(true);
+        var finalMinY = new THREE.Box3().setFromObject(this.root).min.y;
+        this.corpseFinalY = isFinite(finalMinY) ? -finalMinY + 0.01 : 0;
+      }
+      if (this.corpseFinalY !== null) {
+        this.root.position.y = this.corpseFinalY;
+        this.deadFall = 1;
+      }
+      return;
+    }
     if (this.corpseFinalY === null) {
       this.root.position.copy(this.pos);
       this.yawFrame.rotation.y = this.yaw;
@@ -87492,9 +88346,21 @@ window.WH_CONFIG.moveset = {
     }
 
     // ---- visual ----
+    this.animMoveSpeed = moveSpeed;
     if (this.body) {
       this.root.position.copy(this.pos);
       this.yawFrame.rotation.y = this.yaw;
+      if (this.anim) {
+        // The clip supplies gait, sway, crouch and hit poses. The existing
+        // ghoul hop is a gameplay telegraph and stays on the world root.
+        var hopYAnim = 0;
+        if (this.hopTimer >= 0) {
+          var hopFraction = this.hopTimer / ANIM.ghoulHop.duration;
+          hopYAnim = 4 * hopFraction * (1 - hopFraction) * ANIM.ghoulHop.height;
+        }
+        this.root.position.y = hopYAnim;
+        return;
+      }
       this.body.rotation.y = 0;
       // v3 D3: layered walk cycle with per-type amplitude multipliers
       if (this.fsm !== 'dead') {
@@ -87590,8 +88456,10 @@ window.WH_CONFIG.moveset = {
     if (this.hp <= 0) {
       this.hp = 0;
       this.setFsm('dead');
+      if (this.anim) this.anim.death();
       return true;
     }
+    if (this.anim) this.anim.hit();
     // v3: hit stagger visual (0.15s lean-back + knockback)
     this.staggerTimer = ANIM.stagger.visualDuration;
     if (ANIM.stagger.knockback > 0 && fromDir) {
@@ -88562,6 +89430,13 @@ window.WH_CONFIG.moveset = {
       getPlayer: function () { return game.player; },
       getRegionManager: function () { return game.regionManager; },
       getAssetMeta: function (name) { return window.WH_ASSETS.getMeta(name); },
+      getAnimState: function (entity) {
+        var target = entity === undefined || entity === 'player' ? game.player : entity;
+        if (typeof entity === 'number') target = game.regionManager.getEnemies(
+          game.regionManager.logic.activeId)[entity];
+        if (target && target.ref) target = target.ref;
+        return target && target.anim ? target.anim.getState() : null;
+      },
       // test helpers
       teleportPlayer: function (x, z) { game.player.pos.set(x, 0, z); },
       killPlayer: function () { game.player.hp = 0; game.player.takeDamage(1); },
@@ -88845,6 +89720,17 @@ window.WH_CONFIG.moveset = {
         }
         // v3 D4: shake pulse on landed melee hits, while locked-on only
         if (game.player.lockTarget) triggerShake();
+      }
+    }
+
+    // Animation is presentation-only: sample the FSM after combat has consumed
+    // its strike window, then advance every mixer before rendering.
+    if (game.player.anim) game.player.anim.syncPlayer(game.player, dt);
+    var animRegions = Object.keys(rm.enemies);
+    for (var ar = 0; ar < animRegions.length; ar++) {
+      var animList = rm.enemies[animRegions[ar]];
+      for (var ae = 0; ae < animList.length; ae++) {
+        if (animList[ae].anim) animList[ae].anim.syncEnemy(animList[ae], dt);
       }
     }
 

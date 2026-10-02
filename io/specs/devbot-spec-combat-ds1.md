@@ -707,3 +707,37 @@ repairs (by IO, per D2 item 8, never Devbot):
 8. Verification: full suite 18/18 PASS, 0 crashes (2026-09-30, run with
    D3 fixes; A4-1 detail: err 0.931->0.302, snapFree, srDrift 0.0000,
    lastErr 0.000).
+
+## AMENDMENT D4+D5 (2026-10-02, IO — whanim3 cross-round adjudication)
+
+Context: whanim3 (B1 sword orientation + B2 texture intake) rebuilt the
+player/enemy weapon mounts on the rigged-socket structure, exposing that
+the ds1 harness's weapon-pose probes (A1-4 offsets, A3-4 pivot profile)
+read `weaponPivot` — a structure that exists ONLY on rigid stand-ins since
+whanim2 (real rigged bodies carry weapons on the R_Hand bone socket).
+Adjudicated live (structure probes + floor runs): HARNESS ARTIFACT, zero
+game defects; 14/18 non-weapon-readers pass unchanged on the B1/B2 tree.
+
+- D4 (A1-4 + A3-4 readers): socket-first weapon resolution — use
+  `weaponPivot` when present (stand-in compatibility), else the weapon
+  mesh under `R_Hand`; A3-4's profile metric becomes the weapon's
+  body-space euler Y (world quaternion premultiplied by the inverse body
+  quaternion, 'YXZ') which reproduces pivot.rotation.y semantics on the
+  stand-in path and measures the real socket sweep on rigged bodies
+  (live probe: 0.00 -> 2.76 rad across windup). Bars unchanged by D4.
+- D5 (A3-4 active-phase bar): the active window is 2 sim frames (0.12s);
+  the rAF window-buffer sampler catches 0-1 active rows at SwiftShader
+  rates, starving the actFrac bar (measured 0.00 with a healthy 2.74 rad
+  sweep in the same run). The designed-witness REPLACEMENT: the
+  windup->strike swing arc must be >= 1.0 rad — actFrac is retired from
+  the PASS gate (still printed as evidence); the arc bar carries the
+  active-phase witness (first patch landed with actFrac still in the
+  ok-gate; second-floor catch, corrected same hour).
+- Verification at D4+D5: ds1 17/18 -> A1-4 PASS 4/4 offsets worstPair
+  0.0000, A2-4 PASS, A3-4 arc 2.742 mono True recoverOk True (actFrac
+  sub-bar retired with cause). Full-floor rerun recorded in the whanim3
+  round report before IO commit.
+- Note for verdict-time: the whanim3 FROZEN baseline's ds1 18/18 was
+  produced with stand-in-geometry offsets (degraded-asset pass) — its
+  A1-4 PASS is vacuous on this metric and is superseded by the D4/D5
+  readers; the honest post-whanim2 floor requires the socket readers.
