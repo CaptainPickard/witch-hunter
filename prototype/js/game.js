@@ -827,6 +827,10 @@
     game.inventory = new INV.Inventory();
     INV.active = game.inventory;
     game.player.inventory = game.inventory;
+    // fresh-spawn kit (CONFIG.inventory.startingItems). These are possession
+    // items, NOT belt charges: the belt keeps casting exactly as before.
+    // Boot only - death keeps the inventory; no save wiring yet.
+    game.inventory.fillStartingItems();
     game.inventoryUI = new INV.InventoryUI({
       inventory: game.inventory,
       onOpenChange: function (open) { game.player.setInputSuspended(open); }
