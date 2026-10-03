@@ -785,3 +785,58 @@ window.WH_CONFIG.touch = {
     block:    { x: 0.90, y: 0.65 }
   }
 };
+
+// 2026-10-05 inventory Order A (Nicko 10-04): possession system, separate
+// from the belt (belt = casting, inventory = possession; keys 1-5 / Q are
+// untouched). Fixed N-slot grid, per-item stack caps, stacks join on pickup.
+window.WH_CONFIG.inventory = {
+  slots: 24,                        // fixed grid size, growable later
+  defaultStackCap: 60,              // consumables/ingredients without their own stackCap
+  // fresh-spawn kit (boot only; death keeps the inventory, no persistence yet)
+  startingItems: [
+    { id: 'fireboltCharge', count: 3 },
+    { id: 'radianceCharge', count: 1 },
+    { id: 'bandage', count: 1 }
+  ],
+  drop: {
+    mode: 'physical',               // 'physical' (item entity at feet) | 'void' (delete + toast)
+    scatterRadius: 1.75,            // m, dropped items land up to this far from the player
+    pickupRadius: 1.6               // m, E collects the nearest item entity within this
+  },
+  // placeholder world item visual (box, unlit so it reads at night; art pass later)
+  entity: {
+    size: 0.28,                     // m, box edge
+    spinDegPerSec: 70,              // slow yaw spin so drops catch the eye
+    colors: {                       // one accent per category
+      consumable: 0xd8b24a,         // amber (canon fire/human accent)
+      gear: 0x4ac8d8                // cyan
+    }
+  }
+};
+
+// Item registry. ids are canonical (stage 2 enemy drops + gatherables reuse
+// it). Consumables omit stackCap -> CONFIG.inventory.defaultStackCap; gear = 1.
+// equipHint / useHint are data for Order B+; nothing reads them yet.
+window.WH_CONFIG.items = {
+  fireboltCharge: { id: 'fireboltCharge', name: 'Firebolt Charge', glyph: 'FB',
+                    category: 'consumable', useHint: { kind: 'spellCharge', spell: 'firebolt' } },
+  radianceCharge: { id: 'radianceCharge', name: 'Radiance Charge', glyph: 'RA',
+                    category: 'consumable', useHint: { kind: 'spellCharge', spell: 'radiance' } },
+  bandage:        { id: 'bandage', name: 'Bandage', glyph: 'BD',
+                    category: 'consumable', useHint: { kind: 'heal', amount: 25 } },
+  longsword:      { id: 'longsword', name: 'Longsword', glyph: 'LS',
+                    category: 'gear', stackCap: 1, equipHint: 'mainHand' },
+  roundShield:    { id: 'roundShield', name: 'Round Shield', glyph: 'SH',
+                    category: 'gear', stackCap: 1, equipHint: 'offHand' }
+};
+
+// Inventory screen (DOM modal). While open, player movement/combat input is
+// suspended (the world keeps running).
+window.WH_CONFIG.inventoryUI = {
+  openKey: 'KeyI',
+  closeKeys: ['KeyI', 'Escape'],
+  dropKey: 'KeyG',                  // drop 1 of the selected stack; Shift+G = whole stack
+  pickupKey: 'KeyE',                // world: collect the nearest item entity in pickupRadius
+  gridCols: 6,                      // 24 slots -> 6 x 4
+  toastSeconds: 1.8                 // "Dropped X x1" / "Inventory full" toast lifetime
+};
