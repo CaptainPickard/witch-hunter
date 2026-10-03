@@ -358,3 +358,21 @@ html, body {
   border-color: #c9a94a;
   background: rgba(201, 169, 74, 0.12);
 }
+
+/* 10-04: shield in the left hand - spell slots dim, divider badged 'S' */
+.belt-divider.spell-divider {
+  position: relative;
+}
+
+#wh-belt.stowed .belt-slot:not(.consumable) {
+  opacity: 0.45;
+}
+
+#wh-belt.stowed .belt-divider.spell-divider::after {
+  content: 'S';
+  position: absolute;
+  top: -15px;
+  left: -3px;
+  font-size: 10px;
+  color: #c9b88a;
+}

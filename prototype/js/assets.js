@@ -55,7 +55,9 @@
 
     // weapons (pixelated)
     longsword: 'art-direction/3d/assets/weapons/longsword-pixelated.glb',
-    handAxe: 'art-direction/3d/assets/weapons/hand-axe-pixelated.glb'
+    handAxe: 'art-direction/3d/assets/weapons/hand-axe-pixelated.glb',
+    // 10-04 left-hand shield (no NORMAL attribute: prepTemplate rebuilds it)
+    roundShield: 'art-direction/3d/assets/weapons/round-shield-pixelated.glb'
   };
 
   // R4: rigged body -> offline-baked atlas (512 NEAREST + 5-bit posterize).
@@ -209,6 +211,12 @@
     // DoubleSide for safety (R3), NearestFilter on pixelated textures (R2).
     group.traverse(function (obj) {
       if (!obj.isMesh) return;
+      // 10-04: GLBs exported without NORMAL (round shield, some legacy
+      // props) light as black under lit materials; rebuild before use.
+      if (obj.geometry && obj.geometry.attributes &&
+          obj.geometry.attributes.position && !obj.geometry.attributes.normal) {
+        obj.geometry.computeVertexNormals();
+      }
       if (obj.isSkinnedMesh) obj.frustumCulled = false;
       obj.castShadow = false;
       obj.receiveShadow = false;

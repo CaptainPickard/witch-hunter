@@ -77,9 +77,9 @@
     this.focusRegenBlock = 0;         // seconds until focus regen resumes
 
     // v7: weave / loadout state. activeLoadout 1 = weapon+spell,
-    // 2 = weapon+shield. The offhand implement is derived from it.
+    // 2 = weapon+shield. 10-04: kept in step with leftHand by setLeftHand().
     this.activeLoadout = 1;
-    this.offhand = 'spell';           // 'spell' | 'shield' (derived)
+    this.offhand = 'spell';           // 'spell' | 'shield' (= leftHand.mode)
     this.toggling = false;            // loadout toggle busy window
     this.toggleTimer = 0;
     this.castWindup = 0;              // seconds left of cast windup
@@ -89,6 +89,11 @@
     this.belt = ['firebolt', null, null, null, null];   // spell ids / null
     this.consumables = [{ id: 'healthPotion', charges: V7.consumable.healthPotion.charges }, null];
     this.offhandGlow = null;          // emissive sphere mesh at the left anchor
+    // 10-04 left-hand implement (Nicko): Digit1-5 equips belt spells; the
+    // held spell's key again stows to the shield. Boot = slot 1 equipped.
+    // offhand mirrors leftHand.mode and stays the field other code reads.
+    this.leftHand = { mode: 'spell', spellId: this.belt[this.selectedBeltSlot] };
+    this.shield = null;               // round shield mesh (L_Hand child)
 
     // v7: armed finisher state (doc 04 ruling part A)
     this.armedTimer = 0;              // > 0 = armed finisher ready
@@ -253,10 +258,10 @@
       }
       // v7: Q = loadout toggle (busy window, resets chain, keeps armed)
       if (e.code === 'KeyQ' && !e.repeat) self.toggleLoadout();
-      // v7: Digit1-5 = belt spell selection (never touches chain/armed)
+      // 10-04: Digit1-5 = left-hand equip / stow (never touches chain/armed)
       if (e.code.indexOf('Digit') === 0 && !e.repeat) {
         var n = parseInt(e.code.slice(5), 10);
-        if (n >= 1 && n <= V7.belt.slots) self.selectBeltSlot(n - 1);
+        if (n >= 1 && n <= V7.belt.slots) self.pressBeltKey(n - 1);
       }
       // v7: R / T = consumable belt slots 1 / 2
       if (e.code === 'KeyR' && !e.repeat) self.useConsumable(0);
@@ -351,6 +356,7 @@
   // Cannot re-block until stamina has recovered past guardBreakMinStamina.
   Player.prototype.tryBlock = function () {
     if (this.state !== 'alive' || this.rolling || this.attacking) return;
+    if (this.offhand !== 'shield' || this.regripTimer > 0) return;  // 10-04: shield hand only, after its regrip
     if (this.guardBroken) return;
     if (this.stamina < window.WH_CONFIG.block.guardBreakMinStamina) return;
     this.blocking = true;
@@ -408,8 +414,9 @@
     return this.activeLoadout;
   };
 
-  // v7: belt spell selection (Digit1-5). Swaps the bound spell, starts the
-  // regrip window. NEVER touches the combo chain or armed state.
+  // v7: belt spell selection. Swaps the bound spell, starts the regrip
+  // window. NEVER touches the combo chain or armed state. 10-04: keys reach
+  // it through pressBeltKey -> equipBeltSpell.
   Player.prototype.selectBeltSlot = function (i) {
     if (this.state !== 'alive') return;
     if (i < 0 || i >= V7.belt.slots) return;
@@ -419,9 +426,112 @@
       return;
     }
     this.selectedBeltSlot = i;
+    if (this.leftHand.mode === 'spell') this.leftHand.spellId = this.belt[i];
     this.regripTimer = V7.belt.regripSeconds;
     // glow color follows the selection (mesh owned by game.js visuals)
     if (this.onSpellSelected) this.onSpellSelected(this.belt[i]);
+  };
+
+  // 10-04 (Nicko): Digit key k. Empty slot = refusal flash. The held spell's
+  // key again = stow to the shield; any other filled slot = equip that spell
+  // directly (spell -> spell never passes through the shield). A quick swap:
+  // no toggle window, no chain/armed reset, a running swing plays out.
+  Player.prototype.pressBeltKey = function (i) {
+    if (this.state !== 'alive') return;
+    if (i < 0 || i >= V7.belt.slots) return;
+    var spellId = this.belt[i];
+    if (!spellId) {
+      if (this.onCastRefusal) this.onCastRefusal('empty-slot');
+      return;
+    }
+    if (this.leftHand.mode === 'spell' && this.leftHand.spellId === spellId) {
+      this.stowToShield();
+      return;
+    }
+    this.equipBeltSpell(i);
+  };
+
+  // Spell implement from belt slot i (shield -> spell drops the guard).
+  Player.prototype.equipBeltSpell = function (i) {
+    if (!this.belt[i]) return;
+    this.endBlock();
+    this.dropPendingCast();
+    this.selectBeltSlot(i);              // regrip window + glow color
+    this.setLeftHand('spell', this.belt[i]);
+  };
+
+  Player.prototype.stowToShield = function () {
+    this.dropPendingCast();
+    this.regripTimer = V7.belt.regripSeconds;
+    this.setLeftHand('shield', null);
+  };
+
+  // A cast still in windup belongs to the implement being put away: drop it
+  // (no focus spent; deliberate, so no fizzle flash).
+  Player.prototype.dropPendingCast = function () {
+    this.castWindup = 0;
+    this.pendingSpellId = null;
+  };
+
+  // Single left-hand write path (Digit keys, Q toggle, boot). activeLoadout
+  // follows the implement so Q always flips spell <-> shield from here.
+  Player.prototype.setLeftHand = function (mode, spellId) {
+    this.leftHand = { mode: mode, spellId: mode === 'spell' ? spellId : null };
+    this.offhand = mode;
+    this.activeLoadout = mode === 'shield' ? 2 : 1;
+    this.applyLeftHandVisual();
+  };
+
+  // Shield mesh shows only while the shield is the implement (the spell
+  // glow is game.js's, keyed off offhand).
+  Player.prototype.applyLeftHandVisual = function () {
+    if (this.shield) this.shield.visible = this.offhand === 'shield';
+  };
+
+  // Mount the round shield on the skinned L_Hand (constant hand-local mount
+  // measured offline, CONFIG.assets.shieldMount); the rigid stand-in body
+  // has no bones, so it falls back to the mirrored idle anchor on yawFrame.
+  Player.prototype.setShield = function (mesh) {
+    if (this.shield && this.shield.parent) this.shield.parent.remove(this.shield);
+    this.shield = mesh;
+    var SM = window.WH_CONFIG.assets.shieldMount;
+    // Centre the disc on its X/Y and put its back-most point on the holder
+    // origin, so the mount offset is where the shield's back meets the fist.
+    var inner = mesh.children[0];
+    if (inner) {
+      mesh.updateMatrixWorld(true);
+      var box = new THREE.Box3().setFromObject(inner);
+      var s = mesh.scale.x || 1;
+      var c = box.getCenter(new THREE.Vector3()).multiplyScalar(1 / s);
+      inner.position.x -= c.x;
+      inner.position.y -= c.y;
+      inner.position.z -= box.min.z / s;
+    }
+    var hand = this.body && this.body.getObjectByName('L_Hand', true);
+    if (hand) {
+      hand.add(mesh);
+      // raw +Z (boss side) -> faceAxis, raw +Y (disc up) -> upAxis
+      var f = new THREE.Vector3().fromArray(SM.faceAxis).normalize();
+      var u = new THREE.Vector3().fromArray(SM.upAxis);
+      u.addScaledVector(f, -u.dot(f)).normalize();
+      var x = new THREE.Vector3().crossVectors(u, f);
+      var q = new THREE.Quaternion().setFromRotationMatrix(
+        new THREE.Matrix4().makeBasis(x, u, f));
+      // rollDeg: same convention as weaponMount (about hand-local +Z, CCW)
+      if (SM.rollDeg) {
+        q.premultiply(new THREE.Quaternion().setFromAxisAngle(
+          new THREE.Vector3(0, 0, 1), SM.rollDeg * Math.PI / 180));
+      }
+      mesh.quaternion.copy(q);
+      mesh.position.fromArray(SM.offset);
+    } else {
+      // stand-in: face body-left (+X), outside the mirrored weapon anchor
+      var ip = window.WH_CONFIG.moveset.idlePose;
+      this.yawFrame.add(mesh);
+      mesh.rotation.set(0, (ip.pos[0] > 0 ? -1 : 1) * Math.PI / 2, 0);
+      mesh.position.set(-ip.pos[0], ip.pos[1], ip.pos[2]);
+    }
+    this.applyLeftHandVisual();
   };
 
   Player.prototype.getSelectedSpellId = function () {
@@ -780,8 +890,11 @@
       this.toggleTimer -= dt;
       if (this.toggleTimer <= 0) {
         this.toggling = false;
-        this.activeLoadout = 3 - this.activeLoadout;  // v7: flip 1<->2 on toggle complete
-        this.offhand = this.activeLoadout === 2 ? 'shield' : 'spell';
+        // v7: flip 1<->2 on toggle complete. 10-04: loadout 2 = shield,
+        // loadout 1 = the selected belt spell (shield if that slot is empty).
+        var sel = this.getSelectedSpellId();
+        if (3 - this.activeLoadout === 2 || !sel) this.setLeftHand('shield', null);
+        else this.setLeftHand('spell', sel);
       }
     }
     if (this.regripTimer > 0) this.regripTimer = Math.max(0, this.regripTimer - dt);
@@ -791,8 +904,7 @@
       this.armedTimer = Math.max(0, this.armedTimer - dt);
       if (this.armedTimer <= 0) this.crossArmed = false;
     }
-    // offhand implement derived from the active loadout (1 = spell, 2 = shield)
-    this.offhand = this.activeLoadout === 2 ? 'shield' : 'spell';
+    // 10-04: offhand = leftHand.mode, written only by setLeftHand()
     if (this.blocking && this.offhand !== 'shield') this.endBlock();
 
     if (this.state === 'dying') {

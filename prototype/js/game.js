@@ -276,7 +276,7 @@
       game.hud.beltSlots.push(slot);
     }
     var div1 = document.createElement('div');
-    div1.className = 'belt-divider';
+    div1.className = 'belt-divider spell-divider';
     belt.appendChild(div1);
     game.hud.consSlots = [];
     var consKeys = ['R', 'T'];
@@ -382,7 +382,11 @@
     }
     // v7: belt HUD state (selected tint, active pip)
     if (game.hud.belt) {
-      var spellId = p.getSelectedSpellId ? p.getSelectedSpellId() : null;
+      // 10-04: tint = the spell IN HAND; shield in hand dims the spell slots
+      // and badges the divider (CSS #wh-belt.stowed)
+      var stowed = p.offhand === 'shield';
+      game.hud.belt.classList.toggle('stowed', stowed);
+      var spellId = stowed ? null : p.getSelectedSpellId();
       var SC = spellId ? CFG.spell[spellId].schoolColor : null;
       var hex = SC ? '#' + ('000000' + SC.toString(16)).slice(-6) : '';
       for (var i = 0; i < game.hud.beltSlots.length; i++) {
@@ -788,6 +792,17 @@
     return game.player.equipWeapon(id, mesh);
   }
 
+  // 10-04: left-hand round shield. One mesh for the session, mounted once;
+  // equip/stow only flip its visibility (player.applyLeftHandVisual).
+  // Measured sizing as above: weaponTargetHeight.roundShield / disc height.
+  function equipPlayerShield() {
+    var mesh = window.WH_ASSETS.instance('roundShield');
+    if (!mesh) return false;
+    mesh.scale.setScalar(window.WH_ASSETS.weaponScale('roundShield'));
+    game.player.setShield(mesh);
+    return true;
+  }
+
   // ---- WH_DEBUG hooks ----------------------------------------------------------
 
   function setupDebugHooks() {
@@ -916,6 +931,12 @@
       setFocus: function (v) { game.player.focus = v; game.player.focusRegenBlock = 0.1; },  // v7: brief regen pause for debug stability
       getBelt: function () { return game.player.getBelt(); },
       selectBeltSlot: function (i) { game.player.selectBeltSlot(i); },
+      pressBeltKey: function (i) { game.player.pressBeltKey(i); },
+      getLeftHand: function () {
+        var p = game.player;
+        return { mode: p.leftHand.mode, spellId: p.leftHand.spellId,
+                 shieldVisible: !!(p.shield && p.shield.visible) };
+      },
       getActiveLoadout: function () { return game.player.activeLoadout; },
       toggleLoadout: function () { game.player.toggleLoadout(); },
       getOffhand: function () { return game.player.offhand; },
@@ -1018,6 +1039,7 @@
       // v3: register the weapon with the player so attack stages drive its
       // pose. 10-04: which weapon = CONFIG.moveset.playerWeapon.
       equipPlayerWeapon(CFG.moveset.playerWeapon);
+      equipPlayerShield();
 
       // initial region A
       game.regionManager = new window.WH_RegionManager(game.scene);

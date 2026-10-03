@@ -637,7 +637,10 @@ window.WH_CONFIG = {
     // MEASURED GROUND_META height of the loaded GLB - derived from bounds,
     // not magic constants. weaponScaleEnabled is the default-on kill switch.
     weaponScaleEnabled: true,
-    weaponTargetHeight: { longsword: 1.05, handAxe: 0.6 },
+    // roundShield (10-04): 1.0m target / 2.0017 measured disc height
+    // (raw ext 1.995 x 2.002 x 0.393) = scale 0.4996; inside the 0.9-scaled
+    // player body that is a ~0.9m world diameter.
+    weaponTargetHeight: { longsword: 1.05, handAxe: 0.6, roundShield: 1.0 },
     // Grip-mount tuning (2026-10-03): rollDeg rolls a hand-held weapon about
     // the hand's local +Z (grip forward; positive = CCW, right-hand rule)
     // with no code change. enabled:false reverts to the raw GLB axes for
@@ -651,7 +654,17 @@ window.WH_CONFIG = {
     // value so the fist lands ON the grip. handAxe grip is its butt at
     // holder 0, already correct.
     weaponMount: { rollDeg: 0, enabled: true,
-                   gripHolderY: { longsword: 1.637, handAxe: 0 } }
+                   gripHolderY: { longsword: 1.637, handAxe: 0 } },
+    // 10-04 left-hand shield mount (scratch/measure_shield.py, L_Hand at
+    // WH_Idle frame 0). Vectors are L_Hand-local. faceAxis: where the boss
+    // side (raw +Z) points = body-left turned 20 deg toward forward, level.
+    // upAxis: where the disc's raw +Y points = world up. rollDeg: extra turn
+    // about hand-local +Z (weaponMount convention). offset: hand-local spot
+    // the shield's back-most point sits on = fist centroid [0.018, 0.078,
+    // 0.021] pushed 0.042 (fist depth) + 0.01 along faceAxis; the L_Thigh
+    // clears that plane by 0.027 at idle.
+    shieldMount: { faceAxis: [-0.876, 0.4, 0.271], upAxis: [-0.327, -0.903, 0.277],
+                   rollDeg: 0, offset: [-0.028, 0.099, 0.035] }
   }
 };
 // 10-04 change order (Nicko: combo spam -> real chains, souls-style).
