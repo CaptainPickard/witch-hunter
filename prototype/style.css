@@ -376,3 +376,170 @@ html, body {
   font-size: 10px;
   color: #c9b88a;
 }
+
+/* --- 2026-10-05 inventory screen (Order A). Darkwood frame, square stepped
+       borders (pixel look, no radius/blur), amber = the ONE accent
+       (selection), matching the boot bar / reticle #d8b24a. --- */
+#wh-inv {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 4, 3, 0.55);
+  z-index: 20;                  /* above the HUD, below the boot overlay (30) */
+  font-family: monospace;
+  color: #d8d2c0;
+  image-rendering: pixelated;
+  user-select: none;
+}
+
+#wh-inv.open {
+  display: flex;
+}
+
+.inv-panel {
+  background: #1a1510;
+  border: 4px solid #4a4034;
+  box-shadow: 0 0 0 4px #14110e, inset 0 0 0 2px #2a231b;
+  padding: 14px 18px 12px;
+}
+
+.inv-title {
+  text-align: center;
+  font-size: 18px;
+  letter-spacing: 6px;
+  color: #e3dcc4;
+  text-shadow: 2px 2px 0 #0a0806;
+  margin-bottom: 10px;
+}
+
+.inv-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid #4a4034;
+  margin-bottom: 12px;
+}
+
+.inv-tab {
+  padding: 4px 12px;
+  font-size: 12px;
+  letter-spacing: 3px;
+  color: #6a6350;
+  background: #14110e;
+  border: 2px solid #3d382e;
+  border-bottom: none;
+  cursor: pointer;
+}
+
+.inv-tab.active {
+  color: #d8d2c0;
+  background: #2a231b;
+  border-color: #5a5344;
+}
+
+.inv-grid {
+  display: grid;
+  gap: 4px;
+}
+
+.inv-slot {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  background: #0f0c09;
+  border: 2px solid #2a241c;
+  box-shadow: inset 2px 2px 0 #070504;
+  cursor: pointer;
+}
+
+.inv-slot.filled {
+  background: #221c15;
+  border-color: #5a5344;
+}
+
+.inv-slot.selected {
+  border-color: #d8b24a;
+}
+
+.inv-glyph {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 13px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  color: #c9bf9f;
+}
+
+.inv-count {
+  position: absolute;
+  right: 3px;
+  bottom: 1px;
+  font-size: 11px;
+  color: #e3dcc4;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.inv-hint {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #8a7f70;
+}
+
+.inv-char {
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.inv-soon {
+  font-size: 13px;
+  letter-spacing: 3px;
+  color: #6a6350;
+}
+
+.inv-tip {
+  position: fixed;
+  display: none;
+  pointer-events: none;
+  background: #14110e;
+  border: 2px solid #5a5344;
+  padding: 4px 8px;
+  z-index: 25;
+}
+
+.inv-tip-name {
+  font-size: 13px;
+  color: #e3dcc4;
+}
+
+.inv-tip-cat {
+  font-size: 11px;
+  color: #8a7f70;
+}
+
+/* toast: "Dropped Bandage x1" / "Inventory full" */
+#wh-toast {
+  position: absolute;
+  bottom: 70px;
+  width: 100%;
+  text-align: center;
+  font-family: monospace;
+  font-size: 14px;
+  letter-spacing: 2px;
+  color: #e3dcc4;
+  text-shadow: 1px 1px 0 #000, 0 0 6px rgba(0, 0, 0, 0.9);
+  opacity: 0;
+  transition: opacity 0.2s linear;
+  z-index: 22;
+}
+
+#wh-toast.visible {
+  opacity: 1;
+}

@@ -116,9 +116,200 @@
     if (this.onChange) this.onChange();
   };
 
+  // ---- inventory screen (DOM modal, I key) ---------------------------------------
+  // opts: { inventory, onOpenChange(open), onDrop(slotIndex, wholeStack) }.
+  // The UI never touches player state itself: game.js suspends input on
+  // onOpenChange and routes onDrop to the drop flow.
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  function InventoryUI(opts) {
+    var UI = CFG.inventoryUI;
+    var self = this;
+    this.inv = opts.inventory;
+    this.onOpenChange = opts.onOpenChange || null;
+    this.onDrop = opts.onDrop || null;
+    this.open = false;
+    this.tab = 'inventory';
+    this.selected = -1;
+    this.tipSlot = -1;
+
+    var root = el('div');
+    root.id = 'wh-inv';
+    var panel = el('div', 'inv-panel');
+    root.appendChild(panel);
+    panel.appendChild(el('div', 'inv-title', 'INVENTORY'));
+
+    var tabs = el('div', 'inv-tabs');
+    this.tabEls = {
+      inventory: el('div', 'inv-tab', 'INVENTORY'),
+      character: el('div', 'inv-tab', 'CHARACTER')
+    };
+    Object.keys(this.tabEls).forEach(function (k) {
+      tabs.appendChild(self.tabEls[k]);
+      self.tabEls[k].addEventListener('click', function () { self.setTab(k); });
+    });
+    panel.appendChild(tabs);
+
+    // inventory tab: fixed grid, CONFIG.inventoryUI.gridCols wide
+    this.invBody = el('div', 'inv-body');
+    var grid = el('div', 'inv-grid');
+    grid.style.gridTemplateColumns = 'repeat(' + UI.gridCols + ', auto)';
+    this.slotEls = [];
+    this.inv.slots.forEach(function (_, i) {
+      var s = el('div', 'inv-slot');
+      var glyph = el('span', 'inv-glyph');
+      var count = el('span', 'inv-count');
+      s.appendChild(glyph);
+      s.appendChild(count);
+      s.addEventListener('click', function () { self.select(i); });
+      s.addEventListener('mouseenter', function (e) { self.showTip(i, e); });
+      s.addEventListener('mousemove', function (e) { self.moveTip(e); });
+      s.addEventListener('mouseleave', function () { self.hideTip(); });
+      grid.appendChild(s);
+      self.slotEls.push({ root: s, glyph: glyph, count: count });
+    });
+    this.invBody.appendChild(grid);
+    this.invBody.appendChild(el('div', 'inv-hint',
+      keyLabel(UI.dropKey) + ' drop 1  -  Shift+' + keyLabel(UI.dropKey) +
+      ' drop stack  -  ' + UI.closeKeys.map(keyLabel).join(' / ') + ' close'));
+    panel.appendChild(this.invBody);
+
+    // character tab: placeholder until Order B
+    this.charBody = el('div', 'inv-body inv-char');
+    this.charBody.appendChild(el('div', 'inv-soon', 'Coming soon'));
+    panel.appendChild(this.charBody);
+
+    this.tip = el('div', 'inv-tip');
+    this.tipName = el('div', 'inv-tip-name');
+    this.tipCat = el('div', 'inv-tip-cat');
+    this.tip.appendChild(this.tipName);
+    this.tip.appendChild(this.tipCat);
+    root.appendChild(this.tip);
+
+    document.getElementById('wh-root').appendChild(root);
+    this.root = root;
+
+    // toast lives in the HUD layer so it shows with the screen closed too
+    this.toastEl = el('div');
+    this.toastEl.id = 'wh-toast';
+    document.getElementById('wh-hud').appendChild(this.toastEl);
+
+    this.inv.onChange = function () { self.render(); };
+    document.addEventListener('keydown', function (e) { self.onKey(e); });
+    this.setTab('inventory');
+    this.render();
+  }
+
+  // 'KeyG' -> 'G', 'Escape' -> 'Esc'
+  function keyLabel(code) {
+    if (code === 'Escape') return 'Esc';
+    return code.indexOf('Key') === 0 ? code.slice(3) : code;
+  }
+
+  InventoryUI.prototype.onKey = function (e) {
+    var UI = CFG.inventoryUI;
+    if (e.repeat) return;
+    if (!this.open) {
+      if (e.code === UI.openKey) { e.preventDefault(); this.setOpen(true); }
+      return;
+    }
+    if (UI.closeKeys.indexOf(e.code) >= 0) {
+      e.preventDefault();
+      this.setOpen(false);
+    } else if (e.code === UI.dropKey) {
+      e.preventDefault();
+      if (this.tab === 'inventory' && this.selected >= 0 &&
+          this.inv.slots[this.selected] && this.onDrop) {
+        this.onDrop(this.selected, e.shiftKey);
+      }
+    }
+  };
+
+  InventoryUI.prototype.setOpen = function (open) {
+    if (this.open === open) return;
+    this.open = open;
+    this.root.classList.toggle('open', open);
+    if (!open) this.hideTip();
+    this.render();
+    if (this.onOpenChange) this.onOpenChange(open);
+  };
+
+  InventoryUI.prototype.setTab = function (tab) {
+    this.tab = tab;
+    var self = this;
+    Object.keys(this.tabEls).forEach(function (k) {
+      self.tabEls[k].classList.toggle('active', k === tab);
+    });
+    this.invBody.style.display = tab === 'inventory' ? '' : 'none';
+    this.charBody.style.display = tab === 'character' ? '' : 'none';
+    if (tab !== 'inventory') this.hideTip();
+  };
+
+  // Click = select (highlight). Clicking the selected slot again clears it.
+  InventoryUI.prototype.select = function (i) {
+    this.selected = (this.selected === i || !this.inv.slots[i]) ? -1 : i;
+    this.render();
+  };
+
+  InventoryUI.prototype.render = function () {
+    for (var i = 0; i < this.slotEls.length; i++) {
+      var s = this.inv.slots[i];
+      var v = this.slotEls[i];
+      var d = s ? itemDef(s.id) : null;
+      v.root.classList.toggle('filled', !!s);
+      v.root.classList.toggle('selected', i === this.selected && !!s);
+      v.glyph.textContent = d ? d.glyph : '';
+      v.count.textContent = s && s.count > 1 ? String(s.count) : '';
+    }
+    if (this.tipSlot >= 0) this.fillTip(this.tipSlot);
+  };
+
+  InventoryUI.prototype.fillTip = function (i) {
+    var s = this.inv.slots[i];
+    var d = s ? itemDef(s.id) : null;
+    if (!d) { this.tip.style.display = 'none'; return false; }
+    this.tipName.textContent = d.name;
+    this.tipCat.textContent = d.category === 'gear' ? 'Gear' : 'Consumable';
+    this.tip.style.display = 'block';
+    return true;
+  };
+
+  InventoryUI.prototype.showTip = function (i, e) {
+    this.tipSlot = i;
+    if (this.fillTip(i)) this.moveTip(e);
+  };
+
+  InventoryUI.prototype.moveTip = function (e) {
+    this.tip.style.left = (e.clientX + 14) + 'px';
+    this.tip.style.top = (e.clientY + 14) + 'px';
+  };
+
+  InventoryUI.prototype.hideTip = function () {
+    this.tipSlot = -1;
+    this.tip.style.display = 'none';
+  };
+
+  // Brief HUD line ("Dropped Bandage x1", "Inventory full").
+  InventoryUI.prototype.toast = function (text) {
+    var t = this.toastEl;
+    t.textContent = text;
+    t.classList.add('visible');
+    clearTimeout(this.toastTimer);
+    this.toastTimer = setTimeout(function () {
+      t.classList.remove('visible');
+    }, CFG.inventoryUI.toastSeconds * 1000);
+  };
+
   // ---- module ---------------------------------------------------------------------
 
   var M = {
+    InventoryUI: InventoryUI,
     Inventory: Inventory,
     active: null,
     itemDef: itemDef,

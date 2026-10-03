@@ -576,6 +576,7 @@
     prev.y = ev.clientY;
     var p = getPlayer();
     if (!p || p.lockTarget) return;   // same rule as mouse cam: dead while locked
+    if (p.inputSuspended) return;     // 10-05: inventory screen open
     if (dx === 0 && dy === 0) return;
     var sens = ((TC.sensDegPerPx !== undefined) ? TC.sensDegPerPx
       : window.WH_CONFIG.player.mouseSensDegPerPx) * Math.PI / 180;
@@ -594,7 +595,7 @@
   // ---- buttons -----------------------------------------------------------------
   function btnPress(name) {
     var p = getPlayer();
-    if (!p) return;
+    if (!p || p.inputSuspended) return;   // 10-05: inventory screen open
     if (name === 'attack') {
       if (p.tryAttack) p.tryAttack();
     } else if (name === 'lockon') {

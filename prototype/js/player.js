@@ -112,6 +112,11 @@
     // lock-on state (D3)
     this.lockTarget = null;           // enemy object or null
 
+    // 10-05 inventory Order A: true while the inventory screen is open.
+    // Movement / combat / camera input is ignored; key states keep tracking
+    // so held keys resume the instant it closes. The world keeps running.
+    this.inputSuspended = false;
+
     // visual root (body added by game after assets load)
     this.root = new THREE.Group();
     this.yawFrame = new THREE.Group();
@@ -248,6 +253,7 @@
     this.keys = {};
     document.addEventListener('keydown', function (e) {
       self.keys[e.code] = true;
+      if (self.inputSuspended) return;   // 10-05: inventory screen open
       if (e.code === 'Space') {
         e.preventDefault();
         self.tryRoll();
@@ -271,6 +277,7 @@
       self.keys[e.code] = false;
     });
     document.addEventListener('mousedown', function (e) {
+      if (self.inputSuspended) return;   // 10-05: clicks belong to the inventory screen
       if (e.button === 0) {
         self.tryAttack();
         if (!self.lockTarget) {
@@ -310,13 +317,14 @@
       self.camPitch = Math.max(deg2rad(CFG.camPitchMinDeg), Math.min(deg2rad(CFG.camPitchMaxDeg), self.camPitch));
     });
     document.addEventListener('wheel', function (e) {
+      if (self.inputSuspended) return;
       self.camDist += (e.deltaY > 0 ? 1 : -1) * 0.8;
       self.camDist = Math.max(CFG.camMinDistance, Math.min(CFG.camMaxDistance, self.camDist));
     }, { passive: true });
   };
 
   Player.prototype.collectMoveInput = function () {
-    var k = this.keys;
+    var k = this.inputSuspended ? {} : this.keys;
     var ix = 0, iz = 0;
     if (k['KeyW']) iz -= 1;
     if (k['KeyS']) iz += 1;
@@ -325,6 +333,18 @@
     this.moveInput.x = ix;
     this.moveInput.z = iz;
     this.sprinting = !!(k['ShiftLeft'] || k['ShiftRight']);
+  };
+
+  // 10-05 inventory Order A: suspend / restore player input. Suspending
+  // drops an active camera drag and a held guard (RMB release would land
+  // on the open screen); anything already in flight (swing, roll, cast
+  // windup) plays out. Restore is instant - nothing to rebuild.
+  Player.prototype.setInputSuspended = function (on) {
+    this.inputSuspended = !!on;
+    if (on) {
+      this.dragging = false;
+      this.endBlock();
+    }
   };
 
   // 10-04 (Nicko, souls-style): roll cancels attack RECOVER only - windup

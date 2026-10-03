@@ -818,6 +818,21 @@
     fx.attach(game.player);
   }
 
+  // ---- 10-05 inventory (Order A) ------------------------------------------------
+  // The player's Inventory + the I-key screen. Opening the screen suspends
+  // player movement/combat/camera input (player.setInputSuspended); the
+  // world keeps running.
+  function setupInventory() {
+    var INV = window.WH_INVENTORY;
+    game.inventory = new INV.Inventory();
+    INV.active = game.inventory;
+    game.player.inventory = game.inventory;
+    game.inventoryUI = new INV.InventoryUI({
+      inventory: game.inventory,
+      onOpenChange: function (open) { game.player.setInputSuspended(open); }
+    });
+  }
+
   // ---- WH_DEBUG hooks ----------------------------------------------------------
 
   function setupDebugHooks() {
@@ -1063,6 +1078,7 @@
       // pose. 10-04: which weapon = CONFIG.moveset.playerWeapon.
       equipPlayerWeapon(CFG.moveset.playerWeapon);
       equipPlayerShield();
+      setupInventory();     // 10-05 inventory Order A
 
       // initial region A
       game.regionManager = new window.WH_RegionManager(game.scene);
