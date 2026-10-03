@@ -517,3 +517,29 @@ window.WH_CONFIG.moveset = {
   banditStageMult: 1.6,
   enemyWeapon: { bandit: 'handAxe' }
 };
+
+// 2026-10-03 touch controls layer (parallel input; see js/touch-controls.js).
+// enabled:false keeps the layer hidden until the edge toggle is used - the
+// mouse/keyboard path stays the primary control surface, untouched.
+window.WH_CONFIG.touch = {
+  enabled: false,                 // layer hidden until toggle button used
+  opacity: 0.35,                  // faint outlines
+  deadzone: 0.15,                 // stick deadzone (fraction of radius)
+  scaleDefault: 1.0,              // global control scale
+  scaleMin: 0.6,
+  scaleMax: 1.6,
+  buttonSize: 64,                 // px diameter of action buttons at scale 1
+  joystickRadius: 70,             // px radius of stick/camera circles at scale 1
+  sensDegPerPx: 0.25,             // camera pad sens (matches mouseSensDegPerPx)
+  // Default layout: fractions of viewport (0-1), resize-safe. Movement stick
+  // bottom-left, camera pad bottom-right, action cluster right side.
+  layout: {
+    stick:    { x: 0.18, y: 0.72 },
+    cam:      { x: 0.82, y: 0.72 },
+    sprint:   { x: 0.68, y: 0.62 },
+    attack:   { x: 0.90, y: 0.45 },
+    lockon:   { x: 0.72, y: 0.82 },
+    dodge:    { x: 0.55, y: 0.88 },
+    block:    { x: 0.90, y: 0.65 }
+  }
+};

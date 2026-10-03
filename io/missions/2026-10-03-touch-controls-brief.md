@@ -77,3 +77,20 @@ report max 8 lines.
   across a page RELOAD (localStorage), reset restores defaults.
 - Mouse + keyboard behavior COMPLETELY unchanged while the layer exists.
 Player copy law: never the word "free"; no hardcoded agent names.
+## Astrabot findings
+- Shipped prototype/js/touch-controls.js (+ CONFIG.touch, script tag before
+  game.js). Stick writes the same KeyW/A/S/D booleans, camera pad writes
+  camYaw/camPitch + lastManualCamT (same state as the mousemove path, drag
+  untouched), sprint toggles ShiftLeft w/ visible ON, block replicates the
+  RMB split (spell->tryCast, shield->tryBlock/endBlock). Layout/scale persist
+  as viewport fractions in localStorage wh-touch-layout-v1; +/- scales 0.6-1.6;
+  reset restores CONFIG layout; locking saves.
+- Verified in headless chromium against the worktree build (own smoke pass,
+  no harness artifacts added to repo/worktree): 32/32 checks incl. reload
+  persistence, layer off by default, keyboard/mouse paths unchanged, no boot
+  JS errors. esprima clean on touch-controls.js/CONFIG.js/player.js/game.js.
+- IO correction for the input map: WH_DEBUG.player does not exist - the
+  accessor is WH_DEBUG.getPlayer(); it only exists after setupDebugHooks() at
+  boot, so parallel-input code must read it lazily/guarded.
+- Note: player tryRoll/tryCast refuse during roll/attack-recover by design -
+  touch buttons surface the same refusals, no special-casing was added.
