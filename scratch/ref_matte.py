@@ -15,7 +15,11 @@ bg_cand = bright & spread
 lab, _ = ndimage.label(bg_cand)
 border = set(np.unique(np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]]))) - {0}
 bg = np.isin(lab, list(border))
-fg = ndimage.binary_fill_holes(~bg)
+# enclosed background pockets (sky between branches) larger than 150px are background too
+sizes = np.bincount(lab.ravel())
+pockets = np.where(sizes > 150)[0]
+bg |= np.isin(lab, pockets[pockets > 0])
+fg = ~bg
 fg = ndimage.binary_opening(fg, iterations=1)
 # keep the largest subject blob only
 lab2, n = ndimage.label(fg)
