@@ -48,3 +48,18 @@ is a SEPARATE mission running after this one - do not touch player.js).
 - index.html + style.css + assets.js (note relocation only). NO js logic
   changes. No CONFIG knobs for this one (pure placement).
 - Keep diff tight (~80 lines). Player copy law: never "free"; no agent names.
+
+## Astrabot findings
+- DOM order already yields HP -> Stamina -> Focus: `#wh-bars` holds the
+  HP + Stamina pairs in index.html, and game.js buildHud (~lines 190-204)
+  appends the focus label + bar into the same `#wh-bars` container. So the
+  top-left move was pure CSS: `#wh-bars` from left:24px/bottom:24px/280px
+  to top:8px/left:8px/width:240px.
+- Stack height math: 3 labels (~20px each incl. margins) + 3x 14px bars +
+  borders = ~116px; asset-fail-note moved top:6px -> top:128px in assets.js
+  cssText (bars height + 8px gap), keeps left:8px z-index:40, sits ~4px
+  clear below the stack.
+- Zero id renames; game.js refs (wh-hp-bar/wh-stam-bar/wh-focus-bar) intact.
+  assets.js change is ONE line (cssText top value) - esprima parse OK.
+- Committed a2dae0d (style.css + assets.js only); sword round 2 / player.js
+  untouched (sibling's 4232a7f already in history before this commit).

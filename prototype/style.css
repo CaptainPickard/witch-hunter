@@ -31,11 +31,13 @@ html, body {
 }
 
 /* --- bars --- */
+/* 2026-10-03: moved to top-left (Nicko change order). Column stack
+   HP -> Stamina -> Focus (focus appended by game.js), ~116px tall. */
 #wh-bars {
   position: absolute;
-  left: 24px;
-  bottom: 24px;
-  width: 280px;
+  top: 8px;
+  left: 8px;
+  width: 240px;
 }
 
 .bar-label {

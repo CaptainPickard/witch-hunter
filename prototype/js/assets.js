@@ -143,7 +143,7 @@
     if (!el) {
       el = document.createElement('div');
       el.id = 'wh-asset-fail-note';
-      el.style.cssText = 'position:absolute;top:6px;left:8px;font-size:12px;' +
+      el.style.cssText = 'position:absolute;top:128px;left:8px;font-size:12px;' +
         'color:#ff9d9d;z-index:40;letter-spacing:0.5px;text-transform:none;';
       parent.appendChild(el);
     }
