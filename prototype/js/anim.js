@@ -97,14 +97,31 @@
     }
   };
 
-  CharacterAnim.prototype.playerAttack = function (elapsed, duration) {
+  // 10-04: the player clip is phase-mapped like the enemy one - windup /
+  // strike / recover each own a clip segment and play over the CONFIG move's
+  // durations, so per-move timings (thrust vs slash) drive the clip.
+  CharacterAnim.prototype.playerAttack = function (phase, phaseTime, durations) {
     if (this.dead || !this.actions.attack) return;
+    // Chained swings stay in 'attack' and re-seek; no self-crossfade.
     if (this.clip !== 'attack') this.transition('attack', CFG.oneShotFadeSeconds, true);
+    this.attackPhase = phase;
     // Seeking to the FSM clock also handles chained/restarted attacks without
     // allowing mixer drift or a render hitch to move the damage window.
-    this.actions.attack.timeScale = 1;
-    this.actions.attack.time = Math.min(this.actions.attack.getClip().duration,
-      Math.max(0, elapsed * this.actions.attack.getClip().duration / duration));
+    this.seekAttack(phase === 'windup' ? 0 : phase === 'strike' ? 1 : 2,
+      phaseTime, [durations.windup, durations.strike, durations.recover]);
+  };
+
+  // Shared attack-clip seek: segment 0 windup [0, s), 1 strike/active
+  // [s, 2s), 2 recover [2s, end) with s = attackClipStrikeFraction * length.
+  CharacterAnim.prototype.seekAttack = function (seg, phaseTime, durations) {
+    var clip = this.actions.attack.getClip();
+    var strike = clip.duration * CFG.attackClipStrikeFraction;
+    var part = seg === 0 ? { start: 0, span: strike } :
+      seg === 1 ? { start: strike, span: strike } :
+      { start: strike * 2, span: clip.duration - strike * 2 };
+    this.actions.attack.timeScale = part.span / Math.max(1e-4, durations[seg]);
+    this.actions.attack.time = Math.min(clip.duration, part.start +
+      Math.max(0, phaseTime) * this.actions.attack.timeScale);
   };
 
   CharacterAnim.prototype.enemyAttack = function (phase, phaseTime, durations) {
@@ -114,22 +131,16 @@
       this.attackSerial++;
     }
     this.attackPhase = phase;
-    var clip = this.actions.attack.getClip();
-    var strike = clip.duration * CFG.attackClipStrikeFraction;
-    var part = phase === 'windup' ? { start: 0, span: strike, duration: durations.windup } :
-      phase === 'active' ? { start: strike, span: strike, duration: durations.active } :
-      { start: strike * 2, span: clip.duration - strike * 2, duration: durations.recover };
-    this.actions.attack.timeScale = part.span / part.duration;
-    this.actions.attack.time = Math.min(clip.duration, part.start +
-      Math.max(0, phaseTime) * this.actions.attack.timeScale);
+    this.seekAttack(phase === 'windup' ? 0 : phase === 'active' ? 1 : 2,
+      phaseTime, [durations.windup, durations.active, durations.recover]);
   };
 
   CharacterAnim.prototype.syncPlayer = function (player, dt) {
     if (player.state !== 'alive') {
       this.death();
     } else if (player.attacking) {
-      this.playerAttack(window.WH_CONFIG.player.attackDuration - player.attackTimer,
-        window.WH_CONFIG.player.attackDuration);
+      var ph = player.getAttackPhase();
+      this.playerAttack(ph.stage, ph.t, ph.durations);
     } else {
       this.attackPhase = null;
       this.setLocomotion(player.animMoveSpeed || 0, !!player.sprinting || player.rolling);

@@ -14,6 +14,7 @@
   var AW = ANIM.attack;
   var WL = ANIM.walk;
   var V7 = window.WH_CONFIG;          // v7 sections: spell/belt/loadout/armed/consumable
+  var MV = window.WH_CONFIG.moveset;  // 10-04: per-weapon moveset framework
 
   function deg2rad(d) { return d * Math.PI / 180; }
   function smooth(p) { return p * p * (3 - 2 * p); }   // smoothstep ease
@@ -54,9 +55,15 @@
     this.idleTime = 0;                // seconds without movement input
     this.idlePhase = 0;               // breathing phase
     this.lungeLeft = 0;               // strike lunge distance remaining
-    this.comboIndex = 0;              // v5: which chain move comes next
-    this.comboQueued = false;         // v5: next chain input buffered in recover
+    this.comboIndex = 0;              // v5: chain position of the current swing
+    this.comboQueued = false;         // v5: next chain input buffered (strike/recover)
+    this.comboBufferTimer = 0;        // 10-04: seconds the buffered input stays fresh
     this.recoverFullyElapsed = true;  // combat-ds1 P0-3: first swing starts at m1
+    this.weaponId = MV.playerWeapon;  // 10-04: key into CONFIG.moveset.weapons
+    this.attackMoveId = null;         // 10-04: CONFIG move id of the current swing
+    this.attackMove = null;           // 10-04: CONFIG move def (frozen per swing)
+    this.attackTotal = 0;             // windup + strike + recover of attackMove
+    this.attackSerial = 0;            // increments on every swing start
 
     // v6: block / parry state
     this.blocking = false;            // RMB held and block accepted
@@ -127,7 +134,11 @@
   // The skinned hand is the socket. Only stand-ins retain the old rigid pivot.
   Player.prototype.setWeapon = function (mesh) {
     var hand = this.body && this.body.getObjectByName('R_Hand');
+    // 10-04: re-equip drops the previous mesh / stand-in pivot first.
+    if (this.sword && this.sword !== mesh && this.sword.parent) this.sword.parent.remove(this.sword);
+    if (this.weaponPivot) { this.yawFrame.remove(this.weaponPivot); this.weaponPivot = null; }
     this.sword = mesh;
+    this.swordBaseEmissive = null;   // armed-glow base re-sampled per mesh
     if (hand) {
       this.weaponHand = hand;
       hand.add(mesh);
@@ -142,8 +153,11 @@
       var wm = window.WH_CONFIG.assets.weaponMount;
       var mountRotation = new THREE.Quaternion();
       if (wm && wm.enabled) {
+        // 10-04: blade axis per weapon (longsword -Y = unchanged mount;
+        // handAxe +Y = the bandit axe's measured mapping in enemy.js).
+        var bladeY = this.getWeaponDef().bladeAxisY || -1;
         mountRotation.setFromUnitVectors(
-          new THREE.Vector3(0, -1, 0), new THREE.Vector3(0, 0, 1));
+          new THREE.Vector3(0, bladeY, 0), new THREE.Vector3(0, 0, 1));
         // Blade-edge tuning roll about the grip axis. Sign verified: rolling
         // about hand-local +Z is a rotation of the mounted blade's own axis,
         // so the roll quaternion composes on the LEFT of the axis mapping
@@ -164,7 +178,7 @@
       // shift moves the grip ONTO the fist and the tip forward in front).
       // Measured: sword grip at raw y~+0.65 -> holder y 1.637 (CONFIG).
       // Offset is in raw GLB units and scales with the weapon correctly.
-      var gripY = (wm && wm.gripHolderY) ? (wm.gripHolderY['longsword'] || 0) : 0;
+      var gripY = (wm && wm.gripHolderY) ? (wm.gripHolderY[this.weaponId] || 0) : 0;
       if (gripY && mesh.children[0]) {
         mesh.children[0].position.y -= gripY;
       }
@@ -175,6 +189,33 @@
     this.weaponPivot.add(mesh);
     this.swordBase = window.WH_CONFIG.moveset.idlePose;
     this.resetWeaponPose();
+  };
+
+  // 10-04 moveset framework accessors. The weapon def / move defs are read
+  // straight from CONFIG.moveset.weapons so live CONFIG edits apply.
+  Player.prototype.getWeaponDef = function () {
+    return MV.weapons[this.weaponId] || MV.weapons[MV.playerWeapon];
+  };
+
+  // Moves per chain (also the landed-hit count that arms the v7 finisher).
+  Player.prototype.getChainCap = function () {
+    var W = this.getWeaponDef();
+    return Math.max(1, Math.min(W.chainCap || W.chain.length, W.chain.length));
+  };
+
+  Player.prototype.getChainMove = function (index) {
+    var W = this.getWeaponDef();
+    return W.moves[W.chain[index]];
+  };
+
+  // Swap the active moveset (chain resets). mesh optional: game.js passes the
+  // new weapon instance so the hand mount follows the weapon id.
+  Player.prototype.equipWeapon = function (id, mesh) {
+    if (!MV.weapons[id]) return false;
+    this.cancelAttack();
+    this.weaponId = id;
+    if (mesh) this.setWeapon(mesh);
+    return true;
   };
 
   Player.prototype.resetWeaponPose = function () {
@@ -281,18 +322,16 @@
     this.sprinting = !!(k['ShiftLeft'] || k['ShiftRight']);
   };
 
-  // v3: roll cancels attack during WINDUP only (souls-like); attack cannot
-  // start during roll. v7: also refused during the loadout toggle busy window.
+  // 10-04 (Nicko, souls-style): roll cancels attack RECOVER only - windup
+  // and strike are committed. Attack cannot start during roll. v7: also
+  // refused during the loadout toggle busy window.
   Player.prototype.tryRoll = function () {
     if (this.state !== 'alive' || this.rolling || this.toggling) return;
-    if (this.attacking) {
-      if (this.getAttackStage() !== 'windup') return;   // strike/recover locked
-      this.attacking = false;                           // cancel in windup
-      this.attackTimer = 0;
-      this.lungeLeft = 0;
-      this.resetWeaponPose();
-    }
     if (this.stamina < CFG.rollStaminaCost) return;
+    if (this.attacking) {
+      if (this.getAttackStage() !== 'recover') return;  // windup/strike locked
+      this.cancelAttack();                              // roll out of recovery
+    }
     this.spendStamina(CFG.rollStaminaCost);
     this.rolling = true;
     this.rollTimer = CFG.rollDuration;
@@ -551,25 +590,39 @@
     return this.takeDamage(damage);
   };
 
-  // combat-ds1 P0-3: only recover presses queue; the chain starts at the
-  // recover point instead of waiting for the entire recovery to elapse.
+  // 10-04 chain gating (Nicko: combo spam -> real chains). Windup presses
+  // are IGNORED; strike/recover presses are BUFFERED for inputBufferSec and
+  // fired by update() once the swing reaches its chain window. A press while
+  // idle always starts the chain at chain[0].
   Player.prototype.tryAttack = function () {
     if (this.state !== 'alive' || this.rolling || this.toggling) return;
     if (this.blocking) return;              // v6: must release RMB to attack
     if (this.attacking) {
-      if (this.getAttackStage() === 'recover') this.comboQueued = true;
-      return;                                // windup/strike buffer is Round B
+      var stage = this.getAttackStage();
+      if (stage === 'strike' || stage === 'recover') {
+        this.comboQueued = true;
+        this.comboBufferTimer = MV.inputBufferSec;
+      }
+      return;
     }
-    this.startAttack();
+    this.startAttack(0);
   };
 
+  // Starts chain move `nextIndex` (default 0) with its own CONFIG timings.
   Player.prototype.startAttack = function (nextIndex) {
-    if (this.stamina < CFG.attackStaminaCost) return false;
-    this.spendStamina(CFG.attackStaminaCost);
+    var idx = (typeof nextIndex === 'number') ? nextIndex : 0;
+    if (idx >= this.getChainCap()) idx = 0;
+    var M = this.getChainMove(idx);
+    if (this.stamina < M.staminaCost) return false;
+    this.spendStamina(M.staminaCost);
     this.attacking = true;
-    this.attackTimer = CFG.attackDuration;
+    this.attackMoveId = this.getWeaponDef().chain[idx];
+    this.attackMove = M;
+    this.attackTotal = M.windup + M.strike + M.recover;
+    this.attackTimer = this.attackTotal;
+    this.attackSerial++;
     this.attackDidHit = false;
-    this.lungeLeft = AW.strikeLunge;
+    this.lungeLeft = M.lunge;
     // v7: armed finisher consumption (armedTimer > 0 = attack at 1.5x;
     // crossArmed = cross-finisher at 2.0x; both consumed on this attack)
     this.pendingArmedMult = 1;
@@ -583,27 +636,52 @@
     } else {
       this.pendingDamageMult = 1;
     }
-    var cap = window.WH_CONFIG.moveset.comboChainCap;
-    this.comboIndex = (typeof nextIndex === 'number') ? nextIndex :
-      (this.recoverFullyElapsed ? 0 : Math.min(this.comboIndex + 1, cap));
+    this.comboIndex = idx;
     if (this.comboIndex === 0) this.chainHits = 0;  // v7: reset hit counter on chain reset
     else this.chainHits = Math.max(this.chainHits, this.comboIndex);  // sync with chain position
     this.comboQueued = false;
+    this.comboBufferTimer = 0;
     this.recoverFullyElapsed = false;
     // face camera direction on attack (unless locked: windup tracking handles it)
     if (!this.lockTarget) this.yaw = this.camYaw + Math.PI;
     return true;
   };
 
+  // Ends the current swing and resets the chain (roll-out-of-recover,
+  // weapon swap). Armed finisher state is untouched.
+  Player.prototype.cancelAttack = function () {
+    this.attacking = false;
+    this.attackTimer = 0;
+    this.lungeLeft = 0;
+    this.comboIndex = 0;
+    this.comboQueued = false;
+    this.comboBufferTimer = 0;
+    this.chainHits = 0;
+    this.recoverFullyElapsed = true;
+    this.resetWeaponPose();
+  };
+
+  // 10-04: stage + phase clock of the current swing from its CONFIG move.
+  // Returns null or { stage, t (s into stage), dur, p (0..1), durations }.
+  Player.prototype.getAttackPhase = function () {
+    if (!this.attacking || !this.attackMove) return null;
+    var M = this.attackMove;
+    var elapsed = this.attackTotal - this.attackTimer;
+    var stage, start;
+    if (elapsed < M.windup) { stage = 'windup'; start = 0; }
+    else if (elapsed < M.windup + M.strike) { stage = 'strike'; start = M.windup; }
+    else { stage = 'recover'; start = M.windup + M.strike; }
+    var dur = M[stage];
+    var t = elapsed - start;
+    return { stage: stage, t: t, dur: dur,
+             p: dur > 0 ? Math.max(0, Math.min(1, t / dur)) : 1,
+             durations: { windup: M.windup, strike: M.strike, recover: M.recover } };
+  };
+
   // v3 D1: attack stage from elapsed time. 'windup' | 'strike' | 'recover' | null.
   Player.prototype.getAttackStage = function () {
-    if (!this.attacking) return null;
-    var elapsed = CFG.attackDuration - this.attackTimer;
-    var windupEnd = CFG.attackDuration * AW.windupFrac;
-    var strikeEnd = CFG.attackDuration * (AW.windupFrac + AW.strikeFrac);
-    if (elapsed < windupEnd) return 'windup';
-    if (elapsed < strikeEnd) return 'strike';
-    return 'recover';
+    var ph = this.getAttackPhase();
+    return ph ? ph.stage : null;
   };
 
   Player.prototype.spendStamina = function (amount) {
@@ -628,19 +706,23 @@
   };
 
   // Returns attack sweep state for the combat layer: null or {origin, dir,
-  // range, halfAngle, damage}. v3: the active window is the whole STRIKE
-  // stage (hit lands midway through the swing; the sweep consumes once).
+  // range, halfAngle, damage, ghoulMult, moveId}. v3: the active window is
+  // the whole STRIKE stage (the sweep consumes once). 10-04: range / arc /
+  // damage come from the CONFIG move of the CURRENT swing (thrust = narrow
+  // and long, slashes = wide and short).
   Player.prototype.consumeAttackSweep = function () {
     if (!this.attacking || this.attackDidHit) return null;
     if (this.getAttackStage() !== 'strike') return null;
     this.attackDidHit = true;
-    var halfAngle = deg2rad(CFG.attackArcHalfAngleDeg);
+    var M = this.attackMove;
     return {
       origin: this.pos.clone(),
       dir: new THREE.Vector3(Math.sin(this.yaw), 0, Math.cos(this.yaw)),
-      range: CFG.attackRange,
-      halfAngle: halfAngle,
-      damage: CFG.attackDamage * (this.pendingDamageMult || 1)
+      range: M.range,
+      halfAngle: deg2rad(M.halfAngleDeg),
+      damage: M.damage * (this.pendingDamageMult || 1),
+      ghoulMult: M.damageGhoulMult || 1,
+      moveId: this.attackMoveId
     };
   };
 
@@ -723,19 +805,30 @@
 
     if (this.attacking) {
       this.attackTimer -= dt;
-      // combat-ds1 P0-3: consume on every recover frame, including the
-      // final one; an accepted press immediately starts the next windup.
-      if (this.getAttackStage() === 'recover' && this.comboQueued) {
-        var cap = window.WH_CONFIG.moveset.comboChainCap;
-        var next = (this.comboIndex >= cap - 1) ? 0 : this.comboIndex + 1;
-        this.startAttack(next);
+      // 10-04: buffered input expires after inputBufferSec.
+      if (this.comboQueued) {
+        this.comboBufferTimer -= dt;
+        if (this.comboBufferTimer <= 0) { this.comboQueued = false; this.comboBufferTimer = 0; }
       }
-      if (this.attackTimer <= 0) {
+      // Chain window: a fresh buffered press fires the NEXT chain move once
+      // this swing is chainOpenSec into its recover. The last chain move has
+      // no early window - it must resolve its full recover (below).
+      var ph = this.getAttackPhase();
+      var lastMove = this.comboIndex >= this.getChainCap() - 1;
+      if (this.comboQueued && !lastMove && ph.stage === 'recover' &&
+          ph.t >= this.attackMove.chainOpenSec) {
+        this.startAttack(this.comboIndex + 1);
+      }
+      if (this.attacking && this.attackTimer <= 0) {
+        var rebuffered = this.comboQueued;
         this.attacking = false;
         this.recoverFullyElapsed = true;
         this.comboIndex = 0;
         this.chainHits = 0;
         this.comboQueued = false;
+        this.comboBufferTimer = 0;
+        // chain fully resolved: a still-fresh press starts a new chain
+        if (rebuffered) this.startAttack(0);
       }
     }
 
@@ -777,7 +870,7 @@
         if (sprintingNow) {
           this.spendStamina(CFG.sprintStaminaPerSec * dt);
         }
-        if (this.attacking) speed *= this.getAttackStage() === 'windup' ? 0.3 : 0;
+        if (this.attacking) speed *= this.getWeaponDef().moveMultWhileAttacking[this.getAttackStage()] || 0;
         if (this.blocking) speed *= window.WH_CONFIG.block.moveMult;  // v6
         this.animMoveSpeed = speed;
         // camera yaw basis: camera forward projected on xz plane.
@@ -837,33 +930,42 @@
       }
     }
 
+    // Strike lunge along facing (FSM-owned for both the clip and stand-in
+    // paths): velocity = move.lunge / move.strike, dt-scaled so the full
+    // lunge drains at any frame rate. Runs before the bounds clamp.
+    if (this.attacking && this.getAttackStage() === 'strike' && this.lungeLeft > 0) {
+      var lungeVel = this.attackMove.lunge / this.attackMove.strike;
+      var lungeStep = Math.min(lungeVel * dt, this.lungeLeft);
+      this.pos.x += Math.sin(this.yaw) * lungeStep;
+      this.pos.z += Math.cos(this.yaw) * lungeStep;
+      this.lungeLeft -= lungeStep;
+    }
+
     if (clampToBounds) clampToBounds(this);
     this.yawFrame.rotation.y = this.yaw;
 
     // Legacy pivot poses remain only for the rigid stand-in fallback.
+    // 10-04: phase clocks come from the current CONFIG move; the pose shape
+    // (and its bodyLean/crouch) from WH_MOVESET[move.pose].
     if (this.body && !this.anim) {
       if (this.attacking) {
-        var stage = this.getAttackStage();
         var MS = window.WH_MOVESET;
-        var move = [MS.m1, MS.m2, MS.m3][this.comboIndex];
+        var aph = this.getAttackPhase();
+        var stage = aph.stage;
+        var move = MS[this.attackMove.pose] || MS.m1;
         if (stage === 'windup') {
-          var wp = (CFG.attackDuration - this.attackTimer) /
-                   (CFG.attackDuration * AW.windupFrac);       // 0..1
-          var we = smooth(wp);
+          var we = smooth(aph.p);
           this.body.rotation.x = AW.windupLean * we;           // lean back
           this.atkYawOffset = 0;
           this.body.rotation.y = this.atkYawOffset;
           this.body.rotation.z = 0;
-          this.body.position.y = this.bodyBaseY - AW.windupCrouch * we;  // crouch
+          this.body.position.y = this.bodyBaseY - move.crouch * we;  // per-pose crouch
           this.body.position.x = this.bodyBaseX || 0;
           var pw = MS.interpPose(MS.idle, move.windup, we);
           this.weaponPivot.position.set(pw.pos[0], pw.pos[1], pw.pos[2]);
           this.weaponPivot.rotation.set(pw.rot[0], pw.rot[1], pw.rot[2]);
         } else if (stage === 'strike') {
-          var sp = (CFG.attackDuration * AW.windupFrac + CFG.attackDuration * AW.strikeFrac
-                    - this.attackTimer) /
-                   (CFG.attackDuration * AW.strikeFrac);        // 0..1
-          var se = 1 - (1 - sp) * (1 - sp);                     // ease-out
+          var se = 1 - (1 - aph.p) * (1 - aph.p);              // ease-out
           // horizontal yaw sweep through the stage (start behind right shoulder)
           this.atkYawOffset = -deg2rad(AW.strikeYawSweepDeg) * 0.5
                               + deg2rad(AW.strikeYawSweepDeg) * se;
@@ -875,29 +977,12 @@
           var ps = MS.interpPose(move.windup, move.strike, se);
           this.weaponPivot.position.set(ps.pos[0], ps.pos[1], ps.pos[2]);
           this.weaponPivot.rotation.set(ps.rot[0], ps.rot[1], ps.rot[2]);
-          // forward lunge along facing: velocity model. The old target-delta
-          // formula (strikeLunge * se - (strikeLunge - lungeLeft)) strands
-          // the remainder whenever the STRIKE stage spans few frames
-          // (hitches clamped at maxDt), leaving the lunge at ~0.09 of 0.25.
-          // A dt-scaled velocity drains the full lunge at any frame rate.
-          if (this.lungeLeft > 0) {
-            var strikeSpan = CFG.attackDuration * AW.strikeFrac;
-            var lungeVel = AW.strikeLunge / strikeSpan;
-            var lungeStep = Math.min(lungeVel * dt, this.lungeLeft);
-            this.pos.x += Math.sin(this.yaw) * lungeStep;
-            this.pos.z += Math.cos(this.yaw) * lungeStep;
-            this.lungeLeft -= lungeStep;
-          }
         } else {                                                // recover
-          var rEnd = CFG.attackDuration * (AW.windupFrac + AW.strikeFrac);
-          var rp2 = Math.min(1, Math.max(0,
-            (CFG.attackDuration - this.attackTimer - rEnd) /
-            (CFG.attackDuration - rEnd)));                      // 0..1
-          var re = smooth(rp2);
+          var re = smooth(aph.p);
           var swing = deg2rad(AW.strikeYawSweepDeg) * 0.5;      // sweep end offset
           this.atkYawOffset = swing * (1 - re);                 // ease back to neutral
           this.body.rotation.y = this.atkYawOffset;
-          this.body.rotation.x = AW.recoverLean * re;           // forward-lean settle
+          this.body.rotation.x = move.bodyLean * re;            // per-pose forward-lean settle
           this.body.rotation.z = 0;
           this.body.position.y = this.bodyBaseY;
           this.body.position.x = this.bodyBaseX || 0;
@@ -912,14 +997,6 @@
         this.body.position.x = this.bodyBaseX || 0;
         if (this.sword) this.resetWeaponPose();
       }
-    }
-    // Lunge displacement remains FSM-owned even when the clip supplies the pose.
-    if (this.anim && this.attacking && this.getAttackStage() === 'strike' && this.lungeLeft > 0) {
-      var lungeVel = AW.strikeLunge / (CFG.attackDuration * AW.strikeFrac);
-      var lungeStep = Math.min(lungeVel * dt, this.lungeLeft);
-      this.pos.x += Math.sin(this.yaw) * lungeStep;
-      this.pos.z += Math.cos(this.yaw) * lungeStep;
-      this.lungeLeft -= lungeStep;
     }
     if (!this.attacking) this.lungeLeft = 0;
 

@@ -402,12 +402,8 @@ window.WH_CONFIG = {
     rollDuration: 0.45,               // seconds
     rollIFrameWindow: 0.35,           // seconds of i-frames within a roll
     rollStaminaCost: 25.0,
-    attackDuration: 0.5,
-    attackStaminaCost: 15.0,
-    attackRange: 3.2,
-    attackArcHalfAngleDeg: 70,        // swing arc half-angle
-    attackDamage: 34,                 // (POC) from doc 33 one-hand band
-    attackDamageGhoulBonus: 1.15,
+    // 10-04: player attack timing/damage/sweep/stamina moved to
+    // CONFIG.moveset.weapons[*].moves (per-weapon moveset framework).
     staminaMax: 100.0,                // (doc 33 band)
     staminaRegenPerSec: 28.0,
     staminaRegenDelay: 0.6,           // seconds after spend before regen resumes
@@ -568,18 +564,14 @@ window.WH_CONFIG = {
     attackClipStrikeFraction: 0.25
   },
   // v3: procedural animation feel (transform-only; assets are unrigged).
-  // Stage fractions are of CONFIG.player.attackDuration and sum to 1.
+  // 10-04: stage durations + lunge are per move in CONFIG.moveset.weapons;
+  // windup crouch / recover lean are per pose (WH_MOVESET crouch/bodyLean).
   anim: {
     attack: {
-      windupFrac: 0.30,             // of attackDuration
-      strikeFrac: 0.25,             // of attackDuration (recover = remainder)
       windupLean: -0.25,            // rad, body rotation.x lean back
-      windupCrouch: 0.06,           // root dip (units) during windup
       windupSwordRaise: 0.9,        // rad, sword rotation.z lift in windup
       strikeYawSweepDeg: 140,       // total body yaw sweep through strike
-      strikeLunge: 0.25,            // forward units along facing during strike
-      strikeSwordSweepDeg: 160,     // sword arc through strike
-      recoverLean: 0.10             // rad, forward-lean settle in recover
+      strikeSwordSweepDeg: 160      // sword arc through strike
     },
     walk: {
       bobAmp: 0.02,                 // primary vertical bob (R1 feet contact)
@@ -676,7 +668,6 @@ window.WH_CONFIG = {
 // chainCap = moves per chain AND landed hits that arm the v7 finisher.
 window.WH_CONFIG.moveset = {
   idlePose: { pos: [0.7, 1.0, -0.3], rot: [2.2, -0.7, 0.6] },
-  comboChainCap: 3,                 // legacy; superseded by weapons[*].chainCap
   banditStageMult: 1.6,
   enemyWeapon: { bandit: 'handAxe' },
   playerWeapon: 'longsword',        // which weapons[] entry the player wields

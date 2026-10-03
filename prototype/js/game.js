@@ -776,6 +776,18 @@
     }
   }
 
+  // 10-04: instance + mount the player weapon and switch its moveset
+  // (CONFIG.moveset.weapons[id]). Measured sizing (2026-10-03): longsword
+  // 1.988m GLB -> 1.05m hand-held via CONFIG.assets.weaponScale.
+  function equipPlayerWeapon(id) {
+    if (!CFG.moveset.weapons[id]) return false;
+    var mesh = window.WH_ASSETS.instance(id);
+    if (!mesh) return false;
+    mesh.scale.setScalar(window.WH_ASSETS.weaponScale(id));
+    game.player.root.add(mesh);
+    return game.player.equipWeapon(id, mesh);
+  }
+
   // ---- WH_DEBUG hooks ----------------------------------------------------------
 
   function setupDebugHooks() {
@@ -843,9 +855,17 @@
       triggerAttack: function () { game.player.tryAttack(); },
       getComboIndex: function () { return game.player.comboIndex; },
       getCurrentMove: function () {
-        var MS = window.WH_MOVESET;
-        return [MS.m1, MS.m2, MS.m3][game.player.comboIndex] || MS.m1;
+        var p = game.player;
+        var M = p.attackMove || p.getChainMove(p.comboIndex);
+        return window.WH_MOVESET[M.pose] || window.WH_MOVESET.m1;
       },
+      // 10-04 moveset framework hooks
+      getMoveDef: function () {
+        var p = game.player;
+        return { weapon: p.weaponId, moveId: p.attackMoveId, move: p.attackMove,
+                 phase: p.getAttackPhase() };
+      },
+      equipWeapon: function (id) { return equipPlayerWeapon(id); },
       isRolling: function () { return game.player.rolling; },
       getEnemy: function (idx) {
         var list = game.regionManager.getEnemies(game.regionManager.logic.activeId);
@@ -920,7 +940,8 @@
       useConsumable: function (slot) { game.player.useConsumable(slot); },
       getConsumables: function () { return game.player.getConsumables(); },
       getCombo: function () {
-        return { index: game.player.comboIndex, queued: game.player.comboQueued };
+        return { index: game.player.comboIndex, queued: game.player.comboQueued,
+                 buffer: game.player.comboBufferTimer, moveId: game.player.attackMoveId };
       }
     };
   }
@@ -994,13 +1015,9 @@
       pBody.children[0].position.y += window.WH_ASSETS.groundMinY('playerBody');
       game.player.setBody(pBody);
       attachPlayerLantern();   // R2 P0-3: lantern now player-parented (left-hip anchor)
-      var sword = window.WH_ASSETS.instance('longsword');
-      // Measured sizing (2026-10-03): 1.988m GLB -> 1.05m hand-held (scale
-      // ~0.528) via CONFIG.assets.weaponScale; replaces hardcoded 0.9.
-      sword.scale.setScalar(window.WH_ASSETS.weaponScale('longsword'));
-      game.player.root.add(sword);
-      // v3: register the sword with the player so attack stages drive its pose
-      game.player.setWeapon(sword);
+      // v3: register the weapon with the player so attack stages drive its
+      // pose. 10-04: which weapon = CONFIG.moveset.playerWeapon.
+      equipPlayerWeapon(CFG.moveset.playerWeapon);
 
       // initial region A
       game.regionManager = new window.WH_RegionManager(game.scene);
@@ -1181,7 +1198,7 @@
         while (dyaw > Math.PI) dyaw -= Math.PI * 2;
         while (dyaw < -Math.PI) dyaw += Math.PI * 2;
         if (Math.abs(dyaw) > sweep.halfAngle) continue;
-        var dmg = sweep.damage * (e.type === 'ghoul' ? CFG.player.attackDamageGhoulBonus : 1);
+        var dmg = sweep.damage * (e.type === 'ghoul' ? sweep.ghoulMult : 1);
         // v6: riposte - staggered enemies take bonus damage, flag consumed
         if (e.riposteArmed && e.isStaggered && e.isStaggered()) {
           dmg *= CFG.block.riposteMult;
@@ -1192,9 +1209,10 @@
         e.takeDamage(dmg, hitDir);
         // v7: 3rd chain strike landing (consumeAttackSweep consumed) arms
         // the armed finisher window. Use chainHits counter (robust to
-        // comboIndex resets from recoverFullyElapsed).
+        // comboIndex resets from recoverFullyElapsed). 10-04: threshold is
+        // the active weapon's chainCap (longsword 3 = unchanged).
         game.player.chainHits = (game.player.chainHits || 0) + 1;
-        if (game.player.chainHits >= window.WH_CONFIG.moveset.comboChainCap) {
+        if (game.player.chainHits >= game.player.getChainCap()) {
           game.player.armedTimer = CFG.armed.windowSeconds;
         }
         // v3 D4: shake pulse on landed melee hits, while locked-on only
