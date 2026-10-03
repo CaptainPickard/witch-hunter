@@ -175,12 +175,23 @@
     toggleEl.textContent = '\u25C7';
     toggleEl.title = 'Touch controls: show/hide';
     document.body.appendChild(toggleEl);
-    toggleEl.addEventListener('click', onToggleClick);
-    ['mousedown', 'touchstart', 'contextmenu'].forEach(function (t) {
-      toggleEl.addEventListener(t, function (ev) {
-        ev.preventDefault();
-        ev.stopPropagation();
-      });
+    // Nicko 10-03 bug fix: the old handler swallowed touchstart with
+    // preventDefault, which kills the browser's synthetic click on touch
+    // devices - the toggle rendered but never opened with thumbs (mouse
+    // worked). Now: activate on pointerdown directly (touch AND mouse),
+    // then swallow the synthetic click so it can never double-fire.
+    toggleEl.addEventListener('pointerdown', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      onToggleClick();
+    });
+    toggleEl.addEventListener('contextmenu', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+    });
+    toggleEl.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
     });
   }
 
