@@ -28,3 +28,5 @@
 {"kind": "t2i-done", "task_id": "01a10052-9bf0-7268-80f7-2d71567f6315", "status": "SUCCEEDED", "bal_after": 1474, "err": null, "t": "2026-10-03T05:53:07"}
 {"kind": "i23d", "task_id": "01a10053-3888-7022-b473-504a6017fed0", "ref": "scratch/treegen/M19-birch-ref-matte-muted.png", "out": "scratch/treegen/m19-birch-meshy.glb", "tri": 15000, "bal_before": 1474, "t": "2026-10-03T05:53:36"}
 {"kind": "i23d-done", "task_id": "01a10053-3888-7022-b473-504a6017fed0", "status": "SUCCEEDED", "bal_after": 1459, "err": null, "t": "2026-10-03T05:56:20"}
+{"kind": "i23d", "task_id": "01a10056-d4da-7349-aa0c-8088bbcfe006", "ref": "scratch/treegen/M16-living-oak-ref-r6-column.png", "out": "scratch/treegen/m16-living-oak-r6-meshy.glb", "tri": 15000, "bal_before": 1459, "t": "2026-10-03T05:57:33"}
+{"kind": "i23d-done", "task_id": "01a10056-d4da-7349-aa0c-8088bbcfe006", "status": "SUCCEEDED", "bal_after": 1444, "err": null, "t": "2026-10-03T06:00:48"}

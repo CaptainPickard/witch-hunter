@@ -71,3 +71,20 @@ TOTALS: 46 assets, all SUCCEEDED, 0 rejected by vision QA (0 regen rounds),
   mesh (head top y=1.0 local, hands x=+-0.47 y=0.02 z=0.14) and shared across
   bodies at the normalized 1.8-unit scale; per-body sockets remain a rig-stage task.
 
+
+## Tree variety pass 2026-10-03 (Astrabot, biome_library)
+
+Pipeline: Meshy text-to-image ref (nano-banana, 3 cr) on white bg -> local alpha
+matte (scratch/ref_matte.py; foliage tone muted in the REF for m17/m19) ->
+Meshy image-to-3d (meshy-5, quad, symmetry auto, remesh, target 15000) ->
+m5 bake law (raw mesh as-is, normals injected, 512px NEAREST + 5-bit posterize).
+Gate (scratch/tree_gate.py): position-welded largest component >= 60% faces AND
+tinyFar (<10 faces, centroid > 1.0) <= 20. Report: scratch/astrabot-tree-variety-report.md.
+Mission credits: 156 of 160 cap (incl. 6 rejected attempts).
+
+| asset | category | tri target | tri actual | credits | meshy task id | status | vision-QA |
+|---|---|---|---|---|---|---|---|
+| m16-living-oak | biome_library tree | 15000 (quad) | 35590 | 15 (+3 ref) | 01a10047-4905-70e0-a125-ac5536a9026a | SUCCEEDED | PASS* weld largest 92.2%, tinyFar 0; ext X1.845 Y1.627 Z1.848 ymin -0.823; *base flare holed in bottom 10% (sink 0.16 local) |
+| m17-witchwood | biome_library tree | 15000 (quad) | 28084 | 15 (+3 ref) | 01a1004d-7fc8-76e4-9925-45a542023bff | SUCCEEDED | PASS weld largest 94.4% (2 comps), tinyFar 0; ext X0.642 Y1.889 Z0.714 ymin -0.951 |
+| m18-dead-tree | biome_library tree | 15000 (quad) | 30174 | 15 (+3 ref) | 01a10051-0759-716c-95d1-7240d51f7c0d | SUCCEEDED | PASS weld 1 comp 100%, tinyFar 0; ext X1.380 Y1.896 Z0.736 ymin -0.952 |
+| m19-birch | biome_library tree (bonus) | 15000 (quad) | 30484 | 15 (+3 ref) | 01a10053-3888-7022-b473-504a6017fed0 | SUCCEEDED | PASS weld largest 96.7%, tinyFar 0; ext X1.022 Y1.897 Z1.005 ymin -0.951; minor lower-trunk slit |

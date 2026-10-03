@@ -83,7 +83,7 @@ def t2i(out, prompt):
 
 
 def i23d(ref, out, tri):
-    b0 = guard(20)
+    b0 = guard(15)   # observed meshy-5 image-to-3d cost: 15 on 7/7 calls this mission
     uri = 'data:image/png;base64,' + base64.b64encode(open(ref, 'rb').read()).decode()
     body = {'ai_model': 'meshy-5', 'image_url': uri, 'topology': 'quad',
             'target_polycount': int(tri), 'symmetry_mode': 'auto', 'should_remesh': True}
