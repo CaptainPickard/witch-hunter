@@ -58,6 +58,13 @@ window.WH_CONFIG = {
 
   world: {
     groundRadius: 90,                 // playable disc radius per region
+    // R5 P0-5: player + enemies are held inside groundRadius - playerMargin;
+    // the visual ground extends visualGroundFogMult * d95 past that rim, where
+    // d95 = sqrt(-ln(1 - fogOpaqueFrac)) / region fogDensity (FogExp2).
+    playerMargin: 1.5,
+    visualGroundFogMult: 1.1,
+    fogOpaqueFrac: 0.95,
+    colliderCorridorHalfDepth: 6,     // gate corridor = chokepoint x-span, boundary.z +- this
     groundColorA: 0x3d3a2c,           // dark mud/olive (darkwood canon palette)
     groundColorB: 0x232620,           // near-charcoal mud (darkwood canon palette)
     groundTexture: {                  // procedural pixel-art ground canvas (region-manager.js)
@@ -83,7 +90,7 @@ window.WH_CONFIG = {
     enemies: [
       { type: 'bandit', x: -6, z: -8 },
       { type: 'bandit', x: 10, z: -14 },
-      { type: 'ghoul', x: 2, z: -30 }
+      { type: 'ghoul', x: 2, z: -23.5 }
     ],
     props: [
       { asset: 'gravestoneObelisk', x: -10, z: 20, rotY: 0.3, scale: 1.6 },
@@ -273,6 +280,8 @@ window.WH_CONFIG = {
     camPitchMinDeg: -15,
     camPitchMaxDeg: 65,
     camHeight: 2.6,
+    camGroundClearance: 0.4,          // R5 P0-5: camera y floor over the ground (y = 0)
+    camPitchDistShrink: 0.35,         // R5: cap = camMaxDistance * (1 - k * max(0, sin pitch))
     camFollowLerp: 12.0,              // per-second lerp factor
     camAutoFollowDelay: 1.2,          // seconds after manual drag before auto-follow resumes
     camAutoFollowRate: 2.5,           // per-second exp lerp for auto yaw follow

@@ -96,7 +96,7 @@
   // position's current side: a player who walks past the plane outside the
   // corridor is trespassing on the neighbor's side and must be pushed back
   // into their own region, regardless of which side they are now on.
-  RegionManagerLogic.prototype.clampPlayer = function (pos) {
+  RegionManagerLogic.prototype.clampPlayerPlane = function (pos) {
     var conn = DEFS.connections[0];
     if (!conn) return false;
     var insideChoke = DEFS.insideChokepoint(conn, pos.x);
@@ -129,7 +129,122 @@
       var limitB = conn.planeCoord - margin;
       if (enemy.pos.z > limitB) { enemy.pos.z = limitB; clamped = true; }
     }
+    // R5 P0-5 (C11): enemies share the player's rim; the home-side hold line
+    // stays authoritative when the radial pull would cross it.
+    if (whClampRadial(enemy.pos, whPlayRadius(), isHomeA ? 1 : -1,
+        conn.planeCoord + (isHomeA ? margin : -margin))) clamped = true;
     return clamped;
+  };
+
+  // ---- R5 P0-5: world bounds + prop colliders (no THREE import) -------------
+
+  // Playable disc radius: player and enemies are held inside it.
+  function whPlayRadius() {
+    return CFG.world.groundRadius - CFG.world.playerMargin;
+  }
+
+  // Visual ground radius per region. FogExp2 is 95% opaque at
+  // d95 = sqrt(-ln(1 - fogOpaqueFrac)) / density; the disc reaches
+  // visualGroundFogMult * d95 past the playable rim so its edge is never seen.
+  function whVisualGroundRadius(regionId) {
+    var W = CFG.world;
+    var d95 = Math.sqrt(-Math.log(1 - W.fogOpaqueFrac)) /
+      DEFS.regions[regionId].fogDensity;
+    return Math.max(W.groundRadius, whPlayRadius() + W.visualGroundFogMult * d95);
+  }
+
+  // Radial rim clamp that respects a home-side plane limit (limitZ null = no
+  // limit). Pulling toward the origin moves z toward 0, which can re-cross
+  // the plane on B's side: then slide along the plane line onto the rim.
+  function whClampRadial(pos, r, side, limitZ) {
+    var d = Math.sqrt(pos.x * pos.x + pos.z * pos.z);
+    if (!(d > r)) return false;        // inside (NaN is left to the callers)
+    var k = r / d;
+    pos.x *= k;
+    pos.z *= k;
+    if (limitZ !== null && (side === 1 ? pos.z < limitZ : pos.z > limitZ)) {
+      pos.z = limitZ;
+      pos.x = (pos.x < 0 ? -1 : 1) * Math.sqrt(Math.max(0, r * r - limitZ * limitZ));
+    }
+    return true;
+  }
+
+  // Does a prop circle meet the gate corridor rectangle (chokepoint x-span,
+  // boundary.z +- colliderCorridorHalfDepth)? Such props never collide.
+  function whMeetsCorridor(x, z, r) {
+    var hw = CFG.chokepoint.width / 2;
+    var hd = CFG.world.colliderCorridorHalfDepth;
+    var nx = Math.max(CFG.chokepoint.centerX - hw, Math.min(CFG.chokepoint.centerX + hw, x));
+    var nz = Math.max(CFG.boundary.z - hd, Math.min(CFG.boundary.z + hd, z));
+    var dx = x - nx, dz = z - nz;
+    return dx * dx + dz * dz <= r * r;
+  }
+
+  // Collider table for one region from CONFIG props + asset footprints.
+  // C14 (IO ruling, R5): vegetation-class (trunk-dominant) props get TRUNK
+  // colliders — radius = footprint/2 * TRUNK_RATIO — canopy leaves must be
+  // brushable; trunk-is-the-body props (posts/stones/boulders/fences) keep
+  // the full footprint. Devbot-classified list: TRUNK_ASSETS.
+  var TRUNK_RATIO = 0.25;
+  var TRUNK_ASSETS = { livingOak: 1, witchwoodTree: 1, birchTree: 1,
+    deadTree: 1, deadTree2: 1, ancientOak: 1, hangingTree: 1,
+    twistedSapling: 1, thornbush: 1, bramble: 1, largeFern: 1, deadShrub: 1,
+    mossyStump: 1, hollowStump: 1 };
+  function colliderRadius(name, width, scale) {
+    var r = width * scale / 2;
+    if (TRUNK_ASSETS[name] || /tree|oak|birch|sapling|bush|bramble|fern|shrub|stump/i.test(name)) {
+      return r * TRUNK_RATIO;
+    }
+    return r;
+  }
+
+  function whPropColliders(regionId, meta) {
+    var props = DEFS.regions[regionId].cfg.props;
+    var out = { circles: [], exempt: [], complete: true };
+    for (var i = 0; i < props.length; i++) {
+      var p = props[i];
+      var m = meta(p.asset);
+      if (!m) out.complete = false;
+      var row = { index: i, name: p.asset, x: p.x, z: p.z,
+                  r: m ? colliderRadius(p.asset, m.width, p.scale) : 0 };
+      if (whMeetsCorridor(p.x, p.z, row.r)) out.exempt.push(row);
+      else if (row.r > 0) out.circles.push(row);
+    }
+    return out;
+  }
+
+  RegionManagerLogic.prototype.playRadius = whPlayRadius;
+  RegionManagerLogic.prototype.visualGroundRadius = whVisualGroundRadius;
+
+  // Full player clamp = boundary plane + radial rim in ONE call (game.js
+  // clampPlayerToBounds returns early on true, so the rim must not depend on
+  // the plane clamp not firing). Returns true if either clamp fired.
+  RegionManagerLogic.prototype.clampPlayer = function (pos) {
+    var plane = this.clampPlayerPlane(pos);
+    var conn = DEFS.connections[0];
+    var limitZ = (conn && !DEFS.insideChokepoint(conn, pos.x)) ? conn.planeCoord : null;
+    var rim = whClampRadial(pos, whPlayRadius(), DEFS.regions[this.activeId].side, limitZ);
+    return plane || rim;
+  };
+
+  // Circle push-out against static colliders [{x, z, r}]: afterwards
+  // |pos - c| >= c.r + radius for each circle visited; a dead-centre hit
+  // pushes along +x (no NaN).
+  RegionManagerLogic.prototype.pushOutCircles = function (pos, radius, circles) {
+    var hit = false;
+    for (var i = 0; i < circles.length; i++) {
+      var c = circles[i];
+      var dx = pos.x - c.x, dz = pos.z - c.z;
+      var min = c.r + radius;
+      var d2 = dx * dx + dz * dz;
+      if (!(d2 < min * min)) continue;
+      var d = Math.sqrt(d2);
+      if (d < 1e-6) { dx = 1; dz = 0; d = 1; }
+      pos.x = c.x + dx / d * min;
+      pos.z = c.z + dz / d * min;
+      hit = true;
+    }
+    return hit;
   };
 
   // ---- Procedural pixel-art ground texture (darkwood palette) ----------------
@@ -250,7 +365,9 @@
       window.WH_GAME.renderer.capabilities;
     tex.anisotropy = Math.min(4, caps ? caps.getMaxAnisotropy() : 4);
     tex.colorSpace = THREE.SRGBColorSpace;
-    tex.repeat.set(gtc.repeat, gtc.repeat);
+    // R5: repeat scales with the visual disc so texel density stays repeat/90
+    var rep = gtc.repeat * whVisualGroundRadius(regionId) / CFG.world.groundRadius;
+    tex.repeat.set(rep, rep);
     return tex;
   }
 
@@ -271,6 +388,77 @@
 
   RegionManager.prototype.clampEnemyToHomeSide = function (enemy, boundary) {
     return this.logic.clampEnemyToHomeSide(enemy, boundary);
+  };
+
+  // R5 P0-5: collider table per region (cached once every footprint is known).
+  RegionManager.prototype.propColliders = function (regionId) {
+    this.colliders = this.colliders || {};
+    if (this.colliders[regionId]) return this.colliders[regionId];
+    var table = whPropColliders(regionId, function (name) {
+      return window.WH_ASSETS.getMeta(name);
+    });
+    if (table.complete) this.colliders[regionId] = table;
+    return table;
+  };
+
+  // R5 P0-5: push a circle (player) out of the ACTIVE region's prop colliders.
+  // The first call (boot frame 1) also writes the spawn validator report.
+  RegionManager.prototype.pushOutOfProps = function (pos, radius) {
+    if (!this.spawnReport) this.spawnReport = this.validateSpawns();
+    return this.logic.pushOutCircles(pos, radius,
+      this.propColliders(this.logic.activeId).circles);
+  };
+
+  // R5 P0-5 spawn validator over BOTH regions straight from CONFIG: (i) home
+  // side (props past the plane, enemies past the hold line), (ii) inside the
+  // playable radius, (iii) region spawn outside every collider. Logs one
+  // console line; never throws.
+  RegionManager.prototype.validateSpawns = function () {
+    var report = { props: 0, enemies: 0, violations: [], exempt: [] };
+    try {
+      var self = this;
+      var rPlay = whPlayRadius();
+      var plane = CFG.boundary.z;
+      var hold = CFG.enemy.holdAtBoundaryMargin;
+      [CFG.regionA.id, CFG.regionB.id].forEach(function (rid) {
+        var reg = DEFS.regions[rid];
+        var isA = reg.side === 1;
+        var bad = function (kind, index, name, x, z, why) {
+          report.violations.push({ kind: kind, region: rid, index: index,
+            name: name, x: x, z: z, why: why });
+        };
+        reg.cfg.props.forEach(function (p, i) {
+          report.props++;
+          if (isA ? !(p.z > plane) : !(p.z < plane)) bad('prop', i, p.asset, p.x, p.z, 'side');
+          if (Math.sqrt(p.x * p.x + p.z * p.z) > rPlay) bad('prop', i, p.asset, p.x, p.z, 'radius');
+        });
+        reg.cfg.enemies.forEach(function (e, i) {
+          report.enemies++;
+          if (isA ? !(e.z >= plane + hold) : !(e.z <= plane - hold)) bad('enemy', i, e.type, e.x, e.z, 'side');
+          if (Math.sqrt(e.x * e.x + e.z * e.z) > rPlay) bad('enemy', i, e.type, e.x, e.z, 'radius');
+        });
+        var table = self.propColliders(rid);
+        table.exempt.forEach(function (c) {
+          report.exempt.push({ kind: 'collider-corridor', region: rid, index: c.index,
+            name: c.name, x: c.x, z: c.z, r: c.r });
+        });
+        table.circles.forEach(function (c) {
+          var dx = reg.spawn.x - c.x, dz = reg.spawn.z - c.z;
+          var d = Math.sqrt(dx * dx + dz * dz);
+          if (d < c.r + CFG.player.radius) {
+            bad('spawn', c.index, c.name, reg.spawn.x, reg.spawn.z,
+              'spawn inside collider r=' + c.r.toFixed(3) + ' d=' + d.toFixed(3));
+          }
+        });
+      });
+    } catch (err) {
+      report.error = String(err);
+    }
+    console.log('[WH spawn-validator] props=' + report.props + ' enemies=' +
+      report.enemies + ' violations=' + report.violations.length + ' exempt=' +
+      report.exempt.length + (report.error ? ' error=' + report.error : '') +
+      ' ' + JSON.stringify(report.violations));
+    return report;
   };
 
   // Build a region group from CONFIG data (props + ground + enemies). Pre-warm
@@ -294,7 +482,7 @@
       roughness: 1.0, metalness: 0.0, side: THREE.DoubleSide
     });
     var ground = new THREE.Mesh(
-      new THREE.CircleGeometry(CFG.world.groundRadius, 48),
+      new THREE.CircleGeometry(whVisualGroundRadius(regionId), 48),
       groundMat
     );
     ground.rotation.x = -Math.PI / 2;
@@ -313,7 +501,8 @@
         depthWrite: false
       });
       var mist = new THREE.Mesh(
-        new THREE.PlaneGeometry(CFG.world.groundRadius * 2, CFG.world.groundRadius * 2),
+        new THREE.PlaneGeometry(whVisualGroundRadius(regionId) * 2,
+          whVisualGroundRadius(regionId) * 2),
         mistMat
       );
       mist.rotation.x = -Math.PI / 2;

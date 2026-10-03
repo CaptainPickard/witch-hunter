@@ -470,6 +470,12 @@
     var conn = window.WH_REGION_DEFS.connections[0];
     if (!conn) return;
     var blocked = rm.logic.clampPlayer(player.pos);
+    // R5 P0-5: prop colliders run after the plane + rim clamp on EVERY frame
+    // (including frames where it fired); a push-out landing past the plane
+    // or rim is re-clamped once.
+    if (rm.pushOutOfProps(player.pos, CFG.player.radius)) {
+      blocked = rm.logic.clampPlayer(player.pos) || blocked;
+    }
     if (blocked) return;
     // near gate: show hint when close to the chokepoint on the A side
     var distGate = Math.abs(player.pos.x - CFG.chokepoint.centerX);

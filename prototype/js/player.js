@@ -897,12 +897,21 @@
     // orbit camera behind player
     var target = this.pos.clone();
     target.y += CFG.camHeight;
+    // R5 P0-5: distance-by-pitch cap (steeper down-look = closer camera):
+    // cap = camMaxDistance * (1 - camPitchDistShrink * max(0, sin(pitch)))
+    // effective = clamp(camDist, camMinDistance, cap); camDist (wheel state)
+    // is never written here. Camera y floor = ground (y = 0) + clearance.
+    var pitchCap = Math.max(CFG.camMinDistance, CFG.camMaxDistance *
+      (1 - CFG.camPitchDistShrink * Math.max(0, Math.sin(this.camPitch))));
+    var effDist = Math.max(CFG.camMinDistance, Math.min(pitchCap, this.camDist));
+    var floorY = CFG.camGroundClearance;
     var offset = new THREE.Vector3(
       Math.sin(this.camYaw) * Math.cos(this.camPitch),
       Math.sin(this.camPitch),
       Math.cos(this.camYaw) * Math.cos(this.camPitch)
-    ).multiplyScalar(this.camDist);
+    ).multiplyScalar(effDist);
     var want = target.clone().add(offset);
+    if (want.y < floorY) want.y = floorY;
 
     if (this.lockTarget && this.state === 'alive') {
       // D3: camera follows so the target stays framed. Aim camera yaw so the
@@ -927,6 +936,7 @@
         Math.cos(this.camYaw) * Math.cos(this.camPitch)
       ).multiplyScalar(Math.max(CFG.camMinDistance, midDist + LOCK.camExtraDistance));
       want = target.clone().add(offset);
+      if (want.y < floorY) want.y = floorY;
       this.camera.position.lerp(want, lerp);
     } else {
       // v3.1: souls-style auto-follow. While moving (and not within the
@@ -944,6 +954,7 @@
       var lerp2 = 1 - Math.exp(-CFG.camFollowLerp * dt);
       this.camera.position.lerp(want, lerp2);
     }
+    if (this.camera.position.y < floorY) this.camera.position.y = floorY;
     this.camera.lookAt(target);
   };
 

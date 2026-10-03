@@ -182,6 +182,30 @@ C11. Enemy radial clamp pinned inside clampEnemyToHomeSide (enemy.js = BLOCK). C
    retune spans margin, collider radii AND R5-1(f) ground extent; 2nd identical miss = STOP.
 C13 (IO RULING granted 2026-10-02): C1 accepted — player.js enters the AC-PRES
    allowed surface with hunk law "only inside updateCamera :896-947"; wheel/
+   mousemove/lock-on-framing bytes unchanged...[truncated]
    mousemove/lock-on-framing bytes unchanged. The camera ground clamp + by-pitch
    cap cannot live anywhere else (the clamp math IS updateCamera). Devbot's
    report must pin the effective-dist formula; the harness RECORDs d vs formula.
+C15 (IO RULING 2026-10-02, from the R2-floor L3 step-block): the 0.5 absolute
+   per-sample step bar is UNMEASURABLE at SwiftShader fps — the wobble is
+   WALL-clock driven (performance.now in lanternTick), max |dw/dt| = 1.83
+   intensity/s, and a ~330ms frame gap yields up to 0.60 legit steps
+   (measured: diffMax 0.606 on the R5 tree, gap-consistent; earlier gens:
+   0.24-0.51 at shorter gaps). NEW BAR: per-sample step <= 1.9 * (wall gap
+   between the two samples in seconds), FLICKER_ARM now records
+   performance.now stamps (__r2ft); the harness reads both arrays.
+   Band/distinct bars unchanged. R2 harness part06 encodes this.
+C14 (IO RULING granted 2026-10-02, on Devbot's canopy-walls finding): collider
+   radius law CHANGED for vegetation-class props — trunk colliders, not canopy.
+   NEW formula: radius = (GROUND_META.width * scale / 2) * TRUNK_RATIO, where
+   TRUNK_RATIO = 0.25 for assets whose mesh is trunk-dominant (trees: livingOak,
+   witchwoodTree, birch, dead trees, large flora) and 1.0 for trunk-is-the-body
+   props (lantern posts, gravestones, campfire, waymarkers, boulders, mounds,
+   fences). The Devbot-classified asset list is BINDING and recorded in the R5
+   report (harness RECORDs the table + per-prop class in the radii rows).
+   Rationale: canopy-sized invisible walls at 6.7-9.3u are unwalkable space;
+   a souls-like wood reads best when you brush canopy leaves without stopping.
+   B#0/B#23 spawn overlap resolves itself under the 0.25 factor (both spawn
+   distances clear the trunks). The validator's spawn-clearance check uses
+   the same per-class radii. R5-4(a)'s lanternPost contact bar is unchanged
+   (trunk-is-body class, ratio 1.0).
