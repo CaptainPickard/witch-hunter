@@ -47,7 +47,9 @@
     ironFenceCorner: 'art-direction/3d/assets/church-kit/iron-fence-corner-pixelated.glb',
 
     // characters (whanim1 rigged exports; props below stay rigid)
-    playerBody: 'art-direction/3d/assets/races_regen/rigged/human-hunter-male.rigged.glb',
+    // 10-04: rigged copy + WH_SlashR2L/WH_SlashL2R/WH_Thrust chain clips
+    // (scratch/blender_chain_clips.py). Rollback: human-hunter-male.rigged.glb
+    playerBody: 'art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-chain.glb',
     banditBody: 'art-direction/3d/assets/races_regen/rigged/orc-male-warrior.rigged.glb',
     ghoulBody: 'art-direction/3d/assets/races_regen/rigged/undead-ghoul-male.rigged.glb',
 

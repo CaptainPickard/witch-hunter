@@ -118,3 +118,34 @@ Solver residuals per key are in `scratch/chain-clips-qa/solve-log.json`. Most ke
 
 QA contact sheets (front / side / top, red bar = blade proxy on R_Hand +Z) are in
 `scratch/chain-clips-qa/sheet_*.png`.
+- Mesh: 32835 triangles in both files. The exporter split 25805 vertices into 25812. Every
+  triangle's position+UV matches the original within 1.0e-05 (KD-tree, cyclic vertex order), so
+  the R4 pixelated atlas still lines up. `swapBodyMap` keys `BODY_PNG` by the logical name
+  `playerBody` and swaps whatever `m.map` it finds, so it is path-independent and needs no change.
+
+## Wiring (step c, minimal diff)
+
+- `prototype/js/assets.js`: `playerBody` now points to `human-hunter-male.combat-chain.glb`. A
+  comment keeps the rollback path (`human-hunter-male.rigged.glb`). `BODY_PNG.playerBody` is unchanged.
+- `prototype/js/anim.js` follows the file's own convention, a name table next to `NAMES`:
+  - new `MOVE_NAMES = { slashR2L: 'WH_SlashR2L', slashL2R: 'WH_SlashL2R', thrust: 'WH_Thrust' }`.
+    The constructor builds LoopOnce/clamp actions only for clips the body actually has, so enemies
+    and the old GLB stay silent.
+  - `syncPlayer` passes `player.attackMoveId` into `playerAttack(..., moveId)`. That picks the
+    per-move action, and falls back to `'attack'` (WH_Attack1) for handAxe hack/chop, any unmapped
+    move, or a body without the clip. A chain step onto a different clip crossfades over
+    `oneShotFadeSeconds`. Repeats of the same clip re-seek without a self-crossfade, as before.
+  - `seekAttack(seg, t, durations, key)`: the shared WH_Attack1 keeps the
+    `attackClipStrikeFraction` segmentation (enemies and handAxe behave exactly as before).
+    Per-move clips take their segment edges from the move's own CONFIG
+    windup / windup+strike fractions, which is where the clip keys were authored.
+  - `getState()` also reports the per-move clip name and its weight.
+- CONFIG: untouched. No new knobs; the weaponMount numbers and all combat/enemy logic are unchanged.
+- Static check: `esprima.parseScript` passes for anim.js and assets.js. No browser or headless smoke run.
+
+## Left for Nicko's playtest
+
+- Read of the three swings in motion: blade arc, the 0.08 s crossfade between chain steps, and the
+  thrust's upward blade tilt (about 13 deg) at full extension.
+- Pose tuning lives in `scratch/blender_chain_clips.py` `KEYS` (hand target, blade direction and
+  torso twist per key). Rerun the rebuild block above and the verifier.
