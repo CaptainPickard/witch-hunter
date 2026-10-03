@@ -508,7 +508,16 @@ window.WH_CONFIG = {
     // the hand's local +Z (grip forward; positive = CCW, right-hand rule)
     // with no code change. enabled:false reverts to the raw GLB axes for
     // asset debugging. One knob drives both the player sword and bandit axe.
-    weaponMount: { rollDeg: 0, enabled: true }
+    // gripHolderY (Nicko 10-03 "hilt at the opposite end" fix): post-
+    // groundAlign holder-local Y of the weapon's GRIP point, measured from
+    // the GLB. The longsword spans raw y -0.987..+1.001 (tip at -0.987,
+    // crossguard +0.53, grip ~+0.65) and groundAlign shifts it +0.987, so
+    // grip sits at holder y=1.637 while the mount had the TIP at the fist -
+    // hand gripped mid-blade, hilt floating behind. The code subtracts this
+    // value so the fist lands ON the grip. handAxe grip is its butt at
+    // holder 0, already correct.
+    weaponMount: { rollDeg: 0, enabled: true,
+                   gripHolderY: { longsword: 1.637, handAxe: 0 } }
   }
 };
 window.WH_CONFIG.moveset = {

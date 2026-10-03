@@ -155,6 +155,19 @@
         }
       }
       mesh.quaternion.copy(mountRotation);
+      // Grip anchor (Nicko 10-03): the instance is a groundAlign HOLDER whose
+      // inner mesh was lifted so the GLB's raw min-Y rests at holder y=0 -
+      // which put the sword TIP at/behind the fist (hand on mid-blade, hilt
+      // floating behind: "hilt at the opposite end"). Slide the INNER mesh
+      // down by the measured grip height in HOLDER-LOCAL Y (the mount
+      // rotation maps holder -Y to hand-local +Z grip-forward, so a -Y
+      // shift moves the grip ONTO the fist and the tip forward in front).
+      // Measured: sword grip at raw y~+0.65 -> holder y 1.637 (CONFIG).
+      // Offset is in raw GLB units and scales with the weapon correctly.
+      var gripY = (wm && wm.gripHolderY) ? (wm.gripHolderY['longsword'] || 0) : 0;
+      if (gripY && mesh.children[0]) {
+        mesh.children[0].position.y -= gripY;
+      }
       return;
     }
     this.weaponPivot = new THREE.Group();
