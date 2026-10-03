@@ -491,11 +491,135 @@ html, body {
   color: #8a7f70;
 }
 
+/* Order B: CHARACTER tab - hands + spells | inventory gear list */
 .inv-char {
   min-height: 220px;
   display: flex;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.inv-char-col {
+  width: 200px;
+}
+
+.inv-sec {
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: #8a7f70;
+  border-bottom: 2px solid #2a231b;
+  margin: 2px 0 6px;
+  padding-bottom: 2px;
+}
+
+.inv-sec ~ .inv-sec {
+  margin-top: 12px;
+}
+
+.inv-hand,
+.inv-gear {
+  display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 8px;
+  padding: 3px;
+  margin-bottom: 4px;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+
+.inv-hand {
+  flex-wrap: wrap;
+  cursor: default;
+}
+
+.inv-hand.filled,
+.inv-gear {
+  cursor: pointer;
+}
+
+.inv-hand.filled:hover,
+.inv-gear:hover,
+.inv-spell:hover {
+  border-color: #d8b24a;
+}
+
+.inv-hand-label {
+  width: 100%;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #6a6350;
+}
+
+.inv-hand-slot,
+.inv-gear .inv-slot {
+  flex: none;
+}
+
+.inv-hand-name,
+.inv-gear-name {
+  flex: 1;
+  font-size: 13px;
+  color: #d8d2c0;
+}
+
+.inv-hand:not(.filled) .inv-hand-name {
+  color: #6a6350;
+}
+
+.inv-gear-text {
+  flex: 1;
+}
+
+.inv-gear-hands {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #8a7f70;
+}
+
+.inv-gear-list {
+  max-height: 210px;
+  overflow-y: auto;
+}
+
+.inv-hand-btn {
+  font-family: monospace;
+  font-size: 11px;
+  color: #c9bf9f;
+  background: #14110e;
+  border: 2px solid #3d382e;
+  padding: 1px 3px;
+  cursor: pointer;
+}
+
+.inv-hand-btn:hover {
+  color: #e3d27a;
+  border-color: #d8b24a;
+}
+
+.inv-spell {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 3px 4px;
+  margin-bottom: 3px;
+  font-size: 13px;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+
+.inv-spell-key {
+  color: #6a6350;
+}
+
+.inv-spell.active .inv-spell-name {
+  color: #e3d27a;
+}
+
+.inv-spell-mark {
+  margin-left: auto;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #d8b24a;
 }
 
 .inv-soon {

@@ -1,13 +1,15 @@
-// Witch Hunter prototype - inventory (2026-10-05, Order A).
-// Possession system, separate from the belt: the belt is the casting system
-// (keys 1-5 / Q, player.js), the inventory only holds items. Generic on
-// purpose - stage 2 enemy drops + gatherables route through the same item
-// registry (CONFIG.items) and pickup flow.
+// Witch Hunter prototype - inventory (2026-10-05, Order A + B).
+// Possession system, separate from the belt: the belt picks the active
+// learned spell (keys 1-5, player.js), the inventory only holds items.
+// Order B: equipped gear lives in player.hands, NOT in the grid (an item is
+// in exactly one place); the CHARACTER tab moves gear between the two.
+// Generic on purpose - stage 2 enemy drops + gatherables route through the
+// same item registry (CONFIG.items) and pickup flow.
 // Exposes window.WH_INVENTORY:
 //   Inventory          constructor (one per player; game.js owns the instance)
 //   active             the player's Inventory once game.js boots it
 //   addItem / removeItem / countOf / slotAt / forEachSlot -> delegate to active
-//   itemDef(id), stackCapOf(id)
+//   itemDef(id), stackCapOf(id), kindOf(id) ('caster' | 'melee' | 'shield' | null)
 //   InventoryUI        the I-key grid screen (DOM modal) + HUD toast
 //   WorldItems         dropped item entities in the scene (E pickup)
 
@@ -18,6 +20,20 @@
 
   function itemDef(id) {
     return CFG.items[id] || null;
+  }
+
+  // Order B gear capability, purely from CONFIG.items (category + kind).
+  function kindOf(id) {
+    var d = itemDef(id);
+    return d && d.category === 'gear' ? d.kind || null : null;
+  }
+
+  // equipHint 'rightHand' / 'leftHand' -> 'right' / 'left' (default hand)
+  function defaultHandOf(id) {
+    var d = itemDef(id);
+    if (!d || !d.hands || !d.hands.length) return null;
+    var h = d.equipHint === 'rightHand' ? 'right' : d.equipHint === 'leftHand' ? 'left' : null;
+    return h && d.hands.indexOf(h) >= 0 ? h : d.hands[0];
   }
 
   // Gear carries stackCap 1; consumables fall back to the inventory default.
@@ -128,10 +144,13 @@
     if (this.onChange) this.onChange();
   };
 
-  // ---- inventory screen (DOM modal, I key) ---------------------------------------
-  // opts: { inventory, onOpenChange(open), onDrop(slotIndex, wholeStack) }.
+  // ---- inventory screen (DOM modal, I key / INV button) ----------------------------
+  // opts: { inventory, onOpenChange(open), onDrop(slotIndex, wholeStack),
+  //         equip: { hands(), equip(id, hand), unequip(hand), spells(),
+  //                  selectSpell(slot) } }.
   // The UI never touches player state itself: game.js suspends input on
-  // onOpenChange and routes onDrop to the drop flow.
+  // onOpenChange, routes onDrop to the drop flow, and backs opts.equip with
+  // the player's equip rules (refusals toast from there).
 
   function el(tag, cls, text) {
     var e = document.createElement(tag);
@@ -146,6 +165,7 @@
     this.inv = opts.inventory;
     this.onOpenChange = opts.onOpenChange || null;
     this.onDrop = opts.onDrop || null;
+    this.equip = opts.equip || null;
     this.open = false;
     this.tab = 'inventory';
     this.selected = -1;
@@ -192,9 +212,9 @@
       ' drop stack  -  ' + UI.closeKeys.map(keyLabel).join(' / ') + ' close'));
     panel.appendChild(this.invBody);
 
-    // character tab: placeholder until Order B
+    // character tab (Order B): hands + learned spells | inventory gear list.
+    // Rebuilt by renderCharacter() - a handful of rows, no diffing needed.
     this.charBody = el('div', 'inv-body inv-char');
-    this.charBody.appendChild(el('div', 'inv-soon', 'Coming soon'));
     panel.appendChild(this.charBody);
 
     this.tip = el('div', 'inv-tip');
@@ -261,6 +281,7 @@
     this.invBody.style.display = tab === 'inventory' ? '' : 'none';
     this.charBody.style.display = tab === 'character' ? '' : 'none';
     if (tab !== 'inventory') this.hideTip();
+    if (tab === 'character') this.renderCharacter();
   };
 
   // Click = select (highlight). Clicking the selected slot again clears it.
@@ -281,6 +302,104 @@
       v.count.textContent = s && stackCapOf(s.id) > 1 ? String(s.count) : '';
     }
     if (this.tipSlot >= 0) this.fillTip(this.tipSlot);
+    if (this.tab === 'character') this.renderCharacter();
+  };
+
+  var HAND_LABEL = { right: 'RIGHT HAND', left: 'LEFT HAND' };
+  var HAND_KEY = { right: 'R', left: 'L' };
+
+  function spellName(id) {
+    return id.charAt(0).toUpperCase() + id.slice(1);
+  }
+
+  // Left column: RIGHT / LEFT HAND slots (click = unequip to inventory) and
+  // the learned spells (click = set active, same as the belt keys). Right
+  // column: gear rows from the inventory (click = equip to the default
+  // hand, [L] / [R] = that hand; moving across hands is allowed).
+  InventoryUI.prototype.renderCharacter = function () {
+    var self = this, E = this.equip, body = this.charBody;
+    body.textContent = '';
+    if (!E) return;
+    var hands = E.hands();
+
+    var left = el('div', 'inv-char-col');
+    left.appendChild(el('div', 'inv-sec', 'EQUIPPED'));
+    ['right', 'left'].forEach(function (h) {
+      var d = itemDef(hands[h]);
+      var row = el('div', 'inv-hand' + (d ? ' filled' : ''));
+      row.appendChild(el('span', 'inv-hand-label', HAND_LABEL[h]));
+      var slot = el('div', 'inv-slot inv-hand-slot' + (d ? ' filled' : ''));
+      slot.appendChild(el('span', 'inv-glyph', d ? d.glyph : ''));
+      row.appendChild(slot);
+      row.appendChild(el('span', 'inv-hand-name', d ? d.name : 'Empty'));
+      if (d) {
+        // [L] / [R] move the held item across hands (one instance rule)
+        var other = h === 'right' ? 'left' : 'right';
+        if (d.hands && d.hands.indexOf(other) >= 0) {
+          var id = hands[h];
+          var mv = el('button', 'inv-hand-btn', '[' + HAND_KEY[other] + ']');
+          mv.title = 'Move to ' + HAND_LABEL[other].toLowerCase();
+          mv.addEventListener('click', function (e) {
+            e.stopPropagation();
+            E.equip(id, other);
+          });
+          row.appendChild(mv);
+        }
+        row.title = 'Click to unequip';
+        row.addEventListener('click', function () { E.unequip(h); });
+      }
+      left.appendChild(row);
+    });
+    left.appendChild(el('div', 'inv-sec', 'SPELLS'));
+    E.spells().forEach(function (sp) {
+      var row = el('div', 'inv-spell' + (sp.active ? ' active' : ''));
+      row.appendChild(el('span', 'inv-spell-key', String(sp.slot + 1)));
+      row.appendChild(el('span', 'inv-spell-name', spellName(sp.id)));
+      if (sp.active) row.appendChild(el('span', 'inv-spell-mark', 'ACTIVE'));
+      row.addEventListener('click', function () {
+        E.selectSpell(sp.slot);
+        self.render();
+      });
+      left.appendChild(row);
+    });
+    body.appendChild(left);
+
+    var right = el('div', 'inv-char-col');
+    right.appendChild(el('div', 'inv-sec', 'INVENTORY GEAR'));
+    var list = el('div', 'inv-gear-list');
+    var any = false;
+    this.inv.slots.forEach(function (s) {
+      var d = s ? itemDef(s.id) : null;
+      if (!d || d.category !== 'gear' || !d.hands) return;
+      any = true;
+      var id = s.id, def = defaultHandOf(id);
+      var row = el('div', 'inv-gear');
+      var g = el('div', 'inv-slot filled');
+      g.appendChild(el('span', 'inv-glyph', d.glyph));
+      row.appendChild(g);
+      var txt = el('div', 'inv-gear-text');
+      txt.appendChild(el('div', 'inv-gear-name', d.name));
+      txt.appendChild(el('div', 'inv-gear-hands', 'hands: ' + d.hands.map(function (h) {
+        return HAND_KEY[h] + (h === def ? '*' : '');
+      }).join(' / ')));
+      row.appendChild(txt);
+      ['left', 'right'].forEach(function (h) {
+        if (d.hands.indexOf(h) < 0) return;
+        var b = el('button', 'inv-hand-btn', '[' + HAND_KEY[h] + ']');
+        b.title = 'Equip to ' + HAND_LABEL[h].toLowerCase();
+        b.addEventListener('click', function (e) {
+          e.stopPropagation();
+          E.equip(id, h);
+        });
+        row.appendChild(b);
+      });
+      row.title = 'Click: equip to ' + HAND_LABEL[def].toLowerCase();
+      row.addEventListener('click', function () { E.equip(id, def); });
+      list.appendChild(row);
+    });
+    if (!any) list.appendChild(el('div', 'inv-soon', 'No gear in inventory'));
+    right.appendChild(list);
+    body.appendChild(right);
   };
 
   InventoryUI.prototype.fillTip = function (i) {
@@ -288,7 +407,8 @@
     var d = s ? itemDef(s.id) : null;
     if (!d) { this.tip.style.display = 'none'; return false; }
     this.tipName.textContent = d.name;
-    this.tipCat.textContent = d.category === 'gear' ? 'Gear' : 'Consumable';
+    this.tipCat.textContent = d.category === 'gear'
+      ? 'Gear - equip on the CHARACTER tab' : 'Consumable';
     this.tip.style.display = 'block';
     return true;
   };
@@ -391,6 +511,8 @@
     active: null,
     itemDef: itemDef,
     stackCapOf: stackCapOf,
+    kindOf: kindOf,
+    defaultHandOf: defaultHandOf,
     addItem: function (id, count) { return M.active ? M.active.addItem(id, count) : 0; },
     removeItem: function (id, count) { return M.active ? M.active.removeItem(id, count) : 0; },
     countOf: function (id) { return M.active ? M.active.countOf(id) : 0; },
