@@ -176,10 +176,11 @@ def nelder_mead(f, x0, step=12.0, iters=2500, tol=1e-9):
     return pts[k], vals[k]
 
 
-def solve_arm(body, target_pos, target_blade, guess):
+def solve_arm(body, target_pos, target_blade, guess, elbow_w=0.0):
     """Fill R_UpperArm/R_Forearm/R_Hand of `body` so the R_Hand socket lands
     on target_pos with the blade along target_blade. guess = 8 floats (deg),
-    also the regularization anchor (keeps the elbow/twist choice coherent)."""
+    also the regularization anchor (keeps the elbow/twist choice coherent).
+    elbow_w > 0 pins the elbow (R_Forearm rx) toward guess[3] (thrust reach)."""
     tp = Vector(target_pos)
     tb = Vector(target_blade).normalized()
 
@@ -192,6 +193,7 @@ def solve_arm(body, target_pos, target_blade, guess):
     def cost(x):
         pos, blade = hand_state(build(x))
         c = 100.0 * (pos - tp).length_squared + 1.0 * (blade - tb).length_squared
+        c += elbow_w * (x[3] - guess[3]) ** 2
         for v, g, (lo, hi), (bn, _) in zip(x, guess, ARM_BOUNDS, ARM_KEYS):
             c += 4e-6 * (v - g) ** 2
             if bn == "R_Hand":
@@ -288,7 +290,7 @@ KEYS["WH_SlashL2R"] = dict(
         (0.0, {}, None, None, False),
         (0.14 / 0.64, L2R_WINDUP, ((0.22, -0.22, 0.02), (0.55, 0.30, -0.78)), [-70, 30, 40, -70, 0, 0, 0, 0], False),
         (0.24 / 0.64, L2R_CONTACT, ((-0.12, -0.50, 0.36), (-0.30, -0.80, 0.52)), [-85, -5, 5, -25, 0, 0, 0, 0], True),
-        (0.34 / 0.64, L2R_FOLLOW, ((-0.52, -0.22, 0.88), (-0.62, -0.05, 0.78)), [-160, -40, -10, -30, 0, 0, 0, 0], False),
+        (0.34 / 0.64, L2R_FOLLOW, ((-0.44, -0.24, 0.68), (-0.62, -0.05, 0.78)), [-160, -40, -10, -30, 0, 0, 0, 0], False),
         (1.0, {}, None, None, False)])
 
 # ---- WH_Thrust: chamber at the right hip -> straight lunge -> hold -> back to guard
@@ -310,8 +312,8 @@ KEYS["WH_Thrust"] = dict(
     keys=[
         (0.0, {}, None, None, False),
         (0.16 / 0.70, TH_WINDUP, ((-0.36, 0.20, 0.30), (0.02, -1.0, 0.02)), [-10, -20, 0, -115, 0, 0, 0, 0], False),
-        (0.30 / 0.70, TH_EXTEND, ((-0.12, -0.62, 0.50), (0.02, -1.0, 0.0)), [-85, -5, 0, -8, 0, 0, 0, 0], False),
-        (0.40 / 0.70, TH_EXTEND, ((-0.12, -0.60, 0.48), (0.02, -1.0, 0.0)), [-85, -5, 0, -10, 0, 0, 0, 0], False),
+        (0.30 / 0.70, TH_EXTEND, ((-0.12, -0.64, 0.40), (0.02, -1.0, 0.06), 2e-4), [-75, -5, 0, -12, 0, 0, 0, 0], False),
+        (0.40 / 0.70, TH_EXTEND, ((-0.12, -0.62, 0.39), (0.02, -1.0, 0.06), 2e-4), [-75, -5, 0, -15, 0, 0, 0, 0], False),
         (1.0, {}, None, None, False)])
 
 
@@ -320,7 +322,8 @@ def build_keys(spec, name, report):
     for k, (t, body, target, guess, through) in enumerate(spec["keys"]):
         pose = head_counter(merge(body))
         if target:
-            pose, ep, eb = solve_arm(pose, target[0], target[1], guess)
+            pose, ep, eb = solve_arm(pose, target[0], target[1], guess,
+                                     target[2] if len(target) > 2 else 0.0)
             pos, blade = hand_state(pose)
             arm_vals = {bn: {ch: round(pose[bn][ch], 1) for ch in ("rx", "ry", "rz") if ch in pose[bn]}
                         for bn in ("R_UpperArm", "R_Forearm", "R_Hand")}
@@ -453,8 +456,10 @@ def check_fk_against_blender(act, frame):
 def preview(outdir):
     os.makedirs(outdir, exist_ok=True)
     sc = scene
-    sc.render.engine = "BLENDER_EEVEE_NEXT"
-    sc.eevee.taa_render_samples = 4
+    sc.render.engine = "CYCLES"            # EEVEE needs libEGL (absent headless)
+    sc.cycles.device = "CPU"
+    sc.cycles.samples = 6
+    sc.cycles.use_denoising = False
     sc.render.resolution_x = sc.render.resolution_y = 320
     world = bpy.data.worlds.new("W")
     sc.world = world

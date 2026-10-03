@@ -1,0 +1,16 @@
+[CHAIN] WH_SlashR2L key1 t=0.219 solved: pos err 0.3 cm, blade err 3.4 deg, {'R_UpperArm': {'rx': -93.3, 'ry': -30.8, 'rz': 15.0}, 'R_Forearm': {'rx': -62.5, 'ry': -25.1}, 'R_Hand': {'rx': 51.8, 'ry': 14.6, 'rz': -24.5}}
+[CHAIN] WH_SlashR2L key2 t=0.375 solved: pos err 0.4 cm, blade err 4.5 deg, {'R_UpperArm': {'rx': -63.3, 'ry': -19.6, 'rz': 32.1}, 'R_Forearm': {'rx': -51.9, 'ry': -25.5}, 'R_Hand': {'rx': 66.1, 'ry': 27.4, 'rz': -42.7}}
+[CHAIN] WH_SlashR2L key3 t=0.531 solved: pos err 0.3 cm, blade err 4.6 deg, {'R_UpperArm': {'rx': -45.5, 'ry': -5.9, 'rz': 40.0}, 'R_Forearm': {'rx': -63.7, 'ry': -25.5}, 'R_Hand': {'rx': 62.3, 'ry': 32.1, 'rz': -50.4}}
+[CHAIN] clip WH_SlashR2L: 19 keys (15 frames @ 24 fps = 0.625s), phase keys at frames [0.0, 3.2813, 5.625, 7.9688, 15.0]
+[CHAIN] WH_SlashL2R key1 t=0.219 solved: pos err 2.9 cm, blade err 5.5 deg, {'R_UpperArm': {'rx': -4.2, 'ry': 25.1, 'rz': 92.3}, 'R_Forearm': {'rx': -1.7, 'ry': -1.1}, 'R_Hand': {'rx': 75.3, 'ry': 6.1, 'rz': -6.7}}
+[CHAIN] WH_SlashL2R key2 t=0.375 solved: pos err 0.3 cm, blade err 2.1 deg, {'R_UpperArm': {'rx': -54.2, 'ry': -18.2, 'rz': 19.8}, 'R_Forearm': {'rx': -27.7, 'ry': -25.2}, 'R_Hand': {'rx': 29.6, 'ry': 7.3, 'rz': -19.2}}
+[CHAIN] WH_SlashL2R key3 t=0.531 solved: pos err 4.7 cm, blade err 1.9 deg, {'R_UpperArm': {'rx': -104.2, 'ry': -42.9, 'rz': 52.1}, 'R_Forearm': {'rx': -1.2, 'ry': -0.5}, 'R_Hand': {'rx': 28.9, 'ry': 4.3, 'rz': -9.6}}
+[CHAIN] clip WH_SlashL2R: 19 keys (15 frames @ 24 fps = 0.625s), phase keys at frames [0.0, 3.2813, 5.625, 7.9688, 15.0]
+[CHAIN] WH_Thrust key1 t=0.229 solved: pos err 0.1 cm, blade err 2.5 deg, {'R_UpperArm': {'rx': 49.2, 'ry': 10.4, 'rz': 11.6}, 'R_Forearm': {'rx': -94.4, 'ry': 25.3}, 'R_Hand': {'rx': 40.0, 'ry': -1.2, 'rz': 7.8}}
+[CHAIN] WH_Thrust key2 t=0.429 solved: pos err 3.7 cm, blade err 13.7 deg, {'R_UpperArm': {'rx': -62.8, 'ry': -4.9, 'rz': -4.2}, 'R_Forearm': {'rx': -47.5, 'ry': 27.3}, 'R_Hand': {'rx': 77.6, 'ry': 14.3, 'rz': -45.1}}
+[CHAIN] WH_Thrust key3 t=0.571 solved: pos err 3.6 cm, blade err 12.6 deg, {'R_UpperArm': {'rx': -54.2, 'ry': -0.4, 'rz': -5.8}, 'R_Forearm': {'rx': -55.3, 'ry': 27.0}, 'R_Hand': {'rx': 77.3, 'ry': 17.1, 'rz': -52.8}}
+[CHAIN] clip WH_Thrust: 20 keys (16 frames @ 24 fps = 0.667s), phase keys at frames [0.0, 3.6571, 6.8571, 9.1429, 16.0]
+[CHAIN] FK cross-check vs Blender pose eval: OK
+[CHAIN] NLA tracks: ['WH_Walk', 'WH_Run', 'WH_Idle', 'WH_Hit', 'WH_Death', 'WH_Attack1', 'WH_SlashR2L', 'WH_SlashL2R', 'WH_Thrust']
+[CHAIN] exported /tmp/wh-worldfeat/art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-chain.glb (4.54 MB)
+[CHAIN] log -> /tmp/chainclips/log.json
