@@ -662,11 +662,67 @@ window.WH_CONFIG = {
                    gripHolderY: { longsword: 1.637, handAxe: 0 } }
   }
 };
+// 10-04 change order (Nicko: combo spam -> real chains, souls-style).
+// Per-weapon moveset framework: EVERY player combat number lives here. Pose
+// SHAPES stay in js/moveset.js (window.WH_MOVESET keyframes) and are
+// referenced by name via move.pose. Player swing rules (js/player.js):
+//  - each swing runs its own windup -> strike -> recover (seconds below);
+//  - LMB in windup is IGNORED; LMB in strike/recover is BUFFERED for
+//    inputBufferSec and fires the next chain move once the swing is
+//    chainOpenSec into its recover (never earlier - no skipped stages);
+//  - the LAST chain move has no early window: a buffered press waits for
+//    its full recover, then starts a fresh chain at chain[0];
+//  - roll may cancel RECOVER only (never windup/strike) and resets the chain.
+// chainCap = moves per chain AND landed hits that arm the v7 finisher.
 window.WH_CONFIG.moveset = {
   idlePose: { pos: [0.7, 1.0, -0.3], rot: [2.2, -0.7, 0.6] },
-  comboChainCap: 3,
+  comboChainCap: 3,                 // legacy; superseded by weapons[*].chainCap
   banditStageMult: 1.6,
-  enemyWeapon: { bandit: 'handAxe' }
+  enemyWeapon: { bandit: 'handAxe' },
+  playerWeapon: 'longsword',        // which weapons[] entry the player wields
+  inputBufferSec: 0.35,             // buffered LMB lifetime (strike/recover presses)
+  weapons: {
+    longsword: {
+      chainCap: 3,
+      // Nicko's order: swipe right->left, swipe left->right, THRUST, reset.
+      chain: ['slashR2L', 'slashL2R', 'thrust'],
+      // movement speed multiplier per swing stage (windup keeps 0.3 creep)
+      moveMultWhileAttacking: { windup: 0.3, strike: 0, recover: 0 },
+      bladeAxisY: -1,               // mesh-local blade axis (-Y tip, see setWeapon)
+      moves: {
+        slashR2L: { pose: 'm2', windup: 0.14, strike: 0.20, recover: 0.30,
+                    chainOpenSec: 0.12,
+                    damage: 34, range: 3.2, halfAngleDeg: 70, lunge: 0.8,
+                    staminaCost: 15, damageGhoulMult: 1.15 },
+        slashL2R: { pose: 'm1', windup: 0.14, strike: 0.20, recover: 0.30,
+                    chainOpenSec: 0.12,
+                    damage: 34, range: 3.2, halfAngleDeg: 70, lunge: 0.8,
+                    staminaCost: 15, damageGhoulMult: 1.15 },
+        // thrust = narrow, longer reach, more damage, heavier recover
+        thrust:   { pose: 'm4', windup: 0.16, strike: 0.14, recover: 0.40,
+                    chainOpenSec: 0.40,   // last move: full recover anyway
+                    damage: 40, range: 3.8, halfAngleDeg: 22, lunge: 1.4,
+                    staminaCost: 20, damageGhoulMult: 1.15 }
+      }
+    },
+    // Quick 2-hit hatchet chain: faster, shorter, lower damage per hit.
+    handAxe: {
+      chainCap: 2,
+      chain: ['hack', 'chop'],
+      moveMultWhileAttacking: { windup: 0.4, strike: 0, recover: 0 },
+      bladeAxisY: 1,                // axe bit along mesh-local +Y (as enemy.js)
+      moves: {
+        hack: { pose: 'claw', windup: 0.10, strike: 0.14, recover: 0.22,
+                chainOpenSec: 0.08,
+                damage: 22, range: 2.6, halfAngleDeg: 60, lunge: 0.5,
+                staminaCost: 10, damageGhoulMult: 1.15 },
+        chop: { pose: 'm3', windup: 0.12, strike: 0.14, recover: 0.30,
+                chainOpenSec: 0.30,
+                damage: 27, range: 2.7, halfAngleDeg: 35, lunge: 0.7,
+                staminaCost: 12, damageGhoulMult: 1.15 }
+      }
+    }
+  }
 };
 
 // 2026-10-03 touch controls layer (parallel input; see js/touch-controls.js).
