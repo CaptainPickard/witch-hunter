@@ -158,6 +158,21 @@
       loadNote: document.getElementById('wh-load-note'),
       reticle: document.getElementById('wh-lock-reticle')
     };
+    // 2026-10-03 boot loading screen: title + REAL progress bar overlay.
+    // The bar is the fraction of manifest assets settled (loaded OR
+    // stand-in); assets.js fires one tick per asset settle.
+    game.hud.bootBar = document.getElementById('wh-boot-bar');
+    game.hud.bootBarFill = document.getElementById('wh-boot-bar-fill');
+    game.hud.bootSub = document.getElementById('wh-boot-sub');
+    game.hud.bootAssetsDone = 0;
+    game.hud.bootAssetsTotal = Object.keys(window.WH_ASSETS.MANIFEST).length;
+    window.WH_ASSETS.setBootProgressCb(function () {
+      game.hud.bootAssetsDone++;
+      game.hud.bootBarFill.style.width =
+        Math.round(100 * game.hud.bootAssetsDone / game.hud.bootAssetsTotal) + '%';
+      game.hud.bootSub.textContent = 'Loading assets... ' +
+        game.hud.bootAssetsDone + ' / ' + game.hud.bootAssetsTotal;
+    });
     // v6: block/parry feedback cues, DOM only. The stamina bar already exists
     // in index.html and reflects the drain via updateHud.
     var flash = document.createElement('div');
@@ -751,6 +766,13 @@
       game.player.faceTowards(0, 0);     // boot spawn faces map center (Nicko 10-03)
       applyRegionLighting(CFG.regionA.id);
       showRegionName(region.name);
+      // 2026-10-03: smooth fade-out of the boot overlay from CONFIG
+      // (hud.bootOverlayFadeMs); .hidden also releases pointer-events, and
+      // game.hud.loadNote stays in the DOM for any later reuse.
+      var fadeMs = (CFG.hud && typeof CFG.hud.bootOverlayFadeMs === 'number') ?
+        CFG.hud.bootOverlayFadeMs : 900;
+      game.hud.loadNote.style.transition =
+        'opacity ' + (fadeMs / 1000) + 's ease';
       game.hud.loadNote.classList.add('hidden');
 
       game.running = true;

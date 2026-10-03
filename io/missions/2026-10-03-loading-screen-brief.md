@@ -49,3 +49,39 @@ container + webui route are IO-managed), io/specs, docs/planning.
 - Do not alter loader retry semantics or stand-in behavior (just hook progress).
 - Do not remove #wh-load-note uses elsewhere without checking references.
 - Report back through IO; do not start/stop servers; no pushes.
+## Astrabot findings
+Implemented on feat/world-visuals, single commit amended with these findings
+(baseline 36e1f97). Commit hash changes on amend; final hash reported to IO.
+
+- Files: prototype/index.html (+7), prototype/style.css (+42/-4 net),
+  prototype/js/assets.js (+20), prototype/js/game.js (+22), prototype/js/CONFIG.js
+  (+2). ~90 lines, vanilla ES5, three esprima parse checks pass.
+- The overlay IS the existing #wh-load-note, restructured in index.html into
+  #wh-boot-title ("Witch Hunter", uppercased darkwood ivory), #wh-boot-bar with
+  #wh-boot-bar-fill, and a demoted sub-caption #wh-boot-sub (old "Loading
+  assets..." text lives here, now with a live "n / 28" count). No "Loading
+  assets..." as primary element anymore.
+- Real progress source: in loadOne (js/assets.js) the settle chain was captured
+  as `settled`; a final `.then` fires bootProgressTick() exactly once per asset
+  AFTER it settles loaded-or-stand-in (swapBodyMap atlas wait included, so the
+  tick order matches actual completion). setupHud() registers the callback via
+  new WH_ASSETS.setBootProgressCb and counts ticks over
+  Object.keys(WH_ASSETS.MANIFEST).length = 28, setting the fill width to
+  round(100*done/total)%. No timed/fake animation. Retry semantics untouched:
+  backoff only delays that asset's tick. Promise.all / preloadAll contract
+  unchanged (both then-chains pass values through).
+- Fade-out: at boot complete game.js sets transition from
+  CONFIG.hud.bootOverlayFadeMs (new knob, 900ms default; CSS fallback 0.9s)
+  then adds .hidden (opacity 0 + pointer-events:none), so the overlay never
+  blocks input during or after the fade; the node stays in the DOM like before.
+- Failure note: #wh-asset-fail-note creation/append in assets.js untouched,
+  still z-index 40 in #wh-hud while the overlay sits at z-index 30, so a
+  stand-in note remains visible after the overlay fades. flushAssetFailureNote
+  firing mid-load is fine - it simply sits under the overlay until boot done.
+- Palette: title #d8d2c0 (HUD ivory), bar frame #4a4034, bar well #14110e,
+  sub-caption #8a7f70; single accent is the amber fill #d8b24a (same value as
+  the existing reticle/soul fill). No new accent colors, no "free", no agent
+  names. Relative paths only; nothing server-side touched.
+- Not executed in a browser per hard law (no harness runs); Nicko's reload is
+  the acceptance bar. If he wants a different fade length, it is one CONFIG
+  number: hud.bootOverlayFadeMs.

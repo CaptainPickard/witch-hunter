@@ -113,6 +113,16 @@
       CFG.assets.bodyRetryDelayMs : 750;
   var bootFailures = [];
 
+  // 2026-10-03 loading screen (Nicko change order): REAL per-asset progress.
+  // game.js registers a callback fired on each manifest asset settling
+  // (loaded OR stand-in), so the bar fraction is settled/total; retry
+  // backoff just delays that asset's tick.
+  var bootProgressCb = null;
+  function setBootProgressCb(fn) { bootProgressCb = fn; }
+  function bootProgressTick() {
+    if (bootProgressCb) bootProgressCb();
+  }
+
   function classifyError(err) {
     var msg = (err && (err.message || err.statusText)) || String(err || 'unknown');
     var reason;
@@ -283,7 +293,7 @@
         return v;
       });
     }
-    return attempt(0).then(function (v) {
+    var settled = attempt(0).then(function (v) {
       if (v.ok) {
         var root = v.gltf.scene;
         if (CHARACTERS[name]) {
@@ -313,6 +323,12 @@
       bootFailures.push(name + ' (' + info.reason + ' - ' + info.msg + ')');
       flushAssetFailureNote();
       return cache[name];
+    });
+    // 2026-10-03 loading screen: tick exactly once per asset, after it
+    // settles as loaded OR stand-in (swapBodyMap atlas wait included).
+    return settled.then(function (res) {
+      bootProgressTick();
+      return res;
     });
   }
 
@@ -345,6 +361,7 @@
     MANIFEST: MANIFEST,
     RESOLVED: RESOLVED,
     resolveUrl: resolveUrl,
+    setBootProgressCb: setBootProgressCb,
     preloadAll: preloadAll,
     instance: instance,
     getClips: function (name) { return clips[name] || []; },

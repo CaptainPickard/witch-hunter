@@ -21,7 +21,13 @@
     <div id="wh-gate-hint">Enter the Darkwood</div>
     <div id="wh-lock-reticle"></div>
     <div id="wh-death-overlay"><div id="wh-death-text">You died</div><div id="wh-death-sub">Respawning...</div></div>
-    <div id="wh-load-note">Loading assets...</div>
+    <!-- 2026-10-03 boot loading screen: title over a real per-asset progress
+         bar (tick count lives in js/assets.js). Replaces the bare text note. -->
+    <div id="wh-load-note">
+      <div id="wh-boot-title">Witch Hunter</div>
+      <div id="wh-boot-bar"><div id="wh-boot-bar-fill"></div></div>
+      <div id="wh-boot-sub">Loading assets...</div>
+    </div>
   </div>
 </div>
 <script src="vendor/three.classic.js"></script>

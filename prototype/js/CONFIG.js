@@ -403,7 +403,9 @@ window.WH_CONFIG = {
   hud: {
     regionNameFadeSeconds: 2.6,
     deathFadeSeconds: 0.8,
-    fpsUpdateInterval: 0.5
+    fpsUpdateInterval: 0.5,
+    // 2026-10-03 boot loading screen: overlay fade-out duration in ms.
+    bootOverlayFadeMs: 900
   },
 
   lockOn: {
