@@ -8,6 +8,8 @@
 //   active             the player's Inventory once game.js boots it
 //   addItem / removeItem / countOf / slotAt / forEachSlot -> delegate to active
 //   itemDef(id), stackCapOf(id)
+//   InventoryUI        the I-key grid screen (DOM modal) + HUD toast
+//   WorldItems         dropped item entities in the scene (E pickup)
 
 (function () {
   'use strict';
@@ -306,10 +308,74 @@
     }, CFG.inventoryUI.toastSeconds * 1000);
   };
 
+  // ---- world item entities (drops; stage 2 enemy drops / gatherables) -------------
+  // One entity = one stack on the ground: { id, count, x, z, regionId, mesh }.
+  // Placeholder visual: unlit box colored by item category (CONFIG.inventory
+  // .entity), resting on the ground plane (y = 0, the prop convention). The
+  // list persists across region swaps; entities show only while their region
+  // is active (both regions share one world space). No save wiring.
+
+  function WorldItems(scene) {
+    var E = CFG.inventory.entity;
+    this.scene = scene;
+    this.list = [];
+    this.geo = new THREE.BoxGeometry(E.size, E.size, E.size);
+    this.mats = {};
+    for (var cat in E.colors) {
+      this.mats[cat] = new THREE.MeshBasicMaterial({ color: E.colors[cat] });
+    }
+  }
+
+  WorldItems.prototype.spawn = function (id, count, x, z, regionId) {
+    var d = itemDef(id);
+    if (!d || count <= 0) return null;
+    var E = CFG.inventory.entity;
+    var holder = new THREE.Group();
+    holder.position.set(x, 0, z);
+    var box = new THREE.Mesh(this.geo, this.mats[d.category] || this.mats.consumable);
+    box.position.y = E.size / 2;      // bottom face on the ground
+    holder.add(box);
+    holder.rotation.y = Math.random() * Math.PI * 2;
+    this.scene.add(holder);
+    var ent = { id: id, count: count, x: x, z: z, regionId: regionId, mesh: holder };
+    this.list.push(ent);
+    return ent;
+  };
+
+  WorldItems.prototype.remove = function (ent) {
+    var i = this.list.indexOf(ent);
+    if (i < 0) return;
+    this.list.splice(i, 1);
+    this.scene.remove(ent.mesh);    // shared geometry/materials stay alive
+  };
+
+  // Nearest entity of regionId within radius of (x, z) on the ground plane.
+  WorldItems.prototype.nearest = function (x, z, radius, regionId) {
+    var best = null, bestD2 = radius * radius;
+    for (var i = 0; i < this.list.length; i++) {
+      var e = this.list[i];
+      if (e.regionId !== regionId) continue;
+      var dx = e.x - x, dz = e.z - z;
+      var d2 = dx * dx + dz * dz;
+      if (d2 <= bestD2) { bestD2 = d2; best = e; }
+    }
+    return best;
+  };
+
+  WorldItems.prototype.update = function (dt, activeRegionId) {
+    var spin = CFG.inventory.entity.spinDegPerSec * Math.PI / 180 * dt;
+    for (var i = 0; i < this.list.length; i++) {
+      var e = this.list[i];
+      e.mesh.visible = e.regionId === activeRegionId;
+      e.mesh.rotation.y += spin;
+    }
+  };
+
   // ---- module ---------------------------------------------------------------------
 
   var M = {
     InventoryUI: InventoryUI,
+    WorldItems: WorldItems,
     Inventory: Inventory,
     active: null,
     itemDef: itemDef,

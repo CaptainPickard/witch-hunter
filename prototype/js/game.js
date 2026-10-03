@@ -833,8 +833,62 @@
     game.inventory.fillStartingItems();
     game.inventoryUI = new INV.InventoryUI({
       inventory: game.inventory,
-      onOpenChange: function (open) { game.player.setInputSuspended(open); }
+      onOpenChange: function (open) { game.player.setInputSuspended(open); },
+      onDrop: dropFromSlot
     });
+    game.worldItems = new INV.WorldItems(game.scene);
+    document.addEventListener('keydown', function (e) {
+      if (e.code !== CFG.inventoryUI.pickupKey || e.repeat) return;
+      if (game.player.inputSuspended || game.player.state !== 'alive') return;
+      tryPickup();
+    });
+  }
+
+  // G on the selected stack: 1 unit, or the whole stack with Shift.
+  // drop.mode 'void' deletes it; 'physical' puts one item entity carrying
+  // the dropped count at the player's feet + scatter.
+  function dropFromSlot(slotIndex, wholeStack) {
+    var s = game.inventory.slotAt(slotIndex);
+    if (!s) return;
+    var taken = game.inventory.removeFromSlot(slotIndex, wholeStack ? s.count : 1);
+    var D = CFG.inventory.drop;
+    if (D.mode === 'void') {
+      game.inventoryUI.toast('Dropped ' + window.WH_INVENTORY.itemDef(taken.id).name +
+        ' x' + taken.count);
+      return;
+    }
+    // uniform point in the scatter disc, then the player's own bounds +
+    // prop push-out so a drop never lands somewhere it cannot be walked to
+    var ang = Math.random() * Math.PI * 2;
+    var r = D.scatterRadius * Math.sqrt(Math.random());
+    var p = game.player.pos;
+    var at = new THREE.Vector3(p.x + Math.sin(ang) * r, 0, p.z + Math.cos(ang) * r);
+    var rm = game.regionManager;
+    rm.logic.clampPlayer(at);
+    if (rm.pushOutOfProps(at, CFG.player.radius)) rm.logic.clampPlayer(at);
+    game.worldItems.spawn(taken.id, taken.count, at.x, at.z, rm.logic.activeId);
+  }
+
+  // E: nearest item entity within pickupRadius goes into the inventory
+  // (stack-join first). Whatever does not fit stays on the ground.
+  function tryPickup() {
+    var p = game.player.pos;
+    var ent = game.worldItems.nearest(p.x, p.z, CFG.inventory.drop.pickupRadius,
+      game.regionManager.logic.activeId);
+    if (!ent) return;
+    var added = game.inventory.addItem(ent.id, ent.count);
+    var name = window.WH_INVENTORY.itemDef(ent.id).name;
+    if (added <= 0) {
+      game.inventoryUI.toast('Inventory full');
+      return;
+    }
+    ent.count -= added;
+    if (ent.count <= 0) {
+      game.worldItems.remove(ent);
+      game.inventoryUI.toast('Picked up ' + name + ' x' + added);
+    } else {
+      game.inventoryUI.toast('Inventory full');
+    }
   }
 
   // ---- WH_DEBUG hooks ----------------------------------------------------------
@@ -1000,6 +1054,20 @@
           return { x: f.pos.x, z: f.pos.z, alive: f.alive };
         });
       },
+      // 10-05 inventory hooks (AC E setup: addItem('longsword', 24) fills
+      // every slot - gear stacks to 1)
+      getInventory: function () {
+        var out = [];
+        game.inventory.forEachSlot(function (sl) { out.push(sl); });
+        return out;
+      },
+      addItem: function (id, count) { return game.inventory.addItem(id, count); },
+      getWorldItems: function () {
+        return game.worldItems.list.map(function (it) {
+          return { id: it.id, count: it.count, x: it.x, z: it.z, regionId: it.regionId };
+        });
+      },
+      isInventoryOpen: function () { return !!(game.inventoryUI && game.inventoryUI.open); },
       useConsumable: function (slot) { game.player.useConsumable(slot); },
       getConsumables: function () { return game.player.getConsumables(); },
       getCombo: function () {
@@ -1228,6 +1296,9 @@
     // ---- 10-04: Radiance tick. Independent of the left hand, roll, toggle,
     // and player state (keeps following through death + respawn). ----
     for (var ra = 0; ra < game.radiances.length; ra++) game.radiances[ra].update(dt);
+
+    // 10-05: dropped item entities (spin + active-region visibility)
+    game.worldItems.update(dt, rm.logic.activeId);
 
     // ---- v7: projectile update + collision vs enemies ----
     if (game.firebolts.length > 0) {
