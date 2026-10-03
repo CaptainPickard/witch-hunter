@@ -562,7 +562,9 @@
 
   // ---- camera pad -> writes the SAME fields the mousemove handler writes -------
   // (player.js ~242: camYaw/camPitch from px deltas at mouseSensDegPerPx, pitch
-  // clamped to camPitchMin/MaxDeg, lastManualCamT gates camera auto-follow).
+  // clamped to camPitchMin/MaxDeg; lastManualCamT stamps manual camera use
+  // (10-04: camera yaw is manual-only, the auto-follow it gated is gone - the
+  // stamp is kept for debug/future re-enable).
   // Writing those fields directly reuses that exact code path state; drag is
   // NOT touched so the mouse handler stays the sole owner of self.dragging.
   function camMove(ev) {

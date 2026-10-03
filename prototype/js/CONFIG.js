@@ -425,8 +425,8 @@ window.WH_CONFIG = {
     camGroundClearance: 0.4,          // R5 P0-5: camera y floor over the ground (y = 0)
     camPitchDistShrink: 0.35,         // R5: cap = camMaxDistance * (1 - k * max(0, sin pitch))
     camFollowLerp: 12.0,              // per-second lerp factor
-    camAutoFollowDelay: 1.2,          // seconds after manual drag before auto-follow resumes
-    camAutoFollowRate: 2.5,           // per-second exp lerp for auto yaw follow
+    // 10-04 (Nicko): movement auto-follow keys removed - camera yaw is
+    // manual-only (mouse drag / camera joystick); lock-on has its own framing.
     mouseSensDegPerPx: 0.25,
     respawnDelay: 2.2,                 // seconds on death screen before respawn
     // v7: focus pool (spells spend Focus, weapons spend Stamina)

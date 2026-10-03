@@ -972,18 +972,10 @@
       if (want.y < floorY) want.y = floorY;
       this.camera.position.lerp(want, lerp);
     } else {
-      // v3.1: souls-style auto-follow. While moving (and not within the
-      // manual-override window after a mouse drag), ease camera yaw toward
-      // the player's facing so A/D strafing orbits the camera with you.
-      // Idle and lock-on are untouched.
-      var nowT = performance.now() / 1000;
-      var manualOverride = (nowT - this.lastManualCamT) < CFG.camAutoFollowDelay;
-      var moving = (this.moveDirWorld.x !== 0 || this.moveDirWorld.z !== 0);
-      if (moving && !manualOverride) {
-        var followYaw = Math.atan2(this.moveDirWorld.x, this.moveDirWorld.z) + Math.PI;
-        var lerpF = 1 - Math.exp(-CFG.camAutoFollowRate * dt);
-        this.camYaw += shortestAngle(followYaw - this.camYaw) * lerpF;
-      }
+      // 10-04 change order (Nicko): FULL camera decoupling - movement NEVER
+      // turns the camera. camYaw changes only from mouse drag / camera
+      // joystick (both stamp lastManualCamT); lock-on keeps its own framing
+      // above. The old v3.1 movement auto-follow is gone.
       var lerp2 = 1 - Math.exp(-CFG.camFollowLerp * dt);
       this.camera.position.lerp(want, lerp2);
     }
