@@ -86,7 +86,7 @@
     this.castCooldown = 0;            // seconds left of cast cooldown
     this.regripTimer = 0;             // belt re-grip busy window
     this.selectedBeltSlot = 0;        // 0-based index into the 5 belt slots
-    this.belt = ['firebolt', null, null, null, null];   // spell ids / null
+    this.belt = V7.belt.defaultSpells.slice();          // spell ids / null
     this.consumables = [{ id: 'healthPotion', charges: V7.consumable.healthPotion.charges }, null];
     this.offhandGlow = null;          // emissive sphere mesh at the left anchor
     // 10-04 left-hand implement (Nicko): Digit1-5 equips belt spells; the

@@ -23,7 +23,8 @@
     transitionFlash: 0,
     shakeTimer: 0,                    // v3 camera shake remaining seconds
     shakeSeed: 0,                     // per-pulse random phase
-    firebolts: []                     // v7: live Firebolt projectiles
+    firebolts: [],                    // v7: live Firebolt projectiles
+    radiances: []                     // 10-04: the ONE Radiance effect (max 1, kept parked)
   };
   window.WH_GAME = game;
 
@@ -803,6 +804,20 @@
     return true;
   }
 
+  // 10-04: Radiance cast. Max one: a recast refreshes the existing effect
+  // (timer back to full, fade back up), even after it expired and parked.
+  function castRadiance(spellId) {
+    var fx = game.radiances[0];
+    if (fx) {
+      fx.refresh();
+    } else {
+      fx = window.WH_SPELLS.spawn(game.scene, spellId);
+      if (!fx) return;
+      game.radiances.push(fx);
+    }
+    fx.attach(game.player);
+  }
+
   // ---- WH_DEBUG hooks ----------------------------------------------------------
 
   function setupDebugHooks() {
@@ -947,6 +962,14 @@
           cooldown: p.castCooldown,
           regrip: p.regripTimer,
           toggling: p.toggling
+        };
+      },
+      getRadianceState: function () {
+        var fx = game.radiances[0];
+        return {
+          active: !!(fx && fx.active),
+          remainingSeconds: fx ? fx.remaining : 0,
+          lightIntensity: fx ? fx.light.intensity : 0
         };
       },
       getArmedState: function () {
@@ -1170,7 +1193,9 @@
       if (game.player.castWindup <= 0) {
         game.player.castWindup = 0;
         var req = game.player.completeCast();
-        if (req && window.WH_SPELLS) {
+        if (req && window.WH_SPELLS && CFG.spell[req.spellId].kind === 'followLight') {
+          castRadiance(req.spellId);
+        } else if (req && window.WH_SPELLS) {
           var bolt = window.WH_SPELLS.spawn(
             game.scene, req.spellId,
             { x: req.origin.x, y: 1.2, z: req.origin.z },
@@ -1179,6 +1204,10 @@
         }
       }
     }
+
+    // ---- 10-04: Radiance tick. Independent of the left hand, roll, toggle,
+    // and player state (keeps following through death + respawn). ----
+    for (var ra = 0; ra < game.radiances.length; ra++) game.radiances[ra].update(dt);
 
     // ---- v7: projectile update + collision vs enemies ----
     if (game.firebolts.length > 0) {

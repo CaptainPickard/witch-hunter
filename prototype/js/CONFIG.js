@@ -432,9 +432,11 @@ window.WH_CONFIG = {
     castFocusTaxMult: 1.25            // spell focus tax while weapon in main hand
   },
 
-  // v7: bound spells (spell-in-hand battle-mage weave, ONE spell in slice)
+  // v7: bound spells (spell-in-hand battle-mage weave). kind picks the
+  // WH_SPELLS.spawn class: 'projectile' = Firebolt, 'followLight' = Radiance.
   spell: {
     firebolt: {
+      kind: 'projectile',
       focusCost: 8,                   // base focus cost (tax applied by player)
       damage: 12,                     // hp removed on enemy hit
       speed: 40,                      // projectile speed (units/s)
@@ -443,12 +445,41 @@ window.WH_CONFIG = {
       castWindup: 0.25,               // seconds before the bolt spawns
       castCooldown: 0.3,              // seconds after cast before next cast
       schoolColor: 0xff7722           // fire school color (offhand glow, HUD tint)
+    },
+    // 10-04 (Nicko): key 2 light that follows the player for 60s. Once cast
+    // it ignores the left hand entirely (stow / swap / Q / roll / death);
+    // only expiry ends it. Recast = same light, timer back to full.
+    radiance: {
+      kind: 'followLight',
+      focusCost: 10,                  // base focus cost (tax applied by player)
+      castWindup: 0.3,                // seconds before the light appears
+      castCooldown: 0.3,              // seconds after cast before next cast
+      durationSeconds: 60,            // light lifetime from the last cast
+      lightColor: 0xffb36b,           // warm white-amber
+      // 2.2 read dim beside the 6.5 decay-2 lantern from 1.9m up; 8.0 lights
+      // a ~6m ground pool without washing out the lantern
+      lightIntensity: 8.0,
+      lightDistance: 14,              // PointLight range cutoff
+      lightDecay: 2,                  // physical falloff (matches the lantern)
+      glowColor: 0xffd9a0,            // orb color
+      schoolColor: 0xffd9a0,          // offhand glow + HUD tint while held
+      orbRadius: 0.14,
+      orbSegments: [12, 8],           // sphere width / height segments
+      // yawFrame-local (+X = body left, measured: L_Hand sits at +X and the
+      // soles point +Z): above and left of the head
+      anchorOffset: [0.45, 1.9, 0.1],
+      bobAmp: 0.06,                   // vertical bob amplitude (m)
+      bobHz: 0.5,                     // bob cycles per second
+      fadeInSeconds: 0.4,             // fade up on cast / recast from parked
+      fadeOutSeconds: 1.0             // fade down over the last N seconds
     }
   },
 
   // v7: the magic belt (5 abilities + 2 consumables, doc 04 ruling part C)
   belt: {
     slots: 5,                         // spell ability slots (keys 1-5)
+    // boot belt (slot 1 = boot left-hand spell); null = empty slot
+    defaultSpells: ['firebolt', 'radiance', null, null, null],
     regripSeconds: 0.3,               // re-grip busy window after selection
     consumableSlots: 2                // consumable slots (keys R / T)
   },
