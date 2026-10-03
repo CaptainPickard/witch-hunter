@@ -185,6 +185,21 @@
     return holder;
   }
 
+  // 2026-10-03 measured weapon sizing (Nicko: "comically large"): divide the
+  // CONFIG.assets.weaponTargetHeight goal by the MEASURED GROUND_META height
+  // of the loaded GLB. Uniform axes mean height IS the blade/pommel length.
+  // Kill switch: weaponScaleEnabled false (or no CONFIG table / no meta)
+  // returns 1 so legacy hardcoded scaling applies untouched.
+  function weaponScale(name) {
+    var AC = CFG.assets;
+    if (!AC || AC.weaponScaleEnabled === false) return 1;
+    if (!AC.weaponTargetHeight || AC.weaponTargetHeight[name] === undefined) return 1;
+    var tmpl = cache[name];
+    var meta = tmpl && GROUND_META[tmpl.uuid];
+    if (!meta || !(meta.height > 0)) return 1;
+    return AC.weaponTargetHeight[name] / meta.height;
+  }
+
   function prepTemplate(group, isPixelated) {
     // Render settings per validated Witch Hunter 3D setup:
     // DoubleSide for safety (R3), NearestFilter on pixelated textures (R2).
@@ -383,6 +398,7 @@
       return meta ? { height: meta.height, width: meta.width,
                       groundMinY: meta.groundMinY } : null;
     },
+    weaponScale: weaponScale,
     isLoaded: function (name) { return !!cache[name]; },
     isFailed: function (name) { return !!failed[name]; },
     loadedCount: function () { return loadedCount; }

@@ -59,9 +59,23 @@
     var hand = meshRoot.getObjectByName('R_Hand');
     if (this.type === 'bandit' && hand) {
       var heldAxe = window.WH_ASSETS.instance('handAxe');
-      heldAxe.scale.setScalar(0.8);
+      // Measured sizing (2026-10-03): 2.004m GLB -> 0.6m hand-held (scale
+      // ~0.299) via CONFIG.assets.weaponScale; replaces hardcoded 0.8.
+      heldAxe.scale.setScalar(window.WH_ASSETS.weaponScale('handAxe'));
       hand.add(heldAxe);
       heldAxe.position.set(0, 0, 0);
+      // whanim3 measured mount (port of dev 8f777bb): same R_Hand-basis
+      // cant orientation as the player sword so the bit leads, not the
+      // pommel. Skinned-hand bandits only; the pivot fallback keeps the
+      // idlePose table (its skinned basis never existed).
+      hand.updateWorldMatrix(true, false);
+      var handRest = hand.getWorldQuaternion(new THREE.Quaternion());
+      var oldTipWorld = new THREE.Vector3(0, 1, 0).applyQuaternion(handRest);
+      var cantWorld = new THREE.Vector3(0.12, 0, 0.12).applyQuaternion(handRest);
+      var desiredWorld = oldTipWorld.negate().add(cantWorld).normalize();
+      var desiredLocal = desiredWorld.applyQuaternion(handRest.clone().invert());
+      heldAxe.quaternion.copy(new THREE.Quaternion().setFromUnitVectors(
+        new THREE.Vector3(0, -1, 0), desiredLocal));
     }
     // Rigid stand-in fallback retains its original weapon pivot.
     if (!hand && this.type === 'bandit' && window.WH_ASSETS &&

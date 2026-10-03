@@ -132,9 +132,19 @@
       this.weaponHand = hand;
       hand.add(mesh);
       mesh.position.set(0, 0, 0);
-      // Sword asset points +Y along the blade; reverse it in the hand. At the
-      // strike pose the animated hand's +Y aims +Z, so the tip leads -Z.
-      mesh.rotation.set(0, 0, Math.PI);
+      // whanim3 (dev 8f777bb, ported verbatim): the GLB's narrow blade tip
+      // is at -Y, not +Y. The measured WH_Attack1 hand basis needs a small
+      // +X/+Z cant for the tip to lead throughout strike and early recover;
+      // keep this in the rest socket.
+      hand.updateWorldMatrix(true, false);
+      var handRest = hand.getWorldQuaternion(new THREE.Quaternion());
+      var oldTipWorld = new THREE.Vector3(0, 1, 0).applyQuaternion(handRest);
+      var cantWorld = new THREE.Vector3(0.12, 0, 0.12).applyQuaternion(handRest);
+      var desiredWorld = oldTipWorld.negate().add(cantWorld).normalize();
+      var desiredLocal = desiredWorld.applyQuaternion(handRest.clone().invert());
+      var mountRotation = new THREE.Quaternion().setFromUnitVectors(
+        new THREE.Vector3(0, -1, 0), desiredLocal);
+      mesh.quaternion.copy(mountRotation);
       return;
     }
     this.weaponPivot = new THREE.Group();

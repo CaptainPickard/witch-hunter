@@ -496,7 +496,14 @@ window.WH_CONFIG = {
     // R4 kill switch: true swaps the 3 rigged body atlases for the committed
     // 512px pixelated PNGs at postload; false = original 2048 atlas path.
     pixelatedBodies: true,
-    standInColor: 0x777777
+    standInColor: 0x777777,
+    // Measured weapon sizing (2026-10-03, Nicko: weapons "comically large").
+    // Targets are hand-held lengths in metres: longsword ~1.05m vs the 1.8m
+    // player, handAxe ~0.6m. scaleFor(name) divides the target by the
+    // MEASURED GROUND_META height of the loaded GLB - derived from bounds,
+    // not magic constants. weaponScaleEnabled is the default-on kill switch.
+    weaponScaleEnabled: true,
+    weaponTargetHeight: { longsword: 1.05, handAxe: 0.6 }
   }
 };
 window.WH_CONFIG.moveset = {

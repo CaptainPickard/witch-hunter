@@ -753,7 +753,9 @@
       game.player.setBody(pBody);
       attachPlayerLantern();   // R2 P0-3: lantern now player-parented (left-hip anchor)
       var sword = window.WH_ASSETS.instance('longsword');
-      sword.scale.setScalar(0.9);
+      // Measured sizing (2026-10-03): 1.988m GLB -> 1.05m hand-held (scale
+      // ~0.528) via CONFIG.assets.weaponScale; replaces hardcoded 0.9.
+      sword.scale.setScalar(window.WH_ASSETS.weaponScale('longsword'));
       game.player.root.add(sword);
       // v3: register the sword with the player so attack stages drive its pose
       game.player.setWeapon(sword);

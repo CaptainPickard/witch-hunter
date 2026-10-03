@@ -59,3 +59,56 @@ D) Keep the diff tight (~120 lines max incl. CONFIG data). If a needed dev-side
   at rest.
 
 ## Player copy law: never "free"; no hardcoded agent names.
+
+## Astrabot findings (2026-10-03, weapon mount)
+
+Root cause confirmed at 6cb9092: feat player.js setWeapon() attached the
+longsword to the R_Hand bone (whanim2 runtime was present) but with a stale
+pre-whanim3 static orientation - mesh.rotation.set(0, 0, Math.PI) in hand
+space, not dev's measured mount quaternion. Hand-tuned static rotation in a
+skinned bone socket tips the blade backward, so the hilt faces the enemy;
+scales were hardcoded 0.9/0.8 (sword/axe), both ~1.8-2.0m assets.
+
+Changes (ONE commit, feat/world-visuals, no pushes):
+- prototype/js/player.js:135-149 - ported dev 8f777bb measured mount verbatim:
+  rest-socket hand quaternion, oldTipWorld=(0,1,0)*q, cant=(+0.12x,+0.12z),
+  desiredWorld=oldTip.negate()+cant, setFromUnitVectors((0,-1,0), desiredLocal)
+  -> mesh.quaternion. Blade tip (-Y of GLB) leads strikes; pommel below the
+  fist; follows the hand through idle/walk/all 3 combo stages because it is
+  parented to the animated R_Hand bone.
+- prototype/js/CONFIG.js:501-507 - CONFIG.assets.weaponScaleEnabled=true,
+  weaponTargetHeight {longsword: 1.05m, handAxe: 0.6m} (soul-like hand-held
+  vs the 1.8m player).
+- prototype/js/assets.js:186-198, 401 - WH_ASSETS.weaponScale(name):
+  target / MEASURED GROUND_META height of the loaded GLB (all weapon GLBs are
+  uniform-axis, identity node transform, single mesh, so box height IS
+  blade+grip+pommel length); kill switch + no-table/no-meta -> 1.
+- prototype/js/game.js:755-758 - sword.setScalar(hardcoded 0.9) ->
+  weaponScale('longsword').
+- prototype/js/enemy.js:60-77 - bandit handAxe: hardcoded 0.8 ->
+  weaponScale('handAxe') + same measured mount quaternion (hand-axe GLB is
+  also blade-up/-tip-Y along Y). Stand-in pivot fallback kept as-is.
+
+Measured GLB dimensions (glTF POSITION accessor min/max, pixelated variants
+byte-identical bounds to raw): longsword Y-length 1.9881m, X 0.4593, Z 0.1401;
+handAxe Y-length 2.0040m, X 0.7346, Z 0.2456. Derived scales: longsword
+1.05/1.9881 = 0.5281 (in-game blade length 1.05m vs 1.79m before); handAxe
+0.6/2.0040 = 0.2994 (in-game 0.60m vs 1.60m before). weaponScale computes
+these at boot from GROUND_META, so a future remesh re-derives automatically.
+
+Not ported / notes: player.js keeps feat's whanim2 setWeapon skeleton (socket
+path + pivot fallback) - only the orientation inside the socket path changed;
+resetWeaponPose and the rigid stand-in pivot table are untouched. The bandit
+axe previously had NO orientation call (it rode the GLB identity - the blade
+looked OK only by luck); it now shares the sword's measured cant.
+
+Validation per Nicko's hard laws: no harness/automated runs; esprima
+parseScript passed on all five edited files; no servers touched; no pushes.
+Nicko should see (8793 reload): at rest the sword hangs from the right fist
+pommel-down, blade pointing out/forward-ish, hand visually on the grip; the
+tip swings ahead of the fist through all 3 combo swings; sword reads ~1.05m,
+about hip-height-of-player; bandit axes read short (~0.6m) and bit-first.
+
+Commit amended in place on feat/world-visuals (by construction the
+brief cannot hold its own final hash - git log -1 on the branch is
+authoritative; no push, IO pushes).
