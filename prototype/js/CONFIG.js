@@ -862,12 +862,12 @@ window.WH_CONFIG.equip = {
   // hand. The other hand gets the mount mirrored by this hand-local factor:
   // L_Hand <-> R_Hand local frames map by diag(-1, 1, 1) within 0.01
   // (scratch/measure_hand_mirror.py, bind pose). Roll angles flip sign.
-  nativeHand: { longsword: 'right', roundShield: 'left' },
+  nativeHand: { longsword: 'right', roundShield: 'left', magicGlove: 'left' },
   mirrorScale: [-1, 1, 1],
   // Magic glove placeholder (no glove mesh this order): the spell glow orb
   // on the caster hand. anchor 'hand' = child of the hand bone at
-  // handOffset (L_Hand-local fist centroid, scratch/measure_shield.py;
-  // mirrored for R_Hand); 'idlePose' = the old yawFrame anchor (weapon idle
+  // handOffset (fist centroid in the nativeHand.magicGlove bone's frame,
+  // scratch/measure_shield.py; mirrored for the other hand); 'idlePose' = the old yawFrame anchor (weapon idle
   // pose, mirrored per hand).
   casterGlow: { anchor: 'hand', handOffset: [0.018, 0.078, 0.021] }
 };

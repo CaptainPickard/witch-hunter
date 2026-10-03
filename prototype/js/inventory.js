@@ -251,7 +251,9 @@
         e.stopPropagation();
         self.setOpen(!self.open);
       });
-      ['mousedown', 'mouseup', 'click', 'contextmenu'].forEach(function (t) {
+      // mouseup is NOT swallowed: the player's document mouseup must still
+      // end a guard / camera drag released over the button
+      ['mousedown', 'click', 'contextmenu'].forEach(function (t) {
         btn.addEventListener(t, function (e) {
           e.preventDefault();
           e.stopPropagation();

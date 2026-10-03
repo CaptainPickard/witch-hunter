@@ -169,7 +169,7 @@
   }
 
   function boneFor(body, hand) {
-    return body ? body.getObjectByName(hand === 'left' ? 'L_Hand' : 'R_Hand', true) : null;
+    return body ? body.getObjectByName(hand === 'left' ? 'L_Hand' : 'R_Hand') : null;
   }
 
   // The skinned hand is the socket. Only stand-ins retain the old rigid pivot.
@@ -421,6 +421,7 @@
   // Cannot re-block until stamina has recovered past guardBreakMinStamina.
   Player.prototype.tryBlock = function () {
     if (this.state !== 'alive' || this.rolling || this.attacking) return;
+    if (this.toggling) return;              // Order B: the shield is mid-swap until Q lands
     if (!this.hasShield()) return;          // Order B: a shield in either hand
     if (this.guardBroken) return;
     if (this.stamina < window.WH_CONFIG.block.guardBreakMinStamina) return;
@@ -668,13 +669,14 @@
   Player.prototype.handsChanged = function () {
     var melee = this.hasMeleeRight();
     if (!melee && this.attacking) this.cancelAttack();      // no blade, no swing
-    if (melee) {
+    if (melee && this.hands.right !== this.lastRightItem) {
       var mv = itemDef(this.hands.right).moveset;
       if (mv && MV.weapons[mv] && mv !== this.weaponId) {
         this.cancelAttack();
         this.weaponId = mv;
       }
     }
+    this.lastRightItem = this.hands.right;
     if (!this.hasShield()) this.endBlock();
     var ch = this.casterHand();
     if (!ch) this.dropPendingCast();
@@ -715,7 +717,8 @@
   // offset is where the shield's back meets the fist.
   function prepShield(mesh) {
     var inner = mesh.children[0];
-    if (!inner) return;
+    if (!inner || mesh.userData.whShieldPrepped) return;
+    mesh.userData.whShieldPrepped = true;
     mesh.updateMatrixWorld(true);
     var box = new THREE.Box3().setFromObject(inner);
     var s = mesh.scale.x || 1;

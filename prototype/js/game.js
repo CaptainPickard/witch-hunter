@@ -323,14 +323,20 @@
     if (!hand) return;
     var sid = p.getSelectedSpellId();
     if (sid && CFG.spell[sid]) glow.material.color.setHex(CFG.spell[sid].schoolColor);
+    // re-anchor only when the hand / anchor mode / body changes
+    var key = hand + ':' + G.anchor;
+    if (glow.userData.whAnchorKey === key && glow.userData.whBody === p.body && glow.parent) return;
+    glow.userData.whAnchorKey = key;
+    glow.userData.whBody = p.body;
     var bone = G.anchor === 'hand' && p.body
-      ? p.body.getObjectByName(hand === 'left' ? 'L_Hand' : 'R_Hand', true) : null;
+      ? p.body.getObjectByName(hand === 'left' ? 'L_Hand' : 'R_Hand') : null;
     if (bone) {
-      if (glow.parent !== bone) bone.add(glow);
-      var o = G.handOffset, m = hand === 'left' ? [1, 1, 1] : CFG.equip.mirrorScale;
+      bone.add(glow);
+      var nat = CFG.equip.nativeHand.magicGlove || 'left';
+      var o = G.handOffset, m = hand === nat ? [1, 1, 1] : CFG.equip.mirrorScale;
       glow.position.set(o[0] * m[0], o[1] * m[1], o[2] * m[2]);
     } else {
-      if (glow.parent !== p.yawFrame) p.yawFrame.add(glow);
+      p.yawFrame.add(glow);
       var ip = CFG.moveset.idlePose;
       glow.position.set((hand === 'left' ? -1 : 1) * ip.pos[0], ip.pos[1], ip.pos[2]);
     }
