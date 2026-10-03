@@ -97,6 +97,49 @@
   var loadedCount = 0;
   var GROUND_META = {}; // holder uuid -> measured height, width, raw groundMinY
 
+  // 2026-10-03 grey-stand-in resilience (Astrabot, brief: io/missions/
+  // 2026-10-03-astrabot-greybox-brief.md): a one-off multi-MB body GLB fetch
+  // stall/timeout or parse error used to swap the procedural stand-in in
+  // permanently on the FIRST load error (no retry, quiet warn), killing the
+  // model AND its animation clips in one go. Now: character bodies retry
+  // (CONFIG.assets.bodyRetryCount, default 2) with backoff; if retries exhaust,
+  // the stand-in stays but a loud one-line banner names the asset and the
+  // cause (network vs parse vs timeout), stamped into the HUD.
+  var BODY_RETRY_COUNT =
+    (CFG.assets && typeof CFG.assets.bodyRetryCount === 'number') ?
+      CFG.assets.bodyRetryCount : 2;
+  var BODY_RETRY_DELAY_MS =
+    (CFG.assets && typeof CFG.assets.bodyRetryDelayMs === 'number') ?
+      CFG.assets.bodyRetryDelayMs : 750;
+  var bootFailures = [];
+
+  function classifyError(err) {
+    var msg = (err && (err.message || err.statusText)) || String(err || 'unknown');
+    var reason;
+    if (/abort|timed?\s*out/i.test(msg)) reason = 'timeout/abort';
+    else if (/fetch|network|status\s*\d+/i.test(msg)) reason = 'network';
+    else if (/parse|json|binary|magic|unsupported|header|version/i.test(msg)) reason = 'parse';
+    else reason = 'load';
+    return { reason: reason, msg: msg };
+  }
+
+  // HUD stamp: persistent one-liner in #wh-hud naming each stand-in asset +
+  // cause, visible for the whole session regardless of the load-note lifecycle.
+  function flushAssetFailureNote() {
+    if (!bootFailures.length) return;
+    var parent = document.getElementById('wh-hud');
+    if (!parent) return;
+    var el = document.getElementById('wh-asset-fail-note');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'wh-asset-fail-note';
+      el.style.cssText = 'position:absolute;top:6px;left:8px;font-size:12px;' +
+        'color:#ff9d9d;z-index:40;letter-spacing:0.5px;text-transform:none;';
+      parent.appendChild(el);
+    }
+    el.textContent = 'Asset stand-in: ' + bootFailures.join(', ');
+  }
+
   function makeStandIn(name) {
     // Procedural box/cone stand-in per spec hard constraint 5. Logged.
     console.warn('[WH assets] substitution: procedural stand-in for ' + name);
@@ -193,42 +236,81 @@
     });
   }
 
-  function loadOne(name, url, isPixelated) {
+  // One load attempt, racing the per-attempt timeout. Resolves {ok:true,gltf}
+  // or {ok:false,info:{reason,msg}}; never rejects.
+  function loadAttempt(name, url) {
     return new Promise(function (resolve) {
       var loader = new window.WHGLTFLoader();
-      var done = false;
+      var settled = false;
       var timer = setTimeout(function () {
-        if (!done) {
-          done = true;
-          cache[name] = makeStandIn(name);
-          resolve(cache[name]);
-        }
+        if (settled) return;
+        settled = true;
+        resolve({ ok: false, info: { reason: 'timeout/abort',
+          msg: 'no response within ' + CFG.assets.timeoutMs + 'ms' } });
       }, CFG.assets.timeoutMs);
       loader.load(url, function (gltf) {
-        if (done) return;
-        done = true;
+        if (settled) return;
+        settled = true;
         clearTimeout(timer);
-        var root = gltf.scene;
+        resolve({ ok: true, gltf: gltf });
+      }, undefined, function (err) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve({ ok: false, info: classifyError(err) });
+      });
+    });
+  }
+
+  function loadOne(name, url, isPixelated) {
+    // Bounded retry applies to rigged character bodies only: they are the
+    // multi-MB fetches most exposed to one-off tunnel/network stalls, and one
+    // failed body load kills the model AND its animation clips together.
+    // Props keep the single-attempt path (stand-in fallback, never block boot).
+    var maxAttempts = CHARACTERS[name] ? 1 + BODY_RETRY_COUNT : 1;
+    function attempt(n) {
+      return loadAttempt(name, url).then(function (v) {
+        if (v.ok) return v;
+        if (n + 1 < maxAttempts) {
+          var delay = BODY_RETRY_DELAY_MS * (n + 1);   // linear backoff
+          console.warn('[WH assets] retry ' + (n + 1) + '/' + BODY_RETRY_COUNT +
+            ' for ' + name + ' (' + v.info.reason + ') in ' + delay + 'ms');
+          return new Promise(function (r) { setTimeout(r, delay); })
+            .then(function () { return attempt(n + 1); });
+        }
+        return v;
+      });
+    }
+    return attempt(0).then(function (v) {
+      if (v.ok) {
+        var root = v.gltf.scene;
         if (CHARACTERS[name]) {
-          clips[name] = gltf.animations || [];
+          clips[name] = v.gltf.animations || [];
           if (clips[name].length !== 6) {
-            console.warn('[WH assets] expected 6 clips for ' + name + ', got ' + clips[name].length);
+            console.warn('[WH assets] expected 6 clips for ' + name + ', got ' +
+              clips[name].length);
           }
         }
         prepTemplate(root, isPixelated);
         cache[name] = groundAlign(root);
-        swapBodyMap(name, root, function () {
-          loadedCount++;
-          resolve(cache[name]);
+        return new Promise(function (resolve) {
+          swapBodyMap(name, root, function () {
+            loadedCount++;
+            resolve(cache[name]);
+          });
         });
-      }, undefined, function (err) {
-        if (done) return;
-        done = true;
-        clearTimeout(timer);
-        console.warn('[WH assets] load failed for ' + name + ' at ' + url + ': ' + err);
-        cache[name] = makeStandIn(name);
-        resolve(cache[name]);
-      });
+      }
+      var info = v.info;
+      // LOUD end-of-retries banner: names the asset and WHY (network vs parse
+      // vs timeout), styled so it cannot scroll past unnoticed.
+      console.error('%c[WH ASSETS] STAND-IN: ' + name + ' failed to load (' +
+        info.reason + ') after ' + maxAttempts + ' attempt(s). URL: ' + url +
+        ' CAUSE: ' + info.msg + ' - model + animations dead for this session.',
+        'background:#4d0000;color:#ffdddd;padding:2px 6px;font-weight:bold');
+      cache[name] = makeStandIn(name);
+      bootFailures.push(name + ' (' + info.reason + ' - ' + info.msg + ')');
+      flushAssetFailureNote();
+      return cache[name];
     });
   }
 

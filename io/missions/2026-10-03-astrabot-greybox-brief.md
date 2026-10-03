@@ -76,3 +76,54 @@ D) Append a "## Astrabot findings" section to this file with: confirmed cause,
   (CONFIG.assets.bodyRetryCount or similar, default on).
 - Do not touch dev branch, /workspace/witch-hunter working tree, io/specs,
   docs/planning. One commit + one brief edit. Report back through IO.
+
+## Astrabot findings (2026-10-03)
+
+Confirmed cause (client-side, structural): loadOne() in prototype/js/assets.js
+gave every asset exactly ONE shot - a single 20s timeout race and a single
+loader.load onError - then hard-swapped makeStandIn() with zero retries and a
+quiet console.warn. Any one-off failure of a multi-MB rigged body GLB (fetch
+stall/timeout over the tunnel, truncated transfer, or parse error) therefore
+permanently cached the grey box for the session and killed the 6 animation
+clips with it (same GLB source) - matching the symptom exactly and IO
+hypothesis 1. Most probable concrete trigger given the canonical-tree probes
+were all clean: Nicko's browser was pinned to the STALE broken 8793 server
+(pid 1434371, host tree with 74 files deleted) via the tunnel, or suffered a
+transient tunnel stall - both are the same failure class.
+
+Ruled out: CSP/blob: texture-intake failure (IO hypothesis 2, whanim3 class).
+In the vendored loader a blocked/failed image intake flows loadImageSource ->
+catch -> loadTexture catch -> null map (prototype/vendor/gltf-loader.classic.js
+3378-3382), i.e. WHITE untextured bodies WITH animations intact - dev 8f777bb's
+symptom class - and cannot yield a grey stand-in; IO's enforced-CSP replays
+were already clean. Per the "only if diagnosis demands" rule the whanim3
+data:-URI fallback was NOT ported; vendor loader stays byte-identical to dev.
+
+What changed (files/lines):
+- prototype/js/assets.js lines 100-141: retry constants (CONFIG-fed, safe
+  fallbacks) + classifyError() (network vs parse vs timeout/abort via message
+  regex) + bootFailures[] + flushAssetFailureNote() which stamps a persistent
+  pink one-liner "#wh-asset-fail-note" into #wh-hud listing every stand-in
+  asset + cause. Lines 239-315: loadAttempt() = one attempt raced against
+  CFG.assets.timeoutMs resolving {ok,info} verdicts (never rejects); loadOne()
+  now gives rigged character bodies (playerBody/banditBody/ghoulBody) 1 +
+  CONFIG.assets.bodyRetryCount attempts with linear backoff (bodyRetryDelayMs
+  * attempt), logs "[WH assets] retry n/2 for <name> (<reason>)" between
+  attempts, and only on final failure swaps the stand-in - preceded by a LOUD
+  styled console banner "[WH ASSETS] STAND-IN: <name> failed to load
+  (<reason>) after N attempt(s). URL: <url> CAUSE: <msg>" + HUD stamp. Props
+  keep the single-attempt path. makeStandIn() geometry/materials and
+  boot-never-blocks behavior untouched; no other CONFIG defaults changed.
+- prototype/js/CONFIG.js lines 489-493: added CONFIG.assets.bodyRetryCount = 2
+  (default ON) + bodyRetryDelayMs = 750 with comment. 0 disables retry.
+- NOT changed: prototype/vendor/gltf-loader.classic.js (diagnosis says not
+  needed), all builds/, everything else. Only syntax checks run (esprima
+  parse of both edited files: OK) - no harness runs, per Nicko's law.
+- Commit: 7099690 (amended to include this findings edit, same message).
+
+What to look for when Nicko plays: while booting keep the console open - a
+one-off stall now self-heals (watch "[WH assets] retry n/2 for ..." then a
+normal body load); the ONLY failure marker is the styled red-brown
+"[WH ASSETS] STAND-IN: <name> ... CAUSE:" banner plus a persistent pink
+"Asset stand-in: ..." line top-left of the HUD - if a grey box appears WITH
+that banner, read its CAUSE text back to IO (reproducible, not a hiccup).

@@ -486,6 +486,11 @@ window.WH_CONFIG = {
 
   assets: {
     timeoutMs: 20000,                 // per-asset load timeout before stand-in substitution
+    // Grey-stand-in resilience: rigged body loads retry on fetch/parse errors
+    // with linear backoff before the stand-in swap; 0 disables retry. Failure
+    // banner names asset + cause in console and HUD (see js/assets.js).
+    bodyRetryCount: 2,                // extra attempts per rigged body (default on)
+    bodyRetryDelayMs: 750,            // backoff base; delay = base * attempt#
     // R4 kill switch: true swaps the 3 rigged body atlases for the committed
     // 512px pixelated PNGs at postload; false = original 2048 atlas path.
     pixelatedBodies: true,
