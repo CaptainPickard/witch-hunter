@@ -132,18 +132,28 @@
       this.weaponHand = hand;
       hand.add(mesh);
       mesh.position.set(0, 0, 0);
-      // whanim3 (dev 8f777bb, ported verbatim): the GLB's narrow blade tip
-      // is at -Y, not +Y. The measured WH_Attack1 hand basis needs a small
-      // +X/+Z cant for the tip to lead throughout strike and early recover;
-      // keep this in the rest socket.
-      hand.updateWorldMatrix(true, false);
-      var handRest = hand.getWorldQuaternion(new THREE.Quaternion());
-      var oldTipWorld = new THREE.Vector3(0, 1, 0).applyQuaternion(handRest);
-      var cantWorld = new THREE.Vector3(0.12, 0, 0.12).applyQuaternion(handRest);
-      var desiredWorld = oldTipWorld.negate().add(cantWorld).normalize();
-      var desiredLocal = desiredWorld.applyQuaternion(handRest.clone().invert());
-      var mountRotation = new THREE.Quaternion().setFromUnitVectors(
-        new THREE.Vector3(0, -1, 0), desiredLocal);
+      // Grip mount (2026-10-03 re-measure): the longsword GLB's blade tip
+      // lies along mesh-local -Y, and the fist's grip-forward direction is
+      // hand-local +Z, so map -Y -> +Z with a CONSTANT local-space
+      // quaternion. The old world-quaternion math sampled the rest pose at
+      // setWeapon time, letting the animation pose leak in -- blade ended up
+      // parallel to the forearm with the hilt on the wrong end. This mount
+      // is pose-independent, so it holds through idle, walk, and swings.
+      var wm = window.WH_CONFIG.assets.weaponMount;
+      var mountRotation = new THREE.Quaternion();
+      if (wm && wm.enabled) {
+        mountRotation.setFromUnitVectors(
+          new THREE.Vector3(0, -1, 0), new THREE.Vector3(0, 0, 1));
+        // Blade-edge tuning roll about the grip axis. Sign verified: rolling
+        // about hand-local +Z is a rotation of the mounted blade's own axis,
+        // so the roll quaternion composes on the LEFT of the axis mapping
+        // (premultiply = applied after the mapping); positive rollDeg is CCW
+        // around +Z, right-hand rule. Tuning stays a CONFIG data edit.
+        if (wm.rollDeg) {
+          mountRotation.premultiply(new THREE.Quaternion().setFromAxisAngle(
+            new THREE.Vector3(0, 0, 1), wm.rollDeg * Math.PI / 180));
+        }
+      }
       mesh.quaternion.copy(mountRotation);
       return;
     }

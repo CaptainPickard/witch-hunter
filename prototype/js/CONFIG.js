@@ -503,7 +503,12 @@ window.WH_CONFIG = {
     // MEASURED GROUND_META height of the loaded GLB - derived from bounds,
     // not magic constants. weaponScaleEnabled is the default-on kill switch.
     weaponScaleEnabled: true,
-    weaponTargetHeight: { longsword: 1.05, handAxe: 0.6 }
+    weaponTargetHeight: { longsword: 1.05, handAxe: 0.6 },
+    // Grip-mount tuning (2026-10-03): rollDeg rolls a hand-held weapon about
+    // the hand's local +Z (grip forward; positive = CCW, right-hand rule)
+    // with no code change. enabled:false reverts to the raw GLB axes for
+    // asset debugging. One knob drives both the player sword and bandit axe.
+    weaponMount: { rollDeg: 0, enabled: true }
   }
 };
 window.WH_CONFIG.moveset = {

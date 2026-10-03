@@ -56,3 +56,12 @@ io/specs, docs/planning, art GLB binaries.
 - If measurement is ambiguous, pick the most defensible reading and state
   exactly what you assumed in findings so Nicko's next order targets it.
 - Keep diff tight (~100 lines). Player copy law: never "free"; no agent names.
+## Astrabot findings (continuation)
+- Implemented per measured rig data; commit amended below. Files: prototype/js/player.js, CONFIG.js, enemy.js (49+/25-, guardrail met).
+- player.js setWeapon: world-quaternion block (updateWorldMatrix/handRest/oldTipWorld/cantWorld/desiredWorld/desiredLocal) deleted; constant setFromUnitVectors((0,-1,0)->(0,0,1)) in hand-local space, mesh.position (0,0,0).
+- CONFIG.js assets.weaponMount = { rollDeg: 0, enabled: true } added next to weaponScaleEnabled (which is untouched); rollDeg is the future tuning data edit, enabled:false reverts to raw GLB axes.
+- enemy.js bandit handAxe: same mapping with (0,1,0)->(0,0,1) so the bit leads; its weaponScale call untouched.
+- Roll composition order + sign: roll quaternion premultiplied (left of) the axis-mapping quaternion so it spins the mounted weapon about the hand-local Z grip axis AFTER the mapping is applied; positive rollDeg = CCW around +Z by right-hand rule, commented at both call sites.
+- Assumption: 'grip forward = hand-local +Z' per measured R_Hand basis (local +Z -> world (0.095,-0.016,0.161), character forward +Z); verified from given data only, no scratch re-runs.
+- Verification: esprima parse OK on all 3 files; grep confirms zero leftover references to deleted vars, no 'free' in new copy.
+- One commit (fix: sword grip ...) on feat/world-visuals in this worktree, amended with these findings; no push.
