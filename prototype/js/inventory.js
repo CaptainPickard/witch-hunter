@@ -90,6 +90,16 @@
     return { id: s.id, count: take };
   };
 
+  // True when addItem(id, 1) would land (a partial stack or an empty slot).
+  Inventory.prototype.hasRoomFor = function (id) {
+    var cap = stackCapOf(id);
+    for (var i = 0; i < this.slots.length; i++) {
+      var s = this.slots[i];
+      if (!s || (s.id === id && s.count < cap)) return true;
+    }
+    return false;
+  };
+
   Inventory.prototype.countOf = function (id) {
     var n = 0;
     for (var i = 0; i < this.slots.length; i++) {

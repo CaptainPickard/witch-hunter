@@ -310,6 +310,32 @@
     game.spellGlow.visible = false;
   }
 
+  // Order B glove placeholder (no glove mesh yet). anchor 'hand': child of
+  // the skinned hand bone at CONFIG.equip.casterGlow.handOffset (L_Hand-
+  // local fist centroid, mirrored for R_Hand), so it rides the animation.
+  // anchor 'idlePose' (or the rigid stand-in): the old yawFrame anchor =
+  // the weapon idle pose mirrored for the left hand.
+  function updateCasterGlow(p) {
+    var G = CFG.equip.casterGlow;
+    var hand = p.casterHand();
+    var glow = game.spellGlow;
+    glow.visible = !!hand;
+    if (!hand) return;
+    var sid = p.getSelectedSpellId();
+    if (sid && CFG.spell[sid]) glow.material.color.setHex(CFG.spell[sid].schoolColor);
+    var bone = G.anchor === 'hand' && p.body
+      ? p.body.getObjectByName(hand === 'left' ? 'L_Hand' : 'R_Hand', true) : null;
+    if (bone) {
+      if (glow.parent !== bone) bone.add(glow);
+      var o = G.handOffset, m = hand === 'left' ? [1, 1, 1] : CFG.equip.mirrorScale;
+      glow.position.set(o[0] * m[0], o[1] * m[1], o[2] * m[2]);
+    } else {
+      if (glow.parent !== p.yawFrame) p.yawFrame.add(glow);
+      var ip = CFG.moveset.idlePose;
+      glow.position.set((hand === 'left' ? -1 : 1) * ip.pos[0], ip.pos[1], ip.pos[2]);
+    }
+  }
+
   // v6: HUD screen-edge flash pulse (DOM opacity, no WebGL work).
   function flashScreen(durationSec, kind) {
     var el = game.hud.blockFlash;
@@ -383,11 +409,12 @@
     }
     // v7: belt HUD state (selected tint, active pip)
     if (game.hud.belt) {
-      // 10-04: tint = the spell IN HAND; shield in hand dims the spell slots
-      // and badges the divider (CSS #wh-belt.stowed)
-      var stowed = p.offhand === 'shield';
+      // Order B: tint = the ACTIVE learned spell (always shown, so belt
+      // keys confirm even with no caster); no caster in hand dims the spell
+      // slots and badges the divider (CSS #wh-belt.stowed)
+      var stowed = !p.hasCaster();
       game.hud.belt.classList.toggle('stowed', stowed);
-      var spellId = stowed ? null : p.getSelectedSpellId();
+      var spellId = p.getSelectedSpellId();
       var SC = spellId ? CFG.spell[spellId].schoolColor : null;
       var hex = SC ? '#' + ('000000' + SC.toString(16)).slice(-6) : '';
       for (var i = 0; i < game.hud.beltSlots.length; i++) {
@@ -409,21 +436,9 @@
           'active', p.activeLoadout === pi + 1);
       }
     }
-    // v7: offhand glow follows the implement + selected spell color
-    if (game.spellGlow && p.yawFrame) {
-      var spellOn = p.offhand === 'spell';
-      game.spellGlow.visible = spellOn;
-      if (spellOn && game.spellGlow.parent !== p.yawFrame) p.yawFrame.add(game.spellGlow);
-      if (spellOn) {
-        var sid = p.getSelectedSpellId ? p.getSelectedSpellId() : null;
-        if (sid && CFG.spell[sid]) {
-          game.spellGlow.material.color.setHex(CFG.spell[sid].schoolColor);
-        }
-        // hold at the left-hand anchor (mirror of the weapon idle pose)
-        var ip = window.WH_CONFIG.moveset.idlePose;
-        game.spellGlow.position.set(-ip.pos[0], ip.pos[1], ip.pos[2]);
-      }
-    }
+    // v7 spell glow. Order B: the magic glove's placeholder visual - shown
+    // on the hand holding the caster (school color of the active spell).
+    if (game.spellGlow && p.yawFrame) updateCasterGlow(p);
     updateBlockHud(dt);   // v6: flash decay
 
     // fps
@@ -781,27 +796,35 @@
     }
   }
 
-  // 10-04: instance + mount the player weapon and switch its moveset
-  // (CONFIG.moveset.weapons[id]). Measured sizing (2026-10-03): longsword
-  // 1.988m GLB -> 1.05m hand-held via CONFIG.assets.weaponScale.
+  // Hand-held GLB instance at its measured size (2026-10-03: longsword
+  // 1.988m GLB -> 1.05m hand-held via CONFIG.assets.weaponScale; 10-04
+  // roundShield via weaponTargetHeight.roundShield / disc height).
+  function instanceHandMesh(name) {
+    var mesh = window.WH_ASSETS.instance(name);
+    if (!mesh) return null;
+    mesh.scale.setScalar(window.WH_ASSETS.weaponScale(name));
+    return mesh;
+  }
+
+  // 10-04 debug path (WH_DEBUG.equipWeapon): swap the melee moveset
+  // (CONFIG.moveset.weapons[id]) and its hand mesh.
   function equipPlayerWeapon(id) {
     if (!CFG.moveset.weapons[id]) return false;
-    var mesh = window.WH_ASSETS.instance(id);
+    var mesh = instanceHandMesh(id);
     if (!mesh) return false;
-    mesh.scale.setScalar(window.WH_ASSETS.weaponScale(id));
-    game.player.root.add(mesh);
     return game.player.equipWeapon(id, mesh);
   }
 
-  // 10-04: left-hand round shield. One mesh for the session, mounted once;
-  // equip/stow only flip its visibility (player.applyLeftHandVisual).
-  // Measured sizing as above: weaponTargetHeight.roundShield / disc height.
-  function equipPlayerShield() {
-    var mesh = window.WH_ASSETS.instance('roundShield');
-    if (!mesh) return false;
-    mesh.scale.setScalar(window.WH_ASSETS.weaponScale('roundShield'));
-    game.player.setShield(mesh);
-    return true;
+  // Order B: one mesh per gear item with a CONFIG.items[id].mesh asset (the
+  // magic glove has none yet - its placeholder is the spell glow). The
+  // player mounts each on whichever hand holds it, hidden while stowed.
+  function setupHandMeshes() {
+    for (var id in CFG.items) {
+      var d = CFG.items[id];
+      if (d.category !== 'gear' || !d.mesh) continue;
+      var mesh = instanceHandMesh(d.mesh);
+      if (mesh) game.player.setItemMesh(id, mesh);
+    }
   }
 
   // 10-04: Radiance cast. Max one: a recast refreshes the existing effect
@@ -827,15 +850,30 @@
     game.inventory = new INV.Inventory();
     INV.active = game.inventory;
     game.player.inventory = game.inventory;
-    // fresh-spawn kit (CONFIG.inventory.startingItems). These are possession
-    // items, NOT belt charges: the belt keeps casting exactly as before.
-    // Boot only - death keeps the inventory; no save wiring yet.
+    // fresh-spawn kit (CONFIG.inventory.startingItems), then Order B pulls
+    // CONFIG.equip.defaultHands out of it into the hands (glove left,
+    // longsword right). Boot only - death keeps inventory + hands.
     game.inventory.fillStartingItems();
+    game.player.equipDefaultHands();
+    var p = game.player;
     game.inventoryUI = new INV.InventoryUI({
       inventory: game.inventory,
-      onOpenChange: function (open) { game.player.setInputSuspended(open); },
-      onDrop: dropFromSlot
+      onOpenChange: function (open) { p.setInputSuspended(open); },
+      onDrop: dropFromSlot,
+      // Order B CHARACTER tab: the UI only calls these, player owns the rules
+      equip: {
+        hands: function () { return p.hands; },
+        equip: function (id, hand) { return p.equipItem(id, hand); },
+        unequip: function (hand) { return p.unequipHand(hand); },
+        spells: function () { return p.getKnownSpells(); },
+        selectSpell: function (slot) { p.pressBeltKey(slot); }
+      }
     });
+    p.onEquipRefusal = function (text) {
+      game.inventoryUI.toast(text);
+      flashScreen(CFG.block.blockFlashSeconds, 'block');
+    };
+    p.onHandsChanged = function () { game.inventoryUI.render(); };
     game.worldItems = new INV.WorldItems(game.scene);
     document.addEventListener('keydown', function (e) {
       if (e.code !== CFG.inventoryUI.pickupKey || e.repeat) return;
@@ -1020,14 +1058,17 @@
       getBelt: function () { return game.player.getBelt(); },
       selectBeltSlot: function (i) { game.player.selectBeltSlot(i); },
       pressBeltKey: function (i) { game.player.pressBeltKey(i); },
-      getLeftHand: function () {
+      // Order B hand hooks
+      getHands: function () {
         var p = game.player;
-        return { mode: p.leftHand.mode, spellId: p.leftHand.spellId,
-                 shieldVisible: !!(p.shield && p.shield.visible) };
+        return { right: p.hands.right, left: p.hands.left,
+                 caster: p.hasCaster(), shield: p.hasShield(), meleeRight: p.hasMeleeRight(),
+                 rmb: p.secondaryAction() };
       },
+      equipItem: function (id, hand) { return game.player.equipItem(id, hand); },
+      unequipHand: function (hand) { return game.player.unequipHand(hand); },
       getActiveLoadout: function () { return game.player.activeLoadout; },
       toggleLoadout: function () { game.player.toggleLoadout(); },
-      getOffhand: function () { return game.player.offhand; },
       getCastState: function () {
         var p = game.player;
         return {
@@ -1148,9 +1189,8 @@
       attachPlayerLantern();   // R2 P0-3: lantern now player-parented (left-hip anchor)
       // v3: register the weapon with the player so attack stages drive its
       // pose. 10-04: which weapon = CONFIG.moveset.playerWeapon.
-      equipPlayerWeapon(CFG.moveset.playerWeapon);
-      equipPlayerShield();
-      setupInventory();     // 10-05 inventory Order A
+      setupHandMeshes();    // Order B: longsword + shield meshes, mounted per hand
+      setupInventory();     // 10-05 inventory Order A (+ Order B default hands)
 
       // initial region A
       game.regionManager = new window.WH_RegionManager(game.scene);

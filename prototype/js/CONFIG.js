@@ -478,7 +478,8 @@ window.WH_CONFIG = {
   // v7: the magic belt (5 abilities + 2 consumables, doc 04 ruling part C)
   belt: {
     slots: 5,                         // spell ability slots (keys 1-5)
-    // boot belt (slot 1 = boot left-hand spell); null = empty slot
+    // boot belt = learned-spell quick slots (Order B: keys 1-5 pick the
+    // active spell only; slot 1 active at boot); null = empty slot
     defaultSpells: ['firebolt', 'radiance', null, null, null],
     regripSeconds: 0.3,               // re-grip busy window after selection
     consumableSlots: 2                // consumable slots (keys R / T)
@@ -792,10 +793,14 @@ window.WH_CONFIG.touch = {
 window.WH_CONFIG.inventory = {
   slots: 24,                        // fixed grid size, growable later
   defaultStackCap: 60,              // consumables/ingredients without their own stackCap
-  // fresh-spawn kit (boot only; death keeps the inventory, no persistence yet)
+  // fresh-spawn kit (boot only; death keeps the inventory, no persistence yet).
+  // Order B (magic canon 10-05): no spell charges - spells are knowledge.
+  // CONFIG.equip.defaultHands pulls its items OUT of this kit into the hands
+  // at boot, so the grid starts with the shield + bandage only.
   startingItems: [
-    { id: 'fireboltCharge', count: 3 },
-    { id: 'radianceCharge', count: 1 },
+    { id: 'magicGlove', count: 1 },
+    { id: 'longsword', count: 1 },
+    { id: 'roundShield', count: 1 },
     { id: 'bandage', count: 1 }
   ],
   drop: {
@@ -816,18 +821,55 @@ window.WH_CONFIG.inventory = {
 
 // Item registry. ids are canonical (stage 2 enemy drops + gatherables reuse
 // it). Consumables omit stackCap -> CONFIG.inventory.defaultStackCap; gear = 1.
-// equipHint / useHint are data for Order B+; nothing reads them yet.
+// Order B gear data (read by inventory.js + player.js):
+//   kind        'caster' | 'melee' | 'shield' - the ONLY thing combat code
+//               keys off (player.hasCaster / hasMeleeRight / hasShield)
+//   hands       which hands it may enter ('right' / 'left'; one item per hand)
+//   equipHint   default hand for a plain click on the CHARACTER tab
+//   cast        casting implement data; powerTier glove 1 < wand 2 < staff 3
+//               (wands/staffs come later - nothing scales off it yet)
+//   moveset     melee: key into CONFIG.moveset.weapons (right-hand chain)
+//   mesh        WH_ASSETS name of the hand-held model (none = no mesh yet)
+// Spells are KNOWLEDGE (magic canon 10-05), never items or charges; books /
+// scrolls (learn-on-read) are a later category.
 window.WH_CONFIG.items = {
-  fireboltCharge: { id: 'fireboltCharge', name: 'Firebolt Charge', glyph: 'FB',
-                    category: 'consumable', useHint: { kind: 'spellCharge', spell: 'firebolt' } },
-  radianceCharge: { id: 'radianceCharge', name: 'Radiance Charge', glyph: 'RA',
-                    category: 'consumable', useHint: { kind: 'spellCharge', spell: 'radiance' } },
   bandage:        { id: 'bandage', name: 'Bandage', glyph: 'BD',
                     category: 'consumable', useHint: { kind: 'heal', amount: 25 } },
+  magicGlove:     { id: 'magicGlove', name: 'Magic Glove', glyph: 'MG',
+                    category: 'gear', stackCap: 1, kind: 'caster',
+                    hands: ['left', 'right'], equipHint: 'leftHand',
+                    cast: { powerTier: 1 } },
   longsword:      { id: 'longsword', name: 'Longsword', glyph: 'LS',
-                    category: 'gear', stackCap: 1, equipHint: 'mainHand' },
+                    category: 'gear', stackCap: 1, kind: 'melee', moveset: 'longsword', mesh: 'longsword',
+                    hands: ['right', 'left'], equipHint: 'rightHand' },
   roundShield:    { id: 'roundShield', name: 'Round Shield', glyph: 'SH',
-                    category: 'gear', stackCap: 1, equipHint: 'offHand' }
+                    category: 'gear', stackCap: 1, kind: 'shield', mesh: 'roundShield',
+                    hands: ['right', 'left'], equipHint: 'leftHand' }
+};
+
+// Order B (2026-10-05) free per-hand equip. Hands are equip-screen driven;
+// belt keys 1-5 only pick the active learned spell.
+window.WH_CONFIG.equip = {
+  // boot: these leave the starting kit and go straight into the hands
+  defaultHands: { right: 'longsword', left: 'magicGlove' },
+  // RMB routing, first capability present wins ('caster' = cast the active
+  // spell, 'shield' = hold-to-block). Default cast-first (brief ruling);
+  // swap to ['shield', 'caster'] if block-first plays better.
+  rmbOrder: ['caster', 'shield'],
+  // Q = left-hand swap between these two items (0.8s CONFIG.loadout window)
+  qSwap: ['magicGlove', 'roundShield'],
+  // Each item's mount (weaponMount / shieldMount) is measured for its NATIVE
+  // hand. The other hand gets the mount mirrored by this hand-local factor:
+  // L_Hand <-> R_Hand local frames map by diag(-1, 1, 1) within 0.01
+  // (scratch/measure_hand_mirror.py, bind pose). Roll angles flip sign.
+  nativeHand: { longsword: 'right', roundShield: 'left' },
+  mirrorScale: [-1, 1, 1],
+  // Magic glove placeholder (no glove mesh this order): the spell glow orb
+  // on the caster hand. anchor 'hand' = child of the hand bone at
+  // handOffset (L_Hand-local fist centroid, scratch/measure_shield.py;
+  // mirrored for R_Hand); 'idlePose' = the old yawFrame anchor (weapon idle
+  // pose, mirrored per hand).
+  casterGlow: { anchor: 'hand', handOffset: [0.018, 0.078, 0.021] }
 };
 
 // Inventory screen (DOM modal). While open, player movement/combat input is
@@ -838,5 +880,8 @@ window.WH_CONFIG.inventoryUI = {
   dropKey: 'KeyG',                  // drop 1 of the selected stack; Shift+G = whole stack
   pickupKey: 'KeyE',                // world: collect the nearest item entity in pickupRadius
   gridCols: 6,                      // 24 slots -> 6 x 4
-  toastSeconds: 1.8                 // "Dropped X x1" / "Inventory full" toast lifetime
+  toastSeconds: 1.8,                // "Dropped X x1" / "Inventory full" toast lifetime
+  // Order B: clickable HUD button, same toggle as the I key. left / bottom
+  // are px from the viewport's bottom-left corner.
+  openButton: { enabled: true, label: 'INV', left: 16, bottom: 20 }
 };

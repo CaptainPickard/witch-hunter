@@ -606,13 +606,9 @@
       var on = p.keys['ShiftLeft'] && keysWritten['ShiftLeft'];
       setSprint(!on);
     } else if (name === 'block') {
-      // v6/v7 RMB routing replica (player.js ~218-231): spell -> tryCast,
-      // shield -> tryBlock on press + endBlock on release (press-hold).
-      if (p.offhand === 'spell') {
-        if (p.tryCast) p.tryCast();
-      } else {
-        if (p.tryBlock) p.tryBlock();
-      }
+      // RMB routing (Order B: player.secondaryDown - caster -> cast,
+      // shield -> block on press, endBlock on release = press-hold).
+      if (p.secondaryDown) p.secondaryDown();
     }
   }
 
@@ -620,7 +616,7 @@
     if (name !== 'block') return;
     var p = getPlayer();
     if (!p) return;
-    if (p.offhand !== 'spell' && p.endBlock) p.endBlock();
+    if (p.secondaryUp) p.secondaryUp();
   }
 
   function setSprint(on) {

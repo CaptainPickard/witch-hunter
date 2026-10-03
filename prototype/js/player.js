@@ -76,24 +76,30 @@
     this.focusMax = CFG.focusMax;
     this.focusRegenBlock = 0;         // seconds until focus regen resumes
 
-    // v7: weave / loadout state. activeLoadout 1 = weapon+spell,
-    // 2 = weapon+shield. 10-04: kept in step with leftHand by setLeftHand().
+    // v7: weave / loadout state. Order B: activeLoadout is derived from the
+    // left hand for the HUD pips (1 = qSwap[0] glove, 2 = qSwap[1] shield,
+    // 0 = anything else); Q swaps the left hand between the two.
     this.activeLoadout = 1;
-    this.offhand = 'spell';           // 'spell' | 'shield' (= leftHand.mode)
     this.toggling = false;            // loadout toggle busy window
     this.toggleTimer = 0;
+    this.pendingQSwap = null;         // item id Q puts in the left hand on completion
     this.castWindup = 0;              // seconds left of cast windup
     this.castCooldown = 0;            // seconds left of cast cooldown
     this.regripTimer = 0;             // belt re-grip busy window
     this.selectedBeltSlot = 0;        // 0-based index into the 5 belt slots
     this.belt = V7.belt.defaultSpells.slice();          // spell ids / null
     this.consumables = [{ id: 'healthPotion', charges: V7.consumable.healthPotion.charges }, null];
-    this.offhandGlow = null;          // emissive sphere mesh at the left anchor
-    // 10-04 left-hand implement (Nicko): Digit1-5 equips belt spells; the
-    // held spell's key again stows to the shield. Boot = slot 1 equipped.
-    // offhand mirrors leftHand.mode and stays the field other code reads.
-    this.leftHand = { mode: 'spell', spellId: this.belt[this.selectedBeltSlot] };
-    this.shield = null;               // round shield mesh (L_Hand child)
+    this.offhandGlow = null;          // emissive sphere mesh on the caster hand (game.js)
+    // Order B (2026-10-05) free per-hand equip: one gear item id (or null)
+    // per hand, single instances (an item is in a hand OR the inventory).
+    // Combat reads ONLY the capability flags hasCaster / hasShield /
+    // hasMeleeRight, derived from CONFIG.items[id].kind. Belt keys 1-5 pick
+    // the active learned spell and never touch the hands.
+    this.hands = { right: null, left: null };
+    this.inventory = null;            // game.js setupInventory wires the Inventory
+    this.itemMeshes = {};             // item id -> its hand mesh (game.js instances)
+    this.sword = null;                // = itemMeshes of the melee item (armed glow)
+    this.shield = null;               // = itemMeshes of the shield item
 
     // v7: armed finisher state (doc 04 ruling part A)
     this.armedTimer = 0;              // > 0 = armed finisher ready
@@ -141,17 +147,59 @@
     }
   };
 
+  // Order B: mounts are measured for an item's NATIVE hand
+  // (CONFIG.equip.nativeHand); the other hand gets the hand-local mount
+  // mirrored by CONFIG.equip.mirrorScale (S R S for the rotation, S p for
+  // the offset - a proper rotation again, roll angles flip sign).
+  function isMirrored(itemId, hand) {
+    var nat = window.WH_CONFIG.equip.nativeHand[itemId];
+    return !!nat && nat !== hand;
+  }
+
+  function mirrorQuat(q) {
+    var s = window.WH_CONFIG.equip.mirrorScale;
+    var S = new THREE.Matrix4().makeScale(s[0], s[1], s[2]);
+    var m = new THREE.Matrix4().makeRotationFromQuaternion(q);
+    return q.setFromRotationMatrix(S.clone().multiply(m).multiply(S));
+  }
+
+  function mirrorVec(v) {
+    var s = window.WH_CONFIG.equip.mirrorScale;
+    return v.set(v.x * s[0], v.y * s[1], v.z * s[2]);
+  }
+
+  function boneFor(body, hand) {
+    return body ? body.getObjectByName(hand === 'left' ? 'L_Hand' : 'R_Hand', true) : null;
+  }
+
   // The skinned hand is the socket. Only stand-ins retain the old rigid pivot.
-  Player.prototype.setWeapon = function (mesh) {
-    var hand = this.body && this.body.getObjectByName('R_Hand');
-    // 10-04: re-equip drops the previous mesh / stand-in pivot first.
-    if (this.sword && this.sword !== mesh && this.sword.parent) this.sword.parent.remove(this.sword);
-    if (this.weaponPivot) { this.yawFrame.remove(this.weaponPivot); this.weaponPivot = null; }
-    this.sword = mesh;
-    this.swordBaseEmissive = null;   // armed-glow base re-sampled per mesh
-    if (hand) {
-      this.weaponHand = hand;
-      hand.add(mesh);
+  // Order B: hand = 'right' | 'left'; the melee mesh mounts on either one.
+  Player.prototype.mountWeapon = function (mesh, hand, itemId) {
+    var bone = boneFor(this.body, hand);
+    if (this.weaponPivot) {
+      this.weaponPivot.remove(mesh);
+      this.yawFrame.remove(this.weaponPivot);
+      this.weaponPivot = null;
+    }
+    if (mesh.parent) mesh.parent.remove(mesh);
+    var wm = window.WH_CONFIG.assets.weaponMount;
+    // Grip anchor (Nicko 10-03): the instance is a groundAlign HOLDER whose
+    // inner mesh was lifted so the GLB's raw min-Y rests at holder y=0 -
+    // which put the sword TIP at/behind the fist (hand on mid-blade, hilt
+    // floating behind: "hilt at the opposite end"). Slide the INNER mesh
+    // down by the measured grip height in HOLDER-LOCAL Y (the mount
+    // rotation maps holder -Y to hand-local +Z grip-forward, so a -Y
+    // shift moves the grip ONTO the fist and the tip forward in front).
+    // Measured: sword grip at raw y~+0.65 -> holder y 1.637 (CONFIG).
+    // Offset is in raw GLB units and scales with the weapon correctly.
+    // Order B: applied once per mesh - remounts must not stack it.
+    if (!mesh.userData.whGripApplied) {
+      mesh.userData.whGripApplied = true;
+      var gripY = (wm && wm.gripHolderY) ? (wm.gripHolderY[this.weaponId] || 0) : 0;
+      if (gripY && mesh.children[0]) mesh.children[0].position.y -= gripY;
+    }
+    if (bone) {
+      bone.add(mesh);
       mesh.position.set(0, 0, 0);
       // Grip mount (2026-10-03 re-measure): the longsword GLB's blade tip
       // lies along mesh-local -Y, and the fist's grip-forward direction is
@@ -160,7 +208,6 @@
       // setWeapon time, letting the animation pose leak in -- blade ended up
       // parallel to the forearm with the hilt on the wrong end. This mount
       // is pose-independent, so it holds through idle, walk, and swings.
-      var wm = window.WH_CONFIG.assets.weaponMount;
       var mountRotation = new THREE.Quaternion();
       if (wm && wm.enabled) {
         // 10-04: blade axis per weapon (longsword -Y = unchanged mount;
@@ -177,28 +224,25 @@
           mountRotation.premultiply(new THREE.Quaternion().setFromAxisAngle(
             new THREE.Vector3(0, 0, 1), wm.rollDeg * Math.PI / 180));
         }
+        if (isMirrored(itemId, hand)) mirrorQuat(mountRotation);
       }
       mesh.quaternion.copy(mountRotation);
-      // Grip anchor (Nicko 10-03): the instance is a groundAlign HOLDER whose
-      // inner mesh was lifted so the GLB's raw min-Y rests at holder y=0 -
-      // which put the sword TIP at/behind the fist (hand on mid-blade, hilt
-      // floating behind: "hilt at the opposite end"). Slide the INNER mesh
-      // down by the measured grip height in HOLDER-LOCAL Y (the mount
-      // rotation maps holder -Y to hand-local +Z grip-forward, so a -Y
-      // shift moves the grip ONTO the fist and the tip forward in front).
-      // Measured: sword grip at raw y~+0.65 -> holder y 1.637 (CONFIG).
-      // Offset is in raw GLB units and scales with the weapon correctly.
-      var gripY = (wm && wm.gripHolderY) ? (wm.gripHolderY[this.weaponId] || 0) : 0;
-      if (gripY && mesh.children[0]) {
-        mesh.children[0].position.y -= gripY;
-      }
       return;
     }
-    this.weaponPivot = new THREE.Group();
-    this.yawFrame.add(this.weaponPivot);
-    this.weaponPivot.add(mesh);
-    this.swordBase = window.WH_CONFIG.moveset.idlePose;
-    this.resetWeaponPose();
+    // rigid stand-in: right hand = the animated pivot, left = mirrored idle anchor
+    var ip = window.WH_CONFIG.moveset.idlePose;
+    if (hand === 'right') {
+      this.weaponPivot = new THREE.Group();
+      this.yawFrame.add(this.weaponPivot);
+      this.weaponPivot.add(mesh);
+      mesh.position.set(0, 0, 0);
+      this.swordBase = ip;
+      this.resetWeaponPose();
+    } else {
+      this.yawFrame.add(mesh);
+      mesh.position.set(-ip.pos[0], ip.pos[1], ip.pos[2]);
+      mesh.rotation.set(ip.rot[0], -ip.rot[1], -ip.rot[2]);
+    }
   };
 
   // 10-04 moveset framework accessors. The weapon def / move defs are read
@@ -219,12 +263,13 @@
   };
 
   // Swap the active moveset (chain resets). mesh optional: game.js passes the
-  // new weapon instance so the hand mount follows the weapon id.
+  // new weapon instance, which replaces the melee item's hand mesh (debug
+  // WH_DEBUG.equipWeapon; the melee item itself stays the same item id).
   Player.prototype.equipWeapon = function (id, mesh) {
     if (!MV.weapons[id]) return false;
     this.cancelAttack();
     this.weaponId = id;
-    if (mesh) this.setWeapon(mesh);
+    if (mesh) this.setItemMesh(this.meleeItemId(), mesh);
     return true;
   };
 
@@ -262,9 +307,10 @@
         e.preventDefault();
         if (self.onLockToggle) self.onLockToggle();  // game.js decides engage/break
       }
-      // v7: Q = loadout toggle (busy window, resets chain, keeps armed)
+      // v7: Q = loadout toggle (busy window, resets chain, keeps armed).
+      // Order B: swaps the left hand glove <-> shield.
       if (e.code === 'KeyQ' && !e.repeat) self.toggleLoadout();
-      // 10-04: Digit1-5 = left-hand equip / stow (never touches chain/armed)
+      // Order B: Digit1-5 = active learned spell (never touches hands/chain/armed)
       if (e.code.indexOf('Digit') === 0 && !e.repeat) {
         var n = parseInt(e.code.slice(5), 10);
         if (n >= 1 && n <= V7.belt.slots) self.pressBeltKey(n - 1);
@@ -286,18 +332,17 @@
           self.lastDragY = e.clientY;
         }
       }
-      // v6: RMB hold to block (opens the parry window)
+      // v6: RMB hold to block (opens the parry window). Order B: RMB routes
+      // by the hands (secondaryAction: caster -> cast, shield -> block).
       if (e.button === 2) {
         e.preventDefault();
-        // v7: RMB routes by offhand implement: spell -> cast, shield -> block
-        if (self.offhand === 'spell') self.tryCast();
-        else self.tryBlock();
+        self.secondaryDown();
       }
     });
     document.addEventListener('mouseup', function (e) {
       if (e.button === 0) self.dragging = false;
-      // v7: RMB release ends block only when the implement is a shield
-      if (e.button === 2 && self.offhand === 'shield') self.endBlock();
+      // v7: RMB release ends a held block (no-op otherwise)
+      if (e.button === 2) self.secondaryUp();
     });
     // v6: RMB must not open the browser context menu
     document.addEventListener('contextmenu', function (e) {
@@ -376,7 +421,7 @@
   // Cannot re-block until stamina has recovered past guardBreakMinStamina.
   Player.prototype.tryBlock = function () {
     if (this.state !== 'alive' || this.rolling || this.attacking) return;
-    if (this.offhand !== 'shield' || this.regripTimer > 0) return;  // 10-04: shield hand only, after its regrip
+    if (!this.hasShield()) return;          // Order B: a shield in either hand
     if (this.guardBroken) return;
     if (this.stamina < window.WH_CONFIG.block.guardBreakMinStamina) return;
     this.blocking = true;
@@ -414,11 +459,23 @@
     if (this.onGuardBreak) this.onGuardBreak();
   };
 
-  // v7: loadout toggle I <-> II. Busy window blocks attack/cast/block/roll.
-  // Resets the combo chain; KEEPS the armedTimer running; if armed at the
-  // toggle moment, banks the cross-finisher.
+  // v7: loadout toggle busy window (blocks attack/cast/block/roll), resets
+  // the combo chain, KEEPS the armedTimer running; if armed at the toggle
+  // moment, banks the cross-finisher. Order B: Q = LEFT-HAND SWAP between
+  // CONFIG.equip.qSwap[0] (magic glove) and [1] (round shield): left holds
+  // the glove -> the shield goes in, anything else -> the glove goes in.
+  // The incoming item must be in the INVENTORY, else a refusal toast and
+  // nothing changes (no window, no chain reset). The swap lands when the
+  // window completes (update()); the outgoing item returns to the inventory.
   Player.prototype.toggleLoadout = function () {
     if (this.state !== 'alive' || this.toggling) return;
+    var pair = window.WH_CONFIG.equip.qSwap;
+    var target = this.hands.left === pair[0] ? pair[1] : pair[0];
+    if (!this.inventory || this.inventory.countOf(target) <= 0) {
+      this.refuseEquip(itemName(target) + ' not in inventory');
+      return;
+    }
+    this.pendingQSwap = target;
     this.endBlock();                     // shield grip is dropped by the swap
     this.toggling = true;
     this.toggleTimer = V7.loadout.toggleSeconds;
@@ -434,9 +491,11 @@
     return this.activeLoadout;
   };
 
-  // v7: belt spell selection. Swaps the bound spell, starts the regrip
-  // window. NEVER touches the combo chain or armed state. 10-04: keys reach
-  // it through pressBeltKey -> equipBeltSpell.
+  // v7: belt spell selection = the ACTIVE LEARNED SPELL (magic canon 10-05:
+  // spells are knowledge, the belt is 5 quick slots over them). Starts the
+  // regrip window only while a caster is in hand (re-grip applies to
+  // nothing otherwise). NEVER touches the combo chain, armed state, or the
+  // hands.
   Player.prototype.selectBeltSlot = function (i) {
     if (this.state !== 'alive') return;
     if (i < 0 || i >= V7.belt.slots) return;
@@ -446,44 +505,30 @@
       return;
     }
     this.selectedBeltSlot = i;
-    if (this.leftHand.mode === 'spell') this.leftHand.spellId = this.belt[i];
-    this.regripTimer = V7.belt.regripSeconds;
+    if (this.hasCaster()) this.regripTimer = V7.belt.regripSeconds;
     // glow color follows the selection (mesh owned by game.js visuals)
     if (this.onSpellSelected) this.onSpellSelected(this.belt[i]);
   };
 
-  // 10-04 (Nicko): Digit key k. Empty slot = refusal flash. The held spell's
-  // key again = stow to the shield; any other filled slot = equip that spell
-  // directly (spell -> spell never passes through the shield). A quick swap:
-  // no toggle window, no chain/armed reset, a running swing plays out.
+  // Digit key k (Order B): pick that slot's learned spell. Empty slot =
+  // refusal flash; the active spell's own key = no-op. A cast still in
+  // windup belongs to the old spell and is dropped.
   Player.prototype.pressBeltKey = function (i) {
     if (this.state !== 'alive') return;
     if (i < 0 || i >= V7.belt.slots) return;
-    var spellId = this.belt[i];
-    if (!spellId) {
-      if (this.onCastRefusal) this.onCastRefusal('empty-slot');
-      return;
-    }
-    if (this.leftHand.mode === 'spell' && this.leftHand.spellId === spellId) {
-      this.stowToShield();
-      return;
-    }
-    this.equipBeltSpell(i);
+    if (this.belt[i] && i === this.selectedBeltSlot) return;
+    if (this.belt[i]) this.dropPendingCast();
+    this.selectBeltSlot(i);
   };
 
-  // Spell implement from belt slot i (shield -> spell drops the guard).
-  Player.prototype.equipBeltSpell = function (i) {
-    if (!this.belt[i]) return;
-    this.endBlock();
-    this.dropPendingCast();
-    this.selectBeltSlot(i);              // regrip window + glow color
-    this.setLeftHand('spell', this.belt[i]);
-  };
-
-  Player.prototype.stowToShield = function () {
-    this.dropPendingCast();
-    this.regripTimer = V7.belt.regripSeconds;
-    this.setLeftHand('shield', null);
+  // Learned spells (CHARACTER tab list): the belt's filled slots for now.
+  // Books / scrolls (learn-on-read) will add to the belt later.
+  Player.prototype.getKnownSpells = function () {
+    var out = [];
+    for (var i = 0; i < this.belt.length; i++) {
+      if (this.belt[i]) out.push({ slot: i, id: this.belt[i], active: i === this.selectedBeltSlot });
+    }
+    return out;
   };
 
   // A cast still in windup belongs to the implement being put away: drop it
@@ -493,43 +538,229 @@
     this.pendingSpellId = null;
   };
 
-  // Single left-hand write path (Digit keys, Q toggle, boot). activeLoadout
-  // follows the implement so Q always flips spell <-> shield from here.
-  Player.prototype.setLeftHand = function (mode, spellId) {
-    this.leftHand = { mode: mode, spellId: mode === 'spell' ? spellId : null };
-    this.offhand = mode;
-    this.activeLoadout = mode === 'shield' ? 2 : 1;
-    this.applyLeftHandVisual();
+  // ---- Order B: hands ---------------------------------------------------------
+
+  function itemDef(id) {
+    return id ? (window.WH_CONFIG.items[id] || null) : null;
+  }
+
+  function kindOf(id) {
+    var d = itemDef(id);
+    return d ? d.kind || null : null;
+  }
+
+  function itemName(id) {
+    var d = itemDef(id);
+    return d ? d.name : String(id);
+  }
+
+  function otherHand(hand) {
+    return hand === 'right' ? 'left' : 'right';
+  }
+
+  // capability flags: the single source for every combat gate
+  Player.prototype.hasCaster = function () {
+    return !!this.casterHand();
   };
 
-  // Shield mesh shows only while the shield is the implement (the spell
-  // glow is game.js's, keyed off offhand).
-  Player.prototype.applyLeftHandVisual = function () {
-    if (this.shield) this.shield.visible = this.offhand === 'shield';
+  Player.prototype.casterHand = function () {
+    if (kindOf(this.hands.left) === 'caster') return 'left';
+    if (kindOf(this.hands.right) === 'caster') return 'right';
+    return null;
   };
 
-  // Mount the round shield on the skinned L_Hand (constant hand-local mount
-  // measured offline, CONFIG.assets.shieldMount); the rigid stand-in body
-  // has no bones, so it falls back to the mirrored idle anchor on yawFrame.
-  Player.prototype.setShield = function (mesh) {
-    if (this.shield && this.shield.parent) this.shield.parent.remove(this.shield);
-    this.shield = mesh;
-    var SM = window.WH_CONFIG.assets.shieldMount;
-    // Centre the disc on its X/Y and put its back-most point on the holder
-    // origin, so the mount offset is where the shield's back meets the fist.
-    var inner = mesh.children[0];
-    if (inner) {
-      mesh.updateMatrixWorld(true);
-      var box = new THREE.Box3().setFromObject(inner);
-      var s = mesh.scale.x || 1;
-      var c = box.getCenter(new THREE.Vector3()).multiplyScalar(1 / s);
-      inner.position.x -= c.x;
-      inner.position.y -= c.y;
-      inner.position.z -= box.min.z / s;
+  Player.prototype.hasShield = function () {
+    return kindOf(this.hands.left) === 'shield' || kindOf(this.hands.right) === 'shield';
+  };
+
+  Player.prototype.hasMeleeRight = function () {
+    return kindOf(this.hands.right) === 'melee';
+  };
+
+  Player.prototype.handOf = function (id) {
+    if (this.hands.right === id) return 'right';
+    if (this.hands.left === id) return 'left';
+    return null;
+  };
+
+  // The melee item whose mesh/moveset the swing code drives: the one in the
+  // right hand, else the first melee item in CONFIG.items.
+  Player.prototype.meleeItemId = function () {
+    if (this.hasMeleeRight()) return this.hands.right;
+    var items = window.WH_CONFIG.items;
+    for (var id in items) if (items[id].kind === 'melee') return id;
+    return null;
+  };
+
+  // RMB routing (Order B): the first CONFIG.equip.rmbOrder capability held
+  // wins - 'cast' (caster in EITHER hand), 'block' (shield in either hand),
+  // or null = RMB does nothing. Mouse and touch both route through here.
+  Player.prototype.secondaryAction = function () {
+    var order = window.WH_CONFIG.equip.rmbOrder;
+    for (var i = 0; i < order.length; i++) {
+      if (order[i] === 'caster' && this.hasCaster()) return 'cast';
+      if (order[i] === 'shield' && this.hasShield()) return 'block';
     }
-    var hand = this.body && this.body.getObjectByName('L_Hand', true);
-    if (hand) {
-      hand.add(mesh);
+    return null;
+  };
+
+  Player.prototype.secondaryDown = function () {
+    var a = this.secondaryAction();
+    if (a === 'cast') this.tryCast();
+    else if (a === 'block') this.tryBlock();
+  };
+
+  Player.prototype.secondaryUp = function () {
+    this.endBlock();
+  };
+
+  Player.prototype.refuseEquip = function (text) {
+    if (this.onEquipRefusal) this.onEquipRefusal(text);
+    return false;
+  };
+
+  // Equip item id into hand ('right' | 'left'). Sources: the OTHER hand (a
+  // move - never a duplicate) unless inventoryOnly, else the inventory. A
+  // displaced item in the target hand returns to the inventory; drawing from
+  // the inventory frees a slot for it (gear stacks to 1), a hand-to-hand
+  // move needs a free slot or is refused "Inventory full". Returns true when
+  // the item ends up in that hand.
+  Player.prototype.equipItem = function (id, hand, inventoryOnly) {
+    var d = itemDef(id);
+    if (!d || d.category !== 'gear' || !d.hands) return this.refuseEquip(itemName(id) + ' cannot be equipped');
+    if (d.hands.indexOf(hand) < 0) return this.refuseEquip(d.name + ' cannot go in the ' + hand + ' hand');
+    if (this.hands[hand] === id) return true;
+    var other = otherHand(hand);
+    var fromOther = !inventoryOnly && this.hands[other] === id;
+    var inv = this.inventory;
+    if (!fromOther && (!inv || inv.countOf(id) <= 0)) return this.refuseEquip(d.name + ' not in inventory');
+    var displaced = this.hands[hand];
+    if (displaced && fromOther && !inv.hasRoomFor(displaced)) return this.refuseEquip('Inventory full');
+    // hands first, inventory second: the inventory's onChange redraw then
+    // already sees the final hands
+    if (fromOther) this.hands[other] = null;
+    this.hands[hand] = id;
+    if (!fromOther) inv.removeItem(id, 1);
+    if (displaced) inv.addItem(displaced, 1);
+    this.handsChanged();
+    return true;
+  };
+
+  // Hand -> inventory. Refused (toast, item stays) when the inventory is full.
+  Player.prototype.unequipHand = function (hand) {
+    var id = this.hands[hand];
+    if (!id) return false;
+    if (!this.inventory || !this.inventory.hasRoomFor(id)) return this.refuseEquip('Inventory full');
+    this.hands[hand] = null;
+    this.inventory.addItem(id, 1);
+    this.handsChanged();
+    return true;
+  };
+
+  // Boot: move CONFIG.equip.defaultHands items out of the starting kit.
+  Player.prototype.equipDefaultHands = function () {
+    var dh = window.WH_CONFIG.equip.defaultHands;
+    if (dh.right) this.equipItem(dh.right, 'right');
+    if (dh.left) this.equipItem(dh.left, 'left');
+  };
+
+  // Combat side effects of any hand change, then visuals + listeners.
+  Player.prototype.handsChanged = function () {
+    var melee = this.hasMeleeRight();
+    if (!melee && this.attacking) this.cancelAttack();      // no blade, no swing
+    if (melee) {
+      var mv = itemDef(this.hands.right).moveset;
+      if (mv && MV.weapons[mv] && mv !== this.weaponId) {
+        this.cancelAttack();
+        this.weaponId = mv;
+      }
+    }
+    if (!this.hasShield()) this.endBlock();
+    var ch = this.casterHand();
+    if (!ch) this.dropPendingCast();
+    else if (ch !== this.lastCasterHand) this.regripTimer = V7.belt.regripSeconds;
+    this.lastCasterHand = ch;
+    var pair = window.WH_CONFIG.equip.qSwap;
+    this.activeLoadout = this.hands.left === pair[0] ? 1 : this.hands.left === pair[1] ? 2 : 0;
+    this.applyHandVisuals();
+    if (this.onHandsChanged) this.onHandsChanged(this.hands);
+  };
+
+  // Register an item's hand mesh (game.js instances the GLB). One-time prep
+  // here; applyHandVisuals mounts it on whichever hand holds the item.
+  Player.prototype.setItemMesh = function (id, mesh) {
+    var old = this.itemMeshes[id];
+    if (old && old !== mesh) {
+      if (old.parent) old.parent.remove(old);
+      if (this.weaponPivot && old === this.sword) {
+        this.yawFrame.remove(this.weaponPivot);
+        this.weaponPivot = null;
+      }
+    }
+    this.itemMeshes[id] = mesh;
+    mesh.userData.whHand = null;
+    var k = kindOf(id);
+    if (k === 'melee') {
+      this.sword = mesh;
+      this.swordBaseEmissive = null;     // armed-glow base re-sampled per mesh
+    } else if (k === 'shield') {
+      this.shield = mesh;
+      prepShield(mesh);
+    }
+    this.applyHandVisuals();
+  };
+
+  // Shield prep (once per mesh, before any mount): centre the disc on its
+  // X/Y and put its back-most point on the holder origin, so the mount
+  // offset is where the shield's back meets the fist.
+  function prepShield(mesh) {
+    var inner = mesh.children[0];
+    if (!inner) return;
+    mesh.updateMatrixWorld(true);
+    var box = new THREE.Box3().setFromObject(inner);
+    var s = mesh.scale.x || 1;
+    var c = box.getCenter(new THREE.Vector3()).multiplyScalar(1 / s);
+    inner.position.x -= c.x;
+    inner.position.y -= c.y;
+    inner.position.z -= box.min.z / s;
+  }
+
+  // Each registered mesh follows its item: mounted on the hand holding it,
+  // detached + hidden while the item is in the inventory. Remount only on a
+  // hand change (mounts are constant hand-local transforms).
+  Player.prototype.applyHandVisuals = function () {
+    for (var id in this.itemMeshes) {
+      var mesh = this.itemMeshes[id];
+      var hand = this.handOf(id);
+      if (!hand) {
+        if (this.weaponPivot && mesh === this.sword) {
+          this.yawFrame.remove(this.weaponPivot);
+          this.weaponPivot = null;
+        }
+        if (mesh.parent) mesh.parent.remove(mesh);
+        mesh.visible = false;
+        mesh.userData.whHand = null;
+        continue;
+      }
+      mesh.visible = true;
+      if (mesh.userData.whHand === hand && mesh.parent) continue;
+      mesh.userData.whHand = hand;
+      var k = kindOf(id);
+      if (k === 'melee') this.mountWeapon(mesh, hand, id);
+      else if (k === 'shield') this.mountShield(mesh, hand, id);
+    }
+  };
+
+  // Mount the round shield on a skinned hand (constant hand-local mount
+  // measured offline for L_Hand, CONFIG.assets.shieldMount; mirrored for
+  // R_Hand); the rigid stand-in body has no bones, so it falls back to the
+  // idle anchor on yawFrame (mirrored per hand).
+  Player.prototype.mountShield = function (mesh, hand, itemId) {
+    if (mesh.parent) mesh.parent.remove(mesh);
+    var SM = window.WH_CONFIG.assets.shieldMount;
+    var bone = boneFor(this.body, hand);
+    if (bone) {
+      bone.add(mesh);
       // raw +Z (boss side) -> faceAxis, raw +Y (disc up) -> upAxis
       var f = new THREE.Vector3().fromArray(SM.faceAxis).normalize();
       var u = new THREE.Vector3().fromArray(SM.upAxis);
@@ -542,16 +773,21 @@
         q.premultiply(new THREE.Quaternion().setFromAxisAngle(
           new THREE.Vector3(0, 0, 1), SM.rollDeg * Math.PI / 180));
       }
+      var off = new THREE.Vector3().fromArray(SM.offset);
+      if (isMirrored(itemId, hand)) {
+        mirrorQuat(q);
+        mirrorVec(off);
+      }
       mesh.quaternion.copy(q);
-      mesh.position.fromArray(SM.offset);
+      mesh.position.copy(off);
     } else {
-      // stand-in: face body-left (+X), outside the mirrored weapon anchor
+      // stand-in: face outward on its side of the body, outside the weapon anchor
       var ip = window.WH_CONFIG.moveset.idlePose;
+      var side = hand === 'left' ? -1 : 1;
       this.yawFrame.add(mesh);
-      mesh.rotation.set(0, (ip.pos[0] > 0 ? -1 : 1) * Math.PI / 2, 0);
-      mesh.position.set(-ip.pos[0], ip.pos[1], ip.pos[2]);
+      mesh.rotation.set(0, side * (ip.pos[0] > 0 ? 1 : -1) * Math.PI / 2, 0);
+      mesh.position.set(side * ip.pos[0], ip.pos[1], ip.pos[2]);
     }
-    this.applyLeftHandVisual();
   };
 
   Player.prototype.getSelectedSpellId = function () {
@@ -564,7 +800,7 @@
     if (this.state !== 'alive') return false;
     if (this.rolling || this.toggling || this.regripTimer > 0) return false;
     if (this.guardBroken) return false;
-    if (this.offhand !== 'spell') return false;
+    if (!this.hasCaster()) return false;   // Order B: casting implement in either hand
     if (this.attacking && this.getAttackStage() !== 'windup') return false;
     if (this.castCooldown > 0 || this.castWindup > 0) return false;
     var spellId = this.getSelectedSpellId();
@@ -726,6 +962,7 @@
   // idle always starts the chain at chain[0].
   Player.prototype.tryAttack = function () {
     if (this.state !== 'alive' || this.rolling || this.toggling) return;
+    if (!this.hasMeleeRight()) return;     // Order B: chain needs melee in the RIGHT hand
     if (this.blocking) return;              // v6: must release RMB to attack
     if (this.attacking) {
       var stage = this.getAttackStage();
@@ -910,11 +1147,11 @@
       this.toggleTimer -= dt;
       if (this.toggleTimer <= 0) {
         this.toggling = false;
-        // v7: flip 1<->2 on toggle complete. 10-04: loadout 2 = shield,
-        // loadout 1 = the selected belt spell (shield if that slot is empty).
-        var sel = this.getSelectedSpellId();
-        if (3 - this.activeLoadout === 2 || !sel) this.setLeftHand('shield', null);
-        else this.setLeftHand('spell', sel);
+        // Order B: the Q swap lands on completion. Inventory-only source,
+        // re-checked here (the screen may have moved it meanwhile).
+        var qItem = this.pendingQSwap;
+        this.pendingQSwap = null;
+        if (qItem) this.equipItem(qItem, 'left', true);
       }
     }
     if (this.regripTimer > 0) this.regripTimer = Math.max(0, this.regripTimer - dt);
@@ -924,8 +1161,8 @@
       this.armedTimer = Math.max(0, this.armedTimer - dt);
       if (this.armedTimer <= 0) this.crossArmed = false;
     }
-    // 10-04: offhand = leftHand.mode, written only by setLeftHand()
-    if (this.blocking && this.offhand !== 'shield') this.endBlock();
+    // Order B: a guard needs a shield in hand
+    if (this.blocking && !this.hasShield()) this.endBlock();
 
     if (this.state === 'dying') {
       this.deathTilt = Math.min(Math.PI / 2, this.deathTilt + dt * 3);
@@ -1223,6 +1460,7 @@
     this.focusRegenBlock = 0;
     this.toggling = false;
     this.toggleTimer = 0;
+    this.pendingQSwap = null;              // Order B: hands themselves persist through death
     this.castWindup = 0;
     this.castCooldown = 0;
     this.regripTimer = 0;
