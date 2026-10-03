@@ -371,6 +371,120 @@
     return tex;
   }
 
+  // ---- 10-03 change order 2: dirt path ribbon (Nicko: clearing walk to the
+  // cemetery). Visual-only decal strip through region A's south clearing;
+  // trees/lanterns are placed by CONFIG generation relative to the same sway
+  // centerline x = swayAmp*sin(2pi(z-zFrom)/swayPeriod). No collider.
+  function buildDirtPathCanvas() {
+    var size = 128;
+    var canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    var ctx = canvas.getContext('2d');
+    var rand = whRng(78002024);
+    var dirt = whHexToRgb(0x5a4a33);      // packed-dirt umber (darkwood canon)
+    var dirtDark = whHexToRgb(0x463a27);  // wet-mud tone
+    var pebble = whHexToRgb(0x6e5f45);
+    ctx.fillStyle = whCss(dirt, 0, rand);
+    ctx.fillRect(0, 0, size, size);
+    // mud blotch clusters, pixel-art cells (same recipe as the ground canvas)
+    for (var i = 0; i < 60; i++) {
+      var cx = Math.floor(rand() * size);
+      var cy = Math.floor(rand() * size);
+      var cells = 4 + Math.floor(rand() * 10);
+      var tone = rand() < 0.55 ? dirtDark : dirt;
+      var jitter = 6 + rand() * 8;
+      for (var c = 0; c < cells; c++) {
+        var px = (cx + Math.floor(rand() * 7) - 3 + size) % size;
+        var py = (cy + Math.floor(rand() * 7) - 3 + size) % size;
+        var w = rand() < 0.5 ? 1 : 2;
+        ctx.fillStyle = whCss(tone, jitter, rand);
+        ctx.fillRect(px, py, w, w);
+      }
+    }
+    // scattered pebbles + dark grain
+    for (var g = 0; g < 260; g++) {
+      ctx.fillStyle = whCss(rand() < 0.35 ? pebble : dirtDark, 8, rand);
+      var gw = rand() < 0.85 ? 1 : 2;
+      ctx.fillRect(Math.floor(rand() * size), Math.floor(rand() * size), gw, gw);
+    }
+    // soft darker edges (u extremes) so the strip blends into the mud ground
+    var edgeW = 9;
+    ctx.globalAlpha = 0.35;
+    ctx.fillStyle = whCss(dirtDark, 0, rand);
+    ctx.fillRect(0, 0, edgeW, size);
+    ctx.fillRect(size - edgeW, 0, edgeW, size);
+    ctx.globalAlpha = 1;
+    return canvas;
+  }
+
+  function buildDirtPath(regionId) {
+    var DP = CFG.world.dirtPath;
+    if (!DP || DP.regionId !== regionId) return null;
+    // strip geometry in world space: per-segment quads along the sway curve,
+    // v UV accumulates by arc length so the texture flows along the path.
+    var segLen = 6;
+    var zFrom = DP.zFrom, zTo = DP.zTo, hw = DP.halfWidth;
+    var span = zFrom - zTo;
+    var segCount = Math.ceil(span / segLen);
+    var positions = [];
+    var uvs = [];
+    var indices = [];
+    var arc = 0;
+    var pxPrev = null, pzPrev = null;
+    for (var s = 0; s <= segCount; s++) {
+      var zz = zFrom - Math.min(span, s * segLen);
+      var cx = DP.swayAmp * Math.sin(2 * Math.PI * (zz - DP.zFrom) / DP.swayPeriod);
+      var nx = 0, nz = 1;
+      if (pxPrev !== null) {
+        var dx = cx - pxPrev, dz = zz - pzPrev;
+        var len = Math.sqrt(dx * dx + dz * dz) || 1;
+        nx = dz / len; nz = -dx / len;    // left normal in XZ
+        arc += len;
+      }
+      pxPrev = cx; pzPrev = zz;
+      // v0 = c - n*hw, v1 = c + n*hw; uv u spans repeatAcrossWidth tiles
+      positions.push(cx - nx * hw, DP.y, zz - nz * hw,
+                     cx + nx * hw, DP.y, zz + nz * hw);
+      uvs.push(0, arc / DP.tileLengthMeters,
+               DP.repeatAcrossWidth, arc / DP.tileLengthMeters);
+      if (s > 0) {
+        var b = s * 2;
+        // winding: CCW seen from +y so face normals point UP
+        indices.push(b - 2, b, b - 1,  b - 1, b, b + 1);
+      }
+    }
+    var geo = new THREE.BufferGeometry();
+    geo.setAttribute('position',
+      new THREE.BufferAttribute(new Float32Array(positions), 3));
+    geo.setAttribute('uv',
+      new THREE.BufferAttribute(new Float32Array(uvs), 2));
+    geo.setIndex(indices);
+    geo.computeVertexNormals();
+    var tex = new THREE.CanvasTexture(buildDirtPathCanvas());
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.magFilter = THREE.NearestFilter;
+    tex.minFilter = THREE.NearestMipmapLinearFilter;
+    tex.generateMipmaps = true;
+    tex.colorSpace = THREE.SRGBColorSpace;
+    var caps = window.WH_GAME && window.WH_GAME.renderer &&
+      window.WH_GAME.renderer.capabilities;
+    tex.anisotropy = Math.min(4, caps ? caps.getMaxAnisotropy() : 4);
+    var mat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      map: tex,
+      roughness: 1.0, metalness: 0.0, side: THREE.DoubleSide,
+      // decal recipe: same y as the ground would z-fight; offset + 0.02 lift
+      polygonOffset: true,
+      polygonOffsetFactor: -1,
+      polygonOffsetUnits: -1
+    });
+    var mesh = new THREE.Mesh(geo, mat);
+    mesh.name = 'dirt-path';
+    return mesh;
+  }
+
   // ---- Live region manager (THREE scene wiring) ------------------------------
 
   function RegionManager(scene, enemyStateRestoreCb) {
@@ -510,6 +624,11 @@
       mist.name = 'mist-plane';
       group.add(mist);
     }
+
+    // 10-03 change order 2: dirt path ribbon (visual only, region-gated by
+    // CFG.world.dirtPath.regionId; no collider, polygon-offset decal).
+    var dirtPath = buildDirtPath(regionId);
+    if (dirtPath) group.add(dirtPath);
 
     // props from manifest
     var regionCfg = region.cfg;

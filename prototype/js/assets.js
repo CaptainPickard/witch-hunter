@@ -24,9 +24,7 @@
     cemeteryGate: 'art-direction/3d/assets/biome_library/m1-pixelated.glb',
     picketFence: 'art-direction/3d/assets/biome_library/m2-pixelated.glb',
     mourningStatue: 'art-direction/3d/assets/biome_library/m3-pixelated.glb',
-    livingOak: 'art-direction/3d/assets/biome_library/m4-pixelated.glb',
     yewTree: 'art-direction/3d/assets/biome_library/m5-pixelated.glb',
-    witchwoodTree: 'art-direction/3d/assets/biome_library/m6-pixelated.glb',
     fallenLog: 'art-direction/3d/assets/biome_library/m7-pixelated.glb',
     treeStump: 'art-direction/3d/assets/biome_library/m8-pixelated.glb',
     mossBoulder: 'art-direction/3d/assets/biome_library/m9-pixelated.glb',
@@ -36,7 +34,6 @@
 
     // church-kit props + trees
     lanternPost: 'art-direction/3d/assets/church-kit/lantern-post-pixelated.glb',
-    deadTree: 'art-direction/3d/assets/church-kit/dead-tree-pixelated.glb',
     rubblePile: 'art-direction/3d/assets/church-kit/rubble-pile-pixelated.glb',
     churchArchway: 'art-direction/3d/assets/church-kit/church-archway-pixelated.glb',
     churchCornerButtress: 'art-direction/3d/assets/church-kit/church-corner-buttress-pixelated.glb',
