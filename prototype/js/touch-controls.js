@@ -24,6 +24,7 @@
   var rootEl = null;        // #wh-touch-layer
   var toggleEl = null;      // #wh-touch-toggle (right edge, z 45)
   var editBarEl = null;     // edit toolbar (lock, +/- scale, reset, done)
+  var lockChipEl = null;    // always-visible lock chip (re-enter edit mode)
   var controls = {};        // name -> { el, nub }
   var order = ['stick', 'cam', 'sprint', 'attack', 'lockon', 'dodge', 'block'];
   var GAME_KEYS = {
@@ -93,6 +94,16 @@
     '#wh-touch-toggle:hover { border-color: #c9a94a; }',
     '#wh-touch-toggle.active { border-color: #d8b24a; color: #e3d27a;',
     '  box-shadow: 0 0 10px rgba(216, 178, 74, 0.4); }',
+
+    '#wh-touch-lockchip {',
+    '  position: fixed; right: 8px; top: calc(50% + 48px);',
+    '  width: 40px; height: 40px; border-radius: 50%;',
+    '  border: 2px solid #5a5344; background: rgba(20, 17, 14, 0.8);',
+    '  color: #d8d2c0; font: 700 18px/36px monospace; text-align: center;',
+    '  z-index: 45; cursor: pointer; user-select: none;',
+    '  -webkit-user-select: none; touch-action: none; pointer-events: auto;',
+    '}',
+    '#wh-touch-lockchip:hover { border-color: #c9a94a; }',
 
     '#wh-touch-layer {',
     '  position: fixed; inset: 0; z-index: 40; pointer-events: none;',
@@ -238,9 +249,45 @@
     if (visible) hide(); else show();
   }
 
+  // Persistent lock chip (Nicko 10-03): the edit bar only existed on the
+  // auto-edit first show, so once a layout was saved there was NO way back
+  // into edit mode and no lock visual at all. This chip always sits under
+  // the toggle whenever the layer is visible; it re-opens edit mode.
+  function buildLockChip() {
+    if (lockChipEl) return;
+    lockChipEl = el('div');
+    lockChipEl.id = 'wh-touch-lockchip';
+    lockChipEl.textContent = UNLOCKED_GLYPH;
+    lockChipEl.title = 'Edit controls: move / scale / lock';
+    document.body.appendChild(lockChipEl);
+    ['mousedown', 'contextmenu'].forEach(function (t) {
+      lockChipEl.addEventListener(t, function (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+      });
+    });
+    lockChipEl.addEventListener('pointerdown', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (!visible) show();
+      setEditMode(true);        // edit bar returns; unlock to drag
+    });
+    lockChipEl.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+    });
+  }
+
+  function removeLockChip() {
+    if (!lockChipEl) return;
+    lockChipEl.parentNode.removeChild(lockChipEl);
+    lockChipEl = null;
+  }
+
   function show() {
     buildToggle();
     buildControls();
+    buildLockChip();          // Nicko 10-03: edit-mode door always visible
     rootEl.style.display = '';
     visible = true;
     toggleEl.classList.add('active');
@@ -257,6 +304,7 @@
     if (rootEl) rootEl.style.display = 'none';
     visible = false;
     if (toggleEl) toggleEl.classList.remove('active');
+    removeLockChip();         // chip belongs to the visible layer only
     setEditMode(false);
     releaseAll();
     saveState();
