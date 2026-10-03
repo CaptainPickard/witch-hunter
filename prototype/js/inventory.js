@@ -267,7 +267,8 @@
       v.root.classList.toggle('filled', !!s);
       v.root.classList.toggle('selected', i === this.selected && !!s);
       v.glyph.textContent = d ? d.glyph : '';
-      v.count.textContent = s && s.count > 1 ? String(s.count) : '';
+      // count on every stackable item (x1 included); gear (cap 1) shows none
+      v.count.textContent = s && stackCapOf(s.id) > 1 ? String(s.count) : '';
     }
     if (this.tipSlot >= 0) this.fillTip(this.tipSlot);
   };
