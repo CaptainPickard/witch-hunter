@@ -98,7 +98,10 @@
 
   var cache = {};      // logical name -> ground-aligned THREE.Group template
   var clips = {};      // logical character name -> shared AnimationClip objects
-  var CHARACTERS = { playerBody: true, banditBody: true, ghoulBody: true };
+  // value = expected clip count (load sanity check). Order B: playerBody's
+  // combat-chain.glb legitimately holds 9 (6 whanim1 + WH_SlashR2L /
+  // WH_SlashL2R / WH_Thrust) - the old flat "6" warned on every boot.
+  var CHARACTERS = { playerBody: 9, banditBody: 6, ghoulBody: 6 };
   var failed = {};     // logical name -> true (stand-in substituted)
   var loadedCount = 0;
   var GROUND_META = {}; // holder uuid -> measured height, width, raw groundMinY
@@ -325,9 +328,9 @@
         var root = v.gltf.scene;
         if (CHARACTERS[name]) {
           clips[name] = v.gltf.animations || [];
-          if (clips[name].length !== 6) {
-            console.warn('[WH assets] expected 6 clips for ' + name + ', got ' +
-              clips[name].length);
+          if (clips[name].length !== CHARACTERS[name]) {
+            console.warn('[WH assets] expected ' + CHARACTERS[name] + ' clips for ' +
+              name + ', got ' + clips[name].length);
           }
         }
         prepTemplate(root, isPixelated);
