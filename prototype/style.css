@@ -648,6 +648,36 @@ html, body {
   color: #8a7f70;
 }
 
+/* Order B: INV open/close button (bottom-left; left/bottom inline from
+   CONFIG.inventoryUI.openButton). Above the modal (20) and the touch
+   layer's toggle (45) so it stays clickable in every state. */
+#wh-inv-btn {
+  position: fixed;
+  z-index: 46;
+  min-width: 44px;
+  height: 30px;
+  padding: 0 8px;
+  font-family: monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #c9bf9f;
+  background: #1a1510;
+  border: 2px solid #4a4034;
+  box-shadow: 0 0 0 2px #14110e, inset 0 0 0 1px #2a231b;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+#wh-inv-btn:hover {
+  border-color: #c9a94a;
+}
+
+#wh-inv-btn.active {
+  color: #e3d27a;
+  border-color: #d8b24a;
+}
+
 /* toast: "Dropped Bandage x1" / "Inventory full" */
 #wh-toast {
   position: absolute;

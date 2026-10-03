@@ -232,6 +232,35 @@
     this.toastEl.id = 'wh-toast';
     document.getElementById('wh-hud').appendChild(this.toastEl);
 
+    // Order B: clickable open/close button (same toggle as the I key).
+    // Body-level + above the modal so it also closes the screen. Activates
+    // on pointerdown (mouse AND touch, the touch-toggle pattern) and
+    // swallows the mouse events so the player's document listeners never
+    // see a swing / camera drag from it.
+    var OB = UI.openButton;
+    if (OB && OB.enabled) {
+      var btn = el('button', '', OB.label);
+      btn.id = 'wh-inv-btn';
+      btn.type = 'button';
+      btn.tabIndex = -1;               // never keyboard-focused (Space = roll)
+      btn.title = 'Inventory (' + keyLabel(UI.openKey) + ')';
+      btn.style.left = OB.left + 'px';
+      btn.style.bottom = OB.bottom + 'px';
+      btn.addEventListener('pointerdown', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        self.setOpen(!self.open);
+      });
+      ['mousedown', 'mouseup', 'click', 'contextmenu'].forEach(function (t) {
+        btn.addEventListener(t, function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        });
+      });
+      document.body.appendChild(btn);
+      this.openBtn = btn;
+    }
+
     this.inv.onChange = function () { self.render(); };
     document.addEventListener('keydown', function (e) { self.onKey(e); });
     this.setTab('inventory');
@@ -267,6 +296,7 @@
     if (this.open === open) return;
     this.open = open;
     this.root.classList.toggle('open', open);
+    if (this.openBtn) this.openBtn.classList.toggle('active', open);
     if (!open) this.hideTip();
     this.render();
     if (this.onOpenChange) this.onOpenChange(open);
