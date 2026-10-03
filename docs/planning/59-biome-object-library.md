@@ -145,3 +145,119 @@ Total: 135 credits. All 9 SUCCEEDED first try, pixelation v3 pass applied.
 - Scene dressing proceeded with EXISTING inventory: M4-M9 are on disk
   and unused by the prototype; region re-skin used m1-m9 + graveyard +
   church-kit props only (see spec specs/astrabot-spec-darkwood-dressing.md).
+
+2026-10-01 (batch retry — doc 59 ordered batch, landed commit 71dae10
+on feat/world-visuals):
+| ID | Asset | Credits | Vision-QA | Tris | Path |
+|----|-------|---------|-----------|------|------|
+| M10 | Bramble thicket | 15 | PASS | 46.7k | biome_library/m10-pixelated.glb |
+| M19 | Hanging moss drape | 15 | PASS | 15.2k | biome_library/m19-pixelated.glb |
+| M20 | Mud puddle decal | 15 | PASS | 2.5k | biome_library/m20-pixelated.glb |
+| M21 | Gnarled root cluster | 15 | PASS | 5.2k | biome_library/m21-pixelated.glb |
+Total: 60 credits. All 4 SUCCEEDED first try, pixelation v3 pass applied
+(512px NEAREST + 5-bit posterize verified byte-level, normals injected).
+Notes:
+- 402 unblocked: Nicko rotated the Meshy key (now env/file-only, old
+  exposed key superseded) and topped the account to 3000 credits.
+- Submit targets (doc 61 s6 rule 2): 2000 tris M10/M19/M21, 1200 M20;
+  meshy-5 quad topology returns raw counts above (soft target).
+- Atlas-level numeric scan: 0 cyan/magenta strays, 0 white holes across
+  all four atlases; thumbnail QA 4/4 PASS (grimdark coherence check).
+- Task IDs: M10 01a0f5c2-72f5-7074-81e1-8bdb271e607e, M19 01a0f5c3-7708-
+  7416-aa6f-751c4a9632a9, M20 01a0f5c4-7974-7149-8666-e8ee889a7ca7,
+  M21 01a0f5c5-7c8b-77ae-ab84-bd094919fac6.
+- Branch note: assets committed to feat/world-visuals (worktree; dev
+  checkout owned by the blender-anim session). Runtime dressing with
+  these assets rides the world code rounds (R2 onward).
+
+2026-10-01 (B6 scatter kit, PARTIAL 5/6, commit 72752ef
+on feat/world-visuals):
+| ID | Asset | Credits | Vision-QA | Tris | Path |
+|----|-------|---------|-----------|------|------|
+| B6-bones | Bone scatter | 15 | PASS | 10.9k | biome_library/b6-bones-pixelated.glb |
+| B6-leaves | Leaf litter mat | 15 | PASS | 5.3k | biome_library/b6-leaves-pixelated.glb |
+| B6-pebbles | Pebble scatter | 15 | PASS | 3.7k | biome_library/b6-pebbles-pixelated.glb |
+| B6-stonefrags | Headstone fragments | 15 | PASS | 3.0k | biome_library/b6-stonefrags-pixelated.glb |
+| B6-mushrooms | Mushroom cluster | 15 | PASS | 3.2k | biome_library/b6-mushrooms-pixelated.glb |
+| B6-bracken | Withered bracken | 15 | FAIL-retry | (r2 in flight) | — |
+Total: 75 spent (bracken credits consumed on failed mesh; retry ref
+B6-bracken-ref-r2.png vision-QA PASS, resubmit follow-up). Retry rule:
+one retry max per doc 59 conventions.
+Refs note: B6 + B2 + B3 reference art generated this session
+(parented on darkwood-concept.jpeg), QA PASS 100%.
+
+2026-10-01 (B-tex batch, zero credits, commit 4294bef):
+| Asset | Kind | Size | Vision-QA | Path |
+|-------|------|------|-----------|------|
+| particle-ember | sprite | 70x128 | PASS | textures/particles/particle-ember.png |
+| particle-mote | sprite | 128x128 | PASS | textures/particles/particle-mote.png |
+| particle-firefly | sprite | 128x126 | PASS (retry 1; v1 had extra wisps) | textures/particles/particle-firefly.png |
+| particle-ash | sprite | 97x128 | PASS | textures/particles/particle-ash.png |
+| particle-fogpuff | sprite | 128x112 | PASS | textures/particles/particle-fogpuff.png |
+| particle-leaf | sprite | 109x128 | PASS | textures/particles/particle-leaf.png |
+| skyline-keep-ruin | alpha layer | 2048x682 | PASS (41.1% cover) | textures/skyline/skyline-keep-ruin.png |
+| skyline-ridge-watchtower | alpha layer | 2048x682 | PASS (48.1%) | textures/skyline/skyline-ridge-watchtower.png |
+| skyline-dead-treeline | alpha layer | 2048x682 | PASS (37.4%) | textures/skyline/skyline-dead-treeline.png |
+| skyline-monolith-field | alpha layer | 2048x682 | PASS (38.0%) | textures/skyline/skyline-monolith-field.png |
+Total: 0 credits (image-gen only). Particles are RGB-on-black for
+additive blending at runtime (R2+ wiring); skylines are alpha-masked
+RGBA layers for fog-wall composition. Ground decals DEFERRED to the
+code rounds: their blending (alpha vs additive vs multiply) is an R3
+render-pipeline decision per doc 61 B-tex row.
+
+2026-10-01 (B2 batch, commit e8cf53a):
+| ID | Asset | Credits | Vision-QA | Tris | Path |
+|----|-------|---------|-----------|------|------|
+| M11 | Moonbell herb | 15 | FAIL->retry r2 | 13.0k | retry ref armed |
+| M12 | Grave-moss clod | 15 | PASS | 4.1k | biome_library/m12-grave-moss-pixelated.glb |
+| M13 | Hemlock | 15 | PASS | 16.8k | biome_library/m13-hemlock-pixelated.glb |
+| M14 | Blightcap | 15 | PASS | 5.8k | biome_library/m14-blightcap-pixelated.glb |
+| M15 | Bandit campfire (LIGHT SOCKET) | 15 | PASS | 3.8k | biome_library/m15-bandit-campfire-pixelated.glb |
+| M16 | Bandit bedroll | 15 | PASS | 4.7k | biome_library/m16-bandit-bedroll-pixelated.glb |
+| M17 | Coven witch totem | 15 | PASS | 5.0k | biome_library/m17-witch-totem-pixelated.glb |
+| M18 | Glade mote shrine (EMISSIVE) | 15 | PASS | 5.3k | biome_library/m18-mote-shrine-pixelated.glb |
+(bracken retry r2: PASS, landed in same commit, 14.0k total incl.)
+M11 FAIL note: conversion shattered stem into shards + detached bell
+(ref had "faint dew" -> floating droplets). Retry ref r2 built with
+connected-structure constraints, QA PASS, submit pending.
+
+PROVIDER QUIRK (2026-10-01 ~05:20Z, meshy image-to-3d): rapid-succession
+submits in a spaced bash loop (65-70s) return HTTP 400 Bad Request with
+empty body; a SINGLE cold manual attempt moments later succeeds with
+identical payload. Evidence: chain3 fired 6 submits at 2000 target, all
+400; manual resubmit earlier succeeded first try. 19 tasks in ~50min
+preceded the failures. Rule for future batches: submit ONE task, wait
+for its pipeline to finish (or >=5 min), then submit the next; never
+queue-loop submits back-to-back. No credits consumed on 400s
+(consumed_credits stays 0 / task never created).
+
+2026-10-01 (B3 landmarks batch, commits 695efbd + 9a178f5):
+| ID | Asset | Credits | Vision-QA | Tris | Path |
+|----|-------|---------|-----------|------|------|
+| B3-spire | Ruined spire (skyline hero) | 15 | PASS | (see commit) | biome_library/b3-spire-pixelated.glb |
+| B3-gate | Mausoleum gate (chokepoint) | 15 | PASS | 9.0k | biome_library/b3-gate-pixelated.glb |
+| B3-gallows | Gallows | 15 | PASS | 6.7k | biome_library/b3-gallows-pixelated.glb |
+| B3-stones | Standing stones RING | 15 | FAIL-fused | - | UNSHIPPED (fused blob) |
+| B3-waymarker | Lantern waymarker (LIGHT SOCKET) | 15 | PASS | 7.4k | biome_library/b3-waymarker-pixelated.glb |
+| B3-shelter | Rest shelter (P1-10 anchor) | 15 | PASS | 5.8k | biome_library/b3-shelter-pixelated.glb |
+| B3-stone-single | Standing stone SINGLE (retry; ring
+     instanced at runtime 4-6x) | 15 | PASS | 4.8k | biome_library/b3-stone-single-pixelated.glb |
+Total: 105 credits (6 batch + 15 retry). 5/6 batch items pass + retry
+item passes (runtime instancing replaces the failed ring mesh).
+
+== 2026-10-01 SESSION TOTALS (asset half) ==
+- B1 retry 60cr | B6 90cr | B2 135cr (incl. retries) | B3 105cr
+  | B-tex 0cr | ref art ~20 images 0cr. Grand total: 390 credits.
+- Mesh QA record: 33 meshes/textures processed, 22 mesh sets + 10
+  B-tex landed (all v3 pixelation verified byte-level), 3 FAILs caught
+  by thumbnail QA and resolved via retry refs (bracken, moonbell) or
+  redesign+unship (stones ring -> single-stone instancing).
+- Branch: feat/world-visuals (worktree /tmp/wh-worldfeat), all pushed
+  and remote-verified through 9a178f5.
+- PARKED for next windows: B4 camp decor (240cr) + B5 gear (90cr)
+  await BOTH (a) the locked rest-space round P1-10 landing and
+  (b) Nicko's session-window ruling (their 330cr + a normal batch
+  would brush the 700/session cap).
+- Runtime wire-in of ALL landed assets = the world code rounds
+  (R2 onward), driven by the hourly finisher job once the anim
+  session lands dev.

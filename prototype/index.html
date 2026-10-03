@@ -17,11 +17,23 @@
       <div class="bar-outer" id="wh-stam-bar-outer"><div class="bar-fill stam" id="wh-stam-bar"></div></div>
     </div>
     <div id="wh-fps">FPS: 0</div>
+    <!-- 2026-10-03 pixel-fidelity tuner (change order: pixels too large):
+         F1 steps the internal buffer finer, F2 chunkier; readout pulses. -->
+    <div id="wh-res-tuner">
+      <div id="wh-res-readout"></div>
+      <div id="wh-res-hint">F1 finer pixels - F2 chunkier pixels</div>
+    </div>
     <div id="wh-region-name"></div>
     <div id="wh-gate-hint">Enter the Darkwood</div>
     <div id="wh-lock-reticle"></div>
     <div id="wh-death-overlay"><div id="wh-death-text">You died</div><div id="wh-death-sub">Respawning...</div></div>
-    <div id="wh-load-note">Loading assets...</div>
+    <!-- 2026-10-03 boot loading screen: title over a real per-asset progress
+         bar (tick count lives in js/assets.js). Replaces the bare text note. -->
+    <div id="wh-load-note">
+      <div id="wh-boot-title">Witch Hunter</div>
+      <div id="wh-boot-bar"><div id="wh-boot-bar-fill"></div></div>
+      <div id="wh-boot-sub">Loading assets...</div>
+    </div>
   </div>
 </div>
 <script src="vendor/three.classic.js"></script>
@@ -36,6 +48,7 @@
 <script src="js/player.js"></script>
 <script src="js/enemy.js"></script>
 <script src="js/region-manager.js"></script>
+<script src="js/touch-controls.js"></script>
 <script src="js/game.js"></script>
 </body>
 </html>

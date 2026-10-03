@@ -7,24 +7,91 @@ window.WH_CONFIG = {
   renderer: {
     // r185 colorspace + dark-albedo exposure (per validated Witch Hunter 3D settings)
     outputColorSpaceSRGB: true,       // renderer.outputColorSpace = SRGBColorSpace
-    toneMappingExposure: 1.6,         // lifted for dark Meshy albedo (POC)
+    toneMappingName: 'Neutral',       // R2 P0-3: Neutral tonemap (ACES fallback in game.js)
+    toneMappingExposure: 1.15,        // R2 P0-3: re-set so fog stays the brightest large area (audit)
+    // R3 P0-4: maxPixelRatio superseded by internalResDiv (setPixelRatio(1)); legacy key kept
     maxPixelRatio: 2,
+    internalResDiv: 2,                // R3 P0-4: buffer = window px / div (960x540 at 1080p), CSS upscales; 10-03 F1/F2 debug keys tune it live (1..4)
     shadowMapEnabled: false           // v1: swiftshader software render, shadows off (POC)
   },
 
   lighting: {
-    // R4: ambient fill high, keys moderate (dark albedo needs big fill)
-    ambientColor: 0x8a8fa8,
-    ambientIntensity: 4.0,            // bright ambient fill (POC, validated setting)
-    keyColor: 0xfff2dd,
-    keyIntensity: 1.2,                // moderate key
-    hemiSkyColor: 0x6b7fa8,
-    hemiGroundColor: 0x3a3a44,
-    hemiIntensity: 1.5
+    // R2 P0-3 moon-and-lantern night rig: AmbientLight removed entirely - the
+    // hemisphere is the only fill, and region.ambientLightLevel scales it
+    // (region fill = hemiBaseIntensity * ambientLightLevel). Moon = cool
+    // directional on the -z side backlighting the A->B main path. Lantern =
+    // warm PointLight parented into the player's yawFrame (left-hip anchor).
+    ambientIntensity: 0,              // P0-3: AmbientLight removed (kept for backward-compat readers; must stay 0)
+    hemiSkyColor: 0x4a5a80,           // indigo-slate sky (audit 5.3)
+    hemiGroundColor: 0x16181e,        // near-black ground (audit 5.3)
+    // 10-03 order 4 (starry night, moon-dominant): hemi fill cut so the moon
+    // directional is the main sky light; sky luminance comes from the dome.
+    hemiBaseIntensity: 0.55,          // fill at ambientLightLevel 1.0; region fill = base * level
+    moonColor: 0xa8bce6,              // cool moon (audit 5.3)
+    // 10-03 order 4: moon is now the main sky light (fill cut 1.35 -> 0.55).
+    // Directional intensity raised so moon:fill vertical ratio actually lands.
+    moonIntensity: 0.9,              // moon:fill (vertical faces) 3-5:1
+    moonAzimuthDeg: 0,                // -z side, backlights A->B main path
+    moonElevationDeg: 30,             // audit: 25-35 deg
+    lanternColor: 0xffb060,           // warm amber (audit 5.3; canon accent)
+    lanternIntensity: 6.5,            // audit 5.3: 6-8 cd class
+    lanternDistance: 12,              // audit: distance ~12
+    lanternDecay: 2,                  // physical falloff
+    lanternFlickerPct: 5,             // +-5% flicker band
+    lanternAnchor: 'left-hip',        // yawFrame-space anchor
+    lanternAnchorOffset: [-0.32, 0.95, 0.08], // tuned starting anchor
+    // 10-03 order 4: 1.15x base fill for B (darker Darkwood); region A uses 1.0
+    regionBFillMult: 1.15
+  },
+
+  // 10-03 order 4: starry night sky (game.js setupSky). Dome ignores fog;
+  // scene.background goes near-black so fog color no longer lights the world.
+  sky: {
+    domeRadius: 400,                  // beyond ground disc, inside camera far 500
+    zenithColor: 0x070a18,            // deep night indigo
+    horizonBand: 0x2b3350,            // faint band where fog meets sky
+    horizonGlow: 0x8f98ad,            // pale ash highlight (fog-color kin, low band)
+    horizonGlowStop: 0.16,            // glow fade fraction from horizon upward
+    starCount: 600,
+    starSizeMin: 1.2,                 // px at internal res
+    starSizeMax: 2.6,
+    starColors: [0xcfd8e8, 0xaebad0, 0xe8ecf4, 0x9fb2d8],
+    twinklePct: 12,                   // fraction of stars that twinkle slowly
+    moonAzimuthDeg: 0,                // matches lighting.moon (directional -z)
+    moonElevationDeg: 30,
+    moonDistance: 330,                // on the dome, inside camera far
+    moonSizePx: 64,                   // angular size at dome distance
+    moonColor: 0xdfe7f2,
+    moonGlowColor: 0xa8bce6
+  },
+
+  // R2: fixed pool of PointLights (P1-8) - nearest-socket handoff, no per-frame allocation.
+  lightPool: {
+    size: 4,
+    color: 0xffc27a,
+    distance: 11,
+    decay: 2,
+    handoffFadeSec: 0.35,   // intensity fade time constant on handoff
+    minIntensityFloor: 0.0  // unused slot = 0 intensity, never removed
+  },
+  // P1-8: CONFIG assets whose props host a light socket (fixed pool hooks
+  // these, nearest to the player wins). heightFraction is up the prop's
+  // native height; intensity is the pool target when hosting the socket.
+  lightSockets: {
+    lanternPost: { heightFraction: 0.85, intensity: 1.6 },
+    banditCampfire: { heightFraction: 0.55, intensity: 2.4 },
+    lanternWaymarker: { heightFraction: 0.80, intensity: 1.8 }
   },
 
   world: {
     groundRadius: 90,                 // playable disc radius per region
+    // R5 P0-5: player + enemies are held inside groundRadius - playerMargin;
+    // the visual ground extends visualGroundFogMult * d95 past that rim, where
+    // d95 = sqrt(-ln(1 - fogOpaqueFrac)) / region fogDensity (FogExp2).
+    playerMargin: 1.5,
+    visualGroundFogMult: 1.1,
+    fogOpaqueFrac: 0.95,
+    colliderCorridorHalfDepth: 6,     // gate corridor = chokepoint x-span, boundary.z +- this
     groundColorA: 0x3d3a2c,           // dark mud/olive (darkwood canon palette)
     groundColorB: 0x232620,           // near-charcoal mud (darkwood canon palette)
     groundTexture: {                  // procedural pixel-art ground canvas (region-manager.js)
@@ -33,6 +100,20 @@ window.WH_CONFIG = {
       blotchCount: 140,               // noise blotch clusters per canvas
       mossDensity: 0.06,              // pale sickly moss accent, pixel fraction
       puddleDensity: 0.03             // near-black wet puddle specks, pixel fraction
+    },
+    // 10-03 change order 2: dirt path ribbon (region-manager buildDirtPath).
+    // Swaying centerline through the south clearing into the cemetery; visual
+    // only (no collider), pixel-art dirt canvas, repeat-wrapped along length.
+    dirtPath: {
+      regionId: 'hold_outskirts',     // build for region A only (like mistPlane)
+      zFrom: 86.0,                    // south rim start (inside playable 88.5); order 3: span ends at yard fence
+      zTo: 32.0,                      // order 3: ends AT the graveyard fence mouth
+      halfWidth: 2.7,                 // 5.4m wide
+      swayAmp: 1.6,                   // centerline x = amp*sin(2pi(z-zFrom)/period)
+      swayPeriod: 34.0,
+      y: 0.02,                        // above ground disc
+      tileLengthMeters: 3.0,          // one texture tile per 3m along the path
+      repeatAcrossWidth: 1            // one tile across (u-edge fade lands only at strip borders)
     },
     fogNearFactor: 0.25,              // fog near = radius * factor
     fogFarFactor: 1.5,                // fog far = radius * factor
@@ -50,7 +131,15 @@ window.WH_CONFIG = {
     enemies: [
       { type: 'bandit', x: -6, z: -8 },
       { type: 'bandit', x: 10, z: -14 },
-      { type: 'ghoul', x: 2, z: -30 }
+      { type: 'ghoul', x: 2, z: -23.5 },
+      { type: 'bandit', x: -54.3, z: 64.8 },
+      { type: 'ghoul', x: -23.1, z: 71.2 },
+      { type: 'bandit', x: -63.2, z: -18.0 },
+      { type: 'ghoul', x: -64.7, z: 20.5 },
+      { type: 'bandit', x: -42.6, z: 70.7 },
+      { type: 'ghoul', x: -64.9, z: 35.8 },
+      { type: 'bandit', x: -48.5, z: 39.6 },
+      { type: 'ghoul', x: 54.2, z: 74.5 },
     ],
     props: [
       { asset: 'gravestoneObelisk', x: -10, z: 20, rotY: 0.3, scale: 1.6 },
@@ -61,11 +150,9 @@ window.WH_CONFIG = {
       { asset: 'graveMound', x: 3, z: 24, rotY: 0.0, scale: 2.2 },
       { asset: 'graveMound', x: 15, z: 6, rotY: 0.4, scale: 1.8 },
       { asset: 'buriedCoffin', x: -18, z: 5, rotY: 0.9, scale: 1.7 },
+      { asset: 'yewTree', x: 29.4, z: 1.3, rotY: 3.03, scale: 6.5 },
       { asset: 'lanternPost', x: -2, z: 30, rotY: 0.0, scale: 2.4 },
       { asset: 'lanternPost', x: 4, z: -2, rotY: 0.0, scale: 2.4 },
-      { asset: 'deadTree', x: -22, z: -2, rotY: 0.5, scale: 6.5 },
-      { asset: 'deadTree', x: 20, z: 18, rotY: -0.8, scale: 6.5 },
-      { asset: 'deadTree', x: -16, z: -18, rotY: 2.1, scale: 6.5 },
       { asset: 'picketFence', x: 15.4, z: 13.2, rotY: 0.0, scale: 1.63 },
       { asset: 'picketFence', x: 12.2, z: 12.2, rotY: 0.0, scale: 1.55 },
       { asset: 'picketFence', x: -19.1, z: 10.8, rotY: 1.57, scale: 1.59 },
@@ -73,9 +160,6 @@ window.WH_CONFIG = {
       { asset: 'picketFence', x: -20.8, z: 13.3, rotY: 1.57, scale: 1.57 },
       { asset: 'ironFenceSection', x: -5.6, z: 28.9, rotY: 1.65, scale: 1.33 },
       { asset: 'ironFenceSection', x: -7.6, z: 31.1, rotY: 3.54, scale: 1.36 },
-      { asset: 'deadTree', x: 26.0, z: 9.0, rotY: 4.24, scale: 6.5 },
-      { asset: 'livingOak', x: -27.8, z: -19.9, rotY: 1.8, scale: 6.5 },
-      { asset: 'yewTree', x: 29.4, z: 1.3, rotY: 3.03, scale: 6.5 },
       { asset: 'mossBoulder', x: 17.2, z: -9.0, rotY: 5.46, scale: 1.37 },
       { asset: 'mossBoulder', x: -24.4, z: 23.0, rotY: 0.73, scale: 1.34 },
       { asset: 'treeStump', x: 7.2, z: 18.4, rotY: 6.18, scale: 1.14 },
@@ -97,6 +181,104 @@ window.WH_CONFIG = {
       { asset: 'buriedCoffin', x: 6.5, z: 12.5, rotY: 0.4, scale: 1.5 },
       { asset: 'mossBoulder', x: -20.5, z: -12.5, rotY: 4.4, scale: 1.15 },
       { asset: 'treeStump', x: 20.5, z: 2.5, rotY: 3.1, scale: 1.1 }
+ ,
+
+      // 10-03 change order 2: dirt-path lantern chain (every ~12m along the
+      // path; joins existing posts at z 30 and z -2; fixed light pool auto-hooks)
+      { asset: 'lanternPost', x: 5.04, z: 62.0, rotY: 0.0, scale: 2.4 },
+      { asset: 'lanternPost', x: -3.36, z: 51.0, rotY: 0.0, scale: 2.4 },
+      { asset: 'lanternPost', x: 2.6, z: 39.5, rotY: 0.0, scale: 2.4 },
+      // order 3 forest (10-03): ring around graveyard (outside),
+      // path alley, rim fill, dead accents - mixed healthy species
+      { asset: 'yewTree', x: 10.09, y: 0.00, z: 39.59, rotY: 0.90, scale: 9.17 },
+      { asset: 'yewTree', x: 13.43, y: 0.00, z: 36.39, rotY: 3.25, scale: 9.46 },
+      { asset: 'witchwoodTree', x: 19.45, y: 0.00, z: 32.88, rotY: 1.91, scale: 10.41 },
+      { asset: 'yewTree', x: 22.95, y: 0.00, z: 26.82, rotY: 4.36, scale: 9.16 },
+      { asset: 'yewTree', x: 27.04, y: 0.00, z: 25.77, rotY: 4.36, scale: 9.65 },
+      { asset: 'yewTree', x: 25.71, y: 0.00, z: 21.17, rotY: 5.30, scale: 8.52 },
+      { asset: 'yewTree', x: 29.51, y: 0.00, z: 18.91, rotY: 4.30, scale: 9.70 },
+      { asset: 'yewTree', x: 28.16, y: 0.00, z: 14.60, rotY: 0.28, scale: 9.64 },
+      { asset: 'livingOak', x: 30.87, y: 1.57, z: 7.31, rotY: 4.33, scale: 9.82 },
+      { asset: 'yewTree', x: 26.52, y: 0.00, z: -3.92, rotY: 3.01, scale: 9.90 },
+      { asset: 'witchwoodTree', x: 21.93, y: 0.00, z: -10.21, rotY: 5.88, scale: 9.87 },
+      { asset: 'yewTree', x: 17.79, y: 0.00, z: -11.16, rotY: 2.92, scale: 9.73 },
+      { asset: 'yewTree', x: -6.20, y: 0.00, z: -17.34, rotY: 1.52, scale: 10.05 },
+      { asset: 'yewTree', x: -12.93, y: 0.00, z: -17.42, rotY: 5.83, scale: 10.75 },
+      { asset: 'witchwoodTree', x: -14.29, y: 0.00, z: -12.52, rotY: 1.90, scale: 8.82 },
+      { asset: 'yewTree', x: -24.43, y: 0.00, z: -8.01, rotY: 2.41, scale: 8.73 },
+      { asset: 'witchwoodTree', x: -24.57, y: 0.00, z: -3.33, rotY: 4.43, scale: 10.10 },
+      { asset: 'yewTree', x: -26.77, y: 0.00, z: 2.16, rotY: 0.50, scale: 8.78 },
+      { asset: 'yewTree', x: -27.54, y: 0.00, z: 6.47, rotY: 0.41, scale: 10.35 },
+      { asset: 'livingOak', x: -29.75, y: 1.63, z: 10.41, rotY: 5.62, scale: 10.19 },
+      { asset: 'livingOak', x: -28.27, y: 1.71, z: 16.41, rotY: 5.56, scale: 10.66 },
+      { asset: 'livingOak', x: -29.82, y: 1.60, z: 20.75, rotY: 6.07, scale: 9.99 },
+      { asset: 'livingOak', x: -26.92, y: 1.51, z: 24.25, rotY: 6.16, scale: 9.42 },
+      { asset: 'livingOak', x: -26.15, y: 1.51, z: 28.48, rotY: 1.12, scale: 9.42 },
+      { asset: 'yewTree', x: -21.42, y: 0.00, z: 29.64, rotY: 2.49, scale: 9.68 },
+      { asset: 'witchwoodTree', x: -20.77, y: 0.00, z: 34.44, rotY: 1.53, scale: 9.91 },
+      { asset: 'yewTree', x: -16.38, y: 0.00, z: 33.81, rotY: 5.21, scale: 8.51 },
+      { asset: 'yewTree', x: -14.60, y: 0.00, z: 38.65, rotY: 4.31, scale: 9.54 },
+      { asset: 'yewTree', x: -9.91, y: 0.00, z: 36.97, rotY: 1.14, scale: 9.72 },
+      { asset: 'yewTree', x: 23.78, y: 0.00, z: 31.00, rotY: 4.33, scale: 8.81 },
+      { asset: 'livingOak', x: 17.93, y: 1.69, z: 36.83, rotY: 0.95, scale: 10.54 },
+      { asset: 'yewTree', x: -9.10, y: 0.00, z: 41.16, rotY: 2.50, scale: 8.98 },
+      { asset: 'witchwoodTree', x: 22.57, y: 0.00, z: -5.39, rotY: 4.20, scale: 10.43 },
+      { asset: 'yewTree', x: -31.91, y: 0.00, z: 28.49, rotY: 6.17, scale: 10.74 },
+      { asset: 'livingOak', x: 24.50, y: 1.41, z: 39.30, rotY: 3.87, scale: 8.80 },
+      { asset: 'witchwoodTree', x: -28.80, y: 0.00, z: -6.55, rotY: 0.83, scale: 8.67 },
+      { asset: 'livingOak', x: -33.27, y: 1.53, z: 14.18, rotY: 2.82, scale: 9.58 },
+      { asset: 'livingOak', x: -17.59, y: 1.56, z: -20.61, rotY: 6.06, scale: 9.72 },
+      { asset: 'livingOak', x: -33.41, y: 1.43, z: 6.92, rotY: 6.09, scale: 8.92 },
+      { asset: 'yewTree', x: 18.49, y: 0.00, z: -20.26, rotY: 0.73, scale: 9.43 },
+      { asset: 'yewTree', x: -15.56, y: 0.00, z: 44.39, rotY: 4.45, scale: 9.08 },
+      { asset: 'witchwoodTree', x: -21.84, y: 0.00, z: 41.43, rotY: 3.70, scale: 8.53 },
+      { asset: 'yewTree', x: 12.06, y: 0.00, z: 44.64, rotY: 1.05, scale: 10.24 },
+      { asset: 'witchwoodTree', x: 27.83, y: 0.00, z: -10.74, rotY: 5.68, scale: 8.65 },
+      { asset: 'yewTree', x: 27.72, y: 0.00, z: 33.52, rotY: 5.85, scale: 9.50 },
+      { asset: 'yewTree', x: -28.62, y: 0.00, z: -13.03, rotY: 4.86, scale: 8.55 },
+      { asset: 'yewTree', x: 6.93, y: 0.00, z: 82.72, rotY: 1.45, scale: 10.21 },
+      { asset: 'yewTree', x: -10.12, y: 0.00, z: 77.36, rotY: 3.54, scale: 10.09 },
+      { asset: 'yewTree', x: -8.48, y: 0.00, z: 70.95, rotY: 3.89, scale: 10.29 },
+      { asset: 'yewTree', x: 8.55, y: 0.00, z: 73.01, rotY: 0.60, scale: 9.88 },
+      { asset: 'youngAsh', x: 8.91, y: 0.95, z: 64.05, rotY: 1.62, scale: 9.51 },
+      { asset: 'youngAsh', x: -7.85, y: 0.90, z: 59.98, rotY: 4.10, scale: 8.95 },
+      { asset: 'yewTree', x: 10.33, y: 0.00, z: 54.25, rotY: 1.08, scale: 9.79 },
+      { asset: 'yewTree', x: -9.62, y: 0.00, z: 47.00, rotY: 2.10, scale: 9.98 },
+      { asset: 'yewTree', x: 8.60, y: 0.00, z: 33.51, rotY: 4.98, scale: 10.12 },
+      { asset: 'yewTree', x: 57.04, y: 0.00, z: -15.79, rotY: 2.90, scale: 9.27 },
+      { asset: 'yewTree', x: -59.24, y: 0.00, z: -0.74, rotY: 2.93, scale: 9.73 },
+      { asset: 'yewTree', x: 60.96, y: 0.00, z: 56.50, rotY: 6.11, scale: 9.80 },
+      { asset: 'yewTree', x: -57.78, y: 0.00, z: 59.64, rotY: 2.87, scale: 9.29 },
+      { asset: 'yewTree', x: -41.08, y: 0.00, z: 21.82, rotY: 4.32, scale: 9.33 },
+      { asset: 'yewTree', x: 60.10, y: 0.00, z: 31.08, rotY: 1.40, scale: 9.58 },
+      { asset: 'yewTree', x: 16.57, y: 0.00, z: 73.83, rotY: 1.37, scale: 9.70 },
+      { asset: 'yewTree', x: -52.83, y: 0.00, z: 10.61, rotY: 5.48, scale: 9.20 },
+      { asset: 'yewTree', x: 32.79, y: 0.00, z: 43.69, rotY: 1.16, scale: 9.12 },
+      { asset: 'yewTree', x: 70.05, y: 0.00, z: 25.87, rotY: 3.84, scale: 10.48 },
+      { asset: 'yewTree', x: 81.14, y: 0.00, z: -1.12, rotY: 0.50, scale: 9.25 },
+      { asset: 'yewTree', x: 65.62, y: 0.00, z: -18.16, rotY: 2.96, scale: 8.96 },
+      { asset: 'yewTree', x: -52.77, y: 0.00, z: 24.81, rotY: 3.24, scale: 10.59 },
+      { asset: 'yewTree', x: -67.03, y: 0.00, z: -13.59, rotY: 5.40, scale: 10.35 },
+      { asset: 'yewTree', x: 45.49, y: 0.00, z: 69.52, rotY: 5.29, scale: 9.06 },
+      { asset: 'yewTree', x: 63.12, y: 0.00, z: -7.81, rotY: 4.66, scale: 10.46 },
+      { asset: 'yewTree', x: 59.89, y: 0.00, z: 40.01, rotY: 1.88, scale: 9.53 },
+      { asset: 'yewTree', x: -67.76, y: 0.00, z: 40.30, rotY: 0.76, scale: 10.22 },
+      { asset: 'yewTree', x: -70.13, y: 0.00, z: 1.49, rotY: 0.38, scale: 9.85 },
+      { asset: 'yewTree', x: -36.08, y: 0.00, z: 64.13, rotY: 0.08, scale: 8.52 },
+      { asset: 'yewTree', x: 69.01, y: 0.00, z: 9.89, rotY: 5.47, scale: 10.26 },
+      { asset: 'yewTree', x: -78.76, y: 0.00, z: 2.67, rotY: 3.41, scale: 10.39 },
+      { asset: 'yewTree', x: -39.99, y: 0.00, z: 41.03, rotY: 1.04, scale: 9.43 },
+      { asset: 'yewTree', x: -17.37, y: 0.00, z: 54.75, rotY: 2.74, scale: 8.35 },
+      { asset: 'yewTree', x: -32.98, y: 0.00, z: 74.52, rotY: 3.10, scale: 9.64 },
+      { asset: 'yewTree', x: 67.57, y: 0.00, z: 1.41, rotY: 3.78, scale: 8.71 },
+      { asset: 'deadTree', x: 50.59, y: 0.00, z: 51.57, rotY: 6.05, scale: 8.18 },
+      { asset: 'deadTree', x: 50.76, y: 0.00, z: 5.13, rotY: 5.28, scale: 8.50 },
+      { asset: 'deadTree', x: 47.13, y: 0.00, z: -7.95, rotY: 3.05, scale: 8.41 },
+      { asset: 'deadTree', x: -42.33, y: 0.00, z: -9.63, rotY: 5.02, scale: 8.95 },
+      // 10-03 change order 2: darkwood forest ring - yew alley flanking the
+      // dirt path, arc around the cemetery, rim scatter (trunk colliders are
+      // automatic since R5; placement enforces spawn/enemy/corridor/path/prop
+      // clearances; deterministic seed 20261003)
     ]
   },
 
@@ -114,36 +296,36 @@ window.WH_CONFIG = {
       { type: 'bandit', x: 0, z: -60 }
     ],
     props: [
-      { asset: 'livingOak', x: 6.2, z: -46.4, rotY: 0.44, scale: 7.25 },
+      { asset: 'livingOak', y: 1.28, x: 6.2, z: -46.4, rotY: 0.44, scale: 8.0 },
       { asset: 'witchwoodTree', x: -31.2, z: -50.3, rotY: 3.15, scale: 8.6 },
-      { asset: 'livingOak', x: 25.2, z: -73.8, rotY: 2.69, scale: 7.45 },
-      { asset: 'livingOak', x: -31.1, z: -68.7, rotY: 5.13, scale: 8.43 },
+      { asset: 'livingOak', y: 1.28, x: 25.2, z: -73.8, rotY: 2.69, scale: 8.0 },
+      { asset: 'livingOak', y: 1.35, x: -31.1, z: -68.7, rotY: 5.13, scale: 8.43 },
       { asset: 'witchwoodTree', x: 19.0, z: -54.7, rotY: 4.18, scale: 8.28 },
       { asset: 'witchwoodTree', x: -10.9, z: -55.8, rotY: 4.43, scale: 10.43 },
-      { asset: 'livingOak', x: -22.3, z: -59.2, rotY: 1.82, scale: 9.0 },
+      { asset: 'livingOak', y: 1.44, x: -22.3, z: -59.2, rotY: 1.82, scale: 9.0 },
       { asset: 'deadTree', x: 35.5, z: -52.1, rotY: 2.09, scale: 9.85 },
-      { asset: 'witchwoodTree', x: -18.1, z: -35.6, rotY: 0.99, scale: 7.38 },
+      { asset: 'witchwoodTree', x: -18.1, z: -35.6, rotY: 0.99, scale: 8.0 },
       { asset: 'deadTree', x: -9.1, z: -35.8, rotY: 2.13, scale: 8.0 },
       { asset: 'yewTree', x: 21.9, z: -55.6, rotY: 5.57, scale: 8.38 },
-      { asset: 'deadTree', x: 28.8, z: -55.3, rotY: 0.33, scale: 7.62 },
+      { asset: 'deadTree', x: 28.8, z: -55.3, rotY: 0.33, scale: 8.0 },
       { asset: 'yewTree', x: -31.3, z: -43.3, rotY: 3.91, scale: 10.4 },
-      { asset: 'deadTree', x: 31.4, z: -48.7, rotY: 0.61, scale: 7.33 },
+      { asset: 'deadTree', x: 31.4, z: -48.7, rotY: 0.61, scale: 8.0 },
       { asset: 'yewTree', x: 19.4, z: -66.5, rotY: 1.34, scale: 9.18 },
-      { asset: 'deadTree', x: -23.0, z: -47.8, rotY: 0.13, scale: 8.45 },
-      { asset: 'witchwoodTree', x: -29.1, z: -72.5, rotY: 4.72, scale: 6.78 },
+      { asset: 'yewTree', x: -23.0, z: -47.8, rotY: 0.13, scale: 8.45 },
+      { asset: 'witchwoodTree', x: -29.1, z: -72.5, rotY: 4.72, scale: 8.0 },
       { asset: 'yewTree', x: 13.4, z: -70.9, rotY: 4.67, scale: 9.43 },
       { asset: 'deadTree', x: -20.5, z: -42.5, rotY: 4.19, scale: 8.05 },
-      { asset: 'livingOak', x: -23.0, z: -39.2, rotY: 5.43, scale: 6.92 },
+      { asset: 'livingOak', y: 1.28, x: -23.0, z: -39.2, rotY: 5.43, scale: 8.0 },
       { asset: 'yewTree', x: -37.4, z: -47.4, rotY: 3.99, scale: 8.12 },
-      { asset: 'livingOak', x: 23.5, z: -37.4, rotY: 4.81, scale: 7.55 },
-      { asset: 'deadTree', x: 36.4, z: -37.1, rotY: 3.3, scale: 7.05 },
+      { asset: 'livingOak', y: 1.28, x: 23.5, z: -37.4, rotY: 4.81, scale: 8.0 },
+      { asset: 'deadTree', x: 36.4, z: -37.1, rotY: 3.3, scale: 8.0 },
       { asset: 'witchwoodTree', x: -7.4, z: -41.5, rotY: 5.92, scale: 10.02 },
       { asset: 'yewTree', x: 27.7, z: -49.3, rotY: 2.97, scale: 9.75 },
       { asset: 'yewTree', x: 24.0, z: -61.4, rotY: 3.8, scale: 9.7 },
-      { asset: 'witchwoodTree', x: 7.8, z: -38.4, rotY: 2.24, scale: 8.0 },
+      { asset: 'yewTree', x: 7.8, z: -38.4, rotY: 2.24, scale: 8.0 },
       { asset: 'yewTree', x: 15.1, z: -49.5, rotY: 4.85, scale: 7.45 },
       { asset: 'deadTree', x: -31.1, z: -74.8, rotY: 0.61, scale: 8.68 },
-      { asset: 'livingOak', x: -22.9, z: -71.1, rotY: 0.72, scale: 7.82 },
+      { asset: 'livingOak', y: 1.28, x: -22.9, z: -71.1, rotY: 0.72, scale: 8.0 },
       { asset: 'witchwoodTree', x: 29.8, z: -76.9, rotY: 0.5, scale: 9.68 },
       { asset: 'witchwoodTree', x: -28.4, z: -79.9, rotY: 4.96, scale: 9.8 },
       { asset: 'deadTree', x: -16.0, z: -76.7, rotY: 3.09, scale: 9.45 },
@@ -173,7 +355,10 @@ window.WH_CONFIG = {
       { asset: 'gravestoneObelisk', x: 13.1, z: -41.5, rotY: 3.73, scale: 1.38 },
       { asset: 'gravestoneObelisk', x: 20.1, z: -40.0, rotY: 0.14, scale: 1.38 },
       { asset: 'stoneCrossTilted', x: -13.5, z: -36.6, rotY: 5.5, scale: 1.22 },
-      { asset: 'stoneCrossTilted', x: 18.0, z: -43.1, rotY: 6.16, scale: 1.6 }
+      { asset: 'stoneCrossTilted', x: 18.0, z: -43.1, rotY: 6.16, scale: 1.6 },
+      // R2: darkwood light-socket props (doc 61 batches B2/B3)
+      { asset: 'banditCampfire', x: 2.5, z: -52, rotY: 0.0, scale: 1.8 },
+      { asset: 'lanternWaymarker', x: -6.5, z: -47, rotY: 1.1, scale: 1.9 }
     ]
   },
 
@@ -217,12 +402,8 @@ window.WH_CONFIG = {
     rollDuration: 0.45,               // seconds
     rollIFrameWindow: 0.35,           // seconds of i-frames within a roll
     rollStaminaCost: 25.0,
-    attackDuration: 0.5,
-    attackStaminaCost: 15.0,
-    attackRange: 3.2,
-    attackArcHalfAngleDeg: 70,        // swing arc half-angle
-    attackDamage: 34,                 // (POC) from doc 33 one-hand band
-    attackDamageGhoulBonus: 1.15,
+    // 10-04: player attack timing/damage/sweep/stamina moved to
+    // CONFIG.moveset.weapons[*].moves (per-weapon moveset framework).
     staminaMax: 100.0,                // (doc 33 band)
     staminaRegenPerSec: 28.0,
     staminaRegenDelay: 0.6,           // seconds after spend before regen resumes
@@ -237,9 +418,11 @@ window.WH_CONFIG = {
     camPitchMinDeg: -15,
     camPitchMaxDeg: 65,
     camHeight: 2.6,
+    camGroundClearance: 0.4,          // R5 P0-5: camera y floor over the ground (y = 0)
+    camPitchDistShrink: 0.35,         // R5: cap = camMaxDistance * (1 - k * max(0, sin pitch))
     camFollowLerp: 12.0,              // per-second lerp factor
-    camAutoFollowDelay: 1.2,          // seconds after manual drag before auto-follow resumes
-    camAutoFollowRate: 2.5,           // per-second exp lerp for auto yaw follow
+    // 10-04 (Nicko): movement auto-follow keys removed - camera yaw is
+    // manual-only (mouse drag / camera joystick); lock-on has its own framing.
     mouseSensDegPerPx: 0.25,
     respawnDelay: 2.2,                 // seconds on death screen before respawn
     // v7: focus pool (spells spend Focus, weapons spend Stamina)
@@ -358,7 +541,9 @@ window.WH_CONFIG = {
   hud: {
     regionNameFadeSeconds: 2.6,
     deathFadeSeconds: 0.8,
-    fpsUpdateInterval: 0.5
+    fpsUpdateInterval: 0.5,
+    // 2026-10-03 boot loading screen: overlay fade-out duration in ms.
+    bootOverlayFadeMs: 900
   },
 
   lockOn: {
@@ -378,21 +563,17 @@ window.WH_CONFIG = {
     runMetersPerCycle: 6,
     attackClipStrikeFraction: 0.25
   },
-  // v3: procedural animation feel. Since whanim2 the pose values drive only the
-  // rigid stand-in fallback (skinned bodies play animRt clips); the stage
-  // fractions are the combat FSM clock for both paths. Fractions are of
-  // CONFIG.player.attackDuration (recover = 1 - windupFrac - strikeFrac).
+  // v3: procedural animation feel. Since whanim2 pose values drive
+  // only the rigid stand-in fallback (skinned bodies play animRt
+  // clips; whanim2 stage fractions = combat FSM clock for both paths).
+  // 10-04: stage durations + lunge are per move in CONFIG.moveset.weapons;
+  // windup crouch / recover lean are per pose (WH_MOVESET crouch/bodyLean).
   anim: {
     attack: {
-      windupFrac: 0.30,             // of attackDuration
-      strikeFrac: 0.25,             // of attackDuration (recover = remainder)
       windupLean: -0.25,            // rad, body rotation.x lean back
-      windupCrouch: 0.06,           // root dip (units) during windup
       windupSwordRaise: 0.9,        // rad, sword rotation.z lift in windup
       strikeYawSweepDeg: 140,       // total body yaw sweep through strike
-      strikeLunge: 0.25,            // forward units along facing during strike
-      strikeSwordSweepDeg: 160,     // sword arc through strike
-      recoverLean: 0.10             // rad, forward-lean settle in recover
+      strikeSwordSweepDeg: 160      // sword arc through strike
     },
     walk: {
       bobAmp: 0.02,                 // primary vertical bob (R1 feet contact)
@@ -443,12 +624,122 @@ window.WH_CONFIG = {
 
   assets: {
     timeoutMs: 20000,                 // per-asset load timeout before stand-in substitution
-    standInColor: 0x777777
+    // Grey-stand-in resilience: rigged body loads retry on fetch/parse errors
+    // with linear backoff before the stand-in swap; 0 disables retry. Failure
+    // banner names asset + cause in console and HUD (see js/assets.js).
+    bodyRetryCount: 2,                // extra attempts per rigged body (default on)
+    bodyRetryDelayMs: 750,            // backoff base; delay = base * attempt#
+    // R4 kill switch: true swaps the 3 rigged body atlases for the committed
+    // 512px pixelated PNGs at postload; false = original 2048 atlas path.
+    pixelatedBodies: true,
+    standInColor: 0x777777,
+    // Measured weapon sizing (2026-10-03, Nicko: weapons "comically large").
+    // Targets are hand-held lengths in metres: longsword ~1.05m vs the 1.8m
+    // player, handAxe ~0.6m. scaleFor(name) divides the target by the
+    // MEASURED GROUND_META height of the loaded GLB - derived from bounds,
+    // not magic constants. weaponScaleEnabled is the default-on kill switch.
+    weaponScaleEnabled: true,
+    weaponTargetHeight: { longsword: 1.05, handAxe: 0.6 },
+    // Grip-mount tuning (2026-10-03): rollDeg rolls a hand-held weapon about
+    // the hand's local +Z (grip forward; positive = CCW, right-hand rule)
+    // with no code change. enabled:false reverts to the raw GLB axes for
+    // asset debugging. One knob drives both the player sword and bandit axe.
+    // gripHolderY (Nicko 10-03 "hilt at the opposite end" fix): post-
+    // groundAlign holder-local Y of the weapon's GRIP point, measured from
+    // the GLB. The longsword spans raw y -0.987..+1.001 (tip at -0.987,
+    // crossguard +0.53, grip ~+0.65) and groundAlign shifts it +0.987, so
+    // grip sits at holder y=1.637 while the mount had the TIP at the fist -
+    // hand gripped mid-blade, hilt floating behind. The code subtracts this
+    // value so the fist lands ON the grip. handAxe grip is its butt at
+    // holder 0, already correct.
+    weaponMount: { rollDeg: 0, enabled: true,
+                   gripHolderY: { longsword: 1.637, handAxe: 0 } }
   }
 };
+// 10-04 change order (Nicko: combo spam -> real chains, souls-style).
+// Per-weapon moveset framework: EVERY player combat number lives here. Pose
+// SHAPES stay in js/moveset.js (window.WH_MOVESET keyframes) and are
+// referenced by name via move.pose. Player swing rules (js/player.js):
+//  - each swing runs its own windup -> strike -> recover (seconds below);
+//  - LMB in windup is IGNORED; LMB in strike/recover is BUFFERED for
+//    inputBufferSec and fires the next chain move once the swing is
+//    chainOpenSec into its recover (never earlier - no skipped stages);
+//  - the LAST chain move has no early window: a buffered press waits for
+//    its full recover, then starts a fresh chain at chain[0];
+//  - roll may cancel RECOVER only (never windup/strike) and resets the chain.
+// chainCap = moves per chain AND landed hits that arm the v7 finisher.
 window.WH_CONFIG.moveset = {
   idlePose: { pos: [0.7, 1.0, -0.3], rot: [2.2, -0.7, 0.6] },
-  comboChainCap: 3,
   banditStageMult: 1.6,
-  enemyWeapon: { bandit: 'handAxe' }
+  enemyWeapon: { bandit: 'handAxe' },
+  playerWeapon: 'longsword',        // which weapons[] entry the player wields
+  inputBufferSec: 0.35,             // buffered LMB lifetime (strike/recover presses)
+  weapons: {
+    longsword: {
+      chainCap: 3,
+      // Nicko's order: swipe right->left, swipe left->right, THRUST, reset.
+      chain: ['slashR2L', 'slashL2R', 'thrust'],
+      // movement speed multiplier per swing stage (windup keeps 0.3 creep)
+      moveMultWhileAttacking: { windup: 0.3, strike: 0, recover: 0 },
+      bladeAxisY: -1,               // mesh-local blade axis (-Y tip, see setWeapon)
+      moves: {
+        slashR2L: { pose: 'm2', windup: 0.14, strike: 0.20, recover: 0.30,
+                    chainOpenSec: 0.12,
+                    damage: 34, range: 3.2, halfAngleDeg: 70, lunge: 0.8,
+                    staminaCost: 15, damageGhoulMult: 1.15 },
+        slashL2R: { pose: 'm1', windup: 0.14, strike: 0.20, recover: 0.30,
+                    chainOpenSec: 0.12,
+                    damage: 34, range: 3.2, halfAngleDeg: 70, lunge: 0.8,
+                    staminaCost: 15, damageGhoulMult: 1.15 },
+        // thrust = narrow, longer reach, more damage, heavier recover
+        thrust:   { pose: 'm4', windup: 0.16, strike: 0.14, recover: 0.40,
+                    chainOpenSec: 0.40,   // last move: full recover anyway
+                    damage: 40, range: 3.8, halfAngleDeg: 22, lunge: 1.4,
+                    staminaCost: 20, damageGhoulMult: 1.15 }
+      }
+    },
+    // Quick 2-hit hatchet chain: faster, shorter, lower damage per hit.
+    handAxe: {
+      chainCap: 2,
+      chain: ['hack', 'chop'],
+      moveMultWhileAttacking: { windup: 0.4, strike: 0, recover: 0 },
+      bladeAxisY: 1,                // axe bit along mesh-local +Y (as enemy.js)
+      moves: {
+        hack: { pose: 'claw', windup: 0.10, strike: 0.14, recover: 0.22,
+                chainOpenSec: 0.08,
+                damage: 22, range: 2.6, halfAngleDeg: 60, lunge: 0.5,
+                staminaCost: 10, damageGhoulMult: 1.15 },
+        chop: { pose: 'm3', windup: 0.12, strike: 0.14, recover: 0.30,
+                chainOpenSec: 0.30,
+                damage: 27, range: 2.7, halfAngleDeg: 35, lunge: 0.7,
+                staminaCost: 12, damageGhoulMult: 1.15 }
+      }
+    }
+  }
+};
+
+// 2026-10-03 touch controls layer (parallel input; see js/touch-controls.js).
+// enabled:false keeps the layer hidden until the edge toggle is used - the
+// mouse/keyboard path stays the primary control surface, untouched.
+window.WH_CONFIG.touch = {
+  enabled: false,                 // layer hidden until toggle button used
+  opacity: 0.35,                  // faint outlines
+  deadzone: 0.15,                 // stick deadzone (fraction of radius)
+  scaleDefault: 1.0,              // global control scale
+  scaleMin: 0.6,
+  scaleMax: 1.6,
+  buttonSize: 64,                 // px diameter of action buttons at scale 1
+  joystickRadius: 70,             // px radius of stick/camera circles at scale 1
+  sensDegPerPx: 0.25,             // camera pad sens (matches mouseSensDegPerPx)
+  // Default layout: fractions of viewport (0-1), resize-safe. Movement stick
+  // bottom-left, camera pad bottom-right, action cluster right side.
+  layout: {
+    stick:    { x: 0.18, y: 0.72 },
+    cam:      { x: 0.82, y: 0.72 },
+    sprint:   { x: 0.68, y: 0.62 },
+    attack:   { x: 0.90, y: 0.45 },
+    lockon:   { x: 0.72, y: 0.82 },
+    dodge:    { x: 0.55, y: 0.88 },
+    block:    { x: 0.90, y: 0.65 }
+  }
 };

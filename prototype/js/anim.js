@@ -7,6 +7,11 @@
     idle: 'WH_Idle', walk: 'WH_Walk', run: 'WH_Run',
     attack: 'WH_Attack1', hit: 'WH_Hit', death: 'WH_Death'
   };
+  // 10-04 chain clips: CONFIG move id -> per-move player clip. Bodies without
+  // the clip (enemies, handAxe moves, older GLBs) use the shared 'attack'.
+  var MOVE_NAMES = {
+    slashR2L: 'WH_SlashR2L', slashL2R: 'WH_SlashL2R', thrust: 'WH_Thrust'
+  };
 
   function CharacterAnim(body, clips) {
     this.body = body;
@@ -32,6 +37,14 @@
         action.clampWhenFinished = true;
       }
       self.actions[state] = action;
+    });
+    Object.keys(MOVE_NAMES).forEach(function (move) {
+      var clip = THREE.AnimationClip.findByName(clips, MOVE_NAMES[move]);
+      if (!clip) return;
+      var action = self.mixer.clipAction(clip);
+      action.setLoop(THREE.LoopOnce, 1);
+      action.clampWhenFinished = true;
+      self.actions[move] = action;
     });
     this.mixer.addEventListener('finished', function (event) {
       if (event.action === self.actions.hit && !self.dead) {
@@ -100,14 +113,45 @@
     }
   };
 
-  CharacterAnim.prototype.playerAttack = function (elapsed, duration) {
-    if (this.dead || !this.actions.attack) return;
-    if (this.clip !== 'attack') this.transition('attack', CFG.oneShotFadeSeconds, true);
+  // 10-04: the player clip is phase-mapped like the enemy one - windup /
+  // strike / recover each own a clip segment and play over the CONFIG move's
+  // durations, so per-move timings (thrust vs slash) drive the clip.
+  // moveId picks the per-move chain clip when the body has it.
+  CharacterAnim.prototype.playerAttack = function (phase, phaseTime, durations, moveId) {
+    var key = MOVE_NAMES[moveId] && this.actions[moveId] ? moveId : 'attack';
+    if (this.dead || !this.actions[key]) return;
+    // Chained swings sharing a clip stay in it and re-seek (no self-crossfade);
+    // a chain step onto another per-move clip crossfades like any one-shot.
+    if (this.clip !== key) this.transition(key, CFG.oneShotFadeSeconds, true);
+    this.attackPhase = phase;
     // Seeking to the FSM clock also handles chained/restarted attacks without
     // allowing mixer drift or a render hitch to move the damage window.
-    this.actions.attack.timeScale = 1;
-    this.actions.attack.time = Math.min(this.actions.attack.getClip().duration,
-      Math.max(0, elapsed * this.actions.attack.getClip().duration / duration));
+    this.seekAttack(phase === 'windup' ? 0 : phase === 'strike' ? 1 : 2,
+      phaseTime, [durations.windup, durations.strike, durations.recover], key);
+  };
+
+  // Shared attack-clip seek: segment 0 windup [0, s), 1 strike/active
+  // [s, 2s), 2 recover [2s, end) with s = attackClipStrikeFraction * length.
+  // Per-move clips are authored on their CONFIG stage proportions, so their
+  // segment edges are the move's own windup / windup+strike fractions.
+  CharacterAnim.prototype.seekAttack = function (seg, phaseTime, durations, key) {
+    var action = this.actions[key || 'attack'];
+    var clip = action.getClip();
+    var a, b;
+    if (key && key !== 'attack') {
+      var total = Math.max(1e-4, durations[0] + durations[1] + durations[2]);
+      a = clip.duration * durations[0] / total;
+      b = clip.duration * (durations[0] + durations[1]) / total;
+    } else {
+      a = clip.duration * CFG.attackClipStrikeFraction;
+      b = a * 2;
+    }
+    var part = seg === 0 ? { start: 0, span: a } :
+      seg === 1 ? { start: a, span: b - a } :
+      { start: b, span: clip.duration - b };
+    action.timeScale = part.span / Math.max(1e-4, durations[seg]);
+    action.time = Math.min(clip.duration, part.start +
+      Math.max(0, phaseTime) * action.timeScale);
   };
 
   CharacterAnim.prototype.enemyAttack = function (phase, phaseTime, durations) {
@@ -117,22 +161,16 @@
       this.attackSerial++;
     }
     this.attackPhase = phase;
-    var clip = this.actions.attack.getClip();
-    var strike = clip.duration * CFG.attackClipStrikeFraction;
-    var part = phase === 'windup' ? { start: 0, span: strike, duration: durations.windup } :
-      phase === 'active' ? { start: strike, span: strike, duration: durations.active } :
-      { start: strike * 2, span: clip.duration - strike * 2, duration: durations.recover };
-    this.actions.attack.timeScale = part.span / part.duration;
-    this.actions.attack.time = Math.min(clip.duration, part.start +
-      Math.max(0, phaseTime) * this.actions.attack.timeScale);
+    this.seekAttack(phase === 'windup' ? 0 : phase === 'active' ? 1 : 2,
+      phaseTime, [durations.windup, durations.active, durations.recover]);
   };
 
   CharacterAnim.prototype.syncPlayer = function (player, dt) {
     if (player.state !== 'alive') {
       this.death();
     } else if (player.attacking) {
-      this.playerAttack(window.WH_CONFIG.player.attackDuration - player.attackTimer,
-        window.WH_CONFIG.player.attackDuration);
+      var ph = player.getAttackPhase();
+      this.playerAttack(ph.stage, ph.t, ph.durations, player.attackMoveId);
     } else {
       this.attackPhase = null;
       this.setLocomotion(player.animMoveSpeed || 0, !!player.sprinting || player.rolling);
@@ -183,7 +221,11 @@
         (self.dead && state === 'death' && self.clip === 'death')) ?
         act.getEffectiveWeight() : 0;
     });
-    return { clip: NAMES[this.clip] || null, time: time,
+    Object.keys(MOVE_NAMES).forEach(function (move) {
+      var act = self.actions[move];
+      if (act) weights[MOVE_NAMES[move]] = act.isRunning() ? act.getEffectiveWeight() : 0;
+    });
+    return { clip: NAMES[this.clip] || MOVE_NAMES[this.clip] || null, time: time,
       phase: duration ? time / duration : 0, weights: weights,
       timeScale: action ? action.timeScale : 0,
       locomotion: NAMES[this.locomotion], attackSerial: this.attackSerial };

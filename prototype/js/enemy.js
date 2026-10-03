@@ -65,9 +65,32 @@
     var hand = meshRoot.getObjectByName('R_Hand');
     if (this.type === 'bandit' && hand) {
       var heldAxe = window.WH_ASSETS.instance('handAxe');
-      heldAxe.scale.setScalar(0.8);
+      // Measured sizing (2026-10-03): 2.004m GLB -> 0.6m hand-held (scale
+      // ~0.299) via CONFIG.assets.weaponScale; replaces hardcoded 0.8.
+      heldAxe.scale.setScalar(window.WH_ASSETS.weaponScale('handAxe'));
       hand.add(heldAxe);
       heldAxe.position.set(0, 0, 0);
+      // Grip mount (2026-10-03 re-measure): the axe GLB's bit/mass points
+      // along mesh-local +Y (radial profile: near +Y 0.224 vs near -Y
+      // 0.115), so map +Y -> hand-local +Z (grip forward) so the bit leads.
+      // Same constant local-space knob as the player sword: pose-independent
+      // and shared with CONFIG.assets.weaponMount (rollDeg tuning lives
+      // there). The pivot fallback below keeps the idlePose table (its
+      // skinned basis never existed).
+      var wm = window.WH_CONFIG.assets.weaponMount;
+      var axeMount = new THREE.Quaternion();
+      if (wm && wm.enabled) {
+        axeMount.setFromUnitVectors(
+          new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1));
+        // Roll about hand-local +Z: composed on the LEFT of the axis mapping
+        // so it spins the mounted axe about its own grip axis (applied after
+        // the mapping); positive rollDeg = CCW around +Z, right-hand rule.
+        if (wm.rollDeg) {
+          axeMount.premultiply(new THREE.Quaternion().setFromAxisAngle(
+            new THREE.Vector3(0, 0, 1), wm.rollDeg * Math.PI / 180));
+        }
+      }
+      heldAxe.quaternion.copy(axeMount);
     }
     // Rigid stand-in fallback retains its original weapon pivot.
     if (!hand && this.type === 'bandit' && window.WH_ASSETS &&
