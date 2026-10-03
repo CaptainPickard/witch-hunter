@@ -98,13 +98,13 @@
   var GROUND_META = {}; // holder uuid -> measured height, width, raw groundMinY
 
   // 2026-10-03 grey-stand-in resilience (Astrabot, brief: io/missions/
-  // 2026-10-03-astrabot-greybox-brief.md): a one-off multi-MB body GLB fetch
+  // 2026-10-03-astrabot-greybox-brief.md): a one-off multi-MB asset fetch
   // stall/timeout or parse error used to swap the procedural stand-in in
   // permanently on the FIRST load error (no retry, quiet warn), killing the
-  // model AND its animation clips in one go. Now: character bodies retry
-  // (CONFIG.assets.bodyRetryCount, default 2) with backoff; if retries exhaust,
-  // the stand-in stays but a loud one-line banner names the asset and the
-  // cause (network vs parse vs timeout), stamped into the HUD.
+  // model AND its animation clips in one go. Now: ALL assets retry
+  // (CONFIG.assets.bodyRetryCount, default 2) with backoff; if retries
+  // exhaust, the stand-in stays but a loud one-line banner names the asset
+  // and the cause (network vs parse vs timeout), stamped into the HUD.
   var BODY_RETRY_COUNT =
     (CFG.assets && typeof CFG.assets.bodyRetryCount === 'number') ?
       CFG.assets.bodyRetryCount : 2;
@@ -263,15 +263,17 @@
   }
 
   function loadOne(name, url, isPixelated) {
-    // Bounded retry applies to rigged character bodies only: they are the
-    // multi-MB fetches most exposed to one-off tunnel/network stalls, and one
-    // failed body load kills the model AND its animation clips together.
-    // Props keep the single-attempt path (stand-in fallback, never block boot).
-    var maxAttempts = CHARACTERS[name] ? 1 + BODY_RETRY_COUNT : 1;
+    // Bounded retry applies to ALL assets (2026-10-03 change order, Nicko:
+    // oak+witchwood stand-ins from a one-off tunnel stall): the multi-MB
+    // fetches (rigged bodies, big biome trees) are the most exposed. Parse
+    // failures do NOT retry (a corrupt file stays corrupt) - only network
+    // and timeout/abort classes do. Stand-in fallback always remains.
+    var maxAttempts = 1 + BODY_RETRY_COUNT;
     function attempt(n) {
       return loadAttempt(name, url).then(function (v) {
         if (v.ok) return v;
-        if (n + 1 < maxAttempts) {
+        var retryable = v.info.reason !== 'parse';
+        if (retryable && n + 1 < maxAttempts) {
           var delay = BODY_RETRY_DELAY_MS * (n + 1);   // linear backoff
           console.warn('[WH assets] retry ' + (n + 1) + '/' + BODY_RETRY_COUNT +
             ' for ' + name + ' (' + v.info.reason + ') in ' + delay + 'ms');

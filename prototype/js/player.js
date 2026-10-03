@@ -958,6 +958,18 @@
     this.camera.lookAt(target);
   };
 
+  // 2026-10-03 change order (Nicko): spawn faces the map center, not away
+  // from it. Orient body yaw toward (tx, tz) and swing camYaw with it so the
+  // screen-forward invariant (idle body yaw = camYaw + PI, camera trails the
+  // back) stays intact - W still walks screen-forward, now toward the center.
+  Player.prototype.faceTowards = function (tx, tz) {
+    var dx = tx - this.pos.x, dz = tz - this.pos.z;
+    if (dx * dx + dz * dz < 0.0001) return;
+    this.yaw = Math.atan2(dx, dz);
+    this.camYaw = this.yaw + Math.PI;
+    if (this.yawFrame) this.yawFrame.rotation.y = this.yaw;
+  };
+
   Player.prototype.respawnAt = function (x, z) {
     this.pos.set(x, 0, z);
     this.hp = this.hpMax;
@@ -984,6 +996,7 @@
     this.armedTimer = 0;
     this.crossArmed = false;
     this.atkYawOffset = 0;
+    this.faceTowards(0, 0);                // respawn faces map center (Nicko 10-03)
     this.yawFrame.rotation.y = this.yaw;
     if (this.anim) this.anim.revive();
     if (this.body && !this.anim) { this.body.rotation.x = 0; this.body.rotation.y = this.atkYawOffset; }

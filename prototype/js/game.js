@@ -748,6 +748,7 @@
       game.regionManager.buildRegion(CFG.regionA.id, false);
       var region = window.WH_REGION_DEFS.regions[CFG.regionA.id];
       game.player.pos.set(region.spawn.x, 0, region.spawn.z);
+      game.player.faceTowards(0, 0);     // boot spawn faces map center (Nicko 10-03)
       applyRegionLighting(CFG.regionA.id);
       showRegionName(region.name);
       game.hud.loadNote.classList.add('hidden');
