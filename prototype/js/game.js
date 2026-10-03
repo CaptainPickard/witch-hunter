@@ -39,6 +39,62 @@
     };
   }
 
+  // ---- 10-03 pixel-fidelity tuner (change order: colored pixels too large) ----
+  // F1 steps the internal buffer finer, F2 chunkier, through {1..4} live:
+  // renderer.setSize re-inits the drawing buffer (resize handler already does
+  // the same thing on window resizes), CSS keeps the on-screen size, so only
+  // the pixel granularity of the 3D buffer changes mid-run.
+  game.resTuner = {
+    steps: [1, 2, 3, 4],
+    readoutTimer: null
+  };
+
+  function applyResDiv(div) {
+    CFG.renderer.internalResDiv = div;
+    if (!game.renderer) return;   // pre-boot keypress: CONFIG already updated
+    var isz = internalSize();
+    game.renderer.setSize(isz.w, isz.h, false);   // updateStyle=false - CSS keeps display size
+  }
+
+  function showResReadout() {
+    var wrap = document.getElementById('wh-res-tuner');
+    var read = document.getElementById('wh-res-readout');
+    if (!wrap || !read) return;
+    var d = CFG.renderer.internalResDiv;
+    var label = d === 1 ? 'full res' : 'px x' + d;
+    read.textContent = 'Pixel fidelity: ' + d + ' (' + label + ')';
+    wrap.classList.remove('dim');
+    wrap.classList.add('pulse');
+    clearTimeout(game.resTuner.readoutTimer);
+    game.resTuner.readoutTimer = setTimeout(function () {
+      wrap.classList.add('dim');
+    }, 2500);
+  }
+
+  function stepResDiv(dir) {
+    var steps = game.resTuner.steps;
+    var d = CFG.renderer.internalResDiv;
+    var i = steps.indexOf(d);
+    if (i < 0) {   // hand-edited config value: snap to nearest known stepper
+      for (i = 0; i < steps.length && steps[i] < d; i++) {}
+    }
+    i = Math.min(steps.length - 1, Math.max(0, i + dir));
+    if (steps[i] !== d) applyResDiv(steps[i]);
+    showResReadout();
+  }
+
+  function bindResTunerKeys() {
+    document.addEventListener('keydown', function (e) {
+      if (e.code === 'F1') {
+        e.preventDefault();   // stop browser help overlay
+        if (!e.repeat) stepResDiv(-1);
+      } else if (e.code === 'F2') {
+        e.preventDefault();
+        if (!e.repeat) stepResDiv(1);
+      }
+    });
+  }
+
   function setupRenderer() {
     var canvas = document.getElementById('wh-canvas');
     var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: false });
@@ -695,6 +751,8 @@
       60, window.innerWidth / window.innerHeight, 0.1, 500);
     setupLights();
     setupHud();
+    bindResTunerKeys();   // 10-03 F1/F2 pixel-fidelity keys
+    showResReadout();     // visible at boot so the knob is discoverable; dims after 2.5s
 
     game.player = new window.WH_Player(game.scene, game.camera);
     game.player.offhandGlow = game.spellGlow;  // v7: expose glow mesh on player for debug hooks

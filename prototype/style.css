@@ -81,6 +81,35 @@ html, body {
   font-family: monospace;
 }
 
+/* --- 2026-10-03 pixel-fidelity tuner readout (F1/F2 debug keys) --- */
+#wh-res-tuner {
+  position: absolute;
+  top: 32px;
+  right: 16px;
+  text-align: right;
+  font-family: monospace;
+  font-size: 13px;
+  color: #e3dcc4;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+  opacity: 1;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+
+#wh-res-tuner.dim {
+  opacity: 0.25;
+}
+
+#wh-res-tuner.pulse {
+  opacity: 1;
+}
+
+#wh-res-hint {
+  font-size: 11px;
+  color: #8f886f;
+  letter-spacing: 0.5px;
+}
+
 /* --- region name --- */
 #wh-region-name {
   position: absolute;

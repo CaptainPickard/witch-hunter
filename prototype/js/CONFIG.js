@@ -11,7 +11,7 @@ window.WH_CONFIG = {
     toneMappingExposure: 1.15,        // R2 P0-3: re-set so fog stays the brightest large area (audit)
     // R3 P0-4: maxPixelRatio superseded by internalResDiv (setPixelRatio(1)); legacy key kept
     maxPixelRatio: 2,
-    internalResDiv: 2,                // R3 P0-4: buffer = window px / 2 (960x540 at 1080p), CSS upscales
+    internalResDiv: 2,                // R3 P0-4: buffer = window px / div (960x540 at 1080p), CSS upscales; 10-03 F1/F2 debug keys tune it live (1..4)
     shadowMapEnabled: false           // v1: swiftshader software render, shadows off (POC)
   },
 
