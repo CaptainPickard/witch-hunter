@@ -121,7 +121,9 @@
 
   function setupScene() {
     var scene = new THREE.Scene();
-    scene.background = new THREE.Color(CFG.regionA.fogColor);
+    // 10-03 order 4: near-black background - sky luminance comes from the
+    // dome rig; fog color no longer fills the world via scene.background.
+    scene.background = new THREE.Color(0x05070f);
     scene.fog = new THREE.FogExp2(CFG.regionA.fogColor, CFG.regionA.fogDensity);
     return scene;
   }
@@ -583,13 +585,194 @@
   // keyLight is gone; moon and lantern are region-independent.
   function applyRegionLighting(regionId) {
     var region = window.WH_REGION_DEFS.regions[regionId];
-    game.scene.background = new THREE.Color(region.fogColor);
+    // 10-03 order 4: background stays near-black (sky dome owns the view);
+    // fog keeps its regional color/density for the ground haze.
     game.scene.fog.color = new THREE.Color(region.fogColor);
     game.scene.fog.density = region.fogDensity;
     if (game.hemiLight) {
-      var fill = CFG.lighting.hemiBaseIntensity * region.ambientLightLevel;
-      // Flicker is the lantern's job, not the region fill: keep it clean.
+      // B reads darker: 1.15x the already-cut base fill (order 4)
+      var mult = regionId === CFG.regionB.id ?
+        (CFG.lighting.regionBFillMult || 1.0) : 1.0;
+      var fill = CFG.lighting.hemiBaseIntensity * region.ambientLightLevel * mult;
       game.hemiLight.intensity = fill;
+    }
+  }
+
+  // 10-03 order 4: starry night sky. Dome sphere (BackSide, fog:false,
+  // depthWrite off) with a vertical-gradient shader; 600 Points stars on the
+  // dome; moon = additive glow sprite + core disc billboard at the directional
+  // moon's direction. World-anchored via skyTick (player walks, dome stays).
+  function setupSky() {
+    var S = CFG.sky;
+    var group = new THREE.Group();
+    group.name = 'sky-rig';
+
+    var domeMat = new THREE.ShaderMaterial({
+      side: THREE.BackSide,
+      depthWrite: false,
+      fog: false,
+      uniforms: {
+        zenith: { value: new THREE.Color(S.zenithColor) },
+        band: { value: new THREE.Color(S.horizonBand) },
+        glow: { value: new THREE.Color(S.horizonGlow) },
+        glowStop: { value: S.horizonGlowStop }
+      },
+      vertexShader: [
+        'varying vec3 vDir;',
+        'void main() {',
+        '  vDir = normalize(position);',
+        '  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);',
+        '}'
+      ].join('\n'),
+      fragmentShader: [
+        'varying vec3 vDir;',
+        'uniform vec3 zenith;',
+        'uniform vec3 band;',
+        'uniform vec3 glow;',
+        'uniform float glowStop;',
+        'void main() {',
+        '  float h = clamp(vDir.y, -1.0, 1.0);',          // -1 nadir .. 1 zenith
+        '  float t = clamp(h * 2.2, 0.0, 1.0);',          // band -> zenith ramp
+        '  vec3 col = mix(band, zenith, t);',
+        // pale ash glow hugging the horizon (fog meets sky), gone by glowStop
+        '  float g = (1.0 - smoothstep(0.0, ' + S.horizonGlowStop.toFixed(2) +
+          ', abs(h) * 5.0)) * 0.5;',
+        '  col = mix(col, glow, clamp(g, 0.0, 1.0));',
+        '  gl_FragColor = vec4(col, 1.0);',
+        '}'
+      ].join('\n')
+    });
+    var dome = new THREE.Mesh(new THREE.SphereGeometry(S.domeRadius, 32, 20), domeMat);
+    dome.renderOrder = -10;           // draw first; stars/moon after
+    group.add(dome);
+
+    // stars: Points with per-star size/color/phase attributes, sizeAttenuation
+    // off (angular size like real stars), additive so overlaps stay soft.
+    function buildStarTexture() {
+      var c = document.createElement('canvas');
+      c.width = 16; c.height = 16;
+      var x = c.getContext('2d');
+      x.fillStyle = '#ffffff';
+      // blocky plus shape (pixel-art star, NEAREST)
+      x.fillRect(7, 3, 2, 10);
+      x.fillRect(3, 7, 10, 2);
+      var t = new THREE.CanvasTexture(c);
+      t.magFilter = THREE.NearestFilter;
+      t.minFilter = THREE.NearestFilter;
+      t.generateMipmaps = false;
+      return t;
+    }
+    var starGeo = new THREE.BufferGeometry();
+    var pos = [], col = [], siz = [], phs = [];
+    var seedState = 1188;
+    function sRand() {   // mulberry-ish deterministic
+      seedState = (seedState * 1103515245 + 12345) & 0x7fffffff;
+      return seedState / 0x7fffffff;
+    }
+    var cPalette = S.starColors.map(function (h) { return new THREE.Color(h); });
+    for (var i = 0; i < S.starCount; i++) {
+      // distribute on the upper dome (y from -0.08 to near 1), avoid nadir
+      var u = sRand() * 2 - 1;                 // cos theta
+      var yy = Math.max(-0.08, Math.pow(Math.abs(u), 0.65) * (u < 0 ? -1 : 1));
+      var theta = Math.acos(Math.max(-1, Math.min(1, yy)));
+      var phi = sRand() * Math.PI * 2;
+      var st = Math.sin(theta);
+      pos.push(S.domeRadius * 0.98 * st * Math.cos(phi),
+               S.domeRadius * 0.98 * yy,
+               S.domeRadius * 0.98 * st * Math.sin(phi));
+      var c = cPalette[Math.floor(sRand() * cPalette.length)];
+      col.push(c.r, c.g, c.b);
+      siz.push(S.starSizeMin + sRand() * (S.starSizeMax - S.starSizeMin));
+      phs.push(sRand() < S.twinklePct / 100 ? sRand() * 6.28 : -1.0);
+    }
+    starGeo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    starGeo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    starGeo.setAttribute('aSize', new THREE.Float32BufferAttribute(siz, 1));
+    starGeo.setAttribute('aPhase', new THREE.Float32BufferAttribute(phs, 1));
+    var starMat = new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      fog: false,
+      blending: THREE.AdditiveBlending,
+      uniforms: {
+        map: { value: buildStarTexture() },
+        time: { value: 0 }
+      },
+      vertexShader: [
+        'attribute float aSize;',
+        'attribute float aPhase;',
+        'uniform float time;',
+        'varying vec3 vColor;',
+        'varying float vTw;',
+        'void main() {',
+        '  vColor = color;',
+        '  vTw = aPhase < 0.0 ? 1.0 : (0.55 + 0.45 * sin(time * 1.7 + aPhase));',
+        '  vec4 mv = modelViewMatrix * vec4(position, 1.0);',
+        '  gl_PointSize = aSize * vTw;',
+        '  gl_Position = projectionMatrix * mv;',
+        '}'
+      ].join('\n'),
+      fragmentShader: [
+        'uniform sampler2D map;',
+        'varying vec3 vColor;',
+        'varying float vTw;',
+        'void main() {',
+        '  vec4 tx = texture2D(map, gl_PointCoord);',
+        '  gl_FragColor = vec4(vColor * vTw, 1.0) * tx;',
+        '}'
+      ].join('\n'),
+      vertexColors: true
+    });
+    starMat.vertexColors = true;
+    var stars = new THREE.Points(starGeo, starMat);
+    stars.renderOrder = -9;
+    group.add(stars);
+
+    // moon: additive glow sprite + core disc billboard at the moon direction
+    var az = (CFG.lighting.moonAzimuthDeg || S.moonAzimuthDeg) * Math.PI / 180;
+    var el = (CFG.lighting.moonElevationDeg || S.moonElevationDeg) * Math.PI / 180;
+    var moonDir = new THREE.Vector3(
+      Math.sin(az) * Math.cos(el),
+      Math.sin(el),
+      -Math.cos(az) * Math.cos(el));   // -z side like the directional rig
+    var moonPos = moonDir.clone().multiplyScalar(S.moonDistance);
+
+    function moonSprite(hex, size, opacity) {
+      var c = document.createElement('canvas');
+      c.width = 64; c.height = 64;
+      var x = c.getContext('2d');
+      var g = x.createRadialGradient(32, 32, 4, 32, 32, 32);
+      g.addColorStop(0, 'rgba(255,255,255,' + opacity + ')');
+      g.addColorStop(0.5, 'rgba(255,255,255,' + (opacity * 0.35) + ')');
+      g.addColorStop(1, 'rgba(255,255,255,0)');
+      x.fillStyle = g;
+      x.fillRect(0, 0, 64, 64);
+      var t = new THREE.CanvasTexture(c);
+      t.colorSpace = THREE.SRGBColorSpace;
+      var m = new THREE.SpriteMaterial({
+        map: t, color: hex, transparent: true, opacity: 1,
+        blending: THREE.AdditiveBlending, depthWrite: false, fog: false
+      });
+      var sp = new THREE.Sprite(m);
+      sp.scale.set(size, size, 1);
+      sp.position.copy(moonPos);
+      return sp;
+    }
+    var glow = moonSprite(S.moonGlowColor, S.moonSizePx * 3.2, 0.5);
+    glow.renderOrder = -8;
+    var core = moonSprite(S.moonColor, S.moonSizePx, 1.0);
+    core.renderOrder = -7;
+    group.add(glow);
+    group.add(core);
+
+    game.sky = { group: group, stars: stars, starMat: starMat };
+    game.scene.add(group);
+  }
+
+  // per-frame: stars twinkle clock (dome/moon are camera-distance invariant)
+  function skyTick() {
+    if (game.sky && game.sky.starMat) {
+      game.sky.starMat.uniforms.time.value = performance.now() / 1000;
     }
   }
 
@@ -750,6 +933,7 @@
     game.camera = new THREE.PerspectiveCamera(
       60, window.innerWidth / window.innerHeight, 0.1, 500);
     setupLights();
+    setupSky();           // 10-03 order 4: starry night dome + stars + moon
     setupHud();
     bindResTunerKeys();   // 10-03 F1/F2 pixel-fidelity keys
     showResReadout();     // visible at boot so the knob is discoverable; dims after 2.5s
@@ -1036,6 +1220,7 @@
     applyCameraShake(dt);
     poolTick(dt);   // R2: fixed light pool nearest-socket handoff
     lanternTick();  // R2: lantern wobble (CONFIG lanternFlickerPct)
+    skyTick();      // 10-03 order 4: star twinkle clock
     updateHud(dt);
     game.renderer.render(game.scene, game.camera);
   }

@@ -24,9 +24,13 @@ window.WH_CONFIG = {
     ambientIntensity: 0,              // P0-3: AmbientLight removed (kept for backward-compat readers; must stay 0)
     hemiSkyColor: 0x4a5a80,           // indigo-slate sky (audit 5.3)
     hemiGroundColor: 0x16181e,        // near-black ground (audit 5.3)
-    hemiBaseIntensity: 1.35,          // fill at ambientLightLevel 1.0; region fill = base * level
+    // 10-03 order 4 (starry night, moon-dominant): hemi fill cut so the moon
+    // directional is the main sky light; sky luminance comes from the dome.
+    hemiBaseIntensity: 0.55,          // fill at ambientLightLevel 1.0; region fill = base * level
     moonColor: 0xa8bce6,              // cool moon (audit 5.3)
-    moonIntensity: 0.45,              // moon:fill (vertical faces) 3-5:1
+    // 10-03 order 4: moon is now the main sky light (fill cut 1.35 -> 0.55).
+    // Directional intensity raised so moon:fill vertical ratio actually lands.
+    moonIntensity: 0.9,              // moon:fill (vertical faces) 3-5:1
     moonAzimuthDeg: 0,                // -z side, backlights A->B main path
     moonElevationDeg: 30,             // audit: 25-35 deg
     lanternColor: 0xffb060,           // warm amber (audit 5.3; canon accent)
@@ -35,7 +39,30 @@ window.WH_CONFIG = {
     lanternDecay: 2,                  // physical falloff
     lanternFlickerPct: 5,             // +-5% flicker band
     lanternAnchor: 'left-hip',        // yawFrame-space anchor
-    lanternAnchorOffset: [-0.32, 0.95, 0.08] // tuned starting anchor
+    lanternAnchorOffset: [-0.32, 0.95, 0.08], // tuned starting anchor
+    // 10-03 order 4: 1.15x base fill for B (darker Darkwood); region A uses 1.0
+    regionBFillMult: 1.15
+  },
+
+  // 10-03 order 4: starry night sky (game.js setupSky). Dome ignores fog;
+  // scene.background goes near-black so fog color no longer lights the world.
+  sky: {
+    domeRadius: 400,                  // beyond ground disc, inside camera far 500
+    zenithColor: 0x070a18,            // deep night indigo
+    horizonBand: 0x2b3350,            // faint band where fog meets sky
+    horizonGlow: 0x8f98ad,            // pale ash highlight (fog-color kin, low band)
+    horizonGlowStop: 0.16,            // glow fade fraction from horizon upward
+    starCount: 600,
+    starSizeMin: 1.2,                 // px at internal res
+    starSizeMax: 2.6,
+    starColors: [0xcfd8e8, 0xaebad0, 0xe8ecf4, 0x9fb2d8],
+    twinklePct: 12,                   // fraction of stars that twinkle slowly
+    moonAzimuthDeg: 0,                // matches lighting.moon (directional -z)
+    moonElevationDeg: 30,
+    moonDistance: 330,                // on the dome, inside camera far
+    moonSizePx: 64,                   // angular size at dome distance
+    moonColor: 0xdfe7f2,
+    moonGlowColor: 0xa8bce6
   },
 
   // R2: fixed pool of PointLights (P1-8) - nearest-socket handoff, no per-frame allocation.
