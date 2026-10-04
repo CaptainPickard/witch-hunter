@@ -201,3 +201,59 @@ It can be moved with the LAYOUT drag if a thumb disagrees.
 | I5 | Desktop E behaves as before, one action per press |
 
 Not tested in a browser (no headless browser, by order). The syntax was checked by reading the code only, because node is not installed in this environment.
+
+---
+
+## CORPSE LOOT (Order S4, 2026-10-05)
+
+Enemy drops now stay on the corpse. Kills no longer spawn boxes. Boxes are only for player G-drops.
+
+### Flow
+1. `Enemy.takeDamage` → `Enemy.onKilled` → `game.js storeCorpseLoot(enemy)`. The S1 roll (`rollDrops()`: guaranteed 1x stolenCoin + 20% weighted bonus, `CONFIG.drops` unchanged) goes to `WH_CORPSE_LOOT.Manager.attach`, which sets `enemy.corpseLoot = [{id, count}, ...]` and builds that corpse's effect.
+2. The effect waits for `appearDelaySec` (0.6, the old box delay) and for the death settle (`corpseFinalY` set). It then measures the body centre once with a Box3, because the fall direction moves the torso away from root. After that it fades in over `fadeInSec`.
+3. `interact()` = `tryPickup() || lootCorpseNearest(x, z, lootRadius) || tryGather()`. E and touch USE both route through it, as before.
+4. `lootCorpseNearest` finds the nearest corpse in the active region that still has loot, measured from the body centre. Every entry goes through `inventory.addItem` (stack-join), and what does not fit stays in `corpseLoot`:
+   - Something was taken: toast `Looted: Stolen Coin x1, Torch x1`, plus ` - Inventory full` if anything was left on the body.
+   - Nothing fit: toast `Inventory full`, and the corpse keeps glowing.
+   - The list is empty: the effect fades out over `fadeOutSec`, then its materials and geometry are disposed. `nearest()` skips the corpse from then on.
+5. **Prompt:** I generalized the existing `wh-gather-prompt` element rather than adding a second one. `updateInteractPrompt()` follows the interact order:
+   - a box is in reach: no prompt, same as before;
+   - else an unlooted corpse: `USE - Loot`;
+   - else a ready node: `E - Gather {name}`.
+6. **Lifetime:** each effect lives in the scene, not the region group. Every frame the manager checks that its enemy is still in `regionManager.enemies[homeRegionId]`. When a region is unloaded or rebuilt, the effect is disposed and `corpseLoot` is cleared, so the loot vanishes with the corpse. Corpses rebuilt from the region's dead-state come back without loot. The CONFIG comment marks where real-game persistence will attach later (region state next to the 'dead' flag).
+
+### Visual (no lights)
+- **Glow:** an additive `THREE.Sprite` billboard, `glowScale` 1.5 m, centred `glowHeight` 0.45 m above the body. A flat additive ground disc (`groundGlow`) sits under the corpse so it reads at night. Both use the shared canvas radial texture, tinted `glowColor` 0xd8b24a, with an opacity breath every `glowPulseSec` and a slight scale breath. Fog stays on, so the glow is faint at range like the gather markers.
+- **Sparks:** one `THREE.Points` per active corpse with a recycled pool of `sparks.count` (14). Positions are in world space. Each spark's brightness is written into its vertex colour (additive blending, so black is invisible): it fades in at the body and out at the top. Each spark drifts and sways sideways. Nothing is allocated per frame, only typed-array writes. During the fade-out no new sparks spawn.
+- **Allocation:** each corpse gets 1 SpriteMaterial, 1 MeshBasicMaterial, 1 PointsMaterial and 1 BufferGeometry, created once at the kill and disposed when the effect ends. The textures and the disc geometry are shared.
+- **PointLights: zero.** The light budget is unchanged.
+
+### Knobs (`CONFIG.corpseLoot`)
+| Group | Knobs |
+|---|---|
+| Interaction | `lootRadius` 1.6, `promptText`, `lootToast`, `partialSuffix`, `fullText` |
+| Timing | `appearDelaySec` 0.6, `fadeInSec` 0.4, `fadeOutSec` 0.5 |
+| Glow | `glowColor`, `glowOpacity` 0.55, `glowPulseSec` 2.4, `glowPulseMin` 0.6, `glowScale`, `glowHeight`, `groundGlow {radius, opacity}` (opacity 0 turns the pool off) |
+| Sparks | `sparks {count, riseSpeed 0.45, drift 0.12, lifetimeSec 2.2, lifetimeJitter, spawnRadius 0.45, size 0.07, color 0xffd27a}` |
+
+### Judgment calls
+- **Removed `CONFIG.drops.spawnDelaySec` and `bonusOffset`.** They were box-only. The delay now lives on as `corpseLoot.appearDelaySec`.
+- **The corpse can be looted during the 0.6 s appear delay.** The loot exists from the moment of the kill, and only the effect waits. Looting it before the effect shows just disposes the effect.
+- **Added the ground pool disc** next to the billboard. A billboard alone gets cut by the ground plane under a downward camera, and the pool makes the glow read at night.
+- **New debug hook:** `WH_DEBUG.getCorpseLoot()` returns `[{type, state, x, z, loot}]`.
+
+### AC
+| AC | Expected |
+|---|---|
+| C1 | Kill: no boxes. After about 0.6 s the corpse fades in a pulsing gold glow and pool, with sparks rising |
+| C2 | USE/E near the corpse: `Looted: Stolen Coin x1` (bonus item listed when rolled); glow and sparks fade over 0.5 s |
+| C3 | Inventory full (no coin stack with room): `Inventory full`, and the corpse keeps glowing |
+| C4 | Partial: what fits is taken with ` - Inventory full` appended; looting again later takes the rest, then the effect ends |
+| C5 | G-drop boxes unchanged; `tryPickup` runs first, so a box wins over a corpse |
+| C6 | Node gathering unchanged; a corpse wins over a node, and the prompt follows the same order |
+| C7 | No lights added (`getLightPool` and the scene light count are unchanged) |
+| C8 | No new boot code paths besides creating the manager. Locomotion and latching are untouched |
+
+### Not done / unverified
+- **Not run in a browser** (no headless browser, by order). Node is not installed here, so I syntax-checked the edited files with python esprima. Nicko's playtest is the first real run.
+- **Corpse loot does not persist across region rebuilds**, as the playtest rule says. Real-game persistence is marked in CONFIG.
