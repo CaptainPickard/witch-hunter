@@ -1,0 +1,298 @@
+{
+  "input": "/workspace/witch-hunter/art-direction/3d/assets/races_regen/rigged/undead-ghoul-male.rigged.glb",
+  "output": "/workspace/witch-hunter/art-direction/3d/assets/races_regen/rigged/undead-ghoul-male.mixamo.glb",
+  "source_sha256": "2de4227296dbb8866cb05bf6b94302bb3f5a5283c95fde76576494a73270fced",
+  "output_sha256": "3b0d060c26bf5468bb5926af0c2a9f8ecea5a66e898c6da9a67a355c0290e1e3",
+  "original_bin_sha256": "42c7eb5f32d41639659f5df0bf83f8682efb71960f72618543726594507e017c",
+  "output_prefix_sha256": "42c7eb5f32d41639659f5df0bf83f8682efb71960f72618543726594507e017c",
+  "originals": {
+    "WH_Attack1": {
+      "channels": 60,
+      "shape_identical": true,
+      "source_data_identical": true,
+      "ordered_sampler_bytes_sha256": "4ee0155645731b0906700b17a9ff3bdbaefa063c06ad14da3957669e7fab5308"
+    },
+    "WH_Death": {
+      "channels": 60,
+      "shape_identical": true,
+      "source_data_identical": true,
+      "ordered_sampler_bytes_sha256": "a1dd6e1f3d75a1d3e748aaafccc2bfb4911cdf0709ddbfd6616d66a0220eae8e"
+    },
+    "WH_Hit": {
+      "channels": 60,
+      "shape_identical": true,
+      "source_data_identical": true,
+      "ordered_sampler_bytes_sha256": "d7060b155f7553059c976661b87d29e3c3f27c850a2c8b0cc9fec2f73e23d91a"
+    },
+    "WH_Idle": {
+      "channels": 60,
+      "shape_identical": true,
+      "source_data_identical": true,
+      "ordered_sampler_bytes_sha256": "e5689ffab3ffd840f909e20e52aac63455a6e319e9bf8f6f9b717482ed61f2c3"
+    },
+    "WH_Run": {
+      "channels": 60,
+      "shape_identical": true,
+      "source_data_identical": true,
+      "ordered_sampler_bytes_sha256": "8c3b51f1fd2519eaee0bd10e3e2dca82c1ef946581a88bcede1098668f5b335c"
+    },
+    "WH_Walk": {
+      "channels": 60,
+      "shape_identical": true,
+      "source_data_identical": true,
+      "ordered_sampler_bytes_sha256": "5ce0c525830529742b9f1581d3061dae58ca785dad598e39557ff65012d2e7f2"
+    }
+  },
+  "new_clips": {
+    "WH_Idle_Zombie": {
+      "channels": 60,
+      "by_path": {
+        "translation": 20,
+        "rotation": 20,
+        "scale": 20
+      },
+      "samples": [
+        184
+      ],
+      "duration_seconds": [
+        6.1
+      ],
+      "max_rotation_component_span": 0.12398403882980347,
+      "max_quaternion_norm_error": 4.023013298048994e-07,
+      "root_channel_span": 0.0,
+      "dense_30fps": true,
+      "bake": {
+        "src": "/workspace/witch-hunter/scratch/mixamo-fbx/zombienotscary/zombie idle.fbx",
+        "frame_start": 1,
+        "frame_end": 184,
+        "samples": 184,
+        "duration_seconds": 6.1,
+        "fcurves": 200,
+        "leg_scale_ratio": 0.9754488974142614,
+        "max_ground_correction_m": 0.05487024784088135,
+        "status": "baked",
+        "channels": 60
+      },
+      "pass": true
+    },
+    "WH_Walk_Zombie": {
+      "channels": 60,
+      "by_path": {
+        "translation": 20,
+        "rotation": 20,
+        "scale": 20
+      },
+      "samples": [
+        47
+      ],
+      "duration_seconds": [
+        1.533333
+      ],
+      "max_rotation_component_span": 1.8928216099739075,
+      "max_quaternion_norm_error": 9.512937131361809e-07,
+      "root_channel_span": 0.0,
+      "dense_30fps": true,
+      "bake": {
+        "src": "/workspace/witch-hunter/scratch/mixamo-fbx/zombienotscary/walking.fbx",
+        "frame_start": 1,
+        "frame_end": 47,
+        "samples": 47,
+        "duration_seconds": 1.5333333333333334,
+        "fcurves": 200,
+        "leg_scale_ratio": 0.9754488974142614,
+        "max_ground_correction_m": 0.07844722270965576,
+        "status": "baked",
+        "channels": 60
+      },
+      "pass": true
+    },
+    "WH_Run_Zombie": {
+      "channels": 60,
+      "by_path": {
+        "translation": 20,
+        "rotation": 20,
+        "scale": 20
+      },
+      "samples": [
+        25
+      ],
+      "duration_seconds": [
+        0.8
+      ],
+      "max_rotation_component_span": 0.5089657604694366,
+      "max_quaternion_norm_error": 3.5496721007000076e-07,
+      "root_channel_span": 0.0,
+      "dense_30fps": true,
+      "bake": {
+        "src": "/workspace/witch-hunter/scratch/mixamo-fbx/zombienotscary/zombie running.fbx",
+        "frame_start": 1,
+        "frame_end": 25,
+        "samples": 25,
+        "duration_seconds": 0.8,
+        "fcurves": 200,
+        "leg_scale_ratio": 0.9754488974142614,
+        "max_ground_correction_m": 0.0679008960723877,
+        "status": "baked",
+        "channels": 60
+      },
+      "pass": true
+    },
+    "WH_Attack_Zombie": {
+      "channels": 60,
+      "by_path": {
+        "translation": 20,
+        "rotation": 20,
+        "scale": 20
+      },
+      "samples": [
+        140
+      ],
+      "duration_seconds": [
+        4.633333
+      ],
+      "max_rotation_component_span": 1.1565749943256378,
+      "max_quaternion_norm_error": 1.9459951137168474e-06,
+      "root_channel_span": 0.0,
+      "dense_30fps": true,
+      "bake": {
+        "src": "/workspace/witch-hunter/scratch/mixamo-fbx/singles/Zombie_Attack.fbx",
+        "frame_start": 1,
+        "frame_end": 140,
+        "samples": 140,
+        "duration_seconds": 4.633333333333334,
+        "fcurves": 200,
+        "leg_scale_ratio": 0.975448269561729,
+        "max_ground_correction_m": 0.07150375843048096,
+        "status": "baked",
+        "channels": 60
+      },
+      "pass": true
+    },
+    "WH_Hit_Zombie": {
+      "channels": 60,
+      "by_path": {
+        "translation": 20,
+        "rotation": 20,
+        "scale": 20
+      },
+      "samples": [
+        61
+      ],
+      "duration_seconds": [
+        2.0
+      ],
+      "max_rotation_component_span": 0.6402316093444824,
+      "max_quaternion_norm_error": 6.218403325597421e-07,
+      "root_channel_span": 0.0,
+      "dense_30fps": true,
+      "bake": {
+        "src": "/workspace/witch-hunter/scratch/mixamo-fbx/zombienotscary/zombie reaction hit.fbx",
+        "frame_start": 1,
+        "frame_end": 61,
+        "samples": 61,
+        "duration_seconds": 2.0,
+        "fcurves": 200,
+        "leg_scale_ratio": 0.9754488974142614,
+        "max_ground_correction_m": 0.04292166233062744,
+        "status": "baked",
+        "channels": 60
+      },
+      "pass": true
+    },
+    "WH_Death_Zombie": {
+      "channels": 60,
+      "by_path": {
+        "translation": 20,
+        "rotation": 20,
+        "scale": 20
+      },
+      "samples": [
+        350
+      ],
+      "duration_seconds": [
+        11.633333
+      ],
+      "max_rotation_component_span": 1.9233900308609009,
+      "max_quaternion_norm_error": 2.3406216222987553e-06,
+      "root_channel_span": 0.0,
+      "dense_30fps": true,
+      "bake": {
+        "src": "/workspace/witch-hunter/scratch/mixamo-fbx/zombienotscary/zombie agonizing.fbx",
+        "frame_start": 1,
+        "frame_end": 350,
+        "samples": 350,
+        "duration_seconds": 11.633333333333333,
+        "fcurves": 200,
+        "leg_scale_ratio": 0.9754488974142614,
+        "max_ground_correction_m": 0.07385528087615967,
+        "status": "baked",
+        "channels": 60
+      },
+      "pass": true
+    },
+    "WH_StandUp_Zombie": {
+      "channels": 60,
+      "by_path": {
+        "translation": 20,
+        "rotation": 20,
+        "scale": 20
+      },
+      "samples": [
+        94
+      ],
+      "duration_seconds": [
+        3.1
+      ],
+      "max_rotation_component_span": 1.8655382990837097,
+      "max_quaternion_norm_error": 2.274223868115044e-06,
+      "root_channel_span": 0.0,
+      "dense_30fps": true,
+      "bake": {
+        "src": "/workspace/witch-hunter/scratch/mixamo-fbx/zombienotscary/zombie stand up.fbx",
+        "frame_start": 1,
+        "frame_end": 94,
+        "samples": 94,
+        "duration_seconds": 3.1,
+        "fcurves": 200,
+        "leg_scale_ratio": 0.9754488974142614,
+        "max_ground_correction_m": 0.15699899196624756,
+        "status": "baked",
+        "channels": 60
+      },
+      "pass": true
+    }
+  },
+  "assertions": {
+    "original_count_six": true,
+    "exact_animation_names": true,
+    "binary_prefix_identical": true,
+    "original_json_asset": true,
+    "original_json_scene": true,
+    "original_json_scenes": true,
+    "original_json_nodes": true,
+    "original_json_animations": true,
+    "original_json_materials": true,
+    "original_json_meshes": true,
+    "original_json_textures": true,
+    "original_json_images": true,
+    "original_json_skins": true,
+    "original_json_accessors": true,
+    "original_json_bufferViews": true,
+    "original_json_samplers": true,
+    "original_WH_Attack1": true,
+    "original_WH_Death": true,
+    "original_WH_Hit": true,
+    "original_WH_Idle": true,
+    "original_WH_Run": true,
+    "original_WH_Walk": true,
+    "new_WH_Idle_Zombie": true,
+    "new_WH_Walk_Zombie": true,
+    "new_WH_Run_Zombie": true,
+    "new_WH_Attack_Zombie": true,
+    "new_WH_Hit_Zombie": true,
+    "new_WH_Death_Zombie": true,
+    "new_WH_StandUp_Zombie": true
+  },
+  "pass": true,
+  "failed_assertions": []
+}

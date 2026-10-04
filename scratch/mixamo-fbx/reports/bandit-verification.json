@@ -1,0 +1,298 @@
+{
+  "input": "/workspace/witch-hunter/art-direction/3d/assets/races_regen/rigged/orc-male-warrior.rigged.glb",
+  "output": "/workspace/witch-hunter/art-direction/3d/assets/races_regen/rigged/orc-male-warrior.mixamo.glb",
+  "source_sha256": "a4a212ef755eef327290a5fa3880f376b88ef300dddaef108cb3153cf3750677",
+  "output_sha256": "0ff11734b419ad093990ad1ee43fe2fb9efd289d7b8abd17f6a0e7530df68a50",
+  "original_bin_sha256": "8dbed94301fa36b666e876649235bd9362abd8d855eae21c6884d1e94caea1a1",
+  "output_prefix_sha256": "8dbed94301fa36b666e876649235bd9362abd8d855eae21c6884d1e94caea1a1",
+  "originals": {
+    "WH_Attack1": {
+      "channels": 60,
+      "shape_identical": true,
+      "source_data_identical": true,
+      "ordered_sampler_bytes_sha256": "71e05a237c3058160edad2d6f22200bf62ed206bc72e419ea5cc76f6dea3a617"
+    },
+    "WH_Death": {
+      "channels": 60,
+      "shape_identical": true,
+      "source_data_identical": true,
+      "ordered_sampler_bytes_sha256": "df8c840c605d1fb294c4ed00049b8de40601495f1ec0fec816fb8d144ce5e464"
+    },
+    "WH_Hit": {
+      "channels": 60,
+      "shape_identical": true,
+      "source_data_identical": true,
+      "ordered_sampler_bytes_sha256": "b5e439be60c2d927231072a1209ad7f72503ce9534ffbdbcaf65f34d8a714754"
+    },
+    "WH_Idle": {
+      "channels": 60,
+      "shape_identical": true,
+      "source_data_identical": true,
+      "ordered_sampler_bytes_sha256": "f57163f6b275bc7a001c1fba3689fc988f634062ec3889814c4c5f2f61d4a6bf"
+    },
+    "WH_Run": {
+      "channels": 60,
+      "shape_identical": true,
+      "source_data_identical": true,
+      "ordered_sampler_bytes_sha256": "9e4711e6f2ef2067cd321a2ea8406b600236cc4c6d5df8bacdca3c7f7a32f099"
+    },
+    "WH_Walk": {
+      "channels": 60,
+      "shape_identical": true,
+      "source_data_identical": true,
+      "ordered_sampler_bytes_sha256": "9c1ba499cc26948d7cdb738aa66012111ed732c62b53417efa9006a54e527641"
+    }
+  },
+  "new_clips": {
+    "WH_Idle_Melee": {
+      "channels": 60,
+      "by_path": {
+        "translation": 20,
+        "rotation": 20,
+        "scale": 20
+      },
+      "samples": [
+        56
+      ],
+      "duration_seconds": [
+        1.833333
+      ],
+      "max_rotation_component_span": 0.12784382700920105,
+      "max_quaternion_norm_error": 2.4585199676074865e-07,
+      "root_channel_span": 0.0,
+      "dense_30fps": true,
+      "bake": {
+        "src": "/workspace/witch-hunter/scratch/mixamo-fbx/axepack/standing idle.fbx",
+        "frame_start": 1,
+        "frame_end": 56,
+        "samples": 56,
+        "duration_seconds": 1.8333333333333333,
+        "fcurves": 200,
+        "leg_scale_ratio": 0.9818518606506939,
+        "max_ground_correction_m": 0.05469512939453125,
+        "status": "baked",
+        "channels": 60
+      },
+      "pass": true
+    },
+    "WH_Walk_Melee": {
+      "channels": 60,
+      "by_path": {
+        "translation": 20,
+        "rotation": 20,
+        "scale": 20
+      },
+      "samples": [
+        41
+      ],
+      "duration_seconds": [
+        1.333333
+      ],
+      "max_rotation_component_span": 1.9869977235794067,
+      "max_quaternion_norm_error": 1.6576894390496477e-07,
+      "root_channel_span": 0.0,
+      "dense_30fps": true,
+      "bake": {
+        "src": "/workspace/witch-hunter/scratch/mixamo-fbx/axepack/standing walk forward.fbx",
+        "frame_start": 1,
+        "frame_end": 41,
+        "samples": 41,
+        "duration_seconds": 1.3333333333333333,
+        "fcurves": 200,
+        "leg_scale_ratio": 0.9818518606506939,
+        "max_ground_correction_m": 0.05614209175109863,
+        "status": "baked",
+        "channels": 60
+      },
+      "pass": true
+    },
+    "WH_Run_Melee": {
+      "channels": 60,
+      "by_path": {
+        "translation": 20,
+        "rotation": 20,
+        "scale": 20
+      },
+      "samples": [
+        23
+      ],
+      "duration_seconds": [
+        0.733333
+      ],
+      "max_rotation_component_span": 1.964599609375,
+      "max_quaternion_norm_error": 1.8236630405787935e-07,
+      "root_channel_span": 0.0,
+      "dense_30fps": true,
+      "bake": {
+        "src": "/workspace/witch-hunter/scratch/mixamo-fbx/axepack/standing run forward.fbx",
+        "frame_start": 1,
+        "frame_end": 23,
+        "samples": 23,
+        "duration_seconds": 0.7333333333333333,
+        "fcurves": 200,
+        "leg_scale_ratio": 0.9818518606506939,
+        "max_ground_correction_m": 0.0640716552734375,
+        "status": "baked",
+        "channels": 60
+      },
+      "pass": true
+    },
+    "WH_Attack_High": {
+      "channels": 60,
+      "by_path": {
+        "translation": 20,
+        "rotation": 20,
+        "scale": 20
+      },
+      "samples": [
+        96
+      ],
+      "duration_seconds": [
+        3.166667
+      ],
+      "max_rotation_component_span": 1.9858691692352295,
+      "max_quaternion_norm_error": 4.412602985226499e-07,
+      "root_channel_span": 0.0,
+      "dense_30fps": true,
+      "bake": {
+        "src": "/workspace/witch-hunter/scratch/mixamo-fbx/axepack/standing melee attack 360 high.fbx",
+        "frame_start": 1,
+        "frame_end": 96,
+        "samples": 96,
+        "duration_seconds": 3.1666666666666665,
+        "fcurves": 200,
+        "leg_scale_ratio": 0.9818518606506939,
+        "max_ground_correction_m": 0.07141423225402832,
+        "status": "baked",
+        "channels": 60
+      },
+      "pass": true
+    },
+    "WH_Attack_Horiz": {
+      "channels": 60,
+      "by_path": {
+        "translation": 20,
+        "rotation": 20,
+        "scale": 20
+      },
+      "samples": [
+        73
+      ],
+      "duration_seconds": [
+        2.4
+      ],
+      "max_rotation_component_span": 1.8633866906166077,
+      "max_quaternion_norm_error": 2.8279222563654116e-07,
+      "root_channel_span": 0.0,
+      "dense_30fps": true,
+      "bake": {
+        "src": "/workspace/witch-hunter/scratch/mixamo-fbx/axepack/standing melee attack horizontal.fbx",
+        "frame_start": 1,
+        "frame_end": 73,
+        "samples": 73,
+        "duration_seconds": 2.4,
+        "fcurves": 200,
+        "leg_scale_ratio": 0.9818518606506939,
+        "max_ground_correction_m": 0.08392095565795898,
+        "status": "baked",
+        "channels": 60
+      },
+      "pass": true
+    },
+    "WH_Hit_Large_L": {
+      "channels": 60,
+      "by_path": {
+        "translation": 20,
+        "rotation": 20,
+        "scale": 20
+      },
+      "samples": [
+        32
+      ],
+      "duration_seconds": [
+        1.033333
+      ],
+      "max_rotation_component_span": 0.6493569314479828,
+      "max_quaternion_norm_error": 3.2690363616083573e-07,
+      "root_channel_span": 0.0,
+      "dense_30fps": true,
+      "bake": {
+        "src": "/workspace/witch-hunter/scratch/mixamo-fbx/axepack/standing react large from left.fbx",
+        "frame_start": 1,
+        "frame_end": 32,
+        "samples": 32,
+        "duration_seconds": 1.0333333333333334,
+        "fcurves": 200,
+        "leg_scale_ratio": 0.9818518606506939,
+        "max_ground_correction_m": 0.06814944744110107,
+        "status": "baked",
+        "channels": 60
+      },
+      "pass": true
+    },
+    "WH_Taunt": {
+      "channels": 60,
+      "by_path": {
+        "translation": 20,
+        "rotation": 20,
+        "scale": 20
+      },
+      "samples": [
+        86
+      ],
+      "duration_seconds": [
+        2.833333
+      ],
+      "max_rotation_component_span": 1.2432520985603333,
+      "max_quaternion_norm_error": 2.9904778520162267e-07,
+      "root_channel_span": 0.0,
+      "dense_30fps": true,
+      "bake": {
+        "src": "/workspace/witch-hunter/scratch/mixamo-fbx/axepack/standing taunt battlecry.fbx",
+        "frame_start": 1,
+        "frame_end": 86,
+        "samples": 86,
+        "duration_seconds": 2.8333333333333335,
+        "fcurves": 200,
+        "leg_scale_ratio": 0.9818518606506939,
+        "max_ground_correction_m": 0.05782675743103027,
+        "status": "baked",
+        "channels": 60
+      },
+      "pass": true
+    }
+  },
+  "assertions": {
+    "original_count_six": true,
+    "exact_animation_names": true,
+    "binary_prefix_identical": true,
+    "original_json_asset": true,
+    "original_json_scene": true,
+    "original_json_scenes": true,
+    "original_json_nodes": true,
+    "original_json_animations": true,
+    "original_json_materials": true,
+    "original_json_meshes": true,
+    "original_json_textures": true,
+    "original_json_images": true,
+    "original_json_skins": true,
+    "original_json_accessors": true,
+    "original_json_bufferViews": true,
+    "original_json_samplers": true,
+    "original_WH_Attack1": true,
+    "original_WH_Death": true,
+    "original_WH_Hit": true,
+    "original_WH_Idle": true,
+    "original_WH_Run": true,
+    "original_WH_Walk": true,
+    "new_WH_Idle_Melee": true,
+    "new_WH_Walk_Melee": true,
+    "new_WH_Run_Melee": true,
+    "new_WH_Attack_High": true,
+    "new_WH_Attack_Horiz": true,
+    "new_WH_Hit_Large_L": true,
+    "new_WH_Taunt": true
+  },
+  "pass": true,
+  "failed_assertions": []
+}

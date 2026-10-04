@@ -1,0 +1,96 @@
+{
+  "input": "/workspace/witch-hunter/art-direction/3d/assets/races_regen/rigged/undead-ghoul-male.rigged.glb",
+  "output": "/workspace/witch-hunter/art-direction/3d/assets/races_regen/rigged/undead-ghoul-male.mixamo.glb",
+  "fps": 30,
+  "clips": {
+    "WH_Idle_Zombie": {
+      "src": "/workspace/witch-hunter/scratch/mixamo-fbx/zombienotscary/zombie idle.fbx",
+      "frame_start": 1,
+      "frame_end": 184,
+      "samples": 184,
+      "duration_seconds": 6.1,
+      "fcurves": 200,
+      "leg_scale_ratio": 0.9754488974142614,
+      "max_ground_correction_m": 0.05487024784088135,
+      "status": "baked",
+      "channels": 60
+    },
+    "WH_Walk_Zombie": {
+      "src": "/workspace/witch-hunter/scratch/mixamo-fbx/zombienotscary/walking.fbx",
+      "frame_start": 1,
+      "frame_end": 47,
+      "samples": 47,
+      "duration_seconds": 1.5333333333333334,
+      "fcurves": 200,
+      "leg_scale_ratio": 0.9754488974142614,
+      "max_ground_correction_m": 0.07844722270965576,
+      "status": "baked",
+      "channels": 60
+    },
+    "WH_Run_Zombie": {
+      "src": "/workspace/witch-hunter/scratch/mixamo-fbx/zombienotscary/zombie running.fbx",
+      "frame_start": 1,
+      "frame_end": 25,
+      "samples": 25,
+      "duration_seconds": 0.8,
+      "fcurves": 200,
+      "leg_scale_ratio": 0.9754488974142614,
+      "max_ground_correction_m": 0.0679008960723877,
+      "status": "baked",
+      "channels": 60
+    },
+    "WH_Attack_Zombie": {
+      "src": "/workspace/witch-hunter/scratch/mixamo-fbx/singles/Zombie_Attack.fbx",
+      "frame_start": 1,
+      "frame_end": 140,
+      "samples": 140,
+      "duration_seconds": 4.633333333333334,
+      "fcurves": 200,
+      "leg_scale_ratio": 0.975448269561729,
+      "max_ground_correction_m": 0.07150375843048096,
+      "status": "baked",
+      "channels": 60
+    },
+    "WH_Hit_Zombie": {
+      "src": "/workspace/witch-hunter/scratch/mixamo-fbx/zombienotscary/zombie reaction hit.fbx",
+      "frame_start": 1,
+      "frame_end": 61,
+      "samples": 61,
+      "duration_seconds": 2.0,
+      "fcurves": 200,
+      "leg_scale_ratio": 0.9754488974142614,
+      "max_ground_correction_m": 0.04292166233062744,
+      "status": "baked",
+      "channels": 60
+    },
+    "WH_Death_Zombie": {
+      "src": "/workspace/witch-hunter/scratch/mixamo-fbx/zombienotscary/zombie agonizing.fbx",
+      "frame_start": 1,
+      "frame_end": 350,
+      "samples": 350,
+      "duration_seconds": 11.633333333333333,
+      "fcurves": 200,
+      "leg_scale_ratio": 0.9754488974142614,
+      "max_ground_correction_m": 0.07385528087615967,
+      "status": "baked",
+      "channels": 60
+    },
+    "WH_StandUp_Zombie": {
+      "src": "/workspace/witch-hunter/scratch/mixamo-fbx/zombienotscary/zombie stand up.fbx",
+      "frame_start": 1,
+      "frame_end": 94,
+      "samples": 94,
+      "duration_seconds": 3.1,
+      "fcurves": 200,
+      "leg_scale_ratio": 0.9754488974142614,
+      "max_ground_correction_m": 0.15699899196624756,
+      "status": "baked",
+      "channels": 60
+    }
+  },
+  "ground_z": -1.000000238418579,
+  "root_motion": "Root fixed; Hips vertical only",
+  "constraint_space": "WORLD: FBX armature is Y-up centimeters; WH is Z-up meters",
+  "output_bytes": 4923440,
+  "status": "pass"
+}

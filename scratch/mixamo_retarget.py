@@ -54,6 +54,7 @@ def main():
     parser.add_argument('--clips', required=True)
     parser.add_argument('--log', required=True)
     args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
+    Path(args.log).parent.mkdir(parents=True, exist_ok=True)
     inp, out = Path(args.input).resolve(), Path(args.output).resolve()
     assert inp != out and out.name.endswith('.mixamo.glb'), 'Use a separate .mixamo.glb'
     manifest_path = Path(args.clips).resolve()
@@ -65,7 +66,11 @@ def main():
     bpy.ops.import_scene.gltf(filepath=str(inp), bone_heuristic='BLENDER')
     target = bpy.data.objects['WH_Armature']
     assert set(target.pose.bones.keys()) == set(MAP) | {'Root'}
-    meshes = [o for o in bpy.data.objects if o.type == 'MESH']
+    # glTF importer also creates a hidden Icosphere bone-display mesh.
+    # Only the actual skinned character contributes to floor measurements.
+    meshes = [o for o in bpy.data.objects if o.type == 'MESH' and
+              any(m.type == 'ARMATURE' and m.object == target for m in o.modifiers)]
+    assert meshes
     scene = bpy.context.scene
     originals = list(bpy.data.actions)
     for action in originals:
