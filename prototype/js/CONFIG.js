@@ -450,7 +450,14 @@ window.WH_CONFIG = {
       castWindup: 0.25,               // seconds before the bolt spawns
       castCooldown: 0.3,              // seconds after cast before next cast
       schoolColor: 0xff7722,          // fire school color (offhand glow, HUD tint)
-      name: 'Firebolt', glyph: 'FB'   // CHARACTER tab spell columns
+      name: 'Firebolt', glyph: 'FB',  // CHARACTER tab spell columns
+      // 10-05 light radius order: per-hand light while a caster hand's
+      // binding is firebolt (WH_PlayerLight, hand-bone anchor). Brightness
+      // matched to the deleted R2 lantern (0xffb060 @6.5, d12): 0xff7722 has
+      // ~0.65x the linear luminance of 0xffb060, so 10.0 here ~= 6.5 there
+      light: { color: 0xff7722, intensity: 10.0, distance: 12, decay: 2, flickerPct: 5 },
+      // in-flight glow, one pooled light per live bolt (CONFIG.playerLight.projectilePoolSize)
+      projectileLight: { color: 0xff7722, intensity: 2.5, distance: 6, decay: 2, flickerPct: 8 }
     },
     // 10-04 (Nicko): key 2 light that follows the player for 60s. Once cast
     // it ignores the left hand entirely (stow / swap / Q / roll / death);
@@ -462,14 +469,15 @@ window.WH_CONFIG = {
       castCooldown: 0.3,              // seconds after cast before next cast
       durationSeconds: 60,            // light lifetime from the last cast
       lightColor: 0xffb36b,           // warm white-amber
-      // 2.2 read dim beside the 6.5 decay-2 lantern from 1.9m up; 8.0 lights
-      // a ~6m ground pool without washing out the lantern
+      // 2.2 read dim beside the (now deleted) 6.5 decay-2 lantern from 1.9m
+      // up; 8.0 lights a ~6m ground pool
       lightIntensity: 8.0,
       lightDistance: 14,              // PointLight range cutoff
-      lightDecay: 2,                  // physical falloff (matches the lantern)
+      lightDecay: 2,                  // physical falloff
       glowColor: 0xffd9a0,            // orb color
       schoolColor: 0xffd9a0,          // offhand glow + HUD tint while held
       name: 'Radiance', glyph: 'RD',  // CHARACTER tab spell columns
+      light: null,                    // 10-05: no per-hand binding light (its cast follow-light is lightColor..)
       orbRadius: 0.14,
       orbSegments: [12, 8],           // sphere width / height segments
       // yawFrame-local (+X = body left, measured: L_Hand sits at +X and the
