@@ -947,8 +947,9 @@ window.WH_CONFIG.inventory = {
 // (bandit + ghoul drop exactly the same things). Every kill: the guaranteed
 // stack, plus a bonusChance roll into the weighted bonusPool (weight / sum).
 // Cooking ingredients NEVER drop from enemies (gather nodes + wild animals
-// only). Drops spawn as ordinary WorldItems boxes (same E pickup / region
-// gating) at the corpse x/z, spawnDelaySec after the kill. No despawn yet.
+// only). Order S4 (Nicko 10-05): drops are stored on the corpse; boxes are
+// player G-drops only. The roll lands in enemy.corpseLoot and is looted off
+// the body (CONFIG.corpseLoot) - no WorldItems box ever spawns from a kill.
 window.WH_CONFIG.drops = {
   bonusChance: 0.20,                // per kill
   bonusPool: [                      // weighted pick (torch most common, glove rare)
@@ -956,9 +957,47 @@ window.WH_CONFIG.drops = {
     { id: 'bandage', weight: 30 },
     { id: 'magicGlove', weight: 8 }
   ],
-  guaranteed: { id: 'stolenCoin', count: 1 },
-  spawnDelaySec: 0.6,               // drop pops shortly after the corpse settles
-  bonusOffset: 0.45                 // m, bonus box sits this far from the coin (no overlap)
+  guaranteed: { id: 'stolenCoin', count: 1 }
+};
+
+// Order S4 (Nicko 10-05): the corpse IS the loot container (js/corpse-loot.js
+// WH_CORPSE_LOOT). While enemy.corpseLoot is non-empty the body shows a soft
+// additive gold glow (billboard + ground pool) with unlit sparks rising off
+// it; USE / E (game.js interact: box pickup > corpse > gather node) moves
+// everything that fits into the inventory, the rest stays on the body. An
+// emptied corpse fades its effect out and is plain forever after.
+// NO PointLights on corpses, ever - the light budget (CONFIG.playerLight /
+// lightPool) is unchanged; the additive glow reads at night on its own.
+// LIFETIME (playtest): unlooted loot lives only as long as the corpse object -
+// a region rebuild / reset recreates the corpse empty and the loot vanishes.
+// REAL-GAME PERSISTENCE attaches here later: store corpseLoot in the region
+// state (RegionLogic.stateFor(...).enemies) next to the 'dead' flag.
+window.WH_CONFIG.corpseLoot = {
+  lootRadius: 1.6,                  // m from the corpse centre (same feel as pickupRadius)
+  promptText: 'USE - Loot',         // touch + desktop wording (E and USE share interact)
+  lootToast: 'Looted: {list}',      // {list} = 'Stolen Coin x1, Torch x1'
+  partialSuffix: ' - Inventory full',   // appended when something stayed on the body
+  fullText: 'Inventory full',       // nothing fit: corpse keeps glowing
+  appearDelaySec: 0.6,              // effect starts this long after the kill (corpse settles)
+  fadeInSec: 0.4,
+  fadeOutSec: 0.5,                  // looted-empty fade
+  glowColor: 0xd8b24a,              // gold = coin / human accent family
+  glowOpacity: 0.55,                // peak additive strength
+  glowPulseSec: 2.4,                // one gentle breath
+  glowPulseMin: 0.6,                // opacity trough (fraction of peak)
+  glowScale: 1.5,                   // billboard size (m) ~ the torso
+  glowHeight: 0.45,                 // billboard centre over the ground (m)
+  groundGlow: { radius: 0.95, opacity: 0.45 },   // flat additive pool under the body (0 opacity = off)
+  sparks: {
+    count: 14,                      // pool size per active corpse (recycled)
+    riseSpeed: 0.45,                // m/s
+    drift: 0.12,                    // m/s max sideways wander
+    lifetimeSec: 2.2,               // each spark's rise (fades in, then out at the top)
+    lifetimeJitter: 0.35,           // +- fraction
+    spawnRadius: 0.45,              // m disc over the body they rise from
+    size: 0.07,                     // m (attenuated points)
+    color: 0xffd27a
+  }
 };
 
 // Item registry. ids are canonical (stage 2 enemy drops + gatherables reuse

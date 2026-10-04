@@ -492,7 +492,7 @@
       this.setFsm('dead');
       if (this.anim) this.anim.death();
       // stage 2: the one kill entry point (melee sweep + firebolt both land
-      // here) - game.js schedules the CONFIG.drops loot from it
+      // here) - game.js stores the CONFIG.drops roll on the corpse (S4)
       if (Enemy.onKilled) Enemy.onKilled(this);
       return true;
     }
@@ -532,7 +532,7 @@
     }
   };
 
-  Enemy.onKilled = null;              // stage 2: fn(enemy), set by game.js (drops)
+  Enemy.onKilled = null;              // stage 2: fn(enemy), set by game.js (corpse loot)
 
   window.WH_Enemy = Enemy;
   window.WH_ENEMY_TYPES = ['bandit', 'ghoul'];

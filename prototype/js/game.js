@@ -25,7 +25,7 @@
     shakeSeed: 0,                     // per-pulse random phase
     firebolts: [],                    // v7: live Firebolt projectiles
     radiances: [],                    // 10-04: the ONE Radiance effect (max 1, kept parked)
-    pendingDrops: []                  // stage 2: rolled kill loot waiting out CONFIG.drops.spawnDelaySec
+    corpseLoot: null                  // S4: WH_CORPSE_LOOT.Manager (kill loot lives on the body)
   };
   window.WH_GAME = game;
 
@@ -949,7 +949,10 @@
     };
     p.onHandsChanged = function () { game.inventoryUI.render(); };
     game.worldItems = new INV.WorldItems(game.scene);
-    window.WH_Enemy.onKilled = scheduleDrops;
+    // region manager is built after setupInventory - hand over a getter
+    game.corpseLoot = new window.WH_CORPSE_LOOT.Manager(game.scene,
+      function () { return game.regionManager; });
+    window.WH_Enemy.onKilled = storeCorpseLoot;
     // stage 2: gather nodes from every region's CONFIG nodes list
     game.gatherNodes = new window.WH_GATHER.NodeManager(game.scene,
       window.WH_REGION_DEFS.regions);
@@ -961,10 +964,13 @@
 
   // S3b: the one world-interact entry point - E key, touch USE button
   // (WH_DEBUG.interact) and future chests/doors all route through here.
-  // A ground item in reach wins, else the nearest ready node.
+  // A ground item in reach wins (G-drop boxes), then an unlooted corpse,
+  // else the nearest ready node.
   function interact() {
     if (game.player.inputSuspended || game.player.state !== 'alive') return false;
-    return tryPickup() || tryGather();
+    var p = game.player.pos;
+    return tryPickup() || lootCorpseNearest(p.x, p.z, CFG.corpseLoot.lootRadius) ||
+      tryGather();
   }
 
   // G on the selected stack: 1 unit, or the whole stack with Shift.
@@ -1005,35 +1011,41 @@
     return pool.length ? pool[pool.length - 1] : null;
   }
 
-  // Enemy.onKilled: roll the loot now, spawn it spawnDelaySec later at the
-  // corpse x/z in the enemy's home region (the region its corpse lies in).
-  function scheduleDrops(enemy) {
+  // S1 roll: the guaranteed stack plus a bonusChance weighted bonus item.
+  function rollDrops() {
     var D = CFG.drops;
     var items = [{ id: D.guaranteed.id, count: D.guaranteed.count }];
     if (Math.random() < D.bonusChance) {
       var b = weightedPick(D.bonusPool);
       if (b) items.push({ id: b.id, count: 1 });
     }
-    game.pendingDrops.push({ t: D.spawnDelaySec, x: enemy.pos.x, z: enemy.pos.z,
-                             regionId: enemy.homeRegionId, items: items });
+    return items;
   }
 
-  function tickDrops(dt) {
-    var D = CFG.drops;
-    for (var i = game.pendingDrops.length - 1; i >= 0; i--) {
-      var pd = game.pendingDrops[i];
-      pd.t -= dt;
-      if (pd.t > 0) continue;
-      game.pendingDrops.splice(i, 1);
-      var ang = Math.random() * Math.PI * 2;
-      for (var k = 0; k < pd.items.length; k++) {
-        // first stack on the corpse, extras ringed bonusOffset around it
-        var off = k === 0 ? 0 : D.bonusOffset;
-        var a = ang + k * 2.4;
-        game.worldItems.spawn(pd.items[k].id, pd.items[k].count,
-          pd.x + Math.sin(a) * off, pd.z + Math.cos(a) * off, pd.regionId);
-      }
+  // Enemy.onKilled (S4): the roll is stored ON the corpse (enemy.corpseLoot),
+  // never spawned as boxes - the body glows until it is looted empty.
+  function storeCorpseLoot(enemy) {
+    game.corpseLoot.attach(enemy, rollDrops());
+  }
+
+  // USE / E: everything that fits off the nearest unlooted corpse in reach;
+  // what does not fit stays on the body (it keeps glowing). False = no
+  // corpse in reach, so the interact chain falls through to gathering.
+  function lootCorpseNearest(x, z, radius) {
+    var L = CFG.corpseLoot;
+    var corpse = game.corpseLoot.nearest(x, z, radius, game.regionManager.logic.activeId);
+    if (!corpse) return false;
+    var r = game.corpseLoot.loot(corpse, game.inventory);
+    if (!r.taken.length) {
+      game.inventoryUI.toast(L.fullText);
+      return true;
     }
+    var parts = r.taken.map(function (t) {
+      return window.WH_INVENTORY.itemDef(t.id).name + ' x' + t.count;
+    });
+    game.inventoryUI.toast(L.lootToast.replace('{list}', parts.join(', ')) +
+      (r.remaining ? L.partialSuffix : ''));
+    return true;
   }
 
   // E: nearest item entity within pickupRadius goes into the inventory
@@ -1081,20 +1093,25 @@
     return true;
   }
 
-  // 'E - Gather {name}' while a ready node is in reach and no ground item
-  // would take the E press first.
-  function updateGatherPrompt() {
+  // One interact prompt (the wh-gather-prompt element) mirroring interact():
+  // nothing while a ground item would take the press (pickup has no
+  // prompt), 'USE - Loot' for an unlooted corpse, else 'E - Gather {name}'.
+  function updateInteractPrompt() {
     var p = game.player;
-    var node = null;
+    var activeId = game.regionManager.logic.activeId;
+    var text = '';
     if (p.state === 'alive' && !p.inputSuspended &&
-        !game.worldItems.nearest(p.pos.x, p.pos.z, CFG.inventory.drop.pickupRadius,
-          game.regionManager.logic.activeId)) {
-      node = nearestGatherNode();
+        !game.worldItems.nearest(p.pos.x, p.pos.z, CFG.inventory.drop.pickupRadius, activeId)) {
+      if (game.corpseLoot.nearest(p.pos.x, p.pos.z, CFG.corpseLoot.lootRadius, activeId)) {
+        text = CFG.corpseLoot.promptText;
+      } else {
+        var node = nearestGatherNode();
+        if (node) text = CFG.gather.promptText.replace('{name}', CFG.gather.nodeTypes[node.type].name);
+      }
     }
     var el = game.hud.gatherPrompt;
-    var text = node ? CFG.gather.promptText.replace('{name}', CFG.gather.nodeTypes[node.type].name) : '';
     if (el.textContent !== text) el.textContent = text;
-    el.classList.toggle('visible', !!node);
+    el.classList.toggle('visible', !!text);
   }
 
   // ---- WH_DEBUG hooks ----------------------------------------------------------
@@ -1243,6 +1260,13 @@
       handButton: function (button, down) { game.player.handButton(button, down !== false); },
       // S3b: same dispatch as the E key (pickup, then gather)
       interact: function () { return interact(); },
+      // S4: unlooted corpses with a live effect / stored loot
+      getCorpseLoot: function () {
+        return game.corpseLoot.fx.map(function (r) {
+          return { type: r.enemy.type, state: r.state, x: r.enemy.pos.x, z: r.enemy.pos.z,
+                   loot: (r.enemy.corpseLoot || []).slice() };
+        });
+      },
       unequipHand: function (hand) { return game.player.unequipHand(hand); },
       getActiveLoadout: function () { return game.player.activeLoadout; },
       toggleLoadout: function () { game.player.toggleLoadout(); },
@@ -1514,9 +1538,9 @@
     for (var ra = 0; ra < game.radiances.length; ra++) game.radiances[ra].update(dt);
 
     // 10-05: dropped item entities (spin + active-region visibility);
-    // stage 2: kill loot pops once its spawn delay runs out
-    tickDrops(dt);
+    // S4: unlooted-corpse glow + sparks (disposed with their corpse)
     game.worldItems.update(dt, rm.logic.activeId);
+    game.corpseLoot.update(dt, rm.logic.activeId);
     game.gatherNodes.update(dt, rm.logic.activeId);   // stage 2: respawn tick + markers
 
     // ---- v7: projectile update + collision vs enemies ----
@@ -1605,7 +1629,7 @@
     game.playerLight.update(game.player, game.firebolts);
     skyTick();      // 10-03 order 4: star twinkle clock
     updateHud(dt);
-    updateGatherPrompt();
+    updateInteractPrompt();
     game.renderer.render(game.scene, game.camera);
   }
 
