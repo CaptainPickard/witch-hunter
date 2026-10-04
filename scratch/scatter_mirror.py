@@ -274,8 +274,8 @@ def scatter_plan(region_key):
     B = SC['bushes']; G = SC['grass']
     grass_path = DP['halfWidth'] + G['pathPadM'] if has_path else 0
 
-    def bush_pick(rand):
-        bp = pick_weighted(rand, B['assets']); h = lerp([bp[2], bp[3]], rand())
+    def bush_pick(rand, rows):
+        bp = pick_weighted(rand, rows); h = lerp([bp[2], bp[3]], rand())
         bm = meta(bp[0]); sc = h / bm['height']
         return bp[0], sc, bm['width'] * sc / 2 * B['selfRadiusFrac'], rand() * TWO_PI
 
@@ -286,7 +286,7 @@ def scatter_plan(region_key):
         for slot in range(n):
             ang = a0 + slot * TWO_PI / n + (rr2() - 0.5) * (TWO_PI / n) * 0.5
             rad = host['trunk'] * lerp(R['radiusFrac'], rr2())
-            name, sc, own, rot = bush_pick(rr2)
+            name, sc, own, rot = bush_pick(rr2, R.get('assets') or B['assets'])
             bx = host['x'] + math.cos(ang) * rad; bz = host['z'] + math.sin(ang) * rad
             if not in_region(bx, bz, 0) or not clear_world(bx, bz, grass_path) or hits(bx, bz, own, host):
                 plan['stats']['ringSkipped'] += 1; continue
@@ -295,7 +295,7 @@ def scatter_plan(region_key):
 
     rf = stream('freeBushes'); fa = 0
     while fa < B['freeBushes'] * 30 and plan['stats']['freeBushes'] < B['freeBushes']:
-        x, z = sample(rf); name, sc, own, rot = bush_pick(rf); fa += 1
+        x, z = sample(rf); name, sc, own, rot = bush_pick(rf, B['assets']); fa += 1
         if (not in_region(x, z, C['edgeM']) or not clear_world(x, z, C['pathM']) or
                 not clear_points(x, z) or hits(x, z, T['propClearM'], None)):
             continue

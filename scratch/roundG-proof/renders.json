@@ -1,0 +1,63 @@
+[
+ {
+  "png": "/workspace/witch-hunter/scratch/roundG-proof/01-wall-height-closeup.png",
+  "objects": 120,
+  "aim": [
+   77.30249353056433,
+   3.24,
+   39.91646895652293
+  ],
+  "cam": [
+   77.59234390899123,
+   1.7,
+   28.029951243425874
+  ],
+  "lens": 22,
+  "night": false,
+  "segments": [
+   10,
+   11
+  ]
+ },
+ {
+  "png": "/workspace/witch-hunter/scratch/roundG-proof/02-wall-ring-wide.png",
+  "objects": 777,
+  "aim": [
+   -82.26011607714058,
+   4.394141003279682,
+   -28.324429437772604
+  ],
+  "cam": [
+   -53.39512162874652,
+   4.994141003279681,
+   38.793826651303235
+  ],
+  "lens": 16,
+  "night": false,
+  "eyeY": 4.99,
+  "wallH": 7.2
+ },
+ {
+  "png": "/workspace/witch-hunter/scratch/roundG-proof/03-snare-ring-closeup.png",
+  "objects": 139,
+  "aim": [
+   48.712313268444916,
+   0.75,
+   32.56357691356438
+  ],
+  "cam": [
+   49.71733814598933,
+   1.35,
+   36.762377336961144
+  ],
+  "lens": 24,
+  "night": false,
+  "host": {
+   "asset": "youngBirch",
+   "x": 48.712313268444916,
+   "z": 32.56357691356438,
+   "ring": 4,
+   "grass5m": 1
+  }
+ }
+]

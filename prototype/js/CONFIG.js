@@ -461,7 +461,10 @@ window.WH_CONFIG = {
       // every tree gets [min,max] bushes at radiusFrac x its TRUNK collider radius
       ringHosts: ['yewTree', 'livingOak', 'witchwoodTree', 'deadTree', 'youngAsh',
         'youngBirch', 'youngDeadTree'],
-      atTreeRing: { count: [2, 4], radiusFrac: [1.1, 1.6] },
+      // ring bushes draw from their own rows (Round G: Nicko's snare bush;
+      // rollback = assets: B.assets rows, i.e. bushA/bushB)
+      atTreeRing: { count: [2, 4], radiusFrac: [1.1, 1.6],
+        assets: [['whBushSnare', 1, 1.0, 1.4]] },
       freeBushes: 20                  // per region, open ground
     },
     grass: {
@@ -500,7 +503,7 @@ window.WH_CONFIG = {
     minRadius: 86.5,                  // radial jitter never pulls a segment inside this
     segmentLengthUnits: 4.0,          // world meters per segment INSTANCE (X scale)
     overlapM: 0.2,                    // segment count uses length - overlap so ends butt
-    heightM: 2.4,                     // world height (Y scale; mild stretch of the GLB)
+    heightM: 7.2,                     // world height (Y scale only; Round G 3x of 2.4 so the camera can't see over)
     depthScale: 0.7,                  // Z scale = X scale * this (~0.7 m thick)
     sinkM: 0.05,                      // bury the base slightly into the ground
     assets: ['whWallA', 'whWallB'],   // MANIFEST keys, alternated
