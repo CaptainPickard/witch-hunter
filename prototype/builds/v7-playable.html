@@ -86874,8 +86874,11 @@ window.WH_CONFIG.touch = {
     // characters (whanim1 rigged exports; props below stay rigid)
     // 10-04: rigged copy + WH_SlashR2L/WH_SlashL2R/WH_Thrust chain clips
     // (scratch/blender_chain_clips.py). Rollback: human-hunter-male.rigged.glb
-    playerBody: 'art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-chain.glb',
-    banditBody: 'art-direction/3d/assets/races_regen/rigged/orc-male-warrior.rigged.glb',
+    // 10-05 Round C: combat-chain.glb + 12 Mixamo WH_Sword*/WH_Shield* clips
+    // (scratch/mixamo_player.json; chain clips byte-identical). Rollback:
+    // human-hunter-male.combat-chain.glb
+    playerBody: 'art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-sword.glb',
+    banditBody: 'art-direction/3d/assets/races_regen/rigged/orc-male-warrior.mixamo.glb',
     // 10-05: rigged copy + 7 Mixamo WH_*_Zombie clips (13 total).
     // Rollback: undead-ghoul-male.rigged.glb
     ghoulBody: 'art-direction/3d/assets/races_regen/rigged/undead-ghoul-male.mixamo.glb',
@@ -87339,6 +87342,10 @@ window.WH_CONFIG.touch = {
   // GLB regen can never strand a state. moves replaces MOVE_NAMES wholesale.
   // zombie: Mixamo ghoul set; death stays canonical (WH_Death_Zombie ends
   // standing and reads wounded, not dead).
+  // bandit: Mixamo axe set on the cape-fixed orc; death canonical, no moves.
+  // sword: player Mixamo sword-and-shield locomotion (combat-sword.glb);
+  // attack/hit/death canonical, moves IS MOVE_NAMES (same object: identity
+  // checks elsewhere treat it as the default chain-move player body).
   var VARIANTS = {
     zombie: {
       names: {
@@ -87346,6 +87353,20 @@ window.WH_CONFIG.touch = {
         attack: 'WH_Attack_Zombie', hit: 'WH_Hit_Zombie', death: 'WH_Death'
       },
       moves: {}
+    },
+    bandit: {
+      names: {
+        idle: 'WH_Idle_Melee', walk: 'WH_Walk_Melee', run: 'WH_Run_Melee',
+        attack: 'WH_Attack_High', hit: 'WH_Hit_Large_L', death: 'WH_Death'
+      },
+      moves: {}
+    },
+    sword: {
+      names: {
+        idle: 'WH_SwordIdle', walk: 'WH_SwordWalk', run: 'WH_SwordRun',
+        attack: 'WH_Attack1', hit: 'WH_Hit', death: 'WH_Death'
+      },
+      moves: MOVE_NAMES
     }
   };
 
@@ -87815,7 +87836,8 @@ window.WH_CONFIG.touch = {
     this.bodyBaseX = meshRoot.position.x || 0;
     this.yawFrame.add(this.body);
     if (window.WH_ASSETS.getClips('playerBody').length) {
-      this.anim = new window.WH_CharacterAnim(meshRoot, window.WH_ASSETS.getClips('playerBody'));
+      this.anim = new window.WH_CharacterAnim(meshRoot, window.WH_ASSETS.getClips('playerBody'),
+        { variant: 'sword' });
     }
   };
 
@@ -88870,9 +88892,9 @@ window.WH_CONFIG.touch = {
     this.yawFrame.add(this.body);
     var bodyName = this.type === 'bandit' ? 'banditBody' : 'ghoulBody';
     if (window.WH_ASSETS.getClips(bodyName).length) {
-      // 10-05: ghouls play the Mixamo zombie set; bandits keep the default map.
+      // 10-05: ghouls play the Mixamo zombie set, bandits the Mixamo axe set.
       this.anim = new window.WH_CharacterAnim(meshRoot, window.WH_ASSETS.getClips(bodyName),
-        this.type === 'ghoul' ? { variant: 'zombie' } : null);
+        { variant: this.type === 'ghoul' ? 'zombie' : 'bandit' });
     }
     // Rigged bandits carry the axe on the animated hand, not a world pivot.
     var hand = meshRoot.getObjectByName('R_Hand');
