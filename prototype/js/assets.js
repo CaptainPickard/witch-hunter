@@ -52,6 +52,7 @@
     // 10-05 Round C: combat-chain.glb + 12 Mixamo WH_Sword*/WH_Shield* clips
     // (scratch/mixamo_player.json; chain clips byte-identical). Rollback:
     // human-hunter-male.combat-chain.glb
+    // Round D: + 3 Mixamo WH_SS_* chain attacks (24 total).
     playerBody: 'art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-sword.glb',
     banditBody: 'art-direction/3d/assets/races_regen/rigged/orc-male-warrior.mixamo.glb',
     // 10-05: rigged copy + 7 Mixamo WH_*_Zombie clips (13 total).
@@ -405,9 +406,11 @@
         var root = v.gltf.scene;
         if (CHARACTERS[name]) {
           clips[name] = v.gltf.animations || [];
-          if (clips[name].length !== 6) {
-            console.warn('[WH assets] expected 6 clips for ' + name + ', got ' +
-              clips[name].length);
+          // playerBody combat-sword.glb: 9 chain + 12 Sword (Round C) + 3 SS (Round D).
+          var expected = name === 'playerBody' ? 24 : 6;
+          if (clips[name].length !== expected) {
+            console.warn('[WH assets] expected ' + expected + ' clips for ' + name +
+              ', got ' + clips[name].length);
           }
         }
         prepTemplate(root, isPixelated);

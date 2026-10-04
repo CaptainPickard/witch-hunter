@@ -9,7 +9,16 @@
   };
   // 10-04 chain clips: CONFIG move id -> per-move player clip. Bodies without
   // the clip (enemies, handAxe moves, older GLBs) use the shared 'attack'.
+  // Round D: Mixamo sword-pack attacks baked into combat-sword.glb; thrust
+  // slot plays an overhead chop (pack has no stab). A missing WH_SS_* clip
+  // falls back to the authored 10-04 clip (MOVE_FALLBACK_NAMES). Rollback:
+  // revert MOVE_NAMES values to MOVE_FALLBACK_NAMES (+ CONFIG move timings).
   var MOVE_NAMES = {
+    slashR2L: 'WH_SS_SlashR2L',
+    slashL2R: 'WH_SS_SlashL2R',
+    thrust: 'WH_SS_Overhead'
+  };
+  var MOVE_FALLBACK_NAMES = {
     slashR2L: 'WH_SlashR2L', slashL2R: 'WH_SlashL2R', thrust: 'WH_Thrust'
   };
   // 10-05 per-body clip-name variants (options.variant). A slot whose override
@@ -85,6 +94,13 @@
     });
     Object.keys(this.moveNames).forEach(function (move) {
       var clip = THREE.AnimationClip.findByName(clips, self.moveNames[move]);
+      if (!clip && MOVE_FALLBACK_NAMES[move]) {
+        clip = THREE.AnimationClip.findByName(clips, MOVE_FALLBACK_NAMES[move]);
+        if (clip) {
+          console.warn('[WH anim] move ' + move + ' missing ' + self.moveNames[move] +
+            ', falling back');
+        }
+      }
       if (!clip) return;
       var action = self.mixer.clipAction(clip);
       action.setLoop(THREE.LoopOnce, 1);
