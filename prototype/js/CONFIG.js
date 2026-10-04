@@ -284,6 +284,28 @@ window.WH_CONFIG = {
       // dirt path, arc around the cemetery, rim scatter (trunk colliders are
       // automatic since R5; placement enforces spawn/enemy/corridor/path/prop
       // clearances; deterministic seed 20261003)
+    ],
+    // Stage 2 gather nodes (CONFIG.gather.nodeTypes; js/gather.js). Open
+    // forest floor only: clear of the dirt path (+2.5m), the cemetery +
+    // its tree ring, props (trees 4m / others 3m), enemy spawns (5m), the
+    // player spawn (6m), the gate corridor (z > -17); 9m apart.
+    // scratch/gen_gather_nodes.py, seed 20261005. In the real game each
+    // type's list is its PLACEMENT POOL (see CONFIG.gather.economy).
+    nodes: [
+      { type: 'herbBundle', x: 59.8, z: 23.1 },
+      { type: 'herbBundle', x: 13.5, z: 58.4 },
+      { type: 'herbBundle', x: -54.7, z: -15.4 },
+      { type: 'herbBundle', x: -54.5, z: 44.3 },
+      { type: 'herbBundle', x: 21.3, z: 71.0 },
+      { type: 'herbBundle', x: 39.8, z: 43.1 },
+      { type: 'deadwoodPile', x: 69.4, z: 16.4 },
+      { type: 'deadwoodPile', x: 70.8, z: -3.8 },
+      { type: 'deadwoodPile', x: -34.3, z: 42.0 },
+      { type: 'deadwoodPile', x: -40.0, z: 4.6 },
+      { type: 'mushroomCluster', x: 38.0, z: -6.3 },
+      { type: 'mushroomCluster', x: 59.2, z: -0.5 },
+      { type: 'mushroomCluster', x: 68.5, z: -12.6 },
+      { type: 'mushroomCluster', x: -60.0, z: 23.2 }
     ]
   },
 
@@ -364,6 +386,19 @@ window.WH_CONFIG = {
       // R2: darkwood light-socket props (doc 61 batches B2/B3)
       { asset: 'banditCampfire', x: 2.5, z: -52, rotY: 0.0, scale: 1.8 },
       { asset: 'lanternWaymarker', x: -6.5, z: -47, rotY: 1.1, scale: 1.9 }
+    ],
+    // Stage 2 gather nodes: darkwood band (|x| < 42, z -82..-31), clear of
+    // props 3-4m / enemies 5m / spawn 6m, 6m apart (gen_gather_nodes.py)
+    nodes: [
+      { type: 'graveMoss', x: -32.9, z: -39.1 },
+      { type: 'graveMoss', x: 38.3, z: -57.4 },
+      { type: 'graveMoss', x: -33.7, z: -62.2 },
+      { type: 'graveMoss', x: -14.4, z: -66.6 },
+      { type: 'graveMoss', x: -12.7, z: -48.1 },
+      { type: 'bonePile', x: 31.7, z: -63.2 },
+      { type: 'bonePile', x: -41.7, z: -54.4 },
+      { type: 'bonePile', x: -17.0, z: -53.1 },
+      { type: 'bonePile', x: -2.7, z: -52.4 }
     ]
   },
 
@@ -971,7 +1006,76 @@ window.WH_CONFIG.items = {
   // Stage 2 enemy drop (CONFIG.drops.guaranteed). 'valuable' = new category;
   // vendor / currency systems are NOT built - it only stacks for now.
   stolenCoin:     { id: 'stolenCoin', name: 'Stolen Coin', glyph: 'SC',
-                    category: 'valuable', stackCap: 999 }
+                    category: 'valuable', stackCap: 999 },
+  // Stage 2 cooking ingredients: ONLY from gather nodes (CONFIG.gather) and,
+  // in a later stage, wild animals - never enemy drops. Default stackCap.
+  forestHerb:     { id: 'forestHerb', name: 'Forest Herb', glyph: 'FH', category: 'ingredient' },
+  deadwood:       { id: 'deadwood', name: 'Deadwood', glyph: 'DW', category: 'ingredient' },
+  wildMushroom:   { id: 'wildMushroom', name: 'Wild Mushroom', glyph: 'WM', category: 'ingredient' },
+  graveMoss:      { id: 'graveMoss', name: 'Grave Moss', glyph: 'GM', category: 'ingredient' },
+  boneShard:      { id: 'boneShard', name: 'Bone Shard', glyph: 'BS', category: 'ingredient' }
+};
+
+// Stage 2 (Nicko 10-05): static gather nodes (js/gather.js WH_GATHER).
+// Placements live in regionA/regionB .nodes. E harvests the nearest READY
+// node within interactRadius; a full inventory refuses (node stays ready).
+// A harvested node goes dormant and respawns after its type's timer; each
+// node's timer is jittered by respawnJitterPct so nodes never sync.
+//
+// RESPAWN ECONOMY - REAL-GAME DESIGN INTENT (persist this):
+//   common node types respawn once per REAL DAY, rare types once per REAL
+//   WEEK, by wall-clock time regardless of in-game time; a respawning node
+//   reappears at a RANDOM free spot from its type's placement pool (the
+//   region's nodes entries of that type, reshuffled). The day/week economy
+//   arrives with the real game. THIS PLAYTEST runs economy.mode 'playtest':
+//   per-type respawnSec on the game clock, nodes return in place.
+//   mode 'real' = realSec[rarity] on Date.now() (model wired, not tuned).
+window.WH_CONFIG.gather = {
+  interactRadius: 1.6,              // same as pickupRadius feel
+  promptText: 'E - Gather {name}',
+  gatherToast: 'Gathered {name} x{n}',
+  fullText: 'Inventory full',       // reuse
+  respawnJitterPct: 15,             // +-% per respawn so timers stagger (AC S4)
+  fadeSec: 0.5,                     // harvest fade-out / respawn fade-in (scale + sink)
+  economy: {
+    mode: 'playtest',               // 'playtest' (respawnSec, game clock) | 'real' (realSec, wall clock)
+    realSec: { common: 86400, rare: 604800 },   // REAL DAY / REAL WEEK
+    reshuffleOnRespawn: false       // real game: true (random free pool spot); playtest: in place
+  },
+  // !!! PLAYTEST AID ONLY (Nicko 10-05 canon) !!! In the REAL game gather
+  // nodes DO NOT GLOW - players spot them by eye among the bushes / grass
+  // added later. playtestGlow true adds a small unlit marker mesh with a
+  // bob/pulse above each READY node. NO per-node PointLights, ever (the
+  // light budget stays: 4 pool lights + flame cards + player lights).
+  // Real game = playtestGlow false: nodes render as plain flora-adjacent
+  // props. The base mesh here is a PLACEHOLDER for the later bush/grass art
+  // asset mission - node meshes are not this order's art pass.
+  playtestGlow: true,
+  marker: {
+    size: 0.16,                     // octahedron radius (m, times node scale)
+    height: 0.95,                   // float height over the ground (m)
+    bobAmp: 0.08,                   // m
+    bobHz: 0.6,
+    pulseMin: 0.75,                 // scale pulse trough (fraction)
+    pulseHz: 1.1
+  },
+  base: {
+    radius: 0.32,                   // placeholder clump radius (m, times node scale)
+    height: 0.28,
+    colorMult: 0.45                 // clump tint = glowColor * this (dull, flora-adjacent)
+  },
+  nodeTypes: {
+    herbBundle:      { name: 'Herb Bundle', rarity: 'common', yield: { id: 'forestHerb', count: 2 },
+                       respawnSec: 90, glowColor: 0x66aa55, scale: 1.0 },
+    deadwoodPile:    { name: 'Deadwood Pile', rarity: 'common', yield: { id: 'deadwood', count: 3 },
+                       respawnSec: 180, glowColor: 0x998855, scale: 1.0 },
+    mushroomCluster: { name: 'Mushroom Cluster', rarity: 'common', yield: { id: 'wildMushroom', count: 2 },
+                       respawnSec: 120, glowColor: 0xaa99cc, scale: 0.85 },
+    graveMoss:       { name: 'Grave Moss', rarity: 'common', yield: { id: 'graveMoss', count: 2 },
+                       respawnSec: 150, glowColor: 0x77bbaa, scale: 1.0 },
+    bonePile:        { name: 'Bone Pile', rarity: 'common', yield: { id: 'boneShard', count: 2 },
+                       respawnSec: 150, glowColor: 0xbbbbaa, scale: 1.0 }
+  }
 };
 
 // Order B (2026-10-05) free per-hand equip. Hands are equip-screen driven;

@@ -757,3 +757,24 @@ html, body {
 #wh-toast.visible {
   opacity: 1;
 }
+
+/* stage 2: "E - Gather Herb Bundle" while a ready gather node is in reach */
+#wh-gather-prompt {
+  position: absolute;
+  bottom: 96px;
+  width: 100%;
+  text-align: center;
+  font-family: monospace;
+  font-size: 14px;
+  letter-spacing: 2px;
+  color: #cfe0c4;
+  text-shadow: 1px 1px 0 #000, 0 0 6px rgba(0, 0, 0, 0.9);
+  opacity: 0;
+  transition: opacity 0.15s linear;
+  pointer-events: none;
+  z-index: 22;
+}
+
+#wh-gather-prompt.visible {
+  opacity: 1;
+}

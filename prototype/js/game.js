@@ -193,6 +193,7 @@
       stamBar: document.getElementById('wh-stam-bar'),
       regionName: document.getElementById('wh-region-name'),
       gateHint: document.getElementById('wh-gate-hint'),
+      gatherPrompt: document.getElementById('wh-gather-prompt'),
       fps: document.getElementById('wh-fps'),
       death: document.getElementById('wh-death-overlay'),
       loadNote: document.getElementById('wh-load-note'),
@@ -947,10 +948,14 @@
     p.onHandsChanged = function () { game.inventoryUI.render(); };
     game.worldItems = new INV.WorldItems(game.scene);
     window.WH_Enemy.onKilled = scheduleDrops;
+    // stage 2: gather nodes from every region's CONFIG nodes list
+    game.gatherNodes = new window.WH_GATHER.NodeManager(game.scene,
+      window.WH_REGION_DEFS.regions);
     document.addEventListener('keydown', function (e) {
       if (e.code !== CFG.inventoryUI.pickupKey || e.repeat) return;
       if (game.player.inputSuspended || game.player.state !== 'alive') return;
-      tryPickup();
+      // one key: a ground item in reach wins, else the nearest ready node
+      if (!tryPickup()) tryGather();
     });
   }
 
@@ -1029,12 +1034,12 @@
     var p = game.player.pos;
     var ent = game.worldItems.nearest(p.x, p.z, CFG.inventory.drop.pickupRadius,
       game.regionManager.logic.activeId);
-    if (!ent) return;
+    if (!ent) return false;
     var added = game.inventory.addItem(ent.id, ent.count);
     var name = window.WH_INVENTORY.itemDef(ent.id).name;
     if (added <= 0) {
       game.inventoryUI.toast('Inventory full');
-      return;
+      return true;
     }
     ent.count -= added;
     if (ent.count <= 0) {
@@ -1043,6 +1048,45 @@
     } else {
       game.inventoryUI.toast('Inventory full');
     }
+    return true;
+  }
+
+  // ---- stage 2: gather nodes (CONFIG.gather, js/gather.js) ----------------------
+  function nearestGatherNode() {
+    var p = game.player.pos;
+    return game.gatherNodes.nearestReady(p.x, p.z, CFG.gather.interactRadius,
+      game.regionManager.logic.activeId);
+  }
+
+  // E: harvest the whole yield or refuse (full inventory, node stays ready).
+  function tryGather() {
+    var node = nearestGatherNode();
+    if (!node) return false;
+    var r = game.gatherNodes.harvest(node, game.inventory);
+    if (!r.ok) {
+      game.inventoryUI.toast(CFG.gather.fullText);
+      return true;
+    }
+    game.inventoryUI.toast(CFG.gather.gatherToast
+      .replace('{name}', window.WH_INVENTORY.itemDef(r.itemId).name)
+      .replace('{n}', r.count));
+    return true;
+  }
+
+  // 'E - Gather {name}' while a ready node is in reach and no ground item
+  // would take the E press first.
+  function updateGatherPrompt() {
+    var p = game.player;
+    var node = null;
+    if (p.state === 'alive' && !p.inputSuspended &&
+        !game.worldItems.nearest(p.pos.x, p.pos.z, CFG.inventory.drop.pickupRadius,
+          game.regionManager.logic.activeId)) {
+      node = nearestGatherNode();
+    }
+    var el = game.hud.gatherPrompt;
+    var text = node ? CFG.gather.promptText.replace('{name}', CFG.gather.nodeTypes[node.type].name) : '';
+    if (el.textContent !== text) el.textContent = text;
+    el.classList.toggle('visible', !!node);
   }
 
   // ---- WH_DEBUG hooks ----------------------------------------------------------
@@ -1236,6 +1280,13 @@
       getWorldItems: function () {
         return game.worldItems.list.map(function (it) {
           return { id: it.id, count: it.count, x: it.x, z: it.z, regionId: it.regionId };
+        });
+      },
+      // stage 2: gather node states (playtest / report checks)
+      getGatherNodes: function () {
+        return game.gatherNodes.nodes.map(function (n) {
+          return { type: n.type, regionId: n.regionId, x: n.x, z: n.z, state: n.state,
+                   respawnIn: n.state === 'dormant' ? n.readyAt - game.gatherNodes.now() : 0 };
         });
       },
       isInventoryOpen: function () { return !!(game.inventoryUI && game.inventoryUI.open); },
@@ -1456,6 +1507,7 @@
     // stage 2: kill loot pops once its spawn delay runs out
     tickDrops(dt);
     game.worldItems.update(dt, rm.logic.activeId);
+    game.gatherNodes.update(dt, rm.logic.activeId);   // stage 2: respawn tick + markers
 
     // ---- v7: projectile update + collision vs enemies ----
     if (game.firebolts.length > 0) {
@@ -1543,6 +1595,7 @@
     game.playerLight.update(game.player, game.firebolts);
     skyTick();      // 10-03 order 4: star twinkle clock
     updateHud(dt);
+    updateGatherPrompt();
     game.renderer.render(game.scene, game.camera);
   }
 
