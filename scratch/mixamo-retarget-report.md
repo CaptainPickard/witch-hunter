@@ -35,7 +35,18 @@ The final loop isolates every clip: reset frame range/fps after FBX import, clea
 
 ## Pose review
 
-Every mid/end frame was reviewed through the labelled contact sheets. All 14 clips passed rigging/deformation review. Two coarse contact-sheet flags on ghoul walk-end and attack-mid were checked at full resolution: walk-end is a hunched asymmetric gait, not waist collapse; attack-mid boots are intact and the full-range skinned-vertex measurements rule out meaningful floor penetration. The death-source semantic caveat above is retained rather than hidden by a technical PASS.
+Every mid/end frame was reviewed through the labelled contact sheets. Two coarse contact-sheet flags on ghoul walk-end and attack-mid were checked at full resolution: walk-end is a hunched asymmetric gait, not waist collapse; attack-mid boots are intact and the full-range skinned-vertex measurements rule out meaningful floor penetration. The death-source semantic caveat above is retained rather than hidden by a technical PASS.
+
+CORRECTION (2026-10-05, Testerbot opus re-audit after clamp round b599cc1): the
+earlier "All 14 clips passed rigging/deformation review" claim was WRONG and is
+retracted. Bandit cape/torso slab-collapse was missed at contact-sheet thumbnail
+scale and persists in full renders. Scope is WIDER than the two clamped clips:
+the cape slabs appear in WH_Idle_Melee, WH_Attack_Horiz (mid AND end), and
+WH_Hit_Large_L (mid AND end) - i.e. at/near rest pose. Root cause is the orc
+mesh's cape skin weights (bound/fanned incorrectly at rest), NOT animation bend
+angles. The 25deg Spine/Chest clamp (b599cc1) is correct and tightly scoped but
+cannot fix a weighting defect. STATUS: the WHOLE bandit Mixamo clip set is
+parked from wiring pending a cape skin-weight fix round; ghoul set unaffected.
 
 ## Reproduce
 
