@@ -1,6 +1,12 @@
 """Fail-closed GLB retarget verification with exact old-clip byte identity.
 python3 scratch/verify_retarget.py OLD NEW --clips MANIFEST --bake-log LOG --out JSON
-    [--mesh-fix FIXED.rigged.glb]
+    [--mesh-fix FIXED.rigged.glb] [--original-count N] [--held-pose CLIP ...]
+
+--original-count: expected clip count in OLD (default 6 = whanim1 rigged base;
+the player combat-chain base holds 9 on dev, 13 on feat/world-visuals).
+--held-pose: clips that are deliberately near-static held poses (e.g. a
+crouched shield block idle); their motion floor drops from .01 to .001, which
+still rejects a frozen/constant bake. Listed in the report.
 
 --mesh-fix: NEW was baked from a skin-weight-fixed copy of OLD. The fixed copy
 must be OLD + append-only JOINTS_0/WEIGHTS_0 accessors with only those two mesh
@@ -56,7 +62,7 @@ def verify_mesh_fix(jo, bo, fixed, jn, bn, check):
             'swapped_accessors': swapped}
 
 
-def verify(old, new, expected, bake=None, mesh_fix=None):
+def verify(old, new, expected, bake=None, mesh_fix=None, original_count=6, held_poses=()):
     jo, bo = parse(old)
     jn, bn = parse(new)
     original_names = [a['name'] for a in jo['animations']]
@@ -64,7 +70,8 @@ def verify(old, new, expected, bake=None, mesh_fix=None):
     assertions = {}
     def check(name, value):
         assertions[name] = bool(value)
-    check('original_count_six', len(original_names) == 6)
+    check('original_count_six' if original_count == 6 else f'original_count_{original_count}',
+          len(original_names) == original_count)
     check('exact_animation_names', len(names) == len(set(names)) and
           set(names) == set(original_names) | set(expected))
     check('binary_prefix_identical', bn[:len(bo)] == bo)
@@ -138,13 +145,15 @@ def verify(old, new, expected, bake=None, mesh_fix=None):
             if jn['nodes'][channel['target']['node']]['name'] == 'Root':
                 root_span = max(root_span, max(max(row[i] for row in values)-min(row[i] for row in values)
                                               for i in range(len(values[0]))))
-        valid &= (max_quaternion_error < 1e-4 and max_rotation_span > .01 and root_span < 1e-6
+        motion_floor = .001 if name in held_poses else .01
+        valid &= (max_quaternion_error < 1e-4 and max_rotation_span > motion_floor and root_span < 1e-6
                   and len(sample_counts) == 1 and len(durations) == 1)
         record = {'channels': len(targets), 'by_path': dict(shape),
             'samples': sorted(sample_counts), 'duration_seconds': sorted(durations),
             'max_rotation_component_span': max_rotation_span,
             'max_quaternion_norm_error': max_quaternion_error,
-            'root_channel_span': root_span, 'dense_30fps': bool(valid)}
+            'root_channel_span': root_span, 'motion_floor': motion_floor,
+            'held_pose': name in held_poses, 'dense_30fps': bool(valid)}
         if bake:
             source = bake['clips'].get(name, {})
             record['bake'] = source
@@ -167,10 +176,13 @@ def main():
     p.add_argument('--bake-log')
     p.add_argument('--out')
     p.add_argument('--mesh-fix')
+    p.add_argument('--original-count', type=int, default=6)
+    p.add_argument('--held-pose', action='append', default=[])
     args = p.parse_args()
     expected = list(json.loads(Path(args.clips).read_text()))
     bake = json.loads(Path(args.bake_log).read_text()) if args.bake_log else None
-    report = verify(args.old, args.new, expected, bake, args.mesh_fix)
+    report = verify(args.old, args.new, expected, bake, args.mesh_fix,
+                    args.original_count, tuple(args.held_pose))
     text = json.dumps(report, indent=2) + '\n'
     if args.out:
         Path(args.out).write_text(text)

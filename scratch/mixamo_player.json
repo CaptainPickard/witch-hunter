@@ -1,0 +1,14 @@
+{
+  "WH_SwordIdle": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield idle.fbx",
+  "WH_SwordWalk": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield walk.fbx",
+  "WH_SwordRun": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield run.fbx",
+  "WH_SwordWalkBack": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield walk (2).fbx",
+  "WH_SwordIdleAlt": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield idle (2).fbx",
+  "WH_ShieldBlockIdle": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield block idle.fbx",
+  "WH_ShieldCrouchIdle": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield crouch block idle.fbx",
+  "WH_SwordStrafeL": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield strafe (2).fbx",
+  "WH_SwordStrafeR": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield strafe.fbx",
+  "WH_SwordTurnL": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield turn (2).fbx",
+  "WH_SwordTurnR": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield turn.fbx",
+  "WH_SwordCrouchIdle": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield crouch idle.fbx"
+}

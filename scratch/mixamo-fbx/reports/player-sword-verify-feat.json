@@ -1,0 +1,531 @@
+{
+  "input": "/tmp/wh-worldfeat/art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-chain.glb",
+  "output": "/tmp/wh-worldfeat/art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-sword.glb",
+  "source_sha256": "48a342d0d7929ca7694850bdda69b513e10f9b69ac31321d9593ed2ff9c8da01",
+  "output_sha256": "7d0e15c0c2b11dc4562f9f967373b986a4ff5f6cb585f283e6e4696d7f74a046",
+  "original_bin_sha256": "3ef13afb08726a7a68217c7b501f2e3a1395db2139e3f401c663d3250d382a3e",
+  "output_prefix_sha256": "3ef13afb08726a7a68217c7b501f2e3a1395db2139e3f401c663d3250d382a3e",
+  "originals": {
+    "WH_Attack1": {
+      "channels": 60,
+      "shape_identical": true,
+      "source_data_identical": true,
+      "ordered_sampler_bytes_sha256": "97edd3a654cb7449eaaf6d35dfc9f58a09ab9519444fa0faa46ff8b0a04fac55"
+    },
+    "WH_Death": {
+      "channels": 60,
+      "shape_identical": true,
+      "source_data_identical": true,
+      "ordered_sampler_bytes_sha256": "373355ce3ddc1f24365113020186a885333e5f6fd7a2c3937b2a4266684c5c13"
+    },
+    "WH_Hit": {
+      "channels": 60,
+      "shape_identical": true,
+      "source_data_identical": true,
+      "ordered_sampler_bytes_sha256": "47510660db1680523940ca00b74eb4d6e625e3dc2091915402012464e07730ee"
+    },
+    "WH_Idle": {
+      "channels": 60,
+      "shape_identical": true,
+      "source_data_identical": true,
+      "ordered_sampler_bytes_sha256": "d730b5418f6d9ea945c49ed580dc5e602a909834127d52e52718de926bd31a4f"
+    },
+    "WH_Run": {
+      "channels": 60,
+      "shape_identical": true,
+      "source_data_identical": true,
+      "ordered_sampler_bytes_sha256": "432ec6ba4fcbc5297db5b8c727494b21710fcc72eadc85a8041bfb5150376154"
+    },
+    "WH_SlashL2R": {
+      "channels": 60,
+      "shape_identical": true,
+      "source_data_identical": true,
+      "ordered_sampler_bytes_sha256": "fc9c0eb132940318285e423bd9fc044305c4838ed05e3904014f6aa788f022fd"
+    },
+    "WH_SlashR2L": {
+      "channels": 60,
+      "shape_identical": true,
+      "source_data_identical": true,
+      "ordered_sampler_bytes_sha256": "8f51d3c535f29ff73f5beaacbe68885f45b6aca3c6b8af049ba0547c608821ce"
+    },
+    "WH_Thrust": {
+      "channels": 60,
+      "shape_identical": true,
+      "source_data_identical": true,
+      "ordered_sampler_bytes_sha256": "c2fc069c5b07c363b553e23312735484a4b16701702c821f978e2e981c0778a3"
+    },
+    "WH_Walk": {
+      "channels": 60,
+      "shape_identical": true,
+      "source_data_identical": true,
+      "ordered_sampler_bytes_sha256": "d8a2f999859f29789c568e16b26dbc5038c50cd54bcba23fef6cbe2a9f7781a5"
+    },
+    "WH_ShieldRaise": {
+      "channels": 60,
+      "shape_identical": true,
+      "source_data_identical": true,
+      "ordered_sampler_bytes_sha256": "55449f1c11b13a50cfbf57d82a2578a6d11cd38e5e1bd79dcfdaffa4deaf5250"
+    },
+    "WH_ShieldImpact": {
+      "channels": 60,
+      "shape_identical": true,
+      "source_data_identical": true,
+      "ordered_sampler_bytes_sha256": "eb68338ef352b93e0f8c7826e902a6c21c6baa71cfe5d078e6394fd09ca7683d"
+    },
+    "WH_ParrySwipe": {
+      "channels": 60,
+      "shape_identical": true,
+      "source_data_identical": true,
+      "ordered_sampler_bytes_sha256": "f23d616e64b2b7d66389e10433ccea6b3b8f425ab1970d8151ca32d697893ab0"
+    },
+    "WH_GuardBreakStagger": {
+      "channels": 60,
+      "shape_identical": true,
+      "source_data_identical": true,
+      "ordered_sampler_bytes_sha256": "05b8b8b45340ab7089b0af1290d8ada7df0b07d8afa70ffde6179e457d3d7370"
+    }
+  },
+  "new_clips": {
+    "WH_SwordIdle": {
+      "channels": 60,
+      "by_path": {
+        "translation": 20,
+        "rotation": 20,
+        "scale": 20
+      },
+      "samples": [
+        111
+      ],
+      "duration_seconds": [
+        3.666667
+      ],
+      "max_rotation_component_span": 0.6500829309225082,
+      "max_quaternion_norm_error": 1.2738292110014982e-06,
+      "root_channel_span": 0.0,
+      "motion_floor": 0.01,
+      "held_pose": false,
+      "dense_30fps": true,
+      "bake": {
+        "src": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield idle.fbx",
+        "frame_start": 1,
+        "frame_end": 111,
+        "samples": 111,
+        "duration_seconds": 3.6666666666666665,
+        "fcurves": 200,
+        "leg_scale_ratio": 0.9762274187351112,
+        "max_ground_correction_m": 0.0683051347732544,
+        "status": "baked",
+        "channels": 60
+      },
+      "pass": true
+    },
+    "WH_SwordWalk": {
+      "channels": 60,
+      "by_path": {
+        "translation": 20,
+        "rotation": 20,
+        "scale": 20
+      },
+      "samples": [
+        34
+      ],
+      "duration_seconds": [
+        1.1
+      ],
+      "max_rotation_component_span": 1.995421051979065,
+      "max_quaternion_norm_error": 4.083366356155693e-07,
+      "root_channel_span": 0.0,
+      "motion_floor": 0.01,
+      "held_pose": false,
+      "dense_30fps": true,
+      "bake": {
+        "src": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield walk.fbx",
+        "frame_start": 1,
+        "frame_end": 34,
+        "samples": 34,
+        "duration_seconds": 1.1,
+        "fcurves": 200,
+        "leg_scale_ratio": 0.9762274187351112,
+        "max_ground_correction_m": 0.07076501846313477,
+        "status": "baked",
+        "channels": 60
+      },
+      "pass": true
+    },
+    "WH_SwordRun": {
+      "channels": 60,
+      "by_path": {
+        "translation": 20,
+        "rotation": 20,
+        "scale": 20
+      },
+      "samples": [
+        22
+      ],
+      "duration_seconds": [
+        0.7
+      ],
+      "max_rotation_component_span": 1.9623541831970215,
+      "max_quaternion_norm_error": 1.3143941248738855e-06,
+      "root_channel_span": 0.0,
+      "motion_floor": 0.01,
+      "held_pose": false,
+      "dense_30fps": true,
+      "bake": {
+        "src": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield run.fbx",
+        "frame_start": 1,
+        "frame_end": 22,
+        "samples": 22,
+        "duration_seconds": 0.7,
+        "fcurves": 200,
+        "leg_scale_ratio": 0.9762274187351112,
+        "max_ground_correction_m": 0.0837552547454834,
+        "status": "baked",
+        "channels": 60
+      },
+      "pass": true
+    },
+    "WH_SwordWalkBack": {
+      "channels": 60,
+      "by_path": {
+        "translation": 20,
+        "rotation": 20,
+        "scale": 20
+      },
+      "samples": [
+        39
+      ],
+      "duration_seconds": [
+        1.266667
+      ],
+      "max_rotation_component_span": 1.980118453502655,
+      "max_quaternion_norm_error": 9.326948078314246e-07,
+      "root_channel_span": 0.0,
+      "motion_floor": 0.01,
+      "held_pose": false,
+      "dense_30fps": true,
+      "bake": {
+        "src": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield walk (2).fbx",
+        "frame_start": 1,
+        "frame_end": 39,
+        "samples": 39,
+        "duration_seconds": 1.2666666666666666,
+        "fcurves": 200,
+        "leg_scale_ratio": 0.9762274187351112,
+        "max_ground_correction_m": 0.06600368022918701,
+        "status": "baked",
+        "channels": 60
+      },
+      "pass": true
+    },
+    "WH_SwordIdleAlt": {
+      "channels": 60,
+      "by_path": {
+        "translation": 20,
+        "rotation": 20,
+        "scale": 20
+      },
+      "samples": [
+        227
+      ],
+      "duration_seconds": [
+        7.533333
+      ],
+      "max_rotation_component_span": 1.7161590456962585,
+      "max_quaternion_norm_error": 1.3957340894155124e-06,
+      "root_channel_span": 0.0,
+      "motion_floor": 0.01,
+      "held_pose": false,
+      "dense_30fps": true,
+      "bake": {
+        "src": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield idle (2).fbx",
+        "frame_start": 1,
+        "frame_end": 227,
+        "samples": 227,
+        "duration_seconds": 7.533333333333333,
+        "fcurves": 200,
+        "leg_scale_ratio": 0.9762274187351112,
+        "max_ground_correction_m": 0.06657898426055908,
+        "status": "baked",
+        "channels": 60
+      },
+      "pass": true
+    },
+    "WH_ShieldBlockIdle": {
+      "channels": 60,
+      "by_path": {
+        "translation": 20,
+        "rotation": 20,
+        "scale": 20
+      },
+      "samples": [
+        43
+      ],
+      "duration_seconds": [
+        1.4
+      ],
+      "max_rotation_component_span": 0.01990455389022827,
+      "max_quaternion_norm_error": 1.404515804770412e-06,
+      "root_channel_span": 0.0,
+      "motion_floor": 0.01,
+      "held_pose": false,
+      "dense_30fps": true,
+      "bake": {
+        "src": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield block idle.fbx",
+        "frame_start": 1,
+        "frame_end": 43,
+        "samples": 43,
+        "duration_seconds": 1.4,
+        "fcurves": 200,
+        "leg_scale_ratio": 0.9762274187351112,
+        "max_ground_correction_m": 0.06494009494781494,
+        "status": "baked",
+        "channels": 60
+      },
+      "pass": true
+    },
+    "WH_ShieldCrouchIdle": {
+      "channels": 60,
+      "by_path": {
+        "translation": 20,
+        "rotation": 20,
+        "scale": 20
+      },
+      "samples": [
+        16
+      ],
+      "duration_seconds": [
+        0.5
+      ],
+      "max_rotation_component_span": 0.007070973515510559,
+      "max_quaternion_norm_error": 3.2531404272617692e-06,
+      "root_channel_span": 0.0,
+      "motion_floor": 0.001,
+      "held_pose": true,
+      "dense_30fps": true,
+      "bake": {
+        "src": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield crouch block idle.fbx",
+        "frame_start": 1,
+        "frame_end": 16,
+        "samples": 16,
+        "duration_seconds": 0.5,
+        "fcurves": 200,
+        "leg_scale_ratio": 0.9762274187351112,
+        "max_ground_correction_m": 0.07237958908081055,
+        "status": "baked",
+        "channels": 60
+      },
+      "pass": true
+    },
+    "WH_SwordStrafeL": {
+      "channels": 60,
+      "by_path": {
+        "translation": 20,
+        "rotation": 20,
+        "scale": 20
+      },
+      "samples": [
+        40
+      ],
+      "duration_seconds": [
+        1.3
+      ],
+      "max_rotation_component_span": 1.8266013860702515,
+      "max_quaternion_norm_error": 7.990257471224282e-07,
+      "root_channel_span": 0.0,
+      "motion_floor": 0.01,
+      "held_pose": false,
+      "dense_30fps": true,
+      "bake": {
+        "src": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield strafe (2).fbx",
+        "frame_start": 1,
+        "frame_end": 40,
+        "samples": 40,
+        "duration_seconds": 1.3,
+        "fcurves": 200,
+        "leg_scale_ratio": 0.9762274187351112,
+        "max_ground_correction_m": 0.06888031959533691,
+        "status": "baked",
+        "channels": 60
+      },
+      "pass": true
+    },
+    "WH_SwordStrafeR": {
+      "channels": 60,
+      "by_path": {
+        "translation": 20,
+        "rotation": 20,
+        "scale": 20
+      },
+      "samples": [
+        35
+      ],
+      "duration_seconds": [
+        1.133333
+      ],
+      "max_rotation_component_span": 1.8589505553245544,
+      "max_quaternion_norm_error": 1.0417445075461274e-06,
+      "root_channel_span": 0.0,
+      "motion_floor": 0.01,
+      "held_pose": false,
+      "dense_30fps": true,
+      "bake": {
+        "src": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield strafe.fbx",
+        "frame_start": 1,
+        "frame_end": 35,
+        "samples": 35,
+        "duration_seconds": 1.1333333333333333,
+        "fcurves": 200,
+        "leg_scale_ratio": 0.9762274187351112,
+        "max_ground_correction_m": 0.07332217693328857,
+        "status": "baked",
+        "channels": 60
+      },
+      "pass": true
+    },
+    "WH_SwordTurnL": {
+      "channels": 60,
+      "by_path": {
+        "translation": 20,
+        "rotation": 20,
+        "scale": 20
+      },
+      "samples": [
+        29
+      ],
+      "duration_seconds": [
+        0.933333
+      ],
+      "max_rotation_component_span": 0.8357296586036682,
+      "max_quaternion_norm_error": 7.495805482982121e-07,
+      "root_channel_span": 0.0,
+      "motion_floor": 0.01,
+      "held_pose": false,
+      "dense_30fps": true,
+      "bake": {
+        "src": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield turn (2).fbx",
+        "frame_start": 1,
+        "frame_end": 29,
+        "samples": 29,
+        "duration_seconds": 0.9333333333333333,
+        "fcurves": 200,
+        "leg_scale_ratio": 0.9762274187351112,
+        "max_ground_correction_m": 0.07254374027252197,
+        "status": "baked",
+        "channels": 60
+      },
+      "pass": true
+    },
+    "WH_SwordTurnR": {
+      "channels": 60,
+      "by_path": {
+        "translation": 20,
+        "rotation": 20,
+        "scale": 20
+      },
+      "samples": [
+        29
+      ],
+      "duration_seconds": [
+        0.933333
+      ],
+      "max_rotation_component_span": 0.6598126292228699,
+      "max_quaternion_norm_error": 8.545538601190117e-07,
+      "root_channel_span": 0.0,
+      "motion_floor": 0.01,
+      "held_pose": false,
+      "dense_30fps": true,
+      "bake": {
+        "src": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield turn.fbx",
+        "frame_start": 1,
+        "frame_end": 29,
+        "samples": 29,
+        "duration_seconds": 0.9333333333333333,
+        "fcurves": 200,
+        "leg_scale_ratio": 0.9762274187351112,
+        "max_ground_correction_m": 0.06708979606628418,
+        "status": "baked",
+        "channels": 60
+      },
+      "pass": true
+    },
+    "WH_SwordCrouchIdle": {
+      "channels": 60,
+      "by_path": {
+        "translation": 20,
+        "rotation": 20,
+        "scale": 20
+      },
+      "samples": [
+        74
+      ],
+      "duration_seconds": [
+        2.433333
+      ],
+      "max_rotation_component_span": 0.10415343195199966,
+      "max_quaternion_norm_error": 4.303634838720427e-06,
+      "root_channel_span": 0.0,
+      "motion_floor": 0.01,
+      "held_pose": false,
+      "dense_30fps": true,
+      "bake": {
+        "src": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield crouch idle.fbx",
+        "frame_start": 1,
+        "frame_end": 74,
+        "samples": 74,
+        "duration_seconds": 2.433333333333333,
+        "fcurves": 200,
+        "leg_scale_ratio": 0.9762274187351112,
+        "max_ground_correction_m": 0.0847402811050415,
+        "status": "baked",
+        "channels": 60
+      },
+      "pass": true
+    }
+  },
+  "assertions": {
+    "original_count_13": true,
+    "exact_animation_names": true,
+    "binary_prefix_identical": true,
+    "original_json_asset": true,
+    "original_json_scene": true,
+    "original_json_scenes": true,
+    "original_json_nodes": true,
+    "original_json_animations": true,
+    "original_json_materials": true,
+    "original_json_meshes": true,
+    "original_json_textures": true,
+    "original_json_images": true,
+    "original_json_skins": true,
+    "original_json_accessors": true,
+    "original_json_bufferViews": true,
+    "original_json_samplers": true,
+    "original_WH_Attack1": true,
+    "original_WH_Death": true,
+    "original_WH_Hit": true,
+    "original_WH_Idle": true,
+    "original_WH_Run": true,
+    "original_WH_SlashL2R": true,
+    "original_WH_SlashR2L": true,
+    "original_WH_Thrust": true,
+    "original_WH_Walk": true,
+    "original_WH_ShieldRaise": true,
+    "original_WH_ShieldImpact": true,
+    "original_WH_ParrySwipe": true,
+    "original_WH_GuardBreakStagger": true,
+    "new_WH_SwordIdle": true,
+    "new_WH_SwordWalk": true,
+    "new_WH_SwordRun": true,
+    "new_WH_SwordWalkBack": true,
+    "new_WH_SwordIdleAlt": true,
+    "new_WH_ShieldBlockIdle": true,
+    "new_WH_ShieldCrouchIdle": true,
+    "new_WH_SwordStrafeL": true,
+    "new_WH_SwordStrafeR": true,
+    "new_WH_SwordTurnL": true,
+    "new_WH_SwordTurnR": true,
+    "new_WH_SwordCrouchIdle": true
+  },
+  "pass": true,
+  "failed_assertions": []
+}

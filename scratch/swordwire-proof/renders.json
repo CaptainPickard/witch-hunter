@@ -1,0 +1,20 @@
+[
+  {
+    "png": "/workspace/witch-hunter/scratch/swordwire-proof/01_rest_WH_SwordIdle.png",
+    "clip": "WH_SwordIdle",
+    "frame": 0,
+    "ground_clearance_m": -2.9802322387695312e-06
+  },
+  {
+    "png": "/workspace/witch-hunter/scratch/swordwire-proof/02_midstride_WH_SwordWalk.png",
+    "clip": "WH_SwordWalk",
+    "frame": 25,
+    "ground_clearance_m": -1.3113021850585938e-06
+  },
+  {
+    "png": "/workspace/witch-hunter/scratch/swordwire-proof/03_midblock_WH_ShieldCrouchIdle.png",
+    "clip": "WH_ShieldCrouchIdle",
+    "frame": 7,
+    "ground_clearance_m": -9.655952453613281e-06
+  }
+]
