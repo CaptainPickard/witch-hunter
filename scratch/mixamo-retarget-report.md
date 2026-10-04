@@ -13,7 +13,7 @@
 
 ## Important content caveat
 
-`WH_Death_Zombie` is sourced from `zombie agonizing.fbx`, the staged pack's agony clip. The selection document has no death FBX mapping even though the mission requires the `WH_Death_Zombie` name. This clip is technically valid and visually coherent, but ends standing, not prone/dead. It must NOT be wired as a terminal collapse/death replacement without a separate content decision. Runtime wiring remains out of scope.
+`WH_Death_Zombie` is sourced from `zombie agonizing.fbx`, the staged pack's agony clip. **Unwired by Nicko decision 2026-10-05:** the agony clip ends standing; ghoul keeps the existing rigid-fall death in `enemy.js`. Keep the baked clip in the GLB. Runtime wiring remains out of scope.
 
 `WH_Attack_Zombie` uses the explicitly requested `singles/Zombie_Attack.fbx`; the remaining ghoul names are mapped in `scratch/mixamo_ghoul.json`.
 
