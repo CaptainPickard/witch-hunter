@@ -87235,17 +87235,18 @@ window.WH_CONFIG.moveset = {
       // movement speed multiplier per swing stage (windup keeps 0.3 creep)
       moveMultWhileAttacking: { windup: 0.3, strike: 0, recover: 0 },
       bladeAxisY: -1,               // mesh-local blade axis (-Y tip, see setWeapon)
+      // Round D: durations derived from Mixamo impact frames (scratch/swordpack_probe4_rD.json); totals equal clip durations.
       moves: {
-        slashR2L: { pose: 'm2', windup: 0.14, strike: 0.20, recover: 0.30,
-                    chainOpenSec: 0.12,
+        slashR2L: { pose: 'm2', windup: 0.57, strike: 0.20, recover: 0.73,
+                    chainOpenSec: 0.20,
                     damage: 34, range: 3.2, halfAngleDeg: 70, lunge: 0.8,
                     staminaCost: 15, damageGhoulMult: 1.15 },
-        slashL2R: { pose: 'm1', windup: 0.14, strike: 0.20, recover: 0.30,
-                    chainOpenSec: 0.12,
+        slashL2R: { pose: 'm1', windup: 0.80, strike: 0.26, recover: 0.61,
+                    chainOpenSec: 0.26,
                     damage: 34, range: 3.2, halfAngleDeg: 70, lunge: 0.8,
                     staminaCost: 15, damageGhoulMult: 1.15 },
         // thrust = narrow, longer reach, more damage, heavier recover
-        thrust:   { pose: 'm4', windup: 0.16, strike: 0.14, recover: 0.40,
+        thrust:   { pose: 'm4', windup: 0.40, strike: 0.43, recover: 0.17,
                     chainOpenSec: 0.40,   // last move: full recover anyway
                     damage: 40, range: 3.8, halfAngleDeg: 22, lunge: 1.4,
                     staminaCost: 20, damageGhoulMult: 1.15 }
@@ -87809,7 +87810,8 @@ window.WH_CONFIG.inventoryUI = {
   // WH_SlashL2R / WH_Thrust) - the old flat "6" warned on every boot.
   // Order D: 13 = those 9 + the 4 shield/block clips.
   // Round C: 25 = those 13 + 12 Mixamo sword/shield clips (combat-sword.glb).
-  var CHARACTERS = { playerBody: 25, banditBody: 6, ghoulBody: 6 };
+  // Round D: 27 = 13 + 12 + 3 Mixamo WH_SS_* chain attacks.
+  var CHARACTERS = { playerBody: 27, banditBody: 6, ghoulBody: 6 };
   var failed = {};     // logical name -> true (stand-in substituted)
   var loadedCount = 0;
   var GROUND_META = {}; // holder uuid -> measured height, width, raw groundMinY
@@ -88141,7 +88143,16 @@ window.WH_CONFIG.inventoryUI = {
   };
   // 10-04 chain clips: CONFIG move id -> per-move player clip. Bodies without
   // the clip (enemies, handAxe moves, older GLBs) use the shared 'attack'.
+  // Round D: Mixamo sword-pack attacks baked into combat-sword.glb; thrust
+  // slot plays an overhead chop (pack has no stab). A missing WH_SS_* clip
+  // falls back to the authored 10-04 clip (MOVE_FALLBACK_NAMES). Rollback:
+  // revert MOVE_NAMES values to MOVE_FALLBACK_NAMES (+ CONFIG move timings).
   var MOVE_NAMES = {
+    slashR2L: 'WH_SS_SlashR2L',
+    slashL2R: 'WH_SS_SlashL2R',
+    thrust: 'WH_SS_Overhead'
+  };
+  var MOVE_FALLBACK_NAMES = {
     slashR2L: 'WH_SlashR2L', slashL2R: 'WH_SlashL2R', thrust: 'WH_Thrust'
   };
   // Order D shield/block clips (player body only; NOT sword moves). All are
@@ -88226,6 +88237,13 @@ window.WH_CONFIG.inventoryUI = {
     });
     Object.keys(this.moveNames).forEach(function (move) {
       var clip = THREE.AnimationClip.findByName(clips, self.moveNames[move]);
+      if (!clip && MOVE_FALLBACK_NAMES[move]) {
+        clip = THREE.AnimationClip.findByName(clips, MOVE_FALLBACK_NAMES[move]);
+        if (clip) {
+          console.warn('[WH anim] move ' + move + ' missing ' + self.moveNames[move] +
+            ', falling back');
+        }
+      }
       if (!clip) return;
       var action = self.mixer.clipAction(clip);
       action.setLoop(THREE.LoopOnce, 1);
