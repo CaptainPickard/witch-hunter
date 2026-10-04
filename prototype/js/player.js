@@ -101,6 +101,7 @@
     this.hands = { right: null, left: null };
     this.inventory = null;            // game.js setupInventory wires the Inventory
     this.itemMeshes = {};             // item id -> its hand mesh (game.js instances)
+    this.handMeshes = {};             // stage 2: per-hand item meshes { right, left } (torch: both hands at once)
     this.sword = null;                // = itemMeshes of the melee item (armed glow)
     this.shield = null;               // = itemMeshes of the shield item
 
@@ -779,7 +780,19 @@
 
   // Register an item's hand mesh (game.js instances the GLB). One-time prep
   // here; applyHandVisuals mounts it on whichever hand holds the item.
-  Player.prototype.setItemMesh = function (id, mesh) {
+  // Stage 2: kind 'torch' takes a second instance (twin) - one mesh per hand,
+  // so torch + torch shows two torches.
+  Player.prototype.setItemMesh = function (id, mesh, twin) {
+    if (kindOf(id) === 'torch') {
+      var prev = this.handMeshes[id];
+      if (prev) {
+        if (prev.left && prev.left.parent) prev.left.parent.remove(prev.left);
+        if (prev.right && prev.right.parent) prev.right.parent.remove(prev.right);
+      }
+      this.handMeshes[id] = { left: prepTorch(mesh), right: twin ? prepTorch(twin) : null };
+      this.applyHandVisuals();
+      return;
+    }
     var old = this.itemMeshes[id];
     if (old && old !== mesh) {
       if (old.parent) old.parent.remove(old);
@@ -817,6 +830,32 @@
     inner.position.z -= box.min.z / s;
   }
 
+  // Torch prep (once per mesh, before any mount): slide the inner mesh so
+  // the measured grip sits on the holder origin, and hang the hand-light
+  // anchor at the flame (CONFIG.assets.torchMount, raw GLB units).
+  function prepTorch(mesh) {
+    if (!mesh || mesh.userData.whTorchPrepped) return mesh;
+    mesh.userData.whTorchPrepped = true;
+    var TM = window.WH_CONFIG.assets.torchMount;
+    if (mesh.children[0]) mesh.children[0].position.y -= TM.gripHolderY;
+    var anchor = new THREE.Object3D();
+    anchor.position.y = TM.lightHolderY - TM.gripHolderY;
+    mesh.add(anchor);
+    mesh.userData.whLightAnchor = anchor;
+    mesh.userData.whHand = null;
+    mesh.visible = false;
+    return mesh;
+  }
+
+  // Stage 2: the flame anchor of the torch mesh in this hand (light.js hangs
+  // the hand's follow light there), or null when the hand holds no mounted
+  // per-hand mesh.
+  Player.prototype.handLightAnchor = function (hand) {
+    var set = this.handMeshes[this.hands[hand]];
+    var m = set ? set[hand] : null;
+    return m && m.parent && m.visible ? m.userData.whLightAnchor || null : null;
+  };
+
   // Each registered mesh follows its item: mounted on the hand holding it,
   // detached + hidden while the item is in the inventory. Remount only on a
   // hand change (mounts are constant hand-local transforms).
@@ -840,6 +879,56 @@
       var k = kindOf(id);
       if (k === 'melee') this.mountWeapon(mesh, hand, id);
       else if (k === 'shield') this.mountShield(mesh, hand, id);
+    }
+    // stage 2 per-hand meshes: the right/left instance shows iff that hand
+    // holds the item (both may - torch + torch)
+    for (var pid in this.handMeshes) {
+      for (var hi = 0; hi < 2; hi++) {
+        var h = hi === 0 ? 'right' : 'left';
+        var m = this.handMeshes[pid][h];
+        if (!m) continue;
+        if (this.hands[h] !== pid) {
+          if (m.parent) m.parent.remove(m);
+          m.visible = false;
+          m.userData.whHand = null;
+          continue;
+        }
+        m.visible = true;
+        if (m.userData.whHand === h && m.parent) continue;
+        m.userData.whHand = h;
+        this.mountTorch(m, h, pid);
+      }
+    }
+  };
+
+  // Stage 2 S3: torch on a skinned hand - raw +Y (butt -> flame) onto the
+  // hand-local headAxis at the fist centroid (CONFIG.assets.torchMount,
+  // measured for nativeHand.torch, mirrored for the other hand). The rigid
+  // stand-in body has no bones: idle anchor on yawFrame, mirrored per hand.
+  Player.prototype.mountTorch = function (mesh, hand, itemId) {
+    if (mesh.parent) mesh.parent.remove(mesh);
+    var TM = window.WH_CONFIG.assets.torchMount;
+    var bone = boneFor(this.body, hand);
+    if (bone) {
+      bone.add(mesh);
+      var q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0),
+        new THREE.Vector3().fromArray(TM.headAxis).normalize());
+      if (TM.rollDeg) {
+        q.premultiply(new THREE.Quaternion().setFromAxisAngle(
+          new THREE.Vector3().fromArray(TM.headAxis).normalize(), TM.rollDeg * Math.PI / 180));
+      }
+      var off = new THREE.Vector3().fromArray(TM.offset);
+      if (isMirrored(itemId, hand)) {
+        mirrorQuat(q);
+        mirrorVec(off);
+      }
+      mesh.quaternion.copy(q);
+      mesh.position.copy(off);
+    } else {
+      var ip = window.WH_CONFIG.moveset.idlePose;
+      this.yawFrame.add(mesh);
+      mesh.position.set((hand === 'left' ? -1 : 1) * ip.pos[0], ip.pos[1], ip.pos[2]);
+      mesh.rotation.set(0, 0, 0);
     }
   };
 

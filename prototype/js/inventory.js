@@ -9,7 +9,7 @@
 //   Inventory          constructor (one per player; game.js owns the instance)
 //   active             the player's Inventory once game.js boots it
 //   addItem / removeItem / countOf / slotAt / forEachSlot -> delegate to active
-//   itemDef(id), stackCapOf(id), kindOf(id) ('caster' | 'melee' | 'shield' | null)
+//   itemDef(id), stackCapOf(id), kindOf(id) ('caster' | 'melee' | 'shield' | 'torch' | null)
 //   InventoryUI        the I-key grid screen (DOM modal) + HUD toast
 //   WorldItems         dropped item entities in the scene (E pickup)
 

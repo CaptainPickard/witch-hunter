@@ -802,7 +802,19 @@ window.WH_CONFIG = {
     // 0.021] pushed 0.042 (fist depth) + 0.01 along faceAxis; the L_Thigh
     // clears that plane by 0.027 at idle.
     shieldMount: { faceAxis: [-0.876, 0.4, 0.271], upAxis: [-0.327, -0.903, 0.277],
-                   rollDeg: 0, offset: [-0.028, 0.099, 0.035] }
+                   rollDeg: 0, offset: [-0.028, 0.099, 0.035] },
+    // Stage 2 S3 torch hand mount (nativeHand.torch = left; mirrored for the
+    // right hand like the shield). scratch/measure_torch_grip.py: the shaft
+    // is a Y-symmetric stick, butt at holder y 0, narrowest (the hand wrap)
+    // at holder y 0.38-0.57, head flaring 1.14-1.80 (amber cap from 1.54).
+    // headAxis: L_Hand-local direction the torch head points - hand +Z is the
+    // fist's grip-forward axis (the longsword blade's mapping), so the torch
+    // is carried like a raised blade. offset: the fist centroid (casterGlow
+    // handOffset). gripHolderY / lightHolderY are RAW GLB units along the
+    // shaft (they scale with the mesh): the fist lands on gripHolderY, the
+    // hand's follow light sits at lightHolderY (the flame, not the fist).
+    torchMount: { headAxis: [0, 0, 1], rollDeg: 0, offset: [0.018, 0.078, 0.021],
+                  gripHolderY: 0.5, lightHolderY: 1.7 }
   }
 };
 // 10-04 change order (Nicko: combo spam -> real chains, souls-style).
@@ -996,10 +1008,11 @@ window.WH_CONFIG.items = {
   // Torch (10-05 asset mission): either hand, no block. Its light stat wins
   // over that hand's spell light (torch + glove = both lights live). Light
   // ~1.3x firebolt's feel (firebolt 10.0 / 12m) - playtest tunes these.
-  // No mesh key yet: the gather/drop code order adds mesh: 'torch'
-  // (MANIFEST.torch) with its hand mount, and the drop source.
+  // Stage 2: mesh 'torch' (MANIFEST.torch) on CONFIG.assets.torchMount; one
+  // instance per hand, so torch + torch shows two torches and two lights.
+  // Drop source: CONFIG.drops.bonusPool. Not in the Q swap pair.
   torch:          { id: 'torch', name: 'Torch', glyph: 'TR',
-                    category: 'gear', stackCap: 1, kind: 'torch',
+                    category: 'gear', stackCap: 1, kind: 'torch', mesh: 'torch',
                     hands: ['left', 'right'], equipHint: 'leftHand',
                     light: { color: 0xffa040, intensity: 10.5, distance: 15,
                              decay: 2, flickerPct: 7 } },
@@ -1096,7 +1109,7 @@ window.WH_CONFIG.equip = {
   // hand. The other hand gets the mount mirrored by this hand-local factor:
   // L_Hand <-> R_Hand local frames map by diag(-1, 1, 1) within 0.01
   // (scratch/measure_hand_mirror.py, bind pose). Roll angles flip sign.
-  nativeHand: { longsword: 'right', roundShield: 'left', magicGlove: 'left' },
+  nativeHand: { longsword: 'right', roundShield: 'left', magicGlove: 'left', torch: 'left' },
   mirrorScale: [-1, 1, 1],
   // Magic glove placeholder (no glove mesh this order): the spell glow orb
   // on the caster hand. anchor 'hand' = child of the hand bone at

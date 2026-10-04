@@ -883,7 +883,9 @@
       var d = CFG.items[id];
       if (d.category !== 'gear' || !d.mesh) continue;
       var mesh = instanceHandMesh(d.mesh);
-      if (mesh) game.player.setItemMesh(id, mesh);
+      // stage 2: a torch can fill both hands at once -> a twin instance
+      var twin = mesh && d.kind === 'torch' ? instanceHandMesh(d.mesh) : null;
+      if (mesh) game.player.setItemMesh(id, mesh, twin);
     }
   }
 

@@ -92,8 +92,22 @@
       var hand = HANDS[h];
       var light = this.hands[hand];
       var def = player && player.yawFrame ? handLightDef(player, hand) : null;
+      // stage 2: a held torch carries the light at its flame (the fist would
+      // shade it); otherwise the casterGlow hand anchor. Lights never leave
+      // the scene graph (fixed light count): an item anchor that is no
+      // longer held hands the light back to the hand bone.
+      var itemAnchor = def && player.handLightAnchor ? player.handLightAnchor(hand) : null;
+      if (itemAnchor) {
+        if (light.parent !== itemAnchor) {
+          itemAnchor.add(light);
+          light.position.set(0, 0, 0);
+          light.userData.whAnchorKey = 'item';
+        }
+      } else if (player && player.yawFrame &&
+                 (def || light.userData.whAnchorKey === 'item')) {
+        anchorToHand(player, light, hand);
+      }
       if (!def) { light.intensity = 0; continue; }
-      anchorToHand(player, light, hand);
       applyDef(light, def, t, h * P.flickerPhaseStep);
     }
     var n = 0;
