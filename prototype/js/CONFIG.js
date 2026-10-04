@@ -82,10 +82,18 @@ window.WH_CONFIG = {
   // P1-8: CONFIG assets whose props host a light socket (fixed pool hooks
   // these, nearest to the player wins). heightFraction is up the prop's
   // native height; intensity is the pool target when hosting the socket.
+  // Round D2: offset = [x, z] glTF-local (pre-rotY, pre-scale), measured from
+  // GLB vertex bands (scratch/lantern_head_probe.py) so the light sits in the
+  // hanging head: post glass x -0.27..-0.09 @ 64-79% H, waymarker glass
+  // z +0.23..+0.47 @ 55-79% H. Intensities matched to the player torch (10.5)
+  // for ground-pool parity under physical decay 2.
   lightSockets: {
-    lanternPost: { heightFraction: 0.85, intensity: 1.6 },
-    banditCampfire: { heightFraction: 0.55, intensity: 2.4 },
-    lanternWaymarker: { heightFraction: 0.80, intensity: 1.8 }
+    lanternPost:      { heightFraction: 0.72, intensity: 9.0,
+                        offset: [-0.18, 0.0] },
+    banditCampfire:   { heightFraction: 0.55, intensity: 3.2,
+                        offset: [0.0, 0.0] },
+    lanternWaymarker: { heightFraction: 0.67, intensity: 9.5,
+                        offset: [0.0, 0.35] }
   },
 
   world: {

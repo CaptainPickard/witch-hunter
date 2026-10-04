@@ -1460,7 +1460,15 @@
       var sd = S[p.asset];
       if (!sd) continue;
       var h = window.WH_ASSETS.groundHeight(p.asset) * p.scale * sd.heightFraction;
-      out.push({ id: p.asset + '@' + p.x + ',' + p.z, x: p.x, y: h, z: p.z,
+      // Round D2: glTF-local [x, z] offset, rotated like obj.rotation.y and
+      // scaled like the prop (region-manager placement).
+      var off = sd.offset || [0, 0];
+      var rotY = p.rotY || 0;
+      var c = Math.cos(rotY), sn = Math.sin(rotY);
+      var ox = off[0] * c + off[1] * sn;
+      var oz = -off[0] * sn + off[1] * c;
+      var sx = p.x + ox * p.scale, sz = p.z + oz * p.scale;
+      out.push({ id: p.asset + '@' + p.x + ',' + p.z, x: sx, y: h, z: sz,
                  intensity: sd.intensity, weight: 1 });
     }
     return out;
