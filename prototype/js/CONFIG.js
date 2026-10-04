@@ -858,17 +858,18 @@ window.WH_CONFIG.moveset = {
       // movement speed multiplier per swing stage (windup keeps 0.3 creep)
       moveMultWhileAttacking: { windup: 0.3, strike: 0, recover: 0 },
       bladeAxisY: -1,               // mesh-local blade axis (-Y tip, see setWeapon)
+      // Round D: durations derived from Mixamo impact frames (scratch/swordpack_probe4_rD.json); totals equal clip durations.
       moves: {
-        slashR2L: { pose: 'm2', windup: 0.14, strike: 0.20, recover: 0.30,
-                    chainOpenSec: 0.12,
+        slashR2L: { pose: 'm2', windup: 0.57, strike: 0.20, recover: 0.73,
+                    chainOpenSec: 0.20,
                     damage: 34, range: 3.2, halfAngleDeg: 70, lunge: 0.8,
                     staminaCost: 15, damageGhoulMult: 1.15 },
-        slashL2R: { pose: 'm1', windup: 0.14, strike: 0.20, recover: 0.30,
-                    chainOpenSec: 0.12,
+        slashL2R: { pose: 'm1', windup: 0.80, strike: 0.26, recover: 0.61,
+                    chainOpenSec: 0.26,
                     damage: 34, range: 3.2, halfAngleDeg: 70, lunge: 0.8,
                     staminaCost: 15, damageGhoulMult: 1.15 },
         // thrust = narrow, longer reach, more damage, heavier recover
-        thrust:   { pose: 'm4', windup: 0.16, strike: 0.14, recover: 0.40,
+        thrust:   { pose: 'm4', windup: 0.40, strike: 0.43, recover: 0.17,
                     chainOpenSec: 0.40,   // last move: full recover anyway
                     damage: 40, range: 3.8, halfAngleDeg: 22, lunge: 1.4,
                     staminaCost: 20, damageGhoulMult: 1.15 }

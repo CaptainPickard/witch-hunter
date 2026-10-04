@@ -113,7 +113,8 @@
   // WH_SlashL2R / WH_Thrust) - the old flat "6" warned on every boot.
   // Order D: 13 = those 9 + the 4 shield/block clips.
   // Round C: 25 = those 13 + 12 Mixamo sword/shield clips (combat-sword.glb).
-  var CHARACTERS = { playerBody: 25, banditBody: 6, ghoulBody: 6 };
+  // Round D: 27 = 13 + 12 + 3 Mixamo WH_SS_* chain attacks.
+  var CHARACTERS = { playerBody: 27, banditBody: 6, ghoulBody: 6 };
   var failed = {};     // logical name -> true (stand-in substituted)
   var loadedCount = 0;
   var GROUND_META = {}; // holder uuid -> measured height, width, raw groundMinY
