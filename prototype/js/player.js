@@ -147,7 +147,8 @@
     this.bodyBaseX = meshRoot.position.x || 0;
     this.yawFrame.add(this.body);
     if (window.WH_ASSETS.getClips('playerBody').length) {
-      this.anim = new window.WH_CharacterAnim(meshRoot, window.WH_ASSETS.getClips('playerBody'));
+      this.anim = new window.WH_CharacterAnim(meshRoot, window.WH_ASSETS.getClips('playerBody'),
+        { variant: 'sword' });
     }
   };
 

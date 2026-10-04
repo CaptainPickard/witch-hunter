@@ -52,7 +52,10 @@
     // Order D: + WH_ShieldRaise/WH_ShieldImpact/WH_ParrySwipe/
     // WH_GuardBreakStagger (scratch/blender_shield_clips.py, appended by
     // scratch/glb_append_clips.py - the 9 earlier clips are byte-identical).
-    playerBody: 'art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-chain.glb',
+    // 10-05 Round C: combat-chain.glb + 12 Mixamo WH_Sword*/WH_Shield* clips
+    // (scratch/mixamo_player.json; chain clips byte-identical). Rollback:
+    // human-hunter-male.combat-chain.glb
+    playerBody: 'art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-sword.glb',
     banditBody: 'art-direction/3d/assets/races_regen/rigged/orc-male-warrior.mixamo.glb',
     // 10-05: rigged copy + 7 Mixamo WH_*_Zombie clips (13 total).
     // Rollback: undead-ghoul-male.rigged.glb
@@ -109,7 +112,8 @@
   // combat-chain.glb legitimately holds 9 (6 whanim1 + WH_SlashR2L /
   // WH_SlashL2R / WH_Thrust) - the old flat "6" warned on every boot.
   // Order D: 13 = those 9 + the 4 shield/block clips.
-  var CHARACTERS = { playerBody: 13, banditBody: 6, ghoulBody: 6 };
+  // Round C: 25 = those 13 + 12 Mixamo sword/shield clips (combat-sword.glb).
+  var CHARACTERS = { playerBody: 25, banditBody: 6, ghoulBody: 6 };
   var failed = {};     // logical name -> true (stand-in substituted)
   var loadedCount = 0;
   var GROUND_META = {}; // holder uuid -> measured height, width, raw groundMinY
