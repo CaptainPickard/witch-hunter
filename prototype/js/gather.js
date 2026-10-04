@@ -23,7 +23,7 @@
       baseGeo: new THREE.DodecahedronGeometry(1, 0),
       baseMat: new THREE.MeshLambertMaterial({ color: base, flatShading: true }),
       markerGeo: new THREE.OctahedronGeometry(1, 0),
-      markerMat: new THREE.MeshBasicMaterial({ color: def.glowColor, fog: false })
+      markerMat: new THREE.MeshBasicMaterial({ color: def.glowColor })   // unlit, fogged (faint at range)
     };
   }
 
