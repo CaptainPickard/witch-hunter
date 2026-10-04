@@ -1,0 +1,9 @@
+{
+  "WH_Idle_Zombie": "/workspace/witch-hunter/scratch/mixamo-fbx/zombienotscary/zombie idle.fbx",
+  "WH_Walk_Zombie": "/workspace/witch-hunter/scratch/mixamo-fbx/zombienotscary/walking.fbx",
+  "WH_Run_Zombie": "/workspace/witch-hunter/scratch/mixamo-fbx/zombienotscary/zombie running.fbx",
+  "WH_Attack_Zombie": "/workspace/witch-hunter/scratch/mixamo-fbx/singles/Zombie_Attack.fbx",
+  "WH_Hit_Zombie": "/workspace/witch-hunter/scratch/mixamo-fbx/zombienotscary/zombie reaction hit.fbx",
+  "WH_Death_Zombie": "/workspace/witch-hunter/scratch/mixamo-fbx/zombienotscary/zombie agonizing.fbx",
+  "WH_StandUp_Zombie": "/workspace/witch-hunter/scratch/mixamo-fbx/zombienotscary/zombie stand up.fbx"
+}

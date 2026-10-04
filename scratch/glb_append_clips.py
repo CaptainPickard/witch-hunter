@@ -1,127 +1,114 @@
-#!/usr/bin/env python3
-"""Append named animations from a Blender-exported GLB onto a base GLB without
-touching a single pre-existing byte of the base's BIN chunk or JSON entries.
+"""Append only new GLB animations; never re-export the canonical asset.
 
-    python3 scratch/glb_append_clips.py BASE.glb SRC.glb OUT.glb NAME [NAME ...]
-
-Each SRC animation's sampler input/output accessors are copied (tightly
-packed, 4-byte aligned) onto the END of BASE's BIN; new bufferViews /
-accessors / animations are appended to the JSON arrays; channel target nodes
-are remapped SRC -> BASE by node name. Asserts afterwards:
-  - BASE BIN is a byte prefix of OUT BIN,
-  - every pre-existing JSON entry (all top-level arrays) is unchanged,
-  - OUT animation names = BASE names + NAMEs.
-Plain python (struct/json), no numpy, no Blender.
+Dense accessor reader honors both the BIN chunk header and byteStride.
+Only buffers[0].byteLength and append-only arrays may change in the base JSON.
 """
-import hashlib
+import copy
 import json
 import struct
-import sys
+from pathlib import Path
 
-CSIZE = {5120: 1, 5121: 1, 5122: 2, 5123: 2, 5125: 4, 5126: 4}
-NC = {"SCALAR": 1, "VEC2": 2, "VEC3": 3, "VEC4": 4, "MAT2": 4, "MAT3": 9, "MAT4": 16}
-
-
-def load(p):
-    b = open(p, "rb").read()
-    assert b[:4] == b"glTF"
-    off, js, bn = 12, None, b""
-    while off < len(b):
-        ln, ty = struct.unpack_from("<II", b, off)
-        off += 8
-        if ty == 0x4E4F534A:
-            js = json.loads(b[off:off + ln])
-        elif ty == 0x004E4942:
-            bn = b[off:off + ln]
-        off += ln
-    return js, bn
+COMPONENTS = {5120: ('b', 1), 5121: ('B', 1), 5122: ('h', 2),
+              5123: ('H', 2), 5125: ('I', 4), 5126: ('f', 4)}
+WIDTHS = {'SCALAR': 1, 'VEC2': 2, 'VEC3': 3, 'VEC4': 4, 'MAT4': 16}
 
 
-def acc_bytes(js, bn, i):
-    a = js["accessors"][i]
-    bv = js["bufferViews"][a["bufferView"]]
-    el = CSIZE[a["componentType"]] * NC[a["type"]]
-    start = bv.get("byteOffset", 0) + a.get("byteOffset", 0)
-    stride = bv.get("byteStride", 0) or el
-    return b"".join(bn[start + k * stride:start + k * stride + el] for k in range(a["count"]))
+def parse(path):
+    raw = Path(path).read_bytes()
+    magic, version, length = struct.unpack_from('<4sII', raw)
+    assert magic == b'glTF' and version == 2 and length == len(raw)
+    chunks = {}
+    pos = 12
+    while pos < len(raw):
+        size, kind = struct.unpack_from('<I4s', raw, pos)
+        chunks[kind] = raw[pos + 8:pos + 8 + size]
+        pos += 8 + size
+    assert pos == len(raw)
+    doc = json.loads(chunks[b'JSON'])
+    assert len(doc['buffers']) == 1
+    return doc, chunks[b'BIN\0']
 
 
-def save(path, js, bn):
-    j = json.dumps(js, separators=(",", ":")).encode()
-    j += b" " * (-len(j) % 4)
-    bn += b"\0" * (-len(bn) % 4)
-    total = 12 + 8 + len(j) + 8 + len(bn)
-    with open(path, "wb") as fh:
-        fh.write(struct.pack("<4sII", b"glTF", 2, total))
-        fh.write(struct.pack("<II", len(j), 0x4E4F534A) + j)
-        fh.write(struct.pack("<II", len(bn), 0x004E4942) + bn)
+def accessor_bytes(doc, blob, index):
+    acc = doc['accessors'][index]
+    assert 'sparse' not in acc
+    view = doc['bufferViews'][acc['bufferView']]
+    assert view.get('buffer', 0) == 0
+    width = WIDTHS[acc['type']] * COMPONENTS[acc['componentType']][1]
+    stride = view.get('byteStride', width)
+    offset = view.get('byteOffset', 0) + acc.get('byteOffset', 0)
+    end = offset + (acc['count'] - 1) * stride + width
+    assert end <= view.get('byteOffset', 0) + view['byteLength'] <= len(blob)
+    return b''.join(blob[offset + i * stride:offset + i * stride + width]
+                    for i in range(acc['count']))
 
 
-def main(base_p, src_p, out_p, names):
-    B, bb = load(base_p)
-    S, sb = load(src_p)
-    base_json = json.loads(json.dumps(B))
-    have = [a["name"] for a in B.get("animations", [])]
-    clash = [n for n in names if n in have]
-    assert not clash, f"base already has {clash} - rebuild from the pre-append base"
-    src_anims = {a["name"]: a for a in S["animations"]}
-    missing = [n for n in names if n not in src_anims]
-    assert not missing, f"src lacks {missing}"
-    bidx = {n.get("name"): i for i, n in enumerate(B["nodes"])}
-    out = bytearray(bb)
-    out += b"\0" * (-len(out) % 4)
+def accessor_values(doc, blob, index):
+    acc = doc['accessors'][index]
+    fmt = '<' + COMPONENTS[acc['componentType']][0] * WIDTHS[acc['type']]
+    return list(struct.iter_unpack(fmt, accessor_bytes(doc, blob, index)))
+
+
+def save(path, doc, blob):
+    encoded = json.dumps(doc, separators=(',', ':'), ensure_ascii=True).encode()
+    encoded += b' ' * (-len(encoded) % 4)
+    blob = bytes(blob) + b'\0' * (-len(blob) % 4)
+    raw = (struct.pack('<4sII', b'glTF', 2, 28 + len(encoded) + len(blob))
+           + struct.pack('<I4s', len(encoded), b'JSON') + encoded
+           + struct.pack('<I4s', len(blob), b'BIN\0') + blob)
+    Path(path).write_bytes(raw)
+
+
+def append_clips(base_path, source_path, out_path, names):
+    assert Path(base_path).resolve() != Path(out_path).resolve()
+    base, base_bin = parse(base_path)
+    src, src_bin = parse(source_path)
+    out = copy.deepcopy(base)
+    blob = bytearray(base_bin)
+    nodes = {n['name']: i for i, n in enumerate(base['nodes']) if 'name' in n}
+    old_names = {a['name'] for a in base['animations']}
+    assert len(names) == len(set(names)) and not old_names.intersection(names)
+    source_anims = {a['name']: a for a in src['animations']}
+    accessor_map = {}
     for name in names:
-        an = src_anims[name]
-        amap = {}
-
-        def copy_acc(i):
-            if i in amap:
-                return amap[i]
-            a = dict(S["accessors"][i])
-            data = acc_bytes(S, sb, i)
-            while len(out) % 4:
-                out.append(0)
-            B["bufferViews"].append({"buffer": 0, "byteOffset": len(out), "byteLength": len(data)})
-            out.extend(data)
-            a["bufferView"] = len(B["bufferViews"]) - 1
-            a.pop("byteOffset", None)
-            B["accessors"].append(a)
-            amap[i] = len(B["accessors"]) - 1
-            return amap[i]
-
-        samplers = [{"input": copy_acc(s["input"]), "output": copy_acc(s["output"]),
-                     "interpolation": s.get("interpolation", "LINEAR")} for s in an["samplers"]]
-        channels = []
-        for ch in an["channels"]:
-            nname = S["nodes"][ch["target"]["node"]]["name"]
-            assert nname in bidx, f"node {nname} not in base"
-            channels.append({"sampler": ch["sampler"],
-                             "target": {"node": bidx[nname], "path": ch["target"]["path"]}})
-        B["animations"].append({"name": name, "channels": channels, "samplers": samplers})
-        print(f"appended {name}: {len(channels)} channels, {len(amap)} accessors")
-    B["buffers"][0]["byteLength"] = len(out) + (-len(out) % 4)
-    save(out_p, B, bytes(out))
-
-    # ---- proof: nothing pre-existing changed
-    O, ob = load(out_p)
-    assert ob[:len(bb)] == bb, "base BIN is not a byte prefix of OUT BIN"
-    ob0 = dict(O["buffers"][0])
-    ob0["byteLength"] = base_json["buffers"][0]["byteLength"]
-    assert [ob0] + O["buffers"][1:] == base_json["buffers"], "buffers changed beyond byteLength"
-    for key, arr in base_json.items():
-        if key == "buffers":
+        anim = copy.deepcopy(source_anims[name])
+        for channel in anim['channels']:
+            old_node = src['nodes'][channel['target']['node']]
+            new_index = nodes[old_node['name']]
+            new_node = base['nodes'][new_index]
+            # Imported/exported bone local frames must match the base skeleton.
+            for field, default in [('translation', [0, 0, 0]),
+                                   ('rotation', [0, 0, 0, 1]), ('scale', [1, 1, 1])]:
+                left, right = old_node.get(field, default), new_node.get(field, default)
+                delta = max(abs(x-y) for x,y in zip(left, right))
+                if field == 'rotation':
+                    delta = min(delta, max(abs(x+y) for x,y in zip(left,right)))
+                assert delta < 1e-5, (old_node['name'], field, delta)
+            channel['target']['node'] = new_index
+        for sampler in anim['samplers']:
+            for field in ('input', 'output'):
+                idx = sampler[field]
+                if idx not in accessor_map:
+                    acc = copy.deepcopy(src['accessors'][idx])
+                    payload = accessor_bytes(src, src_bin, idx)
+                    blob.extend(b'\0' * (-len(blob) % 4))
+                    view_id = len(out['bufferViews'])
+                    out['bufferViews'].append({'buffer': 0, 'byteOffset': len(blob),
+                                               'byteLength': len(payload)})
+                    blob.extend(payload)
+                    acc['bufferView'] = view_id
+                    acc.pop('byteOffset', None)
+                    accessor_map[idx] = len(out['accessors'])
+                    out['accessors'].append(acc)
+                sampler[field] = accessor_map[idx]
+        out['animations'].append(anim)
+    out['buffers'][0]['byteLength'] = len(blob)
+    save(out_path, out, blob)
+    check, check_bin = parse(out_path)
+    assert check_bin[:len(base_bin)] == base_bin
+    for key, value in base.items():
+        if key == 'buffers':
             continue
-        if isinstance(arr, list):
-            assert O[key][:len(arr)] == arr, f"pre-existing JSON entries changed in '{key}'"
-        else:
-            assert O[key] == arr, f"top-level '{key}' changed"
-    assert [a["name"] for a in O["animations"]] == have + list(names)
-    print(f"PROOF: base BIN ({len(bb)} B, sha256 {hashlib.sha256(bb).hexdigest()[:16]}) is a byte prefix "
-          f"of OUT BIN ({len(ob)} B); all {sum(len(v) for v in base_json.values() if isinstance(v, list))} "
-          f"pre-existing JSON entries identical; animations {len(have)} -> {len(O['animations'])}")
-
-
-if __name__ == "__main__":
-    if len(sys.argv) < 5:
-        raise SystemExit(__doc__)
-    main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4:])
+        assert (check[key][:len(value)] == value if key in
+                ('animations', 'accessors', 'bufferViews') else check[key] == value), key
+    return out
