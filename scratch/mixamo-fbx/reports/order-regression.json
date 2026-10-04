@@ -1,0 +1,29 @@
+{
+  "orders": [
+    [
+      "WH_Idle_Melee",
+      "WH_Walk_Melee"
+    ],
+    [
+      "WH_Walk_Melee",
+      "WH_Idle_Melee"
+    ]
+  ],
+  "clips": {
+    "WH_Idle_Melee": {
+      "fcurves_by_order": [
+        200,
+        200
+      ],
+      "ordered_sampler_bytes_identical": true
+    },
+    "WH_Walk_Melee": {
+      "fcurves_by_order": [
+        200,
+        200
+      ],
+      "ordered_sampler_bytes_identical": true
+    }
+  },
+  "pass": true
+}
