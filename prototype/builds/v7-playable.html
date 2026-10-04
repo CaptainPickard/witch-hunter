@@ -87749,7 +87749,7 @@ window.WH_CONFIG.inventoryUI = {
     // WH_GuardBreakStagger (scratch/blender_shield_clips.py, appended by
     // scratch/glb_append_clips.py - the 9 earlier clips are byte-identical).
     playerBody: 'art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-chain.glb',
-    banditBody: 'art-direction/3d/assets/races_regen/rigged/orc-male-warrior.rigged.glb',
+    banditBody: 'art-direction/3d/assets/races_regen/rigged/orc-male-warrior.mixamo.glb',
     // 10-05: rigged copy + 7 Mixamo WH_*_Zombie clips (13 total).
     // Rollback: undead-ghoul-male.rigged.glb
     ghoulBody: 'art-direction/3d/assets/races_regen/rigged/undead-ghoul-male.mixamo.glb',
@@ -88154,11 +88154,19 @@ window.WH_CONFIG.inventoryUI = {
   // GLB regen can never strand a state. moves replaces MOVE_NAMES wholesale.
   // zombie: Mixamo ghoul set; death stays canonical (WH_Death_Zombie ends
   // standing and reads wounded, not dead).
+  // bandit: Mixamo axe set on the cape-fixed orc; death canonical, no moves.
   var VARIANTS = {
     zombie: {
       names: {
         idle: 'WH_Idle_Zombie', walk: 'WH_Walk_Zombie', run: 'WH_Run_Zombie',
         attack: 'WH_Attack_Zombie', hit: 'WH_Hit_Zombie', death: 'WH_Death'
+      },
+      moves: {}
+    },
+    bandit: {
+      names: {
+        idle: 'WH_Idle_Melee', walk: 'WH_Walk_Melee', run: 'WH_Run_Melee',
+        attack: 'WH_Attack_High', hit: 'WH_Hit_Large_L', death: 'WH_Death'
       },
       moves: {}
     }
@@ -91681,9 +91689,9 @@ window.WH_CONFIG.inventoryUI = {
     this.yawFrame.add(this.body);
     var bodyName = this.type === 'bandit' ? 'banditBody' : 'ghoulBody';
     if (window.WH_ASSETS.getClips(bodyName).length) {
-      // 10-05: ghouls play the Mixamo zombie set; bandits keep the default map.
+      // 10-05: ghouls play the Mixamo zombie set, bandits the Mixamo axe set.
       this.anim = new window.WH_CharacterAnim(meshRoot, window.WH_ASSETS.getClips(bodyName),
-        this.type === 'ghoul' ? { variant: 'zombie' } : null);
+        { variant: this.type === 'ghoul' ? 'zombie' : 'bandit' });
     }
     // Rigged bandits carry the axe on the animated hand, not a world pivot.
     var hand = meshRoot.getObjectByName('R_Hand');
