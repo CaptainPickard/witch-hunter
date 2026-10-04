@@ -901,7 +901,10 @@ window.WH_CONFIG.touch = {
     attack:   { x: 0.90, y: 0.45 },
     lockon:   { x: 0.72, y: 0.82 },
     dodge:    { x: 0.55, y: 0.88 },
-    block:    { x: 0.90, y: 0.65 }
+    block:    { x: 0.90, y: 0.65 },
+    // S3b: USE = the E key (pickup, then gather; future chests/doors).
+    // Above-left of attack, clear of sprint and the camera pad.
+    interact: { x: 0.74, y: 0.38 }
   }
 };
 

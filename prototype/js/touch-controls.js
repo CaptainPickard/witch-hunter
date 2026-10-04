@@ -26,7 +26,7 @@
   var editBarEl = null;     // edit toolbar (lock, +/- scale, reset, done)
   var lockChipEl = null;    // always-visible lock chip (re-enter edit mode)
   var controls = {};        // name -> { el, nub }
-  var order = ['stick', 'cam', 'sprint', 'attack', 'lockon', 'dodge', 'block'];
+  var order = ['stick', 'cam', 'sprint', 'attack', 'lockon', 'dodge', 'block', 'interact'];
   var GAME_KEYS = {
     stick: ['KeyW', 'KeyA', 'KeyS', 'KeyD'],
     sprint: ['ShiftLeft']
@@ -172,7 +172,8 @@
     attack: { glyph: '\u2694', label: 'Attack' },
     lockon: { glyph: '\u2318', label: 'Lock-On' },
     dodge:  { glyph: '\u21C4', label: 'Dodge' },
-    block:  { glyph: '\u25CE', label: 'Off Hand' }
+    block:  { glyph: '\u25CE', label: 'Off Hand' },
+    interact: { glyph: '\u25C8', label: 'Use' }
   };
   var LOCKED_GLYPH = '\uD83D\uDD12';      // closed lock
   var UNLOCKED_GLYPH = '\uD83D\uDD13';    // open lock
@@ -610,6 +611,9 @@
       // Order C: block button = RMB path (off-hand action: left caster ->
       // cast, left shield -> block on press, endBlock on release = press-hold)
       if (p.handButton) p.handButton('rmb', true);
+    } else if (name === 'interact') {
+      // S3b: the E key on phone - shared game.js interact() entry point
+      if (window.WH_DEBUG && window.WH_DEBUG.interact) window.WH_DEBUG.interact();
     }
   }
 

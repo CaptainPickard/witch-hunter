@@ -168,3 +168,36 @@ Region B (darkwood_edge) uses the band |x| < 42, z -82 to -31, at least 6 m betw
 - **Node meshes are placeholders**, waiting on the bush/grass art mission.
 - **Drops never despawn.** If coins pile up in playtest, a `drops.despawnSec` would be the knob to add.
 - **Vendor/currency for Stolen Coin and cooking for ingredients are not built**, as the brief says.
+
+---
+
+## INTERACT BUTTON (Order S3b, 2026-10-05)
+
+A touch USE button that does exactly what the E key does, so pickup and gather work on a phone.
+
+**One entry point.** `game.js` now has a single `interact()` function: it does nothing if input is suspended (inventory open) or the player is dead; otherwise it tries `tryPickup()`, then `tryGather()`, and returns whether anything happened. Three callers use it:
+- the E keydown handler (`CONFIG.inventoryUI.pickupKey`, same `e.repeat` guard as before)
+- `WH_DEBUG.interact()`, which sits next to `handButton` and is what the touch layer calls
+- future chests and doors: add their `tryX()` to the `||` chain inside `interact()`. Nothing else needs to change.
+
+Pickup and gather rules are not touched. The guard and the item-before-node order are the same as the old E path. They were moved, not rewritten.
+
+**Button.** `CONFIG.touch.layout.interact = { x: 0.74, y: 0.38 }`, glyph ◈, label `Use`. It uses the same `.wh-touch-ctl` style, the same `touched` press feedback, and the same size and scale as the other buttons. It is always visible when the touch layer is showing, it can be dragged in LAYOUT mode, and it is included in the saved layout and in Reset. If a saved layout from before this change has no `interact` entry, the button sits at the CONFIG default.
+
+**Placement reasoning.** The suggested (0.72, 0.52) is about 50 px from sprint (0.68, 0.62) on a landscape phone (~800x380). That is less than the 64 px button, so they would overlap. (0.74, 0.38) sits above-left of attack (0.90, 0.45) and above sprint:
+- landscape ~800x380: ~130 px from attack, ~100 px from sprint, well above the camera pad (r 70 at y 0.72)
+- portrait ~390x844: ~85 px from attack
+
+It can be moved with the LAYOUT drag if a thumb disagrees.
+
+**No double-fire.** The touch layer never sends a synthetic `KeyE`. It calls the hook directly, and the button already swallows mouse/touch compatibility events, as attack does. Desktop E goes through the keydown handler only.
+
+| AC | Expected |
+|---|---|
+| I1 | Use ◈ appears above-left of Attack, clear of Sprint, Dodge, Off Hand, Lock-On and the camera pad |
+| I2 | Near an item box: picks it up, with the same toast as E |
+| I3 | Near a ready node (no item in reach): gathers it, with the same toast as E |
+| I4 | Nothing in range: no-op, no console error (`interact()` returns false) |
+| I5 | Desktop E behaves as before, one action per press |
+
+Not tested in a browser (no headless browser, by order). The syntax was checked by reading the code only, because node is not installed in this environment.

@@ -955,10 +955,16 @@
       window.WH_REGION_DEFS.regions);
     document.addEventListener('keydown', function (e) {
       if (e.code !== CFG.inventoryUI.pickupKey || e.repeat) return;
-      if (game.player.inputSuspended || game.player.state !== 'alive') return;
-      // one key: a ground item in reach wins, else the nearest ready node
-      if (!tryPickup()) tryGather();
+      interact();
     });
+  }
+
+  // S3b: the one world-interact entry point - E key, touch USE button
+  // (WH_DEBUG.interact) and future chests/doors all route through here.
+  // A ground item in reach wins, else the nearest ready node.
+  function interact() {
+    if (game.player.inputSuspended || game.player.state !== 'alive') return false;
+    return tryPickup() || tryGather();
   }
 
   // G on the selected stack: 1 unit, or the whole stack with Shift.
@@ -1235,6 +1241,8 @@
       // shield anyway (D-amend AC DA2: addItem('buckler', 1) first)
       equipItem: function (id, hand, fromInventory, force) { return game.player.equipItem(id, hand, fromInventory, force); },
       handButton: function (button, down) { game.player.handButton(button, down !== false); },
+      // S3b: same dispatch as the E key (pickup, then gather)
+      interact: function () { return interact(); },
       unequipHand: function (hand) { return game.player.unequipHand(hand); },
       getActiveLoadout: function () { return game.player.activeLoadout; },
       toggleLoadout: function () { game.player.toggleLoadout(); },
