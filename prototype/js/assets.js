@@ -37,6 +37,9 @@
     bushA: 'art-direction/3d/assets/biome_library/wh-bush-a-pixelated.glb',
     bushB: 'art-direction/3d/assets/biome_library/wh-bush-b-pixelated.glb',
     grassTuft: 'art-direction/3d/assets/biome_library/wh-grass-tuft-pixelated.glb',
+    // Round G tree-ring bush (io/roundG-provenance.md): Nicko's Meshy snare
+    // bush, decimated to 3000 tris, untextured bark material (raw had no texture)
+    whBushSnare: 'art-direction/3d/assets/biome_library/wh-bush-snare-pixelated.glb',
     // Round F boundary wall + gate (io/roundF-wall-provenance.md): wall
     // segments render instanced (region-manager buildWorld). b3Gate is the
     // b3-gate GLB with its near-closed door leaves cut out

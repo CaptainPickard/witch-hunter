@@ -692,8 +692,8 @@
 
     var B = SC.bushes;
     var grassPathM = hasPath ? DP.halfWidth + SC.grass.pathPadM : 0;
-    function bushPick(rand) {
-      var bp = whPickWeighted(rand, B.assets);
+    function bushPick(rand, rows) {
+      var bp = whPickWeighted(rand, rows);
       var h = lerp([bp[2], bp[3]], rand());
       var bm = m(bp[0]);
       var sc = bm && bm.height > 0 ? h / bm.height : 1;
@@ -711,7 +711,7 @@
       for (var slot = 0; slot < n; slot++) {
         var ang = a0 + slot * TWO_PI / n + (rr2() - 0.5) * (TWO_PI / n) * 0.5;
         var rad = host.trunk * lerp(R.radiusFrac, rr2());
-        var bp2 = bushPick(rr2);
+        var bp2 = bushPick(rr2, R.assets || B.assets);
         var bx = host.x + Math.cos(ang) * rad, bz = host.z + Math.sin(ang) * rad;
         if (!inRegion(bx, bz, 0) || !clearOfWorld(bx, bz, grassPathM) ||
             hitsCircles(bx, bz, bp2.own, host)) { plan.stats.ringSkipped++; continue; }
@@ -724,7 +724,7 @@
     var rf = stream('freeBushes');
     for (var fa = 0; fa < B.freeBushes * 30 && plan.stats.freeBushes < B.freeBushes; fa++) {
       var fs = sampleDisc(rf);
-      var fp = bushPick(rf);
+      var fp = bushPick(rf, B.assets);
       if (!inRegion(fs.x, fs.z, C.edgeM) || !clearOfWorld(fs.x, fs.z, C.pathM) ||
           !clearOfPoints(fs.x, fs.z) || hitsCircles(fs.x, fs.z, T.propClearM, null)) continue;
       addInstance(fp.name, fs.x, fs.z, fp.rotY, fp.scale);
