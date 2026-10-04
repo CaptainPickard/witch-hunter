@@ -27,6 +27,8 @@ html, body {
   display: block;
   width: 100%;
   height: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
 #wh-hud {
@@ -37,11 +39,13 @@ html, body {
 }
 
 /* --- bars --- */
+/* 2026-10-03: moved to top-left (Nicko change order). Column stack
+   HP -> Stamina -> Focus (focus appended by game.js), ~116px tall. */
 #wh-bars {
   position: absolute;
-  left: 24px;
-  bottom: 24px;
-  width: 280px;
+  top: 8px;
+  left: 8px;
+  width: 240px;
 }
 
 .bar-label {
@@ -83,6 +87,35 @@ html, body {
   font-size: 13px;
   color: #8f886f;
   font-family: monospace;
+}
+
+/* --- 2026-10-03 pixel-fidelity tuner readout (F1/F2 debug keys) --- */
+#wh-res-tuner {
+  position: absolute;
+  top: 32px;
+  right: 16px;
+  text-align: right;
+  font-family: monospace;
+  font-size: 13px;
+  color: #e3dcc4;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+  opacity: 1;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+
+#wh-res-tuner.dim {
+  opacity: 0.25;
+}
+
+#wh-res-tuner.pulse {
+  opacity: 1;
+}
+
+#wh-res-hint {
+  font-size: 11px;
+  color: #8f886f;
+  letter-spacing: 0.5px;
 }
 
 /* --- region name --- */
@@ -171,23 +204,57 @@ html, body {
   border-radius: 2px;
 }
 
-/* --- load note --- */
+/* --- boot loading screen (2026-10-03, darkwood palette; amber = the ONE
+       accent, matching the reticle/soul fill #d8b24a) --- */
 #wh-load-note {
   position: absolute;
   inset: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
-  letter-spacing: 4px;
   color: #b0a788;
   background: #0a0a0c;
-  transition: opacity 0.5s ease;
+  z-index: 30;                  /* covers boot-time HUD, stays below the
+                                   pink #wh-asset-fail-note (z-index 40) */
+  /* fade-out duration is set at runtime from CONFIG.hud.bootOverlayFadeMs */
+  transition: opacity 0.9s ease;
 }
 
 #wh-load-note.hidden {
   opacity: 0;
   pointer-events: none;
+}
+
+#wh-boot-title {
+  font-size: 56px;
+  letter-spacing: 14px;
+  text-transform: uppercase;
+  color: #d8d2c0;
+  text-shadow: 0 2px 0 #14110e, 0 0 18px rgba(0, 0, 0, 0.9);
+  margin-bottom: 28px;
+}
+
+#wh-boot-bar {
+  width: 320px;
+  max-width: 60vw;
+  height: 14px;
+  border: 2px solid #4a4034;    /* darkwood brown frame */
+  background: #14110e;
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.8);
+}
+
+#wh-boot-bar-fill {
+  width: 0%;                    /* real value: settled/total manifest assets */
+  height: 100%;
+  background: #d8b24a;          /* amber (canon fire/human accent) */
+}
+
+#wh-boot-sub {
+  margin-top: 14px;
+  font-size: 13px;
+  letter-spacing: 3px;
+  color: #8a7f70;
 }
 /* --- v6 block / parry cues (DOM only) --- */
 #wh-block-flash {
@@ -313,11 +380,23 @@ html, body {
       <div class="bar-outer" id="wh-stam-bar-outer"><div class="bar-fill stam" id="wh-stam-bar"></div></div>
     </div>
     <div id="wh-fps">FPS: 0</div>
+    <!-- 2026-10-03 pixel-fidelity tuner (change order: pixels too large):
+         F1 steps the internal buffer finer, F2 chunkier; readout pulses. -->
+    <div id="wh-res-tuner">
+      <div id="wh-res-readout"></div>
+      <div id="wh-res-hint">F1 finer pixels - F2 chunkier pixels</div>
+    </div>
     <div id="wh-region-name"></div>
     <div id="wh-gate-hint">Enter the Darkwood</div>
     <div id="wh-lock-reticle"></div>
     <div id="wh-death-overlay"><div id="wh-death-text">You died</div><div id="wh-death-sub">Respawning...</div></div>
-    <div id="wh-load-note">Loading assets...</div>
+    <!-- 2026-10-03 boot loading screen: title over a real per-asset progress
+         bar (tick count lives in js/assets.js). Replaces the bare text note. -->
+    <div id="wh-load-note">
+      <div id="wh-boot-title">Witch Hunter</div>
+      <div id="wh-boot-bar"><div id="wh-boot-bar-fill"></div></div>
+      <div id="wh-boot-sub">Loading assets...</div>
+    </div>
   </div>
 </div>
 <script>
@@ -85823,6 +85902,9 @@ window.WHSkeletonUtils = { retarget: retarget, retargetClip: retargetClip, clone
 </script>
 <script>
 // Witch Hunter v5 sword moveset: keyframed weapon-pivot poses for player sword combos.
+// 10-04: pose SHAPES only. Timings, damage, sweeps, lunge and chain order live
+// in CONFIG.moveset.weapons[*].moves, which reference these poses by key.
+// bodyLean/crouch are per-pose body-shape amounts (stand-in visual only).
 window.WH_MOVESET = {
   idle: { pos: [0.7, 1.0, -0.3], rot: [2.2, -0.7, 0.6] },
   m1: {
@@ -85830,38 +85912,37 @@ window.WH_MOVESET = {
     windup:  { pos: [0.55, 1.35, 0.1],   rot: [-0.4, 0.8, 0.9] },
     strike:  { pos: [0.25, 0.95, -0.45], rot: [1.57, -0.35, 0.15] },
     recover: { pos: [0.42, 0.9, -0.18],  rot: [1.9, -0.6, 0.35] },
-    bodyLean: 0.18, crouch: 0.03, lunge: 0.25
+    bodyLean: 0.18, crouch: 0.03
   },
   m2: {
     name: 'slash-r2l',
     windup:  { pos: [-0.1, 1.35, 0.15], rot: [-0.4, -0.8, 0.9] },
     strike:  { pos: [0.5, 0.95, -0.4],  rot: [1.57, 0.35, -0.15] },
     recover: { pos: [0.7, 1.0, -0.3], rot: [2.2, -0.7, 0.6] },
-    bodyLean: 0.18, crouch: 0.03, lunge: 0.25
+    bodyLean: 0.18, crouch: 0.03
   },
   m3: {
     name: 'overhead',
     windup:  { pos: [0.1, 1.7, 0.05],  rot: [2.9, 0, 0.1] },
     strike:  { pos: [0.3, 0.35, -0.3], rot: [1.35, 0, 0.08] },
     recover: { pos: [0.7, 1.0, -0.3], rot: [2.2, -0.7, 0.6] },
-    bodyLean: 0.25, crouch: 0.09, lunge: 0.3
+    bodyLean: 0.25, crouch: 0.09
   },
   m4: {
     name: 'thrust',
     windup:  { pos: [0.35, 1.1, 0.35], rot: [1.4, 0.5, 0] },
     strike:  { pos: [0.15, 1.05, -0.7], rot: [1.57, 0, 0] },
     recover: { pos: [0.7, 1.0, -0.3], rot: [2.2, -0.7, 0.6] },
-    bodyLean: 0.12, crouch: 0.02, lunge: 0.4
+    bodyLean: 0.12, crouch: 0.02
   },
   claw: {
     name: 'claw',
     windup:  { pos: [0.3, 1.2, 0.2],  rot: [-0.3, 0.4, 0.4] },
     strike:  { pos: [0.35, 1.0, -0.4], rot: [0.2, 0, 0] },
     recover: { pos: [0.3, 1.2, 0.2],   rot: [0.2, 0.4, 0.4] },
-    bodyLean: 0.15, crouch: 0.03, lunge: 0.2
+    bodyLean: 0.15, crouch: 0.03
   }
 };
-window.WH_MOVESET.chainCap = 3;
 window.WH_MOVESET.interpPose = function (a, b, t) {
   var T = Math.max(0, Math.min(1, t));
   var out = { pos: [0, 0, 0], rot: [0, 0, 0] };
@@ -85882,24 +85963,91 @@ window.WH_CONFIG = {
   renderer: {
     // r185 colorspace + dark-albedo exposure (per validated Witch Hunter 3D settings)
     outputColorSpaceSRGB: true,       // renderer.outputColorSpace = SRGBColorSpace
-    toneMappingExposure: 1.6,         // lifted for dark Meshy albedo (POC)
+    toneMappingName: 'Neutral',       // R2 P0-3: Neutral tonemap (ACES fallback in game.js)
+    toneMappingExposure: 1.15,        // R2 P0-3: re-set so fog stays the brightest large area (audit)
+    // R3 P0-4: maxPixelRatio superseded by internalResDiv (setPixelRatio(1)); legacy key kept
     maxPixelRatio: 2,
+    internalResDiv: 2,                // R3 P0-4: buffer = window px / div (960x540 at 1080p), CSS upscales; 10-03 F1/F2 debug keys tune it live (1..4)
     shadowMapEnabled: false           // v1: swiftshader software render, shadows off (POC)
   },
 
   lighting: {
-    // R4: ambient fill high, keys moderate (dark albedo needs big fill)
-    ambientColor: 0x8a8fa8,
-    ambientIntensity: 4.0,            // bright ambient fill (POC, validated setting)
-    keyColor: 0xfff2dd,
-    keyIntensity: 1.2,                // moderate key
-    hemiSkyColor: 0x6b7fa8,
-    hemiGroundColor: 0x3a3a44,
-    hemiIntensity: 1.5
+    // R2 P0-3 moon-and-lantern night rig: AmbientLight removed entirely - the
+    // hemisphere is the only fill, and region.ambientLightLevel scales it
+    // (region fill = hemiBaseIntensity * ambientLightLevel). Moon = cool
+    // directional on the -z side backlighting the A->B main path. Lantern =
+    // warm PointLight parented into the player's yawFrame (left-hip anchor).
+    ambientIntensity: 0,              // P0-3: AmbientLight removed (kept for backward-compat readers; must stay 0)
+    hemiSkyColor: 0x4a5a80,           // indigo-slate sky (audit 5.3)
+    hemiGroundColor: 0x16181e,        // near-black ground (audit 5.3)
+    // 10-03 order 4 (starry night, moon-dominant): hemi fill cut so the moon
+    // directional is the main sky light; sky luminance comes from the dome.
+    hemiBaseIntensity: 0.55,          // fill at ambientLightLevel 1.0; region fill = base * level
+    moonColor: 0xa8bce6,              // cool moon (audit 5.3)
+    // 10-03 order 4: moon is now the main sky light (fill cut 1.35 -> 0.55).
+    // Directional intensity raised so moon:fill vertical ratio actually lands.
+    moonIntensity: 0.9,              // moon:fill (vertical faces) 3-5:1
+    moonAzimuthDeg: 0,                // -z side, backlights A->B main path
+    moonElevationDeg: 30,             // audit: 25-35 deg
+    lanternColor: 0xffb060,           // warm amber (audit 5.3; canon accent)
+    lanternIntensity: 6.5,            // audit 5.3: 6-8 cd class
+    lanternDistance: 12,              // audit: distance ~12
+    lanternDecay: 2,                  // physical falloff
+    lanternFlickerPct: 5,             // +-5% flicker band
+    lanternAnchor: 'left-hip',        // yawFrame-space anchor
+    lanternAnchorOffset: [-0.32, 0.95, 0.08], // tuned starting anchor
+    // 10-03 order 4: 1.15x base fill for B (darker Darkwood); region A uses 1.0
+    regionBFillMult: 1.15
+  },
+
+  // 10-03 order 4: starry night sky (game.js setupSky). Dome ignores fog;
+  // scene.background goes near-black so fog color no longer lights the world.
+  sky: {
+    domeRadius: 400,                  // beyond ground disc, inside camera far 500
+    zenithColor: 0x070a18,            // deep night indigo
+    horizonBand: 0x2b3350,            // faint band where fog meets sky
+    horizonGlow: 0x8f98ad,            // pale ash highlight (fog-color kin, low band)
+    horizonGlowStop: 0.16,            // glow fade fraction from horizon upward
+    starCount: 600,
+    starSizeMin: 1.2,                 // px at internal res
+    starSizeMax: 2.6,
+    starColors: [0xcfd8e8, 0xaebad0, 0xe8ecf4, 0x9fb2d8],
+    twinklePct: 12,                   // fraction of stars that twinkle slowly
+    moonAzimuthDeg: 0,                // matches lighting.moon (directional -z)
+    moonElevationDeg: 30,
+    moonDistance: 330,                // on the dome, inside camera far
+    moonSizePx: 64,                   // angular size at dome distance
+    moonColor: 0xdfe7f2,
+    moonGlowColor: 0xa8bce6
+  },
+
+  // R2: fixed pool of PointLights (P1-8) - nearest-socket handoff, no per-frame allocation.
+  lightPool: {
+    size: 4,
+    color: 0xffc27a,
+    distance: 11,
+    decay: 2,
+    handoffFadeSec: 0.35,   // intensity fade time constant on handoff
+    minIntensityFloor: 0.0  // unused slot = 0 intensity, never removed
+  },
+  // P1-8: CONFIG assets whose props host a light socket (fixed pool hooks
+  // these, nearest to the player wins). heightFraction is up the prop's
+  // native height; intensity is the pool target when hosting the socket.
+  lightSockets: {
+    lanternPost: { heightFraction: 0.85, intensity: 1.6 },
+    banditCampfire: { heightFraction: 0.55, intensity: 2.4 },
+    lanternWaymarker: { heightFraction: 0.80, intensity: 1.8 }
   },
 
   world: {
     groundRadius: 90,                 // playable disc radius per region
+    // R5 P0-5: player + enemies are held inside groundRadius - playerMargin;
+    // the visual ground extends visualGroundFogMult * d95 past that rim, where
+    // d95 = sqrt(-ln(1 - fogOpaqueFrac)) / region fogDensity (FogExp2).
+    playerMargin: 1.5,
+    visualGroundFogMult: 1.1,
+    fogOpaqueFrac: 0.95,
+    colliderCorridorHalfDepth: 6,     // gate corridor = chokepoint x-span, boundary.z +- this
     groundColorA: 0x3d3a2c,           // dark mud/olive (darkwood canon palette)
     groundColorB: 0x232620,           // near-charcoal mud (darkwood canon palette)
     groundTexture: {                  // procedural pixel-art ground canvas (region-manager.js)
@@ -85908,6 +86056,20 @@ window.WH_CONFIG = {
       blotchCount: 140,               // noise blotch clusters per canvas
       mossDensity: 0.06,              // pale sickly moss accent, pixel fraction
       puddleDensity: 0.03             // near-black wet puddle specks, pixel fraction
+    },
+    // 10-03 change order 2: dirt path ribbon (region-manager buildDirtPath).
+    // Swaying centerline through the south clearing into the cemetery; visual
+    // only (no collider), pixel-art dirt canvas, repeat-wrapped along length.
+    dirtPath: {
+      regionId: 'hold_outskirts',     // build for region A only (like mistPlane)
+      zFrom: 86.0,                    // south rim start (inside playable 88.5); order 3: span ends at yard fence
+      zTo: 32.0,                      // order 3: ends AT the graveyard fence mouth
+      halfWidth: 2.7,                 // 5.4m wide
+      swayAmp: 1.6,                   // centerline x = amp*sin(2pi(z-zFrom)/period)
+      swayPeriod: 34.0,
+      y: 0.02,                        // above ground disc
+      tileLengthMeters: 3.0,          // one texture tile per 3m along the path
+      repeatAcrossWidth: 1            // one tile across (u-edge fade lands only at strip borders)
     },
     fogNearFactor: 0.25,              // fog near = radius * factor
     fogFarFactor: 1.5,                // fog far = radius * factor
@@ -85925,7 +86087,15 @@ window.WH_CONFIG = {
     enemies: [
       { type: 'bandit', x: -6, z: -8 },
       { type: 'bandit', x: 10, z: -14 },
-      { type: 'ghoul', x: 2, z: -30 }
+      { type: 'ghoul', x: 2, z: -23.5 },
+      { type: 'bandit', x: -54.3, z: 64.8 },
+      { type: 'ghoul', x: -23.1, z: 71.2 },
+      { type: 'bandit', x: -63.2, z: -18.0 },
+      { type: 'ghoul', x: -64.7, z: 20.5 },
+      { type: 'bandit', x: -42.6, z: 70.7 },
+      { type: 'ghoul', x: -64.9, z: 35.8 },
+      { type: 'bandit', x: -48.5, z: 39.6 },
+      { type: 'ghoul', x: 54.2, z: 74.5 },
     ],
     props: [
       { asset: 'gravestoneObelisk', x: -10, z: 20, rotY: 0.3, scale: 1.6 },
@@ -85936,11 +86106,9 @@ window.WH_CONFIG = {
       { asset: 'graveMound', x: 3, z: 24, rotY: 0.0, scale: 2.2 },
       { asset: 'graveMound', x: 15, z: 6, rotY: 0.4, scale: 1.8 },
       { asset: 'buriedCoffin', x: -18, z: 5, rotY: 0.9, scale: 1.7 },
+      { asset: 'yewTree', x: 29.4, z: 1.3, rotY: 3.03, scale: 6.5 },
       { asset: 'lanternPost', x: -2, z: 30, rotY: 0.0, scale: 2.4 },
       { asset: 'lanternPost', x: 4, z: -2, rotY: 0.0, scale: 2.4 },
-      { asset: 'deadTree', x: -22, z: -2, rotY: 0.5, scale: 6.5 },
-      { asset: 'deadTree', x: 20, z: 18, rotY: -0.8, scale: 6.5 },
-      { asset: 'deadTree', x: -16, z: -18, rotY: 2.1, scale: 6.5 },
       { asset: 'picketFence', x: 15.4, z: 13.2, rotY: 0.0, scale: 1.63 },
       { asset: 'picketFence', x: 12.2, z: 12.2, rotY: 0.0, scale: 1.55 },
       { asset: 'picketFence', x: -19.1, z: 10.8, rotY: 1.57, scale: 1.59 },
@@ -85948,9 +86116,6 @@ window.WH_CONFIG = {
       { asset: 'picketFence', x: -20.8, z: 13.3, rotY: 1.57, scale: 1.57 },
       { asset: 'ironFenceSection', x: -5.6, z: 28.9, rotY: 1.65, scale: 1.33 },
       { asset: 'ironFenceSection', x: -7.6, z: 31.1, rotY: 3.54, scale: 1.36 },
-      { asset: 'deadTree', x: 26.0, z: 9.0, rotY: 4.24, scale: 6.5 },
-      { asset: 'livingOak', x: -27.8, z: -19.9, rotY: 1.8, scale: 6.5 },
-      { asset: 'yewTree', x: 29.4, z: 1.3, rotY: 3.03, scale: 6.5 },
       { asset: 'mossBoulder', x: 17.2, z: -9.0, rotY: 5.46, scale: 1.37 },
       { asset: 'mossBoulder', x: -24.4, z: 23.0, rotY: 0.73, scale: 1.34 },
       { asset: 'treeStump', x: 7.2, z: 18.4, rotY: 6.18, scale: 1.14 },
@@ -85972,6 +86137,104 @@ window.WH_CONFIG = {
       { asset: 'buriedCoffin', x: 6.5, z: 12.5, rotY: 0.4, scale: 1.5 },
       { asset: 'mossBoulder', x: -20.5, z: -12.5, rotY: 4.4, scale: 1.15 },
       { asset: 'treeStump', x: 20.5, z: 2.5, rotY: 3.1, scale: 1.1 }
+ ,
+
+      // 10-03 change order 2: dirt-path lantern chain (every ~12m along the
+      // path; joins existing posts at z 30 and z -2; fixed light pool auto-hooks)
+      { asset: 'lanternPost', x: 5.04, z: 62.0, rotY: 0.0, scale: 2.4 },
+      { asset: 'lanternPost', x: -3.36, z: 51.0, rotY: 0.0, scale: 2.4 },
+      { asset: 'lanternPost', x: 2.6, z: 39.5, rotY: 0.0, scale: 2.4 },
+      // order 3 forest (10-03): ring around graveyard (outside),
+      // path alley, rim fill, dead accents - mixed healthy species
+      { asset: 'yewTree', x: 10.09, y: 0.00, z: 39.59, rotY: 0.90, scale: 9.17 },
+      { asset: 'yewTree', x: 13.43, y: 0.00, z: 36.39, rotY: 3.25, scale: 9.46 },
+      { asset: 'witchwoodTree', x: 19.45, y: 0.00, z: 32.88, rotY: 1.91, scale: 10.41 },
+      { asset: 'yewTree', x: 22.95, y: 0.00, z: 26.82, rotY: 4.36, scale: 9.16 },
+      { asset: 'yewTree', x: 27.04, y: 0.00, z: 25.77, rotY: 4.36, scale: 9.65 },
+      { asset: 'yewTree', x: 25.71, y: 0.00, z: 21.17, rotY: 5.30, scale: 8.52 },
+      { asset: 'yewTree', x: 29.51, y: 0.00, z: 18.91, rotY: 4.30, scale: 9.70 },
+      { asset: 'yewTree', x: 28.16, y: 0.00, z: 14.60, rotY: 0.28, scale: 9.64 },
+      { asset: 'livingOak', x: 30.87, y: 1.57, z: 7.31, rotY: 4.33, scale: 9.82 },
+      { asset: 'yewTree', x: 26.52, y: 0.00, z: -3.92, rotY: 3.01, scale: 9.90 },
+      { asset: 'witchwoodTree', x: 21.93, y: 0.00, z: -10.21, rotY: 5.88, scale: 9.87 },
+      { asset: 'yewTree', x: 17.79, y: 0.00, z: -11.16, rotY: 2.92, scale: 9.73 },
+      { asset: 'yewTree', x: -6.20, y: 0.00, z: -17.34, rotY: 1.52, scale: 10.05 },
+      { asset: 'yewTree', x: -12.93, y: 0.00, z: -17.42, rotY: 5.83, scale: 10.75 },
+      { asset: 'witchwoodTree', x: -14.29, y: 0.00, z: -12.52, rotY: 1.90, scale: 8.82 },
+      { asset: 'yewTree', x: -24.43, y: 0.00, z: -8.01, rotY: 2.41, scale: 8.73 },
+      { asset: 'witchwoodTree', x: -24.57, y: 0.00, z: -3.33, rotY: 4.43, scale: 10.10 },
+      { asset: 'yewTree', x: -26.77, y: 0.00, z: 2.16, rotY: 0.50, scale: 8.78 },
+      { asset: 'yewTree', x: -27.54, y: 0.00, z: 6.47, rotY: 0.41, scale: 10.35 },
+      { asset: 'livingOak', x: -29.75, y: 1.63, z: 10.41, rotY: 5.62, scale: 10.19 },
+      { asset: 'livingOak', x: -28.27, y: 1.71, z: 16.41, rotY: 5.56, scale: 10.66 },
+      { asset: 'livingOak', x: -29.82, y: 1.60, z: 20.75, rotY: 6.07, scale: 9.99 },
+      { asset: 'livingOak', x: -26.92, y: 1.51, z: 24.25, rotY: 6.16, scale: 9.42 },
+      { asset: 'livingOak', x: -26.15, y: 1.51, z: 28.48, rotY: 1.12, scale: 9.42 },
+      { asset: 'yewTree', x: -21.42, y: 0.00, z: 29.64, rotY: 2.49, scale: 9.68 },
+      { asset: 'witchwoodTree', x: -20.77, y: 0.00, z: 34.44, rotY: 1.53, scale: 9.91 },
+      { asset: 'yewTree', x: -16.38, y: 0.00, z: 33.81, rotY: 5.21, scale: 8.51 },
+      { asset: 'yewTree', x: -14.60, y: 0.00, z: 38.65, rotY: 4.31, scale: 9.54 },
+      { asset: 'yewTree', x: -9.91, y: 0.00, z: 36.97, rotY: 1.14, scale: 9.72 },
+      { asset: 'yewTree', x: 23.78, y: 0.00, z: 31.00, rotY: 4.33, scale: 8.81 },
+      { asset: 'livingOak', x: 17.93, y: 1.69, z: 36.83, rotY: 0.95, scale: 10.54 },
+      { asset: 'yewTree', x: -9.10, y: 0.00, z: 41.16, rotY: 2.50, scale: 8.98 },
+      { asset: 'witchwoodTree', x: 22.57, y: 0.00, z: -5.39, rotY: 4.20, scale: 10.43 },
+      { asset: 'yewTree', x: -31.91, y: 0.00, z: 28.49, rotY: 6.17, scale: 10.74 },
+      { asset: 'livingOak', x: 24.50, y: 1.41, z: 39.30, rotY: 3.87, scale: 8.80 },
+      { asset: 'witchwoodTree', x: -28.80, y: 0.00, z: -6.55, rotY: 0.83, scale: 8.67 },
+      { asset: 'livingOak', x: -33.27, y: 1.53, z: 14.18, rotY: 2.82, scale: 9.58 },
+      { asset: 'livingOak', x: -17.59, y: 1.56, z: -20.61, rotY: 6.06, scale: 9.72 },
+      { asset: 'livingOak', x: -33.41, y: 1.43, z: 6.92, rotY: 6.09, scale: 8.92 },
+      { asset: 'yewTree', x: 18.49, y: 0.00, z: -20.26, rotY: 0.73, scale: 9.43 },
+      { asset: 'yewTree', x: -15.56, y: 0.00, z: 44.39, rotY: 4.45, scale: 9.08 },
+      { asset: 'witchwoodTree', x: -21.84, y: 0.00, z: 41.43, rotY: 3.70, scale: 8.53 },
+      { asset: 'yewTree', x: 12.06, y: 0.00, z: 44.64, rotY: 1.05, scale: 10.24 },
+      { asset: 'witchwoodTree', x: 27.83, y: 0.00, z: -10.74, rotY: 5.68, scale: 8.65 },
+      { asset: 'yewTree', x: 27.72, y: 0.00, z: 33.52, rotY: 5.85, scale: 9.50 },
+      { asset: 'yewTree', x: -28.62, y: 0.00, z: -13.03, rotY: 4.86, scale: 8.55 },
+      { asset: 'yewTree', x: 6.93, y: 0.00, z: 82.72, rotY: 1.45, scale: 10.21 },
+      { asset: 'yewTree', x: -10.12, y: 0.00, z: 77.36, rotY: 3.54, scale: 10.09 },
+      { asset: 'yewTree', x: -8.48, y: 0.00, z: 70.95, rotY: 3.89, scale: 10.29 },
+      { asset: 'yewTree', x: 8.55, y: 0.00, z: 73.01, rotY: 0.60, scale: 9.88 },
+      { asset: 'youngAsh', x: 8.91, y: 0.95, z: 64.05, rotY: 1.62, scale: 9.51 },
+      { asset: 'youngAsh', x: -7.85, y: 0.90, z: 59.98, rotY: 4.10, scale: 8.95 },
+      { asset: 'yewTree', x: 10.33, y: 0.00, z: 54.25, rotY: 1.08, scale: 9.79 },
+      { asset: 'yewTree', x: -9.62, y: 0.00, z: 47.00, rotY: 2.10, scale: 9.98 },
+      { asset: 'yewTree', x: 8.60, y: 0.00, z: 33.51, rotY: 4.98, scale: 10.12 },
+      { asset: 'yewTree', x: 57.04, y: 0.00, z: -15.79, rotY: 2.90, scale: 9.27 },
+      { asset: 'yewTree', x: -59.24, y: 0.00, z: -0.74, rotY: 2.93, scale: 9.73 },
+      { asset: 'yewTree', x: 60.96, y: 0.00, z: 56.50, rotY: 6.11, scale: 9.80 },
+      { asset: 'yewTree', x: -57.78, y: 0.00, z: 59.64, rotY: 2.87, scale: 9.29 },
+      { asset: 'yewTree', x: -41.08, y: 0.00, z: 21.82, rotY: 4.32, scale: 9.33 },
+      { asset: 'yewTree', x: 60.10, y: 0.00, z: 31.08, rotY: 1.40, scale: 9.58 },
+      { asset: 'yewTree', x: 16.57, y: 0.00, z: 73.83, rotY: 1.37, scale: 9.70 },
+      { asset: 'yewTree', x: -52.83, y: 0.00, z: 10.61, rotY: 5.48, scale: 9.20 },
+      { asset: 'yewTree', x: 32.79, y: 0.00, z: 43.69, rotY: 1.16, scale: 9.12 },
+      { asset: 'yewTree', x: 70.05, y: 0.00, z: 25.87, rotY: 3.84, scale: 10.48 },
+      { asset: 'yewTree', x: 81.14, y: 0.00, z: -1.12, rotY: 0.50, scale: 9.25 },
+      { asset: 'yewTree', x: 65.62, y: 0.00, z: -18.16, rotY: 2.96, scale: 8.96 },
+      { asset: 'yewTree', x: -52.77, y: 0.00, z: 24.81, rotY: 3.24, scale: 10.59 },
+      { asset: 'yewTree', x: -67.03, y: 0.00, z: -13.59, rotY: 5.40, scale: 10.35 },
+      { asset: 'yewTree', x: 45.49, y: 0.00, z: 69.52, rotY: 5.29, scale: 9.06 },
+      { asset: 'yewTree', x: 63.12, y: 0.00, z: -7.81, rotY: 4.66, scale: 10.46 },
+      { asset: 'yewTree', x: 59.89, y: 0.00, z: 40.01, rotY: 1.88, scale: 9.53 },
+      { asset: 'yewTree', x: -67.76, y: 0.00, z: 40.30, rotY: 0.76, scale: 10.22 },
+      { asset: 'yewTree', x: -70.13, y: 0.00, z: 1.49, rotY: 0.38, scale: 9.85 },
+      { asset: 'yewTree', x: -36.08, y: 0.00, z: 64.13, rotY: 0.08, scale: 8.52 },
+      { asset: 'yewTree', x: 69.01, y: 0.00, z: 9.89, rotY: 5.47, scale: 10.26 },
+      { asset: 'yewTree', x: -78.76, y: 0.00, z: 2.67, rotY: 3.41, scale: 10.39 },
+      { asset: 'yewTree', x: -39.99, y: 0.00, z: 41.03, rotY: 1.04, scale: 9.43 },
+      { asset: 'yewTree', x: -17.37, y: 0.00, z: 54.75, rotY: 2.74, scale: 8.35 },
+      { asset: 'yewTree', x: -32.98, y: 0.00, z: 74.52, rotY: 3.10, scale: 9.64 },
+      { asset: 'yewTree', x: 67.57, y: 0.00, z: 1.41, rotY: 3.78, scale: 8.71 },
+      { asset: 'deadTree', x: 50.59, y: 0.00, z: 51.57, rotY: 6.05, scale: 8.18 },
+      { asset: 'deadTree', x: 50.76, y: 0.00, z: 5.13, rotY: 5.28, scale: 8.50 },
+      { asset: 'deadTree', x: 47.13, y: 0.00, z: -7.95, rotY: 3.05, scale: 8.41 },
+      { asset: 'deadTree', x: -42.33, y: 0.00, z: -9.63, rotY: 5.02, scale: 8.95 },
+      // 10-03 change order 2: darkwood forest ring - yew alley flanking the
+      // dirt path, arc around the cemetery, rim scatter (trunk colliders are
+      // automatic since R5; placement enforces spawn/enemy/corridor/path/prop
+      // clearances; deterministic seed 20261003)
     ]
   },
 
@@ -85989,36 +86252,36 @@ window.WH_CONFIG = {
       { type: 'bandit', x: 0, z: -60 }
     ],
     props: [
-      { asset: 'livingOak', x: 6.2, z: -46.4, rotY: 0.44, scale: 7.25 },
+      { asset: 'livingOak', y: 1.28, x: 6.2, z: -46.4, rotY: 0.44, scale: 8.0 },
       { asset: 'witchwoodTree', x: -31.2, z: -50.3, rotY: 3.15, scale: 8.6 },
-      { asset: 'livingOak', x: 25.2, z: -73.8, rotY: 2.69, scale: 7.45 },
-      { asset: 'livingOak', x: -31.1, z: -68.7, rotY: 5.13, scale: 8.43 },
+      { asset: 'livingOak', y: 1.28, x: 25.2, z: -73.8, rotY: 2.69, scale: 8.0 },
+      { asset: 'livingOak', y: 1.35, x: -31.1, z: -68.7, rotY: 5.13, scale: 8.43 },
       { asset: 'witchwoodTree', x: 19.0, z: -54.7, rotY: 4.18, scale: 8.28 },
       { asset: 'witchwoodTree', x: -10.9, z: -55.8, rotY: 4.43, scale: 10.43 },
-      { asset: 'livingOak', x: -22.3, z: -59.2, rotY: 1.82, scale: 9.0 },
+      { asset: 'livingOak', y: 1.44, x: -22.3, z: -59.2, rotY: 1.82, scale: 9.0 },
       { asset: 'deadTree', x: 35.5, z: -52.1, rotY: 2.09, scale: 9.85 },
-      { asset: 'witchwoodTree', x: -18.1, z: -35.6, rotY: 0.99, scale: 7.38 },
+      { asset: 'witchwoodTree', x: -18.1, z: -35.6, rotY: 0.99, scale: 8.0 },
       { asset: 'deadTree', x: -9.1, z: -35.8, rotY: 2.13, scale: 8.0 },
       { asset: 'yewTree', x: 21.9, z: -55.6, rotY: 5.57, scale: 8.38 },
-      { asset: 'deadTree', x: 28.8, z: -55.3, rotY: 0.33, scale: 7.62 },
+      { asset: 'deadTree', x: 28.8, z: -55.3, rotY: 0.33, scale: 8.0 },
       { asset: 'yewTree', x: -31.3, z: -43.3, rotY: 3.91, scale: 10.4 },
-      { asset: 'deadTree', x: 31.4, z: -48.7, rotY: 0.61, scale: 7.33 },
+      { asset: 'deadTree', x: 31.4, z: -48.7, rotY: 0.61, scale: 8.0 },
       { asset: 'yewTree', x: 19.4, z: -66.5, rotY: 1.34, scale: 9.18 },
-      { asset: 'deadTree', x: -23.0, z: -47.8, rotY: 0.13, scale: 8.45 },
-      { asset: 'witchwoodTree', x: -29.1, z: -72.5, rotY: 4.72, scale: 6.78 },
+      { asset: 'yewTree', x: -23.0, z: -47.8, rotY: 0.13, scale: 8.45 },
+      { asset: 'witchwoodTree', x: -29.1, z: -72.5, rotY: 4.72, scale: 8.0 },
       { asset: 'yewTree', x: 13.4, z: -70.9, rotY: 4.67, scale: 9.43 },
       { asset: 'deadTree', x: -20.5, z: -42.5, rotY: 4.19, scale: 8.05 },
-      { asset: 'livingOak', x: -23.0, z: -39.2, rotY: 5.43, scale: 6.92 },
+      { asset: 'livingOak', y: 1.28, x: -23.0, z: -39.2, rotY: 5.43, scale: 8.0 },
       { asset: 'yewTree', x: -37.4, z: -47.4, rotY: 3.99, scale: 8.12 },
-      { asset: 'livingOak', x: 23.5, z: -37.4, rotY: 4.81, scale: 7.55 },
-      { asset: 'deadTree', x: 36.4, z: -37.1, rotY: 3.3, scale: 7.05 },
+      { asset: 'livingOak', y: 1.28, x: 23.5, z: -37.4, rotY: 4.81, scale: 8.0 },
+      { asset: 'deadTree', x: 36.4, z: -37.1, rotY: 3.3, scale: 8.0 },
       { asset: 'witchwoodTree', x: -7.4, z: -41.5, rotY: 5.92, scale: 10.02 },
       { asset: 'yewTree', x: 27.7, z: -49.3, rotY: 2.97, scale: 9.75 },
       { asset: 'yewTree', x: 24.0, z: -61.4, rotY: 3.8, scale: 9.7 },
-      { asset: 'witchwoodTree', x: 7.8, z: -38.4, rotY: 2.24, scale: 8.0 },
+      { asset: 'yewTree', x: 7.8, z: -38.4, rotY: 2.24, scale: 8.0 },
       { asset: 'yewTree', x: 15.1, z: -49.5, rotY: 4.85, scale: 7.45 },
       { asset: 'deadTree', x: -31.1, z: -74.8, rotY: 0.61, scale: 8.68 },
-      { asset: 'livingOak', x: -22.9, z: -71.1, rotY: 0.72, scale: 7.82 },
+      { asset: 'livingOak', y: 1.28, x: -22.9, z: -71.1, rotY: 0.72, scale: 8.0 },
       { asset: 'witchwoodTree', x: 29.8, z: -76.9, rotY: 0.5, scale: 9.68 },
       { asset: 'witchwoodTree', x: -28.4, z: -79.9, rotY: 4.96, scale: 9.8 },
       { asset: 'deadTree', x: -16.0, z: -76.7, rotY: 3.09, scale: 9.45 },
@@ -86048,7 +86311,10 @@ window.WH_CONFIG = {
       { asset: 'gravestoneObelisk', x: 13.1, z: -41.5, rotY: 3.73, scale: 1.38 },
       { asset: 'gravestoneObelisk', x: 20.1, z: -40.0, rotY: 0.14, scale: 1.38 },
       { asset: 'stoneCrossTilted', x: -13.5, z: -36.6, rotY: 5.5, scale: 1.22 },
-      { asset: 'stoneCrossTilted', x: 18.0, z: -43.1, rotY: 6.16, scale: 1.6 }
+      { asset: 'stoneCrossTilted', x: 18.0, z: -43.1, rotY: 6.16, scale: 1.6 },
+      // R2: darkwood light-socket props (doc 61 batches B2/B3)
+      { asset: 'banditCampfire', x: 2.5, z: -52, rotY: 0.0, scale: 1.8 },
+      { asset: 'lanternWaymarker', x: -6.5, z: -47, rotY: 1.1, scale: 1.9 }
     ]
   },
 
@@ -86092,12 +86358,8 @@ window.WH_CONFIG = {
     rollDuration: 0.45,               // seconds
     rollIFrameWindow: 0.35,           // seconds of i-frames within a roll
     rollStaminaCost: 25.0,
-    attackDuration: 0.5,
-    attackStaminaCost: 15.0,
-    attackRange: 3.2,
-    attackArcHalfAngleDeg: 70,        // swing arc half-angle
-    attackDamage: 34,                 // (POC) from doc 33 one-hand band
-    attackDamageGhoulBonus: 1.15,
+    // 10-04: player attack timing/damage/sweep/stamina moved to
+    // CONFIG.moveset.weapons[*].moves (per-weapon moveset framework).
     staminaMax: 100.0,                // (doc 33 band)
     staminaRegenPerSec: 28.0,
     staminaRegenDelay: 0.6,           // seconds after spend before regen resumes
@@ -86112,9 +86374,11 @@ window.WH_CONFIG = {
     camPitchMinDeg: -15,
     camPitchMaxDeg: 65,
     camHeight: 2.6,
+    camGroundClearance: 0.4,          // R5 P0-5: camera y floor over the ground (y = 0)
+    camPitchDistShrink: 0.35,         // R5: cap = camMaxDistance * (1 - k * max(0, sin pitch))
     camFollowLerp: 12.0,              // per-second lerp factor
-    camAutoFollowDelay: 1.2,          // seconds after manual drag before auto-follow resumes
-    camAutoFollowRate: 2.5,           // per-second exp lerp for auto yaw follow
+    // 10-04 (Nicko): movement auto-follow keys removed - camera yaw is
+    // manual-only (mouse drag / camera joystick); lock-on has its own framing.
     mouseSensDegPerPx: 0.25,
     respawnDelay: 2.2,                 // seconds on death screen before respawn
     // v7: focus pool (spells spend Focus, weapons spend Stamina)
@@ -86233,7 +86497,9 @@ window.WH_CONFIG = {
   hud: {
     regionNameFadeSeconds: 2.6,
     deathFadeSeconds: 0.8,
-    fpsUpdateInterval: 0.5
+    fpsUpdateInterval: 0.5,
+    // 2026-10-03 boot loading screen: overlay fade-out duration in ms.
+    bootOverlayFadeMs: 900
   },
 
   lockOn: {
@@ -86253,21 +86519,17 @@ window.WH_CONFIG = {
     runMetersPerCycle: 6,
     attackClipStrikeFraction: 0.25
   },
-  // v3: procedural animation feel. Since whanim2 the pose values drive only the
-  // rigid stand-in fallback (skinned bodies play animRt clips); the stage
-  // fractions are the combat FSM clock for both paths. Fractions are of
-  // CONFIG.player.attackDuration (recover = 1 - windupFrac - strikeFrac).
+  // v3: procedural animation feel. Since whanim2 pose values drive
+  // only the rigid stand-in fallback (skinned bodies play animRt
+  // clips; whanim2 stage fractions = combat FSM clock for both paths).
+  // 10-04: stage durations + lunge are per move in CONFIG.moveset.weapons;
+  // windup crouch / recover lean are per pose (WH_MOVESET crouch/bodyLean).
   anim: {
     attack: {
-      windupFrac: 0.30,             // of attackDuration
-      strikeFrac: 0.25,             // of attackDuration (recover = remainder)
       windupLean: -0.25,            // rad, body rotation.x lean back
-      windupCrouch: 0.06,           // root dip (units) during windup
       windupSwordRaise: 0.9,        // rad, sword rotation.z lift in windup
       strikeYawSweepDeg: 140,       // total body yaw sweep through strike
-      strikeLunge: 0.25,            // forward units along facing during strike
-      strikeSwordSweepDeg: 160,     // sword arc through strike
-      recoverLean: 0.10             // rad, forward-lean settle in recover
+      strikeSwordSweepDeg: 160      // sword arc through strike
     },
     walk: {
       bobAmp: 0.02,                 // primary vertical bob (R1 feet contact)
@@ -86318,14 +86580,124 @@ window.WH_CONFIG = {
 
   assets: {
     timeoutMs: 20000,                 // per-asset load timeout before stand-in substitution
-    standInColor: 0x777777
+    // Grey-stand-in resilience: rigged body loads retry on fetch/parse errors
+    // with linear backoff before the stand-in swap; 0 disables retry. Failure
+    // banner names asset + cause in console and HUD (see js/assets.js).
+    bodyRetryCount: 2,                // extra attempts per rigged body (default on)
+    bodyRetryDelayMs: 750,            // backoff base; delay = base * attempt#
+    // R4 kill switch: true swaps the 3 rigged body atlases for the committed
+    // 512px pixelated PNGs at postload; false = original 2048 atlas path.
+    pixelatedBodies: true,
+    standInColor: 0x777777,
+    // Measured weapon sizing (2026-10-03, Nicko: weapons "comically large").
+    // Targets are hand-held lengths in metres: longsword ~1.05m vs the 1.8m
+    // player, handAxe ~0.6m. scaleFor(name) divides the target by the
+    // MEASURED GROUND_META height of the loaded GLB - derived from bounds,
+    // not magic constants. weaponScaleEnabled is the default-on kill switch.
+    weaponScaleEnabled: true,
+    weaponTargetHeight: { longsword: 1.05, handAxe: 0.6 },
+    // Grip-mount tuning (2026-10-03): rollDeg rolls a hand-held weapon about
+    // the hand's local +Z (grip forward; positive = CCW, right-hand rule)
+    // with no code change. enabled:false reverts to the raw GLB axes for
+    // asset debugging. One knob drives both the player sword and bandit axe.
+    // gripHolderY (Nicko 10-03 "hilt at the opposite end" fix): post-
+    // groundAlign holder-local Y of the weapon's GRIP point, measured from
+    // the GLB. The longsword spans raw y -0.987..+1.001 (tip at -0.987,
+    // crossguard +0.53, grip ~+0.65) and groundAlign shifts it +0.987, so
+    // grip sits at holder y=1.637 while the mount had the TIP at the fist -
+    // hand gripped mid-blade, hilt floating behind. The code subtracts this
+    // value so the fist lands ON the grip. handAxe grip is its butt at
+    // holder 0, already correct.
+    weaponMount: { rollDeg: 0, enabled: true,
+                   gripHolderY: { longsword: 1.637, handAxe: 0 } }
   }
 };
+// 10-04 change order (Nicko: combo spam -> real chains, souls-style).
+// Per-weapon moveset framework: EVERY player combat number lives here. Pose
+// SHAPES stay in js/moveset.js (window.WH_MOVESET keyframes) and are
+// referenced by name via move.pose. Player swing rules (js/player.js):
+//  - each swing runs its own windup -> strike -> recover (seconds below);
+//  - LMB in windup is IGNORED; LMB in strike/recover is BUFFERED for
+//    inputBufferSec and fires the next chain move once the swing is
+//    chainOpenSec into its recover (never earlier - no skipped stages);
+//  - the LAST chain move has no early window: a buffered press waits for
+//    its full recover, then starts a fresh chain at chain[0];
+//  - roll may cancel RECOVER only (never windup/strike) and resets the chain.
+// chainCap = moves per chain AND landed hits that arm the v7 finisher.
 window.WH_CONFIG.moveset = {
   idlePose: { pos: [0.7, 1.0, -0.3], rot: [2.2, -0.7, 0.6] },
-  comboChainCap: 3,
   banditStageMult: 1.6,
-  enemyWeapon: { bandit: 'handAxe' }
+  enemyWeapon: { bandit: 'handAxe' },
+  playerWeapon: 'longsword',        // which weapons[] entry the player wields
+  inputBufferSec: 0.35,             // buffered LMB lifetime (strike/recover presses)
+  weapons: {
+    longsword: {
+      chainCap: 3,
+      // Nicko's order: swipe right->left, swipe left->right, THRUST, reset.
+      chain: ['slashR2L', 'slashL2R', 'thrust'],
+      // movement speed multiplier per swing stage (windup keeps 0.3 creep)
+      moveMultWhileAttacking: { windup: 0.3, strike: 0, recover: 0 },
+      bladeAxisY: -1,               // mesh-local blade axis (-Y tip, see setWeapon)
+      moves: {
+        slashR2L: { pose: 'm2', windup: 0.14, strike: 0.20, recover: 0.30,
+                    chainOpenSec: 0.12,
+                    damage: 34, range: 3.2, halfAngleDeg: 70, lunge: 0.8,
+                    staminaCost: 15, damageGhoulMult: 1.15 },
+        slashL2R: { pose: 'm1', windup: 0.14, strike: 0.20, recover: 0.30,
+                    chainOpenSec: 0.12,
+                    damage: 34, range: 3.2, halfAngleDeg: 70, lunge: 0.8,
+                    staminaCost: 15, damageGhoulMult: 1.15 },
+        // thrust = narrow, longer reach, more damage, heavier recover
+        thrust:   { pose: 'm4', windup: 0.16, strike: 0.14, recover: 0.40,
+                    chainOpenSec: 0.40,   // last move: full recover anyway
+                    damage: 40, range: 3.8, halfAngleDeg: 22, lunge: 1.4,
+                    staminaCost: 20, damageGhoulMult: 1.15 }
+      }
+    },
+    // Quick 2-hit hatchet chain: faster, shorter, lower damage per hit.
+    handAxe: {
+      chainCap: 2,
+      chain: ['hack', 'chop'],
+      moveMultWhileAttacking: { windup: 0.4, strike: 0, recover: 0 },
+      bladeAxisY: 1,                // axe bit along mesh-local +Y (as enemy.js)
+      moves: {
+        hack: { pose: 'claw', windup: 0.10, strike: 0.14, recover: 0.22,
+                chainOpenSec: 0.08,
+                damage: 22, range: 2.6, halfAngleDeg: 60, lunge: 0.5,
+                staminaCost: 10, damageGhoulMult: 1.15 },
+        chop: { pose: 'm3', windup: 0.12, strike: 0.14, recover: 0.30,
+                chainOpenSec: 0.30,
+                damage: 27, range: 2.7, halfAngleDeg: 35, lunge: 0.7,
+                staminaCost: 12, damageGhoulMult: 1.15 }
+      }
+    }
+  }
+};
+
+// 2026-10-03 touch controls layer (parallel input; see js/touch-controls.js).
+// enabled:false keeps the layer hidden until the edge toggle is used - the
+// mouse/keyboard path stays the primary control surface, untouched.
+window.WH_CONFIG.touch = {
+  enabled: false,                 // layer hidden until toggle button used
+  opacity: 0.35,                  // faint outlines
+  deadzone: 0.15,                 // stick deadzone (fraction of radius)
+  scaleDefault: 1.0,              // global control scale
+  scaleMin: 0.6,
+  scaleMax: 1.6,
+  buttonSize: 64,                 // px diameter of action buttons at scale 1
+  joystickRadius: 70,             // px radius of stick/camera circles at scale 1
+  sensDegPerPx: 0.25,             // camera pad sens (matches mouseSensDegPerPx)
+  // Default layout: fractions of viewport (0-1), resize-safe. Movement stick
+  // bottom-left, camera pad bottom-right, action cluster right side.
+  layout: {
+    stick:    { x: 0.18, y: 0.72 },
+    cam:      { x: 0.82, y: 0.72 },
+    sprint:   { x: 0.68, y: 0.62 },
+    attack:   { x: 0.90, y: 0.45 },
+    lockon:   { x: 0.72, y: 0.82 },
+    dodge:    { x: 0.55, y: 0.88 },
+    block:    { x: 0.90, y: 0.65 }
+  }
 };
 
 </script>
@@ -86456,8 +86828,9 @@ window.WH_CONFIG.moveset = {
 // against document.baseURI at load time via new URL(...).href, so the game
 // works identically served at / and under any proxy prefix such as
 // /witchhunter/ (tailnet path). Do not hardcode proxy prefixes here.
-// Prefer -pixelated variants for props; races_regen characters have no
-// pixelated variants (D4b-3), raw mesh is accepted for characters.
+// Prefer -pixelated variants for props; rigged characters keep their raw mesh
+// and swap in a pre-baked pixelated atlas PNG at postload (R4, kill switch
+// CONFIG.assets.pixelatedBodies).
 
 (function () {
   'use strict';
@@ -86476,16 +86849,21 @@ window.WH_CONFIG.moveset = {
     cemeteryGate: 'art-direction/3d/assets/biome_library/m1-pixelated.glb',
     picketFence: 'art-direction/3d/assets/biome_library/m2-pixelated.glb',
     mourningStatue: 'art-direction/3d/assets/biome_library/m3-pixelated.glb',
-    livingOak: 'art-direction/3d/assets/biome_library/m4-pixelated.glb',
     yewTree: 'art-direction/3d/assets/biome_library/m5-pixelated.glb',
-    witchwoodTree: 'art-direction/3d/assets/biome_library/m6-pixelated.glb',
+    livingOak: 'art-direction/3d/assets/biome_library/m16-living-oak-pixelated.glb',
+    witchwoodTree: 'art-direction/3d/assets/biome_library/m17-witchwood-pixelated.glb',
+    youngAsh: 'art-direction/3d/assets/biome_library/m19-birch-pixelated.glb',
+    // m18-dead-tree lives in biome_library (Astrabot 10-03)
+    deadTree: 'art-direction/3d/assets/biome_library/m18-dead-tree-pixelated.glb',
     fallenLog: 'art-direction/3d/assets/biome_library/m7-pixelated.glb',
     treeStump: 'art-direction/3d/assets/biome_library/m8-pixelated.glb',
     mossBoulder: 'art-direction/3d/assets/biome_library/m9-pixelated.glb',
+    // R2: darkwood light-socket props (doc 61 batches B2/B3)
+    banditCampfire: 'art-direction/3d/assets/biome_library/m15-bandit-campfire-pixelated.glb',
+    lanternWaymarker: 'art-direction/3d/assets/biome_library/b3-waymarker-pixelated.glb',
 
     // church-kit props + trees
     lanternPost: 'art-direction/3d/assets/church-kit/lantern-post-pixelated.glb',
-    deadTree: 'art-direction/3d/assets/church-kit/dead-tree-pixelated.glb',
     rubblePile: 'art-direction/3d/assets/church-kit/rubble-pile-pixelated.glb',
     churchArchway: 'art-direction/3d/assets/church-kit/church-archway-pixelated.glb',
     churchCornerButtress: 'art-direction/3d/assets/church-kit/church-corner-buttress-pixelated.glb',
@@ -86494,13 +86872,24 @@ window.WH_CONFIG.moveset = {
     ironFenceCorner: 'art-direction/3d/assets/church-kit/iron-fence-corner-pixelated.glb',
 
     // characters (whanim1 rigged exports; props below stay rigid)
-    playerBody: 'art-direction/3d/assets/races_regen/rigged/human-hunter-male.rigged.glb',
+    // 10-04: rigged copy + WH_SlashR2L/WH_SlashL2R/WH_Thrust chain clips
+    // (scratch/blender_chain_clips.py). Rollback: human-hunter-male.rigged.glb
+    playerBody: 'art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-chain.glb',
     banditBody: 'art-direction/3d/assets/races_regen/rigged/orc-male-warrior.rigged.glb',
-    ghoulBody: 'art-direction/3d/assets/races_regen/rigged/undead-ghoul-male.rigged.glb',
+    // 10-05: rigged copy + 7 Mixamo WH_*_Zombie clips (13 total).
+    // Rollback: undead-ghoul-male.rigged.glb
+    ghoulBody: 'art-direction/3d/assets/races_regen/rigged/undead-ghoul-male.mixamo.glb',
 
     // weapons (pixelated)
     longsword: 'art-direction/3d/assets/weapons/longsword-pixelated.glb',
     handAxe: 'art-direction/3d/assets/weapons/hand-axe-pixelated.glb'
+  };
+
+  // R4: rigged body -> offline-baked atlas (512 NEAREST + 5-bit posterize).
+  var BODY_PNG = {
+    playerBody: 'art-direction/3d/assets/races_regen/rigged/human-hunter-male.rigged.pixelated.png',
+    banditBody: 'art-direction/3d/assets/races_regen/rigged/orc-male-warrior.rigged.pixelated.png',
+    ghoulBody: 'art-direction/3d/assets/races_regen/rigged/undead-ghoul-male.rigged.pixelated.png'
   };
 
   // Resolve a manifest-relative path against the document base URL, falling
@@ -86539,6 +86928,59 @@ window.WH_CONFIG.moveset = {
   var loadedCount = 0;
   var GROUND_META = {}; // holder uuid -> measured height, width, raw groundMinY
 
+  // 2026-10-03 grey-stand-in resilience (Astrabot, brief: io/missions/
+  // 2026-10-03-astrabot-greybox-brief.md): a one-off multi-MB asset fetch
+  // stall/timeout or parse error used to swap the procedural stand-in in
+  // permanently on the FIRST load error (no retry, quiet warn), killing the
+  // model AND its animation clips in one go. Now: ALL assets retry
+  // (CONFIG.assets.bodyRetryCount, default 2) with backoff; if retries
+  // exhaust, the stand-in stays but a loud one-line banner names the asset
+  // and the cause (network vs parse vs timeout), stamped into the HUD.
+  var BODY_RETRY_COUNT =
+    (CFG.assets && typeof CFG.assets.bodyRetryCount === 'number') ?
+      CFG.assets.bodyRetryCount : 2;
+  var BODY_RETRY_DELAY_MS =
+    (CFG.assets && typeof CFG.assets.bodyRetryDelayMs === 'number') ?
+      CFG.assets.bodyRetryDelayMs : 750;
+  var bootFailures = [];
+
+  // 2026-10-03 loading screen (Nicko change order): REAL per-asset progress.
+  // game.js registers a callback fired on each manifest asset settling
+  // (loaded OR stand-in), so the bar fraction is settled/total; retry
+  // backoff just delays that asset's tick.
+  var bootProgressCb = null;
+  function setBootProgressCb(fn) { bootProgressCb = fn; }
+  function bootProgressTick() {
+    if (bootProgressCb) bootProgressCb();
+  }
+
+  function classifyError(err) {
+    var msg = (err && (err.message || err.statusText)) || String(err || 'unknown');
+    var reason;
+    if (/abort|timed?\s*out/i.test(msg)) reason = 'timeout/abort';
+    else if (/fetch|network|status\s*\d+/i.test(msg)) reason = 'network';
+    else if (/parse|json|binary|magic|unsupported|header|version/i.test(msg)) reason = 'parse';
+    else reason = 'load';
+    return { reason: reason, msg: msg };
+  }
+
+  // HUD stamp: persistent one-liner in #wh-hud naming each stand-in asset +
+  // cause, visible for the whole session regardless of the load-note lifecycle.
+  function flushAssetFailureNote() {
+    if (!bootFailures.length) return;
+    var parent = document.getElementById('wh-hud');
+    if (!parent) return;
+    var el = document.getElementById('wh-asset-fail-note');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'wh-asset-fail-note';
+      el.style.cssText = 'position:absolute;top:128px;left:8px;font-size:12px;' +
+        'color:#ff9d9d;z-index:40;letter-spacing:0.5px;text-transform:none;';
+      parent.appendChild(el);
+    }
+    el.textContent = 'Asset stand-in: ' + bootFailures.join(', ');
+  }
+
   function makeStandIn(name) {
     // Procedural box/cone stand-in per spec hard constraint 5. Logged.
     console.warn('[WH assets] substitution: procedural stand-in for ' + name);
@@ -86574,6 +87016,21 @@ window.WH_CONFIG.moveset = {
     return holder;
   }
 
+  // 2026-10-03 measured weapon sizing (Nicko: "comically large"): divide the
+  // CONFIG.assets.weaponTargetHeight goal by the MEASURED GROUND_META height
+  // of the loaded GLB. Uniform axes mean height IS the blade/pommel length.
+  // Kill switch: weaponScaleEnabled false (or no CONFIG table / no meta)
+  // returns 1 so legacy hardcoded scaling applies untouched.
+  function weaponScale(name) {
+    var AC = CFG.assets;
+    if (!AC || AC.weaponScaleEnabled === false) return 1;
+    if (!AC.weaponTargetHeight || AC.weaponTargetHeight[name] === undefined) return 1;
+    var tmpl = cache[name];
+    var meta = tmpl && GROUND_META[tmpl.uuid];
+    if (!meta || !(meta.height > 0)) return 1;
+    return AC.weaponTargetHeight[name] / meta.height;
+  }
+
   function prepTemplate(group, isPixelated) {
     // Render settings per validated Witch Hunter 3D setup:
     // DoubleSide for safety (R3), NearestFilter on pixelated textures (R2).
@@ -86601,116 +87058,206 @@ window.WH_CONFIG.moveset = {
     return group;
   }
 
-  // The manager modifier is synchronous; populate it before the parser starts
-  // resolving texture URLs. GLB image bufferViews are converted only once.
-  var embeddedDataUris = new Map();
-
-  function loadOne(name, url, isPixelated) {
-    return new Promise(function (resolve) {
-      var mgr = new THREE.LoadingManager();
-      var loader = new window.WHGLTFLoader(mgr);
-      var imageUrls = [];
-      mgr.setURLModifier(function (resourceUrl) {
-        return resourceUrl.indexOf('blob:') === 0 && embeddedDataUris.has(resourceUrl) ?
-          embeddedDataUris.get(resourceUrl) : resourceUrl;
+  // R4 postload swap: replace the body's atlas map with its pixelated PNG
+  // (the template map is shared by every clone). TextureLoader defaults are
+  // wrong for glTF UVs (flipY true, no colour space), so set state explicitly.
+  // Kill switch off, no PNG entry, or a PNG load error keeps the original.
+  function swapBodyMap(name, root, done) {
+    var rel = CFG.assets.pixelatedBodies && BODY_PNG[name];
+    if (!rel) { done(); return; }
+    new THREE.TextureLoader().load(resolveUrl(rel), function (tex) {
+      root.traverse(function (obj) {
+        if (!obj.isMesh) return;
+        var mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+        mats.forEach(function (m) {
+          if (!m || !m.map || m.map === tex) return;
+          var old = m.map;
+          tex.flipY = false;
+          tex.colorSpace = THREE.SRGBColorSpace;
+          tex.wrapS = old.wrapS;
+          tex.wrapT = old.wrapT;
+          tex.magFilter = THREE.NearestFilter;
+          tex.minFilter = THREE.LinearMipmapLinearFilter;
+          tex.generateMipmaps = true;
+          tex.needsUpdate = true;
+          m.map = tex;
+          m.needsUpdate = true;
+          old.dispose();
+        });
       });
-      // CSP forbids even an attempted fetch(blob:) on /playtest/. Read the
-      // response policy, not the route name, before choosing the fetch path.
-      if (!loadOne.blobPolicy) {
-        loadOne.blobPolicy = fetch(document.baseURI, { credentials: 'same-origin' }).then(function (response) {
-          var csp = response.headers.get('content-security-policy');
-          if (!csp) return true;
-          var match = csp.match(/(?:^|;)\s*connect-src\s+([^;]+)/i);
-          return !match || /(?:^|\s)blob:(?:\s|$)/i.test(match[1]);
-        }).catch(function (err) {
-          console.warn('[WH assets] cannot inspect CSP; using FileReader for embedded images:', err);
-          return false;
-        });
-      }
-      function asDataUri(blob) {
-        return new Promise(function (accept, reject) {
-          var reader = new FileReader();
-          reader.onload = function () { accept(reader.result); };
-          reader.onerror = function () { reject(reader.error || new Error('image FileReader failed')); };
-          reader.readAsDataURL(blob);
-        });
-      }
-      function releaseImageUrls() {
-        imageUrls.forEach(function (imageUrl) {
-          URL.revokeObjectURL(imageUrl);
-          embeddedDataUris.delete(imageUrl);
-        });
-        imageUrls.length = 0;
-      }
-      loader.register(function (parser) {
-        return {
-          name: 'WH_embedded_image_data',
-          beforeRoot: function () {
-            var sources = parser.json.images || [];
-            return loadOne.blobPolicy.then(function (canFetchBlob) {
-              // ImageBitmapLoader decodes via fetch(data:), also forbidden by
-              // connect-src on CSP origins. ImageLoader uses img-src instead.
-              if (!canFetchBlob) parser.textureLoader = new THREE.TextureLoader(mgr);
-              return Promise.all(sources.map(function (source) {
-                if (source.bufferView === undefined || !/^image\//.test(source.mimeType || '')) {
-                  return Promise.resolve();
-                }
-                return parser.getDependency('bufferView', source.bufferView).then(function (bytes) {
-                  var blob = new Blob([bytes], { type: source.mimeType });
-                  var imageUrl = URL.createObjectURL(blob);
-                  imageUrls.push(imageUrl);
-                  // Fetch on permissive origins; a blocked origin must go
-                  // straight to FileReader to avoid a CSP violation event.
-                  var conversion = canFetchBlob ? fetch(imageUrl).then(function (response) {
+      done();
+    }, undefined, function (err) {
+      console.warn('[WH assets] pixelated atlas failed for ' + name + ', keeping original: ' + err);
+      done();
+    });
+  }
+
+  // CSP-safe embedded-texture intake (whanim3, 8f777bb): the manager
+  // modifier is synchronous; populate it before the parser starts resolving
+  // texture URLs. GLB image bufferViews are converted only once.
+  var embeddedDataUris = new Map();
+  var imageUrls = [];
+
+  function registerEmbeddedImagePlugin(loader, mgr) {
+    // CSP forbids even an attempted fetch(blob:) on enforced origins. Read
+    // the RESPONSE POLICY, not the route name, before choosing the path.
+    if (!registerEmbeddedImagePlugin.blobPolicy) {
+      registerEmbeddedImagePlugin.blobPolicy =
+        fetch(document.baseURI, { credentials: 'same-origin' })
+          .then(function (response) {
+            var csp = response.headers.get('content-security-policy');
+            if (!csp) return true;
+            var match = csp.match(/(?:^|;)\s*connect-src\s+([^;]+)/i);
+            return !match || /(?:^|\s)blob:(?:\s|$)/i.test(match[1]);
+          }).catch(function (err) {
+            console.warn('[WH assets] cannot inspect CSP; using FileReader for embedded images:', err);
+            return false;
+          });
+    }
+    function asDataUri(blob) {
+      return new Promise(function (accept, reject) {
+        var reader = new FileReader();
+        reader.onload = function () { accept(reader.result); };
+        reader.onerror = function () { reject(reader.error || new Error('image FileReader failed')); };
+        reader.readAsDataURL(blob);
+      });
+    }
+    function releaseAll() {
+      imageUrls.forEach(function (u) {
+        URL.revokeObjectURL(u);
+        embeddedDataUris.delete(u);
+      });
+      imageUrls.length = 0;
+    }
+    mgr.setURLModifier(function (resourceUrl) {
+      return resourceUrl.indexOf('blob:') === 0 && embeddedDataUris.has(resourceUrl) ?
+        embeddedDataUris.get(resourceUrl) : resourceUrl;
+    });
+    loader.register(function (parser) {
+      return {
+        name: 'WH_embedded_image_data',
+        beforeRoot: function () {
+          var sources = parser.json.images || [];
+          return registerEmbeddedImagePlugin.blobPolicy.then(function (canFetchBlob) {
+            // ImageBitmapLoader decodes via fetch(data:), also forbidden by
+            // connect-src on CSP origins. ImageLoader uses img-src instead.
+            if (!canFetchBlob) parser.textureLoader = new THREE.TextureLoader(mgr);
+            return Promise.all(sources.map(function (source) {
+              if (source.bufferView === undefined || !/^image\//.test(source.mimeType || '')) {
+                return Promise.resolve();
+              }
+              return parser.getDependency('bufferView', source.bufferView).then(function (bytes) {
+                var blob = new Blob([bytes], { type: source.mimeType });
+                var imageUrl = URL.createObjectURL(blob);
+                imageUrls.push(imageUrl);
+                var conversion = canFetchBlob ?
+                  fetch(imageUrl).then(function (response) {
                     if (!response.ok) throw new Error('image fetch status ' + response.status);
                     return response.blob();
-                  }).then(asDataUri).catch(function () { return asDataUri(blob); }) : asDataUri(blob);
-                  return conversion.then(function (dataUri) {
-                    embeddedDataUris.set(imageUrl, dataUri);
-                    source.uri = imageUrl;
-                    delete source.bufferView;
-                  });
+                  }).then(asDataUri).catch(function () { return asDataUri(blob); }) :
+                  asDataUri(blob);
+                return conversion.then(function (dataUri) {
+                  embeddedDataUris.set(imageUrl, dataUri);
+                  source.uri = imageUrl;
+                  delete source.bufferView;
                 });
-              }));
-            }).catch(function (err) {
-              releaseImageUrls();
-              throw err;
-            });
-          },
-          afterRoot: function () { releaseImageUrls(); }
-        };
-      });
-      var done = false;
+              });
+            }));
+          }).catch(function (err) {
+            releaseAll();
+            throw err;
+          });
+        },
+        afterRoot: function () { releaseAll(); }
+      };
+    });
+  }
+
+  // One load attempt, racing the per-attempt timeout. Resolves {ok:true,gltf}
+  // or {ok:false,info:{reason,msg}}; never rejects.
+  function loadAttempt(name, url) {
+    return new Promise(function (resolve) {
+      var settled = false;
+      var mgr = new THREE.LoadingManager();
+      var loader = new window.WHGLTFLoader(mgr);
+      registerEmbeddedImagePlugin(loader, mgr);
       var timer = setTimeout(function () {
-        if (!done) {
-          done = true;
-          cache[name] = makeStandIn(name);
-          resolve(cache[name]);
-        }
+        if (settled) return;
+        settled = true;
+        resolve({ ok: false, info: { reason: 'timeout/abort',
+          msg: 'no response within ' + CFG.assets.timeoutMs + 'ms' } });
       }, CFG.assets.timeoutMs);
       loader.load(url, function (gltf) {
-        if (done) return;
-        done = true;
+        if (settled) return;
+        settled = true;
         clearTimeout(timer);
-        var root = gltf.scene;
+        resolve({ ok: true, gltf: gltf });
+      }, undefined, function (err) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve({ ok: false, info: classifyError(err) });
+      });
+    });
+  }
+
+  function loadOne(name, url, isPixelated) {
+    // Bounded retry applies to ALL assets (2026-10-03 change order, Nicko:
+    // oak+witchwood stand-ins from a one-off tunnel stall): the multi-MB
+    // fetches (rigged bodies, big biome trees) are the most exposed. Parse
+    // failures do NOT retry (a corrupt file stays corrupt) - only network
+    // and timeout/abort classes do. Stand-in fallback always remains.
+    var maxAttempts = 1 + BODY_RETRY_COUNT;
+    function attempt(n) {
+      return loadAttempt(name, url).then(function (v) {
+        if (v.ok) return v;
+        var retryable = v.info.reason !== 'parse';
+        if (retryable && n + 1 < maxAttempts) {
+          var delay = BODY_RETRY_DELAY_MS * (n + 1);   // linear backoff
+          console.warn('[WH assets] retry ' + (n + 1) + '/' + BODY_RETRY_COUNT +
+            ' for ' + name + ' (' + v.info.reason + ') in ' + delay + 'ms');
+          return new Promise(function (r) { setTimeout(r, delay); })
+            .then(function () { return attempt(n + 1); });
+        }
+        return v;
+      });
+    }
+    var settled = attempt(0).then(function (v) {
+      if (v.ok) {
+        var root = v.gltf.scene;
         if (CHARACTERS[name]) {
-          clips[name] = gltf.animations || [];
+          clips[name] = v.gltf.animations || [];
           if (clips[name].length !== 6) {
-            console.warn('[WH assets] expected 6 clips for ' + name + ', got ' + clips[name].length);
+            console.warn('[WH assets] expected 6 clips for ' + name + ', got ' +
+              clips[name].length);
           }
         }
         prepTemplate(root, isPixelated);
         cache[name] = groundAlign(root);
-        loadedCount++;
-        resolve(cache[name]);
-      }, undefined, function (err) {
-        if (done) return;
-        done = true;
-        clearTimeout(timer);
-        console.warn('[WH assets] load failed for ' + name + ' at ' + url + ': ' + err);
-        cache[name] = makeStandIn(name);
-        resolve(cache[name]);
-      });
+        return new Promise(function (resolve) {
+          swapBodyMap(name, root, function () {
+            loadedCount++;
+            resolve(cache[name]);
+          });
+        });
+      }
+      var info = v.info;
+      // LOUD end-of-retries banner: names the asset and WHY (network vs parse
+      // vs timeout), styled so it cannot scroll past unnoticed.
+      console.error('%c[WH ASSETS] STAND-IN: ' + name + ' failed to load (' +
+        info.reason + ') after ' + maxAttempts + ' attempt(s). URL: ' + url +
+        ' CAUSE: ' + info.msg + ' - model + animations dead for this session.',
+        'background:#4d0000;color:#ffdddd;padding:2px 6px;font-weight:bold');
+      cache[name] = makeStandIn(name);
+      bootFailures.push(name + ' (' + info.reason + ' - ' + info.msg + ')');
+      flushAssetFailureNote();
+      return cache[name];
+    });
+    // 2026-10-03 loading screen: tick exactly once per asset, after it
+    // settles as loaded OR stand-in (swapBodyMap atlas wait included).
+    return settled.then(function (res) {
+      bootProgressTick();
+      return res;
     });
   }
 
@@ -86743,6 +87290,7 @@ window.WH_CONFIG.moveset = {
     MANIFEST: MANIFEST,
     RESOLVED: RESOLVED,
     resolveUrl: resolveUrl,
+    setBootProgressCb: setBootProgressCb,
     preloadAll: preloadAll,
     instance: instance,
     getClips: function (name) { return clips[name] || []; },
@@ -86764,6 +87312,7 @@ window.WH_CONFIG.moveset = {
       return meta ? { height: meta.height, width: meta.width,
                       groundMinY: meta.groundMinY } : null;
     },
+    weaponScale: weaponScale,
     isLoaded: function (name) { return !!cache[name]; },
     isFailed: function (name) { return !!failed[name]; },
     loadedCount: function () { return loadedCount; }
@@ -86780,10 +87329,35 @@ window.WH_CONFIG.moveset = {
     idle: 'WH_Idle', walk: 'WH_Walk', run: 'WH_Run',
     attack: 'WH_Attack1', hit: 'WH_Hit', death: 'WH_Death'
   };
+  // 10-04 chain clips: CONFIG move id -> per-move player clip. Bodies without
+  // the clip (enemies, handAxe moves, older GLBs) use the shared 'attack'.
+  var MOVE_NAMES = {
+    slashR2L: 'WH_SlashR2L', slashL2R: 'WH_SlashL2R', thrust: 'WH_Thrust'
+  };
+  // 10-05 per-body clip-name variants (options.variant). A slot whose override
+  // clip is absent from the loaded GLB falls back to the NAMES default, so a
+  // GLB regen can never strand a state. moves replaces MOVE_NAMES wholesale.
+  // zombie: Mixamo ghoul set; death stays canonical (WH_Death_Zombie ends
+  // standing and reads wounded, not dead).
+  var VARIANTS = {
+    zombie: {
+      names: {
+        idle: 'WH_Idle_Zombie', walk: 'WH_Walk_Zombie', run: 'WH_Run_Zombie',
+        attack: 'WH_Attack_Zombie', hit: 'WH_Hit_Zombie', death: 'WH_Death'
+      },
+      moves: {}
+    }
+  };
 
-  function CharacterAnim(body, clips) {
+  function CharacterAnim(body, clips, options) {
+    var variant = options && options.variant ? VARIANTS[options.variant] : null;
+    if (options && options.variant && !variant) {
+      console.warn('[WH anim] unknown variant ' + options.variant);
+    }
     this.body = body;
     this.clips = clips;
+    this.names = {};
+    this.moveNames = variant ? variant.moves : MOVE_NAMES;
     this.mixer = new THREE.AnimationMixer(body);
     this.actions = {};
     this.clip = null;
@@ -86794,17 +87368,32 @@ window.WH_CONFIG.moveset = {
     this.attackSerial = 0;
     var self = this;
     Object.keys(NAMES).forEach(function (state) {
-      var clip = THREE.AnimationClip.findByName(clips, NAMES[state]);
+      var name = variant && variant.names[state] || NAMES[state];
+      var clip = THREE.AnimationClip.findByName(clips, name);
+      if (!clip && name !== NAMES[state]) {
+        console.warn('[WH anim] missing ' + name + ', falling back to ' + NAMES[state]);
+        name = NAMES[state];
+        clip = THREE.AnimationClip.findByName(clips, name);
+      }
       if (!clip) {
-        console.warn('[WH anim] missing ' + NAMES[state]);
+        console.warn('[WH anim] missing ' + name);
         return;
       }
+      self.names[state] = name;
       var action = self.mixer.clipAction(clip);
       if (state === 'hit' || state === 'attack' || state === 'death') {
         action.setLoop(THREE.LoopOnce, 1);
         action.clampWhenFinished = true;
       }
       self.actions[state] = action;
+    });
+    Object.keys(this.moveNames).forEach(function (move) {
+      var clip = THREE.AnimationClip.findByName(clips, self.moveNames[move]);
+      if (!clip) return;
+      var action = self.mixer.clipAction(clip);
+      action.setLoop(THREE.LoopOnce, 1);
+      action.clampWhenFinished = true;
+      self.actions[move] = action;
     });
     this.mixer.addEventListener('finished', function (event) {
       if (event.action === self.actions.hit && !self.dead) {
@@ -86873,14 +87462,45 @@ window.WH_CONFIG.moveset = {
     }
   };
 
-  CharacterAnim.prototype.playerAttack = function (elapsed, duration) {
-    if (this.dead || !this.actions.attack) return;
-    if (this.clip !== 'attack') this.transition('attack', CFG.oneShotFadeSeconds, true);
+  // 10-04: the player clip is phase-mapped like the enemy one - windup /
+  // strike / recover each own a clip segment and play over the CONFIG move's
+  // durations, so per-move timings (thrust vs slash) drive the clip.
+  // moveId picks the per-move chain clip when the body has it.
+  CharacterAnim.prototype.playerAttack = function (phase, phaseTime, durations, moveId) {
+    var key = this.moveNames[moveId] && this.actions[moveId] ? moveId : 'attack';
+    if (this.dead || !this.actions[key]) return;
+    // Chained swings sharing a clip stay in it and re-seek (no self-crossfade);
+    // a chain step onto another per-move clip crossfades like any one-shot.
+    if (this.clip !== key) this.transition(key, CFG.oneShotFadeSeconds, true);
+    this.attackPhase = phase;
     // Seeking to the FSM clock also handles chained/restarted attacks without
     // allowing mixer drift or a render hitch to move the damage window.
-    this.actions.attack.timeScale = 1;
-    this.actions.attack.time = Math.min(this.actions.attack.getClip().duration,
-      Math.max(0, elapsed * this.actions.attack.getClip().duration / duration));
+    this.seekAttack(phase === 'windup' ? 0 : phase === 'strike' ? 1 : 2,
+      phaseTime, [durations.windup, durations.strike, durations.recover], key);
+  };
+
+  // Shared attack-clip seek: segment 0 windup [0, s), 1 strike/active
+  // [s, 2s), 2 recover [2s, end) with s = attackClipStrikeFraction * length.
+  // Per-move clips are authored on their CONFIG stage proportions, so their
+  // segment edges are the move's own windup / windup+strike fractions.
+  CharacterAnim.prototype.seekAttack = function (seg, phaseTime, durations, key) {
+    var action = this.actions[key || 'attack'];
+    var clip = action.getClip();
+    var a, b;
+    if (key && key !== 'attack') {
+      var total = Math.max(1e-4, durations[0] + durations[1] + durations[2]);
+      a = clip.duration * durations[0] / total;
+      b = clip.duration * (durations[0] + durations[1]) / total;
+    } else {
+      a = clip.duration * CFG.attackClipStrikeFraction;
+      b = a * 2;
+    }
+    var part = seg === 0 ? { start: 0, span: a } :
+      seg === 1 ? { start: a, span: b - a } :
+      { start: b, span: clip.duration - b };
+    action.timeScale = part.span / Math.max(1e-4, durations[seg]);
+    action.time = Math.min(clip.duration, part.start +
+      Math.max(0, phaseTime) * action.timeScale);
   };
 
   CharacterAnim.prototype.enemyAttack = function (phase, phaseTime, durations) {
@@ -86890,22 +87510,16 @@ window.WH_CONFIG.moveset = {
       this.attackSerial++;
     }
     this.attackPhase = phase;
-    var clip = this.actions.attack.getClip();
-    var strike = clip.duration * CFG.attackClipStrikeFraction;
-    var part = phase === 'windup' ? { start: 0, span: strike, duration: durations.windup } :
-      phase === 'active' ? { start: strike, span: strike, duration: durations.active } :
-      { start: strike * 2, span: clip.duration - strike * 2, duration: durations.recover };
-    this.actions.attack.timeScale = part.span / part.duration;
-    this.actions.attack.time = Math.min(clip.duration, part.start +
-      Math.max(0, phaseTime) * this.actions.attack.timeScale);
+    this.seekAttack(phase === 'windup' ? 0 : phase === 'active' ? 1 : 2,
+      phaseTime, [durations.windup, durations.active, durations.recover]);
   };
 
   CharacterAnim.prototype.syncPlayer = function (player, dt) {
     if (player.state !== 'alive') {
       this.death();
     } else if (player.attacking) {
-      this.playerAttack(window.WH_CONFIG.player.attackDuration - player.attackTimer,
-        window.WH_CONFIG.player.attackDuration);
+      var ph = player.getAttackPhase();
+      this.playerAttack(ph.stage, ph.t, ph.durations, player.attackMoveId);
     } else {
       this.attackPhase = null;
       this.setLocomotion(player.animMoveSpeed || 0, !!player.sprinting || player.rolling);
@@ -86950,18 +87564,23 @@ window.WH_CONFIG.moveset = {
     var duration = action ? action.getClip().duration : 1;
     var weights = {};
     var self = this;
-    Object.keys(NAMES).forEach(function (state) {
+    Object.keys(this.names).forEach(function (state) {
       var act = self.actions[state];
-      weights[NAMES[state]] = act && (act.isRunning() ||
+      weights[self.names[state]] = act && (act.isRunning() ||
         (self.dead && state === 'death' && self.clip === 'death')) ?
         act.getEffectiveWeight() : 0;
     });
-    return { clip: NAMES[this.clip] || null, time: time,
+    Object.keys(this.moveNames).forEach(function (move) {
+      var act = self.actions[move];
+      if (act) weights[self.moveNames[move]] = act.isRunning() ? act.getEffectiveWeight() : 0;
+    });
+    return { clip: this.names[this.clip] || this.moveNames[this.clip] || null, time: time,
       phase: duration ? time / duration : 0, weights: weights,
       timeScale: action ? action.timeScale : 0,
-      locomotion: NAMES[this.locomotion], attackSerial: this.attackSerial };
+      locomotion: this.names[this.locomotion], attackSerial: this.attackSerial };
   };
 
+  CharacterAnim.VARIANTS = VARIANTS;
   window.WH_CharacterAnim = CharacterAnim;
 })();
 
@@ -87084,6 +87703,7 @@ window.WH_CONFIG.moveset = {
   var AW = ANIM.attack;
   var WL = ANIM.walk;
   var V7 = window.WH_CONFIG;          // v7 sections: spell/belt/loadout/armed/consumable
+  var MV = window.WH_CONFIG.moveset;  // 10-04: per-weapon moveset framework
 
   function deg2rad(d) { return d * Math.PI / 180; }
   function smooth(p) { return p * p * (3 - 2 * p); }   // smoothstep ease
@@ -87124,9 +87744,15 @@ window.WH_CONFIG.moveset = {
     this.idleTime = 0;                // seconds without movement input
     this.idlePhase = 0;               // breathing phase
     this.lungeLeft = 0;               // strike lunge distance remaining
-    this.comboIndex = 0;              // v5: which chain move comes next
-    this.comboQueued = false;         // v5: next chain input buffered in recover
+    this.comboIndex = 0;              // v5: chain position of the current swing
+    this.comboQueued = false;         // v5: next chain input buffered (strike/recover)
+    this.comboBufferTimer = 0;        // 10-04: seconds the buffered input stays fresh
     this.recoverFullyElapsed = true;  // combat-ds1 P0-3: first swing starts at m1
+    this.weaponId = MV.playerWeapon;  // 10-04: key into CONFIG.moveset.weapons
+    this.attackMoveId = null;         // 10-04: CONFIG move id of the current swing
+    this.attackMove = null;           // 10-04: CONFIG move def (frozen per swing)
+    this.attackTotal = 0;             // windup + strike + recover of attackMove
+    this.attackSerial = 0;            // increments on every swing start
 
     // v6: block / parry state
     this.blocking = false;            // RMB held and block accepted
@@ -87196,23 +87822,54 @@ window.WH_CONFIG.moveset = {
   // The skinned hand is the socket. Only stand-ins retain the old rigid pivot.
   Player.prototype.setWeapon = function (mesh) {
     var hand = this.body && this.body.getObjectByName('R_Hand');
+    // 10-04: re-equip drops the previous mesh / stand-in pivot first.
+    if (this.sword && this.sword !== mesh && this.sword.parent) this.sword.parent.remove(this.sword);
+    if (this.weaponPivot) { this.yawFrame.remove(this.weaponPivot); this.weaponPivot = null; }
     this.sword = mesh;
+    this.swordBaseEmissive = null;   // armed-glow base re-sampled per mesh
     if (hand) {
       this.weaponHand = hand;
       hand.add(mesh);
       mesh.position.set(0, 0, 0);
-      // The GLB's narrow blade tip is at -Y, not +Y. The measured
-      // WH_Attack1 hand basis needs a small +X/+Z cant for the tip to lead
-      // throughout strike and early recover; keep this in the rest socket.
-      hand.updateWorldMatrix(true, false);
-      var handRest = hand.getWorldQuaternion(new THREE.Quaternion());
-      var oldTipWorld = new THREE.Vector3(0, 1, 0).applyQuaternion(handRest);
-      var cantWorld = new THREE.Vector3(0.12, 0, 0.12).applyQuaternion(handRest);
-      var desiredWorld = oldTipWorld.negate().add(cantWorld).normalize();
-      var desiredLocal = desiredWorld.applyQuaternion(handRest.clone().invert());
-      var mountRotation = new THREE.Quaternion().setFromUnitVectors(
-        new THREE.Vector3(0, -1, 0), desiredLocal);
+      // Grip mount (2026-10-03 re-measure): the longsword GLB's blade tip
+      // lies along mesh-local -Y, and the fist's grip-forward direction is
+      // hand-local +Z, so map -Y -> +Z with a CONSTANT local-space
+      // quaternion. The old world-quaternion math sampled the rest pose at
+      // setWeapon time, letting the animation pose leak in -- blade ended up
+      // parallel to the forearm with the hilt on the wrong end. This mount
+      // is pose-independent, so it holds through idle, walk, and swings.
+      var wm = window.WH_CONFIG.assets.weaponMount;
+      var mountRotation = new THREE.Quaternion();
+      if (wm && wm.enabled) {
+        // 10-04: blade axis per weapon (longsword -Y = unchanged mount;
+        // handAxe +Y = the bandit axe's measured mapping in enemy.js).
+        var bladeY = this.getWeaponDef().bladeAxisY || -1;
+        mountRotation.setFromUnitVectors(
+          new THREE.Vector3(0, bladeY, 0), new THREE.Vector3(0, 0, 1));
+        // Blade-edge tuning roll about the grip axis. Sign verified: rolling
+        // about hand-local +Z is a rotation of the mounted blade's own axis,
+        // so the roll quaternion composes on the LEFT of the axis mapping
+        // (premultiply = applied after the mapping); positive rollDeg is CCW
+        // around +Z, right-hand rule. Tuning stays a CONFIG data edit.
+        if (wm.rollDeg) {
+          mountRotation.premultiply(new THREE.Quaternion().setFromAxisAngle(
+            new THREE.Vector3(0, 0, 1), wm.rollDeg * Math.PI / 180));
+        }
+      }
       mesh.quaternion.copy(mountRotation);
+      // Grip anchor (Nicko 10-03): the instance is a groundAlign HOLDER whose
+      // inner mesh was lifted so the GLB's raw min-Y rests at holder y=0 -
+      // which put the sword TIP at/behind the fist (hand on mid-blade, hilt
+      // floating behind: "hilt at the opposite end"). Slide the INNER mesh
+      // down by the measured grip height in HOLDER-LOCAL Y (the mount
+      // rotation maps holder -Y to hand-local +Z grip-forward, so a -Y
+      // shift moves the grip ONTO the fist and the tip forward in front).
+      // Measured: sword grip at raw y~+0.65 -> holder y 1.637 (CONFIG).
+      // Offset is in raw GLB units and scales with the weapon correctly.
+      var gripY = (wm && wm.gripHolderY) ? (wm.gripHolderY[this.weaponId] || 0) : 0;
+      if (gripY && mesh.children[0]) {
+        mesh.children[0].position.y -= gripY;
+      }
       return;
     }
     this.weaponPivot = new THREE.Group();
@@ -87220,6 +87877,33 @@ window.WH_CONFIG.moveset = {
     this.weaponPivot.add(mesh);
     this.swordBase = window.WH_CONFIG.moveset.idlePose;
     this.resetWeaponPose();
+  };
+
+  // 10-04 moveset framework accessors. The weapon def / move defs are read
+  // straight from CONFIG.moveset.weapons so live CONFIG edits apply.
+  Player.prototype.getWeaponDef = function () {
+    return MV.weapons[this.weaponId] || MV.weapons[MV.playerWeapon];
+  };
+
+  // Moves per chain (also the landed-hit count that arms the v7 finisher).
+  Player.prototype.getChainCap = function () {
+    var W = this.getWeaponDef();
+    return Math.max(1, Math.min(W.chainCap || W.chain.length, W.chain.length));
+  };
+
+  Player.prototype.getChainMove = function (index) {
+    var W = this.getWeaponDef();
+    return W.moves[W.chain[index]];
+  };
+
+  // Swap the active moveset (chain resets). mesh optional: game.js passes the
+  // new weapon instance so the hand mount follows the weapon id.
+  Player.prototype.equipWeapon = function (id, mesh) {
+    if (!MV.weapons[id]) return false;
+    this.cancelAttack();
+    this.weaponId = id;
+    if (mesh) this.setWeapon(mesh);
+    return true;
   };
 
   Player.prototype.resetWeaponPose = function () {
@@ -87326,18 +88010,15 @@ window.WH_CONFIG.moveset = {
     this.sprinting = !!(k['ShiftLeft'] || k['ShiftRight']);
   };
 
-  // v3: roll cancels attack during WINDUP only (souls-like); attack cannot
-  // start during roll. v7: also refused during the loadout toggle busy window.
+  // 10-04 (Nicko, souls-style): roll cancels attack RECOVER only - windup
+  // and strike are committed. Attack cannot start during roll. v7: also
+  // refused during the loadout toggle busy window.
   Player.prototype.tryRoll = function () {
     if (this.state !== 'alive' || this.rolling || this.toggling) return;
-    if (this.attacking && this.getAttackStage() !== 'windup') return;  // strike/recover locked
-    if (this.stamina < CFG.rollStaminaCost) return;   // a refused roll keeps the swing
+    if (this.stamina < CFG.rollStaminaCost) return;
     if (this.attacking) {
-      this.attacking = false;                           // cancel in windup
-      this.attackTimer = 0;
-      this.lungeLeft = 0;
-      this.endCombo();                                  // the cancelled swing ends the chain
-      this.resetWeaponPose();
+      if (this.getAttackStage() !== 'recover') return;  // windup/strike locked
+      this.cancelAttack();                              // roll out of recovery
     }
     this.spendStamina(CFG.rollStaminaCost);
     this.rolling = true;
@@ -87593,25 +88274,39 @@ window.WH_CONFIG.moveset = {
     return this.takeDamage(damage);
   };
 
-  // combat-ds1 P0-3: only recover presses queue; the chain starts at the
-  // recover point instead of waiting for the entire recovery to elapse.
+  // 10-04 chain gating (Nicko: combo spam -> real chains). Windup presses
+  // are IGNORED; strike/recover presses are BUFFERED for inputBufferSec and
+  // fired by update() once the swing reaches its chain window. A press while
+  // idle always starts the chain at chain[0].
   Player.prototype.tryAttack = function () {
     if (this.state !== 'alive' || this.rolling || this.toggling) return;
     if (this.blocking) return;              // v6: must release RMB to attack
     if (this.attacking) {
-      if (this.getAttackStage() === 'recover') this.comboQueued = true;
-      return;                                // windup/strike buffer is Round B
+      var stage = this.getAttackStage();
+      if (stage === 'strike' || stage === 'recover') {
+        this.comboQueued = true;
+        this.comboBufferTimer = MV.inputBufferSec;
+      }
+      return;
     }
-    this.startAttack();
+    this.startAttack(0);
   };
 
+  // Starts chain move `nextIndex` (default 0) with its own CONFIG timings.
   Player.prototype.startAttack = function (nextIndex) {
-    if (this.stamina < CFG.attackStaminaCost) return false;
-    this.spendStamina(CFG.attackStaminaCost);
+    var idx = (typeof nextIndex === 'number') ? nextIndex : 0;
+    if (idx >= this.getChainCap()) idx = 0;
+    var M = this.getChainMove(idx);
+    if (this.stamina < M.staminaCost) return false;
+    this.spendStamina(M.staminaCost);
     this.attacking = true;
-    this.attackTimer = CFG.attackDuration;
+    this.attackMoveId = this.getWeaponDef().chain[idx];
+    this.attackMove = M;
+    this.attackTotal = M.windup + M.strike + M.recover;
+    this.attackTimer = this.attackTotal;
+    this.attackSerial++;
     this.attackDidHit = false;
-    this.lungeLeft = AW.strikeLunge;
+    this.lungeLeft = M.lunge;
     // v7: armed finisher consumption (armedTimer > 0 = attack at 1.5x;
     // crossArmed = cross-finisher at 2.0x; both consumed on this attack)
     if (this.armedTimer > 0 && this.crossArmed) {
@@ -87624,37 +88319,52 @@ window.WH_CONFIG.moveset = {
     } else {
       this.pendingDamageMult = 1;
     }
-    var cap = window.WH_CONFIG.moveset.comboChainCap;
-    this.comboIndex = (typeof nextIndex === 'number') ? nextIndex :
-      (this.recoverFullyElapsed ? 0 : Math.min(this.comboIndex + 1, cap));
+    this.comboIndex = idx;
     if (this.comboIndex === 0) this.chainHits = 0;  // v7: reset hit counter on chain reset
     else this.chainHits = Math.max(this.chainHits, this.comboIndex);  // sync with chain position
     this.comboQueued = false;
+    this.comboBufferTimer = 0;
     this.recoverFullyElapsed = false;
     // face camera direction on attack (unless locked: windup tracking handles it)
     if (!this.lockTarget) this.yaw = this.camYaw + Math.PI;
     return true;
   };
 
-  // A swing that ends without chaining (full recover, windup roll-cancel,
-  // respawn) closes the chain: the next press is a fresh m1 with no carried
-  // chain hits, so comboIndex stays inside 0..cap-1.
-  Player.prototype.endCombo = function () {
-    this.recoverFullyElapsed = true;
+  // Ends the current swing and resets the chain (roll-out-of-recover,
+  // weapon swap). Armed finisher state is untouched.
+  Player.prototype.cancelAttack = function () {
+    this.attacking = false;
+    this.attackTimer = 0;
+    this.lungeLeft = 0;
     this.comboIndex = 0;
-    this.chainHits = 0;
     this.comboQueued = false;
+    this.comboBufferTimer = 0;
+    this.chainHits = 0;
+    this.recoverFullyElapsed = true;
+    this.resetWeaponPose();
+  };
+
+  // 10-04: stage + phase clock of the current swing from its CONFIG move.
+  // Returns null or { stage, t (s into stage), dur, p (0..1), durations }.
+  Player.prototype.getAttackPhase = function () {
+    if (!this.attacking || !this.attackMove) return null;
+    var M = this.attackMove;
+    var elapsed = this.attackTotal - this.attackTimer;
+    var stage, start;
+    if (elapsed < M.windup) { stage = 'windup'; start = 0; }
+    else if (elapsed < M.windup + M.strike) { stage = 'strike'; start = M.windup; }
+    else { stage = 'recover'; start = M.windup + M.strike; }
+    var dur = M[stage];
+    var t = elapsed - start;
+    return { stage: stage, t: t, dur: dur,
+             p: dur > 0 ? Math.max(0, Math.min(1, t / dur)) : 1,
+             durations: { windup: M.windup, strike: M.strike, recover: M.recover } };
   };
 
   // v3 D1: attack stage from elapsed time. 'windup' | 'strike' | 'recover' | null.
   Player.prototype.getAttackStage = function () {
-    if (!this.attacking) return null;
-    var elapsed = CFG.attackDuration - this.attackTimer;
-    var windupEnd = CFG.attackDuration * AW.windupFrac;
-    var strikeEnd = CFG.attackDuration * (AW.windupFrac + AW.strikeFrac);
-    if (elapsed < windupEnd) return 'windup';
-    if (elapsed < strikeEnd) return 'strike';
-    return 'recover';
+    var ph = this.getAttackPhase();
+    return ph ? ph.stage : null;
   };
 
   Player.prototype.spendStamina = function (amount) {
@@ -87679,19 +88389,23 @@ window.WH_CONFIG.moveset = {
   };
 
   // Returns attack sweep state for the combat layer: null or {origin, dir,
-  // range, halfAngle, damage}. The sweep is consumed once, on the first
-  // STRIKE-stage frame (a multi-tick active window is Round B P0-7).
+  // range, halfAngle, damage, ghoulMult, moveId}. v3: the active window is
+  // the whole STRIKE stage (the sweep consumes once). 10-04: range / arc /
+  // damage come from the CONFIG move of the CURRENT swing (thrust = narrow
+  // and long, slashes = wide and short).
   Player.prototype.consumeAttackSweep = function () {
     if (!this.attacking || this.attackDidHit) return null;
     if (this.getAttackStage() !== 'strike') return null;
     this.attackDidHit = true;
-    var halfAngle = deg2rad(CFG.attackArcHalfAngleDeg);
+    var M = this.attackMove;
     return {
       origin: this.pos.clone(),
       dir: new THREE.Vector3(Math.sin(this.yaw), 0, Math.cos(this.yaw)),
-      range: CFG.attackRange,
-      halfAngle: halfAngle,
-      damage: CFG.attackDamage * (this.pendingDamageMult || 1)
+      range: M.range,
+      halfAngle: deg2rad(M.halfAngleDeg),
+      damage: M.damage * (this.pendingDamageMult || 1),
+      ghoulMult: M.damageGhoulMult || 1,
+      moveId: this.attackMoveId
     };
   };
 
@@ -87788,16 +88502,30 @@ window.WH_CONFIG.moveset = {
 
     if (this.attacking) {
       this.attackTimer -= dt;
-      // combat-ds1 P0-3: consume on every recover frame, including the
-      // final one; an accepted press immediately starts the next windup.
-      if (this.getAttackStage() === 'recover' && this.comboQueued) {
-        var cap = window.WH_CONFIG.moveset.comboChainCap;
-        var next = (this.comboIndex >= cap - 1) ? 0 : this.comboIndex + 1;
-        this.startAttack(next);
+      // 10-04: buffered input expires after inputBufferSec.
+      if (this.comboQueued) {
+        this.comboBufferTimer -= dt;
+        if (this.comboBufferTimer <= 0) { this.comboQueued = false; this.comboBufferTimer = 0; }
       }
-      if (this.attackTimer <= 0) {
+      // Chain window: a fresh buffered press fires the NEXT chain move once
+      // this swing is chainOpenSec into its recover. The last chain move has
+      // no early window - it must resolve its full recover (below).
+      var ph = this.getAttackPhase();
+      var lastMove = this.comboIndex >= this.getChainCap() - 1;
+      if (this.comboQueued && !lastMove && ph.stage === 'recover' &&
+          ph.t >= this.attackMove.chainOpenSec) {
+        this.startAttack(this.comboIndex + 1);
+      }
+      if (this.attacking && this.attackTimer <= 0) {
+        var rebuffered = this.comboQueued;
         this.attacking = false;
-        this.endCombo();
+        this.recoverFullyElapsed = true;
+        this.comboIndex = 0;
+        this.chainHits = 0;
+        this.comboQueued = false;
+        this.comboBufferTimer = 0;
+        // chain fully resolved: a still-fresh press starts a new chain
+        if (rebuffered) this.startAttack(0);
       }
     }
 
@@ -87839,7 +88567,7 @@ window.WH_CONFIG.moveset = {
         if (sprintingNow) {
           this.spendStamina(CFG.sprintStaminaPerSec * dt);
         }
-        if (this.attacking) speed *= this.getAttackStage() === 'windup' ? 0.3 : 0;
+        if (this.attacking) speed *= this.getWeaponDef().moveMultWhileAttacking[this.getAttackStage()] || 0;
         if (this.blocking) speed *= window.WH_CONFIG.block.moveMult;  // v6
         this.animMoveSpeed = speed;
         // camera yaw basis: camera forward projected on xz plane.
@@ -87899,38 +88627,42 @@ window.WH_CONFIG.moveset = {
       }
     }
 
+    // Strike lunge along facing (FSM-owned for both the clip and stand-in
+    // paths): velocity = move.lunge / move.strike, dt-scaled so the full
+    // lunge drains at any frame rate. Runs before the bounds clamp.
+    if (this.attacking && this.getAttackStage() === 'strike' && this.lungeLeft > 0) {
+      var lungeVel = this.attackMove.lunge / this.attackMove.strike;
+      var lungeStep = Math.min(lungeVel * dt, this.lungeLeft);
+      this.pos.x += Math.sin(this.yaw) * lungeStep;
+      this.pos.z += Math.cos(this.yaw) * lungeStep;
+      this.lungeLeft -= lungeStep;
+    }
+
     if (clampToBounds) clampToBounds(this);
     this.yawFrame.rotation.y = this.yaw;
 
     // Legacy pivot poses remain only for the rigid stand-in fallback.
+    // 10-04: phase clocks come from the current CONFIG move; the pose shape
+    // (and its bodyLean/crouch) from WH_MOVESET[move.pose].
     if (this.body && !this.anim) {
       if (this.attacking) {
-        var stage = this.getAttackStage();
         var MS = window.WH_MOVESET;
-        var move = [MS.m1, MS.m2, MS.m3][this.comboIndex];
-        // Stage progress 0..1 from the FSM clock on getAttackStage()'s
-        // boundaries. Strike progress was once measured from
-        // windupEnd + strikeSpan - attackTimer ([-0.6, 0.4) with these
-        // fractions): the sweep left the +-strikeYawSweepDeg/2 bound (D2
-        // item 6) and the strike keyframe was never reached.
-        var elapsed = CFG.attackDuration - this.attackTimer;
-        var windupEnd = CFG.attackDuration * AW.windupFrac;
-        var strikeEnd = CFG.attackDuration * (AW.windupFrac + AW.strikeFrac);
+        var aph = this.getAttackPhase();
+        var stage = aph.stage;
+        var move = MS[this.attackMove.pose] || MS.m1;
         if (stage === 'windup') {
-          var wp = elapsed / windupEnd;                         // 0..1
-          var we = smooth(wp);
+          var we = smooth(aph.p);
           this.body.rotation.x = AW.windupLean * we;           // lean back
           this.atkYawOffset = 0;
           this.body.rotation.y = this.atkYawOffset;
           this.body.rotation.z = 0;
-          this.body.position.y = this.bodyBaseY - AW.windupCrouch * we;  // crouch
+          this.body.position.y = this.bodyBaseY - move.crouch * we;  // per-pose crouch
           this.body.position.x = this.bodyBaseX || 0;
           var pw = MS.interpPose(MS.idle, move.windup, we);
           this.weaponPivot.position.set(pw.pos[0], pw.pos[1], pw.pos[2]);
           this.weaponPivot.rotation.set(pw.rot[0], pw.rot[1], pw.rot[2]);
         } else if (stage === 'strike') {
-          var sp = (elapsed - windupEnd) / (CFG.attackDuration * AW.strikeFrac);   // 0..1
-          var se = 1 - (1 - sp) * (1 - sp);                     // ease-out
+          var se = 1 - (1 - aph.p) * (1 - aph.p);              // ease-out
           // horizontal yaw sweep through the stage (start behind right shoulder)
           this.atkYawOffset = -deg2rad(AW.strikeYawSweepDeg) * 0.5
                               + deg2rad(AW.strikeYawSweepDeg) * se;
@@ -87943,13 +88675,11 @@ window.WH_CONFIG.moveset = {
           this.weaponPivot.position.set(ps.pos[0], ps.pos[1], ps.pos[2]);
           this.weaponPivot.rotation.set(ps.rot[0], ps.rot[1], ps.rot[2]);
         } else {                                                // recover
-          var rp2 = Math.min(1, Math.max(0,
-            (elapsed - strikeEnd) / (CFG.attackDuration - strikeEnd)));   // 0..1
-          var re = smooth(rp2);
+          var re = smooth(aph.p);
           var swing = deg2rad(AW.strikeYawSweepDeg) * 0.5;      // sweep end offset
           this.atkYawOffset = swing * (1 - re);                 // ease back to neutral
           this.body.rotation.y = this.atkYawOffset;
-          this.body.rotation.x = AW.recoverLean * re;           // forward-lean settle
+          this.body.rotation.x = move.bodyLean * re;            // per-pose forward-lean settle
           this.body.rotation.z = 0;
           this.body.position.y = this.bodyBaseY;
           this.body.position.x = this.bodyBaseX || 0;
@@ -87965,8 +88695,6 @@ window.WH_CONFIG.moveset = {
         if (this.sword) this.resetWeaponPose();
       }
     }
-    // Lunge displacement remains FSM-owned even when the clip supplies the pose.
-    if (this.body && this.attacking && this.getAttackStage() === 'strike') this.applyStrikeLunge(dt);
     if (!this.attacking) this.lungeLeft = 0;
 
     this.root.position.copy(this.pos);
@@ -87976,12 +88704,21 @@ window.WH_CONFIG.moveset = {
     // orbit camera behind player
     var target = this.pos.clone();
     target.y += CFG.camHeight;
+    // R5 P0-5: distance-by-pitch cap (steeper down-look = closer camera):
+    // cap = camMaxDistance * (1 - camPitchDistShrink * max(0, sin(pitch)))
+    // effective = clamp(camDist, camMinDistance, cap); camDist (wheel state)
+    // is never written here. Camera y floor = ground (y = 0) + clearance.
+    var pitchCap = Math.max(CFG.camMinDistance, CFG.camMaxDistance *
+      (1 - CFG.camPitchDistShrink * Math.max(0, Math.sin(this.camPitch))));
+    var effDist = Math.max(CFG.camMinDistance, Math.min(pitchCap, this.camDist));
+    var floorY = CFG.camGroundClearance;
     var offset = new THREE.Vector3(
       Math.sin(this.camYaw) * Math.cos(this.camPitch),
       Math.sin(this.camPitch),
       Math.cos(this.camYaw) * Math.cos(this.camPitch)
-    ).multiplyScalar(this.camDist);
+    ).multiplyScalar(effDist);
     var want = target.clone().add(offset);
+    if (want.y < floorY) want.y = floorY;
 
     if (this.lockTarget && this.state === 'alive') {
       // D3: camera follows so the target stays framed. Aim camera yaw so the
@@ -88006,24 +88743,30 @@ window.WH_CONFIG.moveset = {
         Math.cos(this.camYaw) * Math.cos(this.camPitch)
       ).multiplyScalar(Math.max(CFG.camMinDistance, midDist + LOCK.camExtraDistance));
       want = target.clone().add(offset);
+      if (want.y < floorY) want.y = floorY;
       this.camera.position.lerp(want, lerp);
     } else {
-      // v3.1: souls-style auto-follow. While moving (and not within the
-      // manual-override window after a mouse drag), ease camera yaw toward
-      // the player's facing so A/D strafing orbits the camera with you.
-      // Idle and lock-on are untouched.
-      var nowT = performance.now() / 1000;
-      var manualOverride = (nowT - this.lastManualCamT) < CFG.camAutoFollowDelay;
-      var moving = (this.moveDirWorld.x !== 0 || this.moveDirWorld.z !== 0);
-      if (moving && !manualOverride) {
-        var followYaw = Math.atan2(this.moveDirWorld.x, this.moveDirWorld.z) + Math.PI;
-        var lerpF = 1 - Math.exp(-CFG.camAutoFollowRate * dt);
-        this.camYaw += shortestAngle(followYaw - this.camYaw) * lerpF;
-      }
+      // 10-04 change order (Nicko): FULL camera decoupling - movement NEVER
+      // turns the camera. camYaw changes only from mouse drag / camera
+      // joystick (both stamp lastManualCamT); lock-on keeps its own framing
+      // above. The old v3.1 movement auto-follow is gone.
       var lerp2 = 1 - Math.exp(-CFG.camFollowLerp * dt);
       this.camera.position.lerp(want, lerp2);
     }
+    if (this.camera.position.y < floorY) this.camera.position.y = floorY;
     this.camera.lookAt(target);
+  };
+
+  // 2026-10-03 change order (Nicko): spawn faces the map center, not away
+  // from it. Orient body yaw toward (tx, tz) and swing camYaw with it so the
+  // screen-forward invariant (idle body yaw = camYaw + PI, camera trails the
+  // back) stays intact - W still walks screen-forward, now toward the center.
+  Player.prototype.faceTowards = function (tx, tz) {
+    var dx = tx - this.pos.x, dz = tz - this.pos.z;
+    if (dx * dx + dz * dz < 0.0001) return;
+    this.yaw = Math.atan2(dx, dz);
+    this.camYaw = this.yaw + Math.PI;
+    if (this.yawFrame) this.yawFrame.rotation.y = this.yaw;
   };
 
   Player.prototype.respawnAt = function (x, z) {
@@ -88056,6 +88799,7 @@ window.WH_CONFIG.moveset = {
     this.armedTimer = 0;
     this.crossArmed = false;
     this.atkYawOffset = 0;
+    this.faceTowards(0, 0);                // respawn faces map center (Nicko 10-03)
     this.yawFrame.rotation.y = this.yaw;
     if (this.anim) this.anim.revive();
     if (this.body && !this.anim) { this.body.rotation.x = 0; this.body.rotation.y = this.atkYawOffset; }
@@ -88126,15 +88870,40 @@ window.WH_CONFIG.moveset = {
     this.yawFrame.add(this.body);
     var bodyName = this.type === 'bandit' ? 'banditBody' : 'ghoulBody';
     if (window.WH_ASSETS.getClips(bodyName).length) {
-      this.anim = new window.WH_CharacterAnim(meshRoot, window.WH_ASSETS.getClips(bodyName));
+      // 10-05: ghouls play the Mixamo zombie set; bandits keep the default map.
+      this.anim = new window.WH_CharacterAnim(meshRoot, window.WH_ASSETS.getClips(bodyName),
+        this.type === 'ghoul' ? { variant: 'zombie' } : null);
     }
     // Rigged bandits carry the axe on the animated hand, not a world pivot.
     var hand = meshRoot.getObjectByName('R_Hand');
     if (this.type === 'bandit' && hand) {
       var heldAxe = window.WH_ASSETS.instance('handAxe');
-      heldAxe.scale.setScalar(0.8);
+      // Measured sizing (2026-10-03): 2.004m GLB -> 0.6m hand-held (scale
+      // ~0.299) via CONFIG.assets.weaponScale; replaces hardcoded 0.8.
+      heldAxe.scale.setScalar(window.WH_ASSETS.weaponScale('handAxe'));
       hand.add(heldAxe);
       heldAxe.position.set(0, 0, 0);
+      // Grip mount (2026-10-03 re-measure): the axe GLB's bit/mass points
+      // along mesh-local +Y (radial profile: near +Y 0.224 vs near -Y
+      // 0.115), so map +Y -> hand-local +Z (grip forward) so the bit leads.
+      // Same constant local-space knob as the player sword: pose-independent
+      // and shared with CONFIG.assets.weaponMount (rollDeg tuning lives
+      // there). The pivot fallback below keeps the idlePose table (its
+      // skinned basis never existed).
+      var wm = window.WH_CONFIG.assets.weaponMount;
+      var axeMount = new THREE.Quaternion();
+      if (wm && wm.enabled) {
+        axeMount.setFromUnitVectors(
+          new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1));
+        // Roll about hand-local +Z: composed on the LEFT of the axis mapping
+        // so it spins the mounted axe about its own grip axis (applied after
+        // the mapping); positive rollDeg = CCW around +Z, right-hand rule.
+        if (wm.rollDeg) {
+          axeMount.premultiply(new THREE.Quaternion().setFromAxisAngle(
+            new THREE.Vector3(0, 0, 1), wm.rollDeg * Math.PI / 180));
+        }
+      }
+      heldAxe.quaternion.copy(axeMount);
     }
     // Rigid stand-in fallback retains its original weapon pivot.
     if (!hand && this.type === 'bandit' && window.WH_ASSETS &&
@@ -88616,7 +89385,7 @@ window.WH_CONFIG.moveset = {
   // position's current side: a player who walks past the plane outside the
   // corridor is trespassing on the neighbor's side and must be pushed back
   // into their own region, regardless of which side they are now on.
-  RegionManagerLogic.prototype.clampPlayer = function (pos) {
+  RegionManagerLogic.prototype.clampPlayerPlane = function (pos) {
     var conn = DEFS.connections[0];
     if (!conn) return false;
     var insideChoke = DEFS.insideChokepoint(conn, pos.x);
@@ -88649,7 +89418,122 @@ window.WH_CONFIG.moveset = {
       var limitB = conn.planeCoord - margin;
       if (enemy.pos.z > limitB) { enemy.pos.z = limitB; clamped = true; }
     }
+    // R5 P0-5 (C11): enemies share the player's rim; the home-side hold line
+    // stays authoritative when the radial pull would cross it.
+    if (whClampRadial(enemy.pos, whPlayRadius(), isHomeA ? 1 : -1,
+        conn.planeCoord + (isHomeA ? margin : -margin))) clamped = true;
     return clamped;
+  };
+
+  // ---- R5 P0-5: world bounds + prop colliders (no THREE import) -------------
+
+  // Playable disc radius: player and enemies are held inside it.
+  function whPlayRadius() {
+    return CFG.world.groundRadius - CFG.world.playerMargin;
+  }
+
+  // Visual ground radius per region. FogExp2 is 95% opaque at
+  // d95 = sqrt(-ln(1 - fogOpaqueFrac)) / density; the disc reaches
+  // visualGroundFogMult * d95 past the playable rim so its edge is never seen.
+  function whVisualGroundRadius(regionId) {
+    var W = CFG.world;
+    var d95 = Math.sqrt(-Math.log(1 - W.fogOpaqueFrac)) /
+      DEFS.regions[regionId].fogDensity;
+    return Math.max(W.groundRadius, whPlayRadius() + W.visualGroundFogMult * d95);
+  }
+
+  // Radial rim clamp that respects a home-side plane limit (limitZ null = no
+  // limit). Pulling toward the origin moves z toward 0, which can re-cross
+  // the plane on B's side: then slide along the plane line onto the rim.
+  function whClampRadial(pos, r, side, limitZ) {
+    var d = Math.sqrt(pos.x * pos.x + pos.z * pos.z);
+    if (!(d > r)) return false;        // inside (NaN is left to the callers)
+    var k = r / d;
+    pos.x *= k;
+    pos.z *= k;
+    if (limitZ !== null && (side === 1 ? pos.z < limitZ : pos.z > limitZ)) {
+      pos.z = limitZ;
+      pos.x = (pos.x < 0 ? -1 : 1) * Math.sqrt(Math.max(0, r * r - limitZ * limitZ));
+    }
+    return true;
+  }
+
+  // Does a prop circle meet the gate corridor rectangle (chokepoint x-span,
+  // boundary.z +- colliderCorridorHalfDepth)? Such props never collide.
+  function whMeetsCorridor(x, z, r) {
+    var hw = CFG.chokepoint.width / 2;
+    var hd = CFG.world.colliderCorridorHalfDepth;
+    var nx = Math.max(CFG.chokepoint.centerX - hw, Math.min(CFG.chokepoint.centerX + hw, x));
+    var nz = Math.max(CFG.boundary.z - hd, Math.min(CFG.boundary.z + hd, z));
+    var dx = x - nx, dz = z - nz;
+    return dx * dx + dz * dz <= r * r;
+  }
+
+  // Collider table for one region from CONFIG props + asset footprints.
+  // C14 (IO ruling, R5): vegetation-class (trunk-dominant) props get TRUNK
+  // colliders — radius = footprint/2 * TRUNK_RATIO — canopy leaves must be
+  // brushable; trunk-is-the-body props (posts/stones/boulders/fences) keep
+  // the full footprint. Devbot-classified list: TRUNK_ASSETS.
+  var TRUNK_RATIO = 0.25;
+  var TRUNK_ASSETS = { livingOak: 1, witchwoodTree: 1, birchTree: 1,
+    deadTree: 1, deadTree2: 1, ancientOak: 1, hangingTree: 1,
+    twistedSapling: 1, thornbush: 1, bramble: 1, largeFern: 1, deadShrub: 1,
+    mossyStump: 1, hollowStump: 1 };
+  function colliderRadius(name, width, scale) {
+    var r = width * scale / 2;
+    if (TRUNK_ASSETS[name] || /tree|oak|birch|sapling|bush|bramble|fern|shrub|stump/i.test(name)) {
+      return r * TRUNK_RATIO;
+    }
+    return r;
+  }
+
+  function whPropColliders(regionId, meta) {
+    var props = DEFS.regions[regionId].cfg.props;
+    var out = { circles: [], exempt: [], complete: true };
+    for (var i = 0; i < props.length; i++) {
+      var p = props[i];
+      var m = meta(p.asset);
+      if (!m) out.complete = false;
+      var row = { index: i, name: p.asset, x: p.x, z: p.z,
+                  r: m ? colliderRadius(p.asset, m.width, p.scale) : 0 };
+      if (whMeetsCorridor(p.x, p.z, row.r)) out.exempt.push(row);
+      else if (row.r > 0) out.circles.push(row);
+    }
+    return out;
+  }
+
+  RegionManagerLogic.prototype.playRadius = whPlayRadius;
+  RegionManagerLogic.prototype.visualGroundRadius = whVisualGroundRadius;
+
+  // Full player clamp = boundary plane + radial rim in ONE call (game.js
+  // clampPlayerToBounds returns early on true, so the rim must not depend on
+  // the plane clamp not firing). Returns true if either clamp fired.
+  RegionManagerLogic.prototype.clampPlayer = function (pos) {
+    var plane = this.clampPlayerPlane(pos);
+    var conn = DEFS.connections[0];
+    var limitZ = (conn && !DEFS.insideChokepoint(conn, pos.x)) ? conn.planeCoord : null;
+    var rim = whClampRadial(pos, whPlayRadius(), DEFS.regions[this.activeId].side, limitZ);
+    return plane || rim;
+  };
+
+  // Circle push-out against static colliders [{x, z, r}]: afterwards
+  // |pos - c| >= c.r + radius for each circle visited; a dead-centre hit
+  // pushes along +x (no NaN).
+  RegionManagerLogic.prototype.pushOutCircles = function (pos, radius, circles) {
+    var hit = false;
+    for (var i = 0; i < circles.length; i++) {
+      var c = circles[i];
+      var dx = pos.x - c.x, dz = pos.z - c.z;
+      var min = c.r + radius;
+      var d2 = dx * dx + dz * dz;
+      if (!(d2 < min * min)) continue;
+      var d = Math.sqrt(d2);
+      if (d < 1e-6) { dx = 1; dz = 0; d = 1; }
+      pos.x = c.x + dx / d * min;
+      pos.z = c.z + dz / d * min;
+      hit = true;
+    }
+    return hit;
   };
 
   // ---- Procedural pixel-art ground texture (darkwood palette) ----------------
@@ -88770,8 +89654,124 @@ window.WH_CONFIG.moveset = {
       window.WH_GAME.renderer.capabilities;
     tex.anisotropy = Math.min(4, caps ? caps.getMaxAnisotropy() : 4);
     tex.colorSpace = THREE.SRGBColorSpace;
-    tex.repeat.set(gtc.repeat, gtc.repeat);
+    // R5: repeat scales with the visual disc so texel density stays repeat/90
+    var rep = gtc.repeat * whVisualGroundRadius(regionId) / CFG.world.groundRadius;
+    tex.repeat.set(rep, rep);
     return tex;
+  }
+
+  // ---- 10-03 change order 2: dirt path ribbon (Nicko: clearing walk to the
+  // cemetery). Visual-only decal strip through region A's south clearing;
+  // trees/lanterns are placed by CONFIG generation relative to the same sway
+  // centerline x = swayAmp*sin(2pi(z-zFrom)/swayPeriod). No collider.
+  function buildDirtPathCanvas() {
+    var size = 128;
+    var canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    var ctx = canvas.getContext('2d');
+    var rand = whRng(78002024);
+    var dirt = whHexToRgb(0x5a4a33);      // packed-dirt umber (darkwood canon)
+    var dirtDark = whHexToRgb(0x463a27);  // wet-mud tone
+    var pebble = whHexToRgb(0x6e5f45);
+    ctx.fillStyle = whCss(dirt, 0, rand);
+    ctx.fillRect(0, 0, size, size);
+    // mud blotch clusters, pixel-art cells (same recipe as the ground canvas)
+    for (var i = 0; i < 60; i++) {
+      var cx = Math.floor(rand() * size);
+      var cy = Math.floor(rand() * size);
+      var cells = 4 + Math.floor(rand() * 10);
+      var tone = rand() < 0.55 ? dirtDark : dirt;
+      var jitter = 6 + rand() * 8;
+      for (var c = 0; c < cells; c++) {
+        var px = (cx + Math.floor(rand() * 7) - 3 + size) % size;
+        var py = (cy + Math.floor(rand() * 7) - 3 + size) % size;
+        var w = rand() < 0.5 ? 1 : 2;
+        ctx.fillStyle = whCss(tone, jitter, rand);
+        ctx.fillRect(px, py, w, w);
+      }
+    }
+    // scattered pebbles + dark grain
+    for (var g = 0; g < 260; g++) {
+      ctx.fillStyle = whCss(rand() < 0.35 ? pebble : dirtDark, 8, rand);
+      var gw = rand() < 0.85 ? 1 : 2;
+      ctx.fillRect(Math.floor(rand() * size), Math.floor(rand() * size), gw, gw);
+    }
+    // soft darker edges (u extremes) so the strip blends into the mud ground
+    var edgeW = 9;
+    ctx.globalAlpha = 0.35;
+    ctx.fillStyle = whCss(dirtDark, 0, rand);
+    ctx.fillRect(0, 0, edgeW, size);
+    ctx.fillRect(size - edgeW, 0, edgeW, size);
+    ctx.globalAlpha = 1;
+    return canvas;
+  }
+
+  function buildDirtPath(regionId) {
+    var DP = CFG.world.dirtPath;
+    if (!DP || DP.regionId !== regionId) return null;
+    // strip geometry in world space: per-segment quads along the sway curve,
+    // v UV accumulates by arc length so the texture flows along the path.
+    var segLen = 6;
+    var zFrom = DP.zFrom, zTo = DP.zTo, hw = DP.halfWidth;
+    var span = zFrom - zTo;
+    var segCount = Math.ceil(span / segLen);
+    var positions = [];
+    var uvs = [];
+    var indices = [];
+    var arc = 0;
+    var pxPrev = null, pzPrev = null;
+    for (var s = 0; s <= segCount; s++) {
+      var zz = zFrom - Math.min(span, s * segLen);
+      var cx = DP.swayAmp * Math.sin(2 * Math.PI * (zz - DP.zFrom) / DP.swayPeriod);
+      var nx = 0, nz = 1;
+      if (pxPrev !== null) {
+        var dx = cx - pxPrev, dz = zz - pzPrev;
+        var len = Math.sqrt(dx * dx + dz * dz) || 1;
+        nx = dz / len; nz = -dx / len;    // left normal in XZ
+        arc += len;
+      }
+      pxPrev = cx; pzPrev = zz;
+      // v0 = c - n*hw, v1 = c + n*hw; uv u spans repeatAcrossWidth tiles
+      positions.push(cx - nx * hw, DP.y, zz - nz * hw,
+                     cx + nx * hw, DP.y, zz + nz * hw);
+      uvs.push(0, arc / DP.tileLengthMeters,
+               DP.repeatAcrossWidth, arc / DP.tileLengthMeters);
+      if (s > 0) {
+        var b = s * 2;
+        // winding: CCW seen from +y so face normals point UP
+        indices.push(b - 2, b, b - 1,  b - 1, b, b + 1);
+      }
+    }
+    var geo = new THREE.BufferGeometry();
+    geo.setAttribute('position',
+      new THREE.BufferAttribute(new Float32Array(positions), 3));
+    geo.setAttribute('uv',
+      new THREE.BufferAttribute(new Float32Array(uvs), 2));
+    geo.setIndex(indices);
+    geo.computeVertexNormals();
+    var tex = new THREE.CanvasTexture(buildDirtPathCanvas());
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.magFilter = THREE.NearestFilter;
+    tex.minFilter = THREE.NearestMipmapLinearFilter;
+    tex.generateMipmaps = true;
+    tex.colorSpace = THREE.SRGBColorSpace;
+    var caps = window.WH_GAME && window.WH_GAME.renderer &&
+      window.WH_GAME.renderer.capabilities;
+    tex.anisotropy = Math.min(4, caps ? caps.getMaxAnisotropy() : 4);
+    var mat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      map: tex,
+      roughness: 1.0, metalness: 0.0, side: THREE.DoubleSide,
+      // decal recipe: same y as the ground would z-fight; offset + 0.02 lift
+      polygonOffset: true,
+      polygonOffsetFactor: -1,
+      polygonOffsetUnits: -1
+    });
+    var mesh = new THREE.Mesh(geo, mat);
+    mesh.name = 'dirt-path';
+    return mesh;
   }
 
   // ---- Live region manager (THREE scene wiring) ------------------------------
@@ -88791,6 +89791,77 @@ window.WH_CONFIG.moveset = {
 
   RegionManager.prototype.clampEnemyToHomeSide = function (enemy, boundary) {
     return this.logic.clampEnemyToHomeSide(enemy, boundary);
+  };
+
+  // R5 P0-5: collider table per region (cached once every footprint is known).
+  RegionManager.prototype.propColliders = function (regionId) {
+    this.colliders = this.colliders || {};
+    if (this.colliders[regionId]) return this.colliders[regionId];
+    var table = whPropColliders(regionId, function (name) {
+      return window.WH_ASSETS.getMeta(name);
+    });
+    if (table.complete) this.colliders[regionId] = table;
+    return table;
+  };
+
+  // R5 P0-5: push a circle (player) out of the ACTIVE region's prop colliders.
+  // The first call (boot frame 1) also writes the spawn validator report.
+  RegionManager.prototype.pushOutOfProps = function (pos, radius) {
+    if (!this.spawnReport) this.spawnReport = this.validateSpawns();
+    return this.logic.pushOutCircles(pos, radius,
+      this.propColliders(this.logic.activeId).circles);
+  };
+
+  // R5 P0-5 spawn validator over BOTH regions straight from CONFIG: (i) home
+  // side (props past the plane, enemies past the hold line), (ii) inside the
+  // playable radius, (iii) region spawn outside every collider. Logs one
+  // console line; never throws.
+  RegionManager.prototype.validateSpawns = function () {
+    var report = { props: 0, enemies: 0, violations: [], exempt: [] };
+    try {
+      var self = this;
+      var rPlay = whPlayRadius();
+      var plane = CFG.boundary.z;
+      var hold = CFG.enemy.holdAtBoundaryMargin;
+      [CFG.regionA.id, CFG.regionB.id].forEach(function (rid) {
+        var reg = DEFS.regions[rid];
+        var isA = reg.side === 1;
+        var bad = function (kind, index, name, x, z, why) {
+          report.violations.push({ kind: kind, region: rid, index: index,
+            name: name, x: x, z: z, why: why });
+        };
+        reg.cfg.props.forEach(function (p, i) {
+          report.props++;
+          if (isA ? !(p.z > plane) : !(p.z < plane)) bad('prop', i, p.asset, p.x, p.z, 'side');
+          if (Math.sqrt(p.x * p.x + p.z * p.z) > rPlay) bad('prop', i, p.asset, p.x, p.z, 'radius');
+        });
+        reg.cfg.enemies.forEach(function (e, i) {
+          report.enemies++;
+          if (isA ? !(e.z >= plane + hold) : !(e.z <= plane - hold)) bad('enemy', i, e.type, e.x, e.z, 'side');
+          if (Math.sqrt(e.x * e.x + e.z * e.z) > rPlay) bad('enemy', i, e.type, e.x, e.z, 'radius');
+        });
+        var table = self.propColliders(rid);
+        table.exempt.forEach(function (c) {
+          report.exempt.push({ kind: 'collider-corridor', region: rid, index: c.index,
+            name: c.name, x: c.x, z: c.z, r: c.r });
+        });
+        table.circles.forEach(function (c) {
+          var dx = reg.spawn.x - c.x, dz = reg.spawn.z - c.z;
+          var d = Math.sqrt(dx * dx + dz * dz);
+          if (d < c.r + CFG.player.radius) {
+            bad('spawn', c.index, c.name, reg.spawn.x, reg.spawn.z,
+              'spawn inside collider r=' + c.r.toFixed(3) + ' d=' + d.toFixed(3));
+          }
+        });
+      });
+    } catch (err) {
+      report.error = String(err);
+    }
+    console.log('[WH spawn-validator] props=' + report.props + ' enemies=' +
+      report.enemies + ' violations=' + report.violations.length + ' exempt=' +
+      report.exempt.length + (report.error ? ' error=' + report.error : '') +
+      ' ' + JSON.stringify(report.violations));
+    return report;
   };
 
   // Build a region group from CONFIG data (props + ground + enemies). Pre-warm
@@ -88814,7 +89885,7 @@ window.WH_CONFIG.moveset = {
       roughness: 1.0, metalness: 0.0, side: THREE.DoubleSide
     });
     var ground = new THREE.Mesh(
-      new THREE.CircleGeometry(CFG.world.groundRadius, 48),
+      new THREE.CircleGeometry(whVisualGroundRadius(regionId), 48),
       groundMat
     );
     ground.rotation.x = -Math.PI / 2;
@@ -88833,7 +89904,8 @@ window.WH_CONFIG.moveset = {
         depthWrite: false
       });
       var mist = new THREE.Mesh(
-        new THREE.PlaneGeometry(CFG.world.groundRadius * 2, CFG.world.groundRadius * 2),
+        new THREE.PlaneGeometry(whVisualGroundRadius(regionId) * 2,
+          whVisualGroundRadius(regionId) * 2),
         mistMat
       );
       mist.rotation.x = -Math.PI / 2;
@@ -88841,6 +89913,11 @@ window.WH_CONFIG.moveset = {
       mist.name = 'mist-plane';
       group.add(mist);
     }
+
+    // 10-03 change order 2: dirt path ribbon (visual only, region-gated by
+    // CFG.world.dirtPath.regionId; no collider, polygon-offset decal).
+    var dirtPath = buildDirtPath(regionId);
+    if (dirtPath) group.add(dirtPath);
 
     // props from manifest
     var regionCfg = region.cfg;
@@ -88990,6 +90067,714 @@ window.WH_CONFIG.moveset = {
 })();
 </script>
 <script>
+// Witch Hunter - touch controls layer (2026-10-03, Nicko change order).
+// PARALLEL input layer: never removes or shadows mouse/keyboard handlers.
+// Self-contained IIFE exposing window.WH_TouchControls (init/show/hide/
+// setEditMode), loaded in index.html BEFORE game.js. Pointer Events with
+// pointerId tracking so stick + camera sweep + button taps coexist. Tunables
+// live in window.WH_CONFIG.touch; placement persists in localStorage as
+// viewport FRACTIONS (resize-safe). Darkwood faint outlines; amber (#d8b24a)
+// accent on sprint-on/active states only.
+
+(function () {
+  'use strict';
+
+  var TC = window.WH_CONFIG.touch;
+  var LS_KEY = 'wh-touch-layout-v1';
+
+  var inited = false;
+  var visible = false;      // layer shown via toggle button
+  var editMode = false;     // placement UI active (no game input injected)
+  var unlocked = false;     // unlock icon state inside edit mode
+  var scale = TC.scaleDefault || 1.0;
+  var firstShow = true;     // first show auto-enters LAYOUT (edit) mode
+  var hadSavedLayout = false; // a persisted layout already exists (skip auto-edit)
+
+  var rootEl = null;        // #wh-touch-layer
+  var toggleEl = null;      // #wh-touch-toggle (right edge, z 45)
+  var editBarEl = null;     // edit toolbar (lock, +/- scale, reset, done)
+  var lockChipEl = null;    // always-visible lock chip (re-enter edit mode)
+  var controls = {};        // name -> { el, nub }
+  var order = ['stick', 'cam', 'sprint', 'attack', 'lockon', 'dodge', 'block'];
+  var GAME_KEYS = {
+    stick: ['KeyW', 'KeyA', 'KeyS', 'KeyD'],
+    sprint: ['ShiftLeft']
+  };
+  var keysWritten = {};      // game-key booleans currently held BY this layer
+  var pointers = {};         // pointerId -> { role, name }
+  var lastCam = {};          // pointerId -> {x, y} camera drag previous pos
+  var stickActiveId = null;
+  var stickOrigin = { x: 0, y: 0 };
+  var controls_nub_pending = null;
+  var dragId = null, dragName = null, dragOffX = 0, dragOffY = 0;
+  var savedState = null;
+
+  function el(tag, cls, parent) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function clamp(v, lo, hi) { return v < lo ? lo : (v > hi ? hi : v); }
+  function fracX(elm, name) {
+    var sv = elm.style.left;
+    var f = parseFloat(sv);
+    if (isNaN(f)) f = (TC.layout[name] ? TC.layout[name].x * 100 : 50);
+    else if (sv.indexOf('px') >= 0) f = f / window.innerWidth * 100;
+    return clamp(f / 100, 0, 1);
+  }
+  function fracY(elm, name) {
+    var sv = elm.style.top;
+    var f = parseFloat(sv);
+    if (isNaN(f)) f = (TC.layout[name] ? TC.layout[name].y * 100 : 50);
+    else if (sv.indexOf('px') >= 0) f = f / window.innerHeight * 100;
+    return clamp(f / 100, 0, 1);
+  }
+
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      if (!raw) return null;
+      var obj = JSON.parse(raw);
+      if (!obj || typeof obj !== 'object' || !obj.controls) return null;
+      return obj;
+    } catch (e) { return null; }
+  }
+  function saveState() {
+    var out = { enabled: visible, scale: scale, controls: {} };
+    order.forEach(function (name) {
+      var c = controls[name];
+      if (!c) return;
+      out.controls[name] = { x: fracX(c.el, name), y: fracY(c.el, name) };
+    });
+    try { localStorage.setItem(LS_KEY, JSON.stringify(out)); } catch (e) {}
+  }
+
+  // ---- css -----------------------------------------------------------------
+  var CSS = [
+    '#wh-touch-toggle {',
+    '  position: fixed; right: 8px; top: 50%; transform: translateY(-50%);',
+    '  width: 40px; height: 40px; border-radius: 50%;',
+    '  border: 2px solid #5a5344; background: rgba(20, 17, 14, 0.8);',
+    '  color: #d8b24a; font: 700 20px/36px monospace; text-align: center;',
+    '  z-index: 45; cursor: pointer; user-select: none;',
+    '  -webkit-user-select: none; touch-action: none; pointer-events: auto;',
+    '}',
+    '#wh-touch-toggle:hover { border-color: #c9a94a; }',
+    '#wh-touch-toggle.active { border-color: #d8b24a; color: #e3d27a;',
+    '  box-shadow: 0 0 10px rgba(216, 178, 74, 0.4); }',
+
+    '#wh-touch-lockchip {',
+    '  position: fixed; right: 8px; top: calc(50% + 48px);',
+    '  width: 40px; height: 40px; border-radius: 50%;',
+    '  border: 2px solid #5a5344; background: rgba(20, 17, 14, 0.8);',
+    '  color: #d8d2c0; font: 700 18px/36px monospace; text-align: center;',
+    '  z-index: 45; cursor: pointer; user-select: none;',
+    '  -webkit-user-select: none; touch-action: none; pointer-events: auto;',
+    '}',
+    '#wh-touch-lockchip:hover { border-color: #c9a94a; }',
+
+    '#wh-touch-layer {',
+    '  position: fixed; inset: 0; z-index: 40; pointer-events: none;',
+    '  font-family: monospace;',
+    '}',
+
+    '.wh-touch-ctl {',
+    '  position: fixed; display: flex; flex-direction: column;',
+    '  align-items: center; justify-content: center;',
+    '  border: 2px solid rgba(90, 83, 68, 0.9);',
+    '  background: rgba(20, 17, 14, 0.35); border-radius: 50%;',
+    '  color: #d8d2c0; font-family: monospace; text-align: center;',
+    '  user-select: none; -webkit-user-select: none; touch-action: none;',
+    '  pointer-events: auto; cursor: pointer;',
+    '  opacity: ' + (TC.opacity || 0.35) + ';',
+    '  transition: opacity 0.15s ease, border-color 0.1s ease;',
+    '}',
+    '.wh-touch-ctl.touched { opacity: 0.9; }',
+    '.wh-touch-ctl.active { border-color: #d8b24a; color: #e3d27a;',
+    '  box-shadow: 0 0 12px rgba(216, 178, 74, 0.35); }',
+    '.wh-touch-ctl.active .glyph, .wh-touch-ctl.active .lbl { color: #e3d27a; }',
+    '.wh-touch-ctl .glyph { font-size: 20px; line-height: 1; pointer-events: none; }',
+    '.wh-touch-ctl .lbl { font-size: 9px; letter-spacing: 1px; margin-top: 3px;',
+    '  pointer-events: none; text-transform: uppercase; }',
+
+    '#wh-touch-layer.edit .wh-touch-ctl {',
+    '  border-style: dashed; border-color: rgba(216, 178, 74, 0.9);',
+    '  cursor: move;',
+    '}',
+
+    '.wh-touch-ctl.stick .nub { position: absolute; width: 34%; height: 34%;',
+    '  border-radius: 50%; border: 2px solid #6a6350;',
+    '  background: rgba(106, 99, 80, 0.25); pointer-events: none;',
+    '  transform: translate(-50%, -50%); left: 50%; top: 50%; }',
+    '.wh-touch-ctl.cam .crosshair { position: absolute; width: 10px; height: 10px;',
+    '  border-left: 2px solid #6a6350; border-top: 2px solid #6a6350;',
+    '  transform: rotate(45deg); pointer-events: none; }',
+
+    '#wh-touch-editbar {',
+    '  position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%);',
+    '  display: flex; gap: 8px; z-index: 46; pointer-events: auto;',
+    '  user-select: none; -webkit-user-select: none;',
+    '}',
+    '#wh-touch-editbar button {',
+    '  min-width: 40px; height: 36px; padding: 0 10px;',
+    '  border: 2px solid #5a5344; border-radius: 18px;',
+    '  background: rgba(20, 17, 14, 0.85); color: #d8d2c0;',
+    '  font: 700 14px monospace; cursor: pointer; touch-action: none;',
+    '}',
+    '#wh-touch-editbar button:hover { border-color: #c9a94a; }',
+    '#wh-touch-editbar button.amber { border-color: #d8b24a; color: #e3d27a; }'
+  ].join('\n');
+
+  function injectCss() {
+    var t = document.createElement('style');
+    t.id = 'wh-touch-style';
+    t.textContent = CSS;
+    document.head.appendChild(t);
+  }
+
+  // ---- control defs -----------------------------------------------------------
+  var DEFS = {
+    stick:  { label: 'Move' },
+    cam:    { label: 'Camera' },
+    sprint: { label: 'Sprint' },
+    attack: { glyph: '\u2694', label: 'Attack' },
+    lockon: { glyph: '\u2318', label: 'Lock-On' },
+    dodge:  { glyph: '\u21C4', label: 'Dodge' },
+    block:  { glyph: '\u25CE', label: 'Shield/Cast' }
+  };
+  var LOCKED_GLYPH = '\uD83D\uDD12';      // closed lock
+  var UNLOCKED_GLYPH = '\uD83D\uDD13';    // open lock
+
+
+  function buildToggle() {
+    if (toggleEl) return;
+    injectCss();
+    toggleEl = el('div');
+    toggleEl.id = 'wh-touch-toggle';
+    toggleEl.textContent = '\u25C7';
+    toggleEl.title = 'Touch controls: show/hide';
+    document.body.appendChild(toggleEl);
+    // Nicko 10-03 bug fix: the old handler swallowed touchstart with
+    // preventDefault, which kills the browser's synthetic click on touch
+    // devices - the toggle rendered but never opened with thumbs (mouse
+    // worked). Now: activate on pointerdown directly (touch AND mouse),
+    // then swallow the synthetic click so it can never double-fire.
+    toggleEl.addEventListener('pointerdown', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      onToggleClick();
+    });
+    toggleEl.addEventListener('contextmenu', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+    });
+    toggleEl.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+    });
+  }
+
+  function buildControls() {
+    if (rootEl) return;
+    rootEl = el('div');
+    rootEl.id = 'wh-touch-layer';
+    document.body.appendChild(rootEl);
+
+    order.forEach(function (name) {
+      var c = el('div', 'wh-touch-ctl ' + name);
+      var d = DEFS[name];
+      if (name === 'stick') {
+        var nub = el('span', 'nub', c);
+        controls_nub_pending = nub;   // wired after controls[name] exists
+      }
+      if (name === 'cam') el('span', 'crosshair', c);
+      if (d.glyph && name !== 'stick') {
+        var g = el('span', 'glyph', c);
+        g.textContent = d.glyph;
+      }
+      var L = el('span', 'lbl', c);
+      L.textContent = d.label;
+
+      var def = TC.layout[name] || { x: 0.5, y: 0.5 };
+      c.style.left = (def.x * 100) + '%';
+      c.style.top = (def.y * 100) + '%';
+
+      var entry = { el: c, nub: null };
+      if (name === 'stick') entry.nub = controls_nub_pending;
+      controls[name] = entry;
+      controls_nub_pending = null;
+
+      rootEl.appendChild(c);
+      bindControl(c, name);
+    });
+    if (savedState) applySavedState(savedState);
+    applyScale();
+  }
+
+  // ---- toggle / show / hide ------------------------------------------------
+  function onToggleClick(ev) {
+    if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+    if (visible) hide(); else show();
+  }
+
+  // Persistent lock chip (Nicko 10-03): the edit bar only existed on the
+  // auto-edit first show, so once a layout was saved there was NO way back
+  // into edit mode and no lock visual at all. This chip always sits under
+  // the toggle whenever the layer is visible; it re-opens edit mode.
+  function buildLockChip() {
+    if (lockChipEl) return;
+    lockChipEl = el('div');
+    lockChipEl.id = 'wh-touch-lockchip';
+    lockChipEl.textContent = UNLOCKED_GLYPH;
+    lockChipEl.title = 'Edit controls: move / scale / lock';
+    document.body.appendChild(lockChipEl);
+    ['mousedown', 'contextmenu'].forEach(function (t) {
+      lockChipEl.addEventListener(t, function (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+      });
+    });
+    lockChipEl.addEventListener('pointerdown', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (!visible) show();
+      setEditMode(true);        // edit bar returns; unlock to drag
+    });
+    lockChipEl.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+    });
+  }
+
+  function removeLockChip() {
+    if (!lockChipEl) return;
+    lockChipEl.parentNode.removeChild(lockChipEl);
+    lockChipEl = null;
+  }
+
+  function show() {
+    buildToggle();
+    buildControls();
+    buildLockChip();          // Nicko 10-03: edit-mode door always visible
+    rootEl.style.display = '';
+    visible = true;
+    toggleEl.classList.add('active');
+    if (firstShow) {
+      firstShow = false;
+      // Placement happens once: only the very first show with NOTHING stored
+      // yet opens edit mode; every later show returns locked in play mode.
+      if (!hadSavedLayout) setEditMode(true);
+    }
+    saveState();
+  }
+
+  function hide() {
+    if (rootEl) rootEl.style.display = 'none';
+    visible = false;
+    if (toggleEl) toggleEl.classList.remove('active');
+    removeLockChip();         // chip belongs to the visible layer only
+    setEditMode(false);
+    releaseAll();
+    saveState();
+  }
+
+  // ---- edit mode -------------------------------------------------------------
+  function setEditMode(on) {
+    editMode = !!on;
+    unlocked = false;
+    if (!rootEl) return;
+    rootEl.classList.toggle('edit', editMode);
+    buildEditBar();
+  }
+
+  function buildEditBar() {
+    if (editBarEl) { editBarEl.parentNode.removeChild(editBarEl); editBarEl = null; }
+    if (!editMode) return;
+
+    editBarEl = el('div');
+    editBarEl.id = 'wh-touch-editbar';
+    document.body.appendChild(editBarEl);
+
+    var minus = el('button', '', editBarEl);
+    minus.textContent = '\u2212';
+    minus.title = 'Smaller';
+    minus.addEventListener('click', function () { nudgeScale(-0.1); });
+
+    var plus = el('button', '', editBarEl);
+    plus.textContent = '+';
+    plus.title = 'Bigger';
+    plus.addEventListener('click', function () { nudgeScale(0.1); });
+
+    var lockBtn = el('button', '', editBarEl);
+    lockBtn.id = 'wh-touch-lockbtn';
+    lockBtn.textContent = LOCKED_GLYPH;
+    lockBtn.title = unlocked ? 'Lock placement (saves layout)' : 'Unlock placement';
+    lockBtn.addEventListener('click', function () {
+      unlocked = !unlocked;
+      rootEl.classList.toggle('unlocked', unlocked);
+      lockBtn.textContent = unlocked ? UNLOCKED_GLYPH : LOCKED_GLYPH;
+      if (!unlocked) saveState();   // locking placement saves the layout
+      lockBtn.classList.toggle('amber', unlocked);
+    });
+
+    var resetBtn = el('button', '', editBarEl);
+    resetBtn.textContent = 'Reset';
+    resetBtn.title = 'Restore default layout';
+    resetBtn.addEventListener('click', function () {
+      scale = TC.scaleDefault || 1.0;
+      order.forEach(function (name) {
+        var c = controls[name];
+        if (!c) return;
+        var def = TC.layout[name] || { x: 0.5, y: 0.5 };
+        c.el.style.left = (def.x * 100) + '%';
+        c.el.style.top = (def.y * 100) + '%';
+      });
+      applyScale();
+      saveState();
+    });
+
+    var doneBtn = el('button', 'amber', editBarEl);
+    doneBtn.textContent = 'Done';
+    doneBtn.title = 'Lock placement and play';
+    doneBtn.addEventListener('click', function () {
+      unlocked = false;
+      rootEl.classList.remove('unlocked');
+      setEditMode(false);         // locking saves layout (saveState inside)
+      saveState();
+    });
+  }
+
+  function nudgeScale(d) {
+    scale = clamp(scale + d, TC.scaleMin || 0.6, TC.scaleMax || 1.6);
+    applyScale();
+    releaseAll();                 // re-position held pointers for new geometry
+    saveState();
+  }
+
+  function applyScale() {
+    order.forEach(function (name) {
+      var c = controls[name];
+      if (!c) return;
+      var size = (name === 'stick' || name === 'cam')
+        ? TC.joystickRadius * 2 * scale
+        : TC.buttonSize * scale;
+      c.el.style.width = Math.round(size) + 'px';
+      c.el.style.height = Math.round(size) + 'px';
+    });
+  }
+
+  // ---- pointer bindings ----------------------------------------------------------
+  function bindControl(elm, name) {
+    // Mouse compat events must not reach the document handlers (a real-mouse
+    // tap on Attack would otherwise double-fire through document mousedown and
+    // start stale camera dragging). Real canvas/mouse input is unaffected.
+    ['mousedown', 'mouseup', 'touchstart', 'touchend', 'contextmenu']
+      .forEach(function (t) {
+        elm.addEventListener(t, function (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+        });
+      });
+    elm.addEventListener('pointerdown', function (ev) {
+      if (editMode) { startDrag(ev, name); return; }  // edit: drag only
+      if (!visible) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (elm.setPointerCapture) { try { elm.setPointerCapture(ev.pointerId); } catch (e) {} }
+      elm.classList.add('touched');
+      if (name === 'stick') {
+        pointers[ev.pointerId] = { role: 'stick' };
+        stickBegin(ev);
+      } else if (name === 'cam') {
+        pointers[ev.pointerId] = { role: 'cam' };
+        lastCam[ev.pointerId] = { x: ev.clientX, y: ev.clientY };
+      } else {
+        pointers[ev.pointerId] = { role: 'btn', name: name };
+        btnPress(name);
+      }
+    });
+
+    elm.addEventListener('pointermove', function (ev) {
+      var p = pointers[ev.pointerId];
+      if (!p) return;
+      ev.preventDefault();
+      if (p.role === 'stick') stickMove(ev);
+      else if (p.role === 'cam') camMove(ev);
+    });
+
+    elm.addEventListener('pointerup', function (ev) {
+      var p = pointers[ev.pointerId];
+      if (!p) return;
+      delete pointers[ev.pointerId];
+      delete lastCam[ev.pointerId];
+      elm.classList.remove('touched');
+      if (p.role === 'stick') stickEnd();
+      else if (p.role === 'cam') camEnd();
+      else if (p.role === 'btn') btnRelease(p.name);
+    });
+    elm.addEventListener('pointercancel', function (ev) {
+      var p = pointers[ev.pointerId];
+      if (!p) return;
+      delete pointers[ev.pointerId];
+      delete lastCam[ev.pointerId];
+      elm.classList.remove('touched');
+      if (p.role === 'stick') stickEnd();
+      else if (p.role === 'cam') camEnd();
+      else if (p.role === 'btn') btnRelease(p.name);
+    });
+  }
+
+  // ---- edit-mode dragging (unlocked placement) ---------------------------------
+  function startDrag(ev, name) {
+    if (!unlocked) return;     // locked placement: controls inert in edit mode
+    if (dragId !== null) return;
+    dragId = ev.pointerId;
+    dragName = name;
+    var r = controls[name].el.getBoundingClientRect();
+    dragOffX = ev.clientX - r.left;
+    dragOffY = ev.clientY - r.top;
+    if (ev.target.setPointerCapture) {
+      try { ev.target.setPointerCapture(ev.pointerId); } catch (e) {}
+    }
+  }
+
+  function moveDrag(ev) {
+    if (ev.pointerId !== dragId || !dragName) return;
+    var c = controls[dragName];
+    if (!c) return;
+    var r = c.el.getBoundingClientRect();
+    // keep control CENTER inside the viewport (never fully off-screen)
+    var x = clamp(ev.clientX - dragOffX + r.width / 2, 0, window.innerWidth);
+    var y = clamp(ev.clientY - dragOffY + r.height / 2, 0, window.innerHeight);
+    c.el.style.left = (x / window.innerWidth * 100) + '%';
+    c.el.style.top = (y / window.innerHeight * 100) + '%';
+  }
+
+  function endDrag(ev) {
+    if (ev.pointerId !== dragId) return;
+    dragId = null;
+    dragName = null;
+    saveState();               // every drag end persists (also saved on lock)
+  }
+
+  function bindDocDrag() {
+    document.addEventListener('pointermove', moveDrag, { passive: false });
+    document.addEventListener('pointerup', endDrag);
+    document.addEventListener('pointercancel', endDrag);
+    window.addEventListener('blur', function () { releaseAll(); });
+    window.addEventListener('resize', function () {
+      // %-positions self-adjust; re-clamp fractions into 0..1 after resize
+      order.forEach(function (name) {
+        var c = controls[name];
+        if (!c) return;
+        c.el.style.left = clamp(fracX(c.el, name), 0, 1) * 100 + '%';
+        c.el.style.top = clamp(fracY(c.el, name), 0, 1) * 100 + '%';
+      });
+    });
+  }
+
+  // ---- stick -> the SAME keys['KeyW/A/S/D'] booleans the keyboard writes -------
+  function stickBegin(ev) {
+    stickActiveId = ev.pointerId;
+    stickOrigin.x = ev.clientX;
+    stickOrigin.y = ev.clientY;
+    var r = controls.stick.el.getBoundingClientRect();
+    stickOrigin.cx = r.left + r.width / 2;
+    stickOrigin.cy = r.top + r.height / 2;
+    var nub = controls.stick.nub;
+    if (nub) { nub.style.left = '50%'; nub.style.top = '50%'; }
+  }
+
+  function stickMove(ev) {
+    if (ev.pointerId !== stickActiveId) return;
+    var R = (TC.joystickRadius || 70) * scale;
+    var dx = ev.clientX - stickOrigin.x;
+    var dy = ev.clientY - stickOrigin.y;
+    var len = Math.sqrt(dx * dx + dy * dy);
+    var cl = len > R ? R / len : 1;
+    var nx = (dx * cl) / R;
+    var ny = (dy * cl) / R;
+    var nub = controls.stick.nub;
+    if (nub) {
+      nub.style.left = (50 + (nx * 33)) + '%';
+      nub.style.top = (50 + (ny * 33)) + '%';
+    }
+    var dz = TC.deadzone || 0.15;
+    var mag = Math.sqrt(nx * nx + ny * ny);
+    if (mag < dz) {
+      writeStickKeys({ KeyW: false, KeyA: false, KeyS: false, KeyD: false });
+      return;
+    }
+    writeStickKeys({
+      KeyW: ny < -dz, KeyS: ny > dz,
+      KeyA: nx < -dz, KeyD: nx > dz
+    });
+  }
+
+  function writeStickKeys(on) {
+    var p = getPlayer();
+    if (!p || !p.keys) return;
+    GAME_KEYS.stick.forEach(function (code) {
+      var want = !!on[code];
+      if (p.keys[code] !== want) p.keys[code] = want;
+      keysWritten[code] = want;
+    });
+  }
+
+  function stickEnd() {
+    stickActiveId = null;
+    writeStickKeys({ KeyW: false, KeyA: false, KeyS: false, KeyD: false });
+    var nub = controls.stick.nub;
+    if (nub) { nub.style.left = '50%'; nub.style.top = '50%'; }
+  }
+
+  // ---- camera pad -> writes the SAME fields the mousemove handler writes -------
+  // (player.js ~242: camYaw/camPitch from px deltas at mouseSensDegPerPx, pitch
+  // clamped to camPitchMin/MaxDeg; lastManualCamT stamps manual camera use
+  // (10-04: camera yaw is manual-only, the auto-follow it gated is gone - the
+  // stamp is kept for debug/future re-enable).
+  // Writing those fields directly reuses that exact code path state; drag is
+  // NOT touched so the mouse handler stays the sole owner of self.dragging.
+  function camMove(ev) {
+    var prev = lastCam[ev.pointerId];
+    if (!prev) return;
+    var dx = ev.clientX - prev.x;
+    var dy = ev.clientY - prev.y;
+    prev.x = ev.clientX;
+    prev.y = ev.clientY;
+    var p = getPlayer();
+    if (!p || p.lockTarget) return;   // same rule as mouse cam: dead while locked
+    if (dx === 0 && dy === 0) return;
+    var sens = ((TC.sensDegPerPx !== undefined) ? TC.sensDegPerPx
+      : window.WH_CONFIG.player.mouseSensDegPerPx) * Math.PI / 180;
+    p.lastManualCamT = performance.now() / 1000;
+    p.camYaw -= dx * sens;
+    var C = window.WH_CONFIG.player;
+    p.camPitch = clamp(p.camPitch + dy * sens,
+      C.camPitchMinDeg * Math.PI / 180,
+      C.camPitchMaxDeg * Math.PI / 180);
+  }
+
+  function camEnd() {
+    // nothing persistent: pointer map entry is removed by the up/cancel handler
+  }
+
+  // ---- buttons -----------------------------------------------------------------
+  function btnPress(name) {
+    var p = getPlayer();
+    if (!p) return;
+    if (name === 'attack') {
+      if (p.tryAttack) p.tryAttack();
+    } else if (name === 'lockon') {
+      if (p.onLockToggle) p.onLockToggle();
+    } else if (name === 'dodge') {
+      if (p.tryRoll) p.tryRoll();
+    } else if (name === 'sprint') {
+      var on = p.keys['ShiftLeft'] && keysWritten['ShiftLeft'];
+      setSprint(!on);
+    } else if (name === 'block') {
+      // v6/v7 RMB routing replica (player.js ~218-231): spell -> tryCast,
+      // shield -> tryBlock on press + endBlock on release (press-hold).
+      if (p.offhand === 'spell') {
+        if (p.tryCast) p.tryCast();
+      } else {
+        if (p.tryBlock) p.tryBlock();
+      }
+    }
+  }
+
+  function btnRelease(name) {
+    if (name !== 'block') return;
+    var p = getPlayer();
+    if (!p) return;
+    if (p.offhand !== 'spell' && p.endBlock) p.endBlock();
+  }
+
+  function setSprint(on) {
+    var p = getPlayer();
+    if (!p || !p.keys) return;
+    p.keys['ShiftLeft'] = !!on;
+    keysWritten['ShiftLeft'] = !!on;
+    var c = controls.sprint;
+    if (c) c.el.classList.toggle('active', !!on);
+  }
+
+  // clear every key state we set + block/sprint visuals (hide/blur safety)
+  function releaseAll() {
+    var p = getPlayer();
+    if (p && p.keys) {
+      if (keysWritten['ShiftLeft']) { p.keys['ShiftLeft'] = false; keysWritten['ShiftLeft'] = false; }
+      GAME_KEYS.stick.forEach(function (code) {
+        if (keysWritten[code]) { p.keys[code] = false; keysWritten[code] = false; }
+      });
+    }
+    if (controls.sprint) controls.sprint.el.classList.remove('active');
+    var nub = controls.stick && controls.stick.nub;
+    if (nub) { nub.style.left = '50%'; nub.style.top = '50%'; }
+    pointers = {};
+    lastCam = {};
+    stickActiveId = null;
+  }
+
+  function getPlayer() {
+    // WH_DEBUG.player does not exist; the documented accessor is getPlayer()
+    // (game.js setupDebugHooks). Guarded so the layer never throws pre-boot.
+    try {
+      return (window.WH_DEBUG && window.WH_DEBUG.getPlayer &&
+              window.WH_DEBUG.getPlayer()) || null;
+    } catch (e) { return null; }
+  }
+
+  // ---- saved-state application ---------------------------------------------------
+  function applySavedState(saved) {
+    if (saved.scale && typeof saved.scale === 'number') {
+      scale = clamp(saved.scale, TC.scaleMin || 0.6, TC.scaleMax || 1.6);
+    }
+    order.forEach(function (name) {
+      var c = controls[name];
+      var pos = saved.controls[name];
+      if (!c || !pos) return;
+      if (typeof pos.x === 'number' && typeof pos.y === 'number') {
+        c.el.style.left = clamp(pos.x, 0, 1) * 100 + '%';
+        c.el.style.top = clamp(pos.y, 0, 1) * 100 + '%';
+      }
+    });
+    applyScale();
+  }
+
+  // ---- public API ----------------------------------------------------------------
+  window.WH_TouchControls = {
+    init: function () {
+      if (inited) return;
+      inited = true;
+      bindDocDrag();
+      savedState = loadState();
+      hadSavedLayout = !!(savedState && savedState.controls &&
+        Object.keys(savedState.controls).length);
+      buildToggle();            // toggle button always available (z 45)
+      // CONFIG.enabled OR a previously-shown saved layer reopens it; layout is
+      // applied inside buildControls from savedState. No blind save here, so a
+      // freshly saved layout is never clobbered by an empty controls table.
+      if (TC.enabled || (savedState && savedState.enabled)) show();
+    },
+    show: function () { show(); },
+    hide: function () { hide(); },
+    setEditMode: function (on) { setEditMode(!!on); },
+    isVisible: function () { return visible; },
+    isEditMode: function () { return editMode; }
+  };
+
+  // Auto-init: this script loads at body end (DOM above already parsed) and
+  // BEFORE game.js, but getPlayer() defers to WH_DEBUG at interaction time,
+  // so boot order is safe. CONFIG.touch missing simply disables the layer.
+  if (window.WH_CONFIG && window.WH_CONFIG.touch) {
+    window.WH_TouchControls.init();
+  }
+})();
+
+</script>
+<script>
 // Witch Hunter prototype v1 - main loop, camera, HUD, bootstrapping.
 // Exposes window.WH_DEBUG = { player position, activeRegionId,
 // prewarmedRegionId, regionStates summary, plus test helpers } (D4b-5).
@@ -89027,16 +90812,91 @@ window.WH_CONFIG.moveset = {
 
   // ---- renderer / scene ------------------------------------------------------
 
+  // R3 P0-4: internal-pixel law - drawing buffer = window px / div; style.css
+  // keeps the displayed size (pixel-locked upscale). Boot + resize share it.
+  function internalSize() {
+    var div = CFG.renderer.internalResDiv || 1;
+    return {
+      w: Math.max(1, Math.round(window.innerWidth / div)),
+      h: Math.max(1, Math.round(window.innerHeight / div))
+    };
+  }
+
+  // ---- 10-03 pixel-fidelity tuner (change order: colored pixels too large) ----
+  // F1 steps the internal buffer finer, F2 chunkier, through {1..4} live:
+  // renderer.setSize re-inits the drawing buffer (resize handler already does
+  // the same thing on window resizes), CSS keeps the on-screen size, so only
+  // the pixel granularity of the 3D buffer changes mid-run.
+  game.resTuner = {
+    steps: [1, 2, 3, 4],
+    readoutTimer: null
+  };
+
+  function applyResDiv(div) {
+    CFG.renderer.internalResDiv = div;
+    if (!game.renderer) return;   // pre-boot keypress: CONFIG already updated
+    var isz = internalSize();
+    game.renderer.setSize(isz.w, isz.h, false);   // updateStyle=false - CSS keeps display size
+  }
+
+  function showResReadout() {
+    var wrap = document.getElementById('wh-res-tuner');
+    var read = document.getElementById('wh-res-readout');
+    if (!wrap || !read) return;
+    var d = CFG.renderer.internalResDiv;
+    var label = d === 1 ? 'full res' : 'px x' + d;
+    read.textContent = 'Pixel fidelity: ' + d + ' (' + label + ')';
+    wrap.classList.remove('dim');
+    wrap.classList.add('pulse');
+    clearTimeout(game.resTuner.readoutTimer);
+    game.resTuner.readoutTimer = setTimeout(function () {
+      wrap.classList.add('dim');
+    }, 2500);
+  }
+
+  function stepResDiv(dir) {
+    var steps = game.resTuner.steps;
+    var d = CFG.renderer.internalResDiv;
+    var i = steps.indexOf(d);
+    if (i < 0) {   // hand-edited config value: snap to nearest known stepper
+      for (i = 0; i < steps.length && steps[i] < d; i++) {}
+    }
+    i = Math.min(steps.length - 1, Math.max(0, i + dir));
+    if (steps[i] !== d) applyResDiv(steps[i]);
+    showResReadout();
+  }
+
+  function bindResTunerKeys() {
+    document.addEventListener('keydown', function (e) {
+      if (e.code === 'F1') {
+        e.preventDefault();   // stop browser help overlay
+        if (!e.repeat) stepResDiv(-1);
+      } else if (e.code === 'F2') {
+        e.preventDefault();
+        if (!e.repeat) stepResDiv(1);
+      }
+    });
+  }
+
   function setupRenderer() {
     var canvas = document.getElementById('wh-canvas');
     var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: false });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, CFG.renderer.maxPixelRatio));
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    // R3 P0-4: pixelation requires dpr 1 (supersedes maxPixelRatio);
+    // updateStyle=false so CSS drives the display size.
+    var isz = internalSize();
+    renderer.setPixelRatio(1);
+    renderer.setSize(isz.w, isz.h, false);
     // R1: sRGB output (validated Witch Hunter 3D setting)
     if (CFG.renderer.outputColorSpaceSRGB && THREE.SRGBColorSpace) {
       renderer.outputColorSpace = THREE.SRGBColorSpace;
     }
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    // R2 P0-3: Neutral tonemap so fog stays brightest; ACES fallback for
+    // older/no Neutral builds (vanilla var function only).
+    if (THREE.NeutralToneMapping) {
+      renderer.toneMapping = THREE.NeutralToneMapping;   // r185 property exists (verified)
+    } else if (THREE.ACESFilmicToneMapping) {
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    }
     renderer.toneMappingExposure = CFG.renderer.toneMappingExposure;
     renderer.shadowMap.enabled = CFG.renderer.shadowMapEnabled;
     return renderer;
@@ -89044,21 +90904,86 @@ window.WH_CONFIG.moveset = {
 
   function setupScene() {
     var scene = new THREE.Scene();
-    scene.background = new THREE.Color(CFG.regionA.fogColor);
+    // 10-03 order 4: near-black background - sky luminance comes from the
+    // dome rig; fog color no longer fills the world via scene.background.
+    scene.background = new THREE.Color(0x05070f);
     scene.fog = new THREE.FogExp2(CFG.regionA.fogColor, CFG.regionA.fogDensity);
     return scene;
   }
 
+  // R2 P0-3: moon-and-lantern night rig. AmbientLight removed - the hemisphere
+  // is now the only fill. Pool creation (R2-3) slots into this function later;
+  // no pool code lives here in this chunk.
   function setupLights() {
     var L = CFG.lighting;
-    var amb = new THREE.AmbientLight(L.ambientColor, L.ambientIntensity);
-    game.scene.add(amb);
-    var hemi = new THREE.HemisphereLight(L.hemiSkyColor, L.hemiGroundColor, L.hemiIntensity);
+    var hemi = new THREE.HemisphereLight(L.hemiSkyColor, L.hemiGroundColor,
+      L.hemiBaseIntensity);
     game.scene.add(hemi);
-    var key = new THREE.DirectionalLight(L.keyColor, L.keyIntensity);
-    key.position.set(30, 60, 20);
-    game.scene.add(key);
-    game.keyLight = key;
+    game.hemiLight = hemi;
+
+    // Moon: directional clamped to the -z side (azimuth from +/-z axis, deg),
+    // elevation 25-35 deg. Aimed via target at world origin.
+    var az = (L.moonAzimuthDeg || 0) * Math.PI / 180;
+    var el = (L.moonElevationDeg || 30) * Math.PI / 180;
+    var dir = L.moonDirectionDistance || 60;
+    var moon = new THREE.DirectionalLight(L.moonColor, L.moonIntensity);
+    moon.position.set(
+      Math.round(Math.sin(az) * Math.cos(el) * dir * 10) / 10,
+      Math.round(Math.sin(el) * dir * 10) / 10,
+      -Math.round(Math.cos(az) * Math.cos(el) * dir * 10) / 10
+    );
+    moon.target.position.set(0, 0, 0);
+    game.scene.add(moon);
+    game.scene.add(moon.target);
+    game.moonLight = moon;
+
+    // Player lantern: PointLight parented into the player chain. Attach target
+    // is game.player.yawFrame when available, else game.player.root (boot order
+    // note: setupLights runs before the player exists; the lantern lights the
+    // scene rig at boot and re-parents below).
+    var lantern = new THREE.PointLight(L.lanternColor, L.lanternIntensity,
+      L.lanternDistance, L.lanternDecay);
+    var attach = (game.player && (game.player.yawFrame || game.player.root)) ||
+      game.scene;
+    var off = L.lanternAnchorOffset;
+    lantern.position.set(off[0], off[1], off[2]);
+    attach.add(lantern);
+    game.lantern = lantern;
+
+    // R2 P1-8: fixed pool of 4 PointLights + flame cards, created ONCE at boot
+    // BEFORE the first render so the shader light count never changes (M-19).
+    var P = CFG.lightPool;
+    game.lightPool = [];
+    game.flameCards = [];
+    game.lightPoolT = 0;
+    var texLoader = new THREE.TextureLoader();
+    var emberTex = texLoader.load(window.WH_ASSETS.resolveUrl(
+      'art-direction/3d/assets/textures/particles/particle-ember.png'));
+    for (var pi = 0; pi < P.size; pi++) {
+      var pl = new THREE.PointLight(P.color, 0, P.distance, P.decay);
+      game.scene.add(pl);
+      game.lightPool.push(pl);
+      var cardMat = new THREE.SpriteMaterial({ map: emberTex,
+        blending: THREE.AdditiveBlending, transparent: true, depthWrite: false });
+      var card = new THREE.Sprite(cardMat);
+      card.scale.set(0.55, 0.77, 1);
+      card.visible = false;
+      game.scene.add(card);
+      game.flameCards.push(card);
+    }
+  }
+
+  // R2 P0-3: re-parent the lantern into the player's yawFrame once the player
+  // body exists (left-hip anchor = left side of the character, yawFrame space,
+  // so the light turns with the player). Called from boot after setBody().
+  function attachPlayerLantern() {
+    var L = CFG.lighting;
+    if (!game.lantern || !game.player || !game.player.yawFrame) return;
+    if (game.lantern.parent !== game.player.yawFrame) {
+      game.player.yawFrame.add(game.lantern);
+    }
+    var off = L.lanternAnchorOffset;
+    game.lantern.position.set(off[0], off[1], off[2]);
   }
 
   // ---- HUD -------------------------------------------------------------------
@@ -89074,6 +90999,21 @@ window.WH_CONFIG.moveset = {
       loadNote: document.getElementById('wh-load-note'),
       reticle: document.getElementById('wh-lock-reticle')
     };
+    // 2026-10-03 boot loading screen: title + REAL progress bar overlay.
+    // The bar is the fraction of manifest assets settled (loaded OR
+    // stand-in); assets.js fires one tick per asset settle.
+    game.hud.bootBar = document.getElementById('wh-boot-bar');
+    game.hud.bootBarFill = document.getElementById('wh-boot-bar-fill');
+    game.hud.bootSub = document.getElementById('wh-boot-sub');
+    game.hud.bootAssetsDone = 0;
+    game.hud.bootAssetsTotal = Object.keys(window.WH_ASSETS.MANIFEST).length;
+    window.WH_ASSETS.setBootProgressCb(function () {
+      game.hud.bootAssetsDone++;
+      game.hud.bootBarFill.style.width =
+        Math.round(100 * game.hud.bootAssetsDone / game.hud.bootAssetsTotal) + '%';
+      game.hud.bootSub.textContent = 'Loading assets... ' +
+        game.hud.bootAssetsDone + ' / ' + game.hud.bootAssetsTotal;
+    });
     // v6: block/parry feedback cues, DOM only. The stamina bar already exists
     // in index.html and reflects the drain via updateHud.
     var flash = document.createElement('div');
@@ -89387,6 +91327,12 @@ window.WH_CONFIG.moveset = {
     var conn = window.WH_REGION_DEFS.connections[0];
     if (!conn) return;
     var blocked = rm.logic.clampPlayer(player.pos);
+    // R5 P0-5: prop colliders run after the plane + rim clamp on EVERY frame
+    // (including frames where it fired); a push-out landing past the plane
+    // or rim is re-clamped once.
+    if (rm.pushOutOfProps(player.pos, CFG.player.radius)) {
+      blocked = rm.logic.clampPlayer(player.pos) || blocked;
+    }
     if (blocked) return;
     // near gate: show hint when close to the chokepoint on the A side
     var distGate = Math.abs(player.pos.x - CFG.chokepoint.centerX);
@@ -89418,14 +91364,212 @@ window.WH_CONFIG.moveset = {
     game.player.resolveIncomingHit(amount, attacker);
   }
 
+  // R2 P0-3: region lighting = fog swap + hemi fill scaled to the region's
+  // ambientLightLevel (fill = hemiBaseIntensity * ambientLightLevel). The old
+  // keyLight is gone; moon and lantern are region-independent.
   function applyRegionLighting(regionId) {
     var region = window.WH_REGION_DEFS.regions[regionId];
-    game.scene.background = new THREE.Color(region.fogColor);
+    // 10-03 order 4: background stays near-black (sky dome owns the view);
+    // fog keeps its regional color/density for the ground haze.
     game.scene.fog.color = new THREE.Color(region.fogColor);
     game.scene.fog.density = region.fogDensity;
-    if (game.keyLight) {
-      game.keyLight.intensity = CFG.lighting.keyIntensity * region.ambientLightLevel;
+    if (game.hemiLight) {
+      // B reads darker: 1.15x the already-cut base fill (order 4)
+      var mult = regionId === CFG.regionB.id ?
+        (CFG.lighting.regionBFillMult || 1.0) : 1.0;
+      var fill = CFG.lighting.hemiBaseIntensity * region.ambientLightLevel * mult;
+      game.hemiLight.intensity = fill;
     }
+  }
+
+  // 10-03 order 4: starry night sky. Dome sphere (BackSide, fog:false,
+  // depthWrite off) with a vertical-gradient shader; 600 Points stars on the
+  // dome; moon = additive glow sprite + core disc billboard at the directional
+  // moon's direction. World-anchored via skyTick (player walks, dome stays).
+  function setupSky() {
+    var S = CFG.sky;
+    var group = new THREE.Group();
+    group.name = 'sky-rig';
+
+    var domeMat = new THREE.ShaderMaterial({
+      side: THREE.BackSide,
+      depthWrite: false,
+      fog: false,
+      uniforms: {
+        zenith: { value: new THREE.Color(S.zenithColor) },
+        band: { value: new THREE.Color(S.horizonBand) },
+        glow: { value: new THREE.Color(S.horizonGlow) },
+        glowStop: { value: S.horizonGlowStop }
+      },
+      vertexShader: [
+        'varying vec3 vDir;',
+        'void main() {',
+        '  vDir = normalize(position);',
+        '  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);',
+        '}'
+      ].join('\n'),
+      fragmentShader: [
+        'varying vec3 vDir;',
+        'uniform vec3 zenith;',
+        'uniform vec3 band;',
+        'uniform vec3 glow;',
+        'uniform float glowStop;',
+        'void main() {',
+        '  float h = clamp(vDir.y, -1.0, 1.0);',          // -1 nadir .. 1 zenith
+        '  float t = clamp(h * 2.2, 0.0, 1.0);',          // band -> zenith ramp
+        '  vec3 col = mix(band, zenith, t);',
+        // pale ash glow hugging the horizon (fog meets sky), gone by glowStop
+        '  float g = (1.0 - smoothstep(0.0, ' + S.horizonGlowStop.toFixed(2) +
+          ', abs(h) * 5.0)) * 0.5;',
+        '  col = mix(col, glow, clamp(g, 0.0, 1.0));',
+        '  gl_FragColor = vec4(col, 1.0);',
+        '}'
+      ].join('\n')
+    });
+    var dome = new THREE.Mesh(new THREE.SphereGeometry(S.domeRadius, 32, 20), domeMat);
+    dome.renderOrder = -10;           // draw first; stars/moon after
+    group.add(dome);
+
+    // stars: Points with per-star size/color/phase attributes, sizeAttenuation
+    // off (angular size like real stars), additive so overlaps stay soft.
+    function buildStarTexture() {
+      var c = document.createElement('canvas');
+      c.width = 16; c.height = 16;
+      var x = c.getContext('2d');
+      x.fillStyle = '#ffffff';
+      // blocky plus shape (pixel-art star, NEAREST)
+      x.fillRect(7, 3, 2, 10);
+      x.fillRect(3, 7, 10, 2);
+      var t = new THREE.CanvasTexture(c);
+      t.magFilter = THREE.NearestFilter;
+      t.minFilter = THREE.NearestFilter;
+      t.generateMipmaps = false;
+      return t;
+    }
+    var starGeo = new THREE.BufferGeometry();
+    var pos = [], col = [], siz = [], phs = [];
+    var seedState = 1188;
+    function sRand() {   // mulberry-ish deterministic
+      seedState = (seedState * 1103515245 + 12345) & 0x7fffffff;
+      return seedState / 0x7fffffff;
+    }
+    var cPalette = S.starColors.map(function (h) { return new THREE.Color(h); });
+    for (var i = 0; i < S.starCount; i++) {
+      // distribute on the upper dome (y from -0.08 to near 1), avoid nadir
+      var u = sRand() * 2 - 1;                 // cos theta
+      var yy = Math.max(-0.08, Math.pow(Math.abs(u), 0.65) * (u < 0 ? -1 : 1));
+      var theta = Math.acos(Math.max(-1, Math.min(1, yy)));
+      var phi = sRand() * Math.PI * 2;
+      var st = Math.sin(theta);
+      pos.push(S.domeRadius * 0.98 * st * Math.cos(phi),
+               S.domeRadius * 0.98 * yy,
+               S.domeRadius * 0.98 * st * Math.sin(phi));
+      var c = cPalette[Math.floor(sRand() * cPalette.length)];
+      col.push(c.r, c.g, c.b);
+      siz.push(S.starSizeMin + sRand() * (S.starSizeMax - S.starSizeMin));
+      phs.push(sRand() < S.twinklePct / 100 ? sRand() * 6.28 : -1.0);
+    }
+    starGeo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    starGeo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    starGeo.setAttribute('aSize', new THREE.Float32BufferAttribute(siz, 1));
+    starGeo.setAttribute('aPhase', new THREE.Float32BufferAttribute(phs, 1));
+    var starMat = new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      fog: false,
+      blending: THREE.AdditiveBlending,
+      uniforms: {
+        map: { value: buildStarTexture() },
+        time: { value: 0 }
+      },
+      vertexShader: [
+        'attribute float aSize;',
+        'attribute float aPhase;',
+        'uniform float time;',
+        'varying vec3 vColor;',
+        'varying float vTw;',
+        'void main() {',
+        '  vColor = color;',
+        '  vTw = aPhase < 0.0 ? 1.0 : (0.55 + 0.45 * sin(time * 1.7 + aPhase));',
+        '  vec4 mv = modelViewMatrix * vec4(position, 1.0);',
+        '  gl_PointSize = aSize * vTw;',
+        '  gl_Position = projectionMatrix * mv;',
+        '}'
+      ].join('\n'),
+      fragmentShader: [
+        'uniform sampler2D map;',
+        'varying vec3 vColor;',
+        'varying float vTw;',
+        'void main() {',
+        '  vec4 tx = texture2D(map, gl_PointCoord);',
+        '  gl_FragColor = vec4(vColor * vTw, 1.0) * tx;',
+        '}'
+      ].join('\n'),
+      vertexColors: true
+    });
+    starMat.vertexColors = true;
+    var stars = new THREE.Points(starGeo, starMat);
+    stars.renderOrder = -9;
+    group.add(stars);
+
+    // moon: additive glow sprite + core disc billboard at the moon direction
+    var az = (CFG.lighting.moonAzimuthDeg || S.moonAzimuthDeg) * Math.PI / 180;
+    var el = (CFG.lighting.moonElevationDeg || S.moonElevationDeg) * Math.PI / 180;
+    var moonDir = new THREE.Vector3(
+      Math.sin(az) * Math.cos(el),
+      Math.sin(el),
+      -Math.cos(az) * Math.cos(el));   // -z side like the directional rig
+    var moonPos = moonDir.clone().multiplyScalar(S.moonDistance);
+
+    function moonSprite(hex, size, opacity) {
+      var c = document.createElement('canvas');
+      c.width = 64; c.height = 64;
+      var x = c.getContext('2d');
+      var g = x.createRadialGradient(32, 32, 4, 32, 32, 32);
+      g.addColorStop(0, 'rgba(255,255,255,' + opacity + ')');
+      g.addColorStop(0.5, 'rgba(255,255,255,' + (opacity * 0.35) + ')');
+      g.addColorStop(1, 'rgba(255,255,255,0)');
+      x.fillStyle = g;
+      x.fillRect(0, 0, 64, 64);
+      var t = new THREE.CanvasTexture(c);
+      t.colorSpace = THREE.SRGBColorSpace;
+      var m = new THREE.SpriteMaterial({
+        map: t, color: hex, transparent: true, opacity: 1,
+        blending: THREE.AdditiveBlending, depthWrite: false, fog: false
+      });
+      var sp = new THREE.Sprite(m);
+      sp.scale.set(size, size, 1);
+      sp.position.copy(moonPos);
+      return sp;
+    }
+    var glow = moonSprite(S.moonGlowColor, S.moonSizePx * 3.2, 0.5);
+    glow.renderOrder = -8;
+    var core = moonSprite(S.moonColor, S.moonSizePx, 1.0);
+    core.renderOrder = -7;
+    group.add(glow);
+    group.add(core);
+
+    game.sky = { group: group, stars: stars, starMat: starMat };
+    game.scene.add(group);
+  }
+
+  // per-frame: stars twinkle clock (dome/moon are camera-distance invariant)
+  function skyTick() {
+    if (game.sky && game.sky.starMat) {
+      game.sky.starMat.uniforms.time.value = performance.now() / 1000;
+    }
+  }
+
+  // 10-04: instance + mount the player weapon and switch its moveset
+  // (CONFIG.moveset.weapons[id]). Measured sizing (2026-10-03): longsword
+  // 1.988m GLB -> 1.05m hand-held via CONFIG.assets.weaponScale.
+  function equipPlayerWeapon(id) {
+    if (!CFG.moveset.weapons[id]) return false;
+    var mesh = window.WH_ASSETS.instance(id);
+    if (!mesh) return false;
+    mesh.scale.setScalar(window.WH_ASSETS.weaponScale(id));
+    game.player.root.add(mesh);
+    return game.player.equipWeapon(id, mesh);
   }
 
   // ---- WH_DEBUG hooks ----------------------------------------------------------
@@ -89455,6 +91599,13 @@ window.WH_CONFIG.moveset = {
       getPlayer: function () { return game.player; },
       getRegionManager: function () { return game.regionManager; },
       getAssetMeta: function (name) { return window.WH_ASSETS.getMeta(name); },
+      getLightPool: function () {
+        return (game.lightPool || []).map(function (l, i) {
+          return { i: i, intensity: l.intensity, socketId: l.whSocketId || null,
+                   x: l.position.x, y: l.position.y, z: l.position.z };
+        });
+      },
+      getLightSockets: function () { return game.lastSockets || []; },
       getAnimState: function (entity) {
         var target = entity === undefined || entity === 'player' ? game.player : entity;
         if (typeof entity === 'number') target = game.regionManager.getEnemies(
@@ -89488,9 +91639,17 @@ window.WH_CONFIG.moveset = {
       triggerAttack: function () { game.player.tryAttack(); },
       getComboIndex: function () { return game.player.comboIndex; },
       getCurrentMove: function () {
-        var MS = window.WH_MOVESET;
-        return [MS.m1, MS.m2, MS.m3][game.player.comboIndex] || MS.m1;
+        var p = game.player;
+        var M = p.attackMove || p.getChainMove(p.comboIndex);
+        return window.WH_MOVESET[M.pose] || window.WH_MOVESET.m1;
       },
+      // 10-04 moveset framework hooks
+      getMoveDef: function () {
+        var p = game.player;
+        return { weapon: p.weaponId, moveId: p.attackMoveId, move: p.attackMove,
+                 phase: p.getAttackPhase() };
+      },
+      equipWeapon: function (id) { return equipPlayerWeapon(id); },
       isRolling: function () { return game.player.rolling; },
       getEnemy: function (idx) {
         var list = game.regionManager.getEnemies(game.regionManager.logic.activeId);
@@ -89556,7 +91715,8 @@ window.WH_CONFIG.moveset = {
       useConsumable: function (slot) { game.player.useConsumable(slot); },
       getConsumables: function () { return game.player.getConsumables(); },
       getCombo: function () {
-        return { index: game.player.comboIndex, queued: game.player.comboQueued };
+        return { index: game.player.comboIndex, queued: game.player.comboQueued,
+                 buffer: game.player.comboBufferTimer, moveId: game.player.attackMoveId };
       }
     };
   }
@@ -89569,7 +91729,10 @@ window.WH_CONFIG.moveset = {
     game.camera = new THREE.PerspectiveCamera(
       60, window.innerWidth / window.innerHeight, 0.1, 500);
     setupLights();
+    setupSky();           // 10-03 order 4: starry night dome + stars + moon
     setupHud();
+    bindResTunerKeys();   // 10-03 F1/F2 pixel-fidelity keys
+    showResReadout();     // visible at boot so the knob is discoverable; dims after 2.5s
 
     game.player = new window.WH_Player(game.scene, game.camera);
     game.player.offhandGlow = game.spellGlow;  // v7: expose glow mesh on player for debug hooks
@@ -89626,25 +91789,117 @@ window.WH_CONFIG.moveset = {
       // The animated holder owns this scaled lift; do not apply it twice.
       pBody.children[0].position.y += window.WH_ASSETS.groundMinY('playerBody');
       game.player.setBody(pBody);
-      var sword = window.WH_ASSETS.instance('longsword');
-      sword.scale.setScalar(0.9);
-      game.player.root.add(sword);
-      // mounts on the skinned R_Hand socket, else on the stand-in pose pivot
-      game.player.setWeapon(sword);
+      attachPlayerLantern();   // R2 P0-3: lantern now player-parented (left-hip anchor)
+      // v3: register the weapon with the player so attack stages drive its
+      // pose. 10-04: which weapon = CONFIG.moveset.playerWeapon.
+      equipPlayerWeapon(CFG.moveset.playerWeapon);
 
       // initial region A
       game.regionManager = new window.WH_RegionManager(game.scene);
       game.regionManager.buildRegion(CFG.regionA.id, false);
       var region = window.WH_REGION_DEFS.regions[CFG.regionA.id];
       game.player.pos.set(region.spawn.x, 0, region.spawn.z);
+      game.player.faceTowards(0, 0);     // boot spawn faces map center (Nicko 10-03)
       applyRegionLighting(CFG.regionA.id);
       showRegionName(region.name);
+      // 2026-10-03: smooth fade-out of the boot overlay from CONFIG
+      // (hud.bootOverlayFadeMs); .hidden also releases pointer-events, and
+      // game.hud.loadNote stays in the DOM for any later reuse.
+      var fadeMs = (CFG.hud && typeof CFG.hud.bootOverlayFadeMs === 'number') ?
+        CFG.hud.bootOverlayFadeMs : 900;
+      game.hud.loadNote.style.transition =
+        'opacity ' + (fadeMs / 1000) + 's ease';
       game.hud.loadNote.classList.add('hidden');
 
       game.running = true;
       game.lastFrame = performance.now();
       requestAnimationFrame(loop);
     });
+  }
+
+  // R2 P1-8: light socket registry. Static sockets come from the CONFIG props
+  // of the ACTIVE region only (pre-warmed groups excluded by definition);
+  // firebolts contribute dynamic sockets. IO amendments: sockets derive from
+  // CONFIG tables (no scene walk; region-manager.js untouched) and bolt y
+  // comes from the bolt's own pos (Vector3).
+  function computeSockets() {
+    var out = [];
+    var rm = game.regionManager;
+    if (!rm) return out;
+    var reg = window.WH_REGION_DEFS.regions[rm.logic.activeId];
+    var props = reg && reg.cfg && reg.cfg.props ? reg.cfg.props : [];
+    var S = CFG.lightSockets;
+    for (var i = 0; i < props.length; i++) {
+      var p = props[i];
+      var sd = S[p.asset];
+      if (!sd) continue;
+      var h = window.WH_ASSETS.groundHeight(p.asset) * p.scale * sd.heightFraction;
+      out.push({ id: p.asset + '@' + p.x + ',' + p.z, x: p.x, y: h, z: p.z,
+                 intensity: sd.intensity, weight: 1 });
+    }
+    var bolts = game.firebolts || [];
+    for (var j = 0; j < bolts.length; j++) {
+      var b = bolts[j];
+      if (!b || !b.alive) continue;
+      out.push({ id: 'firebolt#' + j, x: b.pos.x, y: b.pos.y, z: b.pos.z,
+                 intensity: 1.8, weight: 0.6 });
+    }
+    return out;
+  }
+
+  // R2 P0-3 (fix during validation): lantern flicker — the CONFIG band
+  // (lanternFlickerPct 5) was previously unused; apply the audit's
+  // deterministic two-sine wobble (no Math.random per spec) to the lantern.
+  // Game-time driven via performance.now so it advances even at SwiftShader
+  // low fps. Amplitude = lanternIntensity * flickerPct/100 (±0.325 @6.5).
+  function lanternTick() {
+    if (!game.lantern) return;
+    var LT = CFG.lighting;
+    var pct = LT.lanternFlickerPct !== undefined
+      ? LT.lanternFlickerPct : 0;
+    if (!pct) return;
+    var t = performance.now() / 1000;
+    var w = 0.6 * Math.sin(7.3 * t) + 0.4 * Math.sin(3.1 * t + 1.7);
+    var base = LT.lanternIntensity !== undefined ? LT.lanternIntensity : 6.5;
+    game.lantern.intensity = base * (1 + w * pct / 100);
+  }
+
+  // R2 P1-8: nearest-socket handoff. One pass per frame: sort sockets by
+  // weighted distance to the player, take the first 4, fade each pool slot
+  // toward its target (faster rate on target change = handoff).
+  function poolTick(dt) {
+    if (!game.lightPool) return;
+    game.lightPoolT += dt;
+    var sockets = computeSockets();
+    game.lastSockets = sockets;
+    var px = game.player ? game.player.pos.x : 0;
+    var pz = game.player ? game.player.pos.z : 0;
+    for (var s = 0; s < sockets.length; s++) {
+      var sk = sockets[s];
+      var dx = sk.x - px, dz = sk.z - pz;
+      sk.d = Math.sqrt(dx * dx + dz * dz) / sk.weight;
+    }
+    sockets.sort(function (a, b) { return a.d - b.d; });
+    var chosen = sockets.slice(0, CFG.lightPool.size);
+    for (var i = 0; i < game.lightPool.length; i++) {
+      var l = game.lightPool[i];
+      var tgt = chosen[i];
+      var want = tgt ? tgt.intensity : 0;
+      var changed = (l.whSocketId || '') !== (tgt ? tgt.id : '');
+      var k = 1 - Math.exp(-dt / (changed ? 0.12 : CFG.lightPool.handoffFadeSec));
+      l.intensity += (want - l.intensity) * k;
+      if (tgt) {
+        l.position.set(tgt.x, tgt.y, tgt.z);
+        l.whSocketId = tgt.id;
+      }
+      var card = game.flameCards[i];
+      if (card) {
+        var on = !!tgt && l.intensity > 0.06;
+        card.visible = on;
+        if (on) card.position.set(tgt.x,
+          tgt.y + 0.06 * Math.sin(2.1 * game.lightPoolT + i * 1.7), tgt.z);
+      }
+    }
   }
 
   // ---- main loop ----------------------------------------------------------------
@@ -89715,7 +91970,7 @@ window.WH_CONFIG.moveset = {
         if (dist > sweep.range) continue;
         var dyaw = wrapAngle(Math.atan2(dx, dz) - game.player.yaw);
         if (Math.abs(dyaw) > sweep.halfAngle) continue;
-        var dmg = sweep.damage * (e.type === 'ghoul' ? CFG.player.attackDamageGhoulBonus : 1);
+        var dmg = sweep.damage * (e.type === 'ghoul' ? sweep.ghoulMult : 1);
         // v6: riposte - staggered enemies take bonus damage, flag consumed
         if (e.riposteArmed && e.isStaggered && e.isStaggered()) {
           dmg *= CFG.block.riposteMult;
@@ -89726,9 +91981,10 @@ window.WH_CONFIG.moveset = {
         e.takeDamage(dmg, hitDir);
         // v7: 3rd chain strike landing (consumeAttackSweep consumed) arms
         // the armed finisher window. Use chainHits counter (robust to
-        // comboIndex resets from recoverFullyElapsed).
+        // comboIndex resets from recoverFullyElapsed). 10-04: threshold is
+        // the active weapon's chainCap (longsword 3 = unchanged).
         game.player.chainHits = (game.player.chainHits || 0) + 1;
-        if (game.player.chainHits >= window.WH_CONFIG.moveset.comboChainCap) {
+        if (game.player.chainHits >= game.player.getChainCap()) {
           game.player.armedTimer = CFG.armed.windowSeconds;
         }
         // v3 D4: shake pulse on landed melee hits, while locked-on only
@@ -89752,6 +92008,9 @@ window.WH_CONFIG.moveset = {
 
     game.player.updateCamera(dt);
     applyCameraShake(dt);
+    poolTick(dt);   // R2: fixed light pool nearest-socket handoff
+    lanternTick();  // R2: lantern wobble (CONFIG lanternFlickerPct)
+    skyTick();      // 10-03 order 4: star twinkle clock
     updateHud(dt);
     game.renderer.render(game.scene, game.camera);
   }
@@ -89760,7 +92019,8 @@ window.WH_CONFIG.moveset = {
     if (!game.renderer) return;
     game.camera.aspect = window.innerWidth / window.innerHeight;
     game.camera.updateProjectionMatrix();
-    game.renderer.setSize(window.innerWidth, window.innerHeight);
+    var isz = internalSize();   // R3 P0-4: same internal-pixel law as boot
+    game.renderer.setSize(isz.w, isz.h, false);
   });
 
   if (document.readyState === 'loading') {
