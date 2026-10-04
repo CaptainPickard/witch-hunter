@@ -1,0 +1,96 @@
+{
+  "input": "/workspace/witch-hunter/art-direction/3d/assets/races_regen/rigged/orc-male-warrior.rigged.glb",
+  "output": "/workspace/witch-hunter/art-direction/3d/assets/races_regen/rigged/orc-male-warrior.mixamo.glb",
+  "fps": 30,
+  "clips": {
+    "WH_Idle_Melee": {
+      "src": "/workspace/witch-hunter/scratch/mixamo-fbx/axepack/standing idle.fbx",
+      "frame_start": 1,
+      "frame_end": 56,
+      "samples": 56,
+      "duration_seconds": 1.8333333333333333,
+      "fcurves": 200,
+      "leg_scale_ratio": 0.9818518606506939,
+      "max_ground_correction_m": 0.05469512939453125,
+      "status": "baked",
+      "channels": 60
+    },
+    "WH_Walk_Melee": {
+      "src": "/workspace/witch-hunter/scratch/mixamo-fbx/axepack/standing walk forward.fbx",
+      "frame_start": 1,
+      "frame_end": 41,
+      "samples": 41,
+      "duration_seconds": 1.3333333333333333,
+      "fcurves": 200,
+      "leg_scale_ratio": 0.9818518606506939,
+      "max_ground_correction_m": 0.05614209175109863,
+      "status": "baked",
+      "channels": 60
+    },
+    "WH_Run_Melee": {
+      "src": "/workspace/witch-hunter/scratch/mixamo-fbx/axepack/standing run forward.fbx",
+      "frame_start": 1,
+      "frame_end": 23,
+      "samples": 23,
+      "duration_seconds": 0.7333333333333333,
+      "fcurves": 200,
+      "leg_scale_ratio": 0.9818518606506939,
+      "max_ground_correction_m": 0.0640716552734375,
+      "status": "baked",
+      "channels": 60
+    },
+    "WH_Attack_High": {
+      "src": "/workspace/witch-hunter/scratch/mixamo-fbx/axepack/standing melee attack 360 high.fbx",
+      "frame_start": 1,
+      "frame_end": 96,
+      "samples": 96,
+      "duration_seconds": 3.1666666666666665,
+      "fcurves": 200,
+      "leg_scale_ratio": 0.9818518606506939,
+      "max_ground_correction_m": 0.07141423225402832,
+      "status": "baked",
+      "channels": 60
+    },
+    "WH_Attack_Horiz": {
+      "src": "/workspace/witch-hunter/scratch/mixamo-fbx/axepack/standing melee attack horizontal.fbx",
+      "frame_start": 1,
+      "frame_end": 73,
+      "samples": 73,
+      "duration_seconds": 2.4,
+      "fcurves": 200,
+      "leg_scale_ratio": 0.9818518606506939,
+      "max_ground_correction_m": 0.08392095565795898,
+      "status": "baked",
+      "channels": 60
+    },
+    "WH_Hit_Large_L": {
+      "src": "/workspace/witch-hunter/scratch/mixamo-fbx/axepack/standing react large from left.fbx",
+      "frame_start": 1,
+      "frame_end": 32,
+      "samples": 32,
+      "duration_seconds": 1.0333333333333334,
+      "fcurves": 200,
+      "leg_scale_ratio": 0.9818518606506939,
+      "max_ground_correction_m": 0.06814944744110107,
+      "status": "baked",
+      "channels": 60
+    },
+    "WH_Taunt": {
+      "src": "/workspace/witch-hunter/scratch/mixamo-fbx/axepack/standing taunt battlecry.fbx",
+      "frame_start": 1,
+      "frame_end": 86,
+      "samples": 86,
+      "duration_seconds": 2.8333333333333335,
+      "fcurves": 200,
+      "leg_scale_ratio": 0.9818518606506939,
+      "max_ground_correction_m": 0.05782675743103027,
+      "status": "baked",
+      "channels": 60
+    }
+  },
+  "ground_z": -1.0,
+  "root_motion": "Root fixed; Hips vertical only",
+  "constraint_space": "WORLD: FBX armature is Y-up centimeters; WH is Z-up meters",
+  "output_bytes": 5248856,
+  "status": "pass"
+}

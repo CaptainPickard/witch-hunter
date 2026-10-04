@@ -36,7 +36,9 @@ def main():
     scene.render.fps = 30
     bpy.ops.import_scene.gltf(filepath=str(Path(args.glb).resolve()), bone_heuristic='BLENDER')
     arm = bpy.data.objects['WH_Armature']
-    meshes = [o for o in bpy.data.objects if o.type == 'MESH']
+    meshes = [o for o in bpy.data.objects if o.type == 'MESH' and
+              any(m.type == 'ARMATURE' and m.object == arm for m in o.modifiers)]
+    assert meshes
     acts = {a.name: a for a in bpy.data.actions}
     for tr in arm.animation_data.nla_tracks:
         tr.mute = True
@@ -72,7 +74,8 @@ def main():
     scene.display.shading.background_type = 'WORLD'
     scene.world = bpy.data.worlds.new('QA_world')
     scene.world.color = (.12, .15, .18)
-    report = {'glb': str(Path(args.glb).resolve()), 'ground_z': ground, 'clips': {}}
+    report = {'glb': str(Path(args.glb).resolve()), 'ground_z': ground,
+              'measured_meshes': [o.name for o in meshes], 'full_range': {}, 'clips': {}}
     for name in names:
         act = acts[name]
         arm.animation_data.action = act
