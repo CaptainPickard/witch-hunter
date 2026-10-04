@@ -12,10 +12,30 @@
   var MOVE_NAMES = {
     slashR2L: 'WH_SlashR2L', slashL2R: 'WH_SlashL2R', thrust: 'WH_Thrust'
   };
+  // 10-05 per-body clip-name variants (options.variant). A slot whose override
+  // clip is absent from the loaded GLB falls back to the NAMES default, so a
+  // GLB regen can never strand a state. moves replaces MOVE_NAMES wholesale.
+  // zombie: Mixamo ghoul set; death stays canonical (WH_Death_Zombie ends
+  // standing and reads wounded, not dead).
+  var VARIANTS = {
+    zombie: {
+      names: {
+        idle: 'WH_Idle_Zombie', walk: 'WH_Walk_Zombie', run: 'WH_Run_Zombie',
+        attack: 'WH_Attack_Zombie', hit: 'WH_Hit_Zombie', death: 'WH_Death'
+      },
+      moves: {}
+    }
+  };
 
-  function CharacterAnim(body, clips) {
+  function CharacterAnim(body, clips, options) {
+    var variant = options && options.variant ? VARIANTS[options.variant] : null;
+    if (options && options.variant && !variant) {
+      console.warn('[WH anim] unknown variant ' + options.variant);
+    }
     this.body = body;
     this.clips = clips;
+    this.names = {};
+    this.moveNames = variant ? variant.moves : MOVE_NAMES;
     this.mixer = new THREE.AnimationMixer(body);
     this.actions = {};
     this.clip = null;
@@ -26,11 +46,18 @@
     this.attackSerial = 0;
     var self = this;
     Object.keys(NAMES).forEach(function (state) {
-      var clip = THREE.AnimationClip.findByName(clips, NAMES[state]);
+      var name = variant && variant.names[state] || NAMES[state];
+      var clip = THREE.AnimationClip.findByName(clips, name);
+      if (!clip && name !== NAMES[state]) {
+        console.warn('[WH anim] missing ' + name + ', falling back to ' + NAMES[state]);
+        name = NAMES[state];
+        clip = THREE.AnimationClip.findByName(clips, name);
+      }
       if (!clip) {
-        console.warn('[WH anim] missing ' + NAMES[state]);
+        console.warn('[WH anim] missing ' + name);
         return;
       }
+      self.names[state] = name;
       var action = self.mixer.clipAction(clip);
       if (state === 'hit' || state === 'attack' || state === 'death') {
         action.setLoop(THREE.LoopOnce, 1);
@@ -38,8 +65,8 @@
       }
       self.actions[state] = action;
     });
-    Object.keys(MOVE_NAMES).forEach(function (move) {
-      var clip = THREE.AnimationClip.findByName(clips, MOVE_NAMES[move]);
+    Object.keys(this.moveNames).forEach(function (move) {
+      var clip = THREE.AnimationClip.findByName(clips, self.moveNames[move]);
       if (!clip) return;
       var action = self.mixer.clipAction(clip);
       action.setLoop(THREE.LoopOnce, 1);
@@ -118,7 +145,7 @@
   // durations, so per-move timings (thrust vs slash) drive the clip.
   // moveId picks the per-move chain clip when the body has it.
   CharacterAnim.prototype.playerAttack = function (phase, phaseTime, durations, moveId) {
-    var key = MOVE_NAMES[moveId] && this.actions[moveId] ? moveId : 'attack';
+    var key = this.moveNames[moveId] && this.actions[moveId] ? moveId : 'attack';
     if (this.dead || !this.actions[key]) return;
     // Chained swings sharing a clip stay in it and re-seek (no self-crossfade);
     // a chain step onto another per-move clip crossfades like any one-shot.
@@ -215,21 +242,22 @@
     var duration = action ? action.getClip().duration : 1;
     var weights = {};
     var self = this;
-    Object.keys(NAMES).forEach(function (state) {
+    Object.keys(this.names).forEach(function (state) {
       var act = self.actions[state];
-      weights[NAMES[state]] = act && (act.isRunning() ||
+      weights[self.names[state]] = act && (act.isRunning() ||
         (self.dead && state === 'death' && self.clip === 'death')) ?
         act.getEffectiveWeight() : 0;
     });
-    Object.keys(MOVE_NAMES).forEach(function (move) {
+    Object.keys(this.moveNames).forEach(function (move) {
       var act = self.actions[move];
-      if (act) weights[MOVE_NAMES[move]] = act.isRunning() ? act.getEffectiveWeight() : 0;
+      if (act) weights[self.moveNames[move]] = act.isRunning() ? act.getEffectiveWeight() : 0;
     });
-    return { clip: NAMES[this.clip] || MOVE_NAMES[this.clip] || null, time: time,
+    return { clip: this.names[this.clip] || this.moveNames[this.clip] || null, time: time,
       phase: duration ? time / duration : 0, weights: weights,
       timeScale: action ? action.timeScale : 0,
-      locomotion: NAMES[this.locomotion], attackSerial: this.attackSerial };
+      locomotion: this.names[this.locomotion], attackSerial: this.attackSerial };
   };
 
+  CharacterAnim.VARIANTS = VARIANTS;
   window.WH_CharacterAnim = CharacterAnim;
 })();
