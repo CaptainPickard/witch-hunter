@@ -3,6 +3,7 @@
   'use strict';
 
   var CFG = window.WH_CONFIG.animRt;
+  function BLK_ANIM() { return window.WH_CONFIG.block.blockAnim; }
   var NAMES = {
     idle: 'WH_Idle', walk: 'WH_Walk', run: 'WH_Run',
     attack: 'WH_Attack1', hit: 'WH_Hit', death: 'WH_Death'
@@ -12,6 +13,15 @@
   var MOVE_NAMES = {
     slashR2L: 'WH_SlashR2L', slashL2R: 'WH_SlashL2R', thrust: 'WH_Thrust'
   };
+  // Order D shield/block clips (player body only; NOT sword moves). All are
+  // LoopOnce + clamp: raise/impact/swipe all END on the same guard frame, so
+  // whichever one ran last, clamped, IS the block hold pose. The stagger ends
+  // in a crouch the guard-break stun sits in.
+  var CLIP_NAMES = {
+    shieldRaise: 'WH_ShieldRaise', shieldImpact: 'WH_ShieldImpact',
+    parrySwipe: 'WH_ParrySwipe', guardBreak: 'WH_GuardBreakStagger'
+  };
+  var SHIELD_HOLD = { shieldRaise: true, shieldImpact: true, parrySwipe: true };
 
   function CharacterAnim(body, clips) {
     this.body = body;
@@ -45,6 +55,14 @@
       action.setLoop(THREE.LoopOnce, 1);
       action.clampWhenFinished = true;
       self.actions[move] = action;
+    });
+    Object.keys(CLIP_NAMES).forEach(function (key) {
+      var clip = THREE.AnimationClip.findByName(clips, CLIP_NAMES[key]);
+      if (!clip) return;
+      var action = self.mixer.clipAction(clip);
+      action.setLoop(THREE.LoopOnce, 1);
+      action.clampWhenFinished = true;
+      self.actions[key] = action;
     });
     this.mixer.addEventListener('finished', function (event) {
       if (event.action === self.actions.hit && !self.dead) {
@@ -114,6 +132,42 @@
     }
   };
 
+  // Order D: blocked hit / landed parry one-shots. Each call is one NEW
+  // resolved enemy hit, so it restarts the clip (from guard back to guard).
+  CharacterAnim.prototype.shieldImpact = function () {
+    if (this.dead || !this.actions.shieldImpact) return;
+    this.transition('shieldImpact', BLK_ANIM().impactCrossfadeSec, true);
+  };
+
+  CharacterAnim.prototype.shieldParry = function () {
+    if (this.dead || !this.actions.parrySwipe) return;
+    this.transition('parrySwipe', BLK_ANIM().parryCrossfadeSec, true);
+  };
+
+  // Order D state-driven block presentation (called from syncPlayer only when
+  // the player is alive and not attacking). Returns true when it owns the
+  // pose this frame; false hands over to setLocomotion. No latched flags:
+  // every decision reads player state + this.clip each frame, and leaving
+  // goes through transition() like any other clip change.
+  CharacterAnim.prototype.syncBlock = function (player) {
+    var cfg = BLK_ANIM();
+    if (player.guardBroken && this.actions.guardBreak) {
+      // stagger plays once and clamps on its crouch for the rest of the stun
+      this.transition('guardBreak', cfg.guardBreakCrossfadeSec);
+      return true;
+    }
+    if (player.rolling) return false;          // roll wins (it also ends the block)
+    if (player.blocking && this.actions.shieldRaise) {
+      // a real (unblocked, e.g. from behind) hit reaction finishes first
+      if (this.hitActive) return true;
+      if (!SHIELD_HOLD[this.clip]) this.transition('shieldRaise', cfg.raiseCrossfadeSec);
+      return true;
+    }
+    // the parry branch ends the block (mechanics); the swipe still finishes
+    if (this.clip === 'parrySwipe' && this.actions.parrySwipe.isRunning()) return true;
+    return false;
+  };
+
   // 10-04: the player clip is phase-mapped like the enemy one - windup /
   // strike / recover each own a clip segment and play over the CONFIG move's
   // durations, so per-move timings (thrust vs slash) drive the clip.
@@ -174,7 +228,13 @@
       this.playerAttack(ph.stage, ph.t, ph.durations, player.attackMoveId);
     } else {
       this.attackPhase = null;
-      this.setLocomotion(player.animMoveSpeed || 0, !!player.sprinting || player.rolling);
+      if (this.syncBlock(player)) {
+        // keep the locomotion state current so the exit crossfade targets it
+        this.locomotion = (player.animMoveSpeed || 0) <= 0.01 ? 'idle' :
+          (player.sprinting ? 'run' : 'walk');
+      } else {
+        this.setLocomotion(player.animMoveSpeed || 0, !!player.sprinting || player.rolling);
+      }
     }
     this.update(dt);
   };
@@ -225,7 +285,14 @@
       var act = self.actions[move];
       if (act) weights[MOVE_NAMES[move]] = act.isRunning() ? act.getEffectiveWeight() : 0;
     });
-    return { clip: NAMES[this.clip] || MOVE_NAMES[this.clip] || null, time: time,
+    Object.keys(CLIP_NAMES).forEach(function (key) {
+      var act = self.actions[key];
+      // a clamped (finished) shield clip still holds the pose at full weight
+      if (act) weights[CLIP_NAMES[key]] = act.enabled && self.clip === key ?
+        act.getEffectiveWeight() : (act.isRunning() ? act.getEffectiveWeight() : 0);
+    });
+    return { clip: NAMES[this.clip] || MOVE_NAMES[this.clip] || CLIP_NAMES[this.clip] || null,
+      time: time,
       phase: duration ? time / duration : 0, weights: weights,
       timeScale: action ? action.timeScale : 0,
       locomotion: NAMES[this.locomotion], attackSerial: this.attackSerial };

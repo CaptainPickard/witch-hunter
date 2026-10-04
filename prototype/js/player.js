@@ -1049,6 +1049,7 @@
       this.spendStamina(BLK.parryStaminaCost);
       attacker.enterStagger(BLK.riposteStaggerDur);
       attacker.riposteArmed = true;          // next player hit does bonus damage
+      if (this.anim) this.anim.shieldParry();  // Order D: deflect swipe (presentation)
       this.endBlock();
       if (this.onParry) this.onParry(attacker);
       return false;                          // zero damage
@@ -1068,8 +1069,10 @@
         this.endBlock();
         this.stamina = 0;
         if (this.onGuardBreak) this.onGuardBreak();
-      } else if (this.onBlock) {
-        this.onBlock(attacker, chip);
+      } else {
+        // Order D: shield recoil replaces the chip's generic hit reaction
+        if (this.anim && !dead) this.anim.shieldImpact();
+        if (this.onBlock) this.onBlock(attacker, chip);
       }
       return !dead;                          // blocked (or killed by chip)
     }

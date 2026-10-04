@@ -537,7 +537,17 @@ window.WH_CONFIG = {
     parryFlashSeconds: 0.15,      // HUD white flash duration
     blockFlashSeconds: 0.12,      // HUD gray flash duration
     guardBreakFlashSeconds: 0.5,  // HUD red flash duration
-    guardBreakTextSeconds: 1.4    // GUARD BROKEN text pulse duration
+    guardBreakTextSeconds: 1.4,   // GUARD BROKEN text pulse duration
+    // Order D presentation only (Blender clips in combat-chain.glb, driven by
+    // anim.js syncBlock). Hold = the clamped last frame of raise / impact /
+    // swipe (all end on the same guard pose). Release / roll / shield loss
+    // exit through the normal locomotion crossfade (animRt.crossfadeSeconds).
+    blockAnim: {
+      raiseCrossfadeSec: 0.06,      // locomotion -> WH_ShieldRaise (clip itself is 0.25s)
+      impactCrossfadeSec: 0.03,     // hold -> WH_ShieldImpact on each blocked hit
+      parryCrossfadeSec: 0.03,      // hold -> WH_ParrySwipe on a landed parry
+      guardBreakCrossfadeSec: 0.06  // -> WH_GuardBreakStagger (0.79s vs guardBreakStun 0.8)
+    }
   },
 
   enemy: {
