@@ -60,7 +60,9 @@
     longsword: 'art-direction/3d/assets/weapons/longsword-pixelated.glb',
     handAxe: 'art-direction/3d/assets/weapons/hand-axe-pixelated.glb',
     // 10-04 left-hand shield (no NORMAL attribute: prepTemplate rebuilds it)
-    roundShield: 'art-direction/3d/assets/weapons/round-shield-pixelated.glb'
+    roundShield: 'art-direction/3d/assets/weapons/round-shield-pixelated.glb',
+    // 10-05 hand torch (scratch/torch_bake.py; NORMAL baked in)
+    torch: 'art-direction/3d/assets/weapons/torch-pixelated.glb'
   };
 
   // R4: rigged body -> offline-baked atlas (512 NEAREST + 5-bit posterize).

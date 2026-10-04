@@ -739,7 +739,11 @@ window.WH_CONFIG = {
     // roundShield (10-04): 1.0m target / 2.0017 measured disc height
     // (raw ext 1.995 x 2.002 x 0.393) = scale 0.4996; inside the 0.9-scaled
     // player body that is a ~0.9m world diameter.
-    weaponTargetHeight: { longsword: 1.05, handAxe: 0.6, roundShield: 1.0 },
+    // torch (10-05 asset mission): 0.62m target / 1.8988 measured height
+    // (raw ext 0.334 x 1.899 x 0.334, scratch/torch_glb_check.py) = scale
+    // 0.3265 - a one-hand torch about a third of the 1.8m player. Read only
+    // once the code order gives items.torch a mesh + hand mount.
+    weaponTargetHeight: { longsword: 1.05, handAxe: 0.6, roundShield: 1.0, torch: 0.62 },
     // Grip-mount tuning (2026-10-03): rollDeg rolls a hand-held weapon about
     // the hand's local +Z (grip forward; positive = CCW, right-hand rule)
     // with no code change. enabled:false reverts to the raw GLB axes for
@@ -890,8 +894,10 @@ window.WH_CONFIG.inventory = {
 // Item registry. ids are canonical (stage 2 enemy drops + gatherables reuse
 // it). Consumables omit stackCap -> CONFIG.inventory.defaultStackCap; gear = 1.
 // Order B gear data (read by inventory.js + player.js):
-//   kind        'caster' | 'melee' | 'shield' - the ONLY thing combat code
-//               keys off (player.handAction per hand, Order C)
+//   kind        'caster' | 'melee' | 'shield' | 'torch' - the ONLY thing
+//               combat code keys off (player.handAction per hand, Order C);
+//               'torch' has no hand action (its button is inert - NOT a
+//               caster) and exists for its light stat
 //   hands       which hands it may enter ('right' / 'left'; one item per hand)
 //   equipHint   default hand for a plain click on the CHARACTER tab
 //   cast        casting implement data; powerTier glove 1 < wand 2 < staff 3
@@ -931,15 +937,17 @@ window.WH_CONFIG.items = {
   towerShield:    { id: 'towerShield', name: 'Tower Shield', glyph: 'TS',
                     category: 'gear', stackCap: 1, kind: 'shield',
                     hands: ['right', 'left'], equipHint: 'leftHand',
-                    block: { moveMult: 0.25 } }                 // heavy
-  // DORMANT example (stage 2 drops/gatherables ship the real torch): the
-  // item light-stat shape. Uncommenting it also needs a kind the hand code
-  // tolerates (no kind = inert button) and a startingItems / drop source.
-  // torch:       { id: 'torch', name: 'Torch', glyph: 'TO',
-  //                category: 'gear', stackCap: 1,
-  //                hands: ['left', 'right'], equipHint: 'leftHand',
-  //                light: { color: 0xffa040, intensity: 8.0, distance: 12,
-  //                         decay: 2, flickerPct: 9 } }
+                    block: { moveMult: 0.25 } },                // heavy
+  // Torch (10-05 asset mission): either hand, no block. Its light stat wins
+  // over that hand's spell light (torch + glove = both lights live). Light
+  // ~1.3x firebolt's feel (firebolt 10.0 / 12m) - playtest tunes these.
+  // No mesh key yet: the gather/drop code order adds mesh: 'torch'
+  // (MANIFEST.torch) with its hand mount, and the drop source.
+  torch:          { id: 'torch', name: 'Torch', glyph: 'TR',
+                    category: 'gear', stackCap: 1, kind: 'torch',
+                    hands: ['left', 'right'], equipHint: 'leftHand',
+                    light: { color: 0xffa040, intensity: 10.5, distance: 15,
+                             decay: 2, flickerPct: 7 } }
 };
 
 // Order B (2026-10-05) free per-hand equip. Hands are equip-screen driven;
