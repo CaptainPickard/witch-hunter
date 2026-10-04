@@ -83,13 +83,16 @@
     this.toggling = false;            // loadout toggle busy window
     this.toggleTimer = 0;
     this.pendingQSwap = null;         // item id Q puts in the left hand on completion
-    this.castWindup = 0;              // seconds left of cast windup
-    this.castCooldown = 0;            // seconds left of cast cooldown
-    this.regripTimer = 0;             // belt re-grip busy window
-    this.selectedBeltSlot = 0;        // 0-based index into the 5 belt slots
+    // Order C (2026-10-05) dual-wield casting: fully independent per-hand
+    // cast state ('main' = right hand, 'off' = left hand). Both hands may be
+    // mid-windup at once; each completes and cools down on its own.
+    this.cast = { main: newCastState(), off: newCastState() };
+    // two pointers into the ONE belt list (0-based slot index per hand):
+    // Digit1-5 sets main, Shift+Digit1-5 sets off
+    this.bindings = { main: 0, off: 0 };
     this.belt = V7.belt.defaultSpells.slice();          // spell ids / null
     this.consumables = [{ id: 'healthPotion', charges: V7.consumable.healthPotion.charges }, null];
-    this.offhandGlow = null;          // emissive sphere mesh on the caster hand (game.js)
+    this.casterGlows = null;          // { right, left } glow orbs per hand (game.js)
     // Order B (2026-10-05) free per-hand equip: one gear item id (or null)
     // per hand, single instances (an item is in a hand OR the inventory).
     // Combat reads ONLY the capability flags hasCaster / hasShield /
@@ -310,10 +313,11 @@
       // v7: Q = loadout toggle (busy window, resets chain, keeps armed).
       // Order B: swaps the left hand glove <-> shield.
       if (e.code === 'KeyQ' && !e.repeat) self.toggleLoadout();
-      // Order B: Digit1-5 = active learned spell (never touches hands/chain/armed)
+      // Order C: Digit1-5 = MAIN (right) hand binding, Shift+Digit1-5 = OFF
+      // (left) hand binding (never touches hands/chain/armed)
       if (e.code.indexOf('Digit') === 0 && !e.repeat) {
         var n = parseInt(e.code.slice(5), 10);
-        if (n >= 1 && n <= V7.belt.slots) self.pressBeltKey(n - 1);
+        if (n >= 1 && n <= V7.belt.slots) self.pressBeltKey(n - 1, e.shiftKey ? 'off' : 'main');
       }
       // v7: R / T = consumable belt slots 1 / 2
       if (e.code === 'KeyR' && !e.repeat) self.useConsumable(0);
@@ -492,12 +496,30 @@
     return this.activeLoadout;
   };
 
-  // v7: belt spell selection = the ACTIVE LEARNED SPELL (magic canon 10-05:
-  // spells are knowledge, the belt is 5 quick slots over them). Starts the
-  // regrip window only while a caster is in hand (re-grip applies to
-  // nothing otherwise). NEVER touches the combo chain, armed state, or the
-  // hands.
-  Player.prototype.selectBeltSlot = function (i) {
+  // ---- Order C: per-hand cast state + bindings --------------------------------
+  // role 'main' = right hand, 'off' = left hand.
+  var ROLE_HAND = { main: 'right', off: 'left' };
+  var HAND_ROLE = { right: 'main', left: 'off' };
+  var ROLES = ['main', 'off'];
+
+  function newCastState() {
+    // windup: seconds left (> 0 = mid-cast), spellId: the spell being cast,
+    // cooldown: seconds until this hand may cast again, regrip: this hand's
+    // re-grip busy window (new binding / implement just entered the hand)
+    return { windup: 0, spellId: null, cooldown: 0, regrip: 0 };
+  }
+
+  function roleOf(handOrRole) {
+    return HAND_ROLE[handOrRole] || (ROLE_HAND[handOrRole] ? handOrRole : 'main');
+  }
+
+  // v7: belt spell selection, Order C: binds belt slot i to one hand ('main'
+  // default = Digit1-5, 'off' = Shift+Digit1-5). Magic canon 10-05: spells
+  // are knowledge, the belt is 5 quick slots over them; a binding is a
+  // pointer into the belt. Starts THAT hand's regrip only while it holds a
+  // caster. NEVER touches the combo chain, armed state, or the hands.
+  Player.prototype.selectBeltSlot = function (i, role) {
+    role = roleOf(role);
     if (this.state !== 'alive') return;
     if (i < 0 || i >= V7.belt.slots) return;
     if (!this.belt[i]) {
@@ -505,39 +527,69 @@
       if (this.onCastRefusal) this.onCastRefusal('empty-slot');
       return;
     }
-    this.selectedBeltSlot = i;
-    if (this.hasCaster()) this.regripTimer = V7.belt.regripSeconds;
-    // glow color follows the selection (mesh owned by game.js visuals)
-    if (this.onSpellSelected) this.onSpellSelected(this.belt[i]);
+    this.bindings[role] = i;
+    if (this.isCasterHand(ROLE_HAND[role])) this.cast[role].regrip = V7.belt.regripSeconds;
+    if (this.onSpellSelected) this.onSpellSelected(this.belt[i], role);
   };
 
-  // Digit key k (Order B): pick that slot's learned spell. Empty slot =
-  // refusal flash; the active spell's own key = no-op. A cast still in
-  // windup belongs to the old spell and is dropped.
-  Player.prototype.pressBeltKey = function (i) {
+  // Digit key (Order B/C): bind that slot's learned spell to the hand.
+  // Empty slot = refusal flash; the hand's current slot = no-op. A cast
+  // still winding up in THAT hand belongs to the old spell and is dropped.
+  Player.prototype.pressBeltKey = function (i, role) {
+    role = roleOf(role);
     if (this.state !== 'alive') return;
     if (i < 0 || i >= V7.belt.slots) return;
-    if (this.belt[i] && i === this.selectedBeltSlot) return;
-    if (this.belt[i]) this.dropPendingCast();
-    this.selectBeltSlot(i);
+    if (this.belt[i] && i === this.bindings[role]) return;
+    if (this.belt[i]) this.dropPendingCast(role);
+    this.selectBeltSlot(i, role);
   };
 
   // Learned spells (CHARACTER tab list): the belt's filled slots for now.
-  // Books / scrolls (learn-on-read) will add to the belt later.
+  // Books / scrolls (learn-on-read) will add to the belt later. main / off
+  // = which hand binding points at the slot.
   Player.prototype.getKnownSpells = function () {
     var out = [];
     for (var i = 0; i < this.belt.length; i++) {
-      if (this.belt[i]) out.push({ slot: i, id: this.belt[i], active: i === this.selectedBeltSlot });
+      if (this.belt[i]) {
+        out.push({ slot: i, id: this.belt[i],
+                   main: i === this.bindings.main, off: i === this.bindings.off });
+      }
     }
     return out;
   };
 
-  // A cast still in windup belongs to the implement being put away: drop it
-  // (no focus spent; deliberate, so no fizzle flash).
-  Player.prototype.dropPendingCast = function () {
-    this.castWindup = 0;
-    this.pendingSpellId = null;
+  // Spell bound to a hand ('main' / 'off' or 'right' / 'left'), or null.
+  Player.prototype.getBoundSpellId = function (role) {
+    return this.belt[this.bindings[roleOf(role)]] || null;
   };
+
+  // A cast still in windup belongs to the implement / binding being put
+  // away: drop it (no focus spent; deliberate, so no fizzle flash). No role
+  // = both hands.
+  Player.prototype.dropPendingCast = function (role) {
+    var roles = role ? [roleOf(role)] : ROLES;
+    for (var r = 0; r < roles.length; r++) {
+      var c = this.cast[roles[r]];
+      c.windup = 0;
+      c.spellId = null;
+    }
+  };
+
+  // Focus already promised to OTHER hands mid-windup (spent on completion).
+  // A new cast must fit beside it, so a focus-starved hand refuses at the
+  // press instead of both windups completing on one cast's worth of focus.
+  Player.prototype.focusReserved = function (exceptRole) {
+    var sum = 0;
+    for (var r = 0; r < ROLES.length; r++) {
+      var c = this.cast[ROLES[r]];
+      if (ROLES[r] !== exceptRole && c.windup > 0 && c.spellId) sum += castCost(c.spellId);
+    }
+    return sum;
+  };
+
+  function castCost(spellId) {
+    return V7.spell[spellId].focusCost * CFG.castFocusTaxMult;
+  }
 
   // ---- Order B: hands ---------------------------------------------------------
 
@@ -568,6 +620,11 @@
     if (kindOf(this.hands.left) === 'caster') return 'left';
     if (kindOf(this.hands.right) === 'caster') return 'right';
     return null;
+  };
+
+  // Order C: does this hand ('right' / 'left') hold a casting implement?
+  Player.prototype.isCasterHand = function (hand) {
+    return kindOf(this.hands[hand]) === 'caster';
   };
 
   Player.prototype.hasShield = function () {
@@ -607,7 +664,7 @@
 
   Player.prototype.secondaryDown = function () {
     var a = this.secondaryAction();
-    if (a === 'cast') this.tryCast();
+    if (a === 'cast') this.tryCast(this.casterHand());
     else if (a === 'block') this.tryBlock();
   };
 
@@ -678,10 +735,15 @@
     }
     this.lastRightItem = this.hands.right;
     if (!this.hasShield()) this.endBlock();
-    var ch = this.casterHand();
-    if (!ch) this.dropPendingCast();
-    else if (ch !== this.lastCasterHand) this.regripTimer = V7.belt.regripSeconds;
-    this.lastCasterHand = ch;
+    // Order C, per hand: an implement leaving drops that hand's windup; an
+    // implement entering (new item in the hand) starts that hand's regrip
+    if (!this.lastHandItems) this.lastHandItems = { right: null, left: null };
+    for (var r = 0; r < ROLES.length; r++) {
+      var h = ROLE_HAND[ROLES[r]];
+      if (!this.isCasterHand(h)) this.dropPendingCast(ROLES[r]);
+      else if (this.hands[h] !== this.lastHandItems[h]) this.cast[ROLES[r]].regrip = V7.belt.regripSeconds;
+      this.lastHandItems[h] = this.hands[h];
+    }
     var pair = window.WH_CONFIG.equip.qSwap;
     this.activeLoadout = this.hands.left === pair[0] ? 1 : this.hands.left === pair[1] ? 2 : 0;
     this.applyHandVisuals();
@@ -793,50 +855,71 @@
     }
   };
 
-  Player.prototype.getSelectedSpellId = function () {
-    return this.belt[this.selectedBeltSlot];
-  };
-
-  // v7: RMB-cast refusal conditions (AC: roll/attacking-strike/toggle/regrip/
+  // v7: cast refusal conditions (AC: roll/attacking-strike/toggle/regrip/
   // guard break/dead/focus). Windup-stage attacks ALLOW the weave cast.
-  Player.prototype.canCast = function () {
+  // Order C: per hand (role 'main' / 'off' or hand 'right' / 'left') - the
+  // hand needs its own implement, its own windup/cooldown/regrip clear, and
+  // the shared focus pool minus what the other hand has already promised.
+  Player.prototype.canCast = function (role) {
+    role = roleOf(role);
+    var c = this.cast[role];
     if (this.state !== 'alive') return false;
-    if (this.rolling || this.toggling || this.regripTimer > 0) return false;
+    if (this.rolling || this.toggling || c.regrip > 0) return false;
     if (this.guardBroken) return false;
-    if (!this.hasCaster()) return false;   // Order B: casting implement in either hand
+    if (!this.isCasterHand(ROLE_HAND[role])) return false;   // implement in THIS hand
     if (this.attacking && this.getAttackStage() !== 'windup') return false;
-    if (this.castCooldown > 0 || this.castWindup > 0) return false;
-    var spellId = this.getSelectedSpellId();
+    if (c.cooldown > 0 || c.windup > 0) return false;
+    var spellId = this.getBoundSpellId(role);
     if (!spellId) return false;
-    var S = V7.spell[spellId];
-    return this.focus >= S.focusCost * CFG.castFocusTaxMult;
+    return this.focus - this.focusReserved(role) >= castCost(spellId);
   };
 
-  // v7: cast entry (RMB with spell implement). Refusal = HUD flash.
+  // v7: cast entry. Refusal = HUD flash. Order C: starts THIS hand's windup
+  // with its binding; the other hand is untouched.
   // CASTING NEVER RESETS THE CHAIN: comboIndex/comboQueued untouched.
-  Player.prototype.tryCast = function () {
-    if (!this.canCast()) {
-      if (this.onCastRefusal) this.onCastRefusal('cast-refused');
-      return;
+  Player.prototype.tryCast = function (role) {
+    role = roleOf(role);
+    if (!this.canCast(role)) {
+      if (this.onCastRefusal) this.onCastRefusal('cast-refused', role);
+      return false;
     }
-    var spellId = this.getSelectedSpellId();
-    var S = V7.spell[spellId];
-    this.castWindup = S.castWindup;      // fizzle check runs during windup
-    this.pendingSpellId = spellId;
+    var spellId = this.getBoundSpellId(role);
+    var c = this.cast[role];
+    c.windup = V7.spell[spellId].castWindup;   // fizzle check runs during windup
+    c.spellId = spellId;
+    return true;
   };
 
-  // v7: windup completion -> spawn the Firebolt, spend focus WITH the
-  // one-hand tax (weapon in main hand = tax always in this slice),
-  // start the cast cooldown. Called by game.js (which owns projectiles).
-  // Returns the spawn request or null.
-  Player.prototype.completeCast = function () {
-    var spellId = this.pendingSpellId;
-    this.pendingSpellId = null;
+  // Order C: tick both hands' windups (game.js loop, which owns the spawned
+  // spells). Returns the completed cast requests (0, 1 or 2 this frame).
+  Player.prototype.tickCasts = function (dt) {
+    var out = [];
+    if (this.state !== 'alive') return out;
+    for (var r = 0; r < ROLES.length; r++) {
+      var c = this.cast[ROLES[r]];
+      if (c.windup <= 0) continue;
+      c.windup -= dt;
+      if (c.windup > 0) continue;
+      c.windup = 0;
+      var req = this.completeCast(ROLES[r]);
+      if (req) out.push(req);
+    }
+    return out;
+  };
+
+  // v7: windup completion -> spend focus WITH the one-hand tax (weapon in
+  // main hand = tax always in this slice), start THIS hand's cooldown.
+  // Returns the spawn request { spellId, role, hand, origin, dirX, dirZ }
+  // or null; game.js spawns from that hand's glow anchor.
+  Player.prototype.completeCast = function (role) {
+    role = roleOf(role);
+    var c = this.cast[role];
+    var spellId = c.spellId;
+    c.spellId = null;
     if (!spellId) return null;
     var S = V7.spell[spellId];
-    var cost = S.focusCost * CFG.castFocusTaxMult;
-    this.spendFocus(cost);
-    this.castCooldown = S.castCooldown;
+    this.spendFocus(castCost(spellId));
+    c.cooldown = S.castCooldown;
     // aim at the lock target, else straight ahead of facing
     var dx = Math.sin(this.yaw), dz = Math.cos(this.yaw);
     if (this.lockTarget) {
@@ -845,19 +928,30 @@
       var d = Math.sqrt(tdx * tdx + tdz * tdz);
       if (d > 0.001) { dx = tdx / d; dz = tdz / d; }
     }
-    return { spellId: spellId, origin: this.pos, dirX: dx, dirZ: dz };
+    return { spellId: spellId, role: role, hand: ROLE_HAND[role],
+             origin: this.pos, dirX: dx, dirZ: dz };
   };
 
-  // v7: damage during castWindup fizzles the cast: NO focus spent,
-  // no projectile. HUD fizzle flash via callback.
+  // Order C: windup progress 0..1 for a hand (glow pulse), 0 when idle.
+  Player.prototype.castProgress = function (role) {
+    var c = this.cast[roleOf(role)];
+    if (c.windup <= 0 || !c.spellId) return 0;
+    var w = V7.spell[c.spellId].castWindup;
+    return w > 0 ? 1 - c.windup / w : 1;
+  };
+
+  // v7: damage during a windup fizzles the cast: NO focus spent, no
+  // projectile. HUD fizzle flash via callback. Order C: fizzles every hand
+  // mid-windup (one flash).
   Player.prototype.cancelCastFizzle = function () {
-    if (this.castWindup > 0) {
-      this.castWindup = 0;
-      this.pendingSpellId = null;
-      if (this.onFizzle) this.onFizzle();
-      return true;
+    var any = false;
+    for (var r = 0; r < ROLES.length; r++) {
+      if (this.cast[ROLES[r]].windup > 0) any = true;
     }
-    return false;
+    if (!any) return false;
+    this.dropPendingCast();
+    if (this.onFizzle) this.onFizzle();
+    return true;
   };
 
   Player.prototype.spendFocus = function (amount) {
@@ -1063,7 +1157,7 @@
     if (this.iframes > 0 || this.state !== 'alive') return false;
     this.hp = Math.max(0, this.hp - amount);
     if (this.anim) this.anim.hit();
-    // v7: hp loss during castWindup fizzles the cast (no focus spent)
+    // v7: hp loss during a cast windup fizzles the cast (no focus spent)
     this.cancelCastFizzle();
     if (this.hp <= 0) {
       this.state = 'dying';
@@ -1157,8 +1251,12 @@
         if (qItem) this.equipItem(qItem, 'left', true);
       }
     }
-    if (this.regripTimer > 0) this.regripTimer = Math.max(0, this.regripTimer - dt);
-    if (this.castCooldown > 0) this.castCooldown = Math.max(0, this.castCooldown - dt);
+    // Order C: per-hand regrip + cooldown (windups tick in tickCasts)
+    for (var cr = 0; cr < ROLES.length; cr++) {
+      var cs = this.cast[ROLES[cr]];
+      if (cs.regrip > 0) cs.regrip = Math.max(0, cs.regrip - dt);
+      if (cs.cooldown > 0) cs.cooldown = Math.max(0, cs.cooldown - dt);
+    }
     // armed finisher window decays; expiry clears armed AND crossArmed
     if (this.armedTimer > 0) {
       this.armedTimer = Math.max(0, this.armedTimer - dt);
@@ -1464,10 +1562,7 @@
     this.toggling = false;
     this.toggleTimer = 0;
     this.pendingQSwap = null;              // Order B: hands themselves persist through death
-    this.castWindup = 0;
-    this.castCooldown = 0;
-    this.regripTimer = 0;
-    this.pendingSpellId = null;
+    this.cast = { main: newCastState(), off: newCastState() };   // Order C: both hands
     this.armedTimer = 0;
     this.crossArmed = false;
     this.atkYawOffset = 0;

@@ -334,6 +334,24 @@ html, body {
   color: #8fa07a;
 }
 
+/* Order C: the OFF (left) hand binding - dashed outline in its school color
+   plus an 'L' badge; the MAIN binding keeps the solid .selected border */
+.belt-slot.off-bound {
+  position: relative;
+  outline: 2px dashed #7a7160;
+  outline-offset: 2px;
+}
+
+.belt-slot.off-bound::after {
+  content: 'L';
+  position: absolute;
+  top: -14px;
+  right: -2px;
+  font-size: 9px;
+  line-height: 10px;
+  color: #c9b88a;
+}
+
 .belt-divider {
   width: 1px;
   height: 26px;

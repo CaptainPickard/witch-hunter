@@ -384,10 +384,10 @@
     });
     left.appendChild(el('div', 'inv-sec', 'SPELLS'));
     E.spells().forEach(function (sp) {
-      var row = el('div', 'inv-spell' + (sp.active ? ' active' : ''));
+      var row = el('div', 'inv-spell' + (sp.main ? ' active' : ''));
       row.appendChild(el('span', 'inv-spell-key', String(sp.slot + 1)));
       row.appendChild(el('span', 'inv-spell-name', spellName(sp.id)));
-      if (sp.active) row.appendChild(el('span', 'inv-spell-mark', 'ACTIVE'));
+      if (sp.main) row.appendChild(el('span', 'inv-spell-mark', 'ACTIVE'));
       row.addEventListener('click', function () {
         E.selectSpell(sp.slot);
         self.render();

@@ -321,7 +321,7 @@
     var glow = game.spellGlow;
     glow.visible = !!hand;
     if (!hand) return;
-    var sid = p.getSelectedSpellId();
+    var sid = p.getBoundSpellId(hand);
     if (sid && CFG.spell[sid]) glow.material.color.setHex(CFG.spell[sid].schoolColor);
     // re-anchor only when the hand / anchor mode / body changes
     var key = hand + ':' + G.anchor;
@@ -420,17 +420,25 @@
       // slots and badges the divider (CSS #wh-belt.stowed)
       var stowed = !p.hasCaster();
       game.hud.belt.classList.toggle('stowed', stowed);
-      var spellId = p.getSelectedSpellId();
+      // Order C: the MAIN binding gets the solid school-color border, the OFF
+      // binding a dashed one (+ 'L' badge); one slot may carry both
+      var spellId = p.getBoundSpellId('main');
       var SC = spellId ? CFG.spell[spellId].schoolColor : null;
       var hex = SC ? '#' + ('000000' + SC.toString(16)).slice(-6) : '';
+      var offId = p.getBoundSpellId('off');
+      var OC = offId ? CFG.spell[offId].schoolColor : null;
+      var offHex = OC ? '#' + ('000000' + OC.toString(16)).slice(-6) : '';
       for (var i = 0; i < game.hud.beltSlots.length; i++) {
         var el = game.hud.beltSlots[i];
         var has = !!p.belt[i];
-        var sel = (i === p.selectedBeltSlot);
+        var sel = (i === p.bindings.main);
+        var off = (i === p.bindings.off);
         el.classList.toggle('filled', has);
         el.classList.toggle('selected', sel);
+        el.classList.toggle('off-bound', off);
         el.style.borderColor = (sel && SC) ? hex : '';
         el.style.color = (sel && SC) ? hex : '';
+        el.style.outlineColor = (off && OC) ? offHex : '';
       }
       for (var ci = 0; ci < game.hud.consSlots.length; ci++) {
         var cs = game.hud.consSlots[ci];
@@ -833,6 +841,11 @@
     }
   }
 
+  // Order C: where a hand's cast spawns.
+  function castOrigin(req) {
+    return { x: req.origin.x, y: 1.2, z: req.origin.z };
+  }
+
   // 10-04: Radiance cast. Max one: a recast refreshes the existing effect
   // (timer back to full, fade back up), even after it expired and parked.
   function castRadiance(spellId) {
@@ -1062,8 +1075,8 @@
       getFocus: function () { return game.player.focus; },
       setFocus: function (v) { game.player.focus = v; game.player.focusRegenBlock = 0.1; },  // v7: brief regen pause for debug stability
       getBelt: function () { return game.player.getBelt(); },
-      selectBeltSlot: function (i) { game.player.selectBeltSlot(i); },
-      pressBeltKey: function (i) { game.player.pressBeltKey(i); },
+      selectBeltSlot: function (i, role) { game.player.selectBeltSlot(i, role); },   // role 'main' (default) / 'off'
+      pressBeltKey: function (i, role) { game.player.pressBeltKey(i, role); },
       // Order B hand hooks
       getHands: function () {
         var p = game.player;
@@ -1075,15 +1088,22 @@
       unequipHand: function (hand) { return game.player.unequipHand(hand); },
       getActiveLoadout: function () { return game.player.activeLoadout; },
       toggleLoadout: function () { game.player.toggleLoadout(); },
+      // Order C: per-hand { windup, spellId, cooldown, regrip } + shared bits
       getCastState: function () {
         var p = game.player;
-        return {
-          windup: p.castWindup,
-          cooldown: p.castCooldown,
-          regrip: p.regripTimer,
-          toggling: p.toggling
-        };
+        function hand(c) {
+          return { windup: c.windup, spellId: c.spellId, cooldown: c.cooldown, regrip: c.regrip };
+        }
+        return { main: hand(p.cast.main), off: hand(p.cast.off),
+                 focus: p.focus, toggling: p.toggling };
       },
+      getBindings: function () {
+        var p = game.player;
+        return { main: { slot: p.bindings.main, spell: p.getBoundSpellId('main') },
+                 off: { slot: p.bindings.off, spell: p.getBoundSpellId('off') } };
+      },
+      bindSpell: function (slot, role) { game.player.pressBeltKey(slot, role || 'main'); },
+      tryCast: function (role) { return game.player.tryCast(role || 'main'); },
       getRadianceState: function () {
         var fx = game.radiances[0];
         return {
@@ -1138,7 +1158,7 @@
     showResReadout();     // visible at boot so the knob is discoverable; dims after 2.5s
 
     game.player = new window.WH_Player(game.scene, game.camera);
-    game.player.offhandGlow = game.spellGlow;  // v7: expose glow mesh on player for debug hooks
+    game.player.casterGlows = { left: game.spellGlow, right: null };  // debug hooks (Order C: one orb per hand in C2)
     game.scene.add(game.player.root);
     // D3: player delegates the F-key toggle to the game's lock-on logic
     game.player.onLockToggle = toggleLockOn;
@@ -1149,12 +1169,6 @@
     };
     game.player.onFizzle = function () {
       flashScreen(CFG.block.parryFlashSeconds, 'parry');
-    };
-    game.player.onSpellSelected = function (spellId) {
-      var SC = CFG.spell[spellId];
-      if (SC && game.spellGlow) {
-        game.spellGlow.material.color.setHex(SC.schoolColor);
-      }
     };
     game.player.onPotion = function () {
       flashScreen(CFG.block.blockFlashSeconds, 'block');
@@ -1321,21 +1335,17 @@
     // player + transition logic
     game.player.update(dt, clampPlayerToBounds);
 
-    // ---- v7: cast windup tick (fires the bolt at windup end) ----
-    if (game.player.castWindup > 0 && game.player.state === 'alive') {
-      game.player.castWindup -= dt;
-      if (game.player.castWindup <= 0) {
-        game.player.castWindup = 0;
-        var req = game.player.completeCast();
-        if (req && window.WH_SPELLS && CFG.spell[req.spellId].kind === 'followLight') {
-          castRadiance(req.spellId);
-        } else if (req && window.WH_SPELLS) {
-          var bolt = window.WH_SPELLS.spawn(
-            game.scene, req.spellId,
-            { x: req.origin.x, y: 1.2, z: req.origin.z },
-            req.dirX, req.dirZ);
-          if (bolt) game.firebolts.push(bolt);
-        }
+    // ---- v7: cast windup tick (fires the bolt at windup end). Order C: both
+    // hands tick independently; 0-2 casts complete per frame. ----
+    var casts = game.player.tickCasts(dt);
+    for (var ci = 0; ci < casts.length && window.WH_SPELLS; ci++) {
+      var req = casts[ci];
+      if (CFG.spell[req.spellId].kind === 'followLight') {
+        castRadiance(req.spellId);
+      } else {
+        var bolt = window.WH_SPELLS.spawn(
+          game.scene, req.spellId, castOrigin(req), req.dirX, req.dirZ);
+        if (bolt) game.firebolts.push(bolt);
       }
     }
 
