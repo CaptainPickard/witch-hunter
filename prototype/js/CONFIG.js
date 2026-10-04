@@ -644,7 +644,15 @@ window.WH_CONFIG = {
     // sit ~10deg above screen center = in frame. Steep pitch pushes it up:
     // ~pitch > 50deg puts an 18m enemy past the top edge (player's own
     // pitch choice; reticle hides off-frame). Playtest is the real gate.
-    reticleOffsetY: 0.9             // reticle aim height above enemy feet
+    reticleOffsetY: 0.9,            // reticle aim height above enemy feet
+    // Order E2 (Nicko 10-05): lock-on only on enemies inside REAL light
+    // (hand light / Radiance / world fire sockets; moonlight never counts).
+    // Lock radius = light range * this: firebolt 12 -> 9.6m, Radiance
+    // 14 -> 11.2m, world fire (lightPool.distance 11) -> 8.8m.
+    lightRadiusFactor: 0.8,
+    lightCheckIntervalSec: 0,       // light registry rebuild interval; 0 = every frame
+    tooDarkText: 'Too dark to target',
+    tooDarkToastSeconds: 1.2        // refusal toast lifetime (an enemy was in range but unlit)
   },
 
   animRt: {

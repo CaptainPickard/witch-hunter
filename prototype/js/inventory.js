@@ -507,14 +507,15 @@
   };
 
   // Brief HUD line ("Dropped Bandage x1", "Inventory full").
-  InventoryUI.prototype.toast = function (text) {
+  // seconds: optional lifetime override (default CONFIG.inventoryUI.toastSeconds).
+  InventoryUI.prototype.toast = function (text, seconds) {
     var t = this.toastEl;
     t.textContent = text;
     t.classList.add('visible');
     clearTimeout(this.toastTimer);
     this.toastTimer = setTimeout(function () {
       t.classList.remove('visible');
-    }, CFG.inventoryUI.toastSeconds * 1000);
+    }, (seconds || CFG.inventoryUI.toastSeconds) * 1000);
   };
 
   // ---- world item entities (drops; stage 2 enemy drops / gatherables) -------------

@@ -502,8 +502,26 @@
 
   // ---- lock-on (D3) ------------------------------------------------------------
 
-  // Best candidate: nearest alive enemy of the ACTIVE region within
+  // Order E2: live lock-light registry (WH_PlayerLight.collectLockLights),
+  // rebuilt every call or at most every CONFIG.lockOn.lightCheckIntervalSec.
+  function lockLights() {
+    var iv = CFG.lockOn.lightCheckIntervalSec;
+    var now = performance.now() / 1000;
+    if (!game.lockLightCache || !(iv > 0) || now - game.lockLightT >= iv) {
+      game.lockLightCache = window.WH_PlayerLight.collectLockLights(
+        game.player, game.playerLight, game.radiances, computeFireSockets());
+      game.lockLightT = now;
+    }
+    return game.lockLightCache;
+  }
+
+  function isLit(e) {
+    return window.WH_PlayerLight.isInLitArea(lockLights(), e.pos.x, e.pos.z);
+  }
+
+  // Best candidate: nearest alive LIT enemy of the ACTIVE region within
   // maxDistance and inside a facing cone around the CAMERA forward direction.
+  // game.lockSkippedDark = an otherwise valid candidate was unlit (refusal toast).
   function pickLockTarget() {
     var L = CFG.lockOn;
     var p = game.player;
@@ -512,6 +530,7 @@
     var fx = Math.sin(p.camYaw + Math.PI), fz = Math.cos(p.camYaw + Math.PI);
     var halfCone = (L.facingConeDeg / 2) * Math.PI / 180;
     var best = null, bestDist = Infinity;
+    game.lockSkippedDark = false;
     for (var i = 0; i < enemies.length; i++) {
       var e = enemies[i];
       if (e.fsm === 'dead') continue;
@@ -523,7 +542,9 @@
       while (dyaw > Math.PI) dyaw -= Math.PI * 2;
       while (dyaw < -Math.PI) dyaw += Math.PI * 2;
       if (Math.abs(dyaw) > halfCone) continue;
-      if (dist < bestDist) { bestDist = dist; best = e; }
+      if (dist >= bestDist) continue;
+      if (!isLit(e)) { game.lockSkippedDark = true; continue; }
+      bestDist = dist; best = e;
     }
     return best;
   }
@@ -537,7 +558,12 @@
     var p = game.player;
     if (p.state !== 'alive' || !game.regionManager) return;
     var t = pickLockTarget();
-    if (!t) return;   // no candidate: do not engage
+    if (!t) {         // no candidate: do not engage
+      if (game.lockSkippedDark && game.inventoryUI) {
+        game.inventoryUI.toast(CFG.lockOn.tooDarkText, CFG.lockOn.tooDarkToastSeconds);
+      }
+      return;
+    }
     p.lockTarget = t;
     // snap camera behind the player relative to the target immediately
     var dx = t.pos.x - p.pos.x, dz = t.pos.z - p.pos.z;
@@ -548,7 +574,8 @@
     game.player.lockTarget = null;
   }
 
-  // Break conditions: target death, range hysteresis, region change.
+  // Break conditions: target death, range hysteresis, region change, and
+  // (Order E2) target outside every lock light - immediate, no grace.
   function updateLockOn() {
     var p = game.player;
     if (!p.lockTarget) { setReticleVisible(false); return; }
@@ -559,7 +586,7 @@
     var wrongRegion = t.homeRegionId !== activeId;
     var dx = t.pos.x - p.pos.x, dz = t.pos.z - p.pos.z;
     var dist = Math.sqrt(dx * dx + dz * dz);
-    if (dead || wrongRegion || dist > L.maxDistance * L.hysteresis) {
+    if (dead || wrongRegion || dist > L.maxDistance * L.hysteresis || !isLit(t)) {
       breakLockOn();
       setReticleVisible(false);
       return;
@@ -1277,6 +1304,20 @@
   // CONFIG tables (no scene walk; region-manager.js untouched) and bolt y
   // comes from the bolt's own pos (Vector3).
   function computeSockets() {
+    var out = computeFireSockets();
+    var bolts = game.firebolts || [];
+    for (var j = 0; j < bolts.length; j++) {
+      var b = bolts[j];
+      if (!b || !b.alive) continue;
+      out.push({ id: 'firebolt#' + j, x: b.pos.x, y: b.pos.y, z: b.pos.z,
+                 intensity: 1.8, weight: 0.6 });
+    }
+    return out;
+  }
+
+  // Static fire-prop sockets of the active region (also the Order E2 'world'
+  // lock lights).
+  function computeFireSockets() {
     var out = [];
     var rm = game.regionManager;
     if (!rm) return out;
@@ -1290,13 +1331,6 @@
       var h = window.WH_ASSETS.groundHeight(p.asset) * p.scale * sd.heightFraction;
       out.push({ id: p.asset + '@' + p.x + ',' + p.z, x: p.x, y: h, z: p.z,
                  intensity: sd.intensity, weight: 1 });
-    }
-    var bolts = game.firebolts || [];
-    for (var j = 0; j < bolts.length; j++) {
-      var b = bolts[j];
-      if (!b || !b.alive) continue;
-      out.push({ id: 'firebolt#' + j, x: b.pos.x, y: b.pos.y, z: b.pos.z,
-                 intensity: 1.8, weight: 0.6 });
     }
     return out;
   }

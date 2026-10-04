@@ -117,9 +117,62 @@
     light.intensity = flicker(def.intensity, def.flickerPct || 0, t, phase);
   }
 
+  // ---- Order E2 (Nicko 10-05): lock-on light registry ------------------------
+  // Lock-on only works on enemies standing in REAL light (moonlight never
+  // counts). Rebuilt on demand from live state, nothing latched:
+  //   'spell'    each hand whose handLightDef is live (firebolt binding, or an
+  //              items[id].light torch) - at the hand light's world position
+  //   'radiance' each lit cast follow-light (game.radiances, intensity > 0)
+  //   'world'    fire-prop sockets of the active region (CONFIG.lightSockets
+  //              props: lantern posts / waymarkers / campfires); these are
+  //              always burning, so all of them count, not just the 4 pool
+  //              lights currently hosting a flame card
+  // radius = the light's range * CONFIG.lockOn.lightRadiusFactor.
+  // Projectile lights are deliberately excluded (a passing bolt is a flash).
+  var tmpV = null;
+  function collectLockLights(player, playerLight, radiances, worldSockets) {
+    var C = cfg();
+    var k = C.lockOn.lightRadiusFactor;
+    var out = [];
+    if (!tmpV) tmpV = new THREE.Vector3();
+    for (var h = 0; h < HANDS.length && player && player.yawFrame; h++) {
+      var def = handLightDef(player, HANDS[h]);
+      if (!def) continue;
+      var hl = playerLight ? playerLight.hands[HANDS[h]] : null;
+      // not yet hand-anchored (still parked on the scene) -> player position
+      var p = hl && hl.parent && !hl.parent.isScene ? hl.getWorldPosition(tmpV) : player.pos;
+      out.push({ x: p.x, z: p.z, radius: def.distance * k, kind: 'spell' });
+    }
+    var rads = radiances || [];
+    for (var r = 0; r < rads.length; r++) {
+      var fx = rads[r];
+      if (!fx || !fx.active || !(fx.light.intensity > 0)) continue;
+      var rp = fx.light.getWorldPosition(tmpV);
+      out.push({ x: rp.x, z: rp.z, radius: fx.config.lightDistance * k, kind: 'radiance' });
+    }
+    var socks = worldSockets || [];
+    for (var s = 0; s < socks.length; s++) {
+      out.push({ x: socks[s].x, z: socks[s].z,
+                 radius: C.lightPool.distance * k, kind: 'world' });
+    }
+    return out;
+  }
+
+  // Point-in-any-light test on the xz plane.
+  function isInLitArea(lights, x, z) {
+    for (var i = 0; i < lights.length; i++) {
+      var L = lights[i];
+      var dx = x - L.x, dz = z - L.z;
+      if (dx * dx + dz * dz <= L.radius * L.radius) return true;
+    }
+    return false;
+  }
+
   window.WH_PlayerLight = {
     PlayerLight: PlayerLight,
     handLightDef: handLightDef,
-    anchorToHand: anchorToHand
+    anchorToHand: anchorToHand,
+    collectLockLights: collectLockLights,
+    isInLitArea: isInLitArea
   };
 })();
