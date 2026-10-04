@@ -1,0 +1,61 @@
+[
+ {
+  "png": "/workspace/witch-hunter/scratch/roundF-proof/01-wall-pair-closeup.png",
+  "objects": 9,
+  "aim": [
+   87.48541893291625,
+   1.2,
+   1.891088627733118
+  ],
+  "cam": [
+   81.46088700758362,
+   1.7,
+   2.961142402385562
+  ],
+  "lens": 28,
+  "night": false
+ },
+ {
+  "png": "/workspace/witch-hunter/scratch/roundF-proof/02-wall-ring-wide-canopy.png",
+  "objects": 161,
+  "aim": [
+   -28.4,
+   5.0,
+   -79.9
+  ],
+  "cam": [
+   -43.89805404711434,
+   3.2,
+   -57.06978930114101
+  ],
+  "lens": 20,
+  "night": false,
+  "tree": {
+   "asset": "witchwoodTree",
+   "x": -28.4,
+   "z": -79.9
+  }
+ },
+ {
+  "png": "/workspace/witch-hunter/scratch/roundF-proof/03-gate-arch-lantern.png",
+  "objects": 99,
+  "aim": [
+   0,
+   4.6,
+   -25
+  ],
+  "cam": [
+   1.5,
+   1.7,
+   -10.0
+  ],
+  "lens": 24,
+  "night": true,
+  "pointLight": {
+   "x": 0.0,
+   "y": 6.353849115642389,
+   "z": -25.0,
+   "watts": 900
+  }
+ }
+]

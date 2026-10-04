@@ -1068,6 +1068,9 @@
       out.push({ id: p.asset + '@' + p.x + ',' + p.z, x: sx, y: h, z: sz,
                  intensity: sd.intensity, weight: 1 });
     }
+    // Round F: world-level sockets (gate-arch lantern), live in both regions.
+    var ws = rm.worldSockets ? rm.worldSockets() : [];
+    for (var w = 0; w < ws.length; w++) out.push(ws[w]);
     var bolts = game.firebolts || [];
     for (var j = 0; j < bolts.length; j++) {
       var b = bolts[j];

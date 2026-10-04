@@ -88,7 +88,13 @@ window.WH_CONFIG = {
     banditCampfire:   { heightFraction: 0.55, intensity: 3.2,
                         offset: [0.0, 0.0] },
     lanternWaymarker: { heightFraction: 0.67, intensity: 9.5,
-                        offset: [0.0, 0.35] }
+                        offset: [0.0, 0.35] },
+    // Round F: gate-arch lantern (WORLD socket, both regions; not a region
+    // prop). heightFraction is up the HUNG lantern's height from its base;
+    // offset [x, z] is arch-local in meters (rotated with arch.rotY).
+    // region-manager wallPlan().sockets -> game.js computeSockets.
+    b3Gate:           { heightFraction: 0.45, intensity: 5.0,
+                        offset: [0.0, 0.0] }
   },
 
   world: {
@@ -439,6 +445,53 @@ window.WH_CONFIG = {
     centerX: 0,                       // gate sits at x = 0 on the boundary
     width: 8,                         // passable corridor width along the boundary
     markerScale: 2.0
+  },
+
+  // Round F (io/missions/2026-10-05-cc-roundF-wall.md): vine-on-stone wall
+  // ring around the shared disc + a wall along the boundary plane, with a
+  // gate arch over the chokepoint. PARAMETERS ONLY: region-manager
+  // whWallPlan derives every segment from this block + measured footprints
+  // (seeded mulberry32; mirror: scratch/wall_mirror.py). World-level: built
+  // once at boot, never disposed by region swaps.
+  boundaryWall: {
+    enabled: true,
+    seed: 20261006,
+    radius: 87.5,                     // ring centerline (playable rim 88.5)
+    minRadius: 86.5,                  // radial jitter never pulls a segment inside this
+    segmentLengthUnits: 4.0,          // world meters per segment INSTANCE (X scale)
+    overlapM: 0.2,                    // segment count uses length - overlap so ends butt
+    heightM: 2.4,                     // world height (Y scale; mild stretch of the GLB)
+    depthScale: 0.7,                  // Z scale = X scale * this (~0.7 m thick)
+    sinkM: 0.05,                      // bury the base slightly into the ground
+    assets: ['whWallA', 'whWallB'],   // MANIFEST keys, alternated
+    jitter: { radial: 0.7, rotJitterDeg: 4 },  // radial: circular 1-2-1 smoothed
+    chordZ: -25,                      // boundary-plane wall line
+    chordFromX: 4.0,                  // from the corridor edge outward...
+    chordToRim: true,                 // ...to the ring intercept (x ~ +-83.85)
+    collider: { r: 0.45, perSegment: 3 },  // circles along each segment's axis
+    // exclusion sweep vs CONFIG props (both regions): collider r + clearM;
+    // ring segments nudge inward in nudgeStepM steps up to nudgeMaxM, then
+    // drop (chord segments drop). maxDrops is the expected ceiling (logged).
+    exclusion: { clearM: 0.5, nudgeStepM: 0.25, nudgeMaxM: 1.0, maxDrops: 2 },
+    arch: {
+      asset: 'b3Gate', x: 0, z: -25, rotY: 0,
+      fitOpening: 5.2,                // scale so the clear opening is >= this (m)
+      // measured from the GLB (scratch/gate_opening.py on b3-gate-open):
+      // narrowest clear gap in the walkable band / ext X, its center / ext X,
+      // opening apex above the floor / ext Y, ext Z / ext X.
+      openingFrac: 0.3428, openingCenterFrac: 0.0059, apexFrac: 0.6454,
+      depthFrac: 0.6338,
+      depthScale: 0.45,               // Z squash: 9.6 m deep at uniform scale -> ~4.3 m
+      // pillar blocks = opening edge .. outer half-width, full depth; ringed by
+      // leg circles (r, spacing) + a corner plug at each doorway mouth corner,
+      // set just outside the opening so the lane == the arch opening.
+      legs: { r: 0.6, spacingM: 1.0 },
+      plugCorners: true, plugR: 0.5
+    },
+    // hung height = heightM * scale (0.9 m: the measured gate is ~1.9x the
+    // briefed ~8 m arch, so the briefed 0.5 m read as a speck at 6.8 m)
+    lantern: { asset: 'whLanternHang', heightM: 0.75, scale: 1.2,
+               topBelowApexM: -0.05 }  // hook top 5 cm INTO the apex stone (attached)
   },
 
   preWarm: {
