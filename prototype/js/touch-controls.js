@@ -172,7 +172,7 @@
     attack: { glyph: '\u2694', label: 'Attack' },
     lockon: { glyph: '\u2318', label: 'Lock-On' },
     dodge:  { glyph: '\u21C4', label: 'Dodge' },
-    block:  { glyph: '\u25CE', label: 'Shield/Cast' }
+    block:  { glyph: '\u25CE', label: 'Off Hand' }
   };
   var LOCKED_GLYPH = '\uD83D\uDD12';      // closed lock
   var UNLOCKED_GLYPH = '\uD83D\uDD13';    // open lock
@@ -597,7 +597,8 @@
     var p = getPlayer();
     if (!p || p.inputSuspended) return;   // 10-05: inventory screen open
     if (name === 'attack') {
-      if (p.tryAttack) p.tryAttack();
+      // Order C: attack button = LMB path (main-hand action)
+      if (p.handButton) p.handButton('lmb', true);
     } else if (name === 'lockon') {
       if (p.onLockToggle) p.onLockToggle();
     } else if (name === 'dodge') {
@@ -606,17 +607,17 @@
       var on = p.keys['ShiftLeft'] && keysWritten['ShiftLeft'];
       setSprint(!on);
     } else if (name === 'block') {
-      // RMB routing (Order B: player.secondaryDown - caster -> cast,
-      // shield -> block on press, endBlock on release = press-hold).
-      if (p.secondaryDown) p.secondaryDown();
+      // Order C: block button = RMB path (off-hand action: left caster ->
+      // cast, left shield -> block on press, endBlock on release = press-hold)
+      if (p.handButton) p.handButton('rmb', true);
     }
   }
 
   function btnRelease(name) {
-    if (name !== 'block') return;
+    if (name !== 'block' && name !== 'attack') return;
     var p = getPlayer();
     if (!p) return;
-    if (p.secondaryUp) p.secondaryUp();
+    if (p.handButton) p.handButton(name === 'attack' ? 'lmb' : 'rmb', false);
   }
 
   function setSprint(on) {

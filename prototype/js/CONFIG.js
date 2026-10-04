@@ -852,10 +852,13 @@ window.WH_CONFIG.items = {
 window.WH_CONFIG.equip = {
   // boot: these leave the starting kit and go straight into the hands
   defaultHands: { right: 'longsword', left: 'magicGlove' },
-  // RMB routing, first capability present wins ('caster' = cast the active
-  // spell, 'shield' = hold-to-block). Default cast-first (brief ruling);
-  // swap to ['shield', 'caster'] if block-first plays better.
-  rmbOrder: ['caster', 'shield'],
+  // Order C two-button combat (supersedes Order B's rmbOrder): each mouse
+  // button acts with ONE hand. 'mainHand' = right hand: longsword -> attack
+  // chain, caster -> cast the main binding, else inert. 'offHand' = left
+  // hand: caster -> cast the off binding, roundShield -> hold-to-block,
+  // else inert. A shield blocks only from the left hand; a melee weapon
+  // swings only from the right. Touch attack button = lmb, block = rmb.
+  twoHand: { lmb: 'mainHand', rmb: 'offHand' },
   // Q = left-hand swap between these two items (0.8s CONFIG.loadout window)
   qSwap: ['magicGlove', 'roundShield'],
   // Each item's mount (weaponMount / shieldMount) is measured for its NATIVE
@@ -868,8 +871,12 @@ window.WH_CONFIG.equip = {
   // on the caster hand. anchor 'hand' = child of the hand bone at
   // handOffset (fist centroid in the nativeHand.magicGlove bone's frame,
   // scratch/measure_shield.py; mirrored for the other hand); 'idlePose' = the old yawFrame anchor (weapon idle
-  // pose, mirrored per hand).
-  casterGlow: { anchor: 'hand', handOffset: [0.018, 0.078, 0.021] }
+  // pose, mirrored per hand). Order C: perHand = one orb on EACH hand
+  // holding a caster, colored by that hand's binding (false = one orb, left
+  // first); casts spawn from the casting hand's orb. windupScale = orb size
+  // at the end of a windup (grows from 1, per-hand cast cue).
+  casterGlow: { anchor: 'hand', handOffset: [0.018, 0.078, 0.021],
+                perHand: true, windupScale: 1.8 }
 };
 
 // Inventory screen (DOM modal). While open, player movement/combat input is

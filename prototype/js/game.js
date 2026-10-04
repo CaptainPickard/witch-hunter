@@ -302,12 +302,17 @@
     document.getElementById('wh-hud').appendChild(belt);
     game.hud.belt = belt;
 
-    // v7: offhand spell glow (left-hand anchor, school-colored emissive)
-    game.spellGlow = new THREE.Mesh(
-      new THREE.SphereGeometry(0.12, 8, 6),
-      new THREE.MeshBasicMaterial({ color: 0xff7722 })
-    );
-    game.spellGlow.visible = false;
+    // v7 spell glow, Order C: one orb per hand (keyed 'right' / 'left'),
+    // school-colored by that hand's binding
+    game.casterGlows = {};
+    ['right', 'left'].forEach(function (h) {
+      var glow = new THREE.Mesh(
+        new THREE.SphereGeometry(0.12, 8, 6),
+        new THREE.MeshBasicMaterial({ color: 0xff7722 })
+      );
+      glow.visible = false;
+      game.casterGlows[h] = glow;
+    });
   }
 
   // Order B glove placeholder (no glove mesh yet). anchor 'hand': child of
@@ -315,18 +320,29 @@
   // local fist centroid, mirrored for R_Hand), so it rides the animation.
   // anchor 'idlePose' (or the rigid stand-in): the old yawFrame anchor =
   // the weapon idle pose mirrored for the left hand.
-  function updateCasterGlow(p) {
+  // Order C: casterGlow.perHand = an orb on EVERY hand holding a caster
+  // (false = only the first, left before right, as in Order B). Each orb
+  // takes its hand's binding color and swells by windupScale over that
+  // hand's windup (the per-hand cast cue until cast clips exist).
+  function updateCasterGlows(p) {
     var G = CFG.equip.casterGlow;
-    var hand = p.casterHand();
-    var glow = game.spellGlow;
-    glow.visible = !!hand;
-    if (!hand) return;
-    var sid = p.getBoundSpellId(hand);
-    if (sid && CFG.spell[sid]) glow.material.color.setHex(CFG.spell[sid].schoolColor);
-    // re-anchor only when the hand / anchor mode / body changes
-    var key = hand + ':' + G.anchor;
-    if (glow.userData.whAnchorKey === key && glow.userData.whBody === p.body && glow.parent) return;
-    glow.userData.whAnchorKey = key;
+    var first = p.casterHand();
+    ['right', 'left'].forEach(function (hand) {
+      var glow = game.casterGlows[hand];
+      var on = G.perHand ? p.isCasterHand(hand) : hand === first;
+      glow.visible = on;
+      if (!on) return;
+      var sid = p.getBoundSpellId(hand);
+      if (sid && CFG.spell[sid]) glow.material.color.setHex(CFG.spell[sid].schoolColor);
+      glow.scale.setScalar(1 + ((G.windupScale || 1) - 1) * p.castProgress(hand));
+      anchorGlow(p, glow, hand, G);
+    });
+  }
+
+  function anchorGlow(p, glow, hand, G) {
+    // re-anchor only when the anchor mode / body changes (the orb is per hand)
+    if (glow.userData.whAnchorKey === G.anchor && glow.userData.whBody === p.body && glow.parent) return;
+    glow.userData.whAnchorKey = G.anchor;
     glow.userData.whBody = p.body;
     var bone = G.anchor === 'hand' && p.body
       ? p.body.getObjectByName(hand === 'left' ? 'L_Hand' : 'R_Hand') : null;
@@ -450,9 +466,9 @@
           'active', p.activeLoadout === pi + 1);
       }
     }
-    // v7 spell glow. Order B: the magic glove's placeholder visual - shown
-    // on the hand holding the caster (school color of the active spell).
-    if (game.spellGlow && p.yawFrame) updateCasterGlow(p);
+    // v7 spell glow. Order B/C: the magic glove's placeholder visual - shown
+    // on each hand holding a caster (school color of that hand's binding).
+    if (game.casterGlows && p.yawFrame) updateCasterGlows(p);
     updateBlockHud(dt);   // v6: flash decay
 
     // fps
@@ -841,8 +857,15 @@
     }
   }
 
-  // Order C: where a hand's cast spawns.
+  // Order C: a cast spawns at the CASTING hand's glow orb (world position,
+  // so right-glove casts leave the right hand and left-glove casts the
+  // left). Fallback (orb not anchored yet): the old chest-height origin.
   function castOrigin(req) {
+    var glow = game.casterGlows && game.casterGlows[req.hand];
+    if (glow && glow.parent) {
+      var w = glow.getWorldPosition(new THREE.Vector3());
+      return { x: w.x, y: w.y, z: w.z };
+    }
     return { x: req.origin.x, y: 1.2, z: req.origin.z };
   }
 
@@ -1078,13 +1101,19 @@
       selectBeltSlot: function (i, role) { game.player.selectBeltSlot(i, role); },   // role 'main' (default) / 'off'
       pressBeltKey: function (i, role) { game.player.pressBeltKey(i, role); },
       // Order B hand hooks
+      // Order C: lmb / rmb = what each button does right now
+      // ('attack' | 'cast' | 'block' | null)
       getHands: function () {
         var p = game.player;
         return { right: p.hands.right, left: p.hands.left,
                  caster: p.hasCaster(), shield: p.hasShield(), meleeRight: p.hasMeleeRight(),
-                 rmb: p.secondaryAction() };
+                 shieldLeft: p.hasShieldLeft(),
+                 lmb: p.handAction(p.buttonHand('lmb')), rmb: p.handAction(p.buttonHand('rmb')) };
       },
-      equipItem: function (id, hand) { return game.player.equipItem(id, hand); },
+      // fromInventory = take the item from the grid even when the other hand
+      // holds the same id (second glove)
+      equipItem: function (id, hand, fromInventory) { return game.player.equipItem(id, hand, fromInventory); },
+      handButton: function (button, down) { game.player.handButton(button, down !== false); },
       unequipHand: function (hand) { return game.player.unequipHand(hand); },
       getActiveLoadout: function () { return game.player.activeLoadout; },
       toggleLoadout: function () { game.player.toggleLoadout(); },
@@ -1158,7 +1187,7 @@
     showResReadout();     // visible at boot so the knob is discoverable; dims after 2.5s
 
     game.player = new window.WH_Player(game.scene, game.camera);
-    game.player.casterGlows = { left: game.spellGlow, right: null };  // debug hooks (Order C: one orb per hand in C2)
+    game.player.casterGlows = game.casterGlows;  // Order C: per-hand orbs, exposed for debug hooks
     game.scene.add(game.player.root);
     // D3: player delegates the F-key toggle to the game's lock-on logic
     game.player.onLockToggle = toggleLockOn;

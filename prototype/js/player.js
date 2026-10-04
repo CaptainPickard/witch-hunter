@@ -95,9 +95,9 @@
     this.casterGlows = null;          // { right, left } glow orbs per hand (game.js)
     // Order B (2026-10-05) free per-hand equip: one gear item id (or null)
     // per hand, single instances (an item is in a hand OR the inventory).
-    // Combat reads ONLY the capability flags hasCaster / hasShield /
-    // hasMeleeRight, derived from CONFIG.items[id].kind. Belt keys 1-5 pick
-    // the active learned spell and never touch the hands.
+    // Combat reads ONLY CONFIG.items[id].kind per hand (Order C:
+    // handAction - LMB acts with the right hand, RMB with the left). Belt
+    // keys bind spells to hands and never touch the hands.
     this.hands = { right: null, left: null };
     this.inventory = null;            // game.js setupInventory wires the Inventory
     this.itemMeshes = {};             // item id -> its hand mesh (game.js instances)
@@ -328,25 +328,28 @@
     });
     document.addEventListener('mousedown', function (e) {
       if (self.inputSuspended) return;   // 10-05: clicks belong to the inventory screen
+      // Order C: LMB = main-hand action, RMB = off-hand action
+      // (CONFIG.equip.twoHand), both through handButton
       if (e.button === 0) {
-        self.tryAttack();
+        self.handButton('lmb', true);
         if (!self.lockTarget) {
           self.dragging = true;
           self.lastDragX = e.clientX;
           self.lastDragY = e.clientY;
         }
       }
-      // v6: RMB hold to block (opens the parry window). Order B: RMB routes
-      // by the hands (secondaryAction: caster -> cast, shield -> block).
       if (e.button === 2) {
         e.preventDefault();
-        self.secondaryDown();
+        self.handButton('rmb', true);
       }
     });
     document.addEventListener('mouseup', function (e) {
-      if (e.button === 0) self.dragging = false;
-      // v7: RMB release ends a held block (no-op otherwise)
-      if (e.button === 2) self.secondaryUp();
+      if (e.button === 0) {
+        self.dragging = false;
+        self.handButton('lmb', false);
+      }
+      // v7: release ends a held block (no-op otherwise)
+      if (e.button === 2) self.handButton('rmb', false);
     });
     // v6: RMB must not open the browser context menu
     document.addEventListener('contextmenu', function (e) {
@@ -426,7 +429,7 @@
   Player.prototype.tryBlock = function () {
     if (this.state !== 'alive' || this.rolling || this.attacking) return;
     if (this.toggling) return;              // Order B: the shield is mid-swap until Q lands
-    if (!this.hasShield()) return;          // Order B: a shield in either hand
+    if (!this.hasShieldLeft()) return;      // Order C: a shield in the LEFT hand
     if (this.guardBroken) return;
     if (this.stamina < window.WH_CONFIG.block.guardBreakMinStamina) return;
     this.blocking = true;
@@ -435,6 +438,7 @@
 
   Player.prototype.endBlock = function () {
     this.blocking = false;
+    this.blockButton = null;
     this.parryTimer = 0;
   };
 
@@ -650,26 +654,47 @@
     return null;
   };
 
-  // RMB routing (Order B): the first CONFIG.equip.rmbOrder capability held
-  // wins - 'cast' (caster in EITHER hand), 'block' (shield in either hand),
-  // or null = RMB does nothing. Mouse and touch both route through here.
-  Player.prototype.secondaryAction = function () {
-    var order = window.WH_CONFIG.equip.rmbOrder;
-    for (var i = 0; i < order.length; i++) {
-      if (order[i] === 'caster' && this.hasCaster()) return 'cast';
-      if (order[i] === 'shield' && this.hasShield()) return 'block';
-    }
+  // Order C: a shield blocks only from the LEFT hand (right = carried).
+  Player.prototype.hasShieldLeft = function () {
+    return kindOf(this.hands.left) === 'shield';
+  };
+
+  // Order C two-button combat. What a hand's button does, from what the
+  // hand holds: right melee -> the attack chain, caster -> cast that hand's
+  // binding, left shield -> hold-to-block, anything else -> null (inert).
+  Player.prototype.handAction = function (hand) {
+    var k = kindOf(this.hands[hand]);
+    if (k === 'melee' && hand === 'right') return 'attack';
+    if (k === 'caster') return 'cast';
+    if (k === 'shield' && hand === 'left') return 'block';
     return null;
   };
 
-  Player.prototype.secondaryDown = function () {
-    var a = this.secondaryAction();
-    if (a === 'cast') this.tryCast(this.casterHand());
-    else if (a === 'block') this.tryBlock();
+  // CONFIG.equip.twoHand maps a button ('lmb' / 'rmb') to 'mainHand' (right)
+  // or 'offHand' (left).
+  Player.prototype.buttonHand = function (button) {
+    return window.WH_CONFIG.equip.twoHand[button] === 'offHand' ? 'left' : 'right';
   };
 
-  Player.prototype.secondaryUp = function () {
-    this.endBlock();
+  // THE dispatch for both combat buttons; mouse (LMB/RMB) and touch
+  // (attack/block buttons) both call it. down = press, else release. A
+  // release only ends a block that this button started.
+  Player.prototype.handButton = function (button, down) {
+    var hand = this.buttonHand(button);
+    if (!down) {
+      if (this.blockButton === button) {
+        this.blockButton = null;
+        this.endBlock();
+      }
+      return;
+    }
+    var a = this.handAction(hand);
+    if (a === 'attack') this.tryAttack();
+    else if (a === 'cast') this.tryCast(hand);
+    else if (a === 'block') {
+      this.tryBlock();
+      if (this.blocking) this.blockButton = button;
+    }
   };
 
   Player.prototype.refuseEquip = function (text) {
@@ -734,7 +759,7 @@
       }
     }
     this.lastRightItem = this.hands.right;
-    if (!this.hasShield()) this.endBlock();
+    if (!this.hasShieldLeft()) this.endBlock();     // Order C: guard = left-hand shield
     // Order C, per hand: an implement leaving drops that hand's windup; an
     // implement entering (new item in the hand) starts that hand's regrip
     if (!this.lastHandItems) this.lastHandItems = { right: null, left: null };
@@ -1262,8 +1287,8 @@
       this.armedTimer = Math.max(0, this.armedTimer - dt);
       if (this.armedTimer <= 0) this.crossArmed = false;
     }
-    // Order B: a guard needs a shield in hand
-    if (this.blocking && !this.hasShield()) this.endBlock();
+    // Order C: a guard needs a shield in the LEFT hand
+    if (this.blocking && !this.hasShieldLeft()) this.endBlock();
 
     if (this.state === 'dying') {
       this.deathTilt = Math.min(Math.PI / 2, this.deathTilt + dt * 3);
