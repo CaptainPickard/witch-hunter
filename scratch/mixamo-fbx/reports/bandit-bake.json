@@ -61,6 +61,27 @@
       "leg_scale_ratio": 0.9818518606506939,
       "max_ground_correction_m": 0.08392095565795898,
       "status": "baked",
+      "bend_clamp": {
+        "limit_degrees": 25.0,
+        "bones": [
+          "Spine",
+          "Chest"
+        ],
+        "metric": "world bone-Y angle from rest bone-Y; swing cone, axial twist preserved",
+        "before_max_degrees": {
+          "Spine": 32.52815095987667,
+          "Chest": 38.32585116890986
+        },
+        "after_max_degrees": {
+          "Spine": 25.000012079336997,
+          "Chest": 25.00002061707346
+        },
+        "swing_clamped_frames": {
+          "Spine": 12,
+          "Chest": 21
+        },
+        "other_fcurves_identical": true
+      },
       "channels": 60
     },
     "WH_Hit_Large_L": {
@@ -73,6 +94,27 @@
       "leg_scale_ratio": 0.9818518606506939,
       "max_ground_correction_m": 0.06814944744110107,
       "status": "baked",
+      "bend_clamp": {
+        "limit_degrees": 25.0,
+        "bones": [
+          "Spine",
+          "Chest"
+        ],
+        "metric": "world bone-Y angle from rest bone-Y; swing cone, axial twist preserved",
+        "before_max_degrees": {
+          "Spine": 61.55728480041502,
+          "Chest": 83.73979262070299
+        },
+        "after_max_degrees": {
+          "Spine": 25.000012079336997,
+          "Chest": 25.00002061707346
+        },
+        "swing_clamped_frames": {
+          "Spine": 19,
+          "Chest": 20
+        },
+        "other_fcurves_identical": true
+      },
       "channels": 60
     },
     "WH_Taunt": {

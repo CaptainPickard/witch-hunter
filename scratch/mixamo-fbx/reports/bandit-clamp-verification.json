@@ -1,0 +1,159 @@
+{
+  "before": "/tmp/wh-clamp-baseline/before.mixamo.glb",
+  "after": "/workspace/witch-hunter/art-direction/3d/assets/races_regen/rigged/orc-male-warrior.mixamo.glb",
+  "before_sha256": "0ff11734b419ad093990ad1ee43fe2fb9efd289d7b8abd17f6a0e7530df68a50",
+  "after_sha256": "25db2ad441dc90873809fab987791f4fd801edb20d9078adb989c1bede23ce1b",
+  "metric": "independent quaternion FK: world bone Y relative to rest world Y; local swing relative to rest local rotation",
+  "before_bends": {
+    "WH_Attack_Horiz": {
+      "Spine": {
+        "world": {
+          "max_degrees": 32.528147577095396,
+          "max_frame": 18,
+          "mid_degrees": 17.223176189742635,
+          "end_degrees": 17.13770291189895
+        },
+        "local": {
+          "max_degrees": 15.09247660118751,
+          "max_frame": 40,
+          "mid_degrees": 14.266848173046164,
+          "end_degrees": 10.411240394192069
+        }
+      },
+      "Chest": {
+        "world": {
+          "max_degrees": 38.32585067824897,
+          "max_frame": 29,
+          "mid_degrees": 24.05338694412466,
+          "end_degrees": 12.398485870653824
+        },
+        "local": {
+          "max_degrees": 13.862203687151807,
+          "max_frame": 29,
+          "mid_degrees": 7.718298778315101,
+          "end_degrees": 5.720633877612426
+        }
+      }
+    },
+    "WH_Hit_Large_L": {
+      "Spine": {
+        "world": {
+          "max_degrees": 61.55728173856094,
+          "max_frame": 10,
+          "mid_degrees": 43.06413198854618,
+          "end_degrees": 17.137838091660935
+        },
+        "local": {
+          "max_degrees": 44.512307848933084,
+          "max_frame": 11,
+          "mid_degrees": 38.62185141461318,
+          "end_degrees": 10.411370205739182
+        }
+      },
+      "Chest": {
+        "world": {
+          "max_degrees": 83.73979795572701,
+          "max_frame": 10,
+          "mid_degrees": 61.259185203269276,
+          "end_degrees": 12.398618679675735
+        },
+        "local": {
+          "max_degrees": 22.67457398700064,
+          "max_frame": 11,
+          "mid_degrees": 18.60414597309246,
+          "end_degrees": 5.720633876553709
+        }
+      }
+    }
+  },
+  "after_bends": {
+    "WH_Attack_Horiz": {
+      "Spine": {
+        "world": {
+          "max_degrees": 25.000016449367315,
+          "max_frame": 15,
+          "mid_degrees": 17.223178697610688,
+          "end_degrees": 17.13771388316103
+        },
+        "local": {
+          "max_degrees": 15.09247622503203,
+          "max_frame": 40,
+          "mid_degrees": 14.266849638124175,
+          "end_degrees": 10.41125215642875
+        }
+      },
+      "Chest": {
+        "world": {
+          "max_degrees": 25.00001400801965,
+          "max_frame": 18,
+          "mid_degrees": 24.053379138393794,
+          "end_degrees": 12.398486486448205
+        },
+        "local": {
+          "max_degrees": 11.185745842874034,
+          "max_frame": 24,
+          "mid_degrees": 7.718288588006393,
+          "end_degrees": 5.720641255431907
+        }
+      }
+    },
+    "WH_Hit_Large_L": {
+      "Spine": {
+        "world": {
+          "max_degrees": 25.000021683942677,
+          "max_frame": 9,
+          "mid_degrees": 25.00000271379683,
+          "end_degrees": 17.1378460913684
+        },
+        "local": {
+          "max_degrees": 24.669702115610896,
+          "max_frame": 22,
+          "mid_degrees": 21.10188137961692,
+          "end_degrees": 10.4113780481301
+        }
+      },
+      "Chest": {
+        "world": {
+          "max_degrees": 25.000023325898937,
+          "max_frame": 8,
+          "mid_degrees": 25.00001195041124,
+          "end_degrees": 12.398626874167762
+        },
+        "local": {
+          "max_degrees": 8.086986579611137,
+          "max_frame": 2,
+          "mid_degrees": 2.8988843027361972,
+          "end_degrees": 5.72063425372882
+        }
+      }
+    }
+  },
+  "scope": {
+    "changed_channels": [
+      [
+        "WH_Attack_Horiz",
+        "Spine",
+        "rotation"
+      ],
+      [
+        "WH_Attack_Horiz",
+        "Chest",
+        "rotation"
+      ],
+      [
+        "WH_Hit_Large_L",
+        "Spine",
+        "rotation"
+      ],
+      [
+        "WH_Hit_Large_L",
+        "Chest",
+        "rotation"
+      ]
+    ],
+    "identical_channels": 776,
+    "all_input_times_identical": true,
+    "only_requested_torso_rotations_changed": true
+  },
+  "pass": true
+}
