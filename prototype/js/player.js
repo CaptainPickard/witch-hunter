@@ -172,6 +172,11 @@
     return v.set(v.x * s[0], v.y * s[1], v.z * s[2]);
   }
 
+  // S3 tweak: shared scratch for the per-frame torch-carry overlay (avoids
+  // per-frame allocations in applyTorchCarryPost). Unit +X axis forever.
+  var AX_X = new THREE.Vector3(1, 0, 0);
+  var TORCH_Q_SCRATCH = new THREE.Quaternion();
+
   function boneFor(body, hand) {
     return body ? body.getObjectByName(hand === 'left' ? 'L_Hand' : 'R_Hand') : null;
   }
@@ -856,6 +861,44 @@
     return m && m.parent && m.visible ? m.userData.whLightAnchor || null : null;
   };
 
+  // S3 tweak (10-06): raised-arm torch carry. Runs AFTER the mixer each frame
+  // (game.js calls it right after syncPlayer): the mixer overwrites every arm
+  // bone's quaternion each frame its clip keys that bone (all 13 clips key the
+  // arms), so reading quat fresh and writing q_clip * q_carry is a clean
+  // per-frame overlay - nothing accumulates, no un-apply. No latched flags
+  // (D9): torchCarryW {right,left} is the only state, eased toward
+  // torch-in-hand-and-alive ? 1 : 0 over carry.easeSec (both directions).
+  // Axis = bone-local +X (measured on combat-chain.glb: limbs run bone-local
+  // +Y; both arms' local X ~ world -X, so +X lifts forward+out; right hand
+  // mirrors with the SAME sign - computed 19.4deg like left's 20.0deg).
+  // Composition order = q_clip * q_carry (carry applied in the bone's
+  // post-clip frame) - matches the measured chain m_local * R(lift).
+  Player.prototype.applyTorchCarryPost = function (dt) {
+    var cfg = window.WH_CONFIG.assets.torchMount.carry;
+    if (!cfg || !this.body || !this.anim) return;
+    if (!this.torchCarryW) this.torchCarryW = { right: 0, left: 0 };
+    for (var hi = 0; hi < 2; hi++) {
+      var hand = hi === 0 ? 'right' : 'left';
+      var target = this.handOf('torch') === hand && this.state === 'alive' ? 1 : 0;
+      var w = this.torchCarryW[hand];
+      var step = dt / (cfg.easeSec || 0.25);
+      if (w < target) w = Math.min(target, w + step);
+      else if (w > target) w = Math.max(target, w - step);
+      this.torchCarryW[hand] = w;
+      if (w <= 0) continue;
+      var ua = boneFor(this.body, hand);
+      if (ua) {
+        TORCH_Q_SCRATCH.setFromAxisAngle(AX_X, (cfg.liftDeg || 0) * Math.PI / 180 * w);
+        ua.quaternion.multiply(TORCH_Q_SCRATCH);
+      }
+      var fb = this.body.getObjectByName(hand === 'left' ? 'L_Forearm' : 'R_Forearm');
+      if (fb && cfg.bendDeg) {
+        TORCH_Q_SCRATCH.setFromAxisAngle(AX_X, (cfg.bendDeg || 0) * Math.PI / 180 * w);
+        fb.quaternion.multiply(TORCH_Q_SCRATCH);
+      }
+    }
+  };
+
   // Each registered mesh follows its item: mounted on the hand holding it,
   // detached + hidden while the item is in the inventory. Remount only on a
   // hand change (mounts are constant hand-local transforms).
@@ -905,6 +948,13 @@
   // hand-local headAxis at the fist centroid (CONFIG.assets.torchMount,
   // measured for nativeHand.torch, mirrored for the other hand). The rigid
   // stand-in body has no bones: idle anchor on yawFrame, mirrored per hand.
+  // S3 tweak (10-06): with the raised-arm carry (applyTorchCarryPost), a
+  // straightenAxis turns the shaft to TRUE vertical: qt = setFromUnitVectors
+  // (meshY -> straightenAxis) is multiplied UNDER the head-axis q, so
+  // meshY -qt-> mesh target -q-> hand target t_hand -rig-> world +Y.
+  // Mirrored with the mount for the off hand (verified: L exact vertical,
+  // R 0.7deg off - rig asymmetry). No per-frame mesh writes; the eased bone
+  // lift animates the whole mount.
   Player.prototype.mountTorch = function (mesh, hand, itemId) {
     if (mesh.parent) mesh.parent.remove(mesh);
     var TM = window.WH_CONFIG.assets.torchMount;
@@ -916,6 +966,14 @@
       if (TM.rollDeg) {
         q.premultiply(new THREE.Quaternion().setFromAxisAngle(
           new THREE.Vector3().fromArray(TM.headAxis).normalize(), TM.rollDeg * Math.PI / 180));
+      }
+      if (TM.carry && TM.carry.straightenAxis) {
+        // mesh-space correction: shaft axis (0,1,0) -> straightenAxis, then
+        // q carries it into hand space; q*qt maps meshY all the way to t_hand
+        var qt = new THREE.Quaternion().setFromUnitVectors(
+          new THREE.Vector3(0, 1, 0),
+          new THREE.Vector3().fromArray(TM.carry.straightenAxis).normalize());
+        q.multiply(qt);
       }
       var off = new THREE.Vector3().fromArray(TM.offset);
       if (isMirrored(itemId, hand)) {

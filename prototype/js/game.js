@@ -1608,6 +1608,9 @@
     // Animation is presentation-only: sample the FSM after combat has consumed
     // its strike window, then advance every mixer before rendering.
     if (game.player.anim) game.player.anim.syncPlayer(game.player, dt);
+    // S3 tweak: raised-arm torch carry - additive bone overlay, must run
+    // after the player mixer so it composes onto the clip's fresh pose.
+    if (game.player.anim) game.player.applyTorchCarryPost(dt);
     var animRegions = Object.keys(rm.enemies);
     for (var ar = 0; ar < animRegions.length; ar++) {
       var animList = rm.enemies[animRegions[ar]];

@@ -814,7 +814,22 @@ window.WH_CONFIG = {
     // shaft (they scale with the mesh): the fist lands on gripHolderY, the
     // hand's follow light sits at lightHolderY (the flame, not the fist).
     torchMount: { headAxis: [0, 0, 1], rollDeg: 0, offset: [0.018, 0.078, 0.021],
-                  gripHolderY: 0.5, lightHolderY: 1.7 }
+                  gripHolderY: 0.5, lightHolderY: 1.7,
+                  // Raised-arm torch carry (S3 tweak 10-06): the shaft stands
+                  // near-vertical instead of riding like a blade. Bone-lift
+                  // overlay in player.applyTorchCarryPost (post-mixer, additive,
+                  // eased by easeSec both ways, only on the hand holding the
+                  // torch). Measured on combat-chain.glb: bind shaft = 86deg
+                  // off vertical; lift 65 + bend 15 -> 20deg, a natural carry
+                  // lean with the flame up and clear of the fist. Right hand
+                  // mirrors with the SAME sign (verified 19.4deg).
+                  carry: { liftDeg: 65, bendDeg: 15, easeSec: 0.25,
+                           // MESH-space dir the shaft must map to for TRUE
+                           // vertical: tgt = q_head^-1 * t_hand, where
+                           // t_hand = M^T * world+Y at full lift (verified:
+                           // L lands exact vertical; R via the mount mirror
+                           // lands 0.7deg off - rig asymmetry)
+                           straightenAxis: [-0.3271, 0.9396, 0.101] } }
   }
 };
 // 10-04 change order (Nicko: combo spam -> real chains, souls-style).
