@@ -376,3 +376,23 @@ Commits: dev 5dea2fc, feat d1d2e0a + build 96e7010 (bundle 2658945 bytes).
 light.js lock-light 'world' radius unchanged (intensity-independent).
 Parked: shadowless-pool look (game lights never castShadow), pre-existing
 aliasing/base-gap asset artifacts visible in stills.
+
+## Round E - world vegetation pass (2026-10-05, Nicko order, same session)
+
+Five Meshy assets (wh-bush-a/b, wh-grass-tuft, wh-tree-birch-young,
+wh-tree-dead-young; 117cr of 130 cap incl 9 t2i refs and 1 destroyed
+first-mesh reroll on bush-a, caught by ortho QA). Instanced scatter layer
+in region-manager.js: seeded deterministic placement (pure function of
+CONFIG, mulberry32), extra trees only in empty areas (32 candidate-slot
+fill, 14 in A / 10 in B, trunk colliders registered), bush rings [2,4]
+around EVERY tree base at [1.1,1.6]x trunk radius (no collision - Nicko
+order), free bushes 20 + grass 220 per region (no collision), all
+undergrowth via 3 InstancedMeshes per region (~+1.0M tris A, +0.56M B,
+3 extra draw calls). Cemetery yard keepOut for trees/bushes; clearances
+4m enemies / 2.5m gather / path / spawn / gates. Enemies ignore scatter
+trees (enemy.js off-limits this round) - same as all existing props.
+Deviation watch-items for playtest: bushes small vs 15-18m trees (knobs:
+CONFIG.scatter.bushes.assets heights, atTreeRing.radiusFrac); grass 1
+tuft/60sqm reads sparse (knob: grass count); stills at
+scratch/roundE-proof/. Wall + lantern-doorway pass = NEXT round (Round F),
+scoped separately, not started.
