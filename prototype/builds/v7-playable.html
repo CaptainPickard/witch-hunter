@@ -86838,7 +86838,10 @@ window.WH_CONFIG = {
       // every tree gets [min,max] bushes at radiusFrac x its TRUNK collider radius
       ringHosts: ['yewTree', 'livingOak', 'witchwoodTree', 'deadTree', 'youngAsh',
         'youngBirch', 'youngDeadTree'],
-      atTreeRing: { count: [2, 4], radiusFrac: [1.1, 1.6] },
+      // ring bushes draw from their own rows (Round G: Nicko's snare bush;
+      // rollback = assets: B.assets rows, i.e. bushA/bushB)
+      atTreeRing: { count: [2, 4], radiusFrac: [1.1, 1.6],
+        assets: [['whBushSnare', 1, 1.0, 1.4]] },
       freeBushes: 20                  // per region, open ground
     },
     grass: {
@@ -86877,7 +86880,7 @@ window.WH_CONFIG = {
     minRadius: 86.5,                  // radial jitter never pulls a segment inside this
     segmentLengthUnits: 4.0,          // world meters per segment INSTANCE (X scale)
     overlapM: 0.2,                    // segment count uses length - overlap so ends butt
-    heightM: 2.4,                     // world height (Y scale; mild stretch of the GLB)
+    heightM: 7.2,                     // world height (Y scale only; Round G 3x of 2.4 so the camera can't see over)
     depthScale: 0.7,                  // Z scale = X scale * this (~0.7 m thick)
     sinkM: 0.05,                      // bury the base slightly into the ground
     assets: ['whWallA', 'whWallB'],   // MANIFEST keys, alternated
@@ -87851,6 +87854,9 @@ window.WH_CONFIG.inventoryUI = {
     bushA: 'art-direction/3d/assets/biome_library/wh-bush-a-pixelated.glb',
     bushB: 'art-direction/3d/assets/biome_library/wh-bush-b-pixelated.glb',
     grassTuft: 'art-direction/3d/assets/biome_library/wh-grass-tuft-pixelated.glb',
+    // Round G tree-ring bush (io/roundG-provenance.md): Nicko's Meshy snare
+    // bush, decimated to 3000 tris, untextured bark material (raw had no texture)
+    whBushSnare: 'art-direction/3d/assets/biome_library/wh-bush-snare-pixelated.glb',
     // Round F boundary wall + gate (io/roundF-wall-provenance.md): wall
     // segments render instanced (region-manager buildWorld). b3Gate is the
     // b3-gate GLB with its near-closed door leaves cut out
@@ -93031,8 +93037,8 @@ window.WH_CONFIG.inventoryUI = {
 
     var B = SC.bushes;
     var grassPathM = hasPath ? DP.halfWidth + SC.grass.pathPadM : 0;
-    function bushPick(rand) {
-      var bp = whPickWeighted(rand, B.assets);
+    function bushPick(rand, rows) {
+      var bp = whPickWeighted(rand, rows);
       var h = lerp([bp[2], bp[3]], rand());
       var bm = m(bp[0]);
       var sc = bm && bm.height > 0 ? h / bm.height : 1;
@@ -93050,7 +93056,7 @@ window.WH_CONFIG.inventoryUI = {
       for (var slot = 0; slot < n; slot++) {
         var ang = a0 + slot * TWO_PI / n + (rr2() - 0.5) * (TWO_PI / n) * 0.5;
         var rad = host.trunk * lerp(R.radiusFrac, rr2());
-        var bp2 = bushPick(rr2);
+        var bp2 = bushPick(rr2, R.assets || B.assets);
         var bx = host.x + Math.cos(ang) * rad, bz = host.z + Math.sin(ang) * rad;
         if (!inRegion(bx, bz, 0) || !clearOfWorld(bx, bz, grassPathM) ||
             hitsCircles(bx, bz, bp2.own, host)) { plan.stats.ringSkipped++; continue; }
@@ -93063,7 +93069,7 @@ window.WH_CONFIG.inventoryUI = {
     var rf = stream('freeBushes');
     for (var fa = 0; fa < B.freeBushes * 30 && plan.stats.freeBushes < B.freeBushes; fa++) {
       var fs = sampleDisc(rf);
-      var fp = bushPick(rf);
+      var fp = bushPick(rf, B.assets);
       if (!inRegion(fs.x, fs.z, C.edgeM) || !clearOfWorld(fs.x, fs.z, C.pathM) ||
           !clearOfPoints(fs.x, fs.z) || hitsCircles(fs.x, fs.z, T.propClearM, null)) continue;
       addInstance(fp.name, fs.x, fs.z, fp.rotY, fp.scale);
