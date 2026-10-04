@@ -262,3 +262,89 @@ Proof stills (scratch/swordwire-proof/, 1024px):
 
 Not wired yet (appended only): WalkBack, Strafe L/R, Turn L/R, the block and
 crouch idles, and IdleAlt. Each one needs player-state hooks.
+
+## Round D - Mixamo attack clips into the longsword chain (2026-10-05)
+
+ORDERED BY: Nicko 10-05. Replaces the self-authored Blender chain-combo attack
+clips with Mixamo sword-pack attacks. Skills honored: witch-hunter-playtest-
+serving, no-harness-playtest-gate (no harness runs; Nicko playtests).
+
+ADJUDICATION (blocking, done first): combat FSM phase durations are CONFIG-
+FIXED, not clip-duration-derived. getAttackPhase reads this.attackMove (the
+CONFIG move-def snapshot taken at startAttack) and slices elapsed into windup/
+strike/recover by CONFIG seconds; seekAttack then slices the CLIP by duration
+RATIO and warp-matches timeScale to the FSM clock. Mixamo timing therefore
+does NOT work automatically: CONFIG was updated per move so a stage boundary
+lands on each clip's measured impact frame (timeScale ~= 1, natural rhythm).
+
+CLIP SELECTION (probes: scratch/swordpack_probe_rD/2/3/4_rD.json, committed):
+- slashR2L = WH_SS_SlashR2L from "sword and shield slash.fbx" (1.500s):
+  in-place, crosses right->left, impact (peak wrist speed 15.6 m/s) at 0.567s.
+- slashL2R = WH_SS_SlashL2R from "sword and shield slash (3).fbx" (1.667s):
+  in-place, crosses left->right deep forward, impact (11.7 m/s) at 0.800s.
+- thrust-slot SUBSTITUTION = WH_SS_Overhead from "sword and shield attack
+  (4).fbx" (1.000s): compact in-place overhead chop, impact (9.8 m/s) at
+  0.400s. Pack has no true stab; overhead-downward reads as a distinct third
+  move, substituted per Nicko's order. Documented here.
+- Rejected: slash (5) crouched, slash (4) + attack (2)/(3) 360-400deg spins,
+  attack.fbx overhead (3.6m travel + 44deg turn).
+NEW CONFIG TIMINGS: slashR2L .57/.20/.73, slashL2R .80/.26/.61, thrust
+.40/.43/.17 (windup/strike/recover; totals = clip durations).
+
+BAKE: mixamo_retarget.py per branch, input = that branch's PRE-ROUND-D
+combat-sword.glb snapshot (adapted from the contract's combat-chain input -
+the script rebuilds all animation data, so chain input would have wiped Round
+C's 12 sword-locomotion clips; snapshots verified byte-identical to pre-bake
+HEAD). Output = the new combat-sword.glb: dev 24 clips, feat 27 clips.
+verify_retarget.py: 40/40 dev, 44/44 feat (re-run by IO independently, zero
+fails). All 21/25 prior clips byte-identical (incl. authored chain clips kept
+for one-line rollback). test_mixamo_retarget.py 11/11 both branches.
+
+WIRING: MOVE_NAMES values rewired to WH_SS_* (VARIANTS.sword.moves keeps the
+SAME object -> feat identity check intact); MOVE_FALLBACK_NAMES keeps the
+authored names as a per-slot fallback with console.warn (degraded mis-slice
+but playable); playerAttack/seekAttack unchanged; player.js untouched.
+
+AUDIT (Testerbot opus, 3 passes - full FAIL->fix cycle):
+1. First audit: FAIL check 2 ONLY. Real catch: the chain-open window counts
+   seconds into RECOVER (player.js: stage==='recover' && ph.t >=
+   chainOpenSec), and strikes are longer with the new clips, so a strike-phase
+   press could expire (old buffer 0.35 < worst 0.52). Checks 1/3/4/5/6 PASS.
+2. Fix 1 (a5a2445/0a14ab8): inputBufferSec 0.35 -> 0.55. Re-audit: FAIL one
+   last case - thrust is the LAST move, so a press during its strike must
+   survive 0.43+0.17=0.60s to restart the chain.
+3. Fix 2 (8f1d46e/a02ab8a): inputBufferSec 0.55 -> 0.65 = 0.60 + one capped
+   20fps frame. Re-audit: PASS CHECK 2 -> Round D fully PASS. Both branches
+   verified fast-forward.
+
+LANDED (pushed by IO after PASS):
+- dev: 4391181 (bake) 8da1aa1 (wiring) a5a2445 8f1d46e (buffer fixes)
+- feat/world-visuals: 9491894 9491894 d45401e f3d8300 (build) 0a14ab8 a02ab8a
+- Serving: HOST /tmp/wh-worldfeat-clean reset --hard a02ab8a; host curl
+  http://localhost:8793/prototype/builds/v7-playable.html = 200, 2658047
+  bytes (byte-exact vs worktree build), WH_SS_SlashR2L marker 1,
+  inputBufferSec: 0.65 marker 1, old windup 0.14 marker 0.
+
+PROOF STILLS (scratch/roundD-proof/, 1024px, vision-reviewed once each):
+- 01-rest.png: clean guard idle, grounded, no clip.
+- 02-ss-slashr2l-mid.png t=0.567 and 03-ss-overhead-mid.png t=0.400: the arm
+  is raised wide at strike-START (still = first strike frame); the cross-body
+  sweep happens later INSIDE the strike windows. consumeAttackSweep applies
+  damage across the whole strike stage, so hit registration is unaffected;
+  impact-frame alignment is about swing FEEL only. Render artifacts noted:
+  cloak clipping through arm/leg, shoulder pinch at raised arm, slight ankle
+  distortion at the planted foot.
+
+ROLLBACK: flip MOVE_NAMES values back to WH_SlashR2L/WH_SlashL2R/WH_Thrust
+(one line in anim.js) + restore old CONFIG timings/inputBufferSec. Authored
+clips remain live in the GLB.
+
+WATCH-ITEMS for playtest: swing cross-body vs impact-frame feel; render
+artifacts above; L2R chain cadence vs old rhythm (0.80s windup is much
+slower than the old 0.14); the 0.65 input buffer may feel slightly floaty
+on chain restarts.
+
+STILL PARKED (unchanged): 9 unhooked baked clips (WalkBack/Strafe L/R/Turn
+L/R/idles), bandit cape panel, ~55deg idle stance, kick/cast/draw/sheath
+hooks, dev's stale prototype/builds/v7-playable.html (harmless - dev is
+served from the checkout).
