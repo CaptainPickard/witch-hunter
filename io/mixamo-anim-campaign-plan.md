@@ -198,3 +198,67 @@ walk_mid.png (frame 11), attack_mid.png (WH_Attack_High frame 32).
   Watch for it in the bandit's overhead swing.
 - Known: assets.js still expects 6 banditBody clips, so it now logs a
   13-clip warning, the same as the ghoul.
+
+## Round C landed (2026-10-05): player sword-and-shield wiring
+
+Contract: io/cc-round-c-contract.md. Commits: dev 75db4ee (rebake), fa4123a
+(wiring), 7613a73 (build). feat/world-visuals: 534f5ef, ea24492, 81803f7
+(build). Both branches are pushed, and 8793 serves 81803f7. Host check:
+html 200, WH_SwordIdle x1, combat-sword.glb 200 at 5364580 B.
+
+Deviation (on purpose): combat-chain.glb is already different on the two
+branches. dev has 9 clips. feat has 13, because Order D added WH_ShieldRaise,
+WH_ShieldImpact, WH_ParrySwipe and WH_GuardBreakStagger, and feat's anim.js
+CLIP_NAMES uses them. So each branch's combat-sword.glb is baked from its OWN
+combat-chain.glb: dev ends up with 21 clips, feat with 25. Baking feat from the
+9-clip base would have removed Order D from the served build. feat assets.js
+CHARACTERS.playerBody 13 -> 25. Neither combat-chain.glb changed (sha
+9ca71111 dev, 48a342d0 feat).
+
+Curation: the swordpack names are generic ("idle (2)", "turn"). There are no
+"looking"/"90" labels, so scratch/swordpack_probe.py tells the variants apart
+by motion. Mixamo faces -Y, and +X is the character's left. The 12 picks are in
+scratch/mixamo_player.json:
+- WH_SwordIdle: idle (3.7s)
+- WH_SwordWalk: walk (-Y = forward)
+- WH_SwordRun: run (forward)
+- WH_SwordWalkBack: walk (2)
+- WH_SwordIdleAlt: idle (2) (7.5s fidget)
+- WH_ShieldBlockIdle: block idle
+- WH_ShieldCrouchIdle: crouch block idle
+- WH_SwordStrafeL / R: strafe (2) / strafe (walk speed)
+- WH_SwordTurnL / R: turn (2) +99deg / turn -99deg
+- WH_SwordCrouchIdle: crouch idle
+
+Left out: attacks/slashes (the chain system owns these), jump, kick, casting,
+power up, draw/sheath, death, impacts, 180 turns, and crouch-walk variants.
+
+Bake and verify: same mixamo_retarget.py flags as bandit. The temporary
+.mixamo.glb is copied to combat-sword.glb because of the script's output-name
+guard. verify_retarget.py PASS: 37/37 on dev, 41/41 on feat.
+- Every original clip is byte-identical (BIN prefix plus append-only JSON).
+- The 12 new clips have 60 channels, 20 nodes, 30fps, and quaternion norm
+  error <5e-6.
+- New flags: --original-count N, and --held-pose for WH_ShieldCrouchIdle. Its
+  0.007 rotation span is a genuine held pose, so its motion floor is .001
+  instead of .01.
+- test_mixamo_retarget.py: 11/11, adding a player-pair test that includes a
+  negative case without --held-pose.
+
+Wiring: VARIANTS.sword maps idle/walk/run to WH_SwordIdle / WH_SwordWalk /
+WH_SwordRun. attack, hit and death stay canonical. moves IS MOVE_NAMES (the
+same object), so the feat moveNames === MOVE_NAMES identity check still holds.
+player.js passes {variant:'sword'}, and assets.js playerBody now points to
+combat-sword.glb. Static check: scratch/check_player_sword_wire.py PASS on both
+branches. The bandit check still passes. No game runs.
+
+Proof stills (scratch/swordwire-proof/, 1024px):
+- 01 idle f0: a guard stance, grounded. The torso is turned ~55deg because of
+  the shield-side stance (hips yaw -54.5). Idle may look rotated compared with
+  walk.
+- 02 walk f25 (max ankle spread): a clean stride.
+- 03 crouch-block f7: a deep crouch with the shield arm forward. There is no
+  shield prop in the render.
+
+Not wired yet (appended only): WalkBack, Strafe L/R, Turn L/R, the block and
+crouch idles, and IdleAlt. Each one needs player-state hooks.
