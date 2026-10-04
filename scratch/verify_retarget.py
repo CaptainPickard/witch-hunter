@@ -1,5 +1,10 @@
 """Fail-closed GLB retarget verification with exact old-clip byte identity.
 python3 scratch/verify_retarget.py OLD NEW --clips MANIFEST --bake-log LOG --out JSON
+    [--mesh-fix FIXED.rigged.glb]
+
+--mesh-fix: NEW was baked from a skin-weight-fixed copy of OLD. The fixed copy
+must be OLD + append-only JOINTS_0/WEIGHTS_0 accessors with only those two mesh
+attribute indices swapped; everything else still byte/JSON-identical to OLD.
 """
 import argparse
 from collections import Counter
@@ -14,7 +19,44 @@ def sha(data):
     return hashlib.sha256(data).hexdigest()
 
 
-def verify(old, new, expected, bake=None):
+SKIN_ATTRS = ('JOINTS_0', 'WEIGHTS_0')
+
+
+def without_skin_attrs(meshes):
+    meshes = json.loads(json.dumps(meshes))
+    for mesh in meshes:
+        for prim in mesh['primitives']:
+            for attr in SKIN_ATTRS:
+                prim['attributes'].pop(attr, None)
+    return meshes
+
+
+def verify_mesh_fix(jo, bo, fixed, jn, bn, check):
+    jf, bf = parse(fixed)
+    check('meshfix_bin_prefix_of_original', bf[:len(bo)] == bo)
+    check('meshfix_bin_prefix_of_output', bn[:len(bf)] == bf)
+    for key in ('accessors', 'bufferViews'):
+        check('meshfix_appendonly_' + key, jf[key][:len(jo[key])] == jo[key]
+              and jn[key][:len(jf[key])] == jf[key])
+    check('meshfix_only_skin_attrs_swapped',
+          without_skin_attrs(jf['meshes']) == without_skin_attrs(jo['meshes']))
+    check('output_meshes_equal_meshfix', jn['meshes'] == jf['meshes'])
+    swapped = {}
+    for mi, (mo, mf) in enumerate(zip(jo['meshes'], jf['meshes'])):
+        for pi, (po, pf) in enumerate(zip(mo['primitives'], mf['primitives'])):
+            for attr in SKIN_ATTRS:
+                a, b = po['attributes'][attr], pf['attributes'][attr]
+                ao, af = jo['accessors'][a], jf['accessors'][b]
+                ok = (b >= len(jo['accessors']) and af['count'] == ao['count'] and
+                      af['type'] == ao['type'] and accessor_bytes(jn, bn, b) == accessor_bytes(jf, bf, b))
+                swapped[f'{mi}.{pi}.{attr}'] = {'original_accessor': a, 'fixed_accessor': b,
+                    'count': af['count'], 'data_differs': accessor_bytes(jo, bo, a) != accessor_bytes(jf, bf, b)}
+                check(f'meshfix_accessor_present_{mi}_{pi}_{attr}', ok)
+    return {'fixed': str(Path(fixed).resolve()), 'fixed_sha256': sha(Path(fixed).read_bytes()),
+            'swapped_accessors': swapped}
+
+
+def verify(old, new, expected, bake=None, mesh_fix=None):
     jo, bo = parse(old)
     jn, bn = parse(new)
     original_names = [a['name'] for a in jo['animations']]
@@ -30,14 +72,19 @@ def verify(old, new, expected, bake=None):
         if key == 'buffers':
             continue
         actual = jn.get(key)
-        equal = (actual[:len(value)] == value if key in
-                 ('animations', 'accessors', 'bufferViews') else actual == value)
+        if mesh_fix and key == 'meshes':
+            equal = without_skin_attrs(actual) == without_skin_attrs(value)
+        else:
+            equal = (actual[:len(value)] == value if key in
+                     ('animations', 'accessors', 'bufferViews') else actual == value)
         check('original_json_' + key, equal)
     report = {'input': str(Path(old).resolve()), 'output': str(Path(new).resolve()),
               'source_sha256': sha(Path(old).read_bytes()),
               'output_sha256': sha(Path(new).read_bytes()),
               'original_bin_sha256': sha(bo), 'output_prefix_sha256': sha(bn[:len(bo)]),
               'originals': {}, 'new_clips': {}, 'assertions': assertions}
+    if mesh_fix:
+        report['mesh_fix'] = verify_mesh_fix(jo, bo, mesh_fix, jn, bn, check)
     by_name = {a['name']: a for a in jn['animations']}
     for anim in jo['animations']:
         name = anim['name']
@@ -119,10 +166,11 @@ def main():
     p.add_argument('--clips', required=True)
     p.add_argument('--bake-log')
     p.add_argument('--out')
+    p.add_argument('--mesh-fix')
     args = p.parse_args()
     expected = list(json.loads(Path(args.clips).read_text()))
     bake = json.loads(Path(args.bake_log).read_text()) if args.bake_log else None
-    report = verify(args.old, args.new, expected, bake)
+    report = verify(args.old, args.new, expected, bake, args.mesh_fix)
     text = json.dumps(report, indent=2) + '\n'
     if args.out:
         Path(args.out).write_text(text)

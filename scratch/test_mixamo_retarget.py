@@ -13,6 +13,9 @@ from verify_retarget import verify
 ROOT = Path(__file__).resolve().parents[1]
 RIGS = ROOT / 'art-direction/3d/assets/races_regen/rigged'
 BODIES = {'bandit': 'orc-male-warrior', 'ghoul': 'undead-ghoul-male'}
+# Bandit .mixamo.glb is baked from the skin-weight-fixed orc (Round B capefix).
+MESH_FIX = {'bandit': ROOT / 'scratch/mixamo-fbx/capefix/orc-male-warrior.rigged.glb'}
+BAKE_LOG = {'bandit': 'bandit-capefix-bake.json', 'ghoul': 'ghoul-bake.json'}
 
 
 class RetargetRegression(unittest.TestCase):
@@ -31,7 +34,8 @@ class RetargetRegression(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             path = Path(d)/'mutant.glb'
             write_glb(path,g,b)
-            result = verify(old,path,json.loads((ROOT/'scratch/mixamo_bandit.json').read_text()))
+            result = verify(old,path,json.loads((ROOT/'scratch/mixamo_bandit.json').read_text()),
+                            mesh_fix=MESH_FIX['bandit'])
         self.assertFalse(result['pass'])
         return result
 
@@ -39,8 +43,9 @@ class RetargetRegression(unittest.TestCase):
         for body,stem in BODIES.items():
             with self.subTest(body=body):
                 manifest = json.loads((ROOT/f'scratch/mixamo_{body}.json').read_text())
-                bake = json.loads((ROOT/f'scratch/mixamo-fbx/reports/{body}-bake.json').read_text())
-                r=verify(RIGS/f'{stem}.rigged.glb',RIGS/f'{stem}.mixamo.glb',manifest,bake)
+                bake = json.loads((ROOT/f'scratch/mixamo-fbx/reports/{BAKE_LOG[body]}').read_text())
+                r=verify(RIGS/f'{stem}.rigged.glb',RIGS/f'{stem}.mixamo.glb',manifest,bake,
+                         MESH_FIX.get(body))
                 self.assertTrue(r['pass'],r['failed_assertions'])
                 self.assertEqual(len(r['originals']),6)
                 self.assertEqual(len(r['new_clips']),7)
@@ -57,6 +62,17 @@ class RetargetRegression(unittest.TestCase):
 
     def test_reject_missing_new_channel(self):
         self.check_mutation(lambda g,b: g['animations'][-1]['channels'].pop())
+
+    def test_capefix_requires_mesh_fix_mode(self):
+        manifest=json.loads((ROOT/'scratch/mixamo_bandit.json').read_text())
+        r=verify(RIGS/'orc-male-warrior.rigged.glb',RIGS/'orc-male-warrior.mixamo.glb',manifest)
+        self.assertEqual(r['failed_assertions'],['original_json_meshes'])
+
+    def test_reject_mesh_change_beyond_skin_attrs(self):
+        def mutate(g,b):
+            g['meshes'][0]['primitives'][0]['attributes']['NORMAL']=0
+        r=self.check_mutation(mutate)
+        self.assertFalse(r['assertions']['original_json_meshes'])
 
     def test_reject_missing_old_clip(self):
         self.check_mutation(lambda g,b: g['animations'].pop(0))
