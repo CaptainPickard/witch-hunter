@@ -396,3 +396,38 @@ CONFIG.scatter.bushes.assets heights, atTreeRing.radiusFrac); grass 1
 tuft/60sqm reads sparse (knob: grass count); stills at
 scratch/roundE-proof/. Wall + lantern-doorway pass = NEXT round (Round F),
 scoped separately, not started.
+## Round F - boundary wall ring + gate arch (2026-10-05, Nicko order)
+
+Three Meshy assets (54 of 60 credits; 1309 -> 1255): wh-wall-vinestone-a/b
+(2.0m vine-on-stone modular segments) + wh-lantern-hang (hanging lantern,
+amber emissive glass). Provenance io/roundF-wall-provenance.md; QA
+scratch/treeqa/roundF/. The arch reuses b3-gate: its two door leaves stand
+nearly closed in the original mesh (13% clear opening - brief's 65% was
+wrong), so scratch/gate_open_cut.py derived b3-gate-open-pixelated.glb
+(34.28% opening measured); original untouched.
+
+Placement (whWallPlan in region-manager.js, pure seeded function of
+CONFIG.boundaryWall, seed 20261006; mirror scratch/wall_mirror.py,
+byte-identical across runs AND branches): 145-segment ring at r 87.5
+(0 nudged, 0 dropped; closest prop the r-84.8 witchwood cleared 1.32m) +
+22 chord segments per side along z=-25 from x=+-4 to the ring intercept.
+2 InstancedMeshes (A 95, B 94) = 2 draw calls; built once at world level,
+region switches never dispose it.
+
+Gate: b3Gate at (0,-25) scaled so the opening is exactly 5.20m (s 9.223,
+Z-squashed 0.45 -> 4.3m deep, apex 6.8m). whLanternHang hangs inside the
+apex (hook 5cm into the stone; 0.9m body - brief's 0.6 was a speck at that
+height). Light socket CONFIG.lightSockets.b3Gate (intensity 5.0, apex-based)
+feeds pool + flame card via a 3-line game.js hook (dev) and computeFireSockets
+(feat: also lock-light eligible).
+
+Colliders: 603 = 567 wall circles (3/segment, r .45, max neighbor gap 0.43m
+< 1.4m player diameter) + 32 arch-leg circles (r .6) + 4 corner plugs
+(r .5). Joined per region by plane side (A 431, B 350).
+
+Watch items: wall draws ~802k tris (Meshy returned 4.1-4.4k vs 2k target -
+decimate if mobile fps drops); modular seam between segments is visible
+closeup (stone courses don't align - foliage overlap is the fix if it
+bothers); Round E proof stills had half-sunk ground objects (renderer
+bug, fixed in F's); bundle's three.js static{} parse warning predates
+this round, game code parses.
