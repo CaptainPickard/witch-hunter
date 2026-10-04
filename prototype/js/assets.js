@@ -49,6 +49,9 @@
     // characters (whanim1 rigged exports; props below stay rigid)
     // 10-04: rigged copy + WH_SlashR2L/WH_SlashL2R/WH_Thrust chain clips
     // (scratch/blender_chain_clips.py). Rollback: human-hunter-male.rigged.glb
+    // Order D: + WH_ShieldRaise/WH_ShieldImpact/WH_ParrySwipe/
+    // WH_GuardBreakStagger (scratch/blender_shield_clips.py, appended by
+    // scratch/glb_append_clips.py - the 9 earlier clips are byte-identical).
     playerBody: 'art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-chain.glb',
     banditBody: 'art-direction/3d/assets/races_regen/rigged/orc-male-warrior.rigged.glb',
     ghoulBody: 'art-direction/3d/assets/races_regen/rigged/undead-ghoul-male.rigged.glb',
@@ -101,7 +104,8 @@
   // value = expected clip count (load sanity check). Order B: playerBody's
   // combat-chain.glb legitimately holds 9 (6 whanim1 + WH_SlashR2L /
   // WH_SlashL2R / WH_Thrust) - the old flat "6" warned on every boot.
-  var CHARACTERS = { playerBody: 9, banditBody: 6, ghoulBody: 6 };
+  // Order D: 13 = those 9 + the 4 shield/block clips.
+  var CHARACTERS = { playerBody: 13, banditBody: 6, ghoulBody: 6 };
   var failed = {};     // logical name -> true (stand-in substituted)
   var loadedCount = 0;
   var GROUND_META = {}; // holder uuid -> measured height, width, raw groundMinY
