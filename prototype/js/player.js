@@ -1508,6 +1508,20 @@
   };
 
   Player.prototype.updateCamera = function (dt) {
+    // Order E1 (Nicko 10-05): lock-on changes ONLY the camera yaw - it aims
+    // so the target sits straight ahead of the player. Anchor, distance and
+    // pitch stay exactly the unlocked orbit below (no midpoint re-anchor, no
+    // extra zoom), so the player stays framed like unlocked play.
+    if (this.lockTarget && this.state === 'alive') {
+      var t = this.lockTarget;
+      var dx = t.pos.x - this.pos.x;
+      var dz = t.pos.z - this.pos.z;
+      // camera sits opposite the target relative to the player
+      if (dx * dx + dz * dz > 0.000001) {
+        var lockLerp = 1 - Math.exp(-LOCK.camLerp * dt);
+        this.camYaw += shortestAngle(Math.atan2(dx, dz) + Math.PI - this.camYaw) * lockLerp;
+      }
+    }
     // orbit camera behind player
     var target = this.pos.clone();
     target.y += CFG.camHeight;
@@ -1527,39 +1541,13 @@
     var want = target.clone().add(offset);
     if (want.y < floorY) want.y = floorY;
 
-    if (this.lockTarget && this.state === 'alive') {
-      // D3: camera follows so the target stays framed. Aim camera yaw so the
-      // target is straight ahead of the player; pull back a bit for framing.
-      var t = this.lockTarget;
-      var dx = t.pos.x - this.pos.x;
-      var dz = t.pos.z - this.pos.z;
-      var dist = Math.sqrt(dx * dx + dz * dz);
-      // camera should sit opposite the target relative to the player
-      var wantYaw = dist > 0.001 ? Math.atan2(dx, dz) + Math.PI : this.camYaw;
-      var wantDist = Math.min(CFG.camMaxDistance,
-        Math.max(this.camDist, dist + LOCK.camExtraDistance));
-      var lerp = 1 - Math.exp(-LOCK.camLerp * dt);
-      this.camYaw += shortestAngle(wantYaw - this.camYaw) * lerp;
-      // frame slightly above midpoint between player and target
-      target.x = (this.pos.x + t.pos.x) / 2;
-      target.z = (this.pos.z + t.pos.z) / 2;
-      var midDist = dist / 2;
-      offset.set(
-        Math.sin(this.camYaw) * Math.cos(this.camPitch),
-        Math.sin(this.camPitch),
-        Math.cos(this.camYaw) * Math.cos(this.camPitch)
-      ).multiplyScalar(Math.max(CFG.camMinDistance, midDist + LOCK.camExtraDistance));
-      want = target.clone().add(offset);
-      if (want.y < floorY) want.y = floorY;
-      this.camera.position.lerp(want, lerp);
-    } else {
-      // 10-04 change order (Nicko): FULL camera decoupling - movement NEVER
-      // turns the camera. camYaw changes only from mouse drag / camera
-      // joystick (both stamp lastManualCamT); lock-on keeps its own framing
-      // above. The old v3.1 movement auto-follow is gone.
-      var lerp2 = 1 - Math.exp(-CFG.camFollowLerp * dt);
-      this.camera.position.lerp(want, lerp2);
-    }
+    // 10-04 change order (Nicko): FULL camera decoupling - movement NEVER
+    // turns the camera. camYaw changes only from mouse drag / camera
+    // joystick (both stamp lastManualCamT) and the lock-on yaw aim above.
+    // The old v3.1 movement auto-follow is gone. Position follow is the same
+    // locked or not (the lock yaw swing is already smoothed by LOCK.camLerp).
+    var lerp2 = 1 - Math.exp(-CFG.camFollowLerp * dt);
+    this.camera.position.lerp(want, lerp2);
     if (this.camera.position.y < floorY) this.camera.position.y = floorY;
     this.camera.lookAt(target);
   };

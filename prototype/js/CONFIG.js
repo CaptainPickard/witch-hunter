@@ -633,9 +633,17 @@ window.WH_CONFIG = {
     maxDistance: 18.0,              // engage range (world units)
     hysteresis: 1.25,               // break at maxDistance * hysteresis
     facingConeDeg: 140,             // total cone around CAMERA forward
-    camLerp: 6.0,                   // per-second lerp for lock camera follow
+    camLerp: 6.0,                   // per-second lerp for the lock camera YAW aim
     trackWindupDegPerSec: 240,      // combat-ds1 P0-4: lock-on turn rate during attack windup
-    camExtraDistance: 3.5,           // camera pulls back this much past target dist
+    // Order E1 (Nicko 10-05): RETIRED. The lock camera no longer re-anchors
+    // at the player/enemy midpoint or zooms; it only aims yaw and keeps the
+    // unlocked orbit distance/pitch. Legacy key kept at 0; nothing reads it.
+    camExtraDistance: 0,
+    // frameCheckNote (E2 AC): default orbit (camDistance 7, pitch 22deg,
+    // camHeight 2.6, fov 60 -> 30deg half-vertical). Enemy feet at 18m ahead
+    // sit ~10deg above screen center = in frame. Steep pitch pushes it up:
+    // ~pitch > 50deg puts an 18m enemy past the top edge (player's own
+    // pitch choice; reticle hides off-frame). Playtest is the real gate.
     reticleOffsetY: 0.9             // reticle aim height above enemy feet
   },
 
