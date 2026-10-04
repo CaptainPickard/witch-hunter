@@ -348,3 +348,31 @@ STILL PARKED (unchanged): 9 unhooked baked clips (WalkBack/Strafe L/R/Turn
 L/R/idles), bandit cape panel, ~55deg idle stance, kick/cast/draw/sheath
 hooks, dev's stale prototype/builds/v7-playable.html (harmless - dev is
 served from the checkout).
+
+## Round D2 - lantern light fix (2026-10-05, same session, Nicko order)
+
+Nicko: lanterns are lit but do not illuminate the ground beneath them, and the
+light sits outside the lantern object. Root causes (measured):
+1. Socket placement had no lateral offset - the pool light sat on the prop's
+   center column while both lantern heads hang off-axis (post glass at
+   glTF-local x -0.27..-0.09 @ 64-79% H; waymarker glass z +0.23..+0.47 @
+   55-79% H). scratch/lantern_head_probe.py (committed) measures vertex bands;
+   IO's coarse band centroids were corrected by Claude Code's finer 3%
+   slices after its contract render put the light on the bracket.
+2. Socket intensities 1.6/1.8/2.4 at decay 2 gave ~0.06-0.6 ground pool vs
+   the player torch (10.5). Raised to torch parity: post 9.0, waymarker 9.5,
+   campfire 3.2.
+Changes: CONFIG.lightSockets gains measured offset [x, z] (glTF-local,
+pre-rotY, pre-scale; post 0.72/[-0.18,0], waymarker 0.67/[0,+0.35], campfire
+centered) + game.js socket placement applies offset with the THREE
+obj.rotation.y convention (rotY sign matches region-manager placement; the
+feat waymarker's rotY 1.1 makes rotation live) and prop scale.
+Deviations (accepted, verified by IO): finer glass slices replaced the
+contract's band centroids; rotation-sign correction; dev's copy of the
+placement lives in computeSockets (dev/feat divergence, same edit).
+Proof stills: scratch/roundD2-proof/ (3, feat) - flame inside post head,
+inside waymarker cage, centered campfire; warm ground pools under all three.
+Commits: dev 5dea2fc, feat d1d2e0a + build 96e7010 (bundle 2658945 bytes).
+light.js lock-light 'world' radius unchanged (intensity-independent).
+Parked: shadowless-pool look (game lights never castShadow), pre-existing
+aliasing/base-gap asset artifacts visible in stills.
