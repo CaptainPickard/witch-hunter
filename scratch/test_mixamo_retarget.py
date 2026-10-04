@@ -52,12 +52,14 @@ class RetargetRegression(unittest.TestCase):
 
     def test_player_sword_delivery(self):
         # Round C: combat-sword.glb = this branch's combat-chain.glb + 12 sword clips.
+        # Round D appends 3 WH_SS_* attack clips (same manifest on dev and feat).
         old, new = RIGS/'human-hunter-male.combat-chain.glb', RIGS/'human-hunter-male.combat-sword.glb'
         manifest = json.loads((ROOT/'scratch/mixamo_player.json').read_text())
+        manifest.update(json.loads(next(ROOT.glob('scratch/roundD-clips-*.json')).read_text()))
         count = len(parse(old)[0]['animations'])
         r = verify(old, new, manifest, original_count=count, held_poses=('WH_ShieldCrouchIdle',))
         self.assertTrue(r['pass'], r['failed_assertions'])
-        self.assertEqual(len(r['new_clips']), 12)
+        self.assertEqual(len(r['new_clips']), 15)
         self.assertFalse(verify(old, new, manifest, original_count=count)['pass'])
 
     def test_reject_old_animation_byte_change(self):

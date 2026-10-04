@@ -1,0 +1,62 @@
+{
+ "sword and shield attack (4).fbx": {
+  "frames": 31,
+  "sec": 1.0,
+  "hand_x_start": 0.0,
+  "hand_x_end": 0.0,
+  "hand_x_min": -0.11,
+  "hand_x_max": 0.34,
+  "hand_y_min": -0.86,
+  "hand_y_max": 0.15,
+  "hand_z_max_rel_hips": 1.49,
+  "hand_ext_max_m": 0.69
+ },
+ "sword and shield slash.fbx": {
+  "frames": 46,
+  "sec": 1.5,
+  "hand_x_start": 0.0,
+  "hand_x_end": -0.03,
+  "hand_x_min": -0.12,
+  "hand_x_max": 0.86,
+  "hand_y_min": -1.38,
+  "hand_y_max": 0.0,
+  "hand_z_max_rel_hips": 1.51,
+  "hand_ext_max_m": 1.18
+ },
+ "sword and shield slash (3).fbx": {
+  "frames": 51,
+  "sec": 1.67,
+  "hand_x_start": 0.0,
+  "hand_x_end": 0.0,
+  "hand_x_min": -0.28,
+  "hand_x_max": 0.78,
+  "hand_y_min": -1.32,
+  "hand_y_max": 0.0,
+  "hand_z_max_rel_hips": 1.69,
+  "hand_ext_max_m": 1.11
+ },
+ "sword and shield slash (5).fbx": {
+  "frames": 42,
+  "sec": 1.37,
+  "hand_x_start": 0.0,
+  "hand_x_end": 0.01,
+  "hand_x_min": -0.21,
+  "hand_x_max": 0.9,
+  "hand_y_min": -1.42,
+  "hand_y_max": 0.01,
+  "hand_z_max_rel_hips": 0.94,
+  "hand_ext_max_m": 1.15
+ },
+ "sword and shield slash (4).fbx": {
+  "frames": 74,
+  "sec": 2.43,
+  "hand_x_start": 0.0,
+  "hand_x_end": -0.01,
+  "hand_x_min": -0.07,
+  "hand_x_max": 0.53,
+  "hand_y_min": -1.42,
+  "hand_y_max": 0.0,
+  "hand_z_max_rel_hips": 1.94,
+  "hand_ext_max_m": 1.27
+ }
+}
