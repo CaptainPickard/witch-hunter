@@ -1,0 +1,19 @@
+{
+  "glb": "/workspace/witch-hunter/art-direction/3d/assets/races_regen/rigged/orc-male-warrior.mixamo.glb",
+  "renders": {
+    "rest": {
+      "action": null,
+      "frame": 0
+    },
+    "walk_mid": {
+      "action": "WH_Walk_Melee",
+      "frame": 11,
+      "foot_separation_m": 0.8822482170806882
+    },
+    "attack_mid": {
+      "action": "WH_Attack_High",
+      "frame": 32,
+      "r_hand_m_per_frame": 0.442077436539513
+    }
+  }
+}

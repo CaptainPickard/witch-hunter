@@ -1,0 +1,89 @@
+{
+  "vertices": 23109,
+  "changed": 7367,
+  "rigid_reassigned": 1601,
+  "renormalised": 5766,
+  "keep_threshold": 0.5,
+  "far_ratio": 1.5,
+  "far_abs_ratio": 2.5,
+  "hip_y": 0.12,
+  "arm_gates": {
+    "rules": [
+      [
+        0.4,
+        [
+          -0.45,
+          0.15
+        ]
+      ],
+      [
+        0.36,
+        [
+          0.15,
+          0.33
+        ]
+      ]
+    ],
+    "vertices": 2734
+  },
+  "jaw_gate": {
+    "abs_x_lt": 0.15,
+    "z_gt_head_plus": 0.05,
+    "vertices": 1034
+  },
+  "loincloth_flap": {
+    "abs_x_lt": 0.12,
+    "abs_z_gt": 0.21,
+    "vertices": 1224
+  },
+  "capsule_radius_m": {
+    "Root": Infinity,
+    "Hips": 0.22,
+    "Spine": 0.25,
+    "Chest": 0.25,
+    "Neck": 0.12,
+    "Head": 0.12,
+    "L_Shoulder": 0.15,
+    "L_UpperArm": 0.09,
+    "L_Forearm": 0.09,
+    "L_Hand": 0.09,
+    "R_Shoulder": 0.15,
+    "R_UpperArm": 0.09,
+    "R_Forearm": 0.09,
+    "R_Hand": 0.09,
+    "L_Thigh": 0.17,
+    "L_Shin": 0.14,
+    "L_Foot": 0.16,
+    "R_Thigh": 0.17,
+    "R_Shin": 0.14,
+    "R_Foot": 0.16
+  },
+  "changed_by_old_dominant": {
+    "Hips": 891,
+    "Spine": 1659,
+    "Chest": 214,
+    "Head": 16,
+    "L_Shoulder": 153,
+    "L_UpperArm": 22,
+    "R_Shoulder": 247,
+    "L_Thigh": 2296,
+    "R_Thigh": 1869
+  },
+  "changed_by_new_region": {
+    "Hips": 299,
+    "Spine": 2497,
+    "Chest": 265,
+    "Head": 16,
+    "L_Shoulder": 48,
+    "L_Forearm": 100,
+    "L_Hand": 378,
+    "R_Shoulder": 22,
+    "R_UpperArm": 5,
+    "R_Forearm": 201,
+    "R_Hand": 604,
+    "L_Thigh": 1521,
+    "R_Thigh": 1411
+  },
+  "canonical": "/workspace/witch-hunter/art-direction/3d/assets/races_regen/rigged/orc-male-warrior.rigged.glb",
+  "output": "/workspace/witch-hunter/scratch/mixamo-fbx/capefix/orc-male-warrior.rigged.glb"
+}
