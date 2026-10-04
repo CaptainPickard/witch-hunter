@@ -159,3 +159,42 @@ free port. Headless swiftshader runs at about 1-2 fps (same on the baseline),
 so each phase waits until its sampled clip shows up instead of using a fixed
 sleep. builds/v7-playable.html was not rebuilt; it was already stale before
 this round (it has no combat-chain clips either).
+
+## Round B landed (2026-10-05): orc cape-fix pipe-through + bandit wiring
+
+Contract: io/cc-round-b-contract.md. Commits: dev 4ae54fa (rebake) + 47e397d
+(wiring); feat/world-visuals 5d1a095 + bd8938d + cee616a (build). Both pushed.
+8793 serves cee616a.
+
+Pipe-through: orc-male-warrior.mixamo.glb is now baked from
+scratch/mixamo-fbx/capefix/orc-male-warrior.rigged.glb, with the same 7-clip
+bandit map and the 25deg clamp (Attack_Horiz/Hit_Large_L). The fixed mesh is
+canonical plus 2 appended accessors (JOINTS_0 373, WEIGHTS_0 374), and only
+the primitive's two attribute indices change. The append route needed no
+change because it remaps by node name and never touches meshes or skins. The
+canonical .rigged.glb was not modified.
+- Weight-fix change: a jaw gate (|x|<0.15, in front of the Head joint). The
+  shipped fix had moved ~560 jaw verts rigidly to the shoulders/Neck/Chest,
+  which made a beak-stretched jaw in walk. orc-weight-fix.json was regenerated
+  from the script (7367 verts changed). The old 4025 report was stale.
+- verify_retarget.py --mesh-fix (37/37 PASS): checked against the ORIGINAL
+  .rigged.glb. All 6 originals are byte-identical. All 7 new clips have 60
+  channels, 20 nodes, dense 30fps, and quaternion norm error <5e-7.
+  test_mixamo_retarget.py: 10/10 OK (bandit in mesh-fix mode plus 2 new
+  negatives).
+
+Wiring: anim.js VARIANTS.bandit = WH_Idle_Melee / WH_Walk_Melee /
+WH_Run_Melee / WH_Attack_High / WH_Hit_Large_L / WH_Death (canonical), moves
+{}. enemy.js passes {variant:'bandit'}. assets.js banditBody ->
+orc-male-warrior.mixamo.glb; rollback is .rigged.glb. Static check:
+scratch/check_bandit_wire.py (esprima parse + VARIANTS AST + clips present).
+No game-loop runs.
+
+Proof stills (Nicko decides by playing): scratch/capefix-proof/rest.png,
+walk_mid.png (frame 11), attack_mid.png (WH_Attack_High frame 32).
+- Rest and walk: no slabs; face normal.
+- Attack mid-swing: the pre-fix forearm slab fans are gone. A residual flat
+  cape/lat panel still stretches from the raised right upper arm to the hip.
+  Watch for it in the bandit's overhead swing.
+- Known: assets.js still expects 6 banditBody clips, so it now logs a
+  13-clip warning, the same as the ghoul.
