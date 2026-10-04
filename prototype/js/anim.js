@@ -58,6 +58,10 @@
   CharacterAnim.prototype.transition = function (state, seconds, restart) {
     if (!this.actions[state] || this.dead && state !== 'death') return;
     if (this.clip === state && !restart) return;
+    // Leaving 'hit' for any other clip ends the hit reaction. An interrupted
+    // (faded / stopped) hit action never fires the mixer 'finished' event, so
+    // hitActive would latch and setLocomotion would never transition again.
+    if (state !== 'hit') this.hitActive = false;
     var prev = this.actions[this.clip];
     var next = this.actions[state];
     // Interrupting a fade must not leave an older third action contributing
