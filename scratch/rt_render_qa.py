@@ -81,6 +81,18 @@ def main():
         arm.animation_data.action = act
         arm.animation_data.action_slot = act.slots[0]
         first, last = act.frame_range
+        clearances = []
+        for frame in range(int(round(first)), int(round(last)) + 1):
+            scene.frame_set(frame)
+            bpy.context.view_layer.update()
+            lo, hi = bounds(meshes)
+            assert all(math.isfinite(v) for v in lo + hi)
+            clearances.append(lo[2] - ground)
+        report['full_range'][name] = {'frames_checked': len(clearances),
+            'min_ground_clearance_m': min(clearances),
+            'max_ground_clearance_m': max(clearances),
+            'no_penetration_at_0_1mm_tolerance': min(clearances) >= -.0001}
+        assert min(clearances) >= -.0001, (name, min(clearances))
         entries = []
         for tag, f in [('mid', int(round((first+last)/2))), ('end', int(round(last)))]:
             scene.frame_set(f)

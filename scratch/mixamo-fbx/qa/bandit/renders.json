@@ -1,0 +1,291 @@
+{
+  "glb": "/workspace/witch-hunter/art-direction/3d/assets/races_regen/rigged/orc-male-warrior.mixamo.glb",
+  "ground_z": -1.0,
+  "measured_meshes": [
+    "WH_Body"
+  ],
+  "full_range": {
+    "WH_Idle_Melee": {
+      "frames_checked": 56,
+      "min_ground_clearance_m": 2.384185791015625e-07,
+      "max_ground_clearance_m": 9.5367431640625e-07,
+      "no_penetration_at_0_1mm_tolerance": true
+    },
+    "WH_Walk_Melee": {
+      "frames_checked": 41,
+      "min_ground_clearance_m": -2.384185791015625e-07,
+      "max_ground_clearance_m": 3.5762786865234375e-07,
+      "no_penetration_at_0_1mm_tolerance": true
+    },
+    "WH_Run_Melee": {
+      "frames_checked": 23,
+      "min_ground_clearance_m": -2.384185791015625e-07,
+      "max_ground_clearance_m": 0.006788492202758789,
+      "no_penetration_at_0_1mm_tolerance": true
+    },
+    "WH_Attack_High": {
+      "frames_checked": 96,
+      "min_ground_clearance_m": -2.384185791015625e-07,
+      "max_ground_clearance_m": 9.5367431640625e-07,
+      "no_penetration_at_0_1mm_tolerance": true
+    },
+    "WH_Attack_Horiz": {
+      "frames_checked": 73,
+      "min_ground_clearance_m": -5.960464477539062e-07,
+      "max_ground_clearance_m": 8.344650268554688e-07,
+      "no_penetration_at_0_1mm_tolerance": true
+    },
+    "WH_Hit_Large_L": {
+      "frames_checked": 32,
+      "min_ground_clearance_m": 1.1920928955078125e-07,
+      "max_ground_clearance_m": 8.344650268554688e-07,
+      "no_penetration_at_0_1mm_tolerance": true
+    },
+    "WH_Taunt": {
+      "frames_checked": 86,
+      "min_ground_clearance_m": -1.1920928955078125e-07,
+      "max_ground_clearance_m": 9.5367431640625e-07,
+      "no_penetration_at_0_1mm_tolerance": true
+    }
+  },
+  "clips": {
+    "WH_Idle_Melee": [
+      {
+        "pose": "mid",
+        "frame": 28,
+        "png": "/workspace/witch-hunter/scratch/mixamo-fbx/qa/bandit/WH_Idle_Melee.png",
+        "bbox_min": [
+          -0.7355611324310303,
+          -0.6654486656188965,
+          -0.9999996423721313
+        ],
+        "bbox_max": [
+          0.5717709064483643,
+          0.528740406036377,
+          0.9390951991081238
+        ],
+        "ground_clearance_m": 3.5762786865234375e-07
+      },
+      {
+        "pose": "end",
+        "frame": 55,
+        "png": "/workspace/witch-hunter/scratch/mixamo-fbx/qa/bandit/WH_Idle_Melee_end.png",
+        "bbox_min": [
+          -0.7743483185768127,
+          -0.7865304946899414,
+          -0.9999994039535522
+        ],
+        "bbox_max": [
+          0.5757411122322083,
+          0.5372101068496704,
+          0.8914555907249451
+        ],
+        "ground_clearance_m": 5.960464477539062e-07
+      }
+    ],
+    "WH_Walk_Melee": [
+      {
+        "pose": "mid",
+        "frame": 20,
+        "png": "/workspace/witch-hunter/scratch/mixamo-fbx/qa/bandit/WH_Walk_Melee.png",
+        "bbox_min": [
+          -0.6296641826629639,
+          -0.6501518487930298,
+          -1.0
+        ],
+        "bbox_max": [
+          0.590396523475647,
+          0.5277236104011536,
+          0.9336085319519043
+        ],
+        "ground_clearance_m": 0.0
+      },
+      {
+        "pose": "end",
+        "frame": 40,
+        "png": "/workspace/witch-hunter/scratch/mixamo-fbx/qa/bandit/WH_Walk_Melee_end.png",
+        "bbox_min": [
+          -0.588444709777832,
+          -0.6420276761054993,
+          -0.9999997615814209
+        ],
+        "bbox_max": [
+          0.6161690950393677,
+          0.515754222869873,
+          0.9316660761833191
+        ],
+        "ground_clearance_m": 2.384185791015625e-07
+      }
+    ],
+    "WH_Run_Melee": [
+      {
+        "pose": "mid",
+        "frame": 11,
+        "png": "/workspace/witch-hunter/scratch/mixamo-fbx/qa/bandit/WH_Run_Melee.png",
+        "bbox_min": [
+          -0.6510235667228699,
+          -0.8879852890968323,
+          -1.0000001192092896
+        ],
+        "bbox_max": [
+          0.5811552405357361,
+          0.5604016780853271,
+          0.9301568865776062
+        ],
+        "ground_clearance_m": -1.1920928955078125e-07
+      },
+      {
+        "pose": "end",
+        "frame": 22,
+        "png": "/workspace/witch-hunter/scratch/mixamo-fbx/qa/bandit/WH_Run_Melee_end.png",
+        "bbox_min": [
+          -0.6720039248466492,
+          -0.7526072263717651,
+          -0.9999997019767761
+        ],
+        "bbox_max": [
+          0.6241454482078552,
+          0.5093766450881958,
+          0.9334974884986877
+        ],
+        "ground_clearance_m": 2.980232238769531e-07
+      }
+    ],
+    "WH_Attack_High": [
+      {
+        "pose": "mid",
+        "frame": 48,
+        "png": "/workspace/witch-hunter/scratch/mixamo-fbx/qa/bandit/WH_Attack_High.png",
+        "bbox_min": [
+          -0.6400828957557678,
+          -1.0384585857391357,
+          -1.0
+        ],
+        "bbox_max": [
+          0.5310935974121094,
+          0.6369838118553162,
+          0.899556040763855
+        ],
+        "ground_clearance_m": 0.0
+      },
+      {
+        "pose": "end",
+        "frame": 95,
+        "png": "/workspace/witch-hunter/scratch/mixamo-fbx/qa/bandit/WH_Attack_High_end.png",
+        "bbox_min": [
+          -0.7742339372634888,
+          -0.7865279316902161,
+          -0.999999463558197
+        ],
+        "bbox_max": [
+          0.5743045806884766,
+          0.5372017025947571,
+          0.8914376497268677
+        ],
+        "ground_clearance_m": 5.364418029785156e-07
+      }
+    ],
+    "WH_Attack_Horiz": [
+      {
+        "pose": "mid",
+        "frame": 36,
+        "png": "/workspace/witch-hunter/scratch/mixamo-fbx/qa/bandit/WH_Attack_Horiz.png",
+        "bbox_min": [
+          -1.079646110534668,
+          -0.5828366279602051,
+          -1.0000004768371582
+        ],
+        "bbox_max": [
+          0.583236038684845,
+          0.6013796925544739,
+          0.7990325689315796
+        ],
+        "ground_clearance_m": -4.76837158203125e-07
+      },
+      {
+        "pose": "end",
+        "frame": 72,
+        "png": "/workspace/witch-hunter/scratch/mixamo-fbx/qa/bandit/WH_Attack_Horiz_end.png",
+        "bbox_min": [
+          -0.7744073271751404,
+          -0.7866164445877075,
+          -0.9999994039535522
+        ],
+        "bbox_max": [
+          0.5757410526275635,
+          0.5372101068496704,
+          0.8914586901664734
+        ],
+        "ground_clearance_m": 5.960464477539062e-07
+      }
+    ],
+    "WH_Hit_Large_L": [
+      {
+        "pose": "mid",
+        "frame": 16,
+        "png": "/workspace/witch-hunter/scratch/mixamo-fbx/qa/bandit/WH_Hit_Large_L.png",
+        "bbox_min": [
+          -0.6582944393157959,
+          -0.8036758303642273,
+          -0.9999994039535522
+        ],
+        "bbox_max": [
+          0.5946632027626038,
+          0.5359269976615906,
+          0.6543936729431152
+        ],
+        "ground_clearance_m": 5.960464477539062e-07
+      },
+      {
+        "pose": "end",
+        "frame": 31,
+        "png": "/workspace/witch-hunter/scratch/mixamo-fbx/qa/bandit/WH_Hit_Large_L_end.png",
+        "bbox_min": [
+          -0.7743465900421143,
+          -0.7865302562713623,
+          -0.999999463558197
+        ],
+        "bbox_max": [
+          0.5757410526275635,
+          0.5372099876403809,
+          0.891456127166748
+        ],
+        "ground_clearance_m": 5.364418029785156e-07
+      }
+    ],
+    "WH_Taunt": [
+      {
+        "pose": "mid",
+        "frame": 42,
+        "png": "/workspace/witch-hunter/scratch/mixamo-fbx/qa/bandit/WH_Taunt.png",
+        "bbox_min": [
+          -0.5138535499572754,
+          -0.5457264184951782,
+          -0.9999996423721313
+        ],
+        "bbox_max": [
+          0.9545482397079468,
+          0.7433956265449524,
+          0.9129548072814941
+        ],
+        "ground_clearance_m": 3.5762786865234375e-07
+      },
+      {
+        "pose": "end",
+        "frame": 85,
+        "png": "/workspace/witch-hunter/scratch/mixamo-fbx/qa/bandit/WH_Taunt_end.png",
+        "bbox_min": [
+          -0.7743455767631531,
+          -0.7865357398986816,
+          -0.999999463558197
+        ],
+        "bbox_max": [
+          0.5757408738136292,
+          0.5372098088264465,
+          0.8914538621902466
+        ],
+        "ground_clearance_m": 5.364418029785156e-07
+      }
+    ]
+  }
+}
