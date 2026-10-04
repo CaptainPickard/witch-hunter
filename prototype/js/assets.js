@@ -49,7 +49,10 @@
     // characters (whanim1 rigged exports; props below stay rigid)
     // 10-04: rigged copy + WH_SlashR2L/WH_SlashL2R/WH_Thrust chain clips
     // (scratch/blender_chain_clips.py). Rollback: human-hunter-male.rigged.glb
-    playerBody: 'art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-chain.glb',
+    // 10-05 Round C: combat-chain.glb + 12 Mixamo WH_Sword*/WH_Shield* clips
+    // (scratch/mixamo_player.json; chain clips byte-identical). Rollback:
+    // human-hunter-male.combat-chain.glb
+    playerBody: 'art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-sword.glb',
     banditBody: 'art-direction/3d/assets/races_regen/rigged/orc-male-warrior.mixamo.glb',
     // 10-05: rigged copy + 7 Mixamo WH_*_Zombie clips (13 total).
     // Rollback: undead-ghoul-male.rigged.glb

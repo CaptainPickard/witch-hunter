@@ -18,6 +18,9 @@
   // zombie: Mixamo ghoul set; death stays canonical (WH_Death_Zombie ends
   // standing and reads wounded, not dead).
   // bandit: Mixamo axe set on the cape-fixed orc; death canonical, no moves.
+  // sword: player Mixamo sword-and-shield locomotion (combat-sword.glb);
+  // attack/hit/death canonical, moves IS MOVE_NAMES (same object: identity
+  // checks elsewhere treat it as the default chain-move player body).
   var VARIANTS = {
     zombie: {
       names: {
@@ -32,6 +35,13 @@
         attack: 'WH_Attack_High', hit: 'WH_Hit_Large_L', death: 'WH_Death'
       },
       moves: {}
+    },
+    sword: {
+      names: {
+        idle: 'WH_SwordIdle', walk: 'WH_SwordWalk', run: 'WH_SwordRun',
+        attack: 'WH_Attack1', hit: 'WH_Hit', death: 'WH_Death'
+      },
+      moves: MOVE_NAMES
     }
   };
 
