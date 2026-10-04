@@ -1,0 +1,30 @@
+[
+ {
+  "png": "/workspace/witch-hunter/scratch/roundE-proof/01-regionA-patch.png",
+  "objects": 90,
+  "aim": [
+   49.712313268444916,
+   2.2,
+   34.56357691356438
+  ],
+  "cam": [
+   44.212313268444916,
+   2.6,
+   26.563576913564383
+  ]
+ },
+ {
+  "png": "/workspace/witch-hunter/scratch/roundE-proof/02-bush-ring-closeup.png",
+  "objects": 68,
+  "aim": [
+   -73.8519870722689,
+   0.9,
+   27.518520124291356
+  ],
+  "cam": [
+   -79.3519870722689,
+   2.4,
+   21.518520124291356
+  ]
+ }
+]

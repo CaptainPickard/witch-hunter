@@ -30,6 +30,13 @@
     youngAsh: 'art-direction/3d/assets/biome_library/m19-birch-pixelated.glb',
     // m18-dead-tree lives in biome_library (Astrabot 10-03)
     deadTree: 'art-direction/3d/assets/biome_library/m18-dead-tree-pixelated.glb',
+    // Round E vegetation scatter (scratch/tree_meshy.py, io/roundE-veg-provenance.md):
+    // extra trees are props; bushes + grass render instanced (region-manager)
+    youngBirch: 'art-direction/3d/assets/biome_library/wh-tree-birch-young-pixelated.glb',
+    youngDeadTree: 'art-direction/3d/assets/biome_library/wh-tree-dead-young-pixelated.glb',
+    bushA: 'art-direction/3d/assets/biome_library/wh-bush-a-pixelated.glb',
+    bushB: 'art-direction/3d/assets/biome_library/wh-bush-b-pixelated.glb',
+    grassTuft: 'art-direction/3d/assets/biome_library/wh-grass-tuft-pixelated.glb',
     fallenLog: 'art-direction/3d/assets/biome_library/m7-pixelated.glb',
     treeStump: 'art-direction/3d/assets/biome_library/m8-pixelated.glb',
     mossBoulder: 'art-direction/3d/assets/biome_library/m9-pixelated.glb',
