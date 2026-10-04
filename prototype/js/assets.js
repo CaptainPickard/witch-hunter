@@ -50,7 +50,7 @@
     // 10-04: rigged copy + WH_SlashR2L/WH_SlashL2R/WH_Thrust chain clips
     // (scratch/blender_chain_clips.py). Rollback: human-hunter-male.rigged.glb
     playerBody: 'art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-chain.glb',
-    banditBody: 'art-direction/3d/assets/races_regen/rigged/orc-male-warrior.rigged.glb',
+    banditBody: 'art-direction/3d/assets/races_regen/rigged/orc-male-warrior.mixamo.glb',
     // 10-05: rigged copy + 7 Mixamo WH_*_Zombie clips (13 total).
     // Rollback: undead-ghoul-male.rigged.glb
     ghoulBody: 'art-direction/3d/assets/races_regen/rigged/undead-ghoul-male.mixamo.glb',

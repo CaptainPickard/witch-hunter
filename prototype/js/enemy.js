@@ -59,9 +59,9 @@
     this.yawFrame.add(this.body);
     var bodyName = this.type === 'bandit' ? 'banditBody' : 'ghoulBody';
     if (window.WH_ASSETS.getClips(bodyName).length) {
-      // 10-05: ghouls play the Mixamo zombie set; bandits keep the default map.
+      // 10-05: ghouls play the Mixamo zombie set, bandits the Mixamo axe set.
       this.anim = new window.WH_CharacterAnim(meshRoot, window.WH_ASSETS.getClips(bodyName),
-        this.type === 'ghoul' ? { variant: 'zombie' } : null);
+        { variant: this.type === 'ghoul' ? 'zombie' : 'bandit' });
     }
     // Rigged bandits carry the axe on the animated hand, not a world pivot.
     var hand = meshRoot.getObjectByName('R_Hand');

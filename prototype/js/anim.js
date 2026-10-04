@@ -17,11 +17,19 @@
   // GLB regen can never strand a state. moves replaces MOVE_NAMES wholesale.
   // zombie: Mixamo ghoul set; death stays canonical (WH_Death_Zombie ends
   // standing and reads wounded, not dead).
+  // bandit: Mixamo axe set on the cape-fixed orc; death canonical, no moves.
   var VARIANTS = {
     zombie: {
       names: {
         idle: 'WH_Idle_Zombie', walk: 'WH_Walk_Zombie', run: 'WH_Run_Zombie',
         attack: 'WH_Attack_Zombie', hit: 'WH_Hit_Zombie', death: 'WH_Death'
+      },
+      moves: {}
+    },
+    bandit: {
+      names: {
+        idle: 'WH_Idle_Melee', walk: 'WH_Walk_Melee', run: 'WH_Run_Melee',
+        attack: 'WH_Attack_High', hit: 'WH_Hit_Large_L', death: 'WH_Death'
       },
       moves: {}
     }
