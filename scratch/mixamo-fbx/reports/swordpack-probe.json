@@ -1,0 +1,563 @@
+{
+ "draw sword 1.fbx": {
+  "frames": 16,
+  "sec": 0.5,
+  "travel_xy_m": [
+   0.02,
+   0.08
+  ],
+  "yaw_start": -3.2,
+  "yaw_delta": -14.5,
+  "hips_z_rel_rest": 0.98
+ },
+ "draw sword 2.fbx": {
+  "frames": 24,
+  "sec": 0.77,
+  "travel_xy_m": [
+   -0.05,
+   -0.06
+  ],
+  "yaw_start": -20.5,
+  "yaw_delta": -34.0,
+  "hips_z_rel_rest": 0.83
+ },
+ "sheath sword 1.fbx": {
+  "frames": 39,
+  "sec": 1.27,
+  "travel_xy_m": [
+   0.03,
+   0.08
+  ],
+  "yaw_start": -54.5,
+  "yaw_delta": 36.9,
+  "hips_z_rel_rest": 0.85
+ },
+ "sheath sword 2.fbx": {
+  "frames": 26,
+  "sec": 0.83,
+  "travel_xy_m": [
+   -0.02,
+   -0.08
+  ],
+  "yaw_start": -17.7,
+  "yaw_delta": 14.5,
+  "hips_z_rel_rest": 0.98
+ },
+ "sword and shield 180 turn (2).fbx": {
+  "frames": 26,
+  "sec": 0.83,
+  "travel_xy_m": [
+   -0.08,
+   -0.5
+  ],
+  "yaw_start": -10.8,
+  "yaw_delta": -179.7,
+  "hips_z_rel_rest": 0.68
+ },
+ "sword and shield 180 turn.fbx": {
+  "frames": 25,
+  "sec": 0.8,
+  "travel_xy_m": [
+   -0.11,
+   -0.26
+  ],
+  "yaw_start": 0.1,
+  "yaw_delta": -181.0,
+  "hips_z_rel_rest": 0.82
+ },
+ "sword and shield attack (2).fbx": {
+  "frames": 40,
+  "sec": 1.3,
+  "travel_xy_m": [
+   1.09,
+   -2.69
+  ],
+  "yaw_start": -10.7,
+  "yaw_delta": -419.6,
+  "hips_z_rel_rest": 0.79
+ },
+ "sword and shield attack (3).fbx": {
+  "frames": 53,
+  "sec": 1.73,
+  "travel_xy_m": [
+   -0.01,
+   -2.41
+  ],
+  "yaw_start": -9.8,
+  "yaw_delta": -397.0,
+  "hips_z_rel_rest": 0.62
+ },
+ "sword and shield attack (4).fbx": {
+  "frames": 31,
+  "sec": 1.0,
+  "travel_xy_m": [
+   0.0,
+   -0.0
+  ],
+  "yaw_start": -54.6,
+  "yaw_delta": -0.0,
+  "hips_z_rel_rest": 0.82
+ },
+ "sword and shield attack.fbx": {
+  "frames": 71,
+  "sec": 2.33,
+  "travel_xy_m": [
+   -0.01,
+   -3.63
+  ],
+  "yaw_start": -10.7,
+  "yaw_delta": -44.3,
+  "hips_z_rel_rest": 0.36
+ },
+ "sword and shield block (2).fbx": {
+  "frames": 21,
+  "sec": 0.67,
+  "travel_xy_m": [
+   -0.0,
+   0.25
+  ],
+  "yaw_start": -66.7,
+  "yaw_delta": 7.5,
+  "hips_z_rel_rest": 0.73
+ },
+ "sword and shield block idle.fbx": {
+  "frames": 43,
+  "sec": 1.4,
+  "travel_xy_m": [
+   0.0,
+   0.0
+  ],
+  "yaw_start": -67.2,
+  "yaw_delta": 0.0,
+  "hips_z_rel_rest": 0.73
+ },
+ "sword and shield block.fbx": {
+  "frames": 18,
+  "sec": 0.57,
+  "travel_xy_m": [
+   -0.03,
+   -0.26
+  ],
+  "yaw_start": -56.0,
+  "yaw_delta": -11.4,
+  "hips_z_rel_rest": 0.73
+ },
+ "sword and shield casting (2).fbx": {
+  "frames": 32,
+  "sec": 1.03,
+  "travel_xy_m": [
+   -0.0,
+   -0.0
+  ],
+  "yaw_start": -41.2,
+  "yaw_delta": 0.0,
+  "hips_z_rel_rest": 0.85
+ },
+ "sword and shield casting.fbx": {
+  "frames": 90,
+  "sec": 2.97,
+  "travel_xy_m": [
+   0.0,
+   -0.0
+  ],
+  "yaw_start": -54.5,
+  "yaw_delta": -0.0,
+  "hips_z_rel_rest": 0.45
+ },
+ "sword and shield crouch block (2).fbx": {
+  "frames": 25,
+  "sec": 0.8,
+  "travel_xy_m": [
+   -0.0,
+   -0.0
+  ],
+  "yaw_start": -30.2,
+  "yaw_delta": -0.0,
+  "hips_z_rel_rest": 0.49
+ },
+ "sword and shield crouch block idle.fbx": {
+  "frames": 16,
+  "sec": 0.5,
+  "travel_xy_m": [
+   -0.0,
+   -0.0
+  ],
+  "yaw_start": -37.4,
+  "yaw_delta": -0.0,
+  "hips_z_rel_rest": 0.49
+ },
+ "sword and shield crouch block.fbx": {
+  "frames": 16,
+  "sec": 0.5,
+  "travel_xy_m": [
+   0.12,
+   -0.31
+  ],
+  "yaw_start": -37.5,
+  "yaw_delta": 0.1,
+  "hips_z_rel_rest": 0.43
+ },
+ "sword and shield crouch idle.fbx": {
+  "frames": 74,
+  "sec": 2.43,
+  "travel_xy_m": [
+   -0.0,
+   -0.0
+  ],
+  "yaw_start": -37.5,
+  "yaw_delta": 0.0,
+  "hips_z_rel_rest": 0.42
+ },
+ "sword and shield crouch.fbx": {
+  "frames": 18,
+  "sec": 0.57,
+  "travel_xy_m": [
+   -0.03,
+   0.27
+  ],
+  "yaw_start": -48.7,
+  "yaw_delta": 9.3,
+  "hips_z_rel_rest": 0.43
+ },
+ "sword and shield crouching (2).fbx": {
+  "frames": 19,
+  "sec": 0.6,
+  "travel_xy_m": [
+   -0.11,
+   0.31
+  ],
+  "yaw_start": -37.4,
+  "yaw_delta": -0.2,
+  "hips_z_rel_rest": 0.43
+ },
+ "sword and shield crouching (3).fbx": {
+  "frames": 20,
+  "sec": 0.63,
+  "travel_xy_m": [
+   0.0,
+   -0.0
+  ],
+  "yaw_start": -37.5,
+  "yaw_delta": -0.0,
+  "hips_z_rel_rest": 0.43
+ },
+ "sword and shield crouching.fbx": {
+  "frames": 16,
+  "sec": 0.5,
+  "travel_xy_m": [
+   0.04,
+   -0.28
+  ],
+  "yaw_start": -37.5,
+  "yaw_delta": -10.1,
+  "hips_z_rel_rest": 0.43
+ },
+ "sword and shield death (2).fbx": {
+  "frames": 118,
+  "sec": 3.9,
+  "travel_xy_m": [
+   -0.25,
+   -1.01
+  ],
+  "yaw_start": -54.5,
+  "yaw_delta": 163.7,
+  "hips_z_rel_rest": 0.15
+ },
+ "sword and shield death.fbx": {
+  "frames": 70,
+  "sec": 2.3,
+  "travel_xy_m": [
+   0.04,
+   1.26
+  ],
+  "yaw_start": -54.5,
+  "yaw_delta": -59.7,
+  "hips_z_rel_rest": 0.14
+ },
+ "sword and shield idle (2).fbx": {
+  "frames": 227,
+  "sec": 7.53,
+  "travel_xy_m": [
+   -0.0,
+   -0.0
+  ],
+  "yaw_start": -54.6,
+  "yaw_delta": -0.0,
+  "hips_z_rel_rest": 0.84
+ },
+ "sword and shield idle (3).fbx": {
+  "frames": 261,
+  "sec": 8.67,
+  "travel_xy_m": [
+   -0.0,
+   -0.0
+  ],
+  "yaw_start": -54.5,
+  "yaw_delta": -0.0,
+  "hips_z_rel_rest": 0.81
+ },
+ "sword and shield idle (4).fbx": {
+  "frames": 77,
+  "sec": 2.53,
+  "travel_xy_m": [
+   0.0,
+   -0.0
+  ],
+  "yaw_start": -54.5,
+  "yaw_delta": 0.0,
+  "hips_z_rel_rest": 0.85
+ },
+ "sword and shield idle.fbx": {
+  "frames": 111,
+  "sec": 3.67,
+  "travel_xy_m": [
+   0.0,
+   -0.0
+  ],
+  "yaw_start": -54.5,
+  "yaw_delta": 0.0,
+  "hips_z_rel_rest": 0.84
+ },
+ "sword and shield impact (2).fbx": {
+  "frames": 30,
+  "sec": 0.97,
+  "travel_xy_m": [
+   -0.0,
+   0.0
+  ],
+  "yaw_start": -54.5,
+  "yaw_delta": 0.0,
+  "hips_z_rel_rest": 0.84
+ },
+ "sword and shield impact (3).fbx": {
+  "frames": 22,
+  "sec": 0.7,
+  "travel_xy_m": [
+   -0.0,
+   0.0
+  ],
+  "yaw_start": -54.5,
+  "yaw_delta": 0.0,
+  "hips_z_rel_rest": 0.83
+ },
+ "sword and shield impact.fbx": {
+  "frames": 24,
+  "sec": 0.77,
+  "travel_xy_m": [
+   0.0,
+   -0.0
+  ],
+  "yaw_start": -67.2,
+  "yaw_delta": -0.0,
+  "hips_z_rel_rest": 0.73
+ },
+ "sword and shield jump (2).fbx": {
+  "frames": 30,
+  "sec": 0.97,
+  "travel_xy_m": [
+   0.0,
+   -0.0
+  ],
+  "yaw_start": -55.7,
+  "yaw_delta": 0.0,
+  "hips_z_rel_rest": 0.8
+ },
+ "sword and shield jump.fbx": {
+  "frames": 26,
+  "sec": 0.83,
+  "travel_xy_m": [
+   -0.0,
+   -2.62
+  ],
+  "yaw_start": -10.7,
+  "yaw_delta": -0.0,
+  "hips_z_rel_rest": 0.89
+ },
+ "sword and shield kick.fbx": {
+  "frames": 37,
+  "sec": 1.2,
+  "travel_xy_m": [
+   0.0,
+   0.0
+  ],
+  "yaw_start": -54.5,
+  "yaw_delta": 0.0,
+  "hips_z_rel_rest": 0.84
+ },
+ "sword and shield power up.fbx": {
+  "frames": 72,
+  "sec": 2.37,
+  "travel_xy_m": [
+   0.0,
+   -0.0
+  ],
+  "yaw_start": -54.5,
+  "yaw_delta": 0.0,
+  "hips_z_rel_rest": 0.81
+ },
+ "sword and shield run (2).fbx": {
+  "frames": 17,
+  "sec": 0.53,
+  "travel_xy_m": [
+   0.0,
+   2.34
+  ],
+  "yaw_start": -21.3,
+  "yaw_delta": -0.0,
+  "hips_z_rel_rest": 0.91
+ },
+ "sword and shield run.fbx": {
+  "frames": 22,
+  "sec": 0.7,
+  "travel_xy_m": [
+   0.0,
+   -2.9
+  ],
+  "yaw_start": -10.7,
+  "yaw_delta": 0.0,
+  "hips_z_rel_rest": 0.88
+ },
+ "sword and shield slash (2).fbx": {
+  "frames": 107,
+  "sec": 3.53,
+  "travel_xy_m": [
+   0.0,
+   -2.45
+  ],
+  "yaw_start": -54.5,
+  "yaw_delta": -360.0,
+  "hips_z_rel_rest": 0.43
+ },
+ "sword and shield slash (3).fbx": {
+  "frames": 51,
+  "sec": 1.67,
+  "travel_xy_m": [
+   0.0,
+   -0.0
+  ],
+  "yaw_start": -54.5,
+  "yaw_delta": 0.0,
+  "hips_z_rel_rest": 0.83
+ },
+ "sword and shield slash (4).fbx": {
+  "frames": 74,
+  "sec": 2.43,
+  "travel_xy_m": [
+   -0.0,
+   -1.04
+  ],
+  "yaw_start": -46.8,
+  "yaw_delta": -360.0,
+  "hips_z_rel_rest": 0.42
+ },
+ "sword and shield slash (5).fbx": {
+  "frames": 42,
+  "sec": 1.37,
+  "travel_xy_m": [
+   0.0,
+   -0.0
+  ],
+  "yaw_start": -37.5,
+  "yaw_delta": -0.0,
+  "hips_z_rel_rest": 0.43
+ },
+ "sword and shield slash.fbx": {
+  "frames": 46,
+  "sec": 1.5,
+  "travel_xy_m": [
+   0.0,
+   -0.0
+  ],
+  "yaw_start": -54.5,
+  "yaw_delta": -0.0,
+  "hips_z_rel_rest": 0.72
+ },
+ "sword and shield strafe (2).fbx": {
+  "frames": 40,
+  "sec": 1.3,
+  "travel_xy_m": [
+   1.41,
+   0.0
+  ],
+  "yaw_start": -60.9,
+  "yaw_delta": -0.0,
+  "hips_z_rel_rest": 0.79
+ },
+ "sword and shield strafe (3).fbx": {
+  "frames": 21,
+  "sec": 0.67,
+  "travel_xy_m": [
+   2.32,
+   -0.0
+  ],
+  "yaw_start": -58.6,
+  "yaw_delta": -0.0,
+  "hips_z_rel_rest": 0.91
+ },
+ "sword and shield strafe (4).fbx": {
+  "frames": 22,
+  "sec": 0.7,
+  "travel_xy_m": [
+   -2.38,
+   -0.0
+  ],
+  "yaw_start": -80.8,
+  "yaw_delta": -0.0,
+  "hips_z_rel_rest": 0.93
+ },
+ "sword and shield strafe.fbx": {
+  "frames": 35,
+  "sec": 1.13,
+  "travel_xy_m": [
+   -1.39,
+   0.0
+  ],
+  "yaw_start": -60.9,
+  "yaw_delta": -0.0,
+  "hips_z_rel_rest": 0.81
+ },
+ "sword and shield turn (2).fbx": {
+  "frames": 29,
+  "sec": 0.93,
+  "travel_xy_m": [
+   0.02,
+   -0.0
+  ],
+  "yaw_start": -54.5,
+  "yaw_delta": 99.3,
+  "hips_z_rel_rest": 0.84
+ },
+ "sword and shield turn.fbx": {
+  "frames": 29,
+  "sec": 0.93,
+  "travel_xy_m": [
+   0.0,
+   0.02
+  ],
+  "yaw_start": -54.5,
+  "yaw_delta": -99.3,
+  "hips_z_rel_rest": 0.84
+ },
+ "sword and shield walk (2).fbx": {
+  "frames": 39,
+  "sec": 1.27,
+  "travel_xy_m": [
+   0.0,
+   1.44
+  ],
+  "yaw_start": 0.1,
+  "yaw_delta": -0.0,
+  "hips_z_rel_rest": 0.92
+ },
+ "sword and shield walk.fbx": {
+  "frames": 34,
+  "sec": 1.1,
+  "travel_xy_m": [
+   0.0,
+   -1.65
+  ],
+  "yaw_start": 0.1,
+  "yaw_delta": 0.0,
+  "hips_z_rel_rest": 0.9
+ }
+}
