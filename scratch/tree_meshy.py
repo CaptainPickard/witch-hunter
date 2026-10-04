@@ -3,7 +3,7 @@
 
 Every command blocks until the provider returned, so two submits can never
 go back-to-back without a confirmed task id in between. Balance is checked
-before every submit against the mission floor (start 1600 - cap 160).
+before every submit against the mission floor (START_BALANCE - CAP; set per mission).
 
   tree_meshy.py balance
   tree_meshy.py t2i  <out.png> <prompt...>          text-to-image ref (submit+wait+dl)
@@ -14,9 +14,12 @@ import sys, os, json, time, base64, urllib.request, urllib.error
 
 KEY = os.environ.get('MESHY_KEY') or sys.exit('MESHY_KEY not set')
 API = 'https://api.meshy.ai/openapi'
-START_BALANCE = 1600
-CAP = 160
+# Round E (io/missions/2026-10-05-cc-roundE-veg.md): start 1426, mission cap 130.
+# (M16-M19 round: start 1600, cap 160.)
+START_BALANCE = 1426
+CAP = 130
 FLOOR = START_BALANCE - CAP
+MAX_TARGET = 2000   # Round E provider cap on target_polycount per submit
 LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tree_meshy_log.jsonl')
 
 
@@ -83,6 +86,8 @@ def t2i(out, prompt):
 
 
 def i23d(ref, out, tri):
+    if int(tri) > MAX_TARGET:
+        raise SystemExit(f'target_polycount {tri} > cap {MAX_TARGET}')
     b0 = guard(15)   # observed meshy-5 image-to-3d cost: 15 on 7/7 calls this mission
     uri = 'data:image/png;base64,' + base64.b64encode(open(ref, 'rb').read()).decode()
     body = {'ai_model': 'meshy-5', 'image_url': uri, 'topology': 'quad',
@@ -107,4 +112,4 @@ if __name__ == '__main__':
     elif cmd == 't2i':
         t2i(sys.argv[2], ' '.join(sys.argv[3:]))
     elif cmd == 'i23d':
-        i23d(sys.argv[2], sys.argv[3], sys.argv[4] if len(sys.argv) > 4 else 30000)
+        i23d(sys.argv[2], sys.argv[3], sys.argv[4] if len(sys.argv) > 4 else MAX_TARGET)
