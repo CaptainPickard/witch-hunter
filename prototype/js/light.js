@@ -18,11 +18,14 @@
 
   function cfg() { return window.WH_CONFIG; }
 
-  // Light block for a hand ('right' / 'left'), or null.
+  // Light block for a hand ('right' / 'left'), or null. An item that emits
+  // light (items[id].light) wins over the binding's spell light on the SAME
+  // hand; the two hands are independent.
   function handLightDef(player, hand) {
     var C = cfg();
     var id = player.hands ? player.hands[hand] : null;
     var item = id ? C.items[id] : null;
+    if (item && item.light) return item.light;
     if (!item || item.kind !== 'caster') return null;
     var sid = player.getBoundSpellId(hand);
     var S = sid ? C.spell[sid] : null;

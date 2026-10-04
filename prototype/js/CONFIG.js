@@ -847,6 +847,9 @@ window.WH_CONFIG.inventory = {
 //               (wands/staffs come later - nothing scales off it yet)
 //   moveset     melee: key into CONFIG.moveset.weapons (right-hand chain)
 //   mesh        WH_ASSETS name of the hand-held model (none = no mesh yet)
+//   light       10-05: { color, intensity, distance, decay, flickerPct } -
+//               while held, that hand's follow light (WH_PlayerLight) uses
+//               these values, winning over the hand's spell-binding light
 // Spells are KNOWLEDGE (magic canon 10-05), never items or charges; books /
 // scrolls (learn-on-read) are a later category.
 window.WH_CONFIG.items = {
@@ -862,6 +865,14 @@ window.WH_CONFIG.items = {
   roundShield:    { id: 'roundShield', name: 'Round Shield', glyph: 'SH',
                     category: 'gear', stackCap: 1, kind: 'shield', mesh: 'roundShield',
                     hands: ['right', 'left'], equipHint: 'leftHand' }
+  // DORMANT example (stage 2 drops/gatherables ship the real torch): the
+  // item light-stat shape. Uncommenting it also needs a kind the hand code
+  // tolerates (no kind = inert button) and a startingItems / drop source.
+  // torch:       { id: 'torch', name: 'Torch', glyph: 'TO',
+  //                category: 'gear', stackCap: 1,
+  //                hands: ['left', 'right'], equipHint: 'leftHand',
+  //                light: { color: 0xffa040, intensity: 8.0, distance: 12,
+  //                         decay: 2, flickerPct: 9 } }
 };
 
 // Order B (2026-10-05) free per-hand equip. Hands are equip-screen driven;
