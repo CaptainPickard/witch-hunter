@@ -61,10 +61,14 @@ order at a time, CONFIG-driven everything, commit+push per sub-block.
       bonePile:       { yield: { id:'boneShard', count: 2 }, respawnSec: 150, glowColor: 0xbbbbaa, scale: 1.0 }
     }
   }
-- Node VISUAL (placeholder, art pass later): small unlit marker mesh (cone or
-  box per type from CONFIG shape) + a faint PointLight? NO - light budget
-  discipline: the glow marker = an unlit emissive-look mesh + subtle bob/pulse
-  via update; NO per-node PointLights (the light order's budget stays).
+- Node VISUAL (Nicko 10-05 canon): in the REAL game gather nodes DO NOT GLOW -
+  they are meant to be spottable by eye among the bushes/grass added later.
+  THIS build is a playtest aid ONLY: CONFIG.gather.playtestGlow = true ships a
+  small unlit emissive-look marker mesh + subtle bob/pulse via update; NO
+  per-node PointLights (light budget stays). The flag + a loud comment are the
+  law: real game = playtestGlow false, nodes render as plain flora-adjacent
+  props (the marker mesh is a placeholder to be replaced by real bush/grass
+  art in a later asset mission - node meshes are NOT this order's art pass).
 - Region CONFIG: add nodes arrays to regionA/regionB defs
   (e.g. regionA: 6x herbBundle, 4x deadwood, 4x mushroomCluster placed
   AWAY from the dirt path/lane and graveyard polygon - do not collide with
