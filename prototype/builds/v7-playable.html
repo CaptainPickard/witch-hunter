@@ -87748,7 +87748,10 @@ window.WH_CONFIG.inventoryUI = {
     // Order D: + WH_ShieldRaise/WH_ShieldImpact/WH_ParrySwipe/
     // WH_GuardBreakStagger (scratch/blender_shield_clips.py, appended by
     // scratch/glb_append_clips.py - the 9 earlier clips are byte-identical).
-    playerBody: 'art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-chain.glb',
+    // 10-05 Round C: combat-chain.glb + 12 Mixamo WH_Sword*/WH_Shield* clips
+    // (scratch/mixamo_player.json; chain clips byte-identical). Rollback:
+    // human-hunter-male.combat-chain.glb
+    playerBody: 'art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-sword.glb',
     banditBody: 'art-direction/3d/assets/races_regen/rigged/orc-male-warrior.mixamo.glb',
     // 10-05: rigged copy + 7 Mixamo WH_*_Zombie clips (13 total).
     // Rollback: undead-ghoul-male.rigged.glb
@@ -87805,7 +87808,8 @@ window.WH_CONFIG.inventoryUI = {
   // combat-chain.glb legitimately holds 9 (6 whanim1 + WH_SlashR2L /
   // WH_SlashL2R / WH_Thrust) - the old flat "6" warned on every boot.
   // Order D: 13 = those 9 + the 4 shield/block clips.
-  var CHARACTERS = { playerBody: 13, banditBody: 6, ghoulBody: 6 };
+  // Round C: 25 = those 13 + 12 Mixamo sword/shield clips (combat-sword.glb).
+  var CHARACTERS = { playerBody: 25, banditBody: 6, ghoulBody: 6 };
   var failed = {};     // logical name -> true (stand-in substituted)
   var loadedCount = 0;
   var GROUND_META = {}; // holder uuid -> measured height, width, raw groundMinY
@@ -88155,6 +88159,9 @@ window.WH_CONFIG.inventoryUI = {
   // zombie: Mixamo ghoul set; death stays canonical (WH_Death_Zombie ends
   // standing and reads wounded, not dead).
   // bandit: Mixamo axe set on the cape-fixed orc; death canonical, no moves.
+  // sword: player Mixamo sword-and-shield locomotion (combat-sword.glb);
+  // attack/hit/death canonical, moves IS MOVE_NAMES (same object: identity
+  // checks elsewhere treat it as the default chain-move player body).
   var VARIANTS = {
     zombie: {
       names: {
@@ -88169,6 +88176,13 @@ window.WH_CONFIG.inventoryUI = {
         attack: 'WH_Attack_High', hit: 'WH_Hit_Large_L', death: 'WH_Death'
       },
       moves: {}
+    },
+    sword: {
+      names: {
+        idle: 'WH_SwordIdle', walk: 'WH_SwordWalk', run: 'WH_SwordRun',
+        attack: 'WH_Attack1', hit: 'WH_Hit', death: 'WH_Death'
+      },
+      moves: MOVE_NAMES
     }
   };
 
@@ -90031,7 +90045,8 @@ window.WH_CONFIG.inventoryUI = {
     this.bodyBaseX = meshRoot.position.x || 0;
     this.yawFrame.add(this.body);
     if (window.WH_ASSETS.getClips('playerBody').length) {
-      this.anim = new window.WH_CharacterAnim(meshRoot, window.WH_ASSETS.getClips('playerBody'));
+      this.anim = new window.WH_CharacterAnim(meshRoot, window.WH_ASSETS.getClips('playerBody'),
+        { variant: 'sword' });
     }
   };
 
