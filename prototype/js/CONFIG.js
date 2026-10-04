@@ -886,9 +886,29 @@ window.WH_CONFIG.inventory = {
     spinDegPerSec: 70,              // slow yaw spin so drops catch the eye
     colors: {                       // one accent per category
       consumable: 0xd8b24a,         // amber (canon fire/human accent)
-      gear: 0x4ac8d8                // cyan
+      gear: 0x4ac8d8,               // cyan
+      valuable: 0x9ff0f0,           // stage 2: pale cyan (Stolen Coin; vendor/currency not built)
+      ingredient: 0x7cb860          // stage 2: moss green (gathered cooking ingredients)
     }
   }
+};
+
+// Stage 2 (Nicko 10-05): enemy drops. ONE shared pool for both enemy types
+// (bandit + ghoul drop exactly the same things). Every kill: the guaranteed
+// stack, plus a bonusChance roll into the weighted bonusPool (weight / sum).
+// Cooking ingredients NEVER drop from enemies (gather nodes + wild animals
+// only). Drops spawn as ordinary WorldItems boxes (same E pickup / region
+// gating) at the corpse x/z, spawnDelaySec after the kill. No despawn yet.
+window.WH_CONFIG.drops = {
+  bonusChance: 0.20,                // per kill
+  bonusPool: [                      // weighted pick (torch most common, glove rare)
+    { id: 'torch', weight: 50 },
+    { id: 'bandage', weight: 30 },
+    { id: 'magicGlove', weight: 8 }
+  ],
+  guaranteed: { id: 'stolenCoin', count: 1 },
+  spawnDelaySec: 0.6,               // drop pops shortly after the corpse settles
+  bonusOffset: 0.45                 // m, bonus box sits this far from the coin (no overlap)
 };
 
 // Item registry. ids are canonical (stage 2 enemy drops + gatherables reuse
@@ -947,7 +967,11 @@ window.WH_CONFIG.items = {
                     category: 'gear', stackCap: 1, kind: 'torch',
                     hands: ['left', 'right'], equipHint: 'leftHand',
                     light: { color: 0xffa040, intensity: 10.5, distance: 15,
-                             decay: 2, flickerPct: 7 } }
+                             decay: 2, flickerPct: 7 } },
+  // Stage 2 enemy drop (CONFIG.drops.guaranteed). 'valuable' = new category;
+  // vendor / currency systems are NOT built - it only stacks for now.
+  stolenCoin:     { id: 'stolenCoin', name: 'Stolen Coin', glyph: 'SC',
+                    category: 'valuable', stackCap: 999 }
 };
 
 // Order B (2026-10-05) free per-hand equip. Hands are equip-screen driven;

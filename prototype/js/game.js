@@ -24,7 +24,8 @@
     shakeTimer: 0,                    // v3 camera shake remaining seconds
     shakeSeed: 0,                     // per-pulse random phase
     firebolts: [],                    // v7: live Firebolt projectiles
-    radiances: []                     // 10-04: the ONE Radiance effect (max 1, kept parked)
+    radiances: [],                    // 10-04: the ONE Radiance effect (max 1, kept parked)
+    pendingDrops: []                  // stage 2: rolled kill loot waiting out CONFIG.drops.spawnDelaySec
   };
   window.WH_GAME = game;
 
@@ -945,6 +946,7 @@
     };
     p.onHandsChanged = function () { game.inventoryUI.render(); };
     game.worldItems = new INV.WorldItems(game.scene);
+    window.WH_Enemy.onKilled = scheduleDrops;
     document.addEventListener('keydown', function (e) {
       if (e.code !== CFG.inventoryUI.pickupKey || e.repeat) return;
       if (game.player.inputSuspended || game.player.state !== 'alive') return;
@@ -975,6 +977,50 @@
     rm.logic.clampPlayer(at);
     if (rm.pushOutOfProps(at, CFG.player.radius)) rm.logic.clampPlayer(at);
     game.worldItems.spawn(taken.id, taken.count, at.x, at.z, rm.logic.activeId);
+  }
+
+  // ---- stage 2: enemy drops (CONFIG.drops) ---------------------------------------
+  // Weighted pick over [{ id, weight }]: P(entry) = weight / sum of weights.
+  function weightedPick(pool) {
+    var total = 0, i;
+    for (i = 0; i < pool.length; i++) total += pool[i].weight;
+    var r = Math.random() * total;
+    for (i = 0; i < pool.length; i++) {
+      r -= pool[i].weight;
+      if (r < 0) return pool[i];
+    }
+    return pool.length ? pool[pool.length - 1] : null;
+  }
+
+  // Enemy.onKilled: roll the loot now, spawn it spawnDelaySec later at the
+  // corpse x/z in the enemy's home region (the region its corpse lies in).
+  function scheduleDrops(enemy) {
+    var D = CFG.drops;
+    var items = [{ id: D.guaranteed.id, count: D.guaranteed.count }];
+    if (Math.random() < D.bonusChance) {
+      var b = weightedPick(D.bonusPool);
+      if (b) items.push({ id: b.id, count: 1 });
+    }
+    game.pendingDrops.push({ t: D.spawnDelaySec, x: enemy.pos.x, z: enemy.pos.z,
+                             regionId: enemy.homeRegionId, items: items });
+  }
+
+  function tickDrops(dt) {
+    var D = CFG.drops;
+    for (var i = game.pendingDrops.length - 1; i >= 0; i--) {
+      var pd = game.pendingDrops[i];
+      pd.t -= dt;
+      if (pd.t > 0) continue;
+      game.pendingDrops.splice(i, 1);
+      var ang = Math.random() * Math.PI * 2;
+      for (var k = 0; k < pd.items.length; k++) {
+        // first stack on the corpse, extras ringed bonusOffset around it
+        var off = k === 0 ? 0 : D.bonusOffset;
+        var a = ang + k * 2.4;
+        game.worldItems.spawn(pd.items[k].id, pd.items[k].count,
+          pd.x + Math.sin(a) * off, pd.z + Math.cos(a) * off, pd.regionId);
+      }
+    }
   }
 
   // E: nearest item entity within pickupRadius goes into the inventory
@@ -1406,7 +1452,9 @@
     // and player state (keeps following through death + respawn). ----
     for (var ra = 0; ra < game.radiances.length; ra++) game.radiances[ra].update(dt);
 
-    // 10-05: dropped item entities (spin + active-region visibility)
+    // 10-05: dropped item entities (spin + active-region visibility);
+    // stage 2: kill loot pops once its spawn delay runs out
+    tickDrops(dt);
     game.worldItems.update(dt, rm.logic.activeId);
 
     // ---- v7: projectile update + collision vs enemies ----

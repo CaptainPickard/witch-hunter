@@ -491,6 +491,9 @@
       this.hp = 0;
       this.setFsm('dead');
       if (this.anim) this.anim.death();
+      // stage 2: the one kill entry point (melee sweep + firebolt both land
+      // here) - game.js schedules the CONFIG.drops loot from it
+      if (Enemy.onKilled) Enemy.onKilled(this);
       return true;
     }
     if (this.anim) this.anim.hit();
@@ -528,6 +531,8 @@
       }
     }
   };
+
+  Enemy.onKilled = null;              // stage 2: fn(enemy), set by game.js (drops)
 
   window.WH_Enemy = Enemy;
   window.WH_ENEMY_TYPES = ['bandit', 'ghoul'];

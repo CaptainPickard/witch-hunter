@@ -480,13 +480,19 @@
     body.appendChild(right);
   };
 
+  var CATEGORY_TIP = {
+    gear: 'Gear - equip on the CHARACTER tab',
+    consumable: 'Consumable',
+    valuable: 'Valuable',
+    ingredient: 'Ingredient'
+  };
+
   InventoryUI.prototype.fillTip = function (i) {
     var s = this.inv.slots[i];
     var d = s ? itemDef(s.id) : null;
     if (!d) { this.tip.style.display = 'none'; return false; }
     this.tipName.textContent = d.name;
-    this.tipCat.textContent = d.category === 'gear'
-      ? 'Gear - equip on the CHARACTER tab' : 'Consumable';
+    this.tipCat.textContent = CATEGORY_TIP[d.category] || d.category;
     this.tip.style.display = 'block';
     return true;
   };
