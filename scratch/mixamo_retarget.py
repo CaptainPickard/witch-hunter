@@ -14,7 +14,7 @@ import sys
 import tempfile
 
 import bpy
-from mathutils import Matrix, Vector
+from mathutils import Matrix, Vector, Quaternion
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from glb_append_clips import append_clips, parse
@@ -47,12 +47,92 @@ def mesh_floor(objects):
     return floor
 
 
+# World-space cone limits about each rest bone's Y axis. Only these two
+# bandit actions opt in; Root/Hips/limbs and every other action stay untouched.
+BANDIT_BEND_LIMITS = {'WH_Hit_Large_L': 25.0, 'WH_Attack_Horiz': 25.0}
+BEND_BONES = ('Spine', 'Chest')  # Mixamo Spine1/Spine2 map to these WH names.
+
+
+def clamp_world_bend(target, action, start, end, limit_degrees):
+    """Reduce swing only, retain axial twist; write only torso quaternion curves.
+
+    Capture unconstrained world poses before editing. Solve Spine then Chest
+    against the evaluated parent, preventing cumulative parent+child bending.
+    The ground pass already ran; no other location/rotation/scale key is changed.
+    """
+    assert 0 < limit_degrees < 90
+    scene = bpy.context.scene
+    limit = math.radians(limit_degrees)
+    axis = Vector((0, 1, 0))
+    rests = {n: (target.matrix_world @ target.data.bones[n].matrix_local).
+             to_quaternion() @ axis for n in BEND_BONES}
+    paths = {target.pose.bones[n].path_from_id('rotation_quaternion') for n in BEND_BONES}
+    untouched = { (fc.data_path, fc.array_index): tuple(tuple(k.co) for k in fc.keyframe_points)
+                 for fc in action.fcurves if fc.data_path not in paths }
+    rotations = {n: {fc.array_index: fc for fc in action.fcurves
+                    if fc.data_path == target.pose.bones[n].path_from_id('rotation_quaternion')}
+                 for n in BEND_BONES}
+    original = {}
+    before = {n: [] for n in BEND_BONES}
+    after = {n: [] for n in BEND_BONES}
+    changed = {n: 0 for n in BEND_BONES}
+    for frame in range(start, end + 1):
+        scene.frame_set(frame)
+        bpy.context.view_layer.update()
+        original[frame] = {n: (target.matrix_world @ target.pose.bones[n].matrix).copy()
+                           for n in BEND_BONES}
+    previous = {}
+    for index, frame in enumerate(range(start, end + 1)):
+        scene.frame_set(frame)
+        bpy.context.view_layer.update()
+        for n in BEND_BONES:
+            pb = target.pose.bones[n]
+            world = original[frame][n]
+            q = world.to_quaternion()
+            direction = q @ axis
+            swing = rests[n].rotation_difference(direction)
+            bend = rests[n].angle(direction)
+            before[n].append(math.degrees(bend))
+            if bend > limit:
+                # Minimal world swing takes the old Y direction onto the cone.
+                desired = Quaternion().slerp(swing, limit / bend) @ rests[n]
+                q = direction.rotation_difference(desired) @ q
+                changed[n] += 1
+            corrected = q.to_matrix().to_4x4()
+            corrected.translation = world.translation
+            local = target.convert_space(
+                pose_bone=pb, matrix=target.matrix_world.inverted() @ corrected,
+                from_space='POSE', to_space='LOCAL')
+            qlocal = local.to_quaternion().normalized()
+            if n in previous and qlocal.dot(previous[n]) < 0:
+                qlocal.negate()
+            previous[n] = qlocal.copy()
+            for component, fc in rotations[n].items():
+                fc.keyframe_points[index].co.y = qlocal[component]
+            pb.rotation_quaternion = qlocal
+            bpy.context.view_layer.update()
+            actual = (target.matrix_world @ pb.matrix).to_quaternion() @ axis
+            after[n].append(math.degrees(rests[n].angle(actual)))
+    for fc in action.fcurves:
+        key = (fc.data_path, fc.array_index)
+        if key in untouched:
+            assert tuple(tuple(k.co) for k in fc.keyframe_points) == untouched[key], key
+    assert all(max(v) <= limit_degrees + .002 for v in after.values()), after
+    return {'limit_degrees': limit_degrees, 'bones': list(BEND_BONES),
+            'metric': 'world bone-Y angle from rest bone-Y; swing cone, axial twist preserved',
+            'before_max_degrees': {n: max(v) for n, v in before.items()},
+            'after_max_degrees': {n: max(v) for n, v in after.items()},
+            'swing_clamped_frames': changed, 'other_fcurves_identical': True}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('input')
     parser.add_argument('output')
     parser.add_argument('--clips', required=True)
     parser.add_argument('--log', required=True)
+    parser.add_argument('--bandit-bend-limit', type=float,
+                        help='QA sweep override for the two bandit torso clamps')
     args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
     Path(args.log).parent.mkdir(parents=True, exist_ok=True)
     inp, out = Path(args.input).resolve(), Path(args.output).resolve()
@@ -211,6 +291,11 @@ def main():
                     # armature translation to Hips basis location channels.
                     pb.location += child_rest.to_3x3().inverted() @ world_delta
                     pb.keyframe_insert('location', frame=frame)
+            bend_clamp = None
+            if inp.name == 'orc-male-warrior.rigged.glb' and name in BANDIT_BEND_LIMITS:
+                bend_clamp = clamp_world_bend(target, action, start, end,
+                    args.bandit_bend_limit if args.bandit_bend_limit is not None
+                    else BANDIT_BEND_LIMITS[name])
             for fc in action.fcurves:
                 for key in fc.keyframe_points:
                     key.interpolation = 'LINEAR'
@@ -240,6 +325,8 @@ def main():
                 'samples': end-start+1, 'duration_seconds': (end-start)/30,
                 'fcurves': len(action.fcurves), 'leg_scale_ratio': ratio,
                 'max_ground_correction_m': max(offsets), 'status': 'baked'}
+            if bend_clamp is not None:
+                report['clips'][name]['bend_clamp'] = bend_clamp
             Path(args.log).write_text(json.dumps(report, indent=2) + '\n')
             log(name, start, end, 'fcurves', len(action.fcurves))
         except Exception as exc:
