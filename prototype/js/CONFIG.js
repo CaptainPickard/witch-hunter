@@ -849,7 +849,7 @@ window.WH_CONFIG.moveset = {
   banditStageMult: 1.6,
   enemyWeapon: { bandit: 'handAxe' },
   playerWeapon: 'longsword',        // which weapons[] entry the player wields
-  inputBufferSec: 0.55,             // buffered LMB lifetime (strike/recover presses); RoundD: 0.55 covers strike remainder + chainOpenSec worst case (0.52s) so no mid-chain press expires silently
+  inputBufferSec: 0.65,             // buffered LMB lifetime (strike/recover presses); RoundD: 0.65 = worst-case hold (thrust finisher: strike remainder 0.43 + full recover 0.17 = 0.60) + one 20fps frame (0.05) - no mash expiring
   weapons: {
     longsword: {
       chainCap: 3,
