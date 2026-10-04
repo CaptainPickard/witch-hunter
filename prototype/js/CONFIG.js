@@ -410,6 +410,62 @@ window.WH_CONFIG = {
     ]
   },
 
+  // Round E (io/missions/2026-10-05-cc-roundE-veg.md): seeded vegetation
+  // scatter, built by region-manager whScatterPlan. PARAMETERS ONLY - no
+  // placement tables: every position is a pure function of this block, the
+  // region's CONFIG props/spawn/enemies/nodes, the dirt-path sway and the
+  // measured asset footprints. Extra trees are normal props WITH trunk
+  // colliders; bushes + grass have NO collider and render as one
+  // InstancedMesh per asset per region (matrices written once at build).
+  scatter: {
+    enabled: true,
+    seed: 20261005,
+    clear: {                          // rejection radii (m) shared by the layers
+      spawnM: 5,                      // region player spawn
+      pathM: 6,                       // dirt-path centerline (trees + free bushes)
+      gateM: 8,                       // chokepoint gate point (+ the collider corridor)
+      enemyM: 4,                      // CONFIG enemy spawns (trees + free bushes)
+      nodeM: 2.5,                     // gather nodes (trees + free bushes)
+      edgeM: 2                        // inset from the playable rim / boundary plane
+    },
+    // keep-out ellipses for trees + free bushes (grass/rings still allowed):
+    // region A cemetery yard + its tree ring = the gather-node graveyard zone
+    // (scratch/gen_gather_nodes.py in_graveyard) - open combat ground stays open.
+    keepOut: [
+      { regionId: 'hold_outskirts', x: 0, z: 10, rx: 36, rz: 33 }
+    ],
+    treesExtra: {
+      minSpacingM: 7,                 // to every tree (CONFIG + scatter)
+      propClearM: 4,                  // beyond any CONFIG prop's collider radius
+      candidates: 32,                 // best-candidate samples per tree: emptiest spot wins
+      targetCount: { hold_outskirts: 14, darkwood_edge: 10 },
+      // [asset, weight, heightMinM, heightMaxM]; scale = height / measured height
+      assets: [
+        ['youngBirch', 3, 8.5, 11.5],
+        ['youngDeadTree', 2, 6.0, 9.0],
+        ['yewTree', 2, 15.5, 18.5],
+        ['witchwoodTree', 1, 15.5, 18.5],
+        ['deadTree', 1, 13.5, 16.5]
+      ]
+    },
+    bushes: {
+      // [asset, weight, heightMinM, heightMaxM]
+      assets: [['bushA', 3, 0.7, 1.0], ['bushB', 2, 0.9, 1.3]],
+      selfRadiusFrac: 0.5,            // own radius = half-width * this (overlap is fine)
+      // every tree gets [min,max] bushes at radiusFrac x its TRUNK collider radius
+      ringHosts: ['yewTree', 'livingOak', 'witchwoodTree', 'deadTree', 'youngAsh',
+        'youngBirch', 'youngDeadTree'],
+      atTreeRing: { count: [2, 4], radiusFrac: [1.1, 1.6] },
+      freeBushes: 20                  // per region, open ground
+    },
+    grass: {
+      asset: 'grassTuft',
+      count: 220,                     // per region
+      height: [0.35, 0.6],            // m
+      pathPadM: 0.4                   // beyond the path half-width
+    }
+  },
+
   // Boundary between A and B: the plane z = CONFIG.boundary.z.
   // Region A occupies z > boundaryZ, region B occupies z < boundaryZ.
   boundary: {

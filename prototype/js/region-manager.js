@@ -198,7 +198,9 @@
     return r;
   }
 
-  function whPropColliders(regionId, meta) {
+  // Round E: plan (optional) = whScatterPlan output; its extra trees join the
+  // table as ordinary trunk colliders (index 'scatter<i>').
+  function whPropColliders(regionId, meta, plan) {
     var props = DEFS.regions[regionId].cfg.props;
     var out = { circles: [], exempt: [], complete: true };
     for (var i = 0; i < props.length; i++) {
@@ -209,6 +211,14 @@
                   r: m ? colliderRadius(p.asset, m.width, p.scale) : 0 };
       if (whMeetsCorridor(p.x, p.z, row.r)) out.exempt.push(row);
       else if (row.r > 0) out.circles.push(row);
+    }
+    if (plan) {
+      if (!plan.complete) out.complete = false;
+      for (var j = 0; j < plan.trees.length; j++) {
+        var t = plan.trees[j];
+        if (t.r > 0) out.circles.push({ index: 'scatter' + j, name: t.asset,
+          x: t.x, z: t.z, r: t.r });
+      }
     }
     return out;
   }
@@ -418,6 +428,32 @@
     return canvas;
   }
 
+  // Path centerline x at z (shared by the ribbon and the Round E scatter).
+  function whPathCenterX(DP, z) {
+    return DP.swayAmp * Math.sin(2 * Math.PI * (z - DP.zFrom) / DP.swayPeriod);
+  }
+
+  // Horizontal distance from (x, z) to the centerline polyline (1 m steps).
+  function whDistToPath(DP, x, z) {
+    var span = DP.zFrom - DP.zTo;
+    var n = Math.ceil(span);
+    var best = Infinity;
+    var ax = whPathCenterX(DP, DP.zFrom), az = DP.zFrom;
+    for (var i = 1; i <= n; i++) {
+      var bz = DP.zFrom - Math.min(span, i);
+      var bx = whPathCenterX(DP, bz);
+      var ex = bx - ax, ez = bz - az;
+      var len2 = ex * ex + ez * ez;
+      var t = len2 > 0 ? ((x - ax) * ex + (z - az) * ez) / len2 : 0;
+      t = Math.max(0, Math.min(1, t));
+      var dx = x - (ax + ex * t), dz = z - (az + ez * t);
+      var d = Math.sqrt(dx * dx + dz * dz);
+      if (d < best) best = d;
+      ax = bx; az = bz;
+    }
+    return best;
+  }
+
   function buildDirtPath(regionId) {
     var DP = CFG.world.dirtPath;
     if (!DP || DP.regionId !== regionId) return null;
@@ -434,7 +470,7 @@
     var pxPrev = null, pzPrev = null;
     for (var s = 0; s <= segCount; s++) {
       var zz = zFrom - Math.min(span, s * segLen);
-      var cx = DP.swayAmp * Math.sin(2 * Math.PI * (zz - DP.zFrom) / DP.swayPeriod);
+      var cx = whPathCenterX(DP, zz);
       var nx = 0, nz = 1;
       if (pxPrev !== null) {
         var dx = cx - pxPrev, dz = zz - pzPrev;
@@ -485,6 +521,261 @@
     return mesh;
   }
 
+  // ---- Round E: seeded vegetation scatter (THREE-free, pure) -----------------
+  // whScatterPlan(regionId, meta) is a pure function of CONFIG (scatter block,
+  // region props/spawn/enemies/nodes, dirt path, boundary/chokepoint) and the
+  // measured footprints meta(name) -> {width, height}. Each layer draws from
+  // its own mulberry32 stream seeded by scatter.seed ^ hash(regionId:layer)
+  // and consumes a FIXED number of draws per item, so the same inputs give
+  // the same plan on every build and tuning one layer never moves another.
+
+  function whHashStr(s) {
+    var h = 2166136261;                // FNV-1a 32-bit
+    for (var i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  }
+
+  function whPickWeighted(rand, rows) {
+    var total = 0, i;
+    for (i = 0; i < rows.length; i++) total += rows[i][1];
+    var u = rand() * total;
+    for (i = 0; i < rows.length; i++) {
+      u -= rows[i][1];
+      if (u < 0) return rows[i];
+    }
+    return rows[rows.length - 1];
+  }
+
+  function whScatterPlan(regionId, meta) {
+    var SC = CFG.scatter;
+    var plan = { trees: [], instances: {}, complete: true,
+      stats: { trees: 0, treeMisses: 0, ringBushes: 0, ringSkipped: 0,
+               freeBushes: 0, grass: 0 } };
+    if (!SC || !SC.enabled) return plan;
+    var reg = DEFS.regions[regionId];
+    var cfg = reg.cfg;
+    var C = SC.clear;
+    var side = reg.side;
+    var plane = CFG.boundary.z;
+    var rPlay = whPlayRadius();
+    var DP = CFG.world.dirtPath;
+    var hasPath = !!(DP && DP.regionId === regionId);
+    var gx = CFG.chokepoint.centerX;
+    var TWO_PI = Math.PI * 2;
+
+    function m(name) {
+      var v = meta(name);
+      if (!v) plan.complete = false;
+      return v;
+    }
+    function lerp(range, u) { return range[0] + (range[1] - range[0]) * u; }
+    function stream(layer) { return whRng((SC.seed ^ whHashStr(regionId + ':' + layer)) | 0); }
+
+    // CONFIG props as circles: r = gameplay collider radius, trunk = trunk
+    // radius (width*scale/2*TRUNK_RATIO) for ring hosts, else 0.
+    var hosts = {};
+    SC.bushes.ringHosts.forEach(function (n) { hosts[n] = 1; });
+    var circles = [];
+    var trees = [];
+    cfg.props.forEach(function (p) {
+      var pm = m(p.asset);
+      var c = { x: p.x, z: p.z,
+        r: pm ? colliderRadius(p.asset, pm.width, p.scale) : 0,
+        trunk: (pm && hosts[p.asset]) ? pm.width * p.scale / 2 * TRUNK_RATIO : 0 };
+      circles.push(c);
+      if (c.trunk > 0) trees.push(c);
+    });
+    var points = (cfg.enemies || []).concat(cfg.nodes || []);
+    var enemyCount = (cfg.enemies || []).length;
+
+    function inRegion(x, z, pad) {
+      if (Math.sqrt(x * x + z * z) > rPlay - pad) return false;
+      return side === 1 ? z > plane + pad : z < plane - pad;
+    }
+    // spawn + gate (point and collider corridor) + path band
+    function clearOfWorld(x, z, pathM) {
+      var dx = x - reg.spawn.x, dz = z - reg.spawn.z;
+      if (dx * dx + dz * dz < C.spawnM * C.spawnM) return false;
+      dx = x - gx; dz = z - plane;
+      if (dx * dx + dz * dz < C.gateM * C.gateM) return false;
+      if (whMeetsCorridor(x, z, 0)) return false;
+      if (hasPath && whDistToPath(DP, x, z) < pathM) return false;
+      return true;
+    }
+    var keepOut = (SC.keepOut || []).filter(function (k) { return k.regionId === regionId; });
+    // enemy spawns, gather nodes and keep-out ellipses (trees + free bushes)
+    function clearOfPoints(x, z) {
+      for (var e = 0; e < keepOut.length; e++) {
+        var kx = (x - keepOut[e].x) / keepOut[e].rx, kz = (z - keepOut[e].z) / keepOut[e].rz;
+        if (kx * kx + kz * kz < 1) return false;
+      }
+      for (var i = 0; i < points.length; i++) {
+        var lim = i < enemyCount ? C.enemyM : C.nodeM;
+        var dx = x - points[i].x, dz = z - points[i].z;
+        if (dx * dx + dz * dz < lim * lim) return false;
+      }
+      return true;
+    }
+    // inside any circle's r + pad (skip = the ring's own host)
+    function hitsCircles(x, z, pad, skip) {
+      for (var i = 0; i < circles.length; i++) {
+        var c = circles[i];
+        if (c === skip) continue;
+        var lim = c.r + pad;
+        var dx = x - c.x, dz = z - c.z;
+        if (dx * dx + dz * dz < lim * lim) return true;
+      }
+      return false;
+    }
+    function sampleDisc(rand) {
+      var rr = rPlay * Math.sqrt(rand());
+      var th = TWO_PI * rand();
+      return { x: rr * Math.cos(th), z: rr * Math.sin(th) };
+    }
+    function addInstance(name, x, z, rotY, scale) {
+      (plan.instances[name] = plan.instances[name] || []).push(
+        { x: x, z: z, rotY: rotY, scale: scale });
+    }
+
+    // 1. extra trees: best-candidate - of N valid samples keep the one
+    // farthest from every tree, the rim and the boundary plane.
+    var T = SC.treesExtra;
+    var rt = stream('trees');
+    var target = T.targetCount[regionId] || 0;
+    for (var t = 0; t < target; t++) {
+      var best = null, bestGap = -1;
+      for (var k = 0; k < T.candidates; k++) {
+        var s = sampleDisc(rt);
+        if (!inRegion(s.x, s.z, C.edgeM) || !clearOfWorld(s.x, s.z, C.pathM) ||
+            !clearOfPoints(s.x, s.z) || hitsCircles(s.x, s.z, T.propClearM, null)) continue;
+        var treeGap = Infinity;
+        for (var q = 0; q < trees.length; q++) {
+          var tdx = s.x - trees[q].x, tdz = s.z - trees[q].z;
+          treeGap = Math.min(treeGap, Math.sqrt(tdx * tdx + tdz * tdz));
+        }
+        if (treeGap < T.minSpacingM) continue;
+        // score counts the rim + plane as neighbours so the interior gaps win
+        var gap = Math.min(treeGap, rPlay - Math.sqrt(s.x * s.x + s.z * s.z),
+          Math.abs(s.z - plane));
+        if (gap > bestGap) { best = s; bestGap = gap; }
+      }
+      var pick = whPickWeighted(rt, T.assets);
+      var rotY = rt() * TWO_PI;
+      var height = lerp([pick[2], pick[3]], rt());
+      if (!best) { plan.stats.treeMisses++; continue; }
+      var tm = m(pick[0]);
+      var scale = tm && tm.height > 0 ? height / tm.height : 1;
+      var row = { asset: pick[0], x: best.x, z: best.z, rotY: rotY, scale: scale,
+        r: tm ? colliderRadius(pick[0], tm.width, scale) : 0 };
+      plan.trees.push(row);
+      var tc = { x: row.x, z: row.z, r: row.r,
+        trunk: tm ? tm.width * scale / 2 * TRUNK_RATIO : 0 };
+      circles.push(tc);
+      trees.push(tc);
+    }
+    plan.stats.trees = plan.trees.length;
+
+    var B = SC.bushes;
+    var grassPathM = hasPath ? DP.halfWidth + SC.grass.pathPadM : 0;
+    function bushPick(rand) {
+      var bp = whPickWeighted(rand, B.assets);
+      var h = lerp([bp[2], bp[3]], rand());
+      var bm = m(bp[0]);
+      var sc = bm && bm.height > 0 ? h / bm.height : 1;
+      return { name: bp[0], scale: sc, own: bm ? bm.width * sc / 2 * B.selfRadiusFrac : 0,
+               rotY: rand() * TWO_PI };
+    }
+
+    // 2. bush rings around EVERY tree (CONFIG ring hosts, then scatter trees)
+    var R = B.atTreeRing;
+    var rr2 = stream('rings');
+    for (var h = 0; h < trees.length; h++) {
+      var host = trees[h];
+      var n = R.count[0] + Math.floor(rr2() * (R.count[1] - R.count[0] + 1));
+      var a0 = rr2() * TWO_PI;
+      for (var slot = 0; slot < n; slot++) {
+        var ang = a0 + slot * TWO_PI / n + (rr2() - 0.5) * (TWO_PI / n) * 0.5;
+        var rad = host.trunk * lerp(R.radiusFrac, rr2());
+        var bp2 = bushPick(rr2);
+        var bx = host.x + Math.cos(ang) * rad, bz = host.z + Math.sin(ang) * rad;
+        if (!inRegion(bx, bz, 0) || !clearOfWorld(bx, bz, grassPathM) ||
+            hitsCircles(bx, bz, bp2.own, host)) { plan.stats.ringSkipped++; continue; }
+        addInstance(bp2.name, bx, bz, bp2.rotY, bp2.scale);
+        plan.stats.ringBushes++;
+      }
+    }
+
+    // 3. free bushes: uniform over the region, tree rejection rules
+    var rf = stream('freeBushes');
+    for (var fa = 0; fa < B.freeBushes * 30 && plan.stats.freeBushes < B.freeBushes; fa++) {
+      var fs = sampleDisc(rf);
+      var fp = bushPick(rf);
+      if (!inRegion(fs.x, fs.z, C.edgeM) || !clearOfWorld(fs.x, fs.z, C.pathM) ||
+          !clearOfPoints(fs.x, fs.z) || hitsCircles(fs.x, fs.z, T.propClearM, null)) continue;
+      addInstance(fp.name, fs.x, fs.z, fp.rotY, fp.scale);
+      plan.stats.freeBushes++;
+    }
+
+    // 4. grass: uniform; skips only path, spawn, gate and collider circles
+    var G = SC.grass;
+    var gm = m(G.asset);
+    var rg = stream('grass');
+    for (var ga = 0; ga < G.count * 10 && plan.stats.grass < G.count; ga++) {
+      var gs = sampleDisc(rg);
+      var gh = lerp(G.height, rg());
+      var grot = rg() * TWO_PI;
+      var gsc = gm && gm.height > 0 ? gh / gm.height : 1;
+      var gown = gm ? gm.width * gsc / 2 : 0;
+      if (!inRegion(gs.x, gs.z, 0) || !clearOfWorld(gs.x, gs.z, grassPathM) ||
+          hitsCircles(gs.x, gs.z, gown, null)) continue;
+      addInstance(G.asset, gs.x, gs.z, grot, gsc);
+      plan.stats.grass++;
+    }
+    return plan;
+  }
+
+  // One InstancedMesh per template mesh (the Round E GLBs are single-mesh:
+  // one per asset per region). Shares the pixelated template's geometry and
+  // material; matrices are written ONCE here, never per frame. Whole-mesh
+  // frustum culling over the instance bounding sphere.
+  function whBuildInstanced(name, list) {
+    var tmpl = window.WH_ASSETS.getTemplate(name);
+    var out = [];
+    if (!tmpl || !list || !list.length) return out;
+    tmpl.updateMatrixWorld(true);
+    var inv = new THREE.Matrix4().copy(tmpl.matrixWorld).invert();
+    var local = new THREE.Matrix4();
+    var mat = new THREE.Matrix4();
+    var pos = new THREE.Vector3();
+    var quat = new THREE.Quaternion();
+    var scl = new THREE.Vector3();
+    var up = new THREE.Vector3(0, 1, 0);
+    tmpl.traverse(function (o) {
+      if (!o.isMesh) return;
+      local.multiplyMatrices(inv, o.matrixWorld);
+      var im = new THREE.InstancedMesh(o.geometry, o.material, list.length);
+      for (var i = 0; i < list.length; i++) {
+        var it = list[i];
+        pos.set(it.x, 0, it.z);
+        quat.setFromAxisAngle(up, it.rotY);
+        scl.setScalar(it.scale);
+        mat.compose(pos, quat, scl).multiply(local);
+        im.setMatrixAt(i, mat);
+      }
+      im.instanceMatrix.needsUpdate = true;
+      im.computeBoundingSphere();
+      im.frustumCulled = true;
+      im.castShadow = false;
+      im.receiveShadow = false;
+      im.name = 'scatter-' + name;
+      out.push(im);
+    });
+    return out;
+  }
+
   // ---- Live region manager (THREE scene wiring) ------------------------------
 
   function RegionManager(scene, enemyStateRestoreCb) {
@@ -510,9 +801,24 @@
     if (this.colliders[regionId]) return this.colliders[regionId];
     var table = whPropColliders(regionId, function (name) {
       return window.WH_ASSETS.getMeta(name);
-    });
+    }, this.scatterPlan(regionId));
     if (table.complete) this.colliders[regionId] = table;
     return table;
+  };
+
+  // Round E: scatter plan per region (cached once every footprint is known,
+  // like the collider table; logs its counts once).
+  RegionManager.prototype.scatterPlan = function (regionId) {
+    this.scatterPlans = this.scatterPlans || {};
+    if (this.scatterPlans[regionId]) return this.scatterPlans[regionId];
+    var plan = whScatterPlan(regionId, function (name) {
+      return window.WH_ASSETS.getMeta(name);
+    });
+    if (plan.complete) {
+      this.scatterPlans[regionId] = plan;
+      console.log('[WH scatter] ' + regionId + ' ' + JSON.stringify(plan.stats));
+    }
+    return plan;
   };
 
   // R5 P0-5: push a circle (player) out of the ACTIVE region's prop colliders.
@@ -641,6 +947,23 @@
       group.add(obj);
     }
 
+    // Round E scatter: extra trees as normal props (colliders via
+    // propColliders), bushes + grass as one InstancedMesh per asset.
+    var plan = this.scatterPlan(regionId);
+    for (var si = 0; si < plan.trees.length; si++) {
+      var sTree = plan.trees[si];
+      var tObj = window.WH_ASSETS.instance(sTree.asset);
+      tObj.position.set(sTree.x, 0, sTree.z);
+      tObj.rotation.y = sTree.rotY;
+      tObj.scale.setScalar(sTree.scale);
+      group.add(tObj);
+    }
+    Object.keys(plan.instances).forEach(function (name) {
+      whBuildInstanced(name, plan.instances[name]).forEach(function (im) {
+        group.add(im);
+      });
+    });
+
     // enemies (fresh instances; dead state restored below)
     this.enemies[regionId] = [];
     for (var j = 0; j < regionCfg.enemies.length; j++) {
@@ -682,6 +1005,7 @@
     this.scene.remove(group);
     group.traverse(function (obj) {
       if (obj.isMesh) {
+        if (obj.isInstancedMesh) obj.dispose();   // Round E: instance buffer
         if (obj.geometry) obj.geometry.dispose();
         var mats = Array.isArray(obj.material) ? obj.material : [obj.material];
         mats.forEach(function (m) {
@@ -775,4 +1099,5 @@
 
   window.WH_RegionManager = RegionManager;
   window.WH_RegionManagerLogic = RegionManagerLogic;
+  window.WH_ScatterPlan = whScatterPlan;   // Round E: pure, for debug/tests
 })();
