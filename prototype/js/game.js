@@ -905,10 +905,10 @@
       // Order B CHARACTER tab: the UI only calls these, player owns the rules
       equip: {
         hands: function () { return p.hands; },
-        equip: function (id, hand) { return p.equipItem(id, hand); },
+        equip: function (id, hand, fromInventory) { return p.equipItem(id, hand, fromInventory); },
         unequip: function (hand) { return p.unequipHand(hand); },
         spells: function () { return p.getKnownSpells(); },
-        selectSpell: function (slot) { p.pressBeltKey(slot); }
+        bindSpell: function (slot, role) { p.pressBeltKey(slot, role); }
       }
     });
     p.onEquipRefusal = function (text) {

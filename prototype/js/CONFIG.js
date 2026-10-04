@@ -444,7 +444,8 @@ window.WH_CONFIG = {
       maxRange: 30,                   // lifetime = maxRange / speed
       castWindup: 0.25,               // seconds before the bolt spawns
       castCooldown: 0.3,              // seconds after cast before next cast
-      schoolColor: 0xff7722           // fire school color (offhand glow, HUD tint)
+      schoolColor: 0xff7722,          // fire school color (offhand glow, HUD tint)
+      name: 'Firebolt', glyph: 'FB'   // CHARACTER tab spell columns
     },
     // 10-04 (Nicko): key 2 light that follows the player for 60s. Once cast
     // it ignores the left hand entirely (stow / swap / Q / roll / death);
@@ -463,6 +464,7 @@ window.WH_CONFIG = {
       lightDecay: 2,                  // physical falloff (matches the lantern)
       glowColor: 0xffd9a0,            // orb color
       schoolColor: 0xffd9a0,          // offhand glow + HUD tint while held
+      name: 'Radiance', glyph: 'RD',  // CHARACTER tab spell columns
       orbRadius: 0.14,
       orbSegments: [12, 8],           // sphere width / height segments
       // yawFrame-local (+X = body left, measured: L_Hand sits at +X and the
@@ -478,8 +480,9 @@ window.WH_CONFIG = {
   // v7: the magic belt (5 abilities + 2 consumables, doc 04 ruling part C)
   belt: {
     slots: 5,                         // spell ability slots (keys 1-5)
-    // boot belt = learned-spell quick slots (Order B: keys 1-5 pick the
-    // active spell only; slot 1 active at boot); null = empty slot
+    // boot belt = learned-spell quick slots; null = empty slot. Order C:
+    // two bindings point into it - Digit1-5 = MAIN (right) hand, Shift+
+    // Digit1-5 = OFF (left) hand; both start on slot 1
     defaultSpells: ['firebolt', 'radiance', null, null, null],
     regripSeconds: 0.3,               // re-grip busy window after selection
     consumableSlots: 2                // consumable slots (keys R / T)
@@ -799,6 +802,7 @@ window.WH_CONFIG.inventory = {
   // at boot, so the grid starts with the shield + bandage only.
   startingItems: [
     { id: 'magicGlove', count: 1 },
+    { id: 'magicGlove', count: 1 },   // Order C: glove #2 (stays in the grid; dual-cast kit)
     { id: 'longsword', count: 1 },
     { id: 'roundShield', count: 1 },
     { id: 'bandage', count: 1 }
@@ -823,7 +827,7 @@ window.WH_CONFIG.inventory = {
 // it). Consumables omit stackCap -> CONFIG.inventory.defaultStackCap; gear = 1.
 // Order B gear data (read by inventory.js + player.js):
 //   kind        'caster' | 'melee' | 'shield' - the ONLY thing combat code
-//               keys off (player.hasCaster / hasMeleeRight / hasShield)
+//               keys off (player.handAction per hand, Order C)
 //   hands       which hands it may enter ('right' / 'left'; one item per hand)
 //   equipHint   default hand for a plain click on the CHARACTER tab
 //   cast        casting implement data; powerTier glove 1 < wand 2 < staff 3

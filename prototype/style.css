@@ -629,6 +629,48 @@ html, body {
   color: #6a6350;
 }
 
+/* Order C: MAIN (R) / OFF (L) spell binding columns */
+.inv-bind {
+  display: flex;
+  gap: 8px;
+}
+
+.inv-bind-col {
+  flex: 1;
+  min-width: 0;
+}
+
+.inv-bind-cur {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 6px;
+}
+
+.inv-bind-cur .inv-slot {
+  width: 32px;
+  height: 32px;
+}
+
+.inv-bind-cur .inv-glyph {
+  top: 6px;
+  font-size: 13px;
+}
+
+.inv-bind-cur .inv-hand-name {
+  font-size: 12px;
+}
+
+.inv-bind-note {
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #a0574a;
+}
+
+.inv-bind-col .inv-spell {
+  font-size: 12px;
+}
+
 .inv-spell.active .inv-spell-name {
   color: #e3d27a;
 }

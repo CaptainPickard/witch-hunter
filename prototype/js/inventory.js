@@ -146,8 +146,11 @@
 
   // ---- inventory screen (DOM modal, I key / INV button) ----------------------------
   // opts: { inventory, onOpenChange(open), onDrop(slotIndex, wholeStack),
-  //         equip: { hands(), equip(id, hand), unequip(hand), spells(),
-  //                  selectSpell(slot) } }.
+  //         equip: { hands(), equip(id, hand, fromInventory), unequip(hand),
+  //                  spells(), bindSpell(slot, role) } }.
+  // Order C: spells() rows are { slot, id, main, off }; bindSpell binds a
+  // belt slot to 'main' (right) or 'off' (left). fromInventory = draw the
+  // item from the grid, never move it from the other hand (second glove).
   // The UI never touches player state itself: game.js suspends input on
   // onOpenChange, routes onDrop to the drop flow, and backs opts.equip with
   // the player's equip rules (refusals toast from there).
@@ -340,14 +343,30 @@
   var HAND_LABEL = { right: 'RIGHT HAND', left: 'LEFT HAND' };
   var HAND_KEY = { right: 'R', left: 'L' };
 
+  // Order C binding columns (role = player.bindings key)
+  var BIND_COLS = [
+    { role: 'main', hand: 'right', label: 'MAIN (R)' },
+    { role: 'off', hand: 'left', label: 'OFF (L)' }
+  ];
+
+  function spellDef(id) {
+    return (window.WH_CONFIG.spell && window.WH_CONFIG.spell[id]) || {};
+  }
+
   function spellName(id) {
-    return id.charAt(0).toUpperCase() + id.slice(1);
+    return spellDef(id).name || id.charAt(0).toUpperCase() + id.slice(1);
+  }
+
+  function spellGlyph(id) {
+    return spellDef(id).glyph || id.slice(0, 2).toUpperCase();
   }
 
   // Left column: RIGHT / LEFT HAND slots (click = unequip to inventory) and
-  // the learned spells (click = set active, same as the belt keys). Right
-  // column: gear rows from the inventory (click = equip to the default
-  // hand, [L] / [R] = that hand; moving across hands is allowed).
+  // the MAIN (R) / OFF (L) spell bindings (click a spell = bind it to that
+  // hand, same as Digit / Shift+Digit). Right column: gear rows from the
+  // inventory (click = equip to the default hand - or the other hand when
+  // the default already holds the same item, e.g. glove #2 - [L] / [R] =
+  // that hand; moving across hands is allowed).
   InventoryUI.prototype.renderCharacter = function () {
     var self = this, E = this.equip, body = this.charBody;
     body.textContent = '';
@@ -382,18 +401,43 @@
       }
       left.appendChild(row);
     });
+    // Order C: SPELLS = two binding columns over the one learned list.
+    // Click a spell under a column = bind it to that hand (same rules as
+    // Digit / Shift+Digit).
     left.appendChild(el('div', 'inv-sec', 'SPELLS'));
-    E.spells().forEach(function (sp) {
-      var row = el('div', 'inv-spell' + (sp.main ? ' active' : ''));
-      row.appendChild(el('span', 'inv-spell-key', String(sp.slot + 1)));
-      row.appendChild(el('span', 'inv-spell-name', spellName(sp.id)));
-      if (sp.main) row.appendChild(el('span', 'inv-spell-mark', 'ACTIVE'));
-      row.addEventListener('click', function () {
-        E.selectSpell(sp.slot);
-        self.render();
+    var spells = E.spells();
+    var cols = el('div', 'inv-bind');
+    BIND_COLS.forEach(function (c) {
+      var col = el('div', 'inv-bind-col');
+      col.appendChild(el('div', 'inv-hand-label', c.label));
+      var bound = null;
+      spells.forEach(function (sp) { if (sp[c.role]) bound = sp; });
+      var cur = el('div', 'inv-bind-cur');
+      var tile = el('div', 'inv-slot inv-hand-slot' + (bound ? ' filled' : ''));
+      tile.appendChild(el('span', 'inv-glyph', bound ? spellGlyph(bound.id) : ''));
+      cur.appendChild(tile);
+      var txt = el('div', 'inv-gear-text');
+      txt.appendChild(el('div', 'inv-hand-name', bound ? spellName(bound.id) : 'None'));
+      txt.appendChild(el('div', 'inv-gear-hands', bound ? 'slot ' + (bound.slot + 1) : ''));
+      if (kindOf(hands[c.hand]) !== 'caster') {
+        txt.appendChild(el('div', 'inv-bind-note', 'no implement'));
+      }
+      cur.appendChild(txt);
+      col.appendChild(cur);
+      spells.forEach(function (sp) {
+        var row = el('div', 'inv-spell' + (sp[c.role] ? ' active' : ''));
+        row.appendChild(el('span', 'inv-spell-key', (c.role === 'off' ? 'S' : '') + (sp.slot + 1)));
+        row.appendChild(el('span', 'inv-spell-name', spellName(sp.id)));
+        row.title = 'Bind to the ' + c.hand + ' hand';
+        row.addEventListener('click', function () {
+          E.bindSpell(sp.slot, c.role);
+          self.render();
+        });
+        col.appendChild(row);
       });
-      left.appendChild(row);
+      cols.appendChild(col);
     });
+    left.appendChild(cols);
     body.appendChild(left);
 
     var right = el('div', 'inv-char-col');
@@ -405,6 +449,8 @@
       if (!d || d.category !== 'gear' || !d.hands) return;
       any = true;
       var id = s.id, def = defaultHandOf(id);
+      var alt = def === 'right' ? 'left' : 'right';
+      if (hands[def] === id && d.hands.indexOf(alt) >= 0) def = alt;
       var row = el('div', 'inv-gear');
       var g = el('div', 'inv-slot filled');
       g.appendChild(el('span', 'inv-glyph', d.glyph));
@@ -421,12 +467,12 @@
         b.title = 'Equip to ' + HAND_LABEL[h].toLowerCase();
         b.addEventListener('click', function (e) {
           e.stopPropagation();
-          E.equip(id, h);
+          E.equip(id, h, true);
         });
         row.appendChild(b);
       });
       row.title = 'Click: equip to ' + HAND_LABEL[def].toLowerCase();
-      row.addEventListener('click', function () { E.equip(id, def); });
+      row.addEventListener('click', function () { E.equip(id, def, true); });
       list.appendChild(row);
     });
     if (!any) list.appendChild(el('div', 'inv-soon', 'No gear in inventory'));
