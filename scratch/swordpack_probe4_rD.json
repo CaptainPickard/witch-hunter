@@ -1,0 +1,35 @@
+{
+ "R2L": {
+  "file": "sword and shield slash.fbx",
+  "frames_total": 46,
+  "dur_sec": 1.5,
+  "fps": 30,
+  "impact_frame_global": 18,
+  "windup_sec": 0.567,
+  "strike_fallback_sec": 0.133,
+  "impact_time": 0.378,
+  "peak_speed_mps": 15.6
+ },
+ "L2R": {
+  "file": "sword and shield slash (3).fbx",
+  "frames_total": 51,
+  "dur_sec": 1.667,
+  "fps": 30,
+  "impact_frame_global": 25,
+  "windup_sec": 0.8,
+  "strike_fallback_sec": 0.267,
+  "impact_time": 0.48,
+  "peak_speed_mps": 11.7
+ },
+ "SUB": {
+  "file": "sword and shield attack (4).fbx",
+  "frames_total": 31,
+  "dur_sec": 1.0,
+  "fps": 30,
+  "impact_frame_global": 13,
+  "windup_sec": 0.4,
+  "strike_fallback_sec": 0.433,
+  "impact_time": 0.4,
+  "peak_speed_mps": 9.8
+ }
+}

@@ -1,0 +1,48 @@
+{
+  "input": "/workspace/witch-hunter/art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-sword.glb",
+  "output": "/workspace/witch-hunter/scratch/mixamo-fbx/rt_roundD/dev-human-hunter-male.mixamo.glb",
+  "fps": 30,
+  "clips": {
+    "WH_SS_SlashR2L": {
+      "src": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield slash.fbx",
+      "frame_start": 1,
+      "frame_end": 46,
+      "samples": 46,
+      "duration_seconds": 1.5,
+      "fcurves": 200,
+      "leg_scale_ratio": 0.9762274187351112,
+      "max_ground_correction_m": 0.08102154731750488,
+      "status": "baked",
+      "channels": 60
+    },
+    "WH_SS_SlashL2R": {
+      "src": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield slash (3).fbx",
+      "frame_start": 1,
+      "frame_end": 51,
+      "samples": 51,
+      "duration_seconds": 1.6666666666666667,
+      "fcurves": 200,
+      "leg_scale_ratio": 0.9762274187351112,
+      "max_ground_correction_m": 0.08863377571105957,
+      "status": "baked",
+      "channels": 60
+    },
+    "WH_SS_Overhead": {
+      "src": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield attack (4).fbx",
+      "frame_start": 1,
+      "frame_end": 31,
+      "samples": 31,
+      "duration_seconds": 1.0,
+      "fcurves": 200,
+      "leg_scale_ratio": 0.9762274187351112,
+      "max_ground_correction_m": 0.07578682899475098,
+      "status": "baked",
+      "channels": 60
+    }
+  },
+  "ground_z": -1.0000007152557373,
+  "root_motion": "Root fixed; Hips vertical only",
+  "constraint_space": "WORLD: FBX armature is Y-up centimeters; WH is Z-up meters",
+  "output_bytes": 5411296,
+  "status": "pass"
+}
