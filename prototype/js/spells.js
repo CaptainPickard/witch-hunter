@@ -122,7 +122,7 @@
     this.orb.visible = true;
   };
 
-  // Follow anchor = the player's yawFrame (pattern of attachPlayerLantern).
+  // Follow anchor = the player's yawFrame (pattern of the deleted R2 lantern).
   RadianceEffect.prototype.attach = function (player) {
     if (!player || !player.yawFrame) return;
     if (this.group.parent !== player.yawFrame) player.yawFrame.add(this.group);

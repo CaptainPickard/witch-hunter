@@ -16,11 +16,12 @@ window.WH_CONFIG = {
   },
 
   lighting: {
-    // R2 P0-3 moon-and-lantern night rig: AmbientLight removed entirely - the
+    // R2 P0-3 moon night rig: AmbientLight removed entirely - the
     // hemisphere is the only fill, and region.ambientLightLevel scales it
     // (region fill = hemiBaseIntensity * ambientLightLevel). Moon = cool
-    // directional on the -z side backlighting the A->B main path. Lantern =
-    // warm PointLight parented into the player's yawFrame (left-hip anchor).
+    // directional on the -z side backlighting the A->B main path. The R2
+    // player lantern is DELETED (10-05 light radius order): player light is
+    // earned - see CONFIG.playerLight.
     ambientIntensity: 0,              // P0-3: AmbientLight removed (kept for backward-compat readers; must stay 0)
     hemiSkyColor: 0x4a5a80,           // indigo-slate sky (audit 5.3)
     hemiGroundColor: 0x16181e,        // near-black ground (audit 5.3)
@@ -33,15 +34,19 @@ window.WH_CONFIG = {
     moonIntensity: 0.9,              // moon:fill (vertical faces) 3-5:1
     moonAzimuthDeg: 0,                // -z side, backlights A->B main path
     moonElevationDeg: 30,             // audit: 25-35 deg
-    lanternColor: 0xffb060,           // warm amber (audit 5.3; canon accent)
-    lanternIntensity: 6.5,            // audit 5.3: 6-8 cd class
-    lanternDistance: 12,              // audit: distance ~12
-    lanternDecay: 2,                  // physical falloff
-    lanternFlickerPct: 5,             // +-5% flicker band
-    lanternAnchor: 'left-hip',        // yawFrame-space anchor
-    lanternAnchorOffset: [-0.32, 0.95, 0.08], // tuned starting anchor
     // 10-03 order 4: 1.15x base fill for B (darker Darkwood); region A uses 1.0
     regionBFillMult: 1.15
+  },
+
+  // 10-05 light radius order (js/light.js WH_PlayerLight): the player has NO
+  // intrinsic light. Per hand (max 2 follow lights, on the hand bone at the
+  // casterGlow anchor): an equipped item's items[id].light, else a caster
+  // hand's bound spell's spell[id].light. Light blocks are
+  // { color, intensity, distance, decay, flickerPct }. All lights exist from
+  // boot at intensity 0 (fixed scene light count, no shader recompiles).
+  playerLight: {
+    flickerPhaseStep: 2.3,            // rad between lights' flicker phases (no lockstep pulse)
+    projectilePoolSize: 2             // in-flight bolt lights (spell[id].projectileLight); extra bolts go unlit
   },
 
   // 10-03 order 4: starry night sky (game.js setupSky). Dome ignores fog;

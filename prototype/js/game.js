@@ -155,18 +155,11 @@
     game.scene.add(moon.target);
     game.moonLight = moon;
 
-    // Player lantern: PointLight parented into the player chain. Attach target
-    // is game.player.yawFrame when available, else game.player.root (boot order
-    // note: setupLights runs before the player exists; the lantern lights the
-    // scene rig at boot and re-parents below).
-    var lantern = new THREE.PointLight(L.lanternColor, L.lanternIntensity,
-      L.lanternDistance, L.lanternDecay);
-    var attach = (game.player && (game.player.yawFrame || game.player.root)) ||
-      game.scene;
-    var off = L.lanternAnchorOffset;
-    lantern.position.set(off[0], off[1], off[2]);
-    attach.add(lantern);
-    game.lantern = lantern;
+    // 10-05 light radius order: the R2 player lantern is deleted. Player
+    // light is earned (hand items / bound spells / projectiles), all owned by
+    // WH_PlayerLight; its lights are created here, before the first render,
+    // at intensity 0 so the scene light count never changes (M-19).
+    game.playerLight = new window.WH_PlayerLight.PlayerLight(game.scene);
 
     // R2 P1-8: fixed pool of 4 PointLights + flame cards, created ONCE at boot
     // BEFORE the first render so the shader light count never changes (M-19).
@@ -189,19 +182,6 @@
       game.scene.add(card);
       game.flameCards.push(card);
     }
-  }
-
-  // R2 P0-3: re-parent the lantern into the player's yawFrame once the player
-  // body exists (left-hip anchor = left side of the character, yawFrame space,
-  // so the light turns with the player). Called from boot after setBody().
-  function attachPlayerLantern() {
-    var L = CFG.lighting;
-    if (!game.lantern || !game.player || !game.player.yawFrame) return;
-    if (game.lantern.parent !== game.player.yawFrame) {
-      game.player.yawFrame.add(game.lantern);
-    }
-    var off = L.lanternAnchorOffset;
-    game.lantern.position.set(off[0], off[1], off[2]);
   }
 
   // ---- HUD -------------------------------------------------------------------
@@ -335,27 +315,9 @@
       var sid = p.getBoundSpellId(hand);
       if (sid && CFG.spell[sid]) glow.material.color.setHex(CFG.spell[sid].schoolColor);
       glow.scale.setScalar(1 + ((G.windupScale || 1) - 1) * p.castProgress(hand));
-      anchorGlow(p, glow, hand, G);
+      // same hand anchor as the hand's follow light (light.js)
+      window.WH_PlayerLight.anchorToHand(p, glow, hand);
     });
-  }
-
-  function anchorGlow(p, glow, hand, G) {
-    // re-anchor only when the anchor mode / body changes (the orb is per hand)
-    if (glow.userData.whAnchorKey === G.anchor && glow.userData.whBody === p.body && glow.parent) return;
-    glow.userData.whAnchorKey = G.anchor;
-    glow.userData.whBody = p.body;
-    var bone = G.anchor === 'hand' && p.body
-      ? p.body.getObjectByName(hand === 'left' ? 'L_Hand' : 'R_Hand') : null;
-    if (bone) {
-      bone.add(glow);
-      var nat = CFG.equip.nativeHand.magicGlove || 'left';
-      var o = G.handOffset, m = hand === nat ? [1, 1, 1] : CFG.equip.mirrorScale;
-      glow.position.set(o[0] * m[0], o[1] * m[1], o[2] * m[2]);
-    } else {
-      p.yawFrame.add(glow);
-      var ip = CFG.moveset.idlePose;
-      glow.position.set((hand === 'left' ? -1 : 1) * ip.pos[0], ip.pos[1], ip.pos[2]);
-    }
   }
 
   // v6: HUD screen-edge flash pulse (DOM opacity, no WebGL work).
@@ -1235,7 +1197,6 @@
       // The animated holder owns this scaled lift; do not apply it twice.
       pBody.children[0].position.y += window.WH_ASSETS.groundMinY('playerBody');
       game.player.setBody(pBody);
-      attachPlayerLantern();   // R2 P0-3: lantern now player-parented (left-hip anchor)
       // v3: register the weapon with the player so attack stages drive its
       // pose. 10-04: which weapon = CONFIG.moveset.playerWeapon.
       setupHandMeshes();    // Order B: longsword + shield meshes, mounted per hand
@@ -1292,23 +1253,6 @@
                  intensity: 1.8, weight: 0.6 });
     }
     return out;
-  }
-
-  // R2 P0-3 (fix during validation): lantern flicker — the CONFIG band
-  // (lanternFlickerPct 5) was previously unused; apply the audit's
-  // deterministic two-sine wobble (no Math.random per spec) to the lantern.
-  // Game-time driven via performance.now so it advances even at SwiftShader
-  // low fps. Amplitude = lanternIntensity * flickerPct/100 (±0.325 @6.5).
-  function lanternTick() {
-    if (!game.lantern) return;
-    var LT = CFG.lighting;
-    var pct = LT.lanternFlickerPct !== undefined
-      ? LT.lanternFlickerPct : 0;
-    if (!pct) return;
-    var t = performance.now() / 1000;
-    var w = 0.6 * Math.sin(7.3 * t) + 0.4 * Math.sin(3.1 * t + 1.7);
-    var base = LT.lanternIntensity !== undefined ? LT.lanternIntensity : 6.5;
-    game.lantern.intensity = base * (1 + w * pct / 100);
   }
 
   // R2 P1-8: nearest-socket handoff. One pass per frame: sort sockets by
@@ -1464,7 +1408,9 @@
     game.player.updateCamera(dt);
     applyCameraShake(dt);
     poolTick(dt);   // R2: fixed light pool nearest-socket handoff
-    lanternTick();  // R2: lantern wobble (CONFIG lanternFlickerPct)
+    // 10-05: earned player light - hand lights follow hands + bindings this
+    // frame, projectile lights follow live bolts (flicker per light)
+    game.playerLight.update(game.player, game.firebolts);
     skyTick();      // 10-03 order 4: star twinkle clock
     updateHud(dt);
     game.renderer.render(game.scene, game.camera);
