@@ -431,3 +431,34 @@ closeup (stone courses don't align - foliage overlap is the fix if it
 bothers); Round E proof stills had half-sunk ground objects (renderer
 bug, fixed in F's); bundle's three.js static{} parse warning predates
 this round, game code parses.
+## Round G - 3x wall height + snare-bush tree rings (2026-10-05, Nicko order)
+
+Nicko's two changes: walls 3x taller (no sightline over), tree rings swap to
+his own Meshy bush. Zero Meshy credits spent (his asset fetched from the
+account task; downloads are free).
+
+- Walls: CONFIG.boundaryWall.heightM 2.4 -> 7.2 (single knob; segment scale
+  sy A 3.1179 -> 9.3537, B 3.0821 -> 9.2464 = exactly 3x; X/Z unchanged).
+  Wall geometry/colliders/arch byte-identical (wall_mirror: 145 ring,
+  22+22 chord, 603 colliders, byte-identical across runs AND branches).
+- Snare bush ("Creat a snare bush with thorns and dead roses", task
+  01a1092f-3bdf-7461-86ad-9eaa081187cc, raw 820,996 tris geometry-ONLY,
+  no UVs/material) -> decimated 3,000 tris (scratch/decimate_roundG.py,
+  deterministic) -> wh-bush-snare-pixelated.glb (73.6KB). FAILED step:
+  tree_bake texture treatment (raw has no material: AttributeError
+  'ColorVisuals' object has no attribute 'material') -> documented
+  flat-colour fallback: 5-bit bark colour of the young dead tree, same
+  metal/roughness as the E bushes. Rings + keepout/clearance law unchanged;
+  ring counts A 305/3 skipped, B 130/2 skipped (narrower briar fits 2 slots
+  bush-a/b could not). Rollback: delete scatter.bushes.atTreeRing.assets key
+  -> falls back to whBushA/B.
+- Proof: scratch/roundG-proof/ (3 stills). Ring tri load ~966k (A) / 440k (B).
+- Watch for playtest: (1) briars are one flat colour (roses = stems) until a
+  Meshy texture pass is bought for the snare bush; (2) vertical stretch of
+  the vinestone texture is visible up close (elongated vines, no tearing);
+  (3) camera can still see over the wall at steep pitch/high zoom (2.6m eye +
+  7m dist needs ~41deg pitch; at max zoom-out ~22deg; max pitch eye ~11.3m
+  > 7.2m wall) - if Nicko wants NO over-look at ANY camera, next step would
+  be a camera pitch clamp or taller wall, his call; (4) on thick-trunked
+  trees the rings sit inside the trunk base flare and partly vanish (ring
+  radius knob if it bothers).
