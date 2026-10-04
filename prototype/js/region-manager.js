@@ -200,7 +200,11 @@
 
   // Round E: plan (optional) = whScatterPlan output; its extra trees join the
   // table as ordinary trunk colliders (index 'scatter<i>').
-  function whPropColliders(regionId, meta, plan) {
+  // Round F: wall (optional) = whWallPlan output; its circles on this
+  // region's side of the plane (within WALL_SIDE_PAD_M; chord + arch always)
+  // join the table. Never corridor-exempt: arch legs/plugs bound the doorway.
+  var WALL_SIDE_PAD_M = 3;
+  function whPropColliders(regionId, meta, plan, wall) {
     var props = DEFS.regions[regionId].cfg.props;
     var out = { circles: [], exempt: [], complete: true };
     for (var i = 0; i < props.length; i++) {
@@ -218,6 +222,14 @@
         var t = plan.trees[j];
         if (t.r > 0) out.circles.push({ index: 'scatter' + j, name: t.asset,
           x: t.x, z: t.z, r: t.r });
+      }
+    }
+    if (wall) {
+      if (!wall.complete) out.complete = false;
+      var side = DEFS.regions[regionId].side;
+      for (var k = 0; k < wall.colliders.length; k++) {
+        var w = wall.colliders[k];
+        if (side * (w.z - CFG.boundary.z) > -WALL_SIDE_PAD_M) out.circles.push(w);
       }
     }
     return out;
@@ -737,10 +749,220 @@
     return plan;
   }
 
+  // ---- Round F: boundary wall ring + gate arch (THREE-free, pure) -----------
+  // whWallPlan(meta) is a pure function of CONFIG (boundaryWall, lightSockets,
+  // both regions' props) and measured footprints. WORLD-level: one plan for
+  // the shared disc, not per region. Streams: seed ^ hash('wall:ring'|
+  // 'wall:chord'); fixed draws per segment (ring: jitter, rotJitter; chord:
+  // facing, rotJitter) drawn BEFORE the exclusion test, so a nudge or drop
+  // never shifts later segments.
+  function whWallPlan(meta) {
+    var W = CFG.boundaryWall;
+    var plan = { segments: [], colliders: [], arch: null, lantern: null, sockets: [],
+      complete: true,
+      stats: { ring: 0, chordE: 0, chordW: 0, nudged: 0, drops: 0, dropReasons: [],
+               overDropLimit: false, colliders: 0 } };
+    if (!W || !W.enabled) return plan;
+    var TWO_PI = Math.PI * 2;
+    var DEG = Math.PI / 180;
+    function m(name) {
+      var v = meta(name);
+      if (!v) plan.complete = false;
+      return v;
+    }
+    function stream(layer) { return whRng((W.seed ^ whHashStr('wall:' + layer)) | 0); }
+
+    // exclusion targets: every CONFIG prop collider of BOTH regions
+    var props = [];
+    [CFG.regionA.id, CFG.regionB.id].forEach(function (rid) {
+      DEFS.regions[rid].cfg.props.forEach(function (p, i) {
+        var pm = m(p.asset);
+        var r = pm ? colliderRadius(p.asset, pm.width, p.scale) : 0;
+        if (r > 0) props.push({ id: rid + '#' + i + ':' + p.asset, x: p.x, z: p.z, r: r });
+      });
+    });
+    var L = W.segmentLengthUnits;
+    var CR = W.collider.r, CN = W.collider.perSegment;
+    var EX = W.exclusion;
+    // collider circle centers along a segment (axis = local X after rotY)
+    function segCircles(x, z, rotY) {
+      var ax = Math.cos(rotY), az = -Math.sin(rotY);
+      var out = [];
+      for (var k = 0; k < CN; k++) {
+        var t = (k + 0.5) / CN - 0.5;          // -1/3, 0, +1/3 for CN = 3
+        out.push({ x: x + ax * t * L, z: z + az * t * L });
+      }
+      return out;
+    }
+    function clash(cs) {
+      for (var i = 0; i < cs.length; i++) {
+        for (var j = 0; j < props.length; j++) {
+          var p = props[j], lim = p.r + EX.clearM + CR;
+          var dx = cs[i].x - p.x, dz = cs[i].z - p.z;
+          if (dx * dx + dz * dz < lim * lim) return p.id;
+        }
+      }
+      return null;
+    }
+    function scaleFor(asset) {
+      var am = m(asset);
+      var sx = am && am.width > 0 ? L / am.width : 1;
+      return { sx: sx, sy: am && am.height > 0 ? W.heightM / am.height : sx,
+               sz: sx * W.depthScale };
+    }
+    var scales = {};
+    W.assets.forEach(function (a) { scales[a] = scaleFor(a); });
+    function addSegment(kind, i, asset, x, z, rotY, cs) {
+      var s = scales[asset];
+      plan.segments.push({ kind: kind, i: i, asset: asset, x: x, z: z, rotY: rotY,
+        sx: s.sx, sy: s.sy, sz: s.sz });
+      for (var k = 0; k < cs.length; k++) {
+        plan.colliders.push({ index: 'wall-' + kind + i + '.' + k, name: asset,
+          x: cs[k].x, z: cs[k].z, r: CR });
+      }
+    }
+    function drop(kind, i, why) {
+      plan.stats.drops++;
+      plan.stats.dropReasons.push(kind + i + ' vs ' + why);
+      if (plan.stats.drops > EX.maxDrops) plan.stats.overDropLimit = true;
+    }
+
+    // 1. ring: N segments around the full circle, chord <= length - overlap
+    // so neighbours butt; asset alternates; radial jitter is a circular
+    // 1-2-1 smoothing of per-segment uniform draws (no hard steps).
+    var R = W.radius;
+    var N = Math.ceil(TWO_PI * R / (L - W.overlapM));
+    var rr = stream('ring');
+    var raw = [], rotJ = [];
+    for (var i = 0; i < N; i++) {
+      raw.push(rr() * 2 - 1);
+      rotJ.push((rr() * 2 - 1) * W.jitter.rotJitterDeg * DEG);
+    }
+    for (i = 0; i < N; i++) {
+      var sm = (raw[(i + N - 1) % N] + 2 * raw[i] + raw[(i + 1) % N]) / 4;
+      var r0 = Math.max(W.minRadius, R + W.jitter.radial * sm);
+      var th = i * TWO_PI / N;
+      // local X along the tangent (-sin th, cos th); local +Z (the GLB's
+      // front face) then points at the disc center
+      var rot = -th - Math.PI / 2 + rotJ[i];
+      var asset = W.assets[i % W.assets.length];
+      var placed = false, why = null;
+      for (var nd = 0; nd <= EX.nudgeMaxM + 1e-9; nd += EX.nudgeStepM) {
+        var rx = (r0 - nd) * Math.cos(th), rz = (r0 - nd) * Math.sin(th);
+        var cs = segCircles(rx, rz, rot);
+        var hit = clash(cs);
+        if (!hit) {
+          addSegment('ring', i, asset, rx, rz, rot, cs);
+          if (nd > 0) plan.stats.nudged++;
+          placed = true;
+          break;
+        }
+        if (why === null) why = hit;
+      }
+      if (placed) plan.stats.ring++;
+      else drop('ring', i, why);
+    }
+
+    // 2. chord along the boundary plane, both sides of the corridor, from
+    // chordFromX to the ring intercept; same alternation, random facing
+    // (the ivy front shows to region A or B), no radial jitter (on-plane).
+    var zc = W.chordZ;
+    var xEnd = W.chordToRim ? Math.sqrt(Math.max(0, R * R - zc * zc)) : W.chordFromX + L;
+    var span = xEnd - W.chordFromX;
+    var nc = Math.max(1, Math.ceil(span / (L - W.overlapM)));
+    var step = span / nc;
+    var rc = stream('chord');
+    [1, -1].forEach(function (sd) {
+      for (var c = 0; c < nc; c++) {
+        var face = rc() < 0.5 ? 0 : Math.PI;
+        var rj = (rc() * 2 - 1) * W.jitter.rotJitterDeg * DEG;
+        var cx = sd * (W.chordFromX + (c + 0.5) * step);
+        var crot = face + rj;
+        var ccs = segCircles(cx, zc, crot);
+        var chit = clash(ccs);
+        var kind = sd === 1 ? 'chordE' : 'chordW';
+        if (chit) { drop(kind, c, chit); continue; }
+        addSegment(kind, c, W.assets[c % W.assets.length], cx, zc, crot, ccs);
+        plan.stats[kind]++;
+      }
+    });
+
+    // 3. gate arch over the chokepoint: scale so the measured clear opening
+    // is >= fitOpening. Pillar blocks (opening edge .. outer half-width,
+    // full depth) are ringed by leg circles inset by legs.r, plus corner
+    // plugs at the four doorway-mouth corners, just OUTSIDE the opening.
+    // NOT whMeetsCorridor-exempt: they are the doorway.
+    var A = W.arch;
+    var gm = m(A.asset);
+    if (gm && gm.width > 0) {
+      var s = A.fitOpening / (A.openingFrac * gm.width);
+      var sz = s * A.depthScale;
+      var ca = Math.cos(A.rotY), sa = Math.sin(A.rotY);
+      // arch-local (x, z) -> world, like obj.rotation.y
+      var toWorld = function (lx, lz) {
+        return { x: A.x + lx * ca + lz * sa, z: A.z - lx * sa + lz * ca };
+      };
+      var opening = A.openingFrac * gm.width * s;
+      var xi = opening / 2;                       // pillar inner face
+      var xo = gm.width * s / 2;                  // pillar outer face
+      var hd = A.depthFrac * gm.width * sz / 2;   // half depth
+      var apexY = A.apexFrac * gm.height * s;
+      plan.arch = { asset: A.asset, x: A.x, z: A.z, rotY: A.rotY,
+        offsetX: -A.openingCenterFrac * gm.width * s,   // centers the opening on (x, z)
+        scale: s, scaleZ: sz, opening: opening, halfWidth: xo, halfDepth: hd,
+        apexY: apexY, height: gm.height * s };
+      var LG = A.legs;
+      var legCount = 0, plugCount = 0;
+      [1, -1].forEach(function (sd) {
+        // perimeter of the inset rectangle [xi + r, xo - r] x [-hd + r, hd - r]
+        var x0 = xi + LG.r, x1 = xo - LG.r, z0 = -hd + LG.r, z1 = hd - LG.r;
+        var nx = Math.max(1, Math.ceil((x1 - x0) / LG.spacingM));
+        var nz = Math.max(1, Math.ceil((z1 - z0) / LG.spacingM));
+        var pts = [];
+        for (var a = 0; a < nx; a++) pts.push([x0 + (x1 - x0) * a / nx, z1]);   // front face
+        for (a = 0; a < nz; a++) pts.push([x1, z1 - (z1 - z0) * a / nz]);       // outer face
+        for (a = 0; a < nx; a++) pts.push([x1 - (x1 - x0) * a / nx, z0]);       // back face
+        for (a = 0; a < nz; a++) pts.push([x0, z0 + (z1 - z0) * a / nz]);       // inner face
+        pts.forEach(function (pt) {
+          var w = toWorld(sd * pt[0], pt[1]);
+          plan.colliders.push({ index: 'arch-leg' + (sd === 1 ? 'E' : 'W') + legCount++,
+            name: A.asset, x: w.x, z: w.z, r: LG.r });
+        });
+        if (A.plugCorners) {
+          [hd, -hd].forEach(function (pz) {
+            var w = toWorld(sd * (xi + A.plugR), pz);
+            plan.colliders.push({ index: 'arch-plug' + plugCount++, name: A.asset,
+              x: w.x, z: w.z, r: A.plugR });
+          });
+        }
+      });
+      plan.stats.archLegs = legCount;
+      plan.stats.archPlugs = plugCount;
+
+      // 4. lantern hung under the opening apex (arch child) + its socket
+      var LT = W.lantern;
+      var lm = m(LT.asset);
+      if (lm && lm.height > 0) {
+        var lh = LT.heightM * LT.scale;
+        var ly = apexY - LT.topBelowApexM - lh;   // base y; hook top = apex - topBelowApexM
+        plan.lantern = { asset: LT.asset, localY: ly, scale: lh / lm.height, height: lh };
+        var SK = CFG.lightSockets[A.asset];
+        if (SK) {
+          var so = toWorld(SK.offset[0], SK.offset[1]);
+          plan.sockets.push({ id: A.asset + '@lantern', x: so.x, y: ly + lh * SK.heightFraction,
+            z: so.z, intensity: SK.intensity, weight: 1 });
+        }
+      }
+    }
+    plan.stats.colliders = plan.colliders.length;
+    return plan;
+  }
+
   // One InstancedMesh per template mesh (the Round E GLBs are single-mesh:
   // one per asset per region). Shares the pixelated template's geometry and
   // material; matrices are written ONCE here, never per frame. Whole-mesh
-  // frustum culling over the instance bounding sphere.
+  // frustum culling over the instance bounding sphere. Round F: items may
+  // carry per-axis sx/sy/sz (+ y) instead of a uniform scale.
   function whBuildInstanced(name, list) {
     var tmpl = window.WH_ASSETS.getTemplate(name);
     var out = [];
@@ -759,9 +981,10 @@
       var im = new THREE.InstancedMesh(o.geometry, o.material, list.length);
       for (var i = 0; i < list.length; i++) {
         var it = list[i];
-        pos.set(it.x, 0, it.z);
+        pos.set(it.x, it.y || 0, it.z);
         quat.setFromAxisAngle(up, it.rotY);
-        scl.setScalar(it.scale);
+        if (it.sx !== undefined) scl.set(it.sx, it.sy, it.sz);
+        else scl.setScalar(it.scale);
         mat.compose(pos, quat, scl).multiply(local);
         im.setMatrixAt(i, mat);
       }
@@ -801,9 +1024,93 @@
     if (this.colliders[regionId]) return this.colliders[regionId];
     var table = whPropColliders(regionId, function (name) {
       return window.WH_ASSETS.getMeta(name);
-    }, this.scatterPlan(regionId));
+    }, this.scatterPlan(regionId), this.wallPlan());
     if (table.complete) this.colliders[regionId] = table;
     return table;
+  };
+
+  // Round F: the world wall plan (one for the shared disc; cached once every
+  // footprint is known, like the scatter plan; logs its counts once).
+  RegionManager.prototype.wallPlan = function () {
+    if (this.wallPlanCache) return this.wallPlanCache;
+    var plan = whWallPlan(function (name) {
+      return window.WH_ASSETS.getMeta(name);
+    });
+    if (plan.complete) {
+      this.wallPlanCache = plan;
+      console.log('[WH wall] ' + JSON.stringify(plan.stats));
+      if (plan.stats.overDropLimit) {
+        console.warn('[WH wall] drops ' + plan.stats.drops + ' > maxDrops ' +
+          CFG.boundaryWall.exclusion.maxDrops + ': ' + plan.stats.dropReasons.join('; '));
+      }
+    }
+    return plan;
+  };
+
+  // Round F: world-level light sockets (gate-arch lantern), live in BOTH
+  // regions; fresh objects per call (game.js computeSockets writes .d).
+  RegionManager.prototype.worldSockets = function () {
+    var s = this.wallPlan().sockets;
+    var out = [];
+    for (var i = 0; i < s.length; i++) {
+      out.push({ id: s[i].id, x: s[i].x, y: s[i].y, z: s[i].z,
+                 intensity: s[i].intensity, weight: s[i].weight });
+    }
+    return out;
+  };
+
+  // Round F: build the wall ring + chord (one InstancedMesh per wall asset =
+  // 2 draw calls) and the gate arch + hung lantern ONCE into a world group
+  // added straight to the scene. Region groups are disposed on swaps; this
+  // group is not a region group, so disposeRegion never touches it and a
+  // rebuild can never double-add it (guarded by this.worldGroup).
+  RegionManager.prototype.buildWorld = function () {
+    if (this.worldGroup) return this.worldGroup;
+    var plan = this.wallPlan();
+    if (!plan.complete) return null;  // footprints not known yet: next buildRegion retries
+    var group = new THREE.Group();
+    group.name = 'world-boundary-wall';
+    var W = CFG.boundaryWall;
+    var byAsset = {};
+    plan.segments.forEach(function (sg) {
+      (byAsset[sg.asset] = byAsset[sg.asset] || []).push({ x: sg.x, y: -W.sinkM, z: sg.z,
+        rotY: sg.rotY, sx: sg.sx, sy: sg.sy, sz: sg.sz });
+    });
+    Object.keys(byAsset).forEach(function (name) {
+      whBuildInstanced(name, byAsset[name]).forEach(function (im) {
+        im.name = 'wall-' + name;
+        group.add(im);
+      });
+    });
+    if (plan.arch) {
+      var A = plan.arch;
+      var arch = new THREE.Group();          // unscaled: origin = opening center
+      arch.name = 'gate-arch';
+      arch.position.set(A.x, 0, A.z);
+      arch.rotation.y = A.rotY;
+      var gate = window.WH_ASSETS.instance(A.asset);
+      gate.position.x = A.offsetX;
+      gate.scale.set(A.scale, A.scale, A.scaleZ);
+      arch.add(gate);
+      if (plan.lantern) {
+        var lan = window.WH_ASSETS.instance(plan.lantern.asset);
+        lan.position.set(0, plan.lantern.localY, 0);
+        lan.scale.setScalar(plan.lantern.scale);
+        lan.traverse(function (o) {
+          // pixel-art glass: the emissive map gets the same nearest filter
+          // prepTemplate gives the base map (shared template material)
+          if (o.isMesh && o.material && o.material.emissiveMap) {
+            o.material.emissiveMap.magFilter = THREE.NearestFilter;
+            o.material.emissiveMap.needsUpdate = true;
+          }
+        });
+        arch.add(lan);
+      }
+      group.add(arch);
+    }
+    this.scene.add(group);
+    this.worldGroup = group;
+    return group;
   };
 
   // Round E: scatter plan per region (cached once every footprint is known,
@@ -893,6 +1200,7 @@
     var group = new THREE.Group();
     group.name = 'region-' + regionId;
     this.buildCounter++;
+    this.buildWorld();                // Round F: world wall, once (no-op after)
 
     // ground disc: procedural pixel-art canvas texture (boot-time, cached),
     // region-biased blotch mix (A olive-dominant, B charcoal-dominant)
@@ -1100,4 +1408,5 @@
   window.WH_RegionManager = RegionManager;
   window.WH_RegionManagerLogic = RegionManagerLogic;
   window.WH_ScatterPlan = whScatterPlan;   // Round E: pure, for debug/tests
+  window.WH_WallPlan = whWallPlan;         // Round F: pure, for debug/tests
 })();

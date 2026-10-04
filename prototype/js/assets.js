@@ -37,6 +37,14 @@
     bushA: 'art-direction/3d/assets/biome_library/wh-bush-a-pixelated.glb',
     bushB: 'art-direction/3d/assets/biome_library/wh-bush-b-pixelated.glb',
     grassTuft: 'art-direction/3d/assets/biome_library/wh-grass-tuft-pixelated.glb',
+    // Round F boundary wall + gate (io/roundF-wall-provenance.md): wall
+    // segments render instanced (region-manager buildWorld). b3Gate is the
+    // b3-gate GLB with its near-closed door leaves cut out
+    // (scratch/gate_open_cut.py); the lantern carries an amber emissive map.
+    whWallA: 'art-direction/3d/assets/biome_library/wh-wall-vinestone-a-pixelated.glb',
+    whWallB: 'art-direction/3d/assets/biome_library/wh-wall-vinestone-b-pixelated.glb',
+    whLanternHang: 'art-direction/3d/assets/biome_library/wh-lantern-hang-pixelated.glb',
+    b3Gate: 'art-direction/3d/assets/biome_library/b3-gate-open-pixelated.glb',
     fallenLog: 'art-direction/3d/assets/biome_library/m7-pixelated.glb',
     treeStump: 'art-direction/3d/assets/biome_library/m8-pixelated.glb',
     mossBoulder: 'art-direction/3d/assets/biome_library/m9-pixelated.glb',
