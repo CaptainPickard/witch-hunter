@@ -547,6 +547,30 @@ window.WH_CONFIG = {
       impactCrossfadeSec: 0.03,     // hold -> WH_ShieldImpact on each blocked hit
       parryCrossfadeSec: 0.03,      // hold -> WH_ParrySwipe on a landed parry
       guardBreakCrossfadeSec: 0.06  // -> WH_GuardBreakStagger (0.79s vs guardBreakStun 0.8)
+    },
+    // Order D enemy feedback (presentation; attack FSM timing untouched).
+    // Blocked or parried swing: the attacker recoils for this long.
+    deflectEnemyRecoilSec: 0.15,
+    deflect: {
+      yawDeg: 18,                   // body twist toward its weapon side (snap, ease out)
+      leanBackDeg: 10,              // body tips back
+      weaponKnockDeg: 40,           // hand-held axe knocked about hand-local X (negate to flip)
+      pushback: 0.25                // world units slid away from the player over the recoil
+    },
+    parryEnemyHitReact: true,       // parried enemy plays its WH_Hit once (stagger read on rigged bodies)
+    // Riposte window marker under a parry-staggered enemy: shown while
+    // isStaggered() && riposteArmed (riposteStaggerDur, gone once the riposte
+    // lands). Amber = canon human-opportunity accent (equip consumable amber).
+    riposteMarker: {
+      color: 0xd8b24a,
+      radius: 0.85,                 // outer radius (world units)
+      width: 0.14,                  // ring thickness
+      segments: 12,                 // low-poly = chunky/pixel read
+      opacity: 0.9,                 // pulse peak
+      pulseMin: 0.45,               // pulse trough (fraction of opacity)
+      pulseHz: 3,
+      endScale: 0.6,                // ring shrinks to this as the window closes
+      yOffset: 0.04                 // above ground (avoid z-fight)
     }
   },
 

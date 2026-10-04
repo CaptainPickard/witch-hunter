@@ -320,6 +320,45 @@
     });
   }
 
+  // Order D: amber ring under each parry-staggered enemy while its riposte
+  // window is open (isStaggered && riposteArmed). One lazily built mesh per
+  // enemy, parented to its root (goes away with the enemy), hidden otherwise;
+  // pulses and shrinks as the stagger runs out.
+  function updateRiposteMarkers() {
+    var M = CFG.block.riposteMarker;
+    var rm = game.regionManager;
+    var t = performance.now() / 1000;
+    Object.keys(rm.enemies).forEach(function (regionId) {
+      var list = rm.enemies[regionId];
+      for (var i = 0; i < list.length; i++) {
+        var e = list[i];
+        var on = regionId === rm.logic.activeId && e.fsm !== 'dead' &&
+          e.riposteArmed && e.isStaggered && e.isStaggered();
+        if (!on) {
+          if (e.riposteMarker) e.riposteMarker.visible = false;
+          continue;
+        }
+        if (!e.riposteMarker) {
+          var ring = new THREE.Mesh(
+            new THREE.RingGeometry(M.radius - M.width, M.radius, M.segments, 1),
+            new THREE.MeshBasicMaterial({ color: M.color, transparent: true,
+              depthWrite: false, side: THREE.DoubleSide, fog: false }));
+          ring.rotation.x = -Math.PI / 2;
+          ring.renderOrder = 2;
+          e.root.add(ring);
+          e.riposteMarker = ring;
+        }
+        var left = Math.max(0, Math.min(1, e.riposteStaggerTimer / CFG.block.riposteStaggerDur));
+        var pulse = M.pulseMin + (1 - M.pulseMin) * (0.5 + 0.5 * Math.sin(t * M.pulseHz * Math.PI * 2));
+        e.riposteMarker.visible = true;
+        // root carries hop/bob y; cancel it so the ring stays on the ground
+        e.riposteMarker.position.set(0, M.yOffset - e.root.position.y, 0);
+        e.riposteMarker.scale.setScalar(M.endScale + (1 - M.endScale) * left);
+        e.riposteMarker.material.opacity = M.opacity * pulse;
+      }
+    });
+  }
+
   // v6: HUD screen-edge flash pulse (DOM opacity, no WebGL work).
   function flashScreen(durationSec, kind) {
     var el = game.hud.blockFlash;
@@ -1166,11 +1205,17 @@
     };
 
     // v6: block/parry HUD feedback callbacks (player must exist first)
-    game.player.onParry = function () {
+    // Order D: the attacker's swing visibly deflects on block AND parry; a
+    // parry also plays the enemy hit reaction (its stagger read) and the
+    // riposte marker (updateRiposteMarkers) shows while the window is open.
+    game.player.onParry = function (attacker) {
       flashScreen(CFG.block.parryFlashSeconds, 'parry');
+      if (attacker && attacker.deflect) attacker.deflect(game.player.pos);
+      if (attacker && attacker.anim && CFG.block.parryEnemyHitReact) attacker.anim.hit();
     };
-    game.player.onBlock = function () {
+    game.player.onBlock = function (attacker) {
       flashScreen(CFG.block.blockFlashSeconds, 'block');
+      if (attacker && attacker.deflect) attacker.deflect(game.player.pos);
     };
     game.player.onGuardBreak = function () {
       flashScreen(CFG.block.guardBreakFlashSeconds, 'guardbreak');
@@ -1401,6 +1446,8 @@
         if (animList[ae].anim) animList[ae].anim.syncEnemy(animList[ae], dt);
       }
     }
+
+    updateRiposteMarkers();   // Order D
 
     // lock-on break conditions + reticle (D3)
     updateLockOn();

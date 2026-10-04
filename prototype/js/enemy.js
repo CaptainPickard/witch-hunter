@@ -44,12 +44,17 @@
     // v6: parry stagger / riposte state
     this.riposteStaggerTimer = 0;      // > 0 = staggered and vulnerable
     this.riposteArmed = false;         // next player hit does riposte damage
+    // Order D: shield deflect recoil (presentation overlay, see deflect())
+    this.deflectTimer = 0;
+    this.deflectDir = { x: 0, z: 0 };
   }
 
   Enemy.prototype.setBody = function (meshRoot) {
     if (this.body) this.yawFrame.remove(this.body);
     this.body = meshRoot;
     this.bodyBaseY = meshRoot.position.y || 0;
+    this.bodyBaseRotX = meshRoot.rotation.x || 0;   // Order D deflect overlay base
+    this.bodyBaseRotY = meshRoot.rotation.y || 0;
     this.yawFrame.add(this.body);
     var bodyName = this.type === 'bandit' ? 'banditBody' : 'ghoulBody';
     if (window.WH_ASSETS.getClips(bodyName).length) {
@@ -85,6 +90,8 @@
         }
       }
       heldAxe.quaternion.copy(axeMount);
+      this.heldAxe = heldAxe;                      // Order D deflect knock
+      this.heldAxeBaseQuat = axeMount.clone();
     }
     // Rigid stand-in fallback retains its original weapon pivot.
     if (!hand && this.type === 'bandit' && window.WH_ASSETS &&
@@ -162,6 +169,17 @@
       return;
     }
     this.fsmTime += dt;
+    // Order D: deflect pushback runs before the parry-stagger freeze so a
+    // parried enemy still recoils
+    if (this.deflectTimer > 0) {
+      var dfl = window.WH_CONFIG.block;
+      var dstep = Math.min(dt, this.deflectTimer);
+      var dspeed = dfl.deflect.pushback / Math.max(1e-4, dfl.deflectEnemyRecoilSec);
+      this.pos.x += this.deflectDir.x * dspeed * dstep;
+      this.pos.z += this.deflectDir.z * dspeed * dstep;
+      this.deflectTimer = Math.max(0, this.deflectTimer - dt);
+      if (boundary && regionManager) regionManager.clampEnemyToHomeSide(this, boundary);
+    }
 
     var toPlayerX = playerPos.x - this.pos.x;
     var toPlayerZ = playerPos.z - this.pos.z;
@@ -182,6 +200,14 @@
       } else {
         // decay bob so the layered cycle does not freeze mid-pose
         this.bobPhase += dt * 3;
+        // Order D: frozen stance (no walk-in-place on the clip) + recoil
+        this.animMoveSpeed = 0;
+        if (this.body) {
+          this.root.position.x = this.pos.x;
+          this.root.position.z = this.pos.z;
+          this.applyDeflectPose(this.anim ? this.bodyBaseRotX : 0,
+            this.anim ? this.bodyBaseRotY : 0);
+        }
         return;              // frozen: no transitions, no movement, no attacks
       }
     }
@@ -326,6 +352,7 @@
           hopYAnim = 4 * hopFraction * (1 - hopFraction) * ANIM.ghoulHop.height;
         }
         this.root.position.y = hopYAnim;
+        this.applyDeflectPose(this.bodyBaseRotX, this.bodyBaseRotY);
         return;
       }
       this.body.rotation.y = 0;
@@ -386,6 +413,7 @@
             this.weaponPivot.rotation.y = this.axeIdle.rot[1];
           }
         }
+        this.applyDeflectPose(this.body.rotation.x, this.body.rotation.y, true);
       }
       // Idle patrol poses can tilt the low mesh below or above the floor.
       if (this.fsm === 'idle' && this.hopTimer < 0) {
@@ -411,6 +439,45 @@
     this.attackPhase = 'idle';          // combat-ds1 P0-6: no phase leaks after parry
     this.attackPhaseT = 0;
     this.setFsm('stagger');
+  };
+
+  // Order D: a blocked / parried swing visibly bounces off the shield. The
+  // attack FSM timing is untouched (presentation + a small CONFIG pushback):
+  // for deflectEnemyRecoilSec the body twists toward its weapon side and
+  // leans back, the weapon knocks outward, and the root slides away.
+  Enemy.prototype.deflect = function (fromPos) {
+    if (this.fsm === 'dead') return;
+    this.deflectTimer = window.WH_CONFIG.block.deflectEnemyRecoilSec;
+    var dx = this.pos.x - fromPos.x;
+    var dz = this.pos.z - fromPos.z;
+    var d = Math.sqrt(dx * dx + dz * dz);
+    this.deflectDir = d > 0.001 ? { x: dx / d, z: dz / d } : { x: 0, z: 0 };
+  };
+
+  // Writes body rotation = base + recoil offset (absolute, so it never
+  // accumulates) and the hand-held axe knock. Offsets are 0 once the timer ends.
+  // pivotFresh: the stand-in weaponPivot was re-posed this frame (additive ok).
+  Enemy.prototype.applyDeflectPose = function (baseX, baseY, pivotFresh) {
+    var B = window.WH_CONFIG.block;
+    var k = this.deflectTimer > 0 ? this.deflectTimer / B.deflectEnemyRecoilSec : 0;
+    var env = smooth(Math.min(1, k));          // snaps on at contact, eases out
+    var deg = Math.PI / 180;
+    if (this.body) {
+      // facing is local +Z: -rotation.y swings the right (weapon) side back,
+      // -rotation.x tips the head backward
+      this.body.rotation.y = baseY - B.deflect.yawDeg * deg * env;
+      this.body.rotation.x = baseX - B.deflect.leanBackDeg * deg * env;
+    }
+    var knock = B.deflect.weaponKnockDeg * deg * env;
+    if (this.heldAxe && this.heldAxeBaseQuat) {
+      this.heldAxe.quaternion.copy(this.heldAxeBaseQuat);
+      if (knock) {
+        this.heldAxe.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(
+          new THREE.Vector3(1, 0, 0), knock));   // about hand-local X
+      }
+    } else if (this.weaponPivot && pivotFresh) {
+      this.weaponPivot.rotation.y -= knock;
+    }
   };
 
   Enemy.prototype.isStaggered = function () {
