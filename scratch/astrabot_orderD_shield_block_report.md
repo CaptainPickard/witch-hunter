@@ -227,3 +227,28 @@ None of these has been playtested yet.
 
 - Upper-body mask for walk-while-blocking (stage 2, see above).
 - The direction of the axe knock axis is unverified (one-knob flip).
+
+## AMENDMENT - Order D-amend: shield weight-class block slowdown (10-05)
+
+Nicko's rule: blocking slows by shield class - buckler 25%, medium 50%, tower 75%.
+
+| Class  | Item id       | items[id].block.moveMult | Block walk speed | Status |
+|---|---|---|---|---|
+| Light  | `buckler`     | 0.75 | 75% of walk | dormant (no mesh, no drop source) |
+| Medium | `roundShield` | 0.5  | 50% of walk (unchanged) | live |
+| Heavy  | `towerShield` | 0.25 | 25% of walk | dormant (no mesh, no drop source) |
+
+- `player.js` move path: while blocking, speed *= left-hand item's `block.moveMult`,
+  else `CONFIG.block.moveMult` (0.5 legacy fallback). One lookup, no new state.
+- Dormant items: `kind 'shield'`, hands right/left, no `mesh` -> `equipItem` refuses
+  with toast "No visual - asset pending" (rule applies to any mesh-less melee/shield).
+  DA2 test path bypasses it: `WH_DEBUG.addItem('buckler',1); WH_DEBUG.equipItem('buckler','left',false,true)`
+  (4th arg `force`, debug only). Forced shields have no hand mesh (game.js skips mesh-less gear).
+- DA3: no other `CONFIG.block` number touched (parryWindow, absorb, arc, staminaCostMult,
+  guardBreak*, riposte*, blockingRegenMult unchanged). Not run in a browser this order.
+
+Future class stats (NOT implemented): the same `items[id].block` object is the hook -
+e.g. `block: { moveMult, absorb, staminaCostMult, arcHalfAngleDeg, parryWindow,
+guardBreakMinStamina }`, each read as `item.block.X ?? CONFIG.block.X` at the existing
+read sites (combat absorb/stamina drain, arc test, parry window), so CONFIG.block stays the
+medium-class default.

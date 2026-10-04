@@ -707,10 +707,12 @@
   // displaced item in the target hand returns to the inventory; drawing from
   // the inventory frees a slot for it (gear stacks to 1), a hand-to-hand
   // move needs a free slot or is refused "Inventory full". Returns true when
-  // the item ends up in that hand.
-  Player.prototype.equipItem = function (id, hand, inventoryOnly) {
+  // the item ends up in that hand. D-amend: a melee/shield item with no mesh
+  // (dormant buckler / towerShield) is refused unless force (WH_DEBUG only).
+  Player.prototype.equipItem = function (id, hand, inventoryOnly, force) {
     var d = itemDef(id);
     if (!d || d.category !== 'gear' || !d.hands) return this.refuseEquip(itemName(id) + ' cannot be equipped');
+    if (!d.mesh && (d.kind === 'shield' || d.kind === 'melee') && !force) return this.refuseEquip('No visual - asset pending');
     if (d.hands.indexOf(hand) < 0) return this.refuseEquip(d.name + ' cannot go in the ' + hand + ' hand');
     if (this.hands[hand] === id) return true;
     var other = otherHand(hand);
@@ -1369,7 +1371,11 @@
           this.spendStamina(CFG.sprintStaminaPerSec * dt);
         }
         if (this.attacking) speed *= this.getWeaponDef().moveMultWhileAttacking[this.getAttackStage()] || 0;
-        if (this.blocking) speed *= window.WH_CONFIG.block.moveMult;  // v6
+        if (this.blocking) {
+          // D-amend: shield weight class (left hand = the blocking shield)
+          var sb = (itemDef(this.hands.left) || {}).block;
+          speed *= sb && sb.moveMult != null ? sb.moveMult : window.WH_CONFIG.block.moveMult;
+        }
         this.animMoveSpeed = speed;
         // camera yaw basis: camera forward projected on xz plane.
         // Camera sits at yaw = camYaw BEHIND the player, so camera forward

@@ -1112,8 +1112,9 @@
                  lmb: p.handAction(p.buttonHand('lmb')), rmb: p.handAction(p.buttonHand('rmb')) };
       },
       // fromInventory = take the item from the grid even when the other hand
-      // holds the same id (second glove)
-      equipItem: function (id, hand, fromInventory) { return game.player.equipItem(id, hand, fromInventory); },
+      // holds the same id (second glove); force = equip a mesh-less dormant
+      // shield anyway (D-amend AC DA2: addItem('buckler', 1) first)
+      equipItem: function (id, hand, fromInventory, force) { return game.player.equipItem(id, hand, fromInventory, force); },
       handButton: function (button, down) { game.player.handButton(button, down !== false); },
       unequipHand: function (hand) { return game.player.unequipHand(hand); },
       getActiveLoadout: function () { return game.player.activeLoadout; },

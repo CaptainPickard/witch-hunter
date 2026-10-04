@@ -528,7 +528,8 @@ window.WH_CONFIG = {
     absorb: 0.8,                  // fraction of damage negated on block (chip = 20%)
     staminaCostMult: 0.9,         // blocked hit drains damage * this
     blockArcHalfAngleDeg: 90,     // half-angle of the block/parry arc
-    moveMult: 0.5,                // movement speed multiplier while blocking
+    moveMult: 0.5,                // movement speed multiplier while blocking (fallback;
+                                  // D-amend: the left-hand shield's items[id].block.moveMult wins)
     blockingRegenMult: 0.5,       // stamina regen rate multiplier while blocking
     guardBreakStun: 0.8,          // s, stun after guard break
     guardBreakMinStamina: 30,     // cannot block again until stamina >= this
@@ -884,6 +885,11 @@ window.WH_CONFIG.inventory = {
 //   light       10-05: { color, intensity, distance, decay, flickerPct } -
 //               while held, that hand's follow light (WH_PlayerLight) uses
 //               these values, winning over the hand's spell-binding light
+//   block       shield: { moveMult } - walk-speed multiplier while blocking
+//               with it in the left hand (D-amend weight class: buckler 0.75
+//               / medium 0.5 / tower 0.25); absent = CONFIG.block.moveMult
+//   kind melee/shield without a mesh refuses to equip ('No visual - asset
+//   pending') except via WH_DEBUG.equipItem(id, hand, fromInv, true)
 // Spells are KNOWLEDGE (magic canon 10-05), never items or charges; books /
 // scrolls (learn-on-read) are a later category.
 window.WH_CONFIG.items = {
@@ -898,7 +904,18 @@ window.WH_CONFIG.items = {
                     hands: ['right', 'left'], equipHint: 'rightHand' },
   roundShield:    { id: 'roundShield', name: 'Round Shield', glyph: 'SH',
                     category: 'gear', stackCap: 1, kind: 'shield', mesh: 'roundShield',
-                    hands: ['right', 'left'], equipHint: 'leftHand' }
+                    hands: ['right', 'left'], equipHint: 'leftHand',
+                    block: { moveMult: 0.5 } },                 // medium
+  // DORMANT shield classes (D-amend 10-05): no mesh / mount yet, no drop
+  // source - stage 2 drops. Data only.
+  buckler:        { id: 'buckler', name: 'Buckler', glyph: 'BK',
+                    category: 'gear', stackCap: 1, kind: 'shield',
+                    hands: ['right', 'left'], equipHint: 'leftHand',
+                    block: { moveMult: 0.75 } },                // light
+  towerShield:    { id: 'towerShield', name: 'Tower Shield', glyph: 'TS',
+                    category: 'gear', stackCap: 1, kind: 'shield',
+                    hands: ['right', 'left'], equipHint: 'leftHand',
+                    block: { moveMult: 0.25 } }                 // heavy
   // DORMANT example (stage 2 drops/gatherables ship the real torch): the
   // item light-stat shape. Uncommenting it also needs a kind the hand code
   // tolerates (no kind = inert button) and a startingItems / drop source.
