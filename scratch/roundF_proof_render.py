@@ -66,6 +66,18 @@ for shot in shots:
         pl.color = (1.0, 0.69, 0.38); pl.shadow_soft_size = 0.15
         po = bpy.data.objects.new('lantern', pl); po.location = (L['x'], -L['z'], L['y'])
         scene.collection.objects.link(po)
+        # Round K (optional keys): shadow False = the game's props never cast shadows
+        # (assets.js prepTemplate), so a light inside a closed lantern still pools on the
+        # ground; flame = radius (m) of an emissive marker sphere at the socket.
+        pl.use_shadow = L.get('shadow', True)
+        if L.get('flame'):
+            bpy.ops.mesh.primitive_uv_sphere_add(radius=L['flame'], location=po.location)
+            fm = bpy.data.materials.new('flame'); fm.use_nodes = True
+            em = fm.node_tree.nodes['Principled BSDF']
+            em.inputs['Emission Color'].default_value = (1.0, 0.55, 0.18, 1)
+            em.inputs['Emission Strength'].default_value = 25.0
+            bpy.context.object.data.materials.append(fm)
+            bpy.context.object.visible_shadow = False
     cx, cy, cz = shot['cam']; ax, ay, az = shot['aim']
     cam_loc = Vector((cx, -cz, cy)); aim = Vector((ax, -az, ay))
     bpy.ops.object.camera_add(location=cam_loc)

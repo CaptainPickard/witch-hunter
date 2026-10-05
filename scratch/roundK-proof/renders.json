@@ -1,0 +1,26 @@
+[
+ {
+  "png": "/workspace/witch-hunter/scratch/roundK-proof/01-new-post-lit.png",
+  "objects": 1,
+  "aim": [
+   0,
+   2.1,
+   0
+  ],
+  "cam": [
+   4.2,
+   2.6,
+   7.6
+  ],
+  "lens": 30,
+  "night": true,
+  "pointLight": {
+   "x": 0.0,
+   "y": 3.887,
+   "z": 0.0,
+   "watts": 900,
+   "shadow": false,
+   "flame": 0.06
+  }
+ }
+]
