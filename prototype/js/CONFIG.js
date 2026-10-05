@@ -913,6 +913,13 @@ window.WH_CONFIG = {
     // 512px pixelated PNGs at postload; false = original 2048 atlas path.
     pixelatedBodies: true,
     standInColor: 0x777777,
+    // Round J (io/roundJ-provenance.md): the Meshy reach-trees are open-
+    // bottomed shells whose root tips hang below the trunk floor, so
+    // groundAlign (lowest vertex -> y=0) stood them on those tips with sky
+    // under the trunk (0.27/0.80/0.39m median gap at scale 10). Extra sink
+    // in GLB units (scales with every placement + scatter scale) = p75 of the
+    // trunk-underside height (scratch/roundJ_underside.py). {} = old look.
+    groundSink: { reachTreeA: 0.0312, reachTreeB: 0.0878, reachTreeC: 0.0500 },
     // Measured weapon sizing (2026-10-03, Nicko: weapons "comically large").
     // Targets are hand-held lengths in metres: longsword ~1.05m vs the 1.8m
     // player, handAxe ~0.6m. scaleFor(name) divides the target by the

@@ -236,6 +236,19 @@
     return holder;
   }
 
+  // Round J: per-asset extra sink below the groundAlign floor, gated by
+  // name via CONFIG.assets.groundSink (GLB units, so it scales with the
+  // holder). GROUND_META keeps the measured bounds; the sink is recorded.
+  function applyGroundSink(name, root) {
+    var sinks = CFG.assets && CFG.assets.groundSink;
+    var sink = sinks && sinks[name];
+    if (!(sink > 0)) return;
+    var holder = root.parent;
+    root.position.y -= sink;
+    holder.updateMatrixWorld(true);
+    GROUND_META[holder.uuid].groundSink = sink;
+  }
+
   // 2026-10-03 measured weapon sizing (Nicko: "comically large"): divide the
   // CONFIG.assets.weaponTargetHeight goal by the MEASURED GROUND_META height
   // of the loaded GLB. Uniform axes mean height IS the blade/pommel length.
@@ -377,6 +390,7 @@
         }
         prepTemplate(root, isPixelated);
         cache[name] = groundAlign(root);
+        applyGroundSink(name, root);
         return new Promise(function (resolve) {
           swapBodyMap(name, root, function () {
             loadedCount++;
