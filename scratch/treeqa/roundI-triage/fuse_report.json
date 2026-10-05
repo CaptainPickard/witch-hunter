@@ -1,0 +1,34 @@
+[
+ {
+  "name": "bramble",
+  "pre_faces": 2499,
+  "post_exact_faces": 2277,
+  "after_fuse_faces": 2273,
+  "after_fuse_verts": 1577,
+  "bytes": 423204
+ },
+ {
+  "name": "reach-a",
+  "pre_faces": 3499,
+  "post_exact_faces": 3422,
+  "after_fuse_faces": 3408,
+  "after_fuse_verts": 1816,
+  "bytes": 534680
+ },
+ {
+  "name": "reach-b",
+  "pre_faces": 3499,
+  "post_exact_faces": 3376,
+  "after_fuse_faces": 3372,
+  "after_fuse_verts": 1874,
+  "bytes": 527312
+ },
+ {
+  "name": "reach-c",
+  "pre_faces": 3500,
+  "post_exact_faces": 3414,
+  "after_fuse_faces": 3403,
+  "after_fuse_verts": 1927,
+  "bytes": 504928
+ }
+]
