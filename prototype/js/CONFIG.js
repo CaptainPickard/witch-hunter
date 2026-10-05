@@ -137,10 +137,22 @@ window.WH_CONFIG = {
   regionA: {
     id: 'hold_outskirts',
     name: 'Hold Outskirts',
-    spawn: { x: 0, z: 45 },           // south of center, boundary is north (z = -25)
+    spawn: { x: 2.5, z: 74.0 },       // Round H: south wall x path, halfway to first lantern
     gravityY: -22,
     fogColor: 0x9aa0a3,               // pale ash grey, whiter (darkwood canon)
     fogDensity: 0.012,                // heavier, lower fog (darkwood canon)
+    // Round H: cemetery fog ramp (game.js cemeteryFogTick, region A only).
+    // zone = the scatter keepOut ellipse with this regionId (the graveyard).
+    // d = normalized ellipse distance (1 = rim); weight w = smoothstep from 0
+    // at d = rampStart to 1 at d = rampEnd; fog density/color lerp from the
+    // region base (fogDensity/fogColor above) toward these by w.
+    cemeteryFog: {
+      zoneKeepOutRegionId: 'hold_outskirts',
+      density: 0.030,
+      color: 0x7f8ea6,                // pale cool blue-grey
+      rampStart: 1.35,
+      rampEnd: 0.55
+    },
     ambientLightLevel: 1.0,           // multiplier on base lighting
     enemies: [
       { type: 'bandit', x: -6, z: -8 },

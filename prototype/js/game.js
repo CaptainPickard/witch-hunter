@@ -605,6 +605,36 @@
     }
   }
 
+  // Round H: cemetery fog ramp. Region A only (applyRegionLighting still
+  // sets the region base on every region switch). w = smoothstep of the
+  // player's normalized distance d to the graveyard ellipse (0 at
+  // d = rampStart, 1 at d = rampEnd); density and color lerp base -> target
+  // by w. O(1) per frame; the zone + colors are resolved once.
+  var cemFog = null;
+  function cemeteryFogTick() {
+    var CF = CFG.regionA.cemeteryFog;
+    var rm = game.regionManager;
+    if (!CF || !rm || !game.player || !game.scene.fog ||
+        cemFog === false || rm.logic.activeId !== CFG.regionA.id) return;
+    if (!cemFog) {
+      var zone = null;
+      (CFG.scatter.keepOut || []).forEach(function (k) {
+        if (k.regionId === CF.zoneKeepOutRegionId) zone = k;
+      });
+      if (!zone) { cemFog = false; return; }   // no zone row: ramp off
+      var base = window.WH_REGION_DEFS.regions[CFG.regionA.id];
+      cemFog = { zone: zone, baseDensity: base.fogDensity,
+        baseColor: new THREE.Color(base.fogColor), color: new THREE.Color(CF.color) };
+    }
+    var Z = cemFog.zone;
+    var nx = (game.player.pos.x - Z.x) / Z.rx, nz = (game.player.pos.z - Z.z) / Z.rz;
+    var d = Math.sqrt(nx * nx + nz * nz);
+    var t = Math.min(1, Math.max(0, (d - CF.rampStart) / (CF.rampEnd - CF.rampStart)));
+    var w = t * t * (3 - 2 * t);
+    game.scene.fog.density = cemFog.baseDensity + (CF.density - cemFog.baseDensity) * w;
+    game.scene.fog.color.lerpColors(cemFog.baseColor, cemFog.color, w);
+  }
+
   // 10-03 order 4: starry night sky. Dome sphere (BackSide, fog:false,
   // depthWrite off) with a vertical-gradient shader; 600 Points stars on the
   // dome; moon = additive glow sprite + core disc billboard at the directional
@@ -1243,6 +1273,7 @@
     game.player.updateCamera(dt);
     applyCameraShake(dt);
     poolTick(dt);   // R2: fixed light pool nearest-socket handoff
+    cemeteryFogTick();  // Round H: graveyard fog ramp (region A)
     lanternTick();  // R2: lantern wobble (CONFIG lanternFlickerPct)
     skyTick();      // 10-03 order 4: star twinkle clock
     updateHud(dt);
