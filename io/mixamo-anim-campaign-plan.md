@@ -547,3 +547,23 @@ ferried the remainder inline (still 03 + world commit + push).
 - Watch for playtest: (1) reach-trunk visual weight vs witchwood slenderness;
   (2) B/C gate shortfall is the thin-tip canopy, not debris; (3) if C's lean
   reads odd in fog, its scatter weight can drop to 0.5 in CONFIG.
+## Round I6 - 6 reach-trees along the walked path corridor (2026-10-05, fix run)
+
+Nicko's screenshot showed the walked corridor walled by cones: the Round I
+mix (8 swaps + 2-3 scatter) put every reach-tree 41-88m from spawn and NONE
+within 12m of the path band (the path view is yews on both sides, 7-11m
+off-centerline, ~59 in region A). Fix (Claude Code dispatch, 27 turns,
+short run): 6 deterministic reach-tree props inserted along the path
+(z 38-67.5, alternating sides 8-11m off centerline, clash-checked - all
+>= 3.3m from neighbors, no nudges needed). A/B/C cycle A,B,C,A,B,C,C order
+A,B,C,A,B,C. Rings auto-registered (+14 ring bushes in A, ringSkipped 3->10
+- near-path rings can skip where props crowd; watch). Wall mirror unchanged;
+scatter mirror deterministic.
+
+Dev @ 70a4ead + docs @ 6c1f33b, feat @ c5d1a9c + build @ 1fb3934. Host
+refresh + curl verified (200, 2698025, markers). Proof still: from the new
+spawn's game camera, 4 new reach-trees visibly break the cone wall (left
+claw-spread most distinct). Note for next asset bake: biome_pixelate
+export() normal-injector reads buffers without the +8 BIN header offset
+(corrupts files needing injection) - bypassed in I2d/I2e/I3/I4; fix the
+helper before the next round that uses it.
