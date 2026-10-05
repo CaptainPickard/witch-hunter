@@ -567,3 +567,31 @@ claw-spread most distinct). Note for next asset bake: biome_pixelate
 export() normal-injector reads buffers without the +8 BIN header offset
 (corrupts files needing injection) - bypassed in I2d/I2e/I3/I4; fix the
 helper before the next round that uses it.
+## Round J + J2 - reach-tree float fix (2026-10-05, Nicko: trees floating)
+
+J diagnosis (Claude dispatch, 49 turns): the reach-trees are OPEN-BOTTOMED -
+Meshy meshes with a root-arch underside whose tips hang lower than the trunk
+shell; groundAlign stood each tree on its root TIPS with sky under the trunk
+(a read "on stilts"). J shipped a name-gated sink
+(CONFIG.assets.groundSink: A 0.0312 / B 0.0878 / C 0.05, applied after
+groundAlign in assets.js applyGroundSink, scales with holder). Under-arch sky
+remained visible (J's after-b still, vision-verified by IO).
+
+J2 close-out (Claude dispatch, 71 turns): no boundary loop existed (the
+"hole" is the raised arch + see-through slits at the flares, 1.3-1.8m up);
+fixed by ADDITIVE geometry only - a closed root pad tucked inside the trunk
+shell reaching to root-tip level (concave dip 0.0025; deeper would re-float
+the tree) + sight-line webs where sky would otherwise show (a: 3256 web
+faces - cavity root lumps). Faces 3499->7235 (a), 3472->4414 (b),
+3418->4326 (c). Verified: underside rays median gap 0.27/0.80/0.39m ->
+0.02/0.02/0.01m; footprint >0.15m-up 100% -> 0%; sky-through-base pixels
+0/9 views (before: a 0/168/341, b 0/130/33); normals unit, lowest vertex
+unchanged (J sink still applies). Watch: b has 49 slit px left across 4
+untested angles (down from 1007); a's webs not yet checked textured in-game;
+dev also took the 18 livingOak y-flip rows from 44580ce (2 youngAsh rows
+left positive - out of the scoped port).
+
+Commits: dev 135ac28 + c4ec214, feat 5798f81 (JS identical; bundle skipped
+byte-identical). Host reset + verified: served GLB sha d83bc365966d4c ==
+repo; curl 200 / 2699122. Pushed both. Backups /tmp/roundJ2-backup/ +
+/tmp/roundJ-backup/.
