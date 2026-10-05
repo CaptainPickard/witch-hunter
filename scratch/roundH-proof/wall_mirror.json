@@ -1,0 +1,251 @@
+{
+ "ringN": 145,
+ "ring": 145,
+ "ringChordLenM": 3.7913,
+ "chordPerSide": 22,
+ "chordE": 22,
+ "chordW": 22,
+ "chordStepM": 3.6297,
+ "chordEndX": 83.8525,
+ "nudged": 0,
+ "drops": 0,
+ "dropReasons": [],
+ "overDropLimit": false,
+ "instancesPerAsset": {
+  "whWallA": 95,
+  "whWallB": 94
+ },
+ "segmentScale": {
+  "whWallA": {
+   "sx": 2.1065,
+   "sy": 9.3537,
+   "sz": 1.4745
+  },
+  "whWallB": {
+   "sx": 2.1064,
+   "sy": 9.2464,
+   "sz": 1.4745
+  }
+ },
+ "colliders": 603,
+ "archLegs": 32,
+ "archPlugs": 4,
+ "collidersJoinedPerRegion": {
+  "hold_outskirts": 431,
+  "darkwood_edge": 350
+ },
+ "arch": {
+  "asset": "b3Gate",
+  "x": 0,
+  "z": -25,
+  "rotY": 0,
+  "offsetX": -0.0895,
+  "scale": 9.223,
+  "scaleZ": 4.1503,
+  "opening": 5.2,
+  "halfWidth": 7.5846,
+  "halfDepth": 2.1632,
+  "apexY": 6.7988,
+  "height": 10.5343
+ },
+ "archOpeningM": 5.2,
+ "legPositionsE": [
+  [
+   3.2,
+   -23.437
+  ],
+  [
+   4.146,
+   -23.437
+  ],
+  [
+   5.092,
+   -23.437
+  ],
+  [
+   6.038,
+   -23.437
+  ],
+  [
+   6.985,
+   -23.437
+  ],
+  [
+   6.985,
+   -24.218
+  ],
+  [
+   6.985,
+   -25.0
+  ],
+  [
+   6.985,
+   -25.782
+  ],
+  [
+   6.985,
+   -26.563
+  ],
+  [
+   6.038,
+   -26.563
+  ],
+  [
+   5.092,
+   -26.563
+  ],
+  [
+   4.146,
+   -26.563
+  ],
+  [
+   3.2,
+   -26.563
+  ],
+  [
+   3.2,
+   -25.782
+  ],
+  [
+   3.2,
+   -25.0
+  ],
+  [
+   3.2,
+   -24.218
+  ]
+ ],
+ "legPositionsW": [
+  [
+   -3.2,
+   -23.437
+  ],
+  [
+   -4.146,
+   -23.437
+  ],
+  [
+   -5.092,
+   -23.437
+  ],
+  [
+   -6.038,
+   -23.437
+  ],
+  [
+   -6.985,
+   -23.437
+  ],
+  [
+   -6.985,
+   -24.218
+  ],
+  [
+   -6.985,
+   -25.0
+  ],
+  [
+   -6.985,
+   -25.782
+  ],
+  [
+   -6.985,
+   -26.563
+  ],
+  [
+   -6.038,
+   -26.563
+  ],
+  [
+   -5.092,
+   -26.563
+  ],
+  [
+   -4.146,
+   -26.563
+  ],
+  [
+   -3.2,
+   -26.563
+  ],
+  [
+   -3.2,
+   -25.782
+  ],
+  [
+   -3.2,
+   -25.0
+  ],
+  [
+   -3.2,
+   -24.218
+  ]
+ ],
+ "plugPositions": [
+  [
+   3.1,
+   -22.837,
+   0.5
+  ],
+  [
+   3.1,
+   -27.163,
+   0.5
+  ],
+  [
+   -3.1,
+   -22.837,
+   0.5
+  ],
+  [
+   -3.1,
+   -27.163,
+   0.5
+  ]
+ ],
+ "passableLaneM": 5.2,
+ "lantern": {
+  "asset": "whLanternHang",
+  "localY": 5.9488,
+  "scale": 0.4748,
+  "height": 0.9
+ },
+ "sockets": [
+  {
+   "id": "b3Gate@lantern",
+   "x": 0.0,
+   "y": 6.3538,
+   "z": -25.0,
+   "intensity": 5
+  }
+ ],
+ "continuity": {
+  "ringRadiusMin": 86.8685,
+  "ringRadiusMax": 88.0588,
+  "ringCircleEdgeGapMax": 0.4333,
+  "playerCanSlipThrough": false
+ },
+ "propClearance": {
+  "minEdgeGapM": 1.3158,
+  "prop": "darkwood_edge#31:witchwoodTree",
+  "circle": "wall-ring101.1"
+ },
+ "meta": {
+  "whWallA": {
+   "width": 1.8989,
+   "height": 0.7698
+  },
+  "whWallB": {
+   "width": 1.899,
+   "height": 0.7787
+  },
+  "b3Gate": {
+   "width": 1.6447,
+   "height": 1.1422
+  },
+  "whLanternHang": {
+   "width": 1.3704,
+   "height": 1.8955
+  }
+ }
+}

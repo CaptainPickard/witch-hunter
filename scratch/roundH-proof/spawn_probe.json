@@ -1,0 +1,44 @@
+{
+ "wallPoint": [
+  0.0,
+  86
+ ],
+ "ringRadius": 87.5,
+ "pathZFrom": 86,
+ "firstLantern": [
+  5.04,
+  62
+ ],
+ "spawn": [
+  2.5,
+  74.0
+ ],
+ "checks": {
+  "nearest_prop_center_m": 6.13,
+  "nearest_prop": [
+   "yewTree",
+   8.55,
+   73.01,
+   1.25
+  ],
+  "min_prop_edge_gap_m": 4.88,
+  "prop_center_ge_3m": true,
+  "prop_edge_clear": true,
+  "keepOut_norm_dist": 1.941,
+  "outside_keepOut": true,
+  "nearest_enemy_m": 25.75,
+  "nearest_enemy": [
+   "ghoul",
+   -23.1,
+   71.2
+  ],
+  "enemy_clear_12m": true,
+  "enemy_nudges": 0,
+  "path_center_x_at_spawn_z": -1.277,
+  "off_path_center_m": 3.777,
+  "on_path_ribbon": false,
+  "inside_wall_ring": true,
+  "nearest_scatter_tree_edge_gap_m": 26.29,
+  "scatter_tree_clear": true
+ }
+}

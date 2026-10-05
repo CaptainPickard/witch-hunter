@@ -1,0 +1,104 @@
+{
+ "signed": "Claude Code (Round H continuation) 2026-10-05",
+ "note": "01-spawn-view.png from the dead run (not re-rendered, not broken)",
+ "renders": [
+  {
+   "png": "scratch/roundH-proof/02-cemetery-fog-approach.png",
+   "objects": 1243,
+   "cam": [
+    1.0939464286940226,
+    4.994141003279681,
+    38.57303268160523
+   ],
+   "aim": [
+    0.3066802138542034,
+    1.2,
+    18.010249444955946
+   ],
+   "lens": 20,
+   "player": [
+    0.842291460603769,
+    32
+   ],
+   "fog": {
+    "d": 0.6671,
+    "w": 0.942,
+    "density": 0.028956303993225616,
+    "baseColor": [
+     0.6039215686274509,
+     0.6274509803921569,
+     0.6392156862745098
+    ],
+    "targetColor": [
+     0.4980392156862745,
+     0.5568627450980392,
+     0.6509803921568628
+    ]
+   },
+   "fogColorLinear": [
+    0.2187,
+    0.2752,
+    0.3805
+   ],
+   "lights": 5,
+   "vertexColorGLBs": [
+    "wh-bush-snare-pixelated.glb"
+   ]
+  },
+  {
+   "png": "scratch/roundH-proof/03-bramble-snare-closeup.png",
+   "objects": 151,
+   "cam": [
+    -75.76241888471228,
+    2.2,
+    25.04330650381769
+   ],
+   "aim": [
+    -79.54561906674219,
+    0.5,
+    18.8001185054719
+   ],
+   "lens": 24,
+   "player": [
+    -78.25000256604702,
+    20.93819658709717
+   ],
+   "fog": {
+    "d": 2.1987,
+    "w": 0,
+    "density": 0.012,
+    "baseColor": [
+     0.6039215686274509,
+     0.6274509803921569,
+     0.6392156862745098
+    ],
+    "targetColor": [
+     0.4980392156862745,
+     0.5568627450980392,
+     0.6509803921568628
+    ]
+   },
+   "fogColorLinear": [
+    0.3231,
+    0.3515,
+    0.3663
+   ],
+   "lights": 5,
+   "vertexColorGLBs": [
+    "wh-bush-snare-pixelated.glb"
+   ],
+   "host": {
+    "asset": "youngDeadTree",
+    "x": -76.28660374897716,
+    "z": 16.82524487573757,
+    "ring": 4,
+    "bramble": {
+     "x": -82.80463438450722,
+     "z": 20.774992135206226,
+     "scale": 0.9283484846993718,
+     "dist": 7.62
+    }
+   }
+  }
+ ]
+}
