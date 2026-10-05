@@ -506,3 +506,44 @@ spent 0 - Meshy forbidden on it).
 - Watch items: bramble lighter than snare canes (could wash out in fog);
   bundle carries wh-bramble.glb 4MB + raw in library but the game loads the
   450KB pixelated file only.
+## Round I - gothic reach-trees replace half the witchwoods (2026-10-05)
+
+Nicko's skyline-closure tree (massive buttressed trunk, proud twisting limbs
+with sharp elbows, needle-thin jagged branches reaching the sky in all
+directions, sparse fractal skeletal canopy). Reference render
+scratch/treegen/roundI/reach-tree-ref.png (vision-briefed from his JPEG by
+IO, not re-analyzed in the run).
+
+THREE VARIANTS (Nicko mid-dispatch order): A = reference match, B = broad
+sideways claw-spread, C = tall lean sparse. Meshy ledger: 3 refs -3 each,
+3 meshes -15 each = 54 of the 60 cap (1267 -> 1213). One run, cut at ~34 min
+by the Claude Code session limit AFTER generation+QA+wiring+2 stills; IO
+ferried the remainder inline (still 03 + world commit + push).
+
+- QA + snap: raws 12.5-14.7k faces -> decimated 3,499/3,499/3,500 with
+  --snap reattaching every detached twig tip (A 60, B 86, C 96 pieces, 0
+  left; max move 0.17-0.23). Gate after snap: A PASS 70.7%, B FAIL 58.8%,
+  C FAIL 56.7% - all three shipped per the 3-variant contract (gate % is
+  largest-piece; the snapped tips ARE the thin canopy, so the low % is the
+  silhouette working as designed); watch: B/C have more separate small
+  pieces than A.
+- Bake: texture path 5-bit + 512 NEAREST (bramble_bake loop), monochrome
+  grey (mean chroma 1.4-1.9), no tint added. Byte-identical across runs.
+- Wire: MANIFEST reachTreeA/B/C; 8 of 17 witchwood prop rows swapped in
+  file order cycling A,B,C,A,B,C,A,B (positions/rotY/scale untouched);
+  scatter adds all three at witchwood weight 1; ringHosts includes all
+  three (snare rings still ring them); collider regex treats them
+  trunk-like (r*0.25).
+- Mirrors: wall UNCHANGED from Round H; scatter counts unchanged (A 14/305/
+  20/220, B 10/130/20/220); mix shifted (scatter landed A x2 B x1 per
+  region this seed; no C or scatter witchwood this seed).
+- Proof: scratch/roundI-proof/ 3 stills. 01 lineup: three clearly distinct
+  silhouettes, all buttressed/jagged/skeletal, grounded, matte. 02
+  enclosure: canopy forms a tunnel/lattice, skyline mostly hidden, claustro
+  read = the ordered feel. 03 world mix: shapes contrast cleanly (horiz
+  jagged vs vertical smooth); watch: reach-tree reads HEAVIER than the
+  witchwood (visual weight, not footprint) - scale parity is correct in
+  numbers (8-10.4 vs witchwood 8-10.4), it is the trunk girth reading.
+- Watch for playtest: (1) reach-trunk visual weight vs witchwood slenderness;
+  (2) B/C gate shortfall is the thin-tip canopy, not debris; (3) if C's lean
+  reads odd in fog, its scatter weight can drop to 0.5 in CONFIG.
