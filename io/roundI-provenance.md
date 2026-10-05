@@ -91,3 +91,25 @@ CONFIG/assets wiring + script edits + still, and wrote this note. Still
 03's vision read: the mix is visually DISTINCT (horizontal jagged reach vs
 vertical smooth witchwood) with a scale watch item (reach-tree reads
 heavier - watch in playtest).
+
+## I6 addendum: why the first mix read as nothing
+
+Nicko's playtest: "still the same old ones". The Round I swaps and scatter landed
+8 CONFIG reach trees plus 2-3 scatter ones per region. Every one of them stood 41-88 m
+from the new spawn (2.5, 74), and none stood within 12 m of the walked dirt path
+(centerline x(z) = 1.6 sin(2pi(z-86)/34), z 32..86). About 59 region-A yews wall the
+path view on both sides, 7-11 m off the centerline. So every cone silhouette the player
+saw was a yew. The mix was correct but out of sight.
+
+Fix (CONFIG regionA props only, dev + feat/world-visuals): 6 rows placed by IO in even
+z-steps on alternating sides, 8-11 m off the centerline:
+A (7.16, 38.0), B (-12.57, 42.5), C (7.29, 49.5), A (-6.82, 56.5), B (8.44, 67.5),
+C (-7.29, 66.5). Re-checked against all 133 region-A props: nearest neighbours are
+3.33 / 3.54 / 5.64 / 3.63 / 3.48 / 4.61 m (all >= 3.0, so no nudge).
+
+- wall_mirror: byte-identical to HEAD (ring 145, colliders 603), deterministic.
+- scatter_mirror: deterministic. hold_outskirts rings 305 -> 319 (+14),
+  ringSkipped 3 -> 10. darkwood_edge unchanged (130).
+- scratch/roundI6-proof/04-path-corridor.png: spawn chase rig, 60 deg vFOV, looking
+  down the path. 4 of the 6 new trees read as jagged horizontal-spread silhouettes
+  against the yew cones.
