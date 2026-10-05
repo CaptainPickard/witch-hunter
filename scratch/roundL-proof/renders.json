@@ -1,0 +1,50 @@
+[
+ {
+  "png": "/workspace/witch-hunter/scratch/roundL-proof/01-v3-lit.png",
+  "objects": 1,
+  "aim": [
+   -0.4,
+   2.3,
+   0
+  ],
+  "cam": [
+   3.4,
+   2.2,
+   7.8
+  ],
+  "lens": 30,
+  "night": true,
+  "pointLight": {
+   "x": -0.761,
+   "y": 3.648,
+   "z": 0.0,
+   "watts": 900,
+   "shadow": false,
+   "flame": 0.06
+  }
+ },
+ {
+  "png": "/workspace/witch-hunter/scratch/roundL-proof/02-v3-lit-cage-close.png",
+  "objects": 1,
+  "aim": [
+   -0.6,
+   3.7,
+   0
+  ],
+  "cam": [
+   1.2,
+   2.6,
+   3.6
+  ],
+  "lens": 35,
+  "night": true,
+  "pointLight": {
+   "x": -0.761,
+   "y": 3.648,
+   "z": 0.0,
+   "watts": 900,
+   "shadow": false,
+   "flame": 0.06
+  }
+ }
+]

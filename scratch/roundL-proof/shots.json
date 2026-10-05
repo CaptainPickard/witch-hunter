@@ -1,0 +1,12 @@
+[
+ {"stem": "01-v3-lit", "night": true, "lens": 30,
+  "objects": [{"glb": "/workspace/witch-hunter/art-direction/3d/assets/church-kit/lantern-post-v3-pixelated.glb",
+               "x": 0, "y": 0, "z": 0, "rotY": 0, "sx": 2.535, "sy": 2.535, "sz": 2.535}],
+  "light": {"x": -0.761, "y": 3.648, "z": 0.0, "watts": 900, "shadow": false, "flame": 0.06},
+  "cam": [3.4, 2.2, 7.8], "aim": [-0.4, 2.3, 0]},
+ {"stem": "02-v3-lit-cage-close", "night": true, "lens": 35,
+  "objects": [{"glb": "/workspace/witch-hunter/art-direction/3d/assets/church-kit/lantern-post-v3-pixelated.glb",
+               "x": 0, "y": 0, "z": 0, "rotY": 0, "sx": 2.535, "sy": 2.535, "sz": 2.535}],
+  "light": {"x": -0.761, "y": 3.648, "z": 0.0, "watts": 900, "shadow": false, "flame": 0.06},
+  "cam": [1.2, 2.6, 3.6], "aim": [-0.6, 3.7, 0]}
+]

@@ -70,7 +70,11 @@
     // Round K (io/roundK-provenance.md): Meshy lantern-post-v2, one welded piece, decimated
     // 2500 + posterize512 (scratch/lanternpost_bake_roundK.py). Rollback = restore the line below.
     // lanternPost: 'art-direction/3d/assets/church-kit/lantern-post-pixelated.glb',
-    lanternPost: 'art-direction/3d/assets/church-kit/lantern-post-v2-pixelated.glb',
+    // Round L (io/roundL-provenance.md): Meshy lantern-post-v3, arm-hook design (cage hangs
+    // off-axis from the arm's hook), one welded piece, 2500 + posterize512
+    // (scratch/lanternpost_bake_roundL.py). v2 retired to the comment below (rollback).
+    // lanternPost: 'art-direction/3d/assets/church-kit/lantern-post-v2-pixelated.glb',
+    lanternPost: 'art-direction/3d/assets/church-kit/lantern-post-v3-pixelated.glb',
     rubblePile: 'art-direction/3d/assets/church-kit/rubble-pile-pixelated.glb',
     churchArchway: 'art-direction/3d/assets/church-kit/church-archway-pixelated.glb',
     churchCornerButtress: 'art-direction/3d/assets/church-kit/church-corner-buttress-pixelated.glb',
