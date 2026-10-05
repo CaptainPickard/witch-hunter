@@ -36,3 +36,48 @@ however the mesh is translated.
   a 0.27 -> -0.05 m, b 0.80 -> -0.08 m, c 0.39 -> -0.11 m.
 - scratch/roundJ-proof/: before/after-<v>-persp.png (eye 0.5 m, 2 m beyond
   the root flare), after-<v>-persp-az120/240.png, before/after-<v>-ortho.png.
+
+## Round J2 addendum: closing the trunk undersides (GLB-side)
+
+Round J's sink still left sky visible through the base in its own proof
+stills (after-a/b az120/az240). The "open bottom" turned out to be a misnomer:
+the welded meshes have **0 boundary edges in the bottom 30%**, so no loop was
+there to fill. The sky came from (1) the raised root arch under the trunk
+(0.03-0.09 GLB units) and (2) see-through slits where flares pull away from
+the trunk 1.3-1.8 m up and 2.3-2.9 m out (traced with Blender ray casts).
+
+`scratch/roundJ2_rootpad.py` (+ `roundJ2_webs.py`) appends two kinds of
+geometry to the single primitive and never moves existing vertices:
+- **Root pad**: a closed plug under the arch. Its footprint R(theta) walks out
+  from the trunk axis while the mesh overhangs (underside < 0.20) and stops
+  where a flare meets the ground. The top follows the underside + 0.004
+  (inside the shell), and the walls drop to ymin + 0.003. The concave bottom
+  disk is only 0.0025 deep, not 0.06: a deeper dome would undercut the root
+  tips, then groundAlign would re-ground on the pad and lift the whole tree.
+- **Webs**: voxelise the base (8 cm, vertical parity), apply a 3D closing
+  (r = 6 vox), and keep only the new voxels that lie on a see-through line of
+  sight (rotated-volume test, 36 azimuths x 4 elevations). Those are meshed
+  as closed volumes (surface nets + Taubin 120 + fast_simplification 0.9).
+UVs come from the nearest bark vertex. NORMAL is written explicitly, unit
+length with no NaNs. The JSON/BIN chunk types are correct, and accessor
+min/max are rewritten. ymin is unchanged, so CONFIG.assets.groundSink
+still applies.
+
+| v | pad V/F | web vox / F | V before->after | F before->after |
+|---|---|---|---|---|
+| a | 338/480 | 11716 / 3256 | 10271->12259 | 3499->7235 |
+| b | 338/480 | 950 / 462 | 1879->2462 | 3472->4414 |
+| c | 338/480 | 827 / 428 | 1934->2508 | 3418->4326 |
+
+Underside rays (roundJ_underside.py, scale 10, sink 0): median gap a 0.27 ->
+0.02 m, b 0.80 -> 0.02 m, c 0.39 -> 0.01 m. Footprint >0.15 m: 100% -> 0%
+for all three. With the Round J sink, the pre-J2 footprint was 5/4/15% and is
+now 0/0/0%.
+Sky-hole pixels (scratch/roundJ2_skyholes.py: sky components not connected
+to the open sky, lower frame): 0/120/240 = 0 on all 9 stills (before: a
+0/168/341, b 0/130/33, c 0). Extra 9-azimuth sweep: a 1877 -> 0, b 1007 ->
+49 (tiny slits at az150/180/300/330), c 0 -> 0.
+Proof: scratch/roundJ2-proof/<v>-persp-az{0,120,240}.png and
+<v>-ortho-{front,side}.png. scratch/roundJ2_base_render.py is
+roundJ_base_render.py with ortho honouring the azimuth.
+Backups of the pre-J2 GLBs are in /tmp/roundJ2-backup/ (not committed).
