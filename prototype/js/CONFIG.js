@@ -416,13 +416,15 @@ window.WH_CONFIG = {
     },
     bushes: {
       // [asset, weight, heightMinM, heightMaxM]
-      assets: [['bushA', 3, 0.7, 1.0], ['bushB', 2, 0.9, 1.3]],
+      // Round H: free bushes = the Meshy bramble (rollback rows:
+      // [['bushA', 3, 0.7, 1.0], ['bushB', 2, 0.9, 1.3]])
+      assets: [['bramble', 1, 1.4, 2.0]],
       selfRadiusFrac: 0.5,            // own radius = half-width * this (overlap is fine)
       // every tree gets [min,max] bushes at radiusFrac x its TRUNK collider radius
       ringHosts: ['yewTree', 'livingOak', 'witchwoodTree', 'deadTree', 'youngAsh',
         'youngBirch', 'youngDeadTree'],
       // ring bushes draw from their own rows (Round G: Nicko's snare bush;
-      // rollback = assets: B.assets rows, i.e. bushA/bushB)
+      // rollback = the bushA/bushB rows noted on B.assets above)
       atTreeRing: { count: [2, 4], radiusFrac: [1.1, 1.6],
         assets: [['whBushSnare', 1, 1.0, 1.4]] },
       freeBushes: 20                  // per region, open ground
