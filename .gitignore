@@ -3,3 +3,6 @@ __pycache__/
 .DS_Store
 tools/rigging/blends/
 tools/rigging/previews/
+# local credentials + session state - never commit
+scratch/.mixamo-credentials.txt
+scratch/.mixamo-storage.json

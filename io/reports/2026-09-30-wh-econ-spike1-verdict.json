@@ -1,0 +1,180 @@
+{
+  "spec_id": "wh-econ-spike1",
+  "validated_at": "2026-09-30T04:05:00Z",
+  "verdict": "PASS",
+  "report": "VALIDATION PASSED - READY FOR COMMIT+PUSH",
+  "baseline": {
+    "head_at_validation": "2fa6b15be91c7cf5bb5d8bd71babc9ca39b26371",
+    "head_unchanged": true,
+    "branch": "dev",
+    "devbot_spec_sha256": "ad004f6c5884d27ee8e5b26f29ec71ff13688cdcb25874379203819201a5b3f5 (amended per A1/A2; pre-amendment frozen value f0958676b5fdc9f50db28d6709a7dc55a06f07c040c5a9ec3182fc02a65e5b04; testerbot spec anchors NOT bumped - flagged to IO, see amendments)",
+    "preexisting_porcelain_sha256_frozen": "51b2fc6ee7b50d7161caf6bdb24a4de5c917c56bc752e08196552a2ea5b479b4 (NOTE: testerbot spec line 52 literal is 62 chars - transcription typo; recomputed true 64-char sha256 of the spec's own 17-line listing (58-74) == sha256 of the LIVE 17 observed entries -> bit-identical proven)",
+    "tree_hygiene": {
+      "result": "PASS",
+      "command": "git -c core.fsmonitor=false -c core.untrackedCache=false status --porcelain -uall (set-diffed vs frozen)",
+      "porcelain_lines_observed": 33,
+      "allowed_additions_observed": [
+        "sui/.gitignore", "sui/README.md", "sui/move/wh-items/.gitignore", "sui/move/wh-items/Move.lock", "sui/move/wh-items/Move.toml", "sui/move/wh-items/sources/craft.move", "sui/move/wh-items/sources/items.move", "sui/move/wh-items/sources/market.move", "sui/move/wh-items/tests/economy_tests.move", "sui/ts/e2e.ts", "sui/ts/e2e_result.json", "sui/ts/generate_lock.py", "sui/ts/package-lock.json", "sui/ts/package.json", "sui/ts/tsconfig.json",
+        "io/specs/testerbot-spec-wh-econ-spike1.md"
+      ],
+      "out_of_scope_changes": [],
+      "preexisting_entries_bit_identical": true,
+      "protected_dirs_diff_sha256": "08c544649566c573ecf7ffe9db91b4a81a7a184254d6ceb3301389cc4833e496",
+      "node_modules_committed": false,
+      "eighteenth_entry_resolution": "The 18th non-sui porcelain entry Devbot reported vs the frozen 17 is '?? io/specs/testerbot-spec-wh-econ-spike1.md' - Testerbot's own validation spec, written pre-build, explicitly allowed as an addition by spec section 1.3. Not a tree violation. Set-difference: observed(33) - frozen(17) - sui(15) == {testerbot spec} exactly; frozen - observed == empty (no pre-existing entry disappeared). All 6 parallel-workstream untracked sha256s re-verified bit-identical; protected-dirs diff sha256 matches frozen anchor; 0 stashes; staged set == exactly 15 files, all under sui/.",
+      "build_dir_note": "sui/move/wh-items/build/ exists from Testerbot's own rerun; covered by sui/.gitignore (build/*), not staged, no secrets."
+    }
+  },
+  "ac_results": {
+    "AC-1": {
+      "result": "PASS",
+      "method": "independent rerun",
+      "command": "sui move build; sui move build --warnings-are-errors",
+      "evidence": [
+        {"file": "/tmp/wh_spike1_ac1_build.log", "line": 0, "note": "Testerbot rerun exit 0, 139 bytes, 0 error lines. Strictness: --warnings-are-errors rerun exit 0 (no active warnings)."},
+        {"file": "sui/move/wh-items/sources/market.move", "line": 1, "note": "single #[allow(lint(share_owned))] covers market module only (shared TransferPolicy + FamilyDisplay metadata). NOT present in items.move/craft.move - a shared WHItem (the A1 error) would still trip the lint and fail --warnings-are-errors. Compiler summary line 'linter warnings suppressed: 1' is informational, not an emitted warning; documented in README line 43."}
+      ]
+    },
+    "AC-2": {
+      "result": "PASS",
+      "method": "independent rerun + suite-floor diff",
+      "evidence": [
+        {"file": "/tmp/wh_spike1_ac2_test.log", "line": 20, "note": "Testerbot rerun: 'Test result: OK. Total tests: 14; passed: 14; failed: 0', exit 0, zero [ FAIL lines. grep 'FAIL|error' hits were false positives (passing test named test_craft_failure_band_sink, summary 'failed: 0')."},
+        {"file": "sui/move/wh-items/tests/economy_tests.move", "line": 32, "note": "source-declared #[test] fns == 14 == runner-observed 14 (set equality verified programmatically). Floor 10 met; 11/11 expected names matched 1:1, zero renames; 3 additions."}
+      ]
+    },
+    "AC-3": {
+      "result": "PASS",
+      "method": "full read (read_file) + grep structural checks + path existence stat",
+      "evidence": [
+        {"file": "sui/README.md", "line": 11, "note": "prereqs: suiup install steps lines 14-17, sui --version line 18, exact installed version line 21"},
+        {"file": "sui/README.md", "line": 22, "note": "env setup SUI_TESTNET_MNEMONIC (22,27) + SUI_TESTNET_FAUCET_URL (23,28), placeholders labeled not credentials (31)"},
+        {"file": "sui/README.md", "line": 33, "note": "run commands: sui move build/test --warnings-are-errors (39-40), npm ci/check/e2e (49-51); expected outputs line 43"},
+        {"file": "sui/README.md", "line": 56, "note": "expected e2e_result.json shape with all 7 step names (58-78, steps at 69-75)"},
+        {"file": "sui/README.md", "line": 90, "note": "'What this spike proves / does not prove' section (90-94), honest skipped_faucet framing"},
+        {"file": "sui/README.md", "line": 0, "note": "all 7 referenced paths stat-verified to exist (sui/move/wh-items, sui/ts, package.json, package-lock.json, tsconfig.json, e2e.ts, README.md)"}
+      ]
+    },
+    "AC-4": {
+      "result": "PASS",
+      "method": "python3 schema check on actual JSON",
+      "evidence": [
+        {"file": "sui/ts/e2e_result.json", "line": 24, "note": "steps: exactly the 7 spec keys (mint, craft, serial, kiosk_list, kiosk_purchase, royalty, provenance) at lines 25-32; set equality asserted"},
+        {"file": "sui/ts/e2e_result.json", "line": 25, "note": "every step ok:false + status:'skipped_faucet' + digest:null; zero hex64 strings anywhere in file (sha256 d3900d7f...) - no fabricated digests; setup metadata (lines 2-23, 16 keys) informational per A2"}
+      ]
+    },
+    "AC-5": {
+      "result": "PASS",
+      "method": "grep source proof + test review + rerun",
+      "evidence": [
+        {"file": "sui/move/wh-items/sources/market.move", "line": 15, "note": "ROYALTY_BPS = 500 (5% of listing price, DENOMINATOR 10000 at line 16); RoyaltyRule struct line 19; add_rule at 72; royalty_due math at 77; pay_royalty distribution 137-145"},
+        {"file": "sui/move/wh-items/sources/market.move", "line": 73, "note": "DecorLockRule added; lock enforced at list (99-100) and purchase (124-125)"},
+        {"file": "sui/move/wh-items/tests/economy_tests.move", "line": 79, "note": "test_royalty_rule_present: asserts bps==500, royalty_due(10000)==500, full distribution flow (pay_royalty -> confirm_request paid==10000 -> policy balance==500); decor lock test at 200-215 (EItemLocked expected_failure). Both green in Testerbot rerun."}
+      ]
+    },
+    "AC-6": {
+      "result": "PASS",
+      "method": "source review + test review + rerun",
+      "evidence": [
+        {"file": "sui/move/wh-items/sources/items.move", "line": 74, "note": "next_serial: per-family counter vector (Registry struct 14-17, counters[family] increment 76-78), shared at init (48)"},
+        {"file": "sui/move/wh-items/tests/economy_tests.move", "line": 67, "note": "test_serial_monotonic_per_family: serials 1,2 within family 0 AND family 1 restarts at 1 - strict monotonicity + cross-family independence; green in rerun"}
+      ]
+    },
+    "AC-7": {
+      "result": "PASS",
+      "method": "source review + test review + rerun",
+      "evidence": [
+        {"file": "sui/move/wh-items/sources/craft.move", "line": 60, "note": "failure branch: result==0 -> consume exactly one material (pop_back + consume_material 62-63), return the rest (64); documented band curve at 11-19"},
+        {"file": "sui/move/wh-items/tests/economy_tests.move", "line": 41, "note": "test_craft_failure_band_sink: asserts no WHItem minted AND survivors.length()==1 (strict subset of 2 inputs) AND serial unconsumed (next_serial==1 proves no mint); green in rerun"}
+      ]
+    },
+    "AC-8": {
+      "result": "PASS",
+      "method": "constant-curve review + audit + rerun",
+      "evidence": [
+        {"file": "sui/move/wh-items/sources/craft.move", "line": 15, "note": "thresholds: bucket=timing_band/10; failure=20-bucket; affix=40+2*bucket - monotonic, affix capped at 60<100 (never guarantees), best band retains 10% failure; craft is private entry with timing_band:u8 (31); no public fun takes Random/RandomGenerator (audited: only entry craft at 31-35); randomness terminal in PTB"},
+        {"file": "sui/move/wh-items/tests/economy_tests.move", "line": 54, "note": "test_timing_band_monotonicity: exhaustive band 0..100 loop asserting failure non-increasing AND affix non-decreasing AND affix<100; green in rerun"}
+      ]
+    },
+    "AC-9": {
+      "result": "PASS",
+      "method": "source review + test review + rerun",
+      "evidence": [
+        {"file": "sui/move/wh-items/sources/craft.move", "line": 66, "note": "success path: lineage populated with every consumed material id + ancestor ids (source.do! at 70); WHItem.lineage field items.move:36; salvage lineage items.move:122-128"},
+        {"file": "sui/move/wh-items/tests/economy_tests.move", "line": 119, "note": "test_provenance_lineage_growth: first craft lineage contains both material ids (129); second craft from item-derived material: child lineage contains parent AND length==3 (136); plus test_salvage_yields_material_with_item_lineage (141-150). Green in rerun."}
+      ]
+    },
+    "AC-10": {
+      "result": "PASS",
+      "method": "independent git set-difference vs frozen baseline",
+      "evidence": [
+        {"file": "/tmp/wh_spike1_porcelain.txt", "line": 0, "note": "33 lines = frozen 17 (all present verbatim, bit-identical - live-17 sha256 equals recomputed sha of spec listing) + 15 sui/** staged + 1 = testerbot spec (18th entry, allowed by spec 1.3). frozen-minus-observed EMPTY."},
+        {"file": "git diff HEAD -- prototype/ tests/ docs/ tools/ art-direction/", "line": 0, "note": "sha256 08c544649566c573ecf7ffe9db91b4a81a7a184254d6ceb3301389cc4833e496 == frozen anchor. HEAD 2fa6b15 unchanged; 0 stashes; staged = exactly 15 files all under sui/; node_modules absent; no *.log in sui/."},
+        {"file": "io/specs/devbot-spec-wh-econ-spike1.md", "line": 30, "note": "devbot spec sha drifted f0958676->ad004f6c but this IS the IO-authorized A1/A2 amendment (markers at lines 30, 31, 43 match testerbot spec section 0 verbatim; 87->89 lines). Per spec section 7 Testerbot validates against the amended pair. Defect: testerbot spec's own frozen anchors (1.2/1.3) were not bumped - flagged to IO, not a Devbot violation."}
+      ]
+    },
+    "AC-11": {
+      "result": "PASS",
+      "method": "review-only (node verified absent) + Move simulated-e2e rerun",
+      "evidence": [
+        {"file": "sui/ts/e2e.ts", "line": 95, "note": "mnemonic/faucet read from process.env only (95-97, throws if unset); zero literal secrets; 7-step flow at 16 + mark() calls 138-208; machine-readable e2e_result.json written at 29 (mode 0600)"},
+        {"file": "sui/ts/package.json", "line": 1, "note": "package.json + package-lock.json + tsconfig.json committed in sui/ts; node absent on VPS (verified) - TS execution ungated by design (spec 6.1)"},
+        {"file": "sui/move/wh-items/tests/economy_tests.move", "line": 153, "note": "test_simulated_e2e_roll_math exercises the identical roll math (craft::outcome + full mint path); green in Testerbot rerun"}
+      ]
+    },
+    "AC-12": {
+      "result": "PASS",
+      "method": "independent version check + grep + publish-flow review",
+      "evidence": [
+        {"file": "sui/README.md", "line": 21, "note": "recorded 'sui 1.81.0-bf0c491c17b8' (also line 88 and e2e_result.json setup.cli_version) == Testerbot's own `sui --version` output, character-exact"},
+        {"file": "sui/move/wh-items/sources", "line": 0, "note": "grep -rni 'upgrade' across sources/ + Move.toml: ZERO hits - no UpgradeCap usage/retention in Move code"},
+        {"file": "sui/ts/e2e.ts", "line": 117, "note": "publish PTB consumes the UpgradeCap via 0x2::package::make_immutable in the SAME transaction (117-119) - immutable-by-construction; package not published (faucet), package_id honestly null; on-chain check N/A per best-effort clause"}
+      ]
+    }
+  },
+  "suite": {
+    "frozen_floor_count": 10,
+    "observed_count": 14,
+    "floor_met": true,
+    "names_observed": [
+      "test_burn_salvage_emits_event", "test_craft_failure_band_sink", "test_craft_success_band",
+      "test_decor_lock_rule_prevents_withdrawal", "test_display_per_family", "test_ingredients_bounds_rejected",
+      "test_kiosk_list_purchase_round_trip", "test_provenance_lineage_growth", "test_royalty_rule_present",
+      "test_salvage_yields_material_with_item_lineage", "test_serial_monotonic_per_family",
+      "test_simulated_e2e_roll_math", "test_timing_band_bounds_rejected", "test_timing_band_monotonicity"
+    ],
+    "floor_diff": {
+      "missing_behaviors": [],
+      "renames": [],
+      "justified": true,
+      "added": ["test_decor_lock_rule_prevents_withdrawal", "test_ingredients_bounds_rejected", "test_salvage_yields_material_with_item_lineage"]
+    }
+  },
+  "secrets": {
+    "patterns_file": "/tmp/wh_spike1_patterns.txt",
+    "matches_in_sui": 0,
+    "triage_notes": "Positive control (planted at /tmp/wh_spike1_secrets_control.txt, OUTSIDE repo) fired every class it contains: suiprivkey bech32=1, assigned-literal=2, mnemonic-literal=1 -> grep trustworthy. In sui/: zero suiprivkey, zero hex64 in any staged file. Staged pattern hits: 2 in sui/README.md lines 27-28 = documented angle-bracket PLACEHOLDERS (README line 31: 'placeholders, not credentials'), triaged false positives. hex64: 50,770 occurrences all inside gitignored sui/move/wh-items/build/ machine-generated bytecode artifacts (from Testerbot's own rerun; not staged, public content hashes). Move.lock manifest_digest values are uppercase-hex public framework fingerprints (outside pattern scope, reviewed anyway). No .env / *.key / mnemonic-named files in sui/. e2e_result.json contains zero hex64 - digests honestly null.",
+    "positive_control": {"path": "/tmp/wh_spike1_secrets_control.txt", "matched": true, "match_count": 4}
+  },
+  "watch_items": {
+    "ts_runtime": "review_only_no_node_failure_by_design (node absent verified; AC-11 review checks all pass; TS execution unverified and unclaimed by Devbot - README line 54 says review-only)",
+    "faucet": {
+      "status": "skipped_faucet",
+      "retries_documented": 3,
+      "steps_marked": ["mint", "craft", "serial", "kiosk_list", "kiosk_purchase", "royalty", "provenance"],
+      "no_fabricated_digests": true,
+      "note": "3 attempts documented in e2e_result.json setup.faucet_attempts (lines 13-17) + publish gas failure (line 11) + browser-faucet block (line 18); setup.move_test reads '13 passed... + simulated_e2e passed' = 13 unit + 1 simulated = 14 total - consistent with Testerbot's rerun (14/14), informational per A2"
+    },
+    "suiup_install": {
+      "path": "/home/hermeswebui/.hermes/profiles/io/home/.local/bin/sui",
+      "sui_version": "sui 1.81.0-bf0c491c17b8 (suiup 0.0.14)"
+    }
+  },
+  "amendments": [
+    {"id": "A1", "when": "2026-09-30", "who": "IO", "what": "WHItem address-owned (key, store); Registry + TransferPolicy the only shared objects", "why": "original 'shared-owned WHItem' was a spec error - a shared object cannot enter an owner's Kiosk", "verified_at": "devbot-spec-wh-econ-spike1.md lines 30-31; code items.move:26-40, market.move:31-33; kiosk round-trip test proves placeability"},
+    {"id": "A2", "when": "2026-09-30", "who": "IO", "what": "seven step keys (mint, craft, serial, kiosk_list, kiosk_purchase, royalty, provenance) are the contract of record; CLI/publish data in top-level setup, treated informational", "why": "dispatch-level labels superseded", "verified_at": "devbot-spec-wh-econ-spike1.md line 43; e2e_result.json steps 25-32 exactly the 7 keys"},
+    {"id": "SPEC-DEFECT-1", "when": "2026-09-30", "who": "Testerbot (finding, not an amendment)", "what": "testerbot spec line 52 frozen porcelain hash literal is 62 chars (2-char transcription typo). Recomputed true 64-char sha256 of the spec's own 17-line listing = 51b2fc6ee7b50d7161caf6bdb24a4de5c917c56bc752e08196552a2ea5b479b4, and the LIVE 17 observed entries hash to exactly that value - bit-identity PROVEN despite the typo.", "why": "IO should correct the literal in the testerbot spec (Testerbot did not modify either spec during validation)", "verified_at": "programmatic recomputation, /tmp/wh_spike1_final_evidence.py"},
+    {"id": "SPEC-DEFECT-2", "when": "2026-09-30", "who": "Testerbot (finding, not an amendment)", "what": "testerbot spec frozen anchors (lines 6, 31, 81, 106) still cite pre-amendment devbot-spec sha f0958676... while the contract of record is ad004f6c... (A1/A2 applied). Per section 7 IO should have bumped these anchors.", "why": "spec hygiene; does not affect verdict - drift verified as the authorized amendment", "verified_at": "sha256sum io/specs/devbot-spec-wh-econ-spike1.md = ad004f6c...; AMENDMENT A1/A2 markers at lines 30/31/43 match testerbot spec section 0 verbatim"},
+    {"id": "NOTE-AC1-WARNING-STRING", "when": "2026-09-30", "who": "Testerbot", "what": "sui 1.81.0 prints 'Total number of linter warnings suppressed: 1' - an informational count of source-scoped #[allow(lint(share_owned))] (market.move:1), not an emitted warning. Strictness-equivalent gate --warnings-are-errors exits 0 in Testerbot's rerun; suppression absent from items.move/craft.move so the A1 property (WHItem never shared) remains lint-guarded.", "why": "recorded so the commit-time reviewer is not surprised by the literal 'warning' string", "verified_at": "/tmp/wh_spike1_ac1_build.log; strict rerun exit 0"}
+  ]
+}
