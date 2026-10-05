@@ -1,0 +1,4 @@
+art-direction/3d/assets/church-kit/lantern-post-v2-pixelated.glb
+  uv-split: faces=2500 comps=2498 largest=2 (0.1%) tinyFar=0
+  welded  : comps=3 largest=2496 (99.8%) tinyFar=0
+  ext X=0.395 Y=1.889 Z=0.402 ymin=-0.951 centerXZ=[0.002, -0.002]  gate(a)=PASS
