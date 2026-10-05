@@ -1,0 +1,16 @@
+art-direction/3d/assets/church-kit/lantern-post-v3-pixelated.glb
+  uv-split: faces=2500 comps=2499 largest=2 (0.1%) tinyFar=10
+  welded  : comps=2 largest=2498 (99.9%) tinyFar=0
+  ext X=0.585 Y=1.893 Z=0.359 ymin=-0.952 centerXZ=[-0.11, -0.003]  gate(a)=PASS
+art-direction/3d/assets/church-kit/lantern-post-v2-pixelated.glb
+  uv-split: faces=2500 comps=2498 largest=2 (0.1%) tinyFar=0
+  welded  : comps=3 largest=2496 (99.8%) tinyFar=0
+  ext X=0.395 Y=1.889 Z=0.402 ymin=-0.951 centerXZ=[0.002, -0.002]  gate(a)=PASS
+art-direction/3d/assets/church-kit/lantern-post-pixelated.glb
+  uv-split: faces=2000 comps=301 largest=90 (4.5%) tinyFar=4
+  welded  : comps=202 largest=214 (10.7%) tinyFar=4
+  ext X=0.59 Y=1.999 Z=0.337 ymin=-1.004 centerXZ=[0.004, 0.004]  gate(a)=FAIL
+scratch/treegen/roundL/lantern-post-v3-meshy.glb
+  uv-split: faces=4344 comps=339 largest=446 (10.3%) tinyFar=0
+  welded  : comps=1 largest=4344 (100.0%) tinyFar=0
+  ext X=0.585 Y=1.893 Z=0.358 ymin=-0.952 centerXZ=[0.001, -0.004]  gate(a)=PASS
