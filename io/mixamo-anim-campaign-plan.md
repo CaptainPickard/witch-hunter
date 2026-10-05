@@ -595,3 +595,34 @@ Commits: dev 135ac28 + c4ec214, feat 5798f81 (JS identical; bundle skipped
 byte-identical). Host reset + verified: served GLB sha d83bc365966d4c ==
 repo; curl 200 / 2699122. Pushed both. Backups /tmp/roundJ2-backup/ +
 /tmp/roundJ-backup/.
+## Round K - lantern-post-v2 replaces the shattered post (2026-10-05)
+
+Nicko's closeup screenshot: the per-piece old post reads as outright
+breakage in-game (floating shard pixels, jagged unstable lantern head, arm
+broken at the scrolls). One Claude Code dispatch (78 turns), first-mesh
+PASS, no re-roll.
+
+- Meshy ledger: ref -3 + mesh -15 = 18 of 40 (1213 -> 1195). Gate table:
+  raw 1 piece (100%), v2 pixelated 3 pieces (99.8% main, 2 finial-tip
+  slivers sharing verts - no floaters), OLD post 202 pieces (10.7% main) =
+  the diagnosis in numbers.
+- Asset: gothic pillar-with-crowned-lantern (no curved arm - the ref drew
+  the lantern on top; accepted as more solid, reads cleaner). Faces 2500,
+  512 texture, NORMAL injected correctly (b'JSON' chunk type; the
+  biome_pixelate.injector bug avoided again).
+- Height 1.8894 vs old 1.9991 -> all 5 lanternPost rows scale 2.4 -> 2.54
+  (both regions) keeping ~4.8m in-world.
+- Socket REmetered for the new head: glass 75.5-87.5% of height, centered
+  on axis -> lightSockets.lanternPost heightFraction 0.81, offset [0,0]
+  (was 0.72 / [-0.18,0]), intensity 9.0 unchanged; light 3.887m up, INSIDE
+  the head (proof still: pool on ground + cap underside + scroll tops lit).
+- Collider correction: lanternPost is NOT trunk-registry - full-footprint
+  radius 0.708 -> 0.502m, AND the new file centers the pillar on the prop
+  origin (old pillar sat 0.36m off its own position) - collider matches the
+  post for the first time.
+- Watch: smooth normals soften step/lantern edges slightly at pixel scale;
+  old post GLBs kept on disk (rollback = MANIFEST pointer); browsers may
+  cache the old GLB - hard reload if v2 doesn't appear.
+- Commits: dev 2dc2a3b + 0d94bde, feat ef1db8b + cc74e53 + build fb6216c.
+  SHA guard: reach/bramble/old-post GLBs 20/20 untouched. Host reset +
+  curl 200/2699635; served v2 sha e47c0ac6e215 == repo.
