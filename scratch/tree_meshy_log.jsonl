@@ -72,3 +72,7 @@
 {"kind": "i23d-done", "task_id": "01a10906-3616-76a5-b39f-a5622d568b44", "status": "SUCCEEDED", "bal_after": 1270, "err": null, "t": "2026-10-04T22:27:37"}
 {"kind": "i23d", "task_id": "01a10907-a486-7077-ab05-57d4c2c7bff7", "ref": "scratch/treegen/roundF/wh-lantern-hang-ref-matte.png", "out": "scratch/treegen/roundF/wh-lantern-hang-meshy.glb", "tri": 1500, "bal_before": 1270, "t": "2026-10-04T22:27:39"}
 {"kind": "i23d-done", "task_id": "01a10907-a486-7077-ab05-57d4c2c7bff7", "status": "SUCCEEDED", "bal_after": 1255, "err": null, "t": "2026-10-04T22:28:40"}
+{"kind": "t2i", "task_id": "01a10961-f7aa-71b5-91aa-6816dad1ced1", "out": "scratch/treegen/roundH/wh-bramble-ref.png", "prompt": "a gnarled bramble thicket, dense tangled thorny canes, sparse withered dark rose blossoms, old graveyard plant, one single object, matte grey clay render, plain black background", "bal_before": 1285, "t": "2026-10-05T00:06:18"}
+{"kind": "t2i-done", "task_id": "01a10961-f7aa-71b5-91aa-6816dad1ced1", "status": "SUCCEEDED", "bal_after": 1282, "err": null, "t": "2026-10-05T00:07:20"}
+{"kind": "i23d", "task_id": "01a10963-2ac6-7165-93f5-45abfd962999", "ref": "scratch/treegen/roundH/wh-bramble-ref-matte.png", "out": "scratch/treegen/roundH/wh-bramble-meshy.glb", "tri": 2000, "bal_before": 1282, "t": "2026-10-05T00:07:37"}
+{"kind": "i23d-done", "task_id": "01a10963-2ac6-7165-93f5-45abfd962999", "status": "SUCCEEDED", "bal_after": 1267, "err": null, "t": "2026-10-05T00:09:09"}

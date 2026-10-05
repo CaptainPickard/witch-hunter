@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 """Alpha-matte a white-background ref: flood-fill from the border over near-white /
 light-grey (incl. the soft floor shadow) -> transparent, then crop to the subject.
-Usage: ref_matte.py in.png out.png [tol=60]"""
+Usage: ref_matte.py in.png out.png [tol=60] [--dark]
+--dark (Round H): the ref is on a plain BLACK background; near-black neutral -> transparent."""
 import sys
 import numpy as np
 from PIL import Image
 from scipy import ndimage
-src, out = sys.argv[1], sys.argv[2]
-tol = int(sys.argv[3]) if len(sys.argv) > 3 else 60
+dark = '--dark' in sys.argv
+argv = [x for x in sys.argv if x != '--dark']
+src, out = argv[1], argv[2]
+tol = int(argv[3]) if len(argv) > 3 else 60
 a = np.asarray(Image.open(src).convert('RGB')).astype(int)
-bright = a.min(axis=2) >= 255 - tol                    # light pixels
+bright = (a.max(axis=2) <= tol) if dark else (a.min(axis=2) >= 255 - tol)   # bg-tone pixels
 spread = a.max(axis=2) - a.min(axis=2) < 25            # neutral grey/white (not foliage/bark)
 bg_cand = bright & spread
 lab, _ = ndimage.label(bg_cand)

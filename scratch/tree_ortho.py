@@ -22,6 +22,30 @@ import matplotlib.pyplot as plt
 from matplotlib.collections import PolyCollection
 
 
+def glb_color0(path):
+    """Round H: per-face sRGB from a single-primitive GLB's float COLOR_0 (linear),
+    read from the chunks directly (trimesh drops COLOR_0 when a material exists).
+    Face order = the GLB index order = trimesh.load(process=False) face order."""
+    import json, struct
+    b = open(path, 'rb').read()
+    jl = struct.unpack_from('<I', b, 12)[0]
+    g = json.loads(b[20:20 + jl]); binoff = 20 + jl + 8
+    prims = [p for mesh in g['meshes'] for p in mesh['primitives']]
+    if len(prims) != 1 or 'COLOR_0' not in prims[0]['attributes']:
+        return None
+
+    def acc(i, dt, w):
+        a = g['accessors'][i]; bv = g['bufferViews'][a['bufferView']]
+        o = binoff + bv.get('byteOffset', 0) + a.get('byteOffset', 0)
+        return np.frombuffer(b, dt, a['count'] * w, o).reshape(a['count'], w)
+    ca = g['accessors'][prims[0]['attributes']['COLOR_0']]
+    w = 4 if ca['type'] == 'VEC4' else 3
+    c = acc(prims[0]['attributes']['COLOR_0'], '<f4', w)[:, :3].astype(float)
+    f = acc(prims[0]['indices'], '<u4', 1).reshape(-1, 3)
+    c = np.where(c <= 0.0031308, c * 12.92, 1.055 * c ** (1 / 2.4) - 0.055)
+    return c[f].mean(axis=1)
+
+
 def face_colors(m):
     tex = getattr(getattr(m.visual, 'material', None), 'baseColorTexture', None)
     uv = getattr(m.visual, 'uv', None)
@@ -35,7 +59,7 @@ def face_colors(m):
     return arr[py, px]
 
 
-def render(m, cols, out, view, title):
+def render(m, cols, out, view, title, zoom=None):
     tri = m.triangles
     fn = m.face_normals
     if view == 'front':
@@ -55,6 +79,8 @@ def render(m, cols, out, view, title):
     r = max(b[1] - b[0]) * 0.62
     cx = 0.0
     cy = (b[0][1] + b[1][1]) / 2
+    if zoom:                                           # Round H closeup: (factor, cx, cy) in screen units
+        r, cx, cy = r / zoom[0], zoom[1], zoom[2]
     ax.set_xlim(cx - r, cx + r)
     ax.set_ylim(cy - r * 4 / 3, cy + r * 4 / 3)
     ax.set_aspect('equal')
@@ -67,8 +93,10 @@ def render(m, cols, out, view, title):
 
 
 def main(src, out_front, out_side, title=''):
-    m = trimesh.load(src, force='mesh')
-    cols = face_colors(m)
+    m = trimesh.load(src, force='mesh', process=False)
+    cols = glb_color0(src)
+    if cols is None:
+        cols = face_colors(m)
     render(m, cols, out_front, 'front', title)
     render(m, cols, out_side, 'side', title)
     print('saved', out_front, out_side)
