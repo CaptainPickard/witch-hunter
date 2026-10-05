@@ -45,6 +45,12 @@
     // to 2500 tris with per-face UV transfer, texture posterized 512 NEAREST
     // (scratch/decimate_roundH.py + scratch/bramble_bake_roundH.py)
     bramble: 'art-direction/3d/assets/biome_library/wh-bramble-pixelated.glb',
+    // Round I gothic reach-trees (io/roundI-provenance.md): 3 Meshy variants, twig tips
+    // reattached + decimated to 3500 tris, texture posterized 512 NEAREST
+    // (scratch/decimate_roundI.py --snap + scratch/reachtree_bake_roundI.py)
+    reachTreeA: 'art-direction/3d/assets/biome_library/wh-reachtree-a-pixelated.glb',
+    reachTreeB: 'art-direction/3d/assets/biome_library/wh-reachtree-b-pixelated.glb',
+    reachTreeC: 'art-direction/3d/assets/biome_library/wh-reachtree-c-pixelated.glb',
     // Round F boundary wall + gate (io/roundF-wall-provenance.md): wall
     // segments render instanced (region-manager buildWorld). b3Gate is the
     // b3-gate GLB with its near-closed door leaves cut out
