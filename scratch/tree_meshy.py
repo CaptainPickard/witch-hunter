@@ -14,11 +14,11 @@ import sys, os, json, time, base64, urllib.request, urllib.error
 
 KEY = os.environ.get('MESHY_KEY') or sys.exit('MESHY_KEY not set')
 API = 'https://api.meshy.ai/openapi'
-# Round I (io/missions/2026-10-05-cc-roundI-reacht.md): start 1267 (measured = brief), cap 60.
-# (Round H: start 1285, cap 30. Round F: start 1309, cap 60. Round E: start 1426, cap 130.
-#  M16-M19 round: start 1600, cap 160.)
-START_BALANCE = 1267
-CAP = 60
+# Round K (io/missions/2026-10-05-cc-roundK-lamppost-v2.md): start 1213 (measured = brief), cap 40.
+# (Round I: start 1267, cap 60. Round H: start 1285, cap 30. Round F: start 1309, cap 60.
+#  Round E: start 1426, cap 130. M16-M19 round: start 1600, cap 160.)
+START_BALANCE = 1213
+CAP = 40
 FLOOR = START_BALANCE - CAP
 MAX_TARGET = 2000   # provider cap on target_polycount per submit (Round E/F)
 LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tree_meshy_log.jsonl')
