@@ -84,10 +84,15 @@ window.WH_CONFIG = {
   // decay 2. Round K: lantern-post-v2 tops the pillar (no side arm): glass
   // x -0.123..+0.127, z -0.116..+0.112 @ 75.5-87.5% H, centre within 2 mm
   // of the pillar axis (scratch/lantern_head_probe_roundK.py). Old post was
-  // { heightFraction: 0.72, offset: [-0.18, 0.0] }.
+  // { heightFraction: 0.72, offset: [-0.18, 0.0] }. Round L: lantern-post-v3
+  // hangs its cage from the arm's hook, OFF the pillar axis (pillar on the
+  // glTF origin): cage floor 70% H, glass to 82.5% (cap brim 82.5-85%),
+  // centre x -0.299, z 0.000 on every cage band
+  // (scratch/lantern_head_probe_roundL.py). v2 was
+  // { heightFraction: 0.81, offset: [0.0, 0.0] }.
   lightSockets: {
-    lanternPost:      { heightFraction: 0.81, intensity: 9.0,
-                        offset: [0.0, 0.0] },
+    lanternPost:      { heightFraction: 0.76, intensity: 9.0,
+                        offset: [-0.30, 0.0] },
     banditCampfire:   { heightFraction: 0.55, intensity: 3.2,
                         offset: [0.0, 0.0] },
     lanternWaymarker: { heightFraction: 0.67, intensity: 9.5,
@@ -180,8 +185,8 @@ window.WH_CONFIG = {
       { asset: 'graveMound', x: 15, z: 6, rotY: 0.4, scale: 1.8 },
       { asset: 'buriedCoffin', x: -18, z: 5, rotY: 0.9, scale: 1.7 },
       { asset: 'yewTree', x: 29.4, z: 1.3, rotY: 3.03, scale: 6.5 },
-      { asset: 'lanternPost', x: -2, z: 30, rotY: 0.0, scale: 2.54 },
-      { asset: 'lanternPost', x: 4, z: -2, rotY: 0.0, scale: 2.54 },
+      { asset: 'lanternPost', x: -2, z: 30, rotY: 0.0, scale: 2.535 },
+      { asset: 'lanternPost', x: 4, z: -2, rotY: 0.0, scale: 2.535 },
       { asset: 'picketFence', x: 15.4, z: 13.2, rotY: 0.0, scale: 1.63 },
       { asset: 'picketFence', x: 12.2, z: 12.2, rotY: 0.0, scale: 1.55 },
       { asset: 'picketFence', x: -19.1, z: 10.8, rotY: 1.57, scale: 1.59 },
@@ -214,9 +219,9 @@ window.WH_CONFIG = {
 
       // 10-03 change order 2: dirt-path lantern chain (every ~12m along the
       // path; joins existing posts at z 30 and z -2; fixed light pool auto-hooks)
-      { asset: 'lanternPost', x: 5.04, z: 62.0, rotY: 0.0, scale: 2.54 },
-      { asset: 'lanternPost', x: -3.36, z: 51.0, rotY: 0.0, scale: 2.54 },
-      { asset: 'lanternPost', x: 2.6, z: 39.5, rotY: 0.0, scale: 2.54 },
+      { asset: 'lanternPost', x: 5.04, z: 62.0, rotY: 0.0, scale: 2.535 },
+      { asset: 'lanternPost', x: -3.36, z: 51.0, rotY: 0.0, scale: 2.535 },
+      { asset: 'lanternPost', x: 2.6, z: 39.5, rotY: 0.0, scale: 2.535 },
       // order 3 forest (10-03): ring around graveyard (outside),
       // path alley, rim fill, dead accents - mixed healthy species
       { asset: 'yewTree', x: 10.09, y: 0.00, z: 39.59, rotY: 0.90, scale: 9.17 },
