@@ -67,7 +67,10 @@
     lanternWaymarker: 'art-direction/3d/assets/biome_library/b3-waymarker-pixelated.glb',
 
     // church-kit props + trees
-    lanternPost: 'art-direction/3d/assets/church-kit/lantern-post-pixelated.glb',
+    // Round K (io/roundK-provenance.md): Meshy lantern-post-v2, one welded piece, decimated
+    // 2500 + posterize512 (scratch/lanternpost_bake_roundK.py). Rollback = restore the line below.
+    // lanternPost: 'art-direction/3d/assets/church-kit/lantern-post-pixelated.glb',
+    lanternPost: 'art-direction/3d/assets/church-kit/lantern-post-v2-pixelated.glb',
     rubblePile: 'art-direction/3d/assets/church-kit/rubble-pile-pixelated.glb',
     churchArchway: 'art-direction/3d/assets/church-kit/church-archway-pixelated.glb',
     churchCornerButtress: 'art-direction/3d/assets/church-kit/church-corner-buttress-pixelated.glb',

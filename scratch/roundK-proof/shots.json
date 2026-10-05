@@ -1,0 +1,7 @@
+[
+ {"stem": "01-new-post-lit", "night": true, "lens": 30,
+  "objects": [{"glb": "/workspace/witch-hunter/art-direction/3d/assets/church-kit/lantern-post-v2-pixelated.glb",
+               "x": 0, "y": 0, "z": 0, "rotY": 0, "sx": 2.54, "sy": 2.54, "sz": 2.54}],
+  "light": {"x": 0.0, "y": 3.887, "z": 0.0, "watts": 900, "shadow": false, "flame": 0.06},
+  "cam": [4.2, 2.6, 7.6], "aim": [0, 2.1, 0]}
+]
