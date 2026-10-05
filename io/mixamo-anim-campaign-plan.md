@@ -626,3 +626,34 @@ PASS, no re-roll.
 - Commits: dev 2dc2a3b + 0d94bde, feat ef1db8b + cc74e53 + build fb6216c.
   SHA guard: reach/bramble/old-post GLBs 20/20 untouched. Host reset +
   curl 200/2699635; served v2 sha e47c0ac6e215 == repo.
+## Round L - lantern-post-v3: gothic arm-hook design (2026-10-05, Nicko)
+
+Nicko wanted the OLD arm-hook silhouette back, gothic, solid. One Claude
+Code dispatch (56 turns), first mesh passed all gates.
+
+- Design: pillar + ONE curved arm hooking past the pillar edge + hex cage
+  hanging from the arm by ring/links. Raw 1 piece (100%); v3 pixelated 2
+  pieces (99.92% main; one 2-face sliver sharing all 3 verts, 0mm gap);
+  old post for comparison: 202 pieces / 10.7% = the shatter, in numbers.
+- Meshy: measured start 1155 (NOTE: 40cr spent 05:42->08:40 OUTSIDE the
+  driver - no log entries; unexplained, flag: nothing else ran in that
+  window per cron/jobs; worth a one-off balance audit if it repeats). Ref
+  -3 + mesh -15 = 18 of 40; end 1137.
+- Scale: v3 1.8934 tall (v2 1.8894, old-old 1.9991) -> rows 2.54 -> 2.535,
+  in-world 4.800m. All 5 rows regionA (regionB has none).
+- Socket remeasured for the HANGING cage: glass 70-82.5% H, cage center
+  x -0.299 z 0.0 -> lightSockets.lanternPost 0.76 / offset [-0.30, 0.0]
+  (intensity 9.0). World light at x -0.76, y 3.65: under the arm hook.
+  Proof still: pool offset under the cage, arm underside warm, cage lit.
+- Collider: pillar on origin; width now includes arm+cage sweep ->
+  radius 0.502 -> 0.742m (base itself ~0.46). Watch: player stops ~0.28m
+  early on the arm side; base-only width for lanternPost is the code fix
+  if it feels wrong (not this round).
+- Hook/ring thin (~1-2cm at scale) - holds in stills; check up close.
+- Meshy glass came back opaque: flame marker invisible in stills; light
+  inside cage verified by measurement + frame lighting pattern.
+- Commits: dev 87e576f + fcb8612, feat 854c5db + dc72969 + build e80b932.
+  SHA guard 24/24 (reach a/b/c, bramble, old post, v2 - mid+pixelated,
+  both trees). Wall mirror unchanged; scatter mirror unchanged; ringHosts
+  correct (no lanternPost). Host reset + curl 200/2700314; served v3 sha
+  e545ae7523a7 == repo.
