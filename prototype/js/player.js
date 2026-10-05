@@ -9,6 +9,9 @@
   'use strict';
 
   var CFG = window.WH_CONFIG.player;
+  var MCFG = window.WH_CONFIG.mouse || {};   // v8: mouse-bind config lives at
+                                             // the WH_CONFIG root (mirrors the
+                                             // CONFIG.touch convention)
   var LOCK = window.WH_CONFIG.lockOn;
   var ANIM = window.WH_CONFIG.anim;
   var AW = ANIM.attack;
@@ -118,6 +121,11 @@
     this.lastDragX = 0;
     this.lastDragY = 0;
     this.lastManualCamT = -1e9;       // timestamp of last manual camera drag
+
+    // v8: pointer-lock mouse bind state (io/specs/mouse-bind-cam-spec.md 5)
+    this.mouseBound = false;          // desired/actual bind state, synced via
+                                      // pointerlockchange (single source of truth)
+    this.mouseChipEl = null;          // HUD chip element, cached in bindInput
 
     // lock-on state (D3)
     this.lockTarget = null;           // enemy object or null
@@ -308,6 +316,11 @@
     this.keys = {};
     document.addEventListener('keydown', function (e) {
       self.keys[e.code] = true;
+      // v8: Backquote toggles the pointer-lock mouse bind (spec section 5;
+      // Esc is NOT handled here - the native exit resyncs via pointerlockchange).
+      // Ahead of the inventory gate so it can always unbind; bindMouse itself
+      // refuses while the screen is open.
+      if (e.code === 'Backquote' && !e.repeat) self.toggleMouseBind();
       if (self.inputSuspended) return;   // 10-05: inventory screen open
       if (e.code === 'Space') {
         e.preventDefault();
@@ -338,7 +351,18 @@
       // Order C: LMB = main-hand action, RMB = off-hand action
       // (CONFIG.equip.twoHand), both through handButton
       if (e.button === 0) {
+        // v8: UI clicks (chip and any non-canvas DOM) are UI-only - no attack,
+        // no drag start, no auto-rebind. The chip's own click handler toggles
+        // bind via the chip path (N6); the canvas auto-rebind path (N5) only
+        // ever arms from real canvas-surface presses.
+        if (!e.target || e.target.id !== 'wh-canvas') return;
         self.handButton('lmb', true);
+        // v8: auto-rebind on a canvas-surface LMB while unbound (spec section 5);
+        // rides along with the attack - drag-start lines below stay untouched.
+        if (!self.lockTarget && !self.mouseBound &&
+            MCFG.autoBindOnCanvasClick) {
+          self.bindMouse();
+        }
         if (!self.lockTarget) {
           self.dragging = true;
           self.lastDragX = e.clientX;
@@ -365,21 +389,88 @@
       return false;
     });
     document.addEventListener('mousemove', function (e) {
-      if (!self.dragging || self.lockTarget) return;   // mouse cam disabled while locked
+      if (self.lockTarget) return;            // lock-on owns the camera (keep)
+      if (self.inputSuspended) return;        // 10-05: inventory screen open - camera input ignored
+      if (self.mouseBound && document.pointerLockElement) {
+        var mdx = e.movementX || 0, mdy = e.movementY || 0;
+        if (mdx === 0 && mdy === 0) return;
+        self.lastManualCamT = performance.now() / 1000;
+        self.applyCamDelta(mdx * (MCFG.pointerLockSensMult != null ? MCFG.pointerLockSensMult : 1.0),
+                           mdy * (MCFG.pointerLockSensMult != null ? MCFG.pointerLockSensMult : 1.0));
+        return;
+      }
+      if (!self.dragging) return;             // unbound mouse: no drag, no camera
       var dx = e.clientX - self.lastDragX;
       var dy = e.clientY - self.lastDragY;
       self.lastDragX = e.clientX;
       self.lastDragY = e.clientY;
       if (dx !== 0 || dy !== 0) self.lastManualCamT = performance.now() / 1000;
-      self.camYaw -= dx * deg2rad(CFG.mouseSensDegPerPx);
-      self.camPitch += dy * deg2rad(CFG.mouseSensDegPerPx);
-      self.camPitch = Math.max(deg2rad(CFG.camPitchMinDeg), Math.min(deg2rad(CFG.camPitchMaxDeg), self.camPitch));
+      self.applyCamDelta(dx, dy);
     });
     document.addEventListener('wheel', function (e) {
       if (self.inputSuspended) return;
       self.camDist += (e.deltaY > 0 ? 1 : -1) * 0.8;
       self.camDist = Math.max(CFG.camMinDistance, Math.min(CFG.camMaxDistance, self.camDist));
     }, { passive: true });
+    // v8: pointer lock state is the single source of truth for mouseBound -
+    // fires on bind, on Esc/native exit, on request failure. NO Esc key handler.
+    document.addEventListener('pointerlockchange', function () {
+      self.syncMouseChip();
+    });
+    // v8: HUD chip toggle (pointer-events:auto on the chip in style.css)
+    var chip = document.getElementById('wh-mouse-chip');
+    if (chip) {
+      this.mouseChipEl = chip;
+      chip.addEventListener('click', function (ev) {
+        ev.preventDefault();
+        self.toggleMouseBind();
+      });
+    }
+  };
+
+  // v8 pointer-lock mouse bind (io/specs/mouse-bind-cam-spec.md section 5)
+
+  Player.prototype.applyCamDelta = function (dxPx, dyPx) {
+    this.camYaw -= dxPx * deg2rad(CFG.mouseSensDegPerPx);
+    this.camPitch += dyPx * deg2rad(CFG.mouseSensDegPerPx);
+    this.camPitch = Math.max(deg2rad(CFG.camPitchMinDeg),
+      Math.min(deg2rad(CFG.camPitchMaxDeg), this.camPitch));
+  };
+
+  Player.prototype.bindMouse = function () {
+    if (document.pointerLockElement || !document.body.requestPointerLock) return;
+    if (this.inputSuspended) return;  // 10-05 Order A: never lock over the open inventory screen
+    var el = document.getElementById('wh-canvas');
+    var self = this;
+    var res = null;
+    try {
+      res = el.requestPointerLock();
+    } catch (e) {
+      // N7: sync-throw fault injection must never surface uncaught
+      this.syncMouseChip();
+      return;
+    }
+    if (res && typeof res.then === 'function') {
+      res.then(function () { self.syncMouseChip(); },
+               function () { self.syncMouseChip(); });
+    }
+  };
+
+  Player.prototype.unbindMouse = function () {
+    if (document.pointerLockElement) document.exitPointerLock();
+    this.syncMouseChip();
+  };
+
+  Player.prototype.toggleMouseBind = function () {
+    this.mouseBound ? this.unbindMouse() : this.bindMouse();
+  };
+
+  Player.prototype.syncMouseChip = function () {
+    this.mouseBound = !!document.pointerLockElement;
+    if (this.mouseChipEl) {
+      this.mouseChipEl.textContent =
+        this.mouseBound ? 'MOUSE: BOUND [`]' : 'MOUSE: UNBOUND [`]';
+    }
   };
 
   Player.prototype.collectMoveInput = function () {
@@ -398,11 +489,18 @@
   // drops an active camera drag and a held guard (RMB release would land
   // on the open screen); anything already in flight (swing, roll, cast
   // windup) plays out. Restore is instant - nothing to rebuild.
+  // v8: the open screen owns the cursor - opening it unbinds a bound mouse
+  // (CONFIG.mouse.unbindOnUiOpen), closing it rebinds an unbound mouse
+  // when CONFIG.mouse.rebindOnUiClose is on.
   Player.prototype.setInputSuspended = function (on) {
+    var wasSuspended = this.inputSuspended;
     this.inputSuspended = !!on;
     if (on) {
       this.dragging = false;
       this.endBlock();
+      if (MCFG.unbindOnUiOpen) this.unbindMouse();
+    } else if (wasSuspended && MCFG.rebindOnUiClose && !this.mouseBound) {
+      this.bindMouse();
     }
   };
 
