@@ -462,3 +462,47 @@ account task; downloads are free).
   be a camera pitch clamp or taller wall, his call; (4) on thick-trunked
   trees the rings sit inside the trunk base flare and partly vanish (ring
   radius knob if it bothers).
+## Round H - south spawn + snare recolor + bramble free bushes + cemetery fog (2026-10-05)
+
+Nicko's tone pass against his dark-fantasy reference (cool moonlit palette,
+pale blue-grey luminous fog, amber lantern pockets, gnarled dead vegetation).
+Two agent runs: run 1 died mid-run (~13 min in, cause unknown) leaving its
+completed work on disk; run 2 = continuation dispatched with harvest facts,
+zero research, finished everything. Meshy ledger both runs: measured start
+1285, t2i -3, bramble i23d -15, balance 1267 (18 of the 30 cap; continuation
+spent 0 - Meshy forbidden on it).
+
+- Spawn: regionA.spawn = (2.5, 74.0) - computed midpoint of the wall-x-path
+  point (0, 86) and the first lantern south post (5.04, 62); faceTowards(0,0)
+  and default camYaw PI unchanged = faces north toward the moon. Safety probe
+  (scratch/roundH_spawn_probe.py): prop edge gap 4.88m, outside graveyard
+  keepOut (norm 1.94), nearest enemy 25.75m, 0 nudges. Watch: sits 3.78m off
+  the path centerline (faithful midpoint - the lantern is off-path; Nicko's
+  order kept).
+- Snare recolor (vertex paint, zero credits): k-NN density classifier (k12,
+  rose_rank 0.62, smooth 2, iso_min 0.5, k_shape 24 after 3 tuning runs) ->
+  COLOR_0 two-tone: canes srgb(40,40,32) dark cold bark, roses srgb(136,104,
+  104) ash-rose, base 4.5% darkened; 45.9% verts classified roses. Landed in
+  wh-bush-snare-pixelated.glb (scratch/snare_color_roundG.py, deterministic).
+- Bramble (free bushes): Meshy ref + mesh via run 1 (SUCCEEDED); run 2
+  decimated 28,355 -> 2,499 tris (scratch/decimate_roundH.py) and baked the
+  TRUE TEXTURE path (2048 source, texel-per-face pickup because the raw UV
+  layout is ~6,050 fragments - smears avoided by design), 5-bit + 512 NEAREST:
+  wh-bramble-pixelated.glb (450KB in-game). MANIFEST.bramble + scatter
+  free assets [['bramble', 1, 1.4, 2.0]] (rollback comment keeps bushA/B).
+  Watch: bramble texture is greyscale (grey ref image) = mid-grey tangle, no
+  rose accents of its own; a vertex-paint pass (free, like the snare's) can
+  add them if Nicko wants.
+- Cemetery fog ramp: game.js cemeteryFogTick (O(1), region A only) lerps
+  scene.fog density 0.012 -> 0.030 and color -> 0x7f8ea6 by smoothstep of the
+  player's normalized distance to the graveyard keepOut ellipse
+  (rampStart 1.35 -> rampEnd 0.55). Knobs all in CONFIG.regionA.cemeteryFog
+  forNicko's tuning.
+- Scatter counts unchanged from Round G (A 14/305/20/220, B 10/130/20/220);
+  wall mirror byte-identical to Round G; all determinism checks byte-identical.
+- Proof: scratch/roundH-proof/ (3 stills; 02 and 03 verified: fog pool reads
+  denser/cooler over the cemetery; bramble reads as dark tangle; snare
+  two-tone reads soft in dim light - hue visible, separation muted).
+- Watch items: bramble lighter than snare canes (could wash out in fog);
+  bundle carries wh-bramble.glb 4MB + raw in library but the game loads the
+  450KB pixelated file only.
