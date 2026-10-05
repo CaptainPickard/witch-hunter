@@ -2,13 +2,16 @@
 """Alpha-matte a white-background ref: flood-fill from the border over near-white /
 light-grey (incl. the soft floor shadow) -> transparent, then crop to the subject.
 Usage: ref_matte.py in.png out.png [tol=60] [--dark]
---dark (Round H): the ref is on a plain BLACK background; near-black neutral -> transparent."""
+--dark (Round H): the ref is on a plain BLACK background; near-black neutral -> transparent.
+--pocket=N (Round I): enclosed bg pockets larger than N px also go transparent (default 150);
+  lower it for fine twig canopies so sky between twigs doesn't read as solid mass."""
 import sys
 import numpy as np
 from PIL import Image
 from scipy import ndimage
 dark = '--dark' in sys.argv
-argv = [x for x in sys.argv if x != '--dark']
+pocket = int(next((x.split('=')[1] for x in sys.argv if x.startswith('--pocket=')), 150))
+argv = [x for x in sys.argv if x != '--dark' and not x.startswith('--pocket=')]
 src, out = argv[1], argv[2]
 tol = int(argv[3]) if len(argv) > 3 else 60
 a = np.asarray(Image.open(src).convert('RGB')).astype(int)
@@ -18,9 +21,9 @@ bg_cand = bright & spread
 lab, _ = ndimage.label(bg_cand)
 border = set(np.unique(np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]]))) - {0}
 bg = np.isin(lab, list(border))
-# enclosed background pockets (sky between branches) larger than 150px are background too
+# enclosed background pockets (sky between branches) larger than `pocket` px are background too
 sizes = np.bincount(lab.ravel())
-pockets = np.where(sizes > 150)[0]
+pockets = np.where(sizes > pocket)[0]
 bg |= np.isin(lab, pockets[pockets > 0])
 fg = ~bg
 fg = ndimage.binary_opening(fg, iterations=1)
