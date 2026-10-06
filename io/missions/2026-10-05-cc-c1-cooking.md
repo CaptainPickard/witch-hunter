@@ -50,6 +50,19 @@ wildMushrooms that make Grave Soup possible. NEVER "fix" missing ingredients
 by adding nodes to a region whose identity is scarcity. Future mechanics keep
 this shape: capability is earned through the world, not the menu.
 
+## CEMETERY ECOLOGY (design canon, Nicko 10-05)
+Wild mushrooms and grave moss grow ONLY around burial grounds: cemeteries,
+graveyards, church ruins. C1 makes the world tell that truth. Region A has a
+cemetery yard (gravestones/stone crosses ~ x -15..20, z 10..25) but its 4
+mushroomCluster nodes sit far from it (x 38..68 east field + one at x -60 west)
+- RELOCATE those 4 to FOREST GROUND AROUND the cemetery: woodland spots near
+the gravestone ring, outside the fence lines, never inside the open yard
+interior (the gen_gather_nodes in_graveyard rule: yard = open combat ground).
+Honor the gather clearances (props 3-4m, enemy spawns 5m, player spawn 6m,
+nodes 6-9m apart, dirt path +2.5m). Region B graveMoss nodes already hug its
+church/graveyard props: leave them. The hint "Mushrooms favor the dead..."
+stays cryptic by intent - an allusion, not a map pin.
+
 ## STATE (verified 2026-10-05, feat tip after mouse-bind Order A landed)
 - feat/world-visuals worktree /tmp/wh-worldfeat clean at 21cebb2 (mouse-bind
   Order A landed: build v8). Build tool is now tools/build_v8.py ->
@@ -94,8 +107,8 @@ this shape: capability is earned through the world, not the menu.
    - Learned-recipe list section: once a recipe is known, click it to
      auto-fill its slots from inventory and start the channel.
    - If the player has NO wildMushroom in inventory, the panel shows the
-     one-time-per-session hint line: "Mushrooms favor the older woods."
-     (points back to Region A; EXPLORATION-REWARD LAW made kind, not loud).
+     one-time-per-session hint line: "Mushrooms favor the dead..."
+     (cryptic per Nicko; the truth it alludes to is the CEMETERY ECOLOGY law).
 3. RECIPES + DISCOVERY (CONFIG.cooking.recipes).
    - Grave Soup: graveMoss + wildMushroom + boneShard. Result item graveSoup
      ('food', glyph 'GS', weight 20). Effect: +20 max HP for 1 in-game day
@@ -144,15 +157,17 @@ A6. Fuel: fire burns down over time (visible light-out); E + deadwood
     relights; cooking blocked when burnt out or too low on fuel.
 A7. Eating Grave Soup: HP bar max visibly extends (+20), HUD buff chip with
     countdown. No other stat moves. Bandage still works as before.
-A8. Region A campfire (dressing) unchanged; no other fire cooks. No new
-    gather nodes anywhere.
-A9. Cook panel without mushrooms in the bag shows the "older woods" hint
-    (once per session).
+A8. Region A campfire (dressing) unchanged; no other fire cooks. No NEW node
+    types anywhere; Region A mushroom clusters now sit around the cemetery
+    yard (CEMETERY ECOLOGY), clear of the yard interior.
+A9. Cook panel without mushrooms in the bag shows the cryptic hint
+    "Mushrooms favor the dead..." (once per session).
 A10. All edited files pass node --check; v8 bundle contains C1 markers.
 
 ## FILES
 - prototype/js/CONFIG.js (CONFIG.cooking block + graveSoup/blandMush items;
-  NO node changes, NO mouse keys)
+  regionA mushroomCluster coords relocated per CEMETERY ECOLOGY; NO mouse
+  keys, NO new node types)
 - prototype/js/cooking.js (NEW; declared in index.html script order +
   tools/build_v8.py concatenation list, before game.js, after inventory.js)
 - prototype/js/game.js (interact branch, fuel tick hook, buff application)
