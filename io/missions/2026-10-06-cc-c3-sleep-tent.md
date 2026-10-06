@@ -89,6 +89,17 @@ command; if the tool is missing the dispatch stops until /app/venv is fixed).
   rebuild (sites store regionId + x/z; the manager re-instantiates when
   that region is built/active - region dispose/rebuild must never delete
   a site).
+- WORLD CAMPS: a camp module row may ALSO bind to a pre-placed world prop
+  (no deploy, no kit). Tutorial anchor (canon: the Region B cooking
+  tutorial is where the first rest happens): camp.js renders the
+  m16-bandit-bedroll prop at a CONFIG.camp.worldCamps row next to the
+  bandit campfire (darkwood_edge, coords beside x 2.5 z -52, ~3m off so
+  both interact radius and the fire ring stay clean), sleep hook = the
+  SAME tent menu. The bandit fire's C1 cook behavior is untouched (the
+  bedroll module is sleep-only). The player's FIRST sleep can therefore
+  happen at the world bedroll OR at a deployed kit - whichever comes
+  first in play. World camp visuals here are NOT the placeholder kit
+  dress-up below; the bedroll is a real shipped asset.
 - PLACEHOLDER VISUALS (pending the Astrabot wh-campkit GLB): stand the
   site out of existing biome_library meshes - m15-bandit-campfire for the
   fire and m16-bandit-bedroll for the bedroll, plus a simple dark canvas
@@ -187,6 +198,10 @@ command; if the tool is missing the dispatch stops until /app/venv is fixed).
    placed, fire fuel state preserved through the transitions.
 10. Bland Mush / Grave Soup behaviors otherwise unchanged (no regressions
     in the cook panel, cap toast, buff chips).
+11. World bedroll: at the region B bandit fire the placed bedroll opens
+    the SAME tent menu via E BEFORE any cooking (first sleep possible
+    pre-kit); the bandit fire still cooks/feeds normally (sleep-only
+    module never hijacks the fire's interact).
 
 ## OUT OF SCOPE (do not touch)
 - The Astrabot wh-campkit GLB (separate lane; placeholder visuals this
