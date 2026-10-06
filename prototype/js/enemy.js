@@ -11,6 +11,12 @@
 
   function smooth(p) { return p * p * (3 - 2 * p); }   // smoothstep ease
 
+  function wrapAngle(a) {
+    while (a > Math.PI) a -= Math.PI * 2;
+    while (a < -Math.PI) a += Math.PI * 2;
+    return a;
+  }
+
   function cfgFor(type) {
     return CFG[type] || CFG.bandit;
   }
@@ -118,8 +124,11 @@
   // The FSM stops on death, but the visual fall must continue to settle.
   Enemy.prototype.updateDeathVisual = function (dt) {
     if (!this.body) return;
-    if (this.anim) {
-      this.anim.death();
+    // A rig without WH_Death (CharacterAnim warns) takes the rigid fall below.
+    if (this.anim && this.anim.actions.death) {
+      // deadFall 1 before the clip ever ran = corpse restored by a region
+      // rebuild: pose it at the clip end instead of replaying the death.
+      this.anim.death(this.deadFall >= 1);
       this.root.position.copy(this.pos);
       this.yawFrame.rotation.y = this.yaw;
       var deathAction = this.anim.actions.death;
@@ -162,9 +171,9 @@
   };
 
   // FSM sense/aggression update. playerPos: THREE.Vector3, canDamagePlayer:
-  // callback(amount, attacker) applies damage through the combat layer if the
-  // player is vulnerable (returns true if it landed). boundary: {z, holdMargin} clamps
-  // movement to home side.
+  // callback(amount, attacker) routes damage through the combat layer
+  // (block/parry/i-frames; its return value is unused). boundary:
+  // {z, holdMargin} clamps movement to home side.
   Enemy.prototype.update = function (dt, playerPos, playerAlive, canDamagePlayer, boundary, regionManager) {
     if (this.fsm === 'dead') {
       this.updateDeathVisual(dt);
@@ -226,10 +235,7 @@
         if (this.attackPhase === 'windup') {
           // combat-ds1 P0-6: only windup may track; freeze facing for the hit.
           if (distToPlayer > 0.001) {
-            var wantYaw = Math.atan2(toPlayerX, toPlayerZ);
-            var deltaYaw = wantYaw - this.yaw;
-            while (deltaYaw > Math.PI) deltaYaw -= Math.PI * 2;
-            while (deltaYaw < -Math.PI) deltaYaw += Math.PI * 2;
+            var deltaYaw = wrapAngle(Math.atan2(toPlayerX, toPlayerZ) - this.yaw);
             var maxYaw = phase.trackDegPerSec * Math.PI / 180 * dt;
             this.yaw += Math.max(-maxYaw, Math.min(maxYaw, deltaYaw));
           }
@@ -238,11 +244,12 @@
             this.attackPhaseT = 0;
             // One damage opportunity at active entry; range and facing must
             // both hold after tracking ends. The callback owns parry/i-frames.
-            var hitYaw = Math.atan2(toPlayerX, toPlayerZ) - this.yaw;
-            while (hitYaw > Math.PI) hitYaw -= Math.PI * 2;
-            while (hitYaw < -Math.PI) hitYaw += Math.PI * 2;
+            var hitYaw = wrapAngle(Math.atan2(toPlayerX, toPlayerZ) - this.yaw);
+            // A-2 ruling 2026-10-02: hitArcDeg is a HALF-angle (±50°), per
+            // the audit of record (doc 60 L221 arcHalfDeg 50); D1 renamed
+            // the key only. /180 == *deg/2 in radians.
             if (distToPlayer <= this.cfg.attackRange + window.WH_CONFIG.player.radius &&
-                Math.abs(hitYaw) <= phase.hitArcDeg * Math.PI / 360) {
+                Math.abs(hitYaw) <= phase.hitArcDeg * Math.PI / 180) {
               canDamagePlayer(this.cfg.attackDamage, this);
             }
           }
@@ -264,9 +271,7 @@
       }
     } else if (this.fsm === 'idle' || this.fsm === 'aggro') {
       if (playerAlive && distToPlayer <= this.cfg.sightRadius) {
-        this.setFsm(this.fsm === 'idle' ? 'aggro' : 'aggro');
-      } else if (distToSpawn > this.cfg.leashRadius) {
-        // will walk home below
+        this.setFsm('aggro');            // idle/aggro both walk home below
       }
       if (playerAlive && distToPlayer <= this.cfg.sightRadius * 0.8) {
         this.setFsm('chase');
@@ -489,6 +494,10 @@
   Enemy.prototype.takeDamage = function (amount, fromDir) {
     if (this.fsm === 'dead') return false;
     this.hp -= amount;
+    // A hit cancels the swing (stagger or death): no phase leak, as in
+    // enterStagger. The next attack entry re-arms windup.
+    this.attackPhase = 'idle';
+    this.attackPhaseT = 0;
     if (this.hp <= 0) {
       this.hp = 0;
       this.setFsm('dead');
@@ -514,7 +523,9 @@
   };
 
   // Circle push-out against a list of other circles (enemies + player).
-  // others: [{pos: THREE.Vector3, radius: number}]
+  // others: [{pos: THREE.Vector3, radius: number}]. Only this enemy moves.
+  // A non-finite distance (a NaN position written from outside) is skipped
+  // so it cannot spread to every neighbour through the push.
   Enemy.prototype.separateFrom = function (others, strength, dt) {
     for (var i = 0; i < others.length; i++) {
       var o = others[i];
@@ -522,15 +533,11 @@
       var dz = this.pos.z - o.pos.z;
       var minDist = this.cfg.radius + o.radius;
       var d2 = dx * dx + dz * dz;
-      if (d2 >= minDist * minDist || d2 === 0) continue;
+      if (!(d2 > 0 && d2 < minDist * minDist)) continue;
       var d = Math.sqrt(d2);
       var push = (minDist - d) * strength * dt;
       this.pos.x += (dx / d) * push;
       this.pos.z += (dz / d) * push;
-      if (o.pushedBy !== undefined) {
-        o.pos.x -= (dx / d) * push * 0.5;
-        o.pos.z -= (dz / d) * push * 0.5;
-      }
     }
   };
 

@@ -1,0 +1,24 @@
+{
+ "combat-ds1-A": {
+  "A1-1": "PASS",
+  "A1-2": "PASS",
+  "A1-3": "FAIL",
+  "A1-4": "PASS",
+  "A2-1": "FAIL",
+  "A2-2": "FAIL",
+  "A2-3": "PASS",
+  "A2-4": "FAIL",
+  "A3-1": "PASS",
+  "A3-2": "PASS",
+  "A3-3": "FAIL",
+  "A3-4": "FAIL",
+  "A3-5": "FAIL",
+  "A3-6": "FAIL",
+  "A4-1": "FAIL",
+  "A4-2": "FAIL",
+  "A4-3": "FAIL"
+ },
+ "weave": {},
+ "v2-assets": {},
+ "v3-anim": {}
+}

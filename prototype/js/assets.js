@@ -341,12 +341,95 @@
     });
   }
 
+  // CSP-safe embedded-texture intake (whanim3, 8f777bb): the manager
+  // modifier is synchronous; populate it before the parser starts resolving
+  // texture URLs. GLB image bufferViews are converted only once.
+  var embeddedDataUris = new Map();
+  var imageUrls = [];
+
+  function registerEmbeddedImagePlugin(loader, mgr) {
+    // CSP forbids even an attempted fetch(blob:) on enforced origins. Read
+    // the RESPONSE POLICY, not the route name, before choosing the path.
+    if (!registerEmbeddedImagePlugin.blobPolicy) {
+      registerEmbeddedImagePlugin.blobPolicy =
+        fetch(document.baseURI, { credentials: 'same-origin' })
+          .then(function (response) {
+            var csp = response.headers.get('content-security-policy');
+            if (!csp) return true;
+            var match = csp.match(/(?:^|;)\s*connect-src\s+([^;]+)/i);
+            return !match || /(?:^|\s)blob:(?:\s|$)/i.test(match[1]);
+          }).catch(function (err) {
+            console.warn('[WH assets] cannot inspect CSP; using FileReader for embedded images:', err);
+            return false;
+          });
+    }
+    function asDataUri(blob) {
+      return new Promise(function (accept, reject) {
+        var reader = new FileReader();
+        reader.onload = function () { accept(reader.result); };
+        reader.onerror = function () { reject(reader.error || new Error('image FileReader failed')); };
+        reader.readAsDataURL(blob);
+      });
+    }
+    function releaseAll() {
+      imageUrls.forEach(function (u) {
+        URL.revokeObjectURL(u);
+        embeddedDataUris.delete(u);
+      });
+      imageUrls.length = 0;
+    }
+    mgr.setURLModifier(function (resourceUrl) {
+      return resourceUrl.indexOf('blob:') === 0 && embeddedDataUris.has(resourceUrl) ?
+        embeddedDataUris.get(resourceUrl) : resourceUrl;
+    });
+    loader.register(function (parser) {
+      return {
+        name: 'WH_embedded_image_data',
+        beforeRoot: function () {
+          var sources = parser.json.images || [];
+          return registerEmbeddedImagePlugin.blobPolicy.then(function (canFetchBlob) {
+            // ImageBitmapLoader decodes via fetch(data:), also forbidden by
+            // connect-src on CSP origins. ImageLoader uses img-src instead.
+            if (!canFetchBlob) parser.textureLoader = new THREE.TextureLoader(mgr);
+            return Promise.all(sources.map(function (source) {
+              if (source.bufferView === undefined || !/^image\//.test(source.mimeType || '')) {
+                return Promise.resolve();
+              }
+              return parser.getDependency('bufferView', source.bufferView).then(function (bytes) {
+                var blob = new Blob([bytes], { type: source.mimeType });
+                var imageUrl = URL.createObjectURL(blob);
+                imageUrls.push(imageUrl);
+                var conversion = canFetchBlob ?
+                  fetch(imageUrl).then(function (response) {
+                    if (!response.ok) throw new Error('image fetch status ' + response.status);
+                    return response.blob();
+                  }).then(asDataUri).catch(function () { return asDataUri(blob); }) :
+                  asDataUri(blob);
+                return conversion.then(function (dataUri) {
+                  embeddedDataUris.set(imageUrl, dataUri);
+                  source.uri = imageUrl;
+                  delete source.bufferView;
+                });
+              });
+            }));
+          }).catch(function (err) {
+            releaseAll();
+            throw err;
+          });
+        },
+        afterRoot: function () { releaseAll(); }
+      };
+    });
+  }
+
   // One load attempt, racing the per-attempt timeout. Resolves {ok:true,gltf}
   // or {ok:false,info:{reason,msg}}; never rejects.
   function loadAttempt(name, url) {
     return new Promise(function (resolve) {
-      var loader = new window.WHGLTFLoader();
       var settled = false;
+      var mgr = new THREE.LoadingManager();
+      var loader = new window.WHGLTFLoader(mgr);
+      registerEmbeddedImagePlugin(loader, mgr);
       var timer = setTimeout(function () {
         if (settled) return;
         settled = true;

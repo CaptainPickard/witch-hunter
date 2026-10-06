@@ -1,0 +1,119 @@
+AC-A1-1 windup yaw chase => PASS dispInWindup=False wuFrames=3 maxDyaw=0.2095 jump=False e 3.142->2.723
+AC-A1-2 strike+recover freeze => PASS frameFrozen=True displFar=True maxDrift=0.0000 conv=3.141592653589793 rows=7
+AC-A1-3 attack-drag offset stability => FAIL maxBodyDelta=0.0000 rad/frame (<=0.35 per-frame D2) samples=6 camMoved=True swingCompleted=False
+AC-A1-4 facing integrity => PASS yawAgree=True parentOk=True offsets=4/4 worstPair=0.0000 (<=0.90 D2)
+AC-A2-1 combo chain [0,1,2] => FAIL timeline=[0] presses=1 maxAttackingGap=0ms (<=50)
+AC-A2-2 combo cap + no requeue => FAIL timeline=[0] presses=2 queuedDuringRestartWindup=False
+AC-A2-3 first swing combo 0 => PASS comboIndex stayed 0 through swing=True saw=None
+AC-A2-4 post-idle restart ci 0 => FAIL idleBefore=False secondSwings=0 ciSecond=None
+AC-A3-1 phase-gated first hit => PASS hpDrop=true frame phT(sim)=0.000 (want ~0.0-0.05, active entry) phaseAtDrop=active
+AC-A3-2 enemy period => PASS periods=30,33 frames (want 33 +-3) ghoul skipped: region-A only
+AC-A3-3 two clean hits => FAIL exception Error("Page.evaluate: TypeError: Cannot read properties of null (reading 'getEnemies')\n    at Object.getEnemy (http://127.0.0.1:8794/builds/v7-playable.html:91677:39)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:35)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:118)\n    at eval (<anonymous>)\n    at UtilityScript.evaluate (<anonymous>:311:30)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)")
+AC-A3-4 phase animation profile => FAIL exception Error("Page.evaluate: TypeError: Cannot read properties of null (reading 'getEnemies')\n    at Object.getEnemy (http://127.0.0.1:8794/builds/v7-playable.html:91677:39)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:35)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:118)\n    at eval (<anonymous>)\n    at UtilityScript.evaluate (<anonymous>:311:30)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)")
+AC-A3-5 roll i-frames dodge => FAIL exception Error("Page.evaluate: TypeError: Cannot read properties of null (reading 'getEnemies')\n    at Object.getEnemy (http://127.0.0.1:8794/builds/v7-playable.html:91677:39)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:35)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:118)\n    at eval (<anonymous>)\n    at UtilityScript.evaluate (<anonymous>:311:30)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)")
+AC-A3-6 rear arc-gate rejection => FAIL exception Error("Page.evaluate: TypeError: Cannot read properties of null (reading 'getEnemies')\n    at Object.getEnemy (http://127.0.0.1:8794/builds/v7-playable.html:91677:39)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:35)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:118)\n    at eval (<anonymous>)\n    at UtilityScript.evaluate (<anonymous>:311:30)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)")
+[diag] lock_and_face_bandit: Error("Page.evaluate: TypeError: Cannot read properties of null (reading 'getEnemies')\n    at Object.getEnemy (http://127.0.0.1:8794/builds/v7-playable.html:91677:39)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:35)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:118)\n    at eval (<anonymous>)\n    at UtilityScript.evaluate (<anonymous>:311:30)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)")
+[diag] lock_and_face_bandit: Error("Page.evaluate: TypeError: Cannot read properties of null (reading 'getEnemies')\n    at Object.getEnemy (http://127.0.0.1:8794/builds/v7-playable.html:91677:39)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:35)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:118)\n    at eval (<anonymous>)\n    at UtilityScript.evaluate (<anonymous>:311:30)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)")
+AC-A4-1 windup rate-cap => FAIL pre-run: lock failed locked=False tgt={'x': -6, 'z': -8}
+AC-A4-2 windup move slow-down => FAIL pre-run: swing-1 recover not reached in 5s
+AC-A4-3 windup turn allowance => FAIL pre-run: swing-1 recover not reached in 5s
+[diag] runtime budget exceeded; remaining ACs not run
+
+========================================================================
+COMBAT-DS1-A SMOKE SUMMARY  total=17 pass=6 fail=11 crashes=0
+  AC-A1-1 windup yaw chase             PASS
+  AC-A1-2 strike+recover freeze        PASS
+  AC-A1-3 attack-drag offset stability FAIL
+  AC-A1-4 facing integrity             PASS
+  AC-A2-1 combo chain [0,1,2]          FAIL
+  AC-A2-2 combo cap + no requeue       FAIL
+  AC-A2-3 first swing combo 0          PASS
+  AC-A2-4 post-idle restart ci 0       FAIL
+  AC-A3-1 phase-gated first hit        PASS
+  AC-A3-2 enemy period                 PASS
+  AC-A3-3 two clean hits               FAIL
+  AC-A3-4 phase animation profile      FAIL
+  AC-A3-5 roll i-frames dodge          FAIL
+  AC-A3-6 rear arc-gate rejection      FAIL
+  AC-A4-1 windup rate-cap              FAIL
+  AC-A4-2 windup move slow-down        FAIL
+  AC-A4-3 windup turn allowance        FAIL
+ZERO CRASHES: YES
+========================================================================
+{
+ "round": "combat-ds1-A",
+ "total": 17,
+ "pass": 6,
+ "fail": 11,
+ "crashes": 0,
+ "per_ac": [
+  {
+   "id": "AC-A1-1",
+   "verdict": "PASS"
+  },
+  {
+   "id": "AC-A1-2",
+   "verdict": "PASS"
+  },
+  {
+   "id": "AC-A1-3",
+   "verdict": "FAIL"
+  },
+  {
+   "id": "AC-A1-4",
+   "verdict": "PASS"
+  },
+  {
+   "id": "AC-A2-1",
+   "verdict": "FAIL"
+  },
+  {
+   "id": "AC-A2-2",
+   "verdict": "FAIL"
+  },
+  {
+   "id": "AC-A2-3",
+   "verdict": "PASS"
+  },
+  {
+   "id": "AC-A2-4",
+   "verdict": "FAIL"
+  },
+  {
+   "id": "AC-A3-1",
+   "verdict": "PASS"
+  },
+  {
+   "id": "AC-A3-2",
+   "verdict": "PASS"
+  },
+  {
+   "id": "AC-A3-3",
+   "verdict": "FAIL"
+  },
+  {
+   "id": "AC-A3-4",
+   "verdict": "FAIL"
+  },
+  {
+   "id": "AC-A3-5",
+   "verdict": "FAIL"
+  },
+  {
+   "id": "AC-A3-6",
+   "verdict": "FAIL"
+  },
+  {
+   "id": "AC-A4-1",
+   "verdict": "FAIL"
+  },
+  {
+   "id": "AC-A4-2",
+   "verdict": "FAIL"
+  },
+  {
+   "id": "AC-A4-3",
+   "verdict": "FAIL"
+  }
+ ]
+}

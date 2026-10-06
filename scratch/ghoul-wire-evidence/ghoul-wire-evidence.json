@@ -1,0 +1,707 @@
+{
+ "url": "http://127.0.0.1:45231/",
+ "head": "c2ae186",
+ "syntax": {
+  "prototype/js/anim.js": "ok",
+  "prototype/js/enemy.js": "ok",
+  "prototype/js/assets.js": "ok"
+ },
+ "ghoulSightRadius": 18,
+ "ghoulSpawn": {
+  "clips": [
+   "WH_Attack1",
+   "WH_Death",
+   "WH_Hit",
+   "WH_Idle",
+   "WH_Run",
+   "WH_Walk",
+   "WH_Idle_Zombie",
+   "WH_Walk_Zombie",
+   "WH_Run_Zombie",
+   "WH_Attack_Zombie",
+   "WH_Hit_Zombie",
+   "WH_Death_Zombie",
+   "WH_StandUp_Zombie"
+  ],
+  "hasAnim": true,
+  "names": {
+   "idle": "WH_Idle_Zombie",
+   "walk": "WH_Walk_Zombie",
+   "run": "WH_Run_Zombie",
+   "attack": "WH_Attack_Zombie",
+   "hit": "WH_Hit_Zombie",
+   "death": "WH_Death"
+  },
+  "moveNames": {},
+  "actions": [
+   "idle",
+   "walk",
+   "run",
+   "attack",
+   "hit",
+   "death"
+  ]
+ },
+ "ghoulCorpse": {
+  "fsm": "dead",
+  "deadFall": 1,
+  "corpseFinalY": 0.01
+ },
+ "ghoulPhases": {
+  "rest": {
+   "clipsSeen": [
+    "WH_Idle_Zombie"
+   ],
+   "frames": 7,
+   "fsms": [
+    "idle"
+   ],
+   "sample": [
+    {
+     "t": 6.586,
+     "fsm": "idle",
+     "clip": "WH_Idle_Zombie",
+     "active": [
+      "WH_Idle_Zombie"
+     ],
+     "speed": 0
+    },
+    {
+     "t": 8.043,
+     "fsm": "idle",
+     "clip": "WH_Idle_Zombie",
+     "active": [
+      "WH_Idle_Zombie"
+     ],
+     "speed": 0
+    },
+    {
+     "t": 8.823,
+     "fsm": "idle",
+     "clip": "WH_Idle_Zombie",
+     "active": [
+      "WH_Idle_Zombie"
+     ],
+     "speed": 0
+    },
+    {
+     "t": 11.778,
+     "fsm": "idle",
+     "clip": "WH_Idle_Zombie",
+     "active": [
+      "WH_Idle_Zombie"
+     ],
+     "speed": 0
+    },
+    {
+     "t": 11.788,
+     "fsm": "idle",
+     "clip": "WH_Idle_Zombie",
+     "active": [
+      "WH_Idle_Zombie"
+     ],
+     "speed": 0
+    },
+    {
+     "t": 11.794,
+     "fsm": "idle",
+     "clip": "WH_Idle_Zombie",
+     "active": [
+      "WH_Idle_Zombie"
+     ],
+     "speed": 0
+    },
+    {
+     "t": 11.832,
+     "fsm": "idle",
+     "clip": "WH_Idle_Zombie",
+     "active": [
+      "WH_Idle_Zombie"
+     ],
+     "speed": 0
+    }
+   ]
+  },
+  "walk": {
+   "clipsSeen": [
+    "WH_Walk_Zombie"
+   ],
+   "frames": 1,
+   "fsms": [
+    "idle"
+   ],
+   "sample": [
+    {
+     "t": 18.86,
+     "fsm": "idle",
+     "clip": "WH_Walk_Zombie",
+     "active": [
+      "WH_Idle_Zombie",
+      "WH_Walk_Zombie"
+     ],
+     "speed": 4.4
+    }
+   ]
+  },
+  "run": {
+   "clipsSeen": [
+    "WH_Run_Zombie"
+   ],
+   "frames": 1,
+   "fsms": [
+    "chase"
+   ],
+   "sample": [
+    {
+     "t": 20.173,
+     "fsm": "chase",
+     "clip": "WH_Run_Zombie",
+     "active": [
+      "WH_Walk_Zombie",
+      "WH_Run_Zombie"
+     ],
+     "speed": 7
+    }
+   ]
+  },
+  "attack": {
+   "clipsSeen": [
+    "WH_Run_Zombie",
+    "WH_Attack_Zombie"
+   ],
+   "frames": 18,
+   "fsms": [
+    "attack",
+    "chase"
+   ],
+   "sample": [
+    {
+     "t": 25.974,
+     "fsm": "chase",
+     "clip": "WH_Run_Zombie",
+     "active": [
+      "WH_Run_Zombie"
+     ],
+     "speed": 7
+    },
+    {
+     "t": 27.306,
+     "fsm": "chase",
+     "clip": "WH_Run_Zombie",
+     "active": [
+      "WH_Run_Zombie"
+     ],
+     "speed": 7
+    },
+    {
+     "t": 28.861,
+     "fsm": "chase",
+     "clip": "WH_Run_Zombie",
+     "active": [
+      "WH_Run_Zombie"
+     ],
+     "speed": 7
+    },
+    {
+     "t": 31.594,
+     "fsm": "chase",
+     "clip": "WH_Run_Zombie",
+     "active": [
+      "WH_Run_Zombie"
+     ],
+     "speed": 7
+    },
+    {
+     "t": 31.604,
+     "fsm": "chase",
+     "clip": "WH_Run_Zombie",
+     "active": [
+      "WH_Run_Zombie"
+     ],
+     "speed": 7
+    },
+    {
+     "t": 32.915,
+     "fsm": "chase",
+     "clip": "WH_Run_Zombie",
+     "active": [
+      "WH_Run_Zombie"
+     ],
+     "speed": 7
+    },
+    {
+     "t": 34.487,
+     "fsm": "chase",
+     "clip": "WH_Run_Zombie",
+     "active": [
+      "WH_Run_Zombie"
+     ],
+     "speed": 7
+    },
+    {
+     "t": 35.716,
+     "fsm": "chase",
+     "clip": "WH_Run_Zombie",
+     "active": [
+      "WH_Run_Zombie"
+     ],
+     "speed": 7
+    },
+    {
+     "t": 37.181,
+     "fsm": "chase",
+     "clip": "WH_Run_Zombie",
+     "active": [
+      "WH_Run_Zombie"
+     ],
+     "speed": 7
+    },
+    {
+     "t": 38.438,
+     "fsm": "chase",
+     "clip": "WH_Run_Zombie",
+     "active": [
+      "WH_Run_Zombie"
+     ],
+     "speed": 7
+    },
+    {
+     "t": 41.48,
+     "fsm": "chase",
+     "clip": "WH_Run_Zombie",
+     "active": [
+      "WH_Run_Zombie"
+     ],
+     "speed": 7
+    },
+    {
+     "t": 42.763,
+     "fsm": "chase",
+     "clip": "WH_Run_Zombie",
+     "active": [
+      "WH_Run_Zombie"
+     ],
+     "speed": 7
+    },
+    {
+     "t": 44.325,
+     "fsm": "chase",
+     "clip": "WH_Run_Zombie",
+     "active": [
+      "WH_Run_Zombie"
+     ],
+     "speed": 7
+    },
+    {
+     "t": 44.454,
+     "fsm": "chase",
+     "clip": "WH_Run_Zombie",
+     "active": [
+      "WH_Run_Zombie"
+     ],
+     "speed": 7
+    },
+    {
+     "t": 45.932,
+     "fsm": "chase",
+     "clip": "WH_Run_Zombie",
+     "active": [
+      "WH_Run_Zombie"
+     ],
+     "speed": 7
+    },
+    {
+     "t": 48.961,
+     "fsm": "chase",
+     "clip": "WH_Run_Zombie",
+     "active": [
+      "WH_Run_Zombie"
+     ],
+     "speed": 7
+    },
+    {
+     "t": 50.333,
+     "fsm": "chase",
+     "clip": "WH_Run_Zombie",
+     "active": [
+      "WH_Run_Zombie"
+     ],
+     "speed": 7
+    },
+    {
+     "t": 51.466,
+     "fsm": "attack",
+     "clip": "WH_Attack_Zombie",
+     "active": [
+      "WH_Run_Zombie",
+      "WH_Attack_Zombie"
+     ],
+     "speed": 0
+    }
+   ]
+  },
+  "hit": {
+   "clipsSeen": [
+    "WH_Hit_Zombie"
+   ],
+   "frames": 1,
+   "fsms": [
+    "stagger"
+   ],
+   "sample": [
+    {
+     "t": 58.495,
+     "fsm": "stagger",
+     "clip": "WH_Hit_Zombie",
+     "active": [
+      "WH_Attack_Zombie",
+      "WH_Hit_Zombie"
+     ],
+     "speed": 0
+    }
+   ]
+  },
+  "death": {
+   "clipsSeen": [
+    "WH_Death"
+   ],
+   "frames": 27,
+   "fsms": [
+    "dead"
+   ],
+   "sample": [
+    {
+     "t": 64.314,
+     "fsm": "dead",
+     "clip": "WH_Death",
+     "active": [
+      "WH_Hit_Zombie",
+      "WH_Death"
+     ],
+     "speed": 0
+    },
+    {
+     "t": 67.803,
+     "fsm": "dead",
+     "clip": "WH_Death",
+     "active": [
+      "WH_Death"
+     ],
+     "speed": 0
+    },
+    {
+     "t": 69.704,
+     "fsm": "dead",
+     "clip": "WH_Death",
+     "active": [
+      "WH_Death"
+     ],
+     "speed": 0
+    },
+    {
+     "t": 72.31,
+     "fsm": "dead",
+     "clip": "WH_Death",
+     "active": [
+      "WH_Death"
+     ],
+     "speed": 0
+    },
+    {
+     "t": 74.855,
+     "fsm": "dead",
+     "clip": "WH_Death",
+     "active": [
+      "WH_Death"
+     ],
+     "speed": 0
+    },
+    {
+     "t": 79.097,
+     "fsm": "dead",
+     "clip": "WH_Death",
+     "active": [
+      "WH_Death"
+     ],
+     "speed": 0
+    },
+    {
+     "t": 82.096,
+     "fsm": "dead",
+     "clip": "WH_Death",
+     "active": [
+      "WH_Death"
+     ],
+     "speed": 0
+    },
+    {
+     "t": 84.905,
+     "fsm": "dead",
+     "clip": "WH_Death",
+     "active": [
+      "WH_Death"
+     ],
+     "speed": 0
+    },
+    {
+     "t": 87.526,
+     "fsm": "dead",
+     "clip": "WH_Death",
+     "active": [
+      "WH_Death"
+     ],
+     "speed": 0
+    },
+    {
+     "t": 90.142,
+     "fsm": "dead",
+     "clip": "WH_Death",
+     "active": [
+      "WH_Death"
+     ],
+     "speed": 0
+    },
+    {
+     "t": 91.639,
+     "fsm": "dead",
+     "clip": "WH_Death",
+     "active": [
+      "WH_Death"
+     ],
+     "speed": 0
+    },
+    {
+     "t": 94.505,
+     "fsm": "dead",
+     "clip": "WH_Death",
+     "active": [
+      "WH_Death"
+     ],
+     "speed": 0
+    },
+    {
+     "t": 97.625,
+     "fsm": "dead",
+     "clip": "WH_Death",
+     "active": [
+      "WH_Death"
+     ],
+     "speed": 0
+    },
+    {
+     "t": 101.831,
+     "fsm": "dead",
+     "clip": "WH_Death",
+     "active": [
+      "WH_Death"
+     ],
+     "speed": 0
+    }
+   ]
+  }
+ },
+ "fallback": {
+  "names": {
+   "idle": "WH_Idle_Zombie",
+   "walk": "WH_Walk",
+   "run": "WH_Run_Zombie",
+   "attack": "WH_Attack_Zombie",
+   "hit": "WH_Hit_Zombie",
+   "death": "WH_Death"
+  },
+  "actions": [
+   "idle",
+   "walk",
+   "run",
+   "attack",
+   "hit",
+   "death"
+  ]
+ },
+ "bandit": {
+  "clips": [
+   "WH_Attack1",
+   "WH_Death",
+   "WH_Hit",
+   "WH_Idle",
+   "WH_Run",
+   "WH_Walk"
+  ],
+  "hasAnim": true,
+  "names": {
+   "idle": "WH_Idle",
+   "walk": "WH_Walk",
+   "run": "WH_Run",
+   "attack": "WH_Attack1",
+   "hit": "WH_Hit",
+   "death": "WH_Death"
+  },
+  "moveNames": {
+   "slashR2L": "WH_SlashR2L",
+   "slashL2R": "WH_SlashL2R",
+   "thrust": "WH_Thrust"
+  },
+  "actions": [
+   "idle",
+   "walk",
+   "run",
+   "attack",
+   "hit",
+   "death"
+  ],
+  "clipsSeen": [
+   "WH_Idle",
+   "WH_Walk"
+  ]
+ },
+ "player": {
+  "names": {
+   "idle": "WH_Idle",
+   "walk": "WH_Walk",
+   "run": "WH_Run",
+   "attack": "WH_Attack1",
+   "hit": "WH_Hit",
+   "death": "WH_Death"
+  },
+  "moveNames": {
+   "slashR2L": "WH_SlashR2L",
+   "slashL2R": "WH_SlashL2R",
+   "thrust": "WH_Thrust"
+  },
+  "actions": [
+   "idle",
+   "walk",
+   "run",
+   "attack",
+   "hit",
+   "death",
+   "slashR2L",
+   "slashL2R",
+   "thrust"
+  ],
+  "attackClipsSeen": [
+   "WH_SlashR2L"
+  ]
+ },
+ "consoleErrors": [
+  "Failed to load resource: the server responded with a status of 404 (File not found) @ http://127.0.0.1:45231/favicon.ico"
+ ],
+ "pageErrors": [],
+ "httpErrors": [],
+ "animWarnings": [
+  "[WH anim] missing WH_Walk_Zombie, falling back to WH_Walk"
+ ],
+ "consoleErrorsExclFavicon": [],
+ "results": [
+  {
+   "check": "syntax:prototype/js/anim.js",
+   "pass": true,
+   "detail": "ok"
+  },
+  {
+   "check": "syntax:prototype/js/enemy.js",
+   "pass": true,
+   "detail": "ok"
+  },
+  {
+   "check": "syntax:prototype/js/assets.js",
+   "pass": true,
+   "detail": "ok"
+  },
+  {
+   "check": "boot",
+   "pass": true,
+   "detail": "WH_DEBUG + player anim + ghoul/bandit clips loaded"
+  },
+  {
+   "check": "ghoul:clips==13",
+   "pass": true,
+   "detail": "13 ['WH_Attack1', 'WH_Death', 'WH_Hit', 'WH_Idle', 'WH_Run', 'WH_Walk', 'WH_Idle_Zombie', 'WH_Walk_Zombie', 'WH_Run_Zombie', 'WH_Attack_Zombie', 'WH_Hit_Zombie', 'WH_Death_Zombie', 'WH_StandUp_Zombie']"
+  },
+  {
+   "check": "ghoul:names",
+   "pass": true,
+   "detail": "{\"idle\": \"WH_Idle_Zombie\", \"walk\": \"WH_Walk_Zombie\", \"run\": \"WH_Run_Zombie\", \"attack\": \"WH_Attack_Zombie\", \"hit\": \"WH_Hit_Zombie\", \"death\": \"WH_Death\"}"
+  },
+  {
+   "check": "ghoul:no-move-clips",
+   "pass": true,
+   "detail": "actions=['idle', 'walk', 'run', 'attack', 'hit', 'death']"
+  },
+  {
+   "check": "ghoul:rest->WH_Idle_Zombie",
+   "pass": true,
+   "detail": "seen=['WH_Idle_Zombie'] fsm=idle"
+  },
+  {
+   "check": "ghoul:walk->WH_Walk_Zombie",
+   "pass": true,
+   "detail": "seen=['WH_Walk_Zombie'] fsms=['idle']"
+  },
+  {
+   "check": "ghoul:chase->WH_Run_Zombie",
+   "pass": true,
+   "detail": "seen=['WH_Run_Zombie'] fsms=['chase']"
+  },
+  {
+   "check": "ghoul:attack->WH_Attack_Zombie",
+   "pass": true,
+   "detail": "seen=['WH_Run_Zombie', 'WH_Attack_Zombie'] fsms=['attack', 'chase']"
+  },
+  {
+   "check": "ghoul:damage->WH_Hit_Zombie",
+   "pass": true,
+   "detail": "seen=['WH_Hit_Zombie']"
+  },
+  {
+   "check": "ghoul:death->WH_Death",
+   "pass": true,
+   "detail": "seen=['WH_Death'] deathZombieEver=False corpse={'fsm': 'dead', 'deadFall': 1, 'corpseFinalY': 0.01}"
+  },
+  {
+   "check": "ghoul:corpse-settles",
+   "pass": true,
+   "detail": "{\"fsm\": \"dead\", \"deadFall\": 1, \"corpseFinalY\": 0.01}"
+  },
+  {
+   "check": "fallback:missing-WH_Walk_Zombie->WH_Walk",
+   "pass": true,
+   "detail": "{\"idle\": \"WH_Idle_Zombie\", \"walk\": \"WH_Walk\", \"run\": \"WH_Run_Zombie\", \"attack\": \"WH_Attack_Zombie\", \"hit\": \"WH_Hit_Zombie\", \"death\": \"WH_Death\"}"
+  },
+  {
+   "check": "fallback:warned",
+   "pass": true,
+   "detail": [
+    "[WH anim] missing WH_Walk_Zombie, falling back to WH_Walk"
+   ]
+  },
+  {
+   "check": "bandit:legacy-map",
+   "pass": true,
+   "detail": "{\"idle\": \"WH_Idle\", \"walk\": \"WH_Walk\", \"run\": \"WH_Run\", \"attack\": \"WH_Attack1\", \"hit\": \"WH_Hit\", \"death\": \"WH_Death\"}"
+  },
+  {
+   "check": "bandit:plays-legacy-clips-only",
+   "pass": true,
+   "detail": "seen=['WH_Idle', 'WH_Walk']"
+  },
+  {
+   "check": "player:chain-clips-resolve",
+   "pass": true,
+   "detail": "[\"idle\", \"walk\", \"run\", \"attack\", \"hit\", \"death\", \"slashR2L\", \"slashL2R\", \"thrust\"]"
+  },
+  {
+   "check": "player:attack-plays-chain-clip",
+   "pass": true,
+   "detail": [
+    "WH_SlashR2L"
+   ]
+  },
+  {
+   "check": "console:no-errors",
+   "pass": true,
+   "detail": "console=['Failed to load resource: the server responded with a status of 404 (File not found) @ http://127.0.0.1:45231/favicon.ico'] page=[] http=[]"
+  }
+ ],
+ "allPass": true
+}

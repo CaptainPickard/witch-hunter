@@ -157,6 +157,9 @@
     if (seconds) next.fadeIn(seconds);
     next.play();
     this.clip = state;
+    // A superseded hit clip fades out disabled and never emits 'finished';
+    // release the latch here or setLocomotion stays blocked indefinitely.
+    if (state !== 'hit') this.hitActive = false;
   };
 
   CharacterAnim.prototype.setLocomotion = function (speed, running) {
@@ -186,7 +189,7 @@
     if (this.dead || !this.actions.death) return;
     this.dead = true;
     this.hitActive = false;
-    this.transition('death', CFG.oneShotFadeSeconds);
+    this.transition('death', alreadyDead ? 0 : CFG.oneShotFadeSeconds);
     if (alreadyDead) {
       this.actions.death.time = this.actions.death.getClip().duration;
       this.actions.death.paused = true;
@@ -302,7 +305,8 @@
 
   CharacterAnim.prototype.syncEnemy = function (enemy, dt) {
     if (enemy.fsm === 'dead') {
-      this.death();
+      // deadFall 1 before any death clip ran = corpse restored by a region rebuild
+      this.death(enemy.deadFall >= 1);
     } else if (enemy.fsm === 'attack') {
       this.enemyAttack(enemy.attackPhase, enemy.attackPhaseT, enemy.cfg.attackPhase);
     } else {
