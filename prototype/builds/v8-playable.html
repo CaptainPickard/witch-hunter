@@ -804,6 +804,208 @@ html, body {
   opacity: 1;
 }
 
+/* --- C1 cook panel (js/cooking.js). Same modal + frame as the inventory
+       screen (#wh-inv / .inv-panel); amber = the channel progress. --- */
+#wh-cook {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 4, 3, 0.55);
+  z-index: 20;
+  font-family: monospace;
+  color: #d8d2c0;
+  image-rendering: pixelated;
+  user-select: none;
+}
+
+#wh-cook.open {
+  display: flex;
+}
+
+.cook-panel {
+  width: 320px;
+}
+
+.cook-fuel {
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #d8b24a;
+  margin-bottom: 6px;
+}
+
+.cook-hint {
+  text-align: center;
+  font-size: 12px;
+  font-style: italic;
+  letter-spacing: 1px;
+  color: #9a8fb8;
+  margin-bottom: 8px;
+}
+
+.cook-pot {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.cook-pot-names {
+  text-align: center;
+  font-size: 11px;
+  color: #8a7f70;
+  margin: 6px 0;
+  min-height: 13px;
+}
+
+.cook-progress {
+  height: 8px;
+  background: #0f0c09;
+  border: 2px solid #2a241c;
+  margin: 4px 0 8px;
+}
+
+.cook-progress-fill {
+  height: 100%;
+  width: 0;
+  background: #d8b24a;
+}
+
+.cook-btns {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.cook-btn {
+  min-width: 84px;
+  height: 28px;
+  font-family: monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #c9bf9f;
+  background: #221c15;
+  border: 2px solid #5a5344;
+  cursor: pointer;
+}
+
+.cook-btn:hover:not(:disabled) {
+  border-color: #c9a94a;
+}
+
+.cook-btn:disabled {
+  color: #5a5344;
+  border-color: #2a241c;
+  cursor: default;
+}
+
+.cook-ings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 52px;
+}
+
+.inv-slot.cook-spent {
+  opacity: 0.4;
+  cursor: default;
+}
+
+#wh-cook.channel .cook-ings,
+#wh-cook.channel .cook-recipes {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.cook-recipe {
+  display: flex;
+  justify-content: space-between;
+}
+
+/* C1: buff chips under the bars (game.js updateBuffHud) */
+#wh-buffs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.buff-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 6px 2px 2px;
+  font-family: monospace;
+  font-size: 11px;
+  color: #d8d2c0;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid #5a5344;
+}
+
+.buff-icon {
+  padding: 1px 3px;
+  font-weight: bold;
+  color: #1a1510;
+  background: #c07a3a;
+}
+
+.buff-time {
+  color: #d8b24a;
+}
+
+.buff-chip.warn .buff-time {
+  animation: wh-buff-blink 1s steps(2, start) infinite;
+}
+
+@keyframes wh-buff-blink {
+  to { visibility: hidden; }
+}
+
+/* C1: EAT button under the grid (selected food stack) */
+.inv-use-btn {
+  display: block;
+  margin: 8px auto 0;
+  min-width: 84px;
+  height: 26px;
+  font-family: monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #e3d27a;
+  background: #221c15;
+  border: 2px solid #d8b24a;
+  cursor: pointer;
+}
+
+.inv-tip-flavor {
+  font-style: italic;
+}
+
+/* C1: campsite-kit button (INERT stub, C3 deploys). Same frame as the INV
+   button; left/bottom inline from CONFIG.cooking.kitButton. */
+#wh-camp-btn {
+  position: fixed;
+  z-index: 46;
+  min-width: 44px;
+  height: 30px;
+  padding: 0 8px;
+  font-family: monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #c9bf9f;
+  background: #1a1510;
+  border: 2px solid #4a4034;
+  box-shadow: 0 0 0 2px #14110e, inset 0 0 0 1px #2a231b;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+#wh-camp-btn:hover {
+  border-color: #c9a94a;
+}
+
 </style>
 </head>
 <body>
@@ -86741,10 +86943,15 @@ window.WH_CONFIG = {
       { type: 'deadwoodPile', x: 70.8, z: -3.8 },
       { type: 'deadwoodPile', x: -34.3, z: 42.0 },
       { type: 'deadwoodPile', x: -40.0, z: 4.6 },
-      { type: 'mushroomCluster', x: 38.0, z: -6.3 },
-      { type: 'mushroomCluster', x: 59.2, z: -0.5 },
-      { type: 'mushroomCluster', x: 68.5, z: -12.6 },
-      { type: 'mushroomCluster', x: -60.0, z: 23.2 }
+      // C1 CEMETERY ECOLOGY (Nicko 10-05): mushrooms grow ONLY around burial
+      // grounds - woodland just past the cemetery tree ring (in_graveyard
+      // ellipse d 1.06..1.13), never the open yard; W / E / SW / S of the
+      // yard. Same clearances (props >= 4.1m, enemies >= 20m, nodes >= 11m,
+      // spawn >= 36m, path + 2.5m). Was x 38 / 59 / 68.5 east field + x -60.
+      { type: 'mushroomCluster', x: -37.1, z: 19.9 },
+      { type: 'mushroomCluster', x: 37.3, z: -4.0 },
+      { type: 'mushroomCluster', x: -29.7, z: 32.0 },
+      { type: 'mushroomCluster', x: 20.1, z: 42.6 }
     ]
   },
 
@@ -87522,7 +87729,8 @@ window.WH_CONFIG.inventory = {
       consumable: 0xd8b24a,         // amber (canon fire/human accent)
       gear: 0x4ac8d8,               // cyan
       valuable: 0x9ff0f0,           // stage 2: pale cyan (Stolen Coin; vendor/currency not built)
-      ingredient: 0x7cb860          // stage 2: moss green (gathered cooking ingredients)
+      ingredient: 0x7cb860,         // stage 2: moss green (gathered cooking ingredients)
+      food: 0xc07a3a                // C1: cooked food (warm broth brown)
     }
   }
 };
@@ -87652,7 +87860,87 @@ window.WH_CONFIG.items = {
   deadwood:       { id: 'deadwood', name: 'Deadwood', glyph: 'DW', category: 'ingredient' },
   wildMushroom:   { id: 'wildMushroom', name: 'Wild Mushroom', glyph: 'WM', category: 'ingredient' },
   graveMoss:      { id: 'graveMoss', name: 'Grave Moss', glyph: 'GM', category: 'ingredient' },
-  boneShard:      { id: 'boneShard', name: 'Bone Shard', glyph: 'BS', category: 'ingredient' }
+  boneShard:      { id: 'boneShard', name: 'Bone Shard', glyph: 'BS', category: 'ingredient' },
+  // C1 cooked food (CONFIG.cooking). category 'food' = eaten from the
+  // inventory screen (select + E / EAT). useHint.buff keys CONFIG.cooking
+  // .buffs (absent = edible, no buff). weight = item weight (no carry
+  // system reads it yet). flavor = tooltip line.
+  graveSoup:      { id: 'graveSoup', name: 'Grave Soup', glyph: 'GS', category: 'food',
+                    weight: 20, useHint: { kind: 'eat', buff: 'graveSoup' },
+                    flavor: 'Earthy, bitter, strangely fortifying' },
+  blandMush:      { id: 'blandMush', name: 'Bland Mush', glyph: 'BM', category: 'food',
+                    weight: 15, useHint: { kind: 'eat' },
+                    flavor: 'A sad grey mush' }
+};
+
+// C1 (io/missions/2026-10-05-cc-c1-cooking.md): cooking at a fire station.
+// CAMP GROWTH LAW: stations are DATA rows (id, region, prop asset + coords,
+// interact radius, fuel) in a generic registry (js/cooking.js
+// WH_COOKING.stations) - C3's deployed campfire registers the same row
+// shape, nothing here is special-cased to the bandit fire. Only rows listed
+// in stations cook; every other fire (region A dressing fire) is inert.
+window.WH_CONFIG.cooking = {
+  interactRadius: 2.5,              // m from the station prop to cook / refuel
+  channelSeconds: 3,                // cook channel; stand still (move / hit / Cancel interrupts)
+  // keys that break a running channel (movement + roll; player.js bindings)
+  interruptKeys: ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space'],
+  // Buff length. Pre-C2 there is no day clock, so 1 in-game day = this many
+  // REAL seconds; C2 converts it to the day length.
+  buffDurationFallbackSec: 480,
+  fire: {
+    startFuelSec: 240,              // stations with startLit begin with this much fuel (generous for the playtest)
+    burnPerCookSec: 10,             // fuel spent per cook (channel + margin), deducted at cook start
+    burnTickSec: 1,                 // passive burn loop step: fuel drops this much every this many seconds
+    refuelCooks: 4,                 // 1 deadwood refuels to burnPerCookSec * refuelCooks seconds
+    fuelItem: 'deadwood',           // the fuel ingredient (never a cook slot)
+    burntLightIntensity: 0          // light-pool socket intensity while burnt out (0 = dark)
+  },
+  stations: [
+    // Region B bandit campfire (prop banditCampfire x 2.5, z -52)
+    { id: 'banditFire', kind: 'cookFire', regionId: 'darkwood_edge',
+      asset: 'banditCampfire', x: 2.5, z: -52, startLit: true }
+  ],
+  // Recipes: exactly 3 ingredients, order-free, no preview ever. Any other
+  // trio at a fire = fallbackResult (the gamble's waste). known flips true on
+  // the first successful cook (session-only; C4 save writes it).
+  recipes: [
+    { id: 'graveSoup', name: 'Grave Soup',
+      ingredients: ['graveMoss', 'wildMushroom', 'boneShard'],
+      result: 'graveSoup', effect: 'graveSoup', known: false }
+  ],
+  fallbackResult: 'blandMush',
+  // Buffs (first buff system). One instance per id; re-eating refreshes the
+  // duration (no stacking). stat 'hpMax' adds amount to CONFIG.player.hpMax.
+  buffs: {
+    graveSoup: { label: 'Grave Soup', glyph: 'GS', stat: 'hpMax', amount: 20 }
+  },
+  hint: {
+    noMushroomText: 'Mushrooms favor the dead...',   // cryptic by intent (CEMETERY ECOLOGY)
+    hintItem: 'wildMushroom'        // shown once per session when the bag holds none
+  },
+  text: {
+    promptCook: 'E - Cook',
+    promptBurnt: 'Fire burnt out - E to add Deadwood (fuel)',
+    promptLow: 'Fire too low - E to add Deadwood (fuel)',
+    refuelToast: 'The fire takes.',
+    noFuelToast: 'You need Deadwood to feed the fire',
+    tooLowToast: 'The fire is too low to cook',
+    needThreeToast: 'Add three ingredients',
+    missingToast: 'Missing ingredients',
+    cookedToast: 'Cooked: {name}',
+    learnedToast: 'Recipe learned: {name}',
+    interruptToast: 'Cooking interrupted',
+    eatToast: 'Ate {name}',
+    kitToast: 'Campsite kit acquired',
+    kitClickToast: 'Set up camp - needs open ground (coming soon)'
+  },
+  toastChainSec: 2.0,               // gap between chained toasts (cooked -> learned -> kit)
+  // C1 campsite-kit moment: an INERT HUD button revealed on the first recipe
+  // learned (C3 owns deploy). left / bottom px from the viewport's
+  // bottom-left (sits right of the INV button).
+  kitButton: { label: 'CAMP', glyph: '▲', left: 76, bottom: 20 },
+  // HUD buff chip row under the bars (icon + remaining time)
+  buffHud: { warnSec: 30 }          // chip blinks under this many seconds left
 };
 
 // Stage 2 (Nicko 10-05): static gather nodes (js/gather.js WH_GATHER).
@@ -87756,6 +88044,8 @@ window.WH_CONFIG.inventoryUI = {
   closeKeys: ['KeyI', 'Escape'],
   dropKey: 'KeyG',                  // drop 1 of the selected stack; Shift+G = whole stack
   pickupKey: 'KeyE',                // world: collect the nearest item entity in pickupRadius
+  useKey: 'KeyE',                   // C1: screen open = eat the selected food stack
+  useLabel: 'EAT',                  // C1: grid use button (touch path)
   gridCols: 6,                      // 24 slots -> 6 x 4
   toastSeconds: 1.8,                // "Dropped X x1" / "Inventory full" toast lifetime
   // Order B: clickable HUD button, same toggle as the I key. left / bottom
@@ -89087,6 +89377,8 @@ window.WH_CONFIG.inventoryUI = {
     this.inv = opts.inventory;
     this.onOpenChange = opts.onOpenChange || null;
     this.onDrop = opts.onDrop || null;
+    this.onUse = opts.onUse || null;  // C1: (slotIndex) eat a food stack
+    this.canUse = opts.canUse || null;  // C1: (itemId) -> usable from the grid?
     this.equip = opts.equip || null;
     this.open = false;
     this.tab = 'inventory';
@@ -89129,6 +89421,11 @@ window.WH_CONFIG.inventoryUI = {
       self.slotEls.push({ root: s, glyph: glyph, count: count });
     });
     this.invBody.appendChild(grid);
+    // C1: EAT button, shown while the selected stack is usable (food)
+    this.useBtn = el('button', 'inv-use-btn', UI.useLabel + ' [' + keyLabel(UI.useKey) + ']');
+    this.useBtn.type = 'button';
+    this.useBtn.addEventListener('click', function () { self.useSelected(); });
+    this.invBody.appendChild(this.useBtn);
     this.invBody.appendChild(el('div', 'inv-hint',
       keyLabel(UI.dropKey) + ' drop 1  -  Shift+' + keyLabel(UI.dropKey) +
       ' drop stack  -  ' + UI.closeKeys.map(keyLabel).join(' / ') + ' close'));
@@ -89142,8 +89439,10 @@ window.WH_CONFIG.inventoryUI = {
     this.tip = el('div', 'inv-tip');
     this.tipName = el('div', 'inv-tip-name');
     this.tipCat = el('div', 'inv-tip-cat');
+    this.tipFlavor = el('div', 'inv-tip-cat inv-tip-flavor');
     this.tip.appendChild(this.tipName);
     this.tip.appendChild(this.tipCat);
+    this.tip.appendChild(this.tipFlavor);
     root.appendChild(this.tip);
 
     document.getElementById('wh-root').appendChild(root);
@@ -89213,11 +89512,28 @@ window.WH_CONFIG.inventoryUI = {
           this.inv.slots[this.selected] && this.onDrop) {
         this.onDrop(this.selected, e.shiftKey);
       }
+    } else if (e.code === UI.useKey) {
+      e.preventDefault();
+      if (this.tab === 'inventory') this.useSelected();
     }
   };
 
+  // C1: the selected stack is usable (food) -> onUse (game.js -> cooking.eat)
+  InventoryUI.prototype.selectedUsable = function () {
+    var s = this.selected >= 0 ? this.inv.slots[this.selected] : null;
+    return !!(s && this.onUse && this.canUse && this.canUse(s.id));
+  };
+
+  InventoryUI.prototype.useSelected = function () {
+    if (!this.selectedUsable()) return;
+    this.onUse(this.selected);
+    if (!this.inv.slots[this.selected]) this.selected = -1;
+    this.render();
+  };
+
+  // blocked: another modal owns the screen (C1 cook panel) - I / INV ignored
   InventoryUI.prototype.setOpen = function (open) {
-    if (this.open === open) return;
+    if (this.open === open || (open && this.blocked)) return;
     this.open = open;
     this.root.classList.toggle('open', open);
     if (this.openBtn) this.openBtn.classList.toggle('active', open);
@@ -89255,6 +89571,7 @@ window.WH_CONFIG.inventoryUI = {
       // count on every stackable item (x1 included); gear (cap 1) shows none
       v.count.textContent = s && stackCapOf(s.id) > 1 ? String(s.count) : '';
     }
+    this.useBtn.style.display = this.selectedUsable() ? '' : 'none';
     if (this.tipSlot >= 0) this.fillTip(this.tipSlot);
     if (this.tab === 'character') this.renderCharacter();
   };
@@ -89403,7 +89720,8 @@ window.WH_CONFIG.inventoryUI = {
     gear: 'Gear - equip on the CHARACTER tab',
     consumable: 'Consumable',
     valuable: 'Valuable',
-    ingredient: 'Ingredient'
+    ingredient: 'Ingredient',
+    food: 'Food - select + ' + keyLabel(CFG.inventoryUI.useKey) + ' to eat'
   };
 
   InventoryUI.prototype.fillTip = function (i) {
@@ -89412,6 +89730,8 @@ window.WH_CONFIG.inventoryUI = {
     if (!d) { this.tip.style.display = 'none'; return false; }
     this.tipName.textContent = d.name;
     this.tipCat.textContent = CATEGORY_TIP[d.category] || d.category;
+    this.tipFlavor.textContent = d.flavor || '';
+    this.tipFlavor.style.display = d.flavor ? '' : 'none';
     this.tip.style.display = 'block';
     return true;
   };
@@ -89524,6 +89844,550 @@ window.WH_CONFIG.inventoryUI = {
     forEachSlot: function (fn) { if (M.active) M.active.forEachSlot(fn); }
   };
   window.WH_INVENTORY = M;
+})();
+
+</script>
+<script>
+// Witch Hunter prototype - cooking (C1, io/missions/2026-10-05-cc-c1-cooking.md).
+// A fire STATION (data row in CONFIG.cooking.stations) burns fuel; E near a
+// lit station opens the COOK panel (3 ingredient slots, no dish preview),
+// Cook runs a channel (CONFIG.cooking.channelSeconds) and turns the trio
+// into a recipe result or the fallback (Bland Mush). CAMP GROWTH LAW: the
+// station list is a registry (Cooking.addStation) - C3's deployed campfire
+// adds a row of the same shape; nothing keys off the bandit fire itself.
+// Exposes window.WH_COOKING:
+//   Cooking   constructor (game.js owns the one instance)
+//   Station   one fire station { id, kind, regionId, asset, x, z, fuel }
+//   matchRecipe(ids) -> recipe row | null (order-free)
+//   BuffSet   the first buff system (food buffs; game.js applies the stats)
+
+(function () {
+  'use strict';
+
+  var CFG = window.WH_CONFIG;
+  var C = CFG.cooking;
+  var INV = window.WH_INVENTORY;
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  // ---- recipes ----------------------------------------------------------------------
+  // Order-free multiset match of exactly 3 ingredient ids.
+  function matchRecipe(ids) {
+    var key = ids.slice().sort().join('|');
+    for (var i = 0; i < C.recipes.length; i++) {
+      if (C.recipes[i].ingredients.slice().sort().join('|') === key) return C.recipes[i];
+    }
+    return null;
+  }
+
+  // { id: count } for a list of ids (duplicates allowed)
+  function tally(ids) {
+    var t = {};
+    for (var i = 0; i < ids.length; i++) if (ids[i]) t[ids[i]] = (t[ids[i]] || 0) + 1;
+    return t;
+  }
+
+  // ---- stations ---------------------------------------------------------------------
+  // fuel = seconds of burn left. Lit while fuel > 0, or while a cook channel
+  // holds the station (that cook's fuel was deducted at start and is what
+  // burns during the channel, so the passive burn pauses).
+  function Station(row) {
+    this.id = row.id;
+    this.kind = row.kind || 'cookFire';
+    this.regionId = row.regionId;
+    this.asset = row.asset;
+    this.x = row.x;
+    this.z = row.z;
+    this.fuel = row.startLit ? C.fire.startFuelSec : 0;
+    this.burnAcc = 0;
+    this.cooking = false;
+  }
+
+  Station.prototype.isLit = function () {
+    return this.fuel > 0 || this.cooking;
+  };
+
+  // enough fuel to start a cook (>= one channel)
+  Station.prototype.canCook = function () {
+    return this.fuel >= C.channelSeconds;
+  };
+
+  // passive burn: burnTickSec of fuel every burnTickSec seconds
+  Station.prototype.update = function (dt) {
+    if (this.cooking || this.fuel <= 0) { this.burnAcc = 0; return; }
+    var tick = C.fire.burnTickSec;
+    this.burnAcc += dt;
+    while (this.burnAcc >= tick && this.fuel > 0) {
+      this.burnAcc -= tick;
+      this.fuel = Math.max(0, this.fuel - tick);
+    }
+  };
+
+  // ---- buffs (C1: the first buff system) --------------------------------------------
+  // One instance per buff id (CONFIG.cooking.buffs); add() on an active id
+  // refreshes its duration, never stacks. Durations are real seconds until
+  // C2's day clock (CONFIG.cooking.buffDurationFallbackSec).
+  function BuffSet() {
+    this.active = {};                 // id -> { id, remaining, duration }
+  }
+
+  BuffSet.prototype.add = function (id, seconds) {
+    var dur = seconds || C.buffDurationFallbackSec;
+    this.active[id] = { id: id, remaining: dur, duration: dur };
+  };
+
+  BuffSet.prototype.update = function (dt) {
+    for (var id in this.active) {
+      this.active[id].remaining -= dt;
+      if (this.active[id].remaining <= 0) delete this.active[id];
+    }
+  };
+
+  // summed amount of every active buff on stat ('hpMax')
+  BuffSet.prototype.statBonus = function (stat) {
+    var n = 0;
+    for (var id in this.active) {
+      var def = C.buffs[id];
+      if (def && def.stat === stat) n += def.amount;
+    }
+    return n;
+  };
+
+  BuffSet.prototype.list = function () {
+    var self = this;
+    return Object.keys(this.active).map(function (id) { return self.active[id]; });
+  };
+
+  // ---- Cooking (registry + panel + channel) -----------------------------------------
+  // opts: { inventory, player, toast(text), onOpenChange(open),
+  //         dropAtFeet(id, count) }.
+  function Cooking(opts) {
+    var self = this;
+    this.inv = opts.inventory;
+    this.player = opts.player;
+    this.toastFn = opts.toast;
+    this.onOpenChange = opts.onOpenChange || null;
+    this.dropAtFeet = opts.dropAtFeet || null;
+    this.stations = [];
+    for (var i = 0; i < C.stations.length; i++) this.addStation(C.stations[i]);
+    this.open = false;
+    this.station = null;              // station the panel is open on
+    this.slots = [null, null, null];  // reserved ingredient ids (not yet taken)
+    this.channel = null;              // { station, ids, t, fuelSpent }
+    this.hintShown = false;           // C1: cryptic hint once per session
+    this.showHint = false;
+    this.lastHp = this.player.hp;
+    this.toastTimers = [];
+    this.buffs = new BuffSet();
+    this.kitAcquired = false;         // C1 campsite-kit moment (button is inert until C3)
+    this.buildPanel();
+    this.buildKitButton();
+    document.addEventListener('keydown', function (e) { self.onKey(e); });
+  }
+
+  // CAMP GROWTH LAW: any module (C3 deployed campfire) registers here.
+  Cooking.prototype.addStation = function (row) {
+    var st = new Station(row);
+    this.stations.push(st);
+    return st;
+  };
+
+  Cooking.prototype.nearestStation = function (x, z, regionId) {
+    var best = null, bestD2 = C.interactRadius * C.interactRadius;
+    for (var i = 0; i < this.stations.length; i++) {
+      var s = this.stations[i];
+      if (s.regionId !== regionId) continue;
+      var dx = s.x - x, dz = s.z - z;
+      var d2 = dx * dx + dz * dz;
+      if (d2 <= bestD2) { bestD2 = d2; best = s; }
+    }
+    return best;
+  };
+
+  // Light-pool socket intensity for a fire prop (game.js computeFireSockets):
+  // a burnt-out station goes dark, anything else keeps its CONFIG value.
+  Cooking.prototype.socketIntensity = function (regionId, prop, base) {
+    for (var i = 0; i < this.stations.length; i++) {
+      var s = this.stations[i];
+      if (s.regionId === regionId && s.asset === prop.asset &&
+          Math.abs(s.x - prop.x) < 0.01 && Math.abs(s.z - prop.z) < 0.01) {
+        return s.isLit() ? base : C.fire.burntLightIntensity;
+      }
+    }
+    return base;
+  };
+
+  Cooking.prototype.promptFor = function (st) {
+    var T = C.text;
+    if (!st.isLit()) return T.promptBurnt;
+    return st.canCook() ? T.promptCook : T.promptLow;
+  };
+
+  // E on a station: lit with enough fuel = open the panel, else feed it.
+  Cooking.prototype.interactStation = function (st) {
+    if (st.canCook()) {
+      this.setOpen(true, st);
+    } else {
+      this.refuel(st);
+    }
+  };
+
+  // 1 fuel item -> burnPerCookSec * refuelCooks seconds on top of what is left.
+  Cooking.prototype.refuel = function (st) {
+    var F = C.fire;
+    if (this.inv.countOf(F.fuelItem) < 1) {
+      this.toast(C.text.noFuelToast);
+      return false;
+    }
+    this.inv.removeItem(F.fuelItem, 1);
+    st.fuel = Math.max(0, st.fuel) + F.burnPerCookSec * F.refuelCooks;
+    st.burnAcc = 0;
+    this.toast(C.text.refuelToast);
+    return true;
+  };
+
+  // Chained toasts (cooked -> learned -> kit), toastChainSec apart.
+  Cooking.prototype.toast = function (text) {
+    this.toastChain([text]);
+  };
+
+  Cooking.prototype.toastChain = function (lines) {
+    var self = this;
+    this.toastTimers.forEach(clearTimeout);
+    this.toastTimers = [];
+    lines.forEach(function (line, i) {
+      if (i === 0) { self.toastFn(line); return; }
+      self.toastTimers.push(setTimeout(function () { self.toastFn(line); },
+        i * C.toastChainSec * 1000));
+    });
+  };
+
+  // ---- panel (DOM modal, inventory-screen patterns) ---------------------------------
+
+  Cooking.prototype.buildPanel = function () {
+    var self = this;
+    var root = el('div');
+    root.id = 'wh-cook';
+    var panel = el('div', 'inv-panel cook-panel');
+    root.appendChild(panel);
+    panel.appendChild(el('div', 'inv-title', 'COOKING'));
+    this.fuelEl = el('div', 'cook-fuel');
+    panel.appendChild(this.fuelEl);
+    this.hintEl = el('div', 'cook-hint', C.hint.noMushroomText);
+    panel.appendChild(this.hintEl);
+
+    var pot = el('div', 'cook-pot');
+    this.slotEls = [];
+    for (var i = 0; i < 3; i++) {
+      (function (i) {
+        var s = el('div', 'inv-slot cook-slot');
+        var g = el('span', 'inv-glyph');
+        s.appendChild(g);
+        s.title = 'Click to clear';
+        s.addEventListener('click', function () { self.clearSlot(i); });
+        pot.appendChild(s);
+        self.slotEls.push({ root: s, glyph: g });
+      })(i);
+    }
+    panel.appendChild(pot);
+    this.potNameEl = el('div', 'cook-pot-names');
+    panel.appendChild(this.potNameEl);
+
+    var prog = el('div', 'cook-progress');
+    this.progFill = el('div', 'cook-progress-fill');
+    prog.appendChild(this.progFill);
+    panel.appendChild(prog);
+
+    var btns = el('div', 'cook-btns');
+    this.cookBtn = el('button', 'cook-btn', 'COOK');
+    this.cookBtn.type = 'button';
+    this.cookBtn.addEventListener('click', function () { self.startCook(); });
+    this.cancelBtn = el('button', 'cook-btn', 'CANCEL');
+    this.cancelBtn.type = 'button';
+    this.cancelBtn.addEventListener('click', function () { self.cancel(); });
+    btns.appendChild(this.cookBtn);
+    btns.appendChild(this.cancelBtn);
+    panel.appendChild(btns);
+
+    panel.appendChild(el('div', 'inv-sec', 'INGREDIENTS'));
+    this.ingEl = el('div', 'cook-ings');
+    panel.appendChild(this.ingEl);
+    panel.appendChild(el('div', 'inv-sec', 'RECIPES'));
+    this.recEl = el('div', 'cook-recipes');
+    panel.appendChild(this.recEl);
+    panel.appendChild(el('div', 'inv-hint', 'Click an ingredient to add it - click a slot to clear - Esc cancel'));
+
+    document.getElementById('wh-root').appendChild(root);
+    this.root = root;
+  };
+
+  Cooking.prototype.setOpen = function (open, st) {
+    if (this.open === open) return;
+    if (!open && this.channel) this.interrupt();
+    this.open = open;
+    this.station = open ? st : null;
+    if (open) {
+      this.slots = [null, null, null];
+      // cryptic hint: first open with no mushroom in the bag, once per session
+      this.showHint = !this.hintShown && this.inv.countOf(C.hint.hintItem) === 0;
+      if (this.showHint) this.hintShown = true;
+    }
+    this.root.classList.toggle('open', open);
+    this.render();
+    if (this.onOpenChange) this.onOpenChange(open);
+  };
+
+  Cooking.prototype.onKey = function (e) {
+    if (!this.open || e.repeat) return;
+    if (e.code === 'Escape') {
+      e.preventDefault();
+      this.cancel();
+    } else if (this.channel && C.interruptKeys.indexOf(e.code) >= 0) {
+      this.interrupt();             // movement input breaks the channel
+    }
+  };
+
+  // Cancel button / Esc: a running channel is interrupted (refund), then close.
+  Cooking.prototype.cancel = function () {
+    if (this.channel) this.interrupt();
+    this.setOpen(false);
+  };
+
+  // count of id still free to reserve (bag minus the pot's reservations)
+  Cooking.prototype.freeCount = function (id) {
+    var n = this.inv.countOf(id);
+    for (var i = 0; i < this.slots.length; i++) if (this.slots[i] === id) n--;
+    return n;
+  };
+
+  Cooking.prototype.addToPot = function (id) {
+    if (this.channel || this.freeCount(id) <= 0) return;
+    var i = this.slots.indexOf(null);
+    if (i < 0) return;
+    this.slots[i] = id;
+    this.render();
+  };
+
+  Cooking.prototype.clearSlot = function (i) {
+    if (this.channel) return;
+    this.slots[i] = null;
+    this.render();
+  };
+
+  // Known recipe row: fill the pot from the bag and start the channel.
+  Cooking.prototype.cookRecipe = function (r) {
+    if (this.channel) return;
+    var need = tally(r.ingredients);
+    for (var id in need) {
+      if (this.inv.countOf(id) < need[id]) { this.toast(C.text.missingToast); return; }
+    }
+    this.slots = r.ingredients.slice();
+    this.startCook();
+  };
+
+  // Ingredients leave the bag and the cook's fuel leaves the fire at START;
+  // an interrupt gives both back in full.
+  Cooking.prototype.startCook = function () {
+    var st = this.station;
+    if (this.channel || !st) return;
+    if (this.slots.indexOf(null) >= 0) { this.toast(C.text.needThreeToast); this.render(); return; }
+    if (!st.canCook()) { this.toast(C.text.tooLowToast); this.render(); return; }
+    var need = tally(this.slots);
+    for (var id in need) {
+      if (this.inv.countOf(id) < need[id]) { this.toast(C.text.missingToast); return; }
+    }
+    for (id in need) this.inv.removeItem(id, need[id]);
+    var spent = Math.min(C.fire.burnPerCookSec, st.fuel);
+    st.fuel -= spent;
+    st.cooking = true;
+    this.channel = { station: st, ids: this.slots.slice(), t: 0, fuelSpent: spent };
+    this.lastHp = this.player.hp;
+    this.render();
+  };
+
+  Cooking.prototype.interrupt = function () {
+    var ch = this.channel;
+    if (!ch) return;
+    this.channel = null;
+    ch.station.cooking = false;
+    ch.station.fuel += ch.fuelSpent;
+    var back = tally(ch.ids);
+    for (var id in back) {
+      var added = this.inv.addItem(id, back[id]);
+      if (added < back[id] && this.dropAtFeet) this.dropAtFeet(id, back[id] - added);
+    }
+    this.toast(C.text.interruptToast);
+    this.render();
+  };
+
+  Cooking.prototype.finishCook = function () {
+    var ch = this.channel;
+    this.channel = null;
+    ch.station.cooking = false;
+    var recipe = matchRecipe(ch.ids);
+    var resultId = recipe ? recipe.result : C.fallbackResult;
+    var added = this.inv.addItem(resultId, 1);
+    if (added < 1 && this.dropAtFeet) this.dropAtFeet(resultId, 1);
+    var name = INV.itemDef(resultId).name;
+    var lines = [C.text.cookedToast.replace('{name}', name)];
+    if (recipe && !recipe.known) {
+      recipe.known = true;
+      lines.push(C.text.learnedToast.replace('{name}', recipe.name));
+      // campsite-kit moment: same beat as the first recipe learned
+      if (!this.kitAcquired) {
+        this.kitAcquired = true;
+        lines.push(C.text.kitToast);
+        this.kitBtn.style.display = '';
+      }
+    }
+    this.toastChain(lines);
+    this.slots = [null, null, null];
+    this.render();
+  };
+
+  // Per frame: station burn, channel progress + interrupts (hit / death /
+  // fire out), panel auto-close on death.
+  Cooking.prototype.update = function (dt) {
+    for (var i = 0; i < this.stations.length; i++) this.stations[i].update(dt);
+    this.buffs.update(dt);
+    var p = this.player;
+    if (this.channel) {
+      // a hit = hp dropped below last frame (a buff-expiry clamp lands
+      // exactly ON hpMax, so it is not a hit)
+      var hit = p.hp < this.lastHp && p.hp < p.hpMax;
+      if (p.state !== 'alive' || hit || !this.channel.station.isLit()) {
+        this.interrupt();
+      } else {
+        this.channel.t += dt;
+        if (this.channel.t >= C.channelSeconds) this.finishCook();
+      }
+    }
+    this.lastHp = p.hp;
+    if (this.open && p.state !== 'alive') this.setOpen(false);
+    if (this.open) this.renderLive();
+  };
+
+  // per-frame bits only (fuel readout, progress bar)
+  Cooking.prototype.renderLive = function () {
+    var st = this.station;
+    if (!st) return;
+    var secs = Math.ceil(st.fuel);
+    var mm = Math.floor(secs / 60), ss = secs % 60;
+    var txt = st.isLit() ? 'Fire: ' + mm + ':' + (ss < 10 ? '0' : '') + ss : 'Fire: burnt out';
+    if (this.fuelEl.textContent !== txt) this.fuelEl.textContent = txt;
+    var frac = this.channel ? Math.min(1, this.channel.t / C.channelSeconds) : 0;
+    this.progFill.style.width = (frac * 100) + '%';
+  };
+
+  Cooking.prototype.render = function () {
+    var self = this;
+    var busy = !!this.channel;
+    var ids = busy ? this.channel.ids : this.slots;
+    for (var i = 0; i < 3; i++) {
+      var d = ids[i] ? INV.itemDef(ids[i]) : null;
+      this.slotEls[i].root.classList.toggle('filled', !!d);
+      this.slotEls[i].glyph.textContent = d ? d.glyph : '';
+    }
+    this.potNameEl.textContent = ids.map(function (id) {
+      return id ? INV.itemDef(id).name : '-';
+    }).join('  +  ');
+    this.hintEl.style.display = this.showHint ? '' : 'none';
+    this.cookBtn.disabled = busy || ids.indexOf(null) >= 0;
+    this.root.classList.toggle('channel', busy);
+
+    // ingredient stacks in the bag (the fuel item is fuel, never a cook slot)
+    this.ingEl.textContent = '';
+    var seen = {};
+    this.inv.forEachSlot(function (s) {
+      if (!s || seen[s.id]) return;
+      var d = INV.itemDef(s.id);
+      if (!d || d.category !== 'ingredient' || s.id === C.fire.fuelItem) return;
+      seen[s.id] = true;
+      var free = self.freeCount(s.id);
+      var b = el('div', 'inv-slot' + (free > 0 ? ' filled' : ' cook-spent'));
+      b.appendChild(el('span', 'inv-glyph', d.glyph));
+      b.appendChild(el('span', 'inv-count', String(Math.max(0, free))));
+      b.title = d.name;
+      b.addEventListener('click', function () { self.addToPot(s.id); });
+      self.ingEl.appendChild(b);
+    });
+    if (!this.ingEl.children.length) this.ingEl.appendChild(el('div', 'inv-soon', 'No ingredients'));
+
+    // learned recipes (one-click cook)
+    this.recEl.textContent = '';
+    C.recipes.forEach(function (r) {
+      if (!r.known) return;
+      var row = el('div', 'inv-spell cook-recipe');
+      row.appendChild(el('span', 'inv-spell-name', r.name));
+      row.appendChild(el('span', 'inv-gear-hands', r.ingredients.map(function (id) {
+        return INV.itemDef(id).glyph;
+      }).join(' + ')));
+      row.title = 'Cook ' + r.name;
+      row.addEventListener('click', function () { self.cookRecipe(r); });
+      self.recEl.appendChild(row);
+    });
+    if (!this.recEl.children.length) this.recEl.appendChild(el('div', 'inv-soon', 'None known'));
+    this.renderLive();
+  };
+
+  // ---- food use (inventory screen EAT / E on a selected food stack) ---------------
+
+  Cooking.prototype.canEat = function (id) {
+    var d = INV.itemDef(id);
+    return !!(d && d.category === 'food' && d.useHint && d.useHint.kind === 'eat');
+  };
+
+  // Eat 1 from slot i: its buff (if any) starts / refreshes. Returns true when eaten.
+  Cooking.prototype.eat = function (slotIndex) {
+    var s = this.inv.slotAt(slotIndex);
+    if (!s || !this.canEat(s.id) || this.player.state !== 'alive') return false;
+    var d = INV.itemDef(s.id);
+    this.inv.removeFromSlot(slotIndex, 1);
+    if (d.useHint.buff && C.buffs[d.useHint.buff]) this.buffs.add(d.useHint.buff);
+    this.toast(C.text.eatToast.replace('{name}', d.name) +
+      (d.useHint.buff ? '' : ' - ' + d.flavor));
+    return true;
+  };
+
+  // ---- campsite kit (C1 stub: INERT HUD button, C3 owns deploy) ------------------
+  // Same body-level button pattern as the INV button: pointerdown acts,
+  // the mouse events are swallowed so no swing / camera drag leaks through.
+  Cooking.prototype.buildKitButton = function () {
+    var self = this, K = C.kitButton;
+    var btn = el('button', '', K.glyph + ' ' + K.label);
+    btn.id = 'wh-camp-btn';
+    btn.type = 'button';
+    btn.tabIndex = -1;
+    btn.title = 'Campsite kit';
+    btn.style.left = K.left + 'px';
+    btn.style.bottom = K.bottom + 'px';
+    btn.style.display = 'none';       // revealed on the first recipe learned
+    btn.addEventListener('pointerdown', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      self.toast(C.text.kitClickToast);
+    });
+    ['mousedown', 'click', 'contextmenu'].forEach(function (t) {
+      btn.addEventListener(t, function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+    });
+    document.body.appendChild(btn);
+    this.kitBtn = btn;
+  };
+
+  window.WH_COOKING = {
+    BuffSet: BuffSet,
+    Cooking: Cooking,
+    Station: Station,
+    matchRecipe: matchRecipe
+  };
 })();
 
 </script>
@@ -94915,6 +95779,15 @@ window.WH_CONFIG.inventoryUI = {
     document.getElementById('wh-bars').appendChild(focusOuter);
     game.hud.focusBar = focusFill;
 
+    // C1: buff chip row under the bars (icon + remaining time), one chip per
+    // active buff, rebuilt only when the set changes (updateBuffHud)
+    game.hud.hpBarOuter = document.getElementById('wh-hp-bar-outer');
+    var buffRow = document.createElement('div');
+    buffRow.id = 'wh-buffs';
+    document.getElementById('wh-bars').appendChild(buffRow);
+    game.hud.buffRow = buffRow;
+    game.hud.buffChips = {};
+
     // v7: bottom-center belt row: 5 spell slots | divider | 2 consumables
     // | divider | 2 loadout pips I/II
     var belt = document.createElement('div');
@@ -95071,9 +95944,57 @@ window.WH_CONFIG.inventoryUI = {
     game.hud.death.classList.toggle('visible', visible);
   }
 
+  // C1 buff layer: effective stats = CONFIG base + active buffs. hpMax only
+  // for now; current hp is clamped inside the new max (buff expiry).
+  function applyBuffStats() {
+    var p = game.player;
+    p.hpMax = CFG.player.hpMax + game.cooking.buffs.statBonus('hpMax');
+    if (p.hp > p.hpMax) p.hp = p.hpMax;
+  }
+
+  // C1: one chip per active buff: glyph + CONFIG label + m:ss left
+  function updateBuffHud() {
+    var chips = game.hud.buffChips;
+    var list = game.cooking.buffs.list();
+    var live = {};
+    for (var i = 0; i < list.length; i++) {
+      var b = list[i], def = CFG.cooking.buffs[b.id];
+      live[b.id] = true;
+      var c = chips[b.id];
+      if (!c) {
+        c = { root: document.createElement('div'), time: document.createElement('span') };
+        c.root.className = 'buff-chip';
+        var icon = document.createElement('span');
+        icon.className = 'buff-icon';
+        icon.textContent = def.glyph;
+        var label = document.createElement('span');
+        label.className = 'buff-label';
+        label.textContent = def.label + (def.stat === 'hpMax' ? ' +' + def.amount + ' max HP' : '');
+        c.time.className = 'buff-time';
+        c.root.appendChild(icon);
+        c.root.appendChild(label);
+        c.root.appendChild(c.time);
+        game.hud.buffRow.appendChild(c.root);
+        chips[b.id] = c;
+      }
+      var secs = Math.max(0, Math.ceil(b.remaining));
+      var txt = Math.floor(secs / 60) + ':' + ('0' + (secs % 60)).slice(-2);
+      if (c.time.textContent !== txt) c.time.textContent = txt;
+      c.root.classList.toggle('warn', b.remaining <= CFG.cooking.buffHud.warnSec);
+    }
+    for (var id in chips) {
+      if (live[id]) continue;
+      game.hud.buffRow.removeChild(chips[id].root);
+      delete chips[id];
+    }
+  }
+
   function updateHud(dt) {
     var p = game.player;
     game.hud.hpBar.style.width = (p.hp / p.hpMax * 100) + '%';
+    // C1: a buffed hpMax visibly lengthens the HP bar (base max = 100% width)
+    game.hud.hpBarOuter.style.width = (p.hpMax / CFG.player.hpMax * 100) + '%';
+    updateBuffHud();
     game.hud.stamBar.style.width = (p.stamina / p.staminaMax * 100) + '%';
     // v7: armed state = weapon emissive pulse while armedTimer > 0
     if (p.sword && p.sword.material) {
@@ -95634,6 +96555,9 @@ window.WH_CONFIG.inventoryUI = {
       inventory: game.inventory,
       onOpenChange: function (open) { p.setInputSuspended(open); },
       onDrop: dropFromSlot,
+      // C1: food eaten from the grid (EAT / E) - cooking owns buffs
+      onUse: function (i) { return game.cooking.eat(i); },
+      canUse: function (id) { return game.cooking.canEat(id); },
       // Order B CHARACTER tab: the UI only calls these, player owns the rules
       equip: {
         hands: function () { return p.hands; },
@@ -95656,6 +96580,18 @@ window.WH_CONFIG.inventoryUI = {
     // stage 2: gather nodes from every region's CONFIG nodes list
     game.gatherNodes = new window.WH_GATHER.NodeManager(game.scene,
       window.WH_REGION_DEFS.regions);
+    // C1 cooking: fire stations (CONFIG.cooking.stations) + the COOK panel.
+    // The panel suspends input like the inventory screen and blocks I / INV.
+    game.cooking = new window.WH_COOKING.Cooking({
+      inventory: game.inventory,
+      player: p,
+      toast: function (text) { game.inventoryUI.toast(text); },
+      onOpenChange: function (open) {
+        game.inventoryUI.blocked = open;
+        p.setInputSuspended(open);
+      },
+      dropAtFeet: dropAtFeet
+    });
     document.addEventListener('keydown', function (e) {
       if (e.code !== CFG.inventoryUI.pickupKey || e.repeat) return;
       interact();
@@ -95665,12 +96601,26 @@ window.WH_CONFIG.inventoryUI = {
   // S3b: the one world-interact entry point - E key, touch USE button
   // (WH_DEBUG.interact) and future chests/doors all route through here.
   // A ground item in reach wins (G-drop boxes), then an unlooted corpse,
-  // else the nearest ready node.
+  // then a cooking station (C1), else the nearest ready node.
   function interact() {
     if (game.player.inputSuspended || game.player.state !== 'alive') return false;
     var p = game.player.pos;
     return tryPickup() || lootCorpseNearest(p.x, p.z, CFG.corpseLoot.lootRadius) ||
-      tryGather();
+      tryCookStation() || tryGather();
+  }
+
+  // ---- C1 cooking stations (CONFIG.cooking, js/cooking.js) -----------------------
+  function nearestCookStation() {
+    var p = game.player.pos;
+    return game.cooking.nearestStation(p.x, p.z, game.regionManager.logic.activeId);
+  }
+
+  // E: lit station = open the COOK panel; burnt / too low = feed it deadwood.
+  function tryCookStation() {
+    var st = nearestCookStation();
+    if (!st) return false;
+    game.cooking.interactStation(st);
+    return true;
   }
 
   // G on the selected stack: 1 unit, or the whole stack with Shift.
@@ -95680,12 +96630,18 @@ window.WH_CONFIG.inventoryUI = {
     var s = game.inventory.slotAt(slotIndex);
     if (!s) return;
     var taken = game.inventory.removeFromSlot(slotIndex, wholeStack ? s.count : 1);
-    var D = CFG.inventory.drop;
-    if (D.mode === 'void') {
+    if (CFG.inventory.drop.mode === 'void') {
       game.inventoryUI.toast('Dropped ' + window.WH_INVENTORY.itemDef(taken.id).name +
         ' x' + taken.count);
       return;
     }
+    dropAtFeet(taken.id, taken.count);
+  }
+
+  // One item entity carrying count at the player's feet + scatter (G-drop,
+  // C1 cook result / refund that no longer fits the bag).
+  function dropAtFeet(id, count) {
+    var D = CFG.inventory.drop;
     // uniform point in the scatter disc, then the player's own bounds +
     // prop push-out so a drop never lands somewhere it cannot be walked to
     var ang = Math.random() * Math.PI * 2;
@@ -95695,7 +96651,7 @@ window.WH_CONFIG.inventoryUI = {
     var rm = game.regionManager;
     rm.logic.clampPlayer(at);
     if (rm.pushOutOfProps(at, CFG.player.radius)) rm.logic.clampPlayer(at);
-    game.worldItems.spawn(taken.id, taken.count, at.x, at.z, rm.logic.activeId);
+    game.worldItems.spawn(id, count, at.x, at.z, rm.logic.activeId);
   }
 
   // ---- stage 2: enemy drops (CONFIG.drops) ---------------------------------------
@@ -95795,15 +96751,19 @@ window.WH_CONFIG.inventoryUI = {
 
   // One interact prompt (the wh-gather-prompt element) mirroring interact():
   // nothing while a ground item would take the press (pickup has no
-  // prompt), 'USE - Loot' for an unlooted corpse, else 'E - Gather {name}'.
+  // prompt), 'USE - Loot' for an unlooted corpse, the cook station prompt
+  // (C1), else 'E - Gather {name}'.
   function updateInteractPrompt() {
     var p = game.player;
     var activeId = game.regionManager.logic.activeId;
     var text = '';
     if (p.state === 'alive' && !p.inputSuspended &&
         !game.worldItems.nearest(p.pos.x, p.pos.z, CFG.inventory.drop.pickupRadius, activeId)) {
+      var st;
       if (game.corpseLoot.nearest(p.pos.x, p.pos.z, CFG.corpseLoot.lootRadius, activeId)) {
         text = CFG.corpseLoot.promptText;
+      } else if ((st = nearestCookStation())) {
+        text = game.cooking.promptFor(st);   // C1: cook / burnt / too low
       } else {
         var node = nearestGatherNode();
         if (node) text = CFG.gather.promptText.replace('{name}', CFG.gather.nodeTypes[node.type].name);
@@ -95839,6 +96799,7 @@ window.WH_CONFIG.inventoryUI = {
         });
       },
       getPlayer: function () { return game.player; },
+      getCooking: function () { return game.cooking; },   // C1 stations / panel state
       getRegionManager: function () { return game.regionManager; },
       getAssetMeta: function (name) { return window.WH_ASSETS.getMeta(name); },
       getLightPool: function () {
@@ -96168,8 +97129,11 @@ window.WH_CONFIG.inventoryUI = {
       var ox = off[0] * c + off[1] * sn;
       var oz = -off[0] * sn + off[1] * c;
       var sx = p.x + ox * p.scale, sz = p.z + oz * p.scale;
+      // C1: a burnt-out cooking station's socket goes dark
+      var inten = game.cooking ? game.cooking.socketIntensity(rm.logic.activeId, p, sd.intensity)
+        : sd.intensity;
       out.push({ id: p.asset + '@' + p.x + ',' + p.z, x: sx, y: h, z: sz,
-                 intensity: sd.intensity, weight: 1 });
+                 intensity: inten, weight: 1 });
     }
     // Round F: world-level sockets (gate-arch lantern), live in both regions.
     var ws = rm.worldSockets ? rm.worldSockets() : [];
@@ -96343,6 +97307,9 @@ window.WH_CONFIG.inventoryUI = {
     game.playerLight.update(game.player, game.firebolts);
     cemeteryFogTick();  // Round H: graveyard fog ramp (region A)
     skyTick();      // 10-03 order 4: star twinkle clock
+    // C1: fire burn + cook channel (after combat so this frame's hits interrupt)
+    game.cooking.update(dt);
+    applyBuffStats();   // C1: effective hpMax from active food buffs
     updateHud(dt);
     updateInteractPrompt();
     game.renderer.render(game.scene, game.camera);
