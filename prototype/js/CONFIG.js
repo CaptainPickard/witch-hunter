@@ -1446,24 +1446,26 @@ window.WH_CONFIG.dayNight = {
   // panorama pools for the dome (js/daynight.js SkyPool). Each phase shows
   // one pano from its pool, cross-faded over the same blendFrac window as
   // the lighting. Paths are repo-relative and ride WH_ASSETS.resolveUrl like
-  // the GLBs. 2048x512 seam-fixed posterized JPEGs: bottom edge = horizon,
-  // top edge = zenith. The rows above stay the LIGHTING; panos only paint.
+  // the GLBs. 10-06 HD re-emit (Nicko: skies too pixelated): NO posterize,
+  // smooth 2048x682 JPEGs; night = v2 moon-contract set (moon LOW-LEFT,
+  // yawDeg 29). Bottom edge = horizon, top = zenith. Rows above = LIGHTING;
+  // panos only paint.
   pools: {
-    day: ['art-direction/textures/sky2/sky2-day.jpg',       // approved A
-          'art-direction/textures/sky3/sky3-dayB.jpg',
-          'art-direction/textures/sky3/sky3-dayC.jpg',
-          'art-direction/textures/sky3/sky3-dayD.jpg'],
-    dawn: ['art-direction/textures/sky2/sky2-dawn.jpg',     // approved A
-           'art-direction/textures/sky3/sky3-dawnB.jpg',
-           'art-direction/textures/sky3/sky3-dawnC.jpg',
-           'art-direction/textures/sky3/sky3-dawnD.jpg'],
-    dusk: ['art-direction/textures/sky2/sky2-dusk.jpg',     // approved A
-           'art-direction/textures/sky3/sky3-duskB.jpg',
-           'art-direction/textures/sky3/sky3-duskC.jpg',
-           'art-direction/textures/sky3/sky3-duskD.jpg'],
-    night: ['art-direction/textures/sky2/sky2-nightA.jpg',
-            'art-direction/textures/sky2/sky2-nightB.jpg',
-            'art-direction/textures/sky2/sky2-nightC.jpg']
+    day: ['art-direction/textures/sky2v2/sky2-day.jpg',       // approved A
+          'art-direction/textures/sky2v2/sky3-dayB.jpg',
+          'art-direction/textures/sky2v2/sky3-dayC.jpg',
+          'art-direction/textures/sky2v2/sky3-dayD.jpg'],
+    dawn: ['art-direction/textures/sky2v2/sky2-dawn.jpg',     // approved A
+           'art-direction/textures/sky2v2/sky3-dawnB.jpg',
+           'art-direction/textures/sky2v2/sky3-dawnC.jpg',
+           'art-direction/textures/sky2v2/sky3-dawnD.jpg'],
+    dusk: ['art-direction/textures/sky2v2/sky2-dusk.jpg',     // approved A
+           'art-direction/textures/sky2v2/sky3-duskB.jpg',
+           'art-direction/textures/sky2v2/sky3-duskC.jpg',
+           'art-direction/textures/sky2v2/sky3-duskD.jpg'],
+    night: ['art-direction/textures/sky2v2/sky2v2-nightA.jpg',
+            'art-direction/textures/sky2v2/sky2v2-nightB.jpg',
+            'art-direction/textures/sky2v2/sky2v2-nightC.jpg']
   },
   // ROTATION LAW (Nicko 10-06): variant = (dayCounter + areaPoolOffset[area])
   // % pool.length; dayCounter = full clock wraps since beginCycle (0 on the
@@ -1474,9 +1476,11 @@ window.WH_CONFIG.dayNight = {
   // setting distinct offsets (e.g. darkwood_edge: 2).
   areaPoolOffset: { hold_outskirts: 0, darkwood_edge: 0 },
   skyPool: {
-    // pano yaw (deg about +y) so sky2-nightA's painted moon (u ~0.70) sits
-    // on the moon directional's bearing (azimuth 0 = -z)
-    yawDeg: 162,
+    // pano yaw (deg about +y). 10-06 moon reposition: v2 night panos carry
+    // the moon at u ~0.22 (LOW-LEFT contract); yaw 29 puts it ~18 deg to the
+    // player's LEFT of the path (-z) - "above the graveyard path" (Nicko).
+    // All three v2 nights use the same contract so one yaw lines them up.
+    yawDeg: 29,
     areaFadeSec: 1.0,               // region-cross variant swap (brief value)
     preloadFrac: 0.2,               // load the NEXT phase's pano in this first part of a phase
     cacheMax: 6                     // textures alive at once (LRU, shown panos pinned)
