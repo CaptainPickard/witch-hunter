@@ -1,0 +1,71 @@
+AC-A1  release roll (dir, <0.35s)                   => FAIL  rolled=True earlyRoll(f<=up)=True dn=15 up=17 rows=20
+AC-A2  tap-no-dir = backstep                        => PASS  roll=False backstep=True maxIFrames=0.200 stamSpent=20.0
+AC-A3  hold>=0.35s sprint; release no roll          => PASS  sprintDuringHold=True anyRoll=False postRoll=False
+AC-A4  rollIFrameWindow = 0.433                     => FAIL  cfg.iw=0.433 cfg.dur=0.45 iframeFrames=4 target=8.66±2
+AC-B1  cancel matrix: at-threshold fires            => FAIL  no roll after buffered dodge press (pre-build: dropped)
+AC-B1e cancel matrix: 1 frame early ignored         => PASS  firstBlocking_el=1.450 T=1.425 (buffered press)
+AC-B2  chainOpenSec preserved                       => FAIL  slashL2R never began (pre-build: windup press dropped)
+AC-B3  guard-raise delay 0.13s                      => FAIL  hp 100->100 blockActiveSeen=True (pre-build: flag absent)
+[diag] runtime budget exceeded; remaining ACs skipped
+
+========================================================================
+ERPARITY SMOKE SUMMARY  total=8 pass=3 fail=5 crashes=0
+  AC-A1  release roll (dir, <0.35s)                 FAIL
+  AC-A2  tap-no-dir = backstep                      PASS
+  AC-A3  hold>=0.35s sprint; release no roll        PASS
+  AC-A4  rollIFrameWindow = 0.433                   FAIL
+  AC-B1  cancel matrix: at-threshold fires          FAIL
+  AC-B1e cancel matrix: 1 frame early ignored       PASS
+  AC-B2  chainOpenSec preserved                     FAIL
+  AC-B3  guard-raise delay 0.13s                    FAIL
+ZERO CRASHES: YES
+========================================================================
+{
+ "round": "erparity",
+ "total": 8,
+ "pass": 3,
+ "fail": 5,
+ "crashes": 0,
+ "per_ac": [
+  {
+   "id": "A1",
+   "verdict": "FAIL",
+   "detail": "rolled=True earlyRoll(f<=up)=True dn=15 up=17 rows=20"
+  },
+  {
+   "id": "A2",
+   "verdict": "PASS",
+   "detail": "roll=False backstep=True maxIFrames=0.200 stamSpent=20.0"
+  },
+  {
+   "id": "A3",
+   "verdict": "PASS",
+   "detail": "sprintDuringHold=True anyRoll=False postRoll=False"
+  },
+  {
+   "id": "A4",
+   "verdict": "FAIL",
+   "detail": "cfg.iw=0.433 cfg.dur=0.45 iframeFrames=4 target=8.66\u00b12"
+  },
+  {
+   "id": "B1",
+   "verdict": "FAIL",
+   "detail": "no roll after buffered dodge press (pre-build: dropped)"
+  },
+  {
+   "id": "B1e",
+   "verdict": "PASS",
+   "detail": "firstBlocking_el=1.450 T=1.425 (buffered press)"
+  },
+  {
+   "id": "B2",
+   "verdict": "FAIL",
+   "detail": "slashL2R never began (pre-build: windup press dropped)"
+  },
+  {
+   "id": "B3",
+   "verdict": "FAIL",
+   "detail": "hp 100->100 blockActiveSeen=True (pre-build: flag absent)"
+  }
+ ]
+}

@@ -556,7 +556,7 @@ window.WH_CONFIG = {
     sprintStaminaPerSec: 18.0,
     rollSpeed: 14.0,
     rollDuration: 0.45,               // seconds
-    rollIFrameWindow: 0.35,           // seconds of i-frames within a roll
+    rollIFrameWindow: 0.433,          // EPR1: s of i-frames (ER medium roll = 13 frames @ 30 Hz)
     rollStaminaCost: 25.0,
     // 10-04: player attack timing/damage/sweep/stamina moved to
     // CONFIG.moveset.weapons[*].moves (per-weapon moveset framework).
@@ -831,6 +831,18 @@ window.WH_CONFIG = {
 //    its full recover, then starts a fresh chain at chain[0];
 //  - roll may cancel RECOVER only (never windup/strike) and resets the chain.
 // chainCap = moves per chain AND landed hits that arm the v7 finisher.
+// EPR1 (io/specs/devbot-spec-wh-erparity-combat.md, 2026-10-06) replaces the
+// windup / roll rules above with per-move data (ER-style cancel matrix):
+//  - move.cancel = EARLIEST point each input type may interrupt the swing,
+//    as a fraction of windup+strike+recover: dodge = a queued dodge (pressed
+//    in any stage) rolls out; guard = a held RMB raises the block while the
+//    swing plays out; move = walk restores to combat.er.moveCancelWalkMult x
+//    player.walkSpeed. The light (chain) column stays chainOpenSec.
+//  - LMB in windup: ignored before move.bufferFrom x windup, buffered from
+//    it; such a press starts its inputBufferSec lifetime at the strike.
+//  - move.rootMotion = cumulative forward metres per stage [start, end]
+//    (frame-anchored, player.js applyRootMotion) x lunge (legacy multiplier,
+//    1.0); moves without a table keep the legacy strike lunge (metres).
 window.WH_CONFIG.moveset = {
   idlePose: { pos: [0.7, 1.0, -0.3], rot: [2.2, -0.7, 0.6] },
   banditStageMult: 1.6,
@@ -846,20 +858,28 @@ window.WH_CONFIG.moveset = {
       moveMultWhileAttacking: { windup: 0.3, strike: 0, recover: 0 },
       bladeAxisY: -1,               // mesh-local blade axis (-Y tip, see setWeapon)
       // Round D: durations derived from Mixamo impact frames (scratch/swordpack_probe4_rD.json); totals equal clip durations.
+      // EPR1 (spec 3.2-3.3; DESIGN values, playtest-tunable): cancel / bufferFrom /
+      // rootMotion per move; lunge (was 0.8 / 0.8 / 1.4 m) is now the 1.0 table multiplier.
       moves: {
         slashR2L: { pose: 'm2', windup: 0.57, strike: 0.20, recover: 0.73,
                     chainOpenSec: 0.20,
-                    damage: 34, range: 3.2, halfAngleDeg: 70, lunge: 0.8,
-                    staminaCost: 15, damageGhoulMult: 1.15 },
+                    damage: 34, range: 3.2, halfAngleDeg: 70, lunge: 1.0,
+                    staminaCost: 15, damageGhoulMult: 1.15,
+                    cancel: { dodge: 0.90, guard: 0.95, move: 0.65 }, bufferFrom: 0.5,
+                    rootMotion: { windup: [0, 0], strike: [0, 0.9], recover: [0.9, 1.0] } },
         slashL2R: { pose: 'm1', windup: 0.80, strike: 0.26, recover: 0.61,
                     chainOpenSec: 0.26,
-                    damage: 34, range: 3.2, halfAngleDeg: 70, lunge: 0.8,
-                    staminaCost: 15, damageGhoulMult: 1.15 },
+                    damage: 34, range: 3.2, halfAngleDeg: 70, lunge: 1.0,
+                    staminaCost: 15, damageGhoulMult: 1.15,
+                    cancel: { dodge: 0.90, guard: 0.95, move: 0.65 }, bufferFrom: 0.5,
+                    rootMotion: { windup: [0, 0], strike: [0, 0.9], recover: [0.9, 1.0] } },
         // thrust = narrow, longer reach, more damage, heavier recover
         thrust:   { pose: 'm4', windup: 0.40, strike: 0.43, recover: 0.17,
                     chainOpenSec: 0.40,   // last move: full recover anyway
-                    damage: 40, range: 3.8, halfAngleDeg: 22, lunge: 1.4,
-                    staminaCost: 20, damageGhoulMult: 1.15 }
+                    damage: 40, range: 3.8, halfAngleDeg: 22, lunge: 1.0,
+                    staminaCost: 20, damageGhoulMult: 1.15,
+                    cancel: { dodge: 0.90, guard: 0.95, move: 0.80 }, bufferFrom: 0.5,
+                    rootMotion: { windup: [0, 0], strike: [0, 1.5], recover: [1.5, 1.7] } }
       }
     },
     // Quick 2-hit hatchet chain: faster, shorter, lower damage per hit.
@@ -868,16 +888,38 @@ window.WH_CONFIG.moveset = {
       chain: ['hack', 'chop'],
       moveMultWhileAttacking: { windup: 0.4, strike: 0, recover: 0 },
       bladeAxisY: 1,                // axe bit along mesh-local +Y (as enemy.js)
+      // EPR1 F3: neutral cancel columns mirroring the longsword slashes; no bufferFrom
+      // (windup LMB stays ignored) and no rootMotion table (legacy lunge metres).
       moves: {
         hack: { pose: 'claw', windup: 0.10, strike: 0.14, recover: 0.22,
                 chainOpenSec: 0.08,
                 damage: 22, range: 2.6, halfAngleDeg: 60, lunge: 0.5,
-                staminaCost: 10, damageGhoulMult: 1.15 },
+                staminaCost: 10, damageGhoulMult: 1.15,
+                cancel: { dodge: 0.90, guard: 0.95, move: 0.65 } },
         chop: { pose: 'm3', windup: 0.12, strike: 0.14, recover: 0.30,
                 chainOpenSec: 0.30,
                 damage: 27, range: 2.7, halfAngleDeg: 35, lunge: 0.7,
-                staminaCost: 12, damageGhoulMult: 1.15 }
+                staminaCost: 12, damageGhoulMult: 1.15,
+                cancel: { dodge: 0.90, guard: 0.95, move: 0.65 } }
       }
+    }
+  }
+};
+
+// EPR1 (2026-10-06, io/specs/devbot-spec-wh-erparity-combat.md): ER-parity input
+// grammar shared by every move (per-move cancel / bufferFrom / rootMotion are on the
+// CONFIG.moveset moves above). Seconds are the number of record; harness gates
+// convert at the 1 / loop.maxDt = 20 Hz game clock (EPR1-A1).
+window.WH_CONFIG.combat = {
+  er: {
+    dodgeHoldSec: 0.35,             // Space held >= this (inclusive: 7 frames @20 Hz) = sprint, release no roll; shorter = dodge on release
+    guardRaiseSec: 0.13,            // block accept -> blockActive for the hit checks (~ER 4-frame raise)
+    moveCancelWalkMult: 0.5,        // walk from move.cancel.move to the swing's end, x player.walkSpeed
+    backstep: {                     // keyboard dodge tap with no move direction, from neutral
+      duration: 0.30,               // s, backwards hop along facing
+      speedMult: 0.9,               // x player.walkSpeed
+      iframes: 0.20,                // s
+      staminaCost: 20
     }
   }
 };

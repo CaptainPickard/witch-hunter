@@ -1,0 +1,27 @@
+AC14  v2 regression exit=1                       => FAIL [proxy] strafe while locked: cross=0.67 dot=0.00 => FAIL | ASSET AUDIT [root]: 0 glb fetches, non-200: [] => FAIL | V2 VERIFY: FAIL
+AC14  v3 regression                              => FAIL Command '['/usr/local/bin/python3', '/workspace/wh-erparity-test/tests/wh_v3_anim_probes.py']' timed out after 420 secon
+AC13  clean load + hooks [root]                  => PASS title='Witch Hunter v7 - Weave Slice' missing=[] consoleErr=0
+AC1   CONFIG tunables                            => PASS {}
+AC12  debug hook round-trips                     => PASS focus=55 belt=['firebolt', None, None, None, None] loadout=1 offhand=spell
+AC11  HUD focus bar + belt row + pips            => PASS {'focusBar': True, 'label': True, 'beltRow': True, 'pips': True, 'text': True}
+AC2   belt Digit1-5 + empty refusal + glow       => PASS sel=True slots=[0, 0, 0, 0, 0] glowOk=True flash=True cls=block op=0.17
+AC3   cast tax + Firebolt hit                    => PASS tgt=True fb=1 spent=10.00 exp=10.00 dmg=12.0
+AC4   cast preserves combo chain                 => PASS {'index': 2, 'queued': True, 'buffer': 0, 'moveId': None}
+AC5   fizzle on windup damage                    => PASS fired=True fizzleConfirmed=True focusAtReflex=90 focusFinal=91.2 fbAlive=0 fbAll=0
+AC6   Q toggle busy/reset/armed/pip              => PASS lo 1->2 off=shield armed=True combo={'index': 0, 'queued': False, 'buffer': 0, 'moveId': None} busy=True pip=True
+AC7   3-hit chain arms finisher                  => FAIL timer=0.00
+AC7   armed consumed at ~1.5x                    => FAIL base=34.0 fin=34.0 ratio=1.00 consumed=True
+AC7   armed timer expiry disarms                 => PASS 
+AC8   cross-finisher ~2.0x consumed              => FAIL cross=False xratio=1.00 consumed=True alive=alive (armedAtToggle=0)
+AC9   guard break clears armed                   => PASS {'timer': 0, 'cross': False}
+AC10  R potion heal/refuse + T empty             => PASS heal=40.0 fullRefuse=True tRefuse=True cons=[{'id': 'healthPotion', 'charges': 3}, None]->[{'id': 'healthPotion', 'charges': 2}, None]
+AC13  zero console errors [root]                 => FAIL console=[] page=['this.endCombo is not a function', 'this.endCombo is not a function']
+---
+FAIL AC14 v2 regression exit=1 :: [proxy] strafe while locked: cross=0.67 dot=0.00 => FAIL | ASSET AUDIT [root]: 0 glb fetches, non-200: [] => FAIL | V2 VERIFY: FAIL
+FAIL AC14 v3 regression :: Command '['/usr/local/bin/python3', '/workspace/wh-erparity-test/tests/wh_v3_anim_probes.py']' timed out after 420 secon
+FAIL AC7 3-hit chain arms finisher :: timer=0.00
+FAIL AC7 armed consumed at ~1.5x :: base=34.0 fin=34.0 ratio=1.00 consumed=True
+FAIL AC8 cross-finisher ~2.0x consumed :: cross=False xratio=1.00 consumed=True alive=alive (armedAtToggle=0)
+FAIL AC13 zero console errors [root] :: console=[] page=['this.endCombo is not a function', 'this.endCombo is not a function']
+V7 WEAVE: FAIL (12/18 checks pass, regress=False)
+

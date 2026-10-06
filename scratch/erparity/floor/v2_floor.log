@@ -1,0 +1,13 @@
+[root] WH_DEBUG v2 hooks present => PASS
+[root] W after setCameraYaw(90): dx=-1.50 dz=0.00 => PASS
+[root] A strafe: dx=-0.00 dz=1.20 => PASS
+[root] F lock-on: locked=True target=bandit yawErr=0.000 => PASS
+[root] reticle visible while locked => PASS
+[root] strafe while locked: cross=0.67 dot=0.00 => FAIL
+[root] kill target -> unlock => PASS
+[root] region round trip: B=darkwood_edge A=hold_outskirts => PASS
+[root] pageerrors=[] consoleErrors=[] => PASS
+ASSET AUDIT [root]: 43 glb fetches, non-200: [] => PASS
+GLB sample: []
+V2 VERIFY: FAIL
+

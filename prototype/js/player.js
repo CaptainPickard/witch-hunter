@@ -16,6 +16,8 @@
   var WL = ANIM.walk;
   var V7 = window.WH_CONFIG;          // v7 sections: spell/belt/loadout/armed/consumable
   var MV = window.WH_CONFIG.moveset;  // 10-04: per-weapon moveset framework
+  var ER = window.WH_CONFIG.combat.er; // EPR1: ER-parity input grammar / backstep / guard raise
+  var GATE_EPS = 1e-6;                // EPR1: float slack - a cancel point hit exactly counts as reached
 
   function deg2rad(d) { return d * Math.PI / 180; }
   function smooth(p) { return p * p * (3 - 2 * p); }   // smoothstep ease
@@ -49,6 +51,17 @@
     this.rolling = false;
     this.rollTimer = 0;
     this.rollDir = new THREE.Vector3(0, 0, 1);
+    this.backstep = false;            // EPR1: no-direction dodge tap = backwards hop
+    this.backstepTimer = 0;
+    // EPR1: keyboard Space grammar (tap = dodge on release, hold = sprint),
+    // sampled once per sim frame by sampleDodgeInput()
+    this.dodgeKeyDown = false;        // raw Space state from key events
+    this.dodgePressLatch = false;     // a press since the last sim-frame sample
+    this.dodgeHeld = false;           // sampled hold in progress
+    this.dodgeHoldMs = 0;             // integer ms held (sum of round(dt * 1000))
+    this.dodgeSprint = false;         // hold reached combat.er.dodgeHoldSec
+    this.dodgeQueued = false;         // dodge waiting for the swing's dodge cancel point
+    this.dodgeDir = { x: 0, z: 0 };   // input direction at the queued release (0 = none)
     this.attacking = false;
     this.attackTimer = 0;
     this.attackDidHit = false;
@@ -56,6 +69,10 @@
     this.idleTime = 0;                // seconds without movement input
     this.idlePhase = 0;               // breathing phase
     this.lungeLeft = 0;               // strike lunge distance remaining
+    this.rootMotionApplied = 0;       // EPR1: metres of the swing's rootMotion table applied
+    this.rootMotionStage = null;      // EPR1: stage the frame-anchored progress tracks
+    this.rootMotionT0 = 0;            // EPR1: first sampled time into that stage
+    this.rootMotionSpan = 0;          // EPR1: last-frame time minus rootMotionT0
     this.comboIndex = 0;              // v5: chain position of the current swing
     this.comboQueued = false;         // v5: next chain input buffered (strike/recover)
     this.comboBufferTimer = 0;        // 10-04: seconds the buffered input stays fresh
@@ -71,6 +88,9 @@
     this.parryTimer = 0;              // seconds left in the parry window
     this.guardBroken = false;         // guard break active (cannot block)
     this.guardBreakTimer = 0;         // seconds left of guard-break stun
+    this.blockActive = false;         // EPR1-A3: guard raised (guardRaiseSec after accept); hit checks read this
+    this.guardRaiseTimer = 0;         // EPR1: seconds until blockActive
+    this.guardQueued = false;         // EPR1: RMB held in a swing, before its guard cancel point
 
     // v7: focus pool (mirrors the stamina pattern)
     this.focus = CFG.focusMax;
@@ -246,7 +266,9 @@
       self.keys[e.code] = true;
       if (e.code === 'Space') {
         e.preventDefault();
-        self.tryRoll();
+        // EPR1 (A1-A3): the dodge acts on RELEASE (sampleDodgeInput); latch the
+        // press so a down+up inside one sim frame still counts as a tap.
+        if (!e.repeat) { self.dodgeKeyDown = true; self.dodgePressLatch = true; }
       }
       if (e.code === 'KeyF' && !e.repeat) {
         e.preventDefault();
@@ -265,6 +287,7 @@
     });
     document.addEventListener('keyup', function (e) {
       self.keys[e.code] = false;
+      if (e.code === 'Space') self.dodgeKeyDown = false;   // EPR1: release -> sampleDodgeInput
     });
     document.addEventListener('mousedown', function (e) {
       if (e.button === 0) {
@@ -320,46 +343,149 @@
     if (k['KeyD']) ix += 1;
     this.moveInput.x = ix;
     this.moveInput.z = iz;
-    this.sprinting = !!(k['ShiftLeft'] || k['ShiftRight']);
+    // EPR1 (A3): a held dodge (>= combat.er.dodgeHoldSec) sprints like Shift
+    this.sprinting = !!(k['ShiftLeft'] || k['ShiftRight']) || this.dodgeSprint;
   };
 
-  // 10-04 (Nicko, souls-style): roll cancels attack RECOVER only - windup
-  // and strike are committed. Attack cannot start during roll. v7: also
-  // refused during the loadout toggle busy window.
+  // EPR1: world-space unit direction of the live WASD / touch-stick keys on
+  // the camera-yaw basis update() walks on, or null with no move input.
+  Player.prototype.inputDirWorld = function () {
+    var k = this.keys;
+    var mx = (k['KeyD'] ? 1 : 0) - (k['KeyA'] ? 1 : 0);
+    var mz = (k['KeyS'] ? 1 : 0) - (k['KeyW'] ? 1 : 0);
+    if (mx === 0 && mz === 0) return null;
+    var len = Math.sqrt(mx * mx + mz * mz);
+    mx /= len; mz /= len;
+    var fx = Math.sin(this.camYaw + Math.PI), fz = Math.cos(this.camYaw + Math.PI);
+    return { x: fx * (-mz) - fz * mx, z: fz * (-mz) + fx * mx };
+  };
+
+  // EPR1 (spec 3.1, EPR1-A7): tryRoll() keeps meaning "roll now" for the
+  // touch dodge button - never a backstep, no tap/hold gesture (the
+  // keyboard Space grammar is sampleDodgeInput below).
   Player.prototype.tryRoll = function () {
-    if (this.state !== 'alive' || this.rolling || this.toggling) return;
-    if (this.stamina < CFG.rollStaminaCost) return;
+    this.requestDodge(false);
+  };
+
+  // EPR1: single dodge entry. allowBackstep = keyboard tap, where a tap
+  // with no move direction from neutral is a backstep. During a swing the
+  // dodge is queued from any stage and rolls out at the move's dodge cancel
+  // point (CONFIG move.cancel.dodge replaces the 10-04 recover-only rule);
+  // it replaces a buffered LMB (latest input wins). Refused during a roll /
+  // backstep and (v7) during the loadout toggle busy window.
+  Player.prototype.requestDodge = function (allowBackstep) {
+    if (this.state !== 'alive' || this.rolling || this.backstep || this.toggling) return;
+    var dir = this.inputDirWorld();
     if (this.attacking) {
-      if (this.getAttackStage() !== 'recover') return;  // windup/strike locked
-      this.cancelAttack();                              // roll out of recovery
+      this.dodgeQueued = true;
+      this.dodgeDir.x = dir ? dir.x : 0;
+      this.dodgeDir.z = dir ? dir.z : 0;
+      this.comboQueued = false;
+      this.comboBufferTimer = 0;
+      if (this.cancelOpen('dodge')) this.consumeQueuedDodge();
+      return;
     }
+    if (!dir && allowBackstep) this.startBackstep();
+    else this.startRoll(dir);
+  };
+
+  // EPR1: fire the queued dodge (dodge point reached, or the swing is over)
+  // as a ROLL: live input direction, else the direction at release, else
+  // facing. Refused (dead / toggling / stamina) it is dropped, swing kept.
+  Player.prototype.consumeQueuedDodge = function () {
+    this.dodgeQueued = false;
+    if (this.state !== 'alive' || this.toggling) return;
+    if (this.stamina < CFG.rollStaminaCost) return;
+    var dir = this.inputDirWorld();
+    if (!dir && (this.dodgeDir.x !== 0 || this.dodgeDir.z !== 0)) dir = this.dodgeDir;
+    if (this.attacking) this.cancelAttack();          // roll out of the swing (chain resets)
+    this.startRoll(dir);
+  };
+
+  Player.prototype.startRoll = function (dir) {
+    if (this.stamina < CFG.rollStaminaCost) return false;
     this.spendStamina(CFG.rollStaminaCost);
     this.rolling = true;
     this.rollTimer = CFG.rollDuration;
     this.iframes = CFG.rollIFrameWindow;
     this.endBlock();                        // v6: roll takes priority over block
-    // roll direction: current move input direction, or facing if idle
-    var dir = new THREE.Vector3(this.moveDirWorld.x, 0, this.moveDirWorld.z);
-    if (dir.lengthSq() < 0.01) {
-      dir.set(Math.sin(this.yaw), 0, Math.cos(this.yaw));
+    // roll direction: the input direction, or facing when there is none
+    var d = new THREE.Vector3(dir ? dir.x : 0, 0, dir ? dir.z : 0);
+    if (d.lengthSq() < 0.01) {
+      d.set(Math.sin(this.yaw), 0, Math.cos(this.yaw));
     }
-    dir.normalize();
-    this.rollDir.copy(dir);
+    d.normalize();
+    this.rollDir.copy(d);
+    return true;
   };
 
-  // v6: RMB down. Refused while rolling, attacking (any stage), staggered
-  // (dying/dead), or guard-broken. On success opens the parry window.
-  // Cannot re-block until stamina has recovered past guardBreakMinStamina.
+  // EPR1 (A2): backstep = procedural backwards hop along facing (update()
+  // slides the group; no clip change), short i-frames, chain reset.
+  Player.prototype.startBackstep = function () {
+    var BS = ER.backstep;
+    if (this.stamina < BS.staminaCost) return false;
+    this.spendStamina(BS.staminaCost);
+    this.backstep = true;
+    this.backstepTimer = BS.duration;
+    this.iframes = BS.iframes;
+    this.endBlock();
+    this.endCombo();
+    return true;
+  };
+
+  // EPR1 (A1-A3, EPR1-A2/A6): keyboard Space grammar, sampled once per sim
+  // frame by update(). A press latched since the last frame counts as held
+  // for this frame, so a tap inside one frame still registers; its release
+  // acts on the next frame. Hold time sums round(dt * 1000) ms per frame
+  // (exactly 50 at the 20 Hz clamp): an integer boundary, no float drift.
+  // Held >= dodgeHoldSec (inclusive: 7 frames = sprint side) sprints while
+  // held and the release does nothing; a shorter hold dodges on release.
+  Player.prototype.sampleDodgeInput = function (dt) {
+    var down = this.dodgeKeyDown || this.dodgePressLatch;
+    var holdMs = Math.round(ER.dodgeHoldSec * 1000);
+    this.dodgePressLatch = false;
+    if (down) {
+      if (!this.dodgeHeld) { this.dodgeHeld = true; this.dodgeHoldMs = 0; }
+      this.dodgeHoldMs += Math.round(dt * 1000);
+      this.dodgeSprint = this.dodgeHoldMs >= holdMs;
+      return;
+    }
+    if (!this.dodgeHeld) return;
+    var tap = this.dodgeHoldMs < holdMs;
+    this.dodgeHeld = false;
+    this.dodgeHoldMs = 0;
+    this.dodgeSprint = false;
+    if (tap) this.requestDodge(true);
+  };
+
+  // v6: RMB down. Refused while rolling (EPR1: or backstepping), dying/dead,
+  // or guard-broken. On success opens the parry window. Cannot re-block until
+  // stamina has recovered past guardBreakMinStamina. EPR1 (B3, EPR1-A5):
+  // blocking still flips on accept; the hit checks read blockActive, set
+  // guardRaiseSec later. During a swing the held RMB is queued and accepted
+  // at the move's guard cancel point (the swing plays out underneath).
   Player.prototype.tryBlock = function () {
-    if (this.state !== 'alive' || this.rolling || this.attacking) return;
+    this.guardQueued = false;
+    if (this.state !== 'alive' || this.rolling || this.backstep) return;
     if (this.guardBroken) return;
     if (this.stamina < window.WH_CONFIG.block.guardBreakMinStamina) return;
+    if (this.attacking && !this.cancelOpen('guard')) {
+      this.guardQueued = true;
+      return;
+    }
+    this.comboQueued = false;               // EPR1: the raised guard wins the buffer
+    this.comboBufferTimer = 0;
     this.blocking = true;
+    this.blockActive = false;
+    this.guardRaiseTimer = ER.guardRaiseSec;
     this.parryTimer = window.WH_CONFIG.block.parryWindow;
   };
 
   Player.prototype.endBlock = function () {
     this.blocking = false;
+    this.blockActive = false;
+    this.guardRaiseTimer = 0;
+    this.guardQueued = false;
     this.parryTimer = 0;
   };
 
@@ -435,7 +561,7 @@
   // guard break/dead/focus). Windup-stage attacks ALLOW the weave cast.
   Player.prototype.canCast = function () {
     if (this.state !== 'alive') return false;
-    if (this.rolling || this.toggling || this.regripTimer > 0) return false;
+    if (this.rolling || this.backstep || this.toggling || this.regripTimer > 0) return false;   // EPR1: backstep = roll
     if (this.guardBroken) return false;
     if (this.offhand !== 'spell') return false;
     if (this.attacking && this.getAttackStage() !== 'windup') return false;
@@ -536,6 +662,8 @@
   // 3. blocking + attacker in block arc -> chip damage + stamina drain,
   //    guard break when stamina empties
   // 4. otherwise full damage
+  // EPR1-A5: 2 and 3 read blockActive (guard raised guardRaiseSec after the
+  // RMB accept), not blocking.
   // Returns true when hp damage (full or chip) was applied.
   Player.prototype.resolveIncomingHit = function (damage, attacker) {
     if (this.state !== 'alive') return false;
@@ -556,7 +684,7 @@
 
     // 2. parry: timing window open AND attacker in the block arc (spec:
     // attacker behind + blocking = full damage, no parry).
-    if (this.blocking && this.parryTimer > 0 && attacker &&
+    if (this.blockActive && this.parryTimer > 0 && attacker &&
         attacker.enterStagger && attackerInArc) {
       this.spendStamina(BLK.parryStaminaCost);
       attacker.enterStagger(BLK.riposteStaggerDur);
@@ -567,7 +695,7 @@
     }
 
     // 3. block: only if attacker is within the block arc of player facing
-    if (this.blocking && attacker && attacker.pos && attackerInArc) {
+    if (this.blockActive && attacker && attacker.pos && attackerInArc) {
       var staminaCost = Math.max(1, Math.round(damage * BLK.staminaCostMult));
       this.stamina = Math.max(0, this.stamina - staminaCost);
       this.staminaRegenBlock = CFG.staminaRegenDelay;
@@ -587,18 +715,24 @@
     return this.takeDamage(damage);
   };
 
-  // 10-04 chain gating (Nicko: combo spam -> real chains). Windup presses
-  // are IGNORED; strike/recover presses are BUFFERED for inputBufferSec and
-  // fired by update() once the swing reaches its chain window. A press while
-  // idle always starts the chain at chain[0].
+  // 10-04 chain gating (Nicko: combo spam -> real chains). Strike/recover
+  // presses are BUFFERED for inputBufferSec and fired by update() once the
+  // swing reaches its chain window. EPR1 (B5): windup presses are IGNORED
+  // before move.bufferFrom x windup and BUFFERED from it (their lifetime
+  // starts at the strike); a buffered LMB replaces a queued dodge. A press
+  // while idle always starts the chain at chain[0].
   Player.prototype.tryAttack = function () {
-    if (this.state !== 'alive' || this.rolling || this.toggling) return;
+    if (this.state !== 'alive' || this.rolling || this.backstep || this.toggling) return;
     if (this.blocking) return;              // v6: must release RMB to attack
     if (this.attacking) {
       var stage = this.getAttackStage();
-      if (stage === 'strike' || stage === 'recover') {
+      var M = this.attackMove;
+      if (stage === 'strike' || stage === 'recover' ||
+          (typeof M.bufferFrom === 'number' &&
+           this.attackTotal - this.attackTimer + GATE_EPS >= M.bufferFrom * M.windup)) {
         this.comboQueued = true;
         this.comboBufferTimer = MV.inputBufferSec;
+        this.dodgeQueued = false;
       }
       return;
     }
@@ -620,6 +754,8 @@
     this.attackSerial++;
     this.attackDidHit = false;
     this.lungeLeft = M.lunge;
+    this.rootMotionApplied = 0;             // EPR1: each swing runs its own rootMotion table
+    this.rootMotionStage = null;
     // v7: armed finisher consumption (armedTimer > 0 = attack at 1.5x;
     // crossArmed = cross-finisher at 2.0x; both consumed on this attack)
     if (this.armedTimer > 0 && this.crossArmed) {
@@ -652,9 +788,22 @@
     this.comboIndex = 0;
     this.comboQueued = false;
     this.comboBufferTimer = 0;
+    this.dodgeQueued = false;                // EPR1
     this.chainHits = 0;
     this.recoverFullyElapsed = true;
     this.resetWeaponPose();
+  };
+
+  // A swing that ends without chaining (full recover, windup roll-cancel,
+  // respawn) closes the chain: the next press is a fresh m1 with no carried
+  // chain hits, so comboIndex stays inside 0..cap-1. EPR1: restored - the
+  // 33d0d80 definition was lost on origin/dev while toggleLoadout() and
+  // respawnAt() still call it (KeyQ threw "endCombo is not a function").
+  Player.prototype.endCombo = function () {
+    this.recoverFullyElapsed = true;
+    this.comboIndex = 0;
+    this.chainHits = 0;
+    this.comboQueued = false;
   };
 
   // 10-04: stage + phase clock of the current swing from its CONFIG move.
@@ -678,6 +827,25 @@
   Player.prototype.getAttackStage = function () {
     var ph = this.getAttackPhase();
     return ph ? ph.stage : null;
+  };
+
+  // EPR1 cancel matrix: elapsed (s) from which input type col ('dodge' |
+  // 'guard' | 'move') may interrupt the current swing = CONFIG
+  // move.cancel[col] x (windup + strike + recover). Without the column the
+  // pre-EPR1 law holds: dodge from recover start, guard / move never. The
+  // light column stays chainOpenSec (update()).
+  Player.prototype.getCancelPoint = function (col) {
+    var M = this.attackMove;
+    if (!M) return 0;
+    if (M.cancel && typeof M.cancel[col] === 'number') return M.cancel[col] * this.attackTotal;
+    return col === 'dodge' ? M.windup + M.strike : Infinity;
+  };
+
+  // True once the current swing has reached its cancel point for col (a
+  // point reached exactly, up to float noise, counts as reached).
+  Player.prototype.cancelOpen = function (col) {
+    if (!this.attacking) return false;
+    return this.attackTotal - this.attackTimer + GATE_EPS >= this.getCancelPoint(col);
   };
 
   Player.prototype.spendStamina = function (amount) {
@@ -756,6 +924,44 @@
     this.lungeLeft -= lungeStep;
   };
 
+  // EPR1 (spec 3.3, C1-C3): attack root motion along facing from the move's
+  // FRAME TABLE (CONFIG move.rootMotion[stage] = cumulative forward metres
+  // [start, end], times move.lunge). Frame-anchored: a stage's first sim
+  // frame sits at its start value and its last at its end value, linear in
+  // frame index between, so the stage-change frame adds nothing (20 Hz
+  // slashR2L strike = 4 frames: 0 / 0.3 / 0.6 / 0.9 m). The last-frame time
+  // is predicted from the current dt; a shortfall lands on the next stage's
+  // first frame. Moves without a table keep the legacy strike lunge
+  // (move.lunge metres drained over the strike, unchanged).
+  Player.prototype.applyRootMotion = function (dt) {
+    var M = this.attackMove;
+    var ph = this.getAttackPhase();
+    if (!M.rootMotion) {
+      if (ph.stage !== 'strike' || this.lungeLeft <= 0) return;
+      var lungeVel = M.lunge / M.strike;
+      var lungeStep = Math.min(lungeVel * dt, this.lungeLeft);
+      this.pos.x += Math.sin(this.yaw) * lungeStep;
+      this.pos.z += Math.cos(this.yaw) * lungeStep;
+      this.lungeLeft -= lungeStep;
+      return;
+    }
+    var seg = M.rootMotion[ph.stage];
+    if (!seg) return;
+    if (this.rootMotionStage !== ph.stage) {
+      this.rootMotionStage = ph.stage;
+      this.rootMotionT0 = ph.t;
+      this.rootMotionSpan = Math.max(0, Math.floor((ph.dur - ph.t - GATE_EPS) / dt)) * dt;
+    }
+    var p = this.rootMotionSpan > 0 ?
+      Math.min(1, Math.max(0, (ph.t - this.rootMotionT0) / this.rootMotionSpan)) : 1;
+    var scale = typeof M.lunge === 'number' ? M.lunge : 1;
+    var step = (seg[0] + (seg[1] - seg[0]) * p) * scale - this.rootMotionApplied;
+    if (step <= 0) return;
+    this.pos.x += Math.sin(this.yaw) * step;
+    this.pos.z += Math.cos(this.yaw) * step;
+    this.rootMotionApplied += step;
+  };
+
   Player.prototype.update = function (dt, clampToBounds) {
     this.stateTime += dt;
 
@@ -768,6 +974,12 @@
       if (this.guardBreakTimer <= 0) this.guardBroken = false;
     }
     if (this.blocking && (this.rolling || this.state !== 'alive')) this.endBlock();
+    // EPR1 (B3, EPR1-A5): the accepted block turns ACTIVE for the hit checks
+    // guardRaiseSec later (3 frames at the 20 Hz clamp).
+    if (this.blocking) {
+      if (this.guardRaiseTimer > 0) this.guardRaiseTimer = Math.max(0, this.guardRaiseTimer - dt);
+      this.blockActive = this.guardRaiseTimer <= 0;
+    }
     if (this.staminaRegenBlock > 0) {
       this.staminaRegenBlock -= dt;
     } else if (this.stamina < this.staminaMax) {
@@ -805,6 +1017,9 @@
     this.offhand = this.activeLoadout === 2 ? 'shield' : 'spell';
     if (this.blocking && this.offhand !== 'shield') this.endBlock();
 
+    // EPR1: keyboard Space grammar (dodge on release / sprint while held)
+    this.sampleDodgeInput(dt);
+
     if (this.state === 'dying') {
       this.deathTilt = Math.min(Math.PI / 2, this.deathTilt + dt * 3);
       if (this.body && !this.anim) this.body.rotation.x = -this.deathTilt;
@@ -815,8 +1030,10 @@
 
     if (this.attacking) {
       this.attackTimer -= dt;
-      // 10-04: buffered input expires after inputBufferSec.
-      if (this.comboQueued) {
+      // 10-04: buffered input expires after inputBufferSec. EPR1 (B5): a
+      // press buffered in windup (from bufferFrom) starts its lifetime at
+      // the strike, so it survives to the chain window.
+      if (this.comboQueued && this.getAttackStage() !== 'windup') {
         this.comboBufferTimer -= dt;
         if (this.comboBufferTimer <= 0) { this.comboQueued = false; this.comboBufferTimer = 0; }
       }
@@ -829,6 +1046,11 @@
           ph.t >= this.attackMove.chainOpenSec) {
         this.startAttack(this.comboIndex + 1);
       }
+      // EPR1 cancel matrix: a queued dodge rolls out at the move's dodge
+      // point; a held RMB raises the guard at its guard point while the
+      // swing plays out (hits wait for blockActive).
+      if (this.dodgeQueued && this.cancelOpen('dodge')) this.consumeQueuedDodge();
+      if (this.guardQueued && this.cancelOpen('guard')) this.tryBlock();
       if (this.attacking && this.attackTimer <= 0) {
         var rebuffered = this.comboQueued;
         this.attacking = false;
@@ -840,6 +1062,12 @@
         // chain fully resolved: a still-fresh press starts a new chain
         if (rebuffered) this.startAttack(0);
       }
+    }
+    // EPR1: inputs still queued once the swing is over (fully recovered or
+    // cancelled) act now.
+    if (!this.attacking) {
+      if (this.dodgeQueued) this.consumeQueuedDodge();
+      if (this.guardQueued) this.tryBlock();
     }
 
     this.updateLockTracking(dt);
@@ -866,6 +1094,14 @@
         if (this.body) { this.body.rotation.x = 0; this.body.rotation.z = 0; }
         this.resetWeaponPose();
       }
+    } else if (this.backstep) {
+      // EPR1 (A2): backwards hop along facing - the group slides, the body
+      // keeps its pose (no clip change).
+      this.backstepTimer -= dt;
+      var bsStep = CFG.walkSpeed * ER.backstep.speedMult * dt;
+      this.pos.x -= Math.sin(this.yaw) * bsStep;
+      this.pos.z -= Math.cos(this.yaw) * bsStep;
+      if (this.backstepTimer <= 0) this.backstep = false;
     } else {
       // camera-relative movement
       this.collectMoveInput();
@@ -880,7 +1116,13 @@
         if (sprintingNow) {
           this.spendStamina(CFG.sprintStaminaPerSec * dt);
         }
-        if (this.attacking) speed *= this.getWeaponDef().moveMultWhileAttacking[this.getAttackStage()] || 0;
+        // EPR1 (B4): from the move cancel point to the swing's end the walk
+        // restores to moveCancelWalkMult x walkSpeed; before it the per-stage
+        // moveMultWhileAttacking gates walk input exactly as before.
+        if (this.attacking) {
+          if (this.cancelOpen('move')) speed = CFG.walkSpeed * ER.moveCancelWalkMult;
+          else speed *= this.getWeaponDef().moveMultWhileAttacking[this.getAttackStage()] || 0;
+        }
         if (this.blocking) speed *= window.WH_CONFIG.block.moveMult;  // v6
         this.animMoveSpeed = speed;
         // camera yaw basis: camera forward projected on xz plane.
@@ -940,16 +1182,10 @@
       }
     }
 
-    // Strike lunge along facing (FSM-owned for both the clip and stand-in
-    // paths): velocity = move.lunge / move.strike, dt-scaled so the full
-    // lunge drains at any frame rate. Runs before the bounds clamp.
-    if (this.attacking && this.getAttackStage() === 'strike' && this.lungeLeft > 0) {
-      var lungeVel = this.attackMove.lunge / this.attackMove.strike;
-      var lungeStep = Math.min(lungeVel * dt, this.lungeLeft);
-      this.pos.x += Math.sin(this.yaw) * lungeStep;
-      this.pos.z += Math.cos(this.yaw) * lungeStep;
-      this.lungeLeft -= lungeStep;
-    }
+    // Attack root motion along facing (FSM-owned for both the clip and
+    // stand-in paths): EPR1 rootMotion table, or the legacy strike lunge
+    // without one (applyRootMotion). Runs before the bounds clamp (C3).
+    if (this.attacking) this.applyRootMotion(dt);
 
     if (clampToBounds) clampToBounds(this);
     this.yawFrame.rotation.y = this.yaw;
@@ -1089,6 +1325,9 @@
     this.state = 'alive';
     this.stateTime = 0;
     this.rolling = false;
+    this.backstep = false;                  // EPR1
+    this.backstepTimer = 0;
+    this.dodgeQueued = false;
     this.attacking = false;
     this.attackTimer = 0;
     this.attackDidHit = false;
