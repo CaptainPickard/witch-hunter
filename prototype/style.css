@@ -795,3 +795,123 @@ html, body {
 #wh-gather-prompt.visible {
   opacity: 1;
 }
+
+/* --- C1 cook panel (js/cooking.js). Same modal + frame as the inventory
+       screen (#wh-inv / .inv-panel); amber = the channel progress. --- */
+#wh-cook {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 4, 3, 0.55);
+  z-index: 20;
+  font-family: monospace;
+  color: #d8d2c0;
+  image-rendering: pixelated;
+  user-select: none;
+}
+
+#wh-cook.open {
+  display: flex;
+}
+
+.cook-panel {
+  width: 320px;
+}
+
+.cook-fuel {
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #d8b24a;
+  margin-bottom: 6px;
+}
+
+.cook-hint {
+  text-align: center;
+  font-size: 12px;
+  font-style: italic;
+  letter-spacing: 1px;
+  color: #9a8fb8;
+  margin-bottom: 8px;
+}
+
+.cook-pot {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.cook-pot-names {
+  text-align: center;
+  font-size: 11px;
+  color: #8a7f70;
+  margin: 6px 0;
+  min-height: 13px;
+}
+
+.cook-progress {
+  height: 8px;
+  background: #0f0c09;
+  border: 2px solid #2a241c;
+  margin: 4px 0 8px;
+}
+
+.cook-progress-fill {
+  height: 100%;
+  width: 0;
+  background: #d8b24a;
+}
+
+.cook-btns {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.cook-btn {
+  min-width: 84px;
+  height: 28px;
+  font-family: monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #c9bf9f;
+  background: #221c15;
+  border: 2px solid #5a5344;
+  cursor: pointer;
+}
+
+.cook-btn:hover:not(:disabled) {
+  border-color: #c9a94a;
+}
+
+.cook-btn:disabled {
+  color: #5a5344;
+  border-color: #2a241c;
+  cursor: default;
+}
+
+.cook-ings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 52px;
+}
+
+.inv-slot.cook-spent {
+  opacity: 0.4;
+  cursor: default;
+}
+
+#wh-cook.channel .cook-ings,
+#wh-cook.channel .cook-recipes {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.cook-recipe {
+  display: flex;
+  justify-content: space-between;
+}

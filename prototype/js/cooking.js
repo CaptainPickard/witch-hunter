@@ -1,0 +1,448 @@
+// Witch Hunter prototype - cooking (C1, io/missions/2026-10-05-cc-c1-cooking.md).
+// A fire STATION (data row in CONFIG.cooking.stations) burns fuel; E near a
+// lit station opens the COOK panel (3 ingredient slots, no dish preview),
+// Cook runs a channel (CONFIG.cooking.channelSeconds) and turns the trio
+// into a recipe result or the fallback (Bland Mush). CAMP GROWTH LAW: the
+// station list is a registry (Cooking.addStation) - C3's deployed campfire
+// adds a row of the same shape; nothing keys off the bandit fire itself.
+// Exposes window.WH_COOKING:
+//   Cooking   constructor (game.js owns the one instance)
+//   Station   one fire station { id, kind, regionId, asset, x, z, fuel }
+//   matchRecipe(ids) -> recipe row | null (order-free)
+
+(function () {
+  'use strict';
+
+  var CFG = window.WH_CONFIG;
+  var C = CFG.cooking;
+  var INV = window.WH_INVENTORY;
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  // ---- recipes ----------------------------------------------------------------------
+  // Order-free multiset match of exactly 3 ingredient ids.
+  function matchRecipe(ids) {
+    var key = ids.slice().sort().join('|');
+    for (var i = 0; i < C.recipes.length; i++) {
+      if (C.recipes[i].ingredients.slice().sort().join('|') === key) return C.recipes[i];
+    }
+    return null;
+  }
+
+  // { id: count } for a list of ids (duplicates allowed)
+  function tally(ids) {
+    var t = {};
+    for (var i = 0; i < ids.length; i++) if (ids[i]) t[ids[i]] = (t[ids[i]] || 0) + 1;
+    return t;
+  }
+
+  // ---- stations ---------------------------------------------------------------------
+  // fuel = seconds of burn left. Lit while fuel > 0, or while a cook channel
+  // holds the station (that cook's fuel was deducted at start and is what
+  // burns during the channel, so the passive burn pauses).
+  function Station(row) {
+    this.id = row.id;
+    this.kind = row.kind || 'cookFire';
+    this.regionId = row.regionId;
+    this.asset = row.asset;
+    this.x = row.x;
+    this.z = row.z;
+    this.fuel = row.startLit ? C.fire.startFuelSec : 0;
+    this.burnAcc = 0;
+    this.cooking = false;
+  }
+
+  Station.prototype.isLit = function () {
+    return this.fuel > 0 || this.cooking;
+  };
+
+  // enough fuel to start a cook (>= one channel)
+  Station.prototype.canCook = function () {
+    return this.fuel >= C.channelSeconds;
+  };
+
+  // passive burn: burnTickSec of fuel every burnTickSec seconds
+  Station.prototype.update = function (dt) {
+    if (this.cooking || this.fuel <= 0) { this.burnAcc = 0; return; }
+    var tick = C.fire.burnTickSec;
+    this.burnAcc += dt;
+    while (this.burnAcc >= tick && this.fuel > 0) {
+      this.burnAcc -= tick;
+      this.fuel = Math.max(0, this.fuel - tick);
+    }
+  };
+
+  // ---- Cooking (registry + panel + channel) -----------------------------------------
+  // opts: { inventory, player, toast(text), onOpenChange(open),
+  //         dropAtFeet(id, count) }.
+  function Cooking(opts) {
+    var self = this;
+    this.inv = opts.inventory;
+    this.player = opts.player;
+    this.toastFn = opts.toast;
+    this.onOpenChange = opts.onOpenChange || null;
+    this.dropAtFeet = opts.dropAtFeet || null;
+    this.stations = [];
+    for (var i = 0; i < C.stations.length; i++) this.addStation(C.stations[i]);
+    this.open = false;
+    this.station = null;              // station the panel is open on
+    this.slots = [null, null, null];  // reserved ingredient ids (not yet taken)
+    this.channel = null;              // { station, ids, t, fuelSpent }
+    this.hintShown = false;           // C1: cryptic hint once per session
+    this.showHint = false;
+    this.lastHp = this.player.hp;
+    this.toastTimers = [];
+    this.buildPanel();
+    document.addEventListener('keydown', function (e) { self.onKey(e); });
+  }
+
+  // CAMP GROWTH LAW: any module (C3 deployed campfire) registers here.
+  Cooking.prototype.addStation = function (row) {
+    var st = new Station(row);
+    this.stations.push(st);
+    return st;
+  };
+
+  Cooking.prototype.nearestStation = function (x, z, regionId) {
+    var best = null, bestD2 = C.interactRadius * C.interactRadius;
+    for (var i = 0; i < this.stations.length; i++) {
+      var s = this.stations[i];
+      if (s.regionId !== regionId) continue;
+      var dx = s.x - x, dz = s.z - z;
+      var d2 = dx * dx + dz * dz;
+      if (d2 <= bestD2) { bestD2 = d2; best = s; }
+    }
+    return best;
+  };
+
+  // Light-pool socket intensity for a fire prop (game.js computeFireSockets):
+  // a burnt-out station goes dark, anything else keeps its CONFIG value.
+  Cooking.prototype.socketIntensity = function (regionId, prop, base) {
+    for (var i = 0; i < this.stations.length; i++) {
+      var s = this.stations[i];
+      if (s.regionId === regionId && s.asset === prop.asset &&
+          Math.abs(s.x - prop.x) < 0.01 && Math.abs(s.z - prop.z) < 0.01) {
+        return s.isLit() ? base : C.fire.burntLightIntensity;
+      }
+    }
+    return base;
+  };
+
+  Cooking.prototype.promptFor = function (st) {
+    var T = C.text;
+    if (!st.isLit()) return T.promptBurnt;
+    return st.canCook() ? T.promptCook : T.promptLow;
+  };
+
+  // E on a station: lit with enough fuel = open the panel, else feed it.
+  Cooking.prototype.interactStation = function (st) {
+    if (st.canCook()) {
+      this.setOpen(true, st);
+    } else {
+      this.refuel(st);
+    }
+  };
+
+  // 1 fuel item -> burnPerCookSec * refuelCooks seconds on top of what is left.
+  Cooking.prototype.refuel = function (st) {
+    var F = C.fire;
+    if (this.inv.countOf(F.fuelItem) < 1) {
+      this.toast(C.text.noFuelToast);
+      return false;
+    }
+    this.inv.removeItem(F.fuelItem, 1);
+    st.fuel = Math.max(0, st.fuel) + F.burnPerCookSec * F.refuelCooks;
+    st.burnAcc = 0;
+    this.toast(C.text.refuelToast);
+    return true;
+  };
+
+  // Chained toasts (cooked -> learned -> kit), toastChainSec apart.
+  Cooking.prototype.toast = function (text) {
+    this.toastChain([text]);
+  };
+
+  Cooking.prototype.toastChain = function (lines) {
+    var self = this;
+    this.toastTimers.forEach(clearTimeout);
+    this.toastTimers = [];
+    lines.forEach(function (line, i) {
+      if (i === 0) { self.toastFn(line); return; }
+      self.toastTimers.push(setTimeout(function () { self.toastFn(line); },
+        i * C.toastChainSec * 1000));
+    });
+  };
+
+  // ---- panel (DOM modal, inventory-screen patterns) ---------------------------------
+
+  Cooking.prototype.buildPanel = function () {
+    var self = this;
+    var root = el('div');
+    root.id = 'wh-cook';
+    var panel = el('div', 'inv-panel cook-panel');
+    root.appendChild(panel);
+    panel.appendChild(el('div', 'inv-title', 'COOKING'));
+    this.fuelEl = el('div', 'cook-fuel');
+    panel.appendChild(this.fuelEl);
+    this.hintEl = el('div', 'cook-hint', C.hint.noMushroomText);
+    panel.appendChild(this.hintEl);
+
+    var pot = el('div', 'cook-pot');
+    this.slotEls = [];
+    for (var i = 0; i < 3; i++) {
+      (function (i) {
+        var s = el('div', 'inv-slot cook-slot');
+        var g = el('span', 'inv-glyph');
+        s.appendChild(g);
+        s.title = 'Click to clear';
+        s.addEventListener('click', function () { self.clearSlot(i); });
+        pot.appendChild(s);
+        self.slotEls.push({ root: s, glyph: g });
+      })(i);
+    }
+    panel.appendChild(pot);
+    this.potNameEl = el('div', 'cook-pot-names');
+    panel.appendChild(this.potNameEl);
+
+    var prog = el('div', 'cook-progress');
+    this.progFill = el('div', 'cook-progress-fill');
+    prog.appendChild(this.progFill);
+    panel.appendChild(prog);
+
+    var btns = el('div', 'cook-btns');
+    this.cookBtn = el('button', 'cook-btn', 'COOK');
+    this.cookBtn.type = 'button';
+    this.cookBtn.addEventListener('click', function () { self.startCook(); });
+    this.cancelBtn = el('button', 'cook-btn', 'CANCEL');
+    this.cancelBtn.type = 'button';
+    this.cancelBtn.addEventListener('click', function () { self.cancel(); });
+    btns.appendChild(this.cookBtn);
+    btns.appendChild(this.cancelBtn);
+    panel.appendChild(btns);
+
+    panel.appendChild(el('div', 'inv-sec', 'INGREDIENTS'));
+    this.ingEl = el('div', 'cook-ings');
+    panel.appendChild(this.ingEl);
+    panel.appendChild(el('div', 'inv-sec', 'RECIPES'));
+    this.recEl = el('div', 'cook-recipes');
+    panel.appendChild(this.recEl);
+    panel.appendChild(el('div', 'inv-hint', 'Click an ingredient to add it - click a slot to clear - Esc cancel'));
+
+    document.getElementById('wh-root').appendChild(root);
+    this.root = root;
+  };
+
+  Cooking.prototype.setOpen = function (open, st) {
+    if (this.open === open) return;
+    if (!open && this.channel) this.interrupt();
+    this.open = open;
+    this.station = open ? st : null;
+    if (open) {
+      this.slots = [null, null, null];
+      // cryptic hint: first open with no mushroom in the bag, once per session
+      this.showHint = !this.hintShown && this.inv.countOf(C.hint.hintItem) === 0;
+      if (this.showHint) this.hintShown = true;
+    }
+    this.root.classList.toggle('open', open);
+    this.render();
+    if (this.onOpenChange) this.onOpenChange(open);
+  };
+
+  Cooking.prototype.onKey = function (e) {
+    if (!this.open || e.repeat) return;
+    if (e.code === 'Escape') {
+      e.preventDefault();
+      this.cancel();
+    } else if (this.channel && C.interruptKeys.indexOf(e.code) >= 0) {
+      this.interrupt();             // movement input breaks the channel
+    }
+  };
+
+  // Cancel button / Esc: a running channel is interrupted (refund), then close.
+  Cooking.prototype.cancel = function () {
+    if (this.channel) this.interrupt();
+    this.setOpen(false);
+  };
+
+  // count of id still free to reserve (bag minus the pot's reservations)
+  Cooking.prototype.freeCount = function (id) {
+    var n = this.inv.countOf(id);
+    for (var i = 0; i < this.slots.length; i++) if (this.slots[i] === id) n--;
+    return n;
+  };
+
+  Cooking.prototype.addToPot = function (id) {
+    if (this.channel || this.freeCount(id) <= 0) return;
+    var i = this.slots.indexOf(null);
+    if (i < 0) return;
+    this.slots[i] = id;
+    this.render();
+  };
+
+  Cooking.prototype.clearSlot = function (i) {
+    if (this.channel) return;
+    this.slots[i] = null;
+    this.render();
+  };
+
+  // Known recipe row: fill the pot from the bag and start the channel.
+  Cooking.prototype.cookRecipe = function (r) {
+    if (this.channel) return;
+    var need = tally(r.ingredients);
+    for (var id in need) {
+      if (this.inv.countOf(id) < need[id]) { this.toast(C.text.missingToast); return; }
+    }
+    this.slots = r.ingredients.slice();
+    this.startCook();
+  };
+
+  // Ingredients leave the bag and the cook's fuel leaves the fire at START;
+  // an interrupt gives both back in full.
+  Cooking.prototype.startCook = function () {
+    var st = this.station;
+    if (this.channel || !st) return;
+    if (this.slots.indexOf(null) >= 0) { this.toast(C.text.needThreeToast); this.render(); return; }
+    if (!st.canCook()) { this.toast(C.text.tooLowToast); this.render(); return; }
+    var need = tally(this.slots);
+    for (var id in need) {
+      if (this.inv.countOf(id) < need[id]) { this.toast(C.text.missingToast); return; }
+    }
+    for (id in need) this.inv.removeItem(id, need[id]);
+    var spent = Math.min(C.fire.burnPerCookSec, st.fuel);
+    st.fuel -= spent;
+    st.cooking = true;
+    this.channel = { station: st, ids: this.slots.slice(), t: 0, fuelSpent: spent };
+    this.lastHp = this.player.hp;
+    this.render();
+  };
+
+  Cooking.prototype.interrupt = function () {
+    var ch = this.channel;
+    if (!ch) return;
+    this.channel = null;
+    ch.station.cooking = false;
+    ch.station.fuel += ch.fuelSpent;
+    var back = tally(ch.ids);
+    for (var id in back) {
+      var added = this.inv.addItem(id, back[id]);
+      if (added < back[id] && this.dropAtFeet) this.dropAtFeet(id, back[id] - added);
+    }
+    this.toast(C.text.interruptToast);
+    this.render();
+  };
+
+  Cooking.prototype.finishCook = function () {
+    var ch = this.channel;
+    this.channel = null;
+    ch.station.cooking = false;
+    var recipe = matchRecipe(ch.ids);
+    var resultId = recipe ? recipe.result : C.fallbackResult;
+    var added = this.inv.addItem(resultId, 1);
+    if (added < 1 && this.dropAtFeet) this.dropAtFeet(resultId, 1);
+    var name = INV.itemDef(resultId).name;
+    var lines = [C.text.cookedToast.replace('{name}', name)];
+    if (recipe && !recipe.known) {
+      recipe.known = true;
+      lines.push(C.text.learnedToast.replace('{name}', recipe.name));
+      if (this.onRecipeLearned) this.onRecipeLearned(recipe, lines);
+    }
+    this.toastChain(lines);
+    this.slots = [null, null, null];
+    this.render();
+  };
+
+  // Per frame: station burn, channel progress + interrupts (hit / death /
+  // fire out), panel auto-close on death.
+  Cooking.prototype.update = function (dt) {
+    for (var i = 0; i < this.stations.length; i++) this.stations[i].update(dt);
+    var p = this.player;
+    if (this.channel) {
+      // a hit = hp dropped below last frame (a buff-expiry clamp lands
+      // exactly ON hpMax, so it is not a hit)
+      var hit = p.hp < this.lastHp && p.hp < p.hpMax;
+      if (p.state !== 'alive' || hit || !this.channel.station.isLit()) {
+        this.interrupt();
+      } else {
+        this.channel.t += dt;
+        if (this.channel.t >= C.channelSeconds) this.finishCook();
+      }
+    }
+    this.lastHp = p.hp;
+    if (this.open && p.state !== 'alive') this.setOpen(false);
+    if (this.open) this.renderLive();
+  };
+
+  // per-frame bits only (fuel readout, progress bar)
+  Cooking.prototype.renderLive = function () {
+    var st = this.station;
+    if (!st) return;
+    var secs = Math.ceil(st.fuel);
+    var mm = Math.floor(secs / 60), ss = secs % 60;
+    var txt = st.isLit() ? 'Fire: ' + mm + ':' + (ss < 10 ? '0' : '') + ss : 'Fire: burnt out';
+    if (this.fuelEl.textContent !== txt) this.fuelEl.textContent = txt;
+    var frac = this.channel ? Math.min(1, this.channel.t / C.channelSeconds) : 0;
+    this.progFill.style.width = (frac * 100) + '%';
+  };
+
+  Cooking.prototype.render = function () {
+    var self = this;
+    var busy = !!this.channel;
+    var ids = busy ? this.channel.ids : this.slots;
+    for (var i = 0; i < 3; i++) {
+      var d = ids[i] ? INV.itemDef(ids[i]) : null;
+      this.slotEls[i].root.classList.toggle('filled', !!d);
+      this.slotEls[i].glyph.textContent = d ? d.glyph : '';
+    }
+    this.potNameEl.textContent = ids.map(function (id) {
+      return id ? INV.itemDef(id).name : '-';
+    }).join('  +  ');
+    this.hintEl.style.display = this.showHint ? '' : 'none';
+    this.cookBtn.disabled = busy || ids.indexOf(null) >= 0;
+    this.root.classList.toggle('channel', busy);
+
+    // ingredient stacks in the bag (the fuel item is fuel, never a cook slot)
+    this.ingEl.textContent = '';
+    var seen = {};
+    this.inv.forEachSlot(function (s) {
+      if (!s || seen[s.id]) return;
+      var d = INV.itemDef(s.id);
+      if (!d || d.category !== 'ingredient' || s.id === C.fire.fuelItem) return;
+      seen[s.id] = true;
+      var free = self.freeCount(s.id);
+      var b = el('div', 'inv-slot' + (free > 0 ? ' filled' : ' cook-spent'));
+      b.appendChild(el('span', 'inv-glyph', d.glyph));
+      b.appendChild(el('span', 'inv-count', String(Math.max(0, free))));
+      b.title = d.name;
+      b.addEventListener('click', function () { self.addToPot(s.id); });
+      self.ingEl.appendChild(b);
+    });
+    if (!this.ingEl.children.length) this.ingEl.appendChild(el('div', 'inv-soon', 'No ingredients'));
+
+    // learned recipes (one-click cook)
+    this.recEl.textContent = '';
+    C.recipes.forEach(function (r) {
+      if (!r.known) return;
+      var row = el('div', 'inv-spell cook-recipe');
+      row.appendChild(el('span', 'inv-spell-name', r.name));
+      row.appendChild(el('span', 'inv-gear-hands', r.ingredients.map(function (id) {
+        return INV.itemDef(id).glyph;
+      }).join(' + ')));
+      row.title = 'Cook ' + r.name;
+      row.addEventListener('click', function () { self.cookRecipe(r); });
+      self.recEl.appendChild(row);
+    });
+    if (!this.recEl.children.length) this.recEl.appendChild(el('div', 'inv-soon', 'None known'));
+    this.renderLive();
+  };
+
+  window.WH_COOKING = {
+    Cooking: Cooking,
+    Station: Station,
+    matchRecipe: matchRecipe
+  };
+})();

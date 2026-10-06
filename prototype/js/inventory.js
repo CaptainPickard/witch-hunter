@@ -297,8 +297,9 @@
     }
   };
 
+  // blocked: another modal owns the screen (C1 cook panel) - I / INV ignored
   InventoryUI.prototype.setOpen = function (open) {
-    if (this.open === open) return;
+    if (this.open === open || (open && this.blocked)) return;
     this.open = open;
     this.root.classList.toggle('open', open);
     if (this.openBtn) this.openBtn.classList.toggle('active', open);

@@ -1285,6 +1285,8 @@ window.WH_CONFIG.items = {
 window.WH_CONFIG.cooking = {
   interactRadius: 2.5,              // m from the station prop to cook / refuel
   channelSeconds: 3,                // cook channel; stand still (move / hit / Cancel interrupts)
+  // keys that break a running channel (movement + roll; player.js bindings)
+  interruptKeys: ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space'],
   // Buff length. Pre-C2 there is no day clock, so 1 in-game day = this many
   // REAL seconds; C2 converts it to the day length.
   buffDurationFallbackSec: 480,

@@ -986,6 +986,18 @@
     // stage 2: gather nodes from every region's CONFIG nodes list
     game.gatherNodes = new window.WH_GATHER.NodeManager(game.scene,
       window.WH_REGION_DEFS.regions);
+    // C1 cooking: fire stations (CONFIG.cooking.stations) + the COOK panel.
+    // The panel suspends input like the inventory screen and blocks I / INV.
+    game.cooking = new window.WH_COOKING.Cooking({
+      inventory: game.inventory,
+      player: p,
+      toast: function (text) { game.inventoryUI.toast(text); },
+      onOpenChange: function (open) {
+        game.inventoryUI.blocked = open;
+        p.setInputSuspended(open);
+      },
+      dropAtFeet: dropAtFeet
+    });
     document.addEventListener('keydown', function (e) {
       if (e.code !== CFG.inventoryUI.pickupKey || e.repeat) return;
       interact();
@@ -995,12 +1007,26 @@
   // S3b: the one world-interact entry point - E key, touch USE button
   // (WH_DEBUG.interact) and future chests/doors all route through here.
   // A ground item in reach wins (G-drop boxes), then an unlooted corpse,
-  // else the nearest ready node.
+  // then a cooking station (C1), else the nearest ready node.
   function interact() {
     if (game.player.inputSuspended || game.player.state !== 'alive') return false;
     var p = game.player.pos;
     return tryPickup() || lootCorpseNearest(p.x, p.z, CFG.corpseLoot.lootRadius) ||
-      tryGather();
+      tryCookStation() || tryGather();
+  }
+
+  // ---- C1 cooking stations (CONFIG.cooking, js/cooking.js) -----------------------
+  function nearestCookStation() {
+    var p = game.player.pos;
+    return game.cooking.nearestStation(p.x, p.z, game.regionManager.logic.activeId);
+  }
+
+  // E: lit station = open the COOK panel; burnt / too low = feed it deadwood.
+  function tryCookStation() {
+    var st = nearestCookStation();
+    if (!st) return false;
+    game.cooking.interactStation(st);
+    return true;
   }
 
   // G on the selected stack: 1 unit, or the whole stack with Shift.
@@ -1010,12 +1036,18 @@
     var s = game.inventory.slotAt(slotIndex);
     if (!s) return;
     var taken = game.inventory.removeFromSlot(slotIndex, wholeStack ? s.count : 1);
-    var D = CFG.inventory.drop;
-    if (D.mode === 'void') {
+    if (CFG.inventory.drop.mode === 'void') {
       game.inventoryUI.toast('Dropped ' + window.WH_INVENTORY.itemDef(taken.id).name +
         ' x' + taken.count);
       return;
     }
+    dropAtFeet(taken.id, taken.count);
+  }
+
+  // One item entity carrying count at the player's feet + scatter (G-drop,
+  // C1 cook result / refund that no longer fits the bag).
+  function dropAtFeet(id, count) {
+    var D = CFG.inventory.drop;
     // uniform point in the scatter disc, then the player's own bounds +
     // prop push-out so a drop never lands somewhere it cannot be walked to
     var ang = Math.random() * Math.PI * 2;
@@ -1025,7 +1057,7 @@
     var rm = game.regionManager;
     rm.logic.clampPlayer(at);
     if (rm.pushOutOfProps(at, CFG.player.radius)) rm.logic.clampPlayer(at);
-    game.worldItems.spawn(taken.id, taken.count, at.x, at.z, rm.logic.activeId);
+    game.worldItems.spawn(id, count, at.x, at.z, rm.logic.activeId);
   }
 
   // ---- stage 2: enemy drops (CONFIG.drops) ---------------------------------------
@@ -1125,15 +1157,19 @@
 
   // One interact prompt (the wh-gather-prompt element) mirroring interact():
   // nothing while a ground item would take the press (pickup has no
-  // prompt), 'USE - Loot' for an unlooted corpse, else 'E - Gather {name}'.
+  // prompt), 'USE - Loot' for an unlooted corpse, the cook station prompt
+  // (C1), else 'E - Gather {name}'.
   function updateInteractPrompt() {
     var p = game.player;
     var activeId = game.regionManager.logic.activeId;
     var text = '';
     if (p.state === 'alive' && !p.inputSuspended &&
         !game.worldItems.nearest(p.pos.x, p.pos.z, CFG.inventory.drop.pickupRadius, activeId)) {
+      var st;
       if (game.corpseLoot.nearest(p.pos.x, p.pos.z, CFG.corpseLoot.lootRadius, activeId)) {
         text = CFG.corpseLoot.promptText;
+      } else if ((st = nearestCookStation())) {
+        text = game.cooking.promptFor(st);   // C1: cook / burnt / too low
       } else {
         var node = nearestGatherNode();
         if (node) text = CFG.gather.promptText.replace('{name}', CFG.gather.nodeTypes[node.type].name);
@@ -1169,6 +1205,7 @@
         });
       },
       getPlayer: function () { return game.player; },
+      getCooking: function () { return game.cooking; },   // C1 stations / panel state
       getRegionManager: function () { return game.regionManager; },
       getAssetMeta: function (name) { return window.WH_ASSETS.getMeta(name); },
       getLightPool: function () {
@@ -1498,8 +1535,11 @@
       var ox = off[0] * c + off[1] * sn;
       var oz = -off[0] * sn + off[1] * c;
       var sx = p.x + ox * p.scale, sz = p.z + oz * p.scale;
+      // C1: a burnt-out cooking station's socket goes dark
+      var inten = game.cooking ? game.cooking.socketIntensity(rm.logic.activeId, p, sd.intensity)
+        : sd.intensity;
       out.push({ id: p.asset + '@' + p.x + ',' + p.z, x: sx, y: h, z: sz,
-                 intensity: sd.intensity, weight: 1 });
+                 intensity: inten, weight: 1 });
     }
     // Round F: world-level sockets (gate-arch lantern), live in both regions.
     var ws = rm.worldSockets ? rm.worldSockets() : [];
@@ -1673,6 +1713,8 @@
     game.playerLight.update(game.player, game.firebolts);
     cemeteryFogTick();  // Round H: graveyard fog ramp (region A)
     skyTick();      // 10-03 order 4: star twinkle clock
+    // C1: fire burn + cook channel (after combat so this frame's hits interrupt)
+    game.cooking.update(dt);
     updateHud(dt);
     updateInteractPrompt();
     game.renderer.render(game.scene, game.camera);
