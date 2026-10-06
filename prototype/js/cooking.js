@@ -10,6 +10,8 @@
 //   Station   one fire station { id, kind, regionId, asset, x, z, fuel }
 //   matchRecipe(ids) -> recipe row | null (order-free)
 //   BuffSet   the first buff system (food buffs; game.js applies the stats)
+// C2: day buffs count down on the day clock (js/daynight.js, opts.dayNight),
+// dayMeal buffs obey the one-meal-per-day cap, 'hot' buffs heal over time.
 
 (function () {
   'use strict';
@@ -80,22 +82,57 @@
 
   // ---- buffs (C1: the first buff system) --------------------------------------------
   // One instance per buff id (CONFIG.cooking.buffs); add() on an active id
-  // refreshes its duration, never stacks. Durations are real seconds until
-  // C2's day clock (CONFIG.cooking.buffDurationFallbackSec).
-  function BuffSet() {
-    this.active = {};                 // id -> { id, remaining, duration }
+  // refreshes its duration, never stacks; different ids coexist. C2: stat
+  // buffs last def.days in-game DAYS, counted down by the day clock
+  // (dayNight.dayDelta; frozen while the clock is dormant); without a
+  // dayNight, 1 day = buffDurationFallbackSec real seconds. 'hot' buffs
+  // run on REAL seconds (def.durationSec). remaining = seconds left (HUD).
+  function BuffSet(dayNight) {
+    this.dayNight = dayNight || null;
+    this.active = {};                 // id -> { id, kind, unit, remaining, days?, acc? }
   }
 
-  BuffSet.prototype.add = function (id, seconds) {
-    var dur = seconds || C.buffDurationFallbackSec;
-    this.active[id] = { id: id, remaining: dur, duration: dur };
+  BuffSet.prototype.add = function (id) {
+    var def = C.buffs[id] || {};
+    var old = this.active[id];
+    var b = { id: id, kind: def.kind || 'stat' };
+    if (b.kind === 'hot') {
+      b.unit = 'sec';
+      b.remaining = b.duration = def.durationSec;
+      b.acc = old ? old.acc : 0;      // refresh keeps the tick phase (no double tick)
+    } else if (this.dayNight) {
+      b.unit = 'day';
+      b.days = def.days || 1;
+      b.remaining = b.duration = b.days * CFG.dayNight.dayLengthSec;
+    } else {
+      b.unit = 'sec';
+      b.remaining = b.duration = (def.days || 1) * C.buffDurationFallbackSec;
+    }
+    this.active[id] = b;
   };
 
-  BuffSet.prototype.update = function (dt) {
+  // Counts every buff down; returns the HP that 'hot' buffs heal this frame
+  // (Cooking.update applies it AFTER the cook-interrupt hit test, so regen
+  // never masks or fakes a hit).
+  BuffSet.prototype.update = function (dt, dayDelta) {
+    var heal = 0;
     for (var id in this.active) {
-      this.active[id].remaining -= dt;
-      if (this.active[id].remaining <= 0) delete this.active[id];
+      var b = this.active[id];
+      if (b.kind === 'hot') {
+        var def = C.buffs[id];
+        b.acc += Math.min(dt, b.remaining);
+        // eps: 30s of summed dt still lands all 30 ticks
+        while (b.acc >= def.tickSec - 1e-6) { b.acc -= def.tickSec; heal += def.rate; }
+      }
+      if (b.unit === 'day') {
+        b.days -= dayDelta || 0;
+        b.remaining = b.days * CFG.dayNight.dayLengthSec;
+      } else {
+        b.remaining -= dt;
+      }
+      if (b.remaining <= 1e-6) delete this.active[id];
     }
+    return heal;
   };
 
   // summed amount of every active buff on stat ('hpMax')
@@ -115,7 +152,7 @@
 
   // ---- Cooking (registry + panel + channel) -----------------------------------------
   // opts: { inventory, player, toast(text), onOpenChange(open),
-  //         dropAtFeet(id, count) }.
+  //         dropAtFeet(id, count), dayNight }.
   function Cooking(opts) {
     var self = this;
     this.inv = opts.inventory;
@@ -133,7 +170,9 @@
     this.showHint = false;
     this.lastHp = this.player.hp;
     this.toastTimers = [];
-    this.buffs = new BuffSet();
+    this.dayNight = opts.dayNight || null;   // C2: js/daynight.js clock
+    this.buffs = new BuffSet(this.dayNight);
+    this.mealDay = -1;                // C2: dayNight.day the day's dayMeal was eaten
     this.kitAcquired = false;         // C1 campsite-kit moment (button is inert until C3)
     this.buildPanel();
     this.buildKitButton();
@@ -417,7 +456,7 @@
   // fire out), panel auto-close on death.
   Cooking.prototype.update = function (dt) {
     for (var i = 0; i < this.stations.length; i++) this.stations[i].update(dt);
-    this.buffs.update(dt);
+    var heal = this.buffs.update(dt, this.dayNight ? this.dayNight.dayDelta : 0);
     var p = this.player;
     if (this.channel) {
       // a hit = hp dropped below last frame (a buff-expiry clamp lands
@@ -430,6 +469,9 @@
         if (this.channel.t >= C.channelSeconds) this.finishCook();
       }
     }
+    // C2 heal over time (Bland Mush) lands after the hit test; lastHp takes
+    // the healed value so the next frame only compares real drops
+    if (heal > 0 && p.state === 'alive') p.hp = Math.min(p.hpMax, p.hp + heal);
     this.lastHp = p.hp;
     if (this.open && p.state !== 'alive') this.setOpen(false);
     if (this.open) this.renderLive();
@@ -510,14 +552,25 @@
   };
 
   // Eat 1 from slot i: its buff (if any) starts / refreshes. Returns true when eaten.
+  // C2 meal cap: a dayMeal buff fills the day's one meal slot; a further
+  // dayMeal meal that day is eaten (consumed) but grants no buff. Refresh
+  // counts as the day's meal. Non-dayMeal food (Bland Mush) is never capped.
   Cooking.prototype.eat = function (slotIndex) {
     var s = this.inv.slotAt(slotIndex);
     if (!s || !this.canEat(s.id) || this.player.state !== 'alive') return false;
     var d = INV.itemDef(s.id);
+    var bid = d.useHint.buff, bdef = bid ? C.buffs[bid] : null;
     this.inv.removeFromSlot(slotIndex, 1);
-    if (d.useHint.buff && C.buffs[d.useHint.buff]) this.buffs.add(d.useHint.buff);
+    if (bdef && bdef.dayMeal && this.dayNight) {
+      if (this.mealDay === this.dayNight.day) {
+        this.toast(C.text.alreadyAteToast);
+        return true;
+      }
+      this.mealDay = this.dayNight.day;
+    }
+    if (bdef) this.buffs.add(bid);
     this.toast(C.text.eatToast.replace('{name}', d.name) +
-      (d.useHint.buff ? '' : ' - ' + d.flavor));
+      (bdef && bdef.stat ? '' : ' - ' + d.flavor));
     return true;
   };
 

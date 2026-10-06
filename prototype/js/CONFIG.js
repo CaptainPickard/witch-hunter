@@ -1272,7 +1272,7 @@ window.WH_CONFIG.items = {
                     weight: 20, useHint: { kind: 'eat', buff: 'graveSoup' },
                     flavor: 'Earthy, bitter, strangely fortifying' },
   blandMush:      { id: 'blandMush', name: 'Bland Mush', glyph: 'BM', category: 'food',
-                    weight: 15, useHint: { kind: 'eat' },
+                    weight: 15, useHint: { kind: 'eat', buff: 'blandMush' },
                     flavor: 'A sad grey mush' }
 };
 
@@ -1287,8 +1287,9 @@ window.WH_CONFIG.cooking = {
   channelSeconds: 3,                // cook channel; stand still (move / hit / Cancel interrupts)
   // keys that break a running channel (movement + roll; player.js bindings)
   interruptKeys: ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space'],
-  // Buff length. Pre-C2 there is no day clock, so 1 in-game day = this many
-  // REAL seconds; C2 converts it to the day length.
+  // C2: day buffs last buffs[].days in-game days (CONFIG.dayNight
+  // dayLengthSec, counted down by the day clock). FALLBACK ONLY: if the
+  // daynight module is missing, 1 day = this many REAL seconds.
   buffDurationFallbackSec: 480,
   fire: {
     startFuelSec: 240,              // stations with startLit begin with this much fuel (generous for the playtest)
@@ -1313,9 +1314,18 @@ window.WH_CONFIG.cooking = {
   ],
   fallbackResult: 'blandMush',
   // Buffs (first buff system). One instance per id; re-eating refreshes the
-  // duration (no stacking). stat 'hpMax' adds amount to CONFIG.player.hpMax.
+  // duration (no stacking); different ids coexist. stat 'hpMax' adds amount
+  // to CONFIG.player.hpMax for days in-game days. dayMeal: true = the day's
+  // ONE stat meal (doc 10): a second dayMeal meal the same day is eaten but
+  // grants nothing (text.alreadyAteToast); a new day (clock wrap / C3 rest)
+  // clears the slot. kind 'hot' = heal over time: rate HP every tickSec for
+  // durationSec REAL seconds (never day-scaled, never meal-capped), gain
+  // clamped to hpMax.
   buffs: {
-    graveSoup: { label: 'Grave Soup', glyph: 'GS', stat: 'hpMax', amount: 20 }
+    graveSoup: { label: 'Grave Soup', glyph: 'GS', stat: 'hpMax', amount: 20,
+                 days: 1, dayMeal: true },
+    blandMush: { label: 'Bland Mush', glyph: 'BM', kind: 'hot', rate: 2,
+                 tickSec: 1, durationSec: 30 }
   },
   hint: {
     noMushroomText: 'Mushrooms favor the dead...',   // cryptic by intent (CEMETERY ECOLOGY)
@@ -1335,6 +1345,7 @@ window.WH_CONFIG.cooking = {
     learnedToast: 'Recipe learned: {name}',
     interruptToast: 'Cooking interrupted',
     eatToast: 'Ate {name}',
+    alreadyAteToast: 'You have already eaten today',   // C2 meal cap (dayMeal buff refused)
     kitToast: 'Campsite kit acquired',
     kitClickToast: 'Set up camp - needs open ground (coming soon)'
   },

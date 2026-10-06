@@ -435,7 +435,8 @@
         icon.textContent = def.glyph;
         var label = document.createElement('span');
         label.className = 'buff-label';
-        label.textContent = def.label + (def.stat === 'hpMax' ? ' +' + def.amount + ' max HP' : '');
+        label.textContent = def.label + (def.stat === 'hpMax' ? ' +' + def.amount + ' max HP' :
+          def.kind === 'hot' ? ' +' + def.rate + ' HP/s' : '');
         c.time.className = 'buff-time';
         c.root.appendChild(icon);
         c.root.appendChild(label);
@@ -1124,7 +1125,8 @@
         game.inventoryUI.blocked = open;
         p.setInputSuspended(open);
       },
-      dropAtFeet: dropAtFeet
+      dropAtFeet: dropAtFeet,
+      dayNight: game.dayNight         // C2: day buffs + meal cap ride the day clock
     });
     document.addEventListener('keydown', function (e) {
       if (e.code !== CFG.inventoryUI.pickupKey || e.repeat) return;
