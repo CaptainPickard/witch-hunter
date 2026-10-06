@@ -1441,6 +1441,41 @@ window.WH_CONFIG.dayNight = {
       stars: 0.25,
       discColor: 0xe8b894, discGlowColor: 0xa07060, discOpacity: 0.9
     }
+  },
+  // C2b (io/missions/2026-10-06-cc-c2b-skydome-pools.md) WH_SKYPOOL: painted
+  // panorama pools for the dome (js/daynight.js SkyPool). Each phase shows
+  // one pano from its pool, cross-faded over the same blendFrac window as
+  // the lighting. Paths are repo-relative and ride WH_ASSETS.resolveUrl like
+  // the GLBs. 2048x512 seam-fixed posterized JPEGs: bottom edge = horizon,
+  // top edge = zenith. The rows above stay the LIGHTING; panos only paint.
+  pools: {
+    day: ['art-direction/textures/sky2/sky2-day.jpg',       // approved A
+          'art-direction/textures/sky3/sky3-dayB.jpg',
+          'art-direction/textures/sky3/sky3-dayC.jpg',
+          'art-direction/textures/sky3/sky3-dayD.jpg'],
+    dawn: ['art-direction/textures/sky2/sky2-dawn.jpg',     // approved A
+           'art-direction/textures/sky3/sky3-dawnB.jpg',
+           'art-direction/textures/sky3/sky3-dawnC.jpg',
+           'art-direction/textures/sky3/sky3-dawnD.jpg'],
+    dusk: ['art-direction/textures/sky2/sky2-dusk.jpg',     // approved A
+           'art-direction/textures/sky3/sky3-duskB.jpg',
+           'art-direction/textures/sky3/sky3-duskC.jpg',
+           'art-direction/textures/sky3/sky3-duskD.jpg'],
+    night: ['art-direction/textures/sky2/sky2-nightA.jpg',
+            'art-direction/textures/sky2/sky2-nightB.jpg',
+            'art-direction/textures/sky2/sky2-nightC.jpg']
+  },
+  // ROTATION LAW (Nicko 10-06): variant = (dayCounter + areaPoolOffset[area])
+  // % pool.length; dayCounter = full clock wraps since beginCycle (0 on the
+  // dormant night). One new offset per new area.
+  areaPoolOffset: { hold_outskirts: 0, darkwood_edge: 2 },
+  skyPool: {
+    // pano yaw (deg about +y) so sky2-nightA's painted moon (u ~0.70) sits
+    // on the moon directional's bearing (azimuth 0 = -z)
+    yawDeg: 162,
+    areaFadeSec: 1.0,               // region-cross variant swap (brief value)
+    preloadFrac: 0.2,               // load the NEXT phase's pano in this first part of a phase
+    cacheMax: 6                     // textures alive at once (LRU, shown panos pinned)
   }
 };
 

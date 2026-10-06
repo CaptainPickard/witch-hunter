@@ -1548,6 +1548,7 @@
     setupSky();           // 10-03 order 4: starry night dome + stars + moon
     // C2: day/night clock - boots DORMANT on today's night look (tutorial law)
     game.dayNight = new window.WH_DAYNIGHT.DayNight();
+    game.dayNight.attachSky(game.sky, CFG.regionA.id);   // C2b WH_SKYPOOL: painted dome panos
     setupHud();
     bindResTunerKeys();   // 10-03 F1/F2 pixel-fidelity keys
     showResReadout();     // visible at boot so the knob is discoverable; dims after 2.5s
