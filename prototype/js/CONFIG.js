@@ -1468,7 +1468,11 @@ window.WH_CONFIG.dayNight = {
   // ROTATION LAW (Nicko 10-06): variant = (dayCounter + areaPoolOffset[area])
   // % pool.length; dayCounter = full clock wraps since beginCycle (0 on the
   // dormant night). One new offset per new area.
-  areaPoolOffset: { hold_outskirts: 0, darkwood_edge: 2 },
+  // 10-06 Nicko PLAYTEST: offsets zeroed - EVERY area plays the same variant
+  // per day (day 1 = A skies everywhere, then B, C, D by day count) so each
+  // cycle's feel can be judged directly. Restore per-area variation by
+  // setting distinct offsets (e.g. darkwood_edge: 2).
+  areaPoolOffset: { hold_outskirts: 0, darkwood_edge: 0 },
   skyPool: {
     // pano yaw (deg about +y) so sky2-nightA's painted moon (u ~0.70) sits
     // on the moon directional's bearing (azimuth 0 = -z)
