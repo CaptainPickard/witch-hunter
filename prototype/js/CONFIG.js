@@ -346,10 +346,15 @@ window.WH_CONFIG = {
       { type: 'deadwoodPile', x: 70.8, z: -3.8 },
       { type: 'deadwoodPile', x: -34.3, z: 42.0 },
       { type: 'deadwoodPile', x: -40.0, z: 4.6 },
-      { type: 'mushroomCluster', x: 38.0, z: -6.3 },
-      { type: 'mushroomCluster', x: 59.2, z: -0.5 },
-      { type: 'mushroomCluster', x: 68.5, z: -12.6 },
-      { type: 'mushroomCluster', x: -60.0, z: 23.2 }
+      // C1 CEMETERY ECOLOGY (Nicko 10-05): mushrooms grow ONLY around burial
+      // grounds - woodland just past the cemetery tree ring (in_graveyard
+      // ellipse d 1.06..1.13), never the open yard; W / E / SW / S of the
+      // yard. Same clearances (props >= 4.1m, enemies >= 20m, nodes >= 11m,
+      // spawn >= 36m, path + 2.5m). Was x 38 / 59 / 68.5 east field + x -60.
+      { type: 'mushroomCluster', x: -37.1, z: 19.9 },
+      { type: 'mushroomCluster', x: 37.3, z: -4.0 },
+      { type: 'mushroomCluster', x: -29.7, z: 32.0 },
+      { type: 'mushroomCluster', x: 20.1, z: 42.6 }
     ]
   },
 
@@ -1127,7 +1132,8 @@ window.WH_CONFIG.inventory = {
       consumable: 0xd8b24a,         // amber (canon fire/human accent)
       gear: 0x4ac8d8,               // cyan
       valuable: 0x9ff0f0,           // stage 2: pale cyan (Stolen Coin; vendor/currency not built)
-      ingredient: 0x7cb860          // stage 2: moss green (gathered cooking ingredients)
+      ingredient: 0x7cb860,         // stage 2: moss green (gathered cooking ingredients)
+      food: 0xc07a3a                // C1: cooked food (warm broth brown)
     }
   }
 };
@@ -1257,7 +1263,85 @@ window.WH_CONFIG.items = {
   deadwood:       { id: 'deadwood', name: 'Deadwood', glyph: 'DW', category: 'ingredient' },
   wildMushroom:   { id: 'wildMushroom', name: 'Wild Mushroom', glyph: 'WM', category: 'ingredient' },
   graveMoss:      { id: 'graveMoss', name: 'Grave Moss', glyph: 'GM', category: 'ingredient' },
-  boneShard:      { id: 'boneShard', name: 'Bone Shard', glyph: 'BS', category: 'ingredient' }
+  boneShard:      { id: 'boneShard', name: 'Bone Shard', glyph: 'BS', category: 'ingredient' },
+  // C1 cooked food (CONFIG.cooking). category 'food' = eaten from the
+  // inventory screen (select + E / EAT). useHint.buff keys CONFIG.cooking
+  // .buffs (absent = edible, no buff). weight = item weight (no carry
+  // system reads it yet). flavor = tooltip line.
+  graveSoup:      { id: 'graveSoup', name: 'Grave Soup', glyph: 'GS', category: 'food',
+                    weight: 20, useHint: { kind: 'eat', buff: 'graveSoup' },
+                    flavor: 'Earthy, bitter, strangely fortifying' },
+  blandMush:      { id: 'blandMush', name: 'Bland Mush', glyph: 'BM', category: 'food',
+                    weight: 15, useHint: { kind: 'eat' },
+                    flavor: 'A sad grey mush' }
+};
+
+// C1 (io/missions/2026-10-05-cc-c1-cooking.md): cooking at a fire station.
+// CAMP GROWTH LAW: stations are DATA rows (id, region, prop asset + coords,
+// interact radius, fuel) in a generic registry (js/cooking.js
+// WH_COOKING.stations) - C3's deployed campfire registers the same row
+// shape, nothing here is special-cased to the bandit fire. Only rows listed
+// in stations cook; every other fire (region A dressing fire) is inert.
+window.WH_CONFIG.cooking = {
+  interactRadius: 2.5,              // m from the station prop to cook / refuel
+  channelSeconds: 3,                // cook channel; stand still (move / hit / Cancel interrupts)
+  // Buff length. Pre-C2 there is no day clock, so 1 in-game day = this many
+  // REAL seconds; C2 converts it to the day length.
+  buffDurationFallbackSec: 480,
+  fire: {
+    startFuelSec: 240,              // stations with startLit begin with this much fuel (generous for the playtest)
+    burnPerCookSec: 10,             // fuel spent per cook (channel + margin), deducted at cook start
+    burnTickSec: 1,                 // passive burn loop step: fuel drops this much every this many seconds
+    refuelCooks: 4,                 // 1 deadwood refuels to burnPerCookSec * refuelCooks seconds
+    fuelItem: 'deadwood',           // the fuel ingredient (never a cook slot)
+    burntLightIntensity: 0          // light-pool socket intensity while burnt out (0 = dark)
+  },
+  stations: [
+    // Region B bandit campfire (prop banditCampfire x 2.5, z -52)
+    { id: 'banditFire', kind: 'cookFire', regionId: 'darkwood_edge',
+      asset: 'banditCampfire', x: 2.5, z: -52, startLit: true }
+  ],
+  // Recipes: exactly 3 ingredients, order-free, no preview ever. Any other
+  // trio at a fire = fallbackResult (the gamble's waste). known flips true on
+  // the first successful cook (session-only; C4 save writes it).
+  recipes: [
+    { id: 'graveSoup', name: 'Grave Soup',
+      ingredients: ['graveMoss', 'wildMushroom', 'boneShard'],
+      result: 'graveSoup', effect: 'graveSoup', known: false }
+  ],
+  fallbackResult: 'blandMush',
+  // Buffs (first buff system). One instance per id; re-eating refreshes the
+  // duration (no stacking). stat 'hpMax' adds amount to CONFIG.player.hpMax.
+  buffs: {
+    graveSoup: { label: 'Grave Soup', glyph: 'GS', stat: 'hpMax', amount: 20 }
+  },
+  hint: {
+    noMushroomText: 'Mushrooms favor the dead...',   // cryptic by intent (CEMETERY ECOLOGY)
+    hintItem: 'wildMushroom'        // shown once per session when the bag holds none
+  },
+  text: {
+    promptCook: 'E - Cook',
+    promptBurnt: 'Fire burnt out - E to add Deadwood (fuel)',
+    promptLow: 'Fire too low - E to add Deadwood (fuel)',
+    refuelToast: 'The fire takes.',
+    noFuelToast: 'You need Deadwood to feed the fire',
+    tooLowToast: 'The fire is too low to cook',
+    needThreeToast: 'Add three ingredients',
+    missingToast: 'Missing ingredients',
+    cookedToast: 'Cooked: {name}',
+    learnedToast: 'Recipe learned: {name}',
+    interruptToast: 'Cooking interrupted',
+    eatToast: 'Ate {name}',
+    kitToast: 'Campsite kit acquired',
+    kitClickToast: 'Set up camp - needs open ground (coming soon)'
+  },
+  toastChainSec: 2.0,               // gap between chained toasts (cooked -> learned -> kit)
+  // C1 campsite-kit moment: an INERT HUD button revealed on the first recipe
+  // learned (C3 owns deploy). left / bottom px from the viewport's
+  // bottom-left (sits right of the INV button).
+  kitButton: { label: 'CAMP', glyph: '▲', left: 76, bottom: 20 },
+  // HUD buff chip row under the bars (icon + remaining time)
+  buffHud: { warnSec: 30 }          // chip blinks under this many seconds left
 };
 
 // Stage 2 (Nicko 10-05): static gather nodes (js/gather.js WH_GATHER).
