@@ -974,8 +974,8 @@ html, body {
   font-style: italic;
 }
 
-/* C1: campsite-kit button (INERT stub, C3 deploys). Same frame as the INV
-   button; left/bottom inline from CONFIG.cooking.kitButton. */
+/* C1: campsite-kit button (C3: press = camp placement, js/camp.js). Same
+   frame as the INV button; left/bottom inline from CONFIG.cooking.kitButton. */
 #wh-camp-btn {
   position: fixed;
   z-index: 46;
@@ -996,4 +996,79 @@ html, body {
 
 #wh-camp-btn:hover {
   border-color: #c9a94a;
+}
+
+#wh-camp-btn.active {
+  color: #e3d27a;
+  border-color: #d8b24a;
+}
+
+/* --- C3 camps (js/camp.js): TENT MENU = the cook panel's modal + frame,
+       one button row per option (touch-sized); placement PLACE / CANCEL
+       bar; Save and Heal fade to black. --- */
+#wh-camp-menu {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 4, 3, 0.55);
+  z-index: 20;
+  font-family: monospace;
+  color: #d8d2c0;
+  image-rendering: pixelated;
+  user-select: none;
+}
+
+#wh-camp-menu.open {
+  display: flex;
+}
+
+.camp-menu-panel {
+  width: 240px;
+}
+
+.camp-menu-btns {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.camp-menu-btn {
+  height: 36px;
+}
+
+#wh-camp-place {
+  position: absolute;
+  left: 50%;
+  bottom: 84px;
+  transform: translateX(-50%);
+  display: none;
+  z-index: 21;
+  margin: 0;
+}
+
+#wh-camp-place.open {
+  display: flex;
+}
+
+#wh-camp-place .cook-btn {
+  height: 34px;
+  background: #1a1510;
+  touch-action: manipulation;
+}
+
+#wh-sleep-fade {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  transition-property: opacity;
+  transition-timing-function: ease;
+  z-index: 25;
+}
+
+#wh-sleep-fade.on {
+  opacity: 1;
 }

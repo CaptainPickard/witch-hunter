@@ -1346,16 +1346,89 @@ window.WH_CONFIG.cooking = {
     interruptToast: 'Cooking interrupted',
     eatToast: 'Ate {name}',
     alreadyAteToast: 'You have already eaten today',   // C2 meal cap (dayMeal buff refused)
-    kitToast: 'Campsite kit acquired',
-    kitClickToast: 'Set up camp - needs open ground (coming soon)'
+    kitToast: 'Campsite kit acquired'
   },
   toastChainSec: 2.0,               // gap between chained toasts (cooked -> learned -> kit)
-  // C1 campsite-kit moment: an INERT HUD button revealed on the first recipe
-  // learned (C3 owns deploy). left / bottom px from the viewport's
-  // bottom-left (sits right of the INV button).
+  // C1 campsite-kit moment: the CAMP HUD button revealed on the first recipe
+  // learned; a press enters camp placement (C3, CONFIG.camp / js/camp.js).
+  // left / bottom px from the viewport's bottom-left (right of the INV button).
   kitButton: { label: 'CAMP', glyph: '▲', left: 76, bottom: 20 },
   // HUD buff chip row under the bars (icon + remaining time)
   buffHud: { warnSec: 30 }          // chip blinks under this many seconds left
+};
+
+// C3 (io/missions/2026-10-06-cc-c3-sleep-tent.md): camps (js/camp.js
+// WH_CAMP). A camp is a set of MODULE ROWS - each row = one prop + one
+// interact hook ('cook' registers a CONFIG.cooking station row through
+// Cooking.addStation, same shape as the bandit fire; 'sleep' opens the TENT
+// MENU: Save / Save and Heal). Future modules (storage chest, craft bench,
+// warp camp) are new rows + a new hook, nothing else. The deployed kit is
+// session-only (C4 save rides after); sites live on the camp manager, never
+// in region content, so region swaps never eat them.
+window.WH_CONFIG.camp = {
+  interactRadius: 2.5,              // m from a sleep module to open the tent menu (cooking feel)
+  // One row per visual piece; swapping in the Astrabot wh-campkit GLB is a
+  // one-line edit per piece (glb = an assets.js manifest name; tent: null =
+  // the procedural dark-canvas A-frame placeholder below).
+  assets: {
+    fire:    { glb: 'banditCampfire', scale: 1.0 },
+    bedroll: { glb: 'banditBedroll', scale: 1.0 },
+    tent:    { glb: null, scale: 1.0 }
+  },
+  tentPlaceholder: { width: 2.0, length: 2.4, height: 1.4, color: 0x2e2a24, poleColor: 0x4a3b2a },
+  // The deployable kit (fire + bedroll + tent). offset = [right, back] m in
+  // the site frame (back = away from where the player stood when placing);
+  // rotY = extra yaw on top of the site yaw (tent: door faces the fire).
+  // Sleep modules sit > cooking.interactRadius from the fire so the fire
+  // keeps its cook prompt and the bedroll / tent keep theirs.
+  modules: [
+    { id: 'fire', hook: 'cook', asset: 'fire', offset: [0, 0], rotY: 0,
+      station: { kind: 'cookFire', startLit: true } },   // fuel = CONFIG.cooking.fire rules
+    { id: 'bedroll', hook: 'sleep', asset: 'bedroll', offset: [3.0, 1.0], rotY: Math.PI / 2 },
+    { id: 'tent', hook: 'sleep', asset: 'tent', offset: [0, 3.6], rotY: 0, menuAnchor: true }
+  ],
+  respawnStepM: 1.5,                // respawn = the menu anchor + this far toward its door (clear of the fire ring)
+  // WORLD CAMPS: module rows bound to a fixed world spot (no kit, no deploy).
+  // Tutorial anchor: the Region B bandit camp's bedroll (beside the bandit
+  // fire x 2.5 z -52, 3.6m off: outside both interact radii). The bandit
+  // fire itself stays the CONFIG.cooking station - sleep-only here.
+  worldCamps: [
+    { id: 'banditCamp', regionId: 'darkwood_edge',
+      modules: [
+        { id: 'bedroll', hook: 'sleep', asset: 'bedroll', x: 0.0, z: -49.4, rotY: -0.77 }
+      ],
+      respawn: { x: -1.0, z: -48.3 }, face: { x: 2.5, z: -52 } }
+  ],
+  deploy: {
+    maxSites: 1,                    // one kit: a new deploy packs up the old site (fire fuel starts fresh)
+    maxReachM: 9,                   // ghost stays within this of the player
+    startAheadM: 4,                 // ghost start: this far ahead of the player
+    pathBand: 2.5,                  // m beyond the dirt path half-width (gather on_path margin)
+    // clearances: CONFIG.gather.placement (props / trees / enemies / spawn /
+    // node spacing) + CONFIG.scatter.clear (gateM, edgeM) + scatter.keepOut,
+    // tested at every module of the kit; other camps count as props
+    ghostColor: 0xd23a2a,
+    ghostOpacity: 0.45
+  },
+  sleepFadeSec: 0.6,                // Save and Heal: fade to black, rest, fade back
+  text: {
+    prompt: 'E - Camp',
+    menuTitle: 'CAMP',
+    save: 'Save',
+    saveHeal: 'Save and Heal',
+    cancel: 'Cancel',
+    savedToast: 'Respawn point set',
+    restedToast: 'You wake at dawn - Day {day}',
+    placingToast: 'Choose open ground - click / E to camp, Esc / CAMP to cancel',
+    placedToast: 'Camp set up',
+    refuseToast: 'No room to camp here - {why}',
+    why: {
+      edge: 'too close to the edge', gate: 'too close to the gate', path: 'too close to the path',
+      keepOut: 'too close to the graveyard', spawn: 'too close to the trailhead',
+      tree: 'too close to a tree', prop: 'something is in the way', enemy: 'enemies nearby',
+      node: 'too close to forage', camp: 'too close to another camp'
+    }
+  }
 };
 
 // C2 (io/missions/2026-10-05-cc-c2-daynight.md): day/night cycle
@@ -1370,10 +1443,6 @@ window.WH_CONFIG.dayNight = {
   // visibly moves the sky. REAL GAME: 600 (doc 10 day-buff scale) - a later
   // CONFIG tune; day-length buffs (CONFIG.cooking.buffs[].days) follow it.
   dayLengthSec: 60,
-  // !!! PLAYTEST-ONLY HATCH (C3 DELETES IT) !!! The dormant clock calls
-  // beginCycle() this many seconds after boot so the cycle can be seen
-  // without the sleep action. 0 = off (tutorial law: day only after sleep).
-  autoBeginSec: 15,
   startPhase: 'night',              // dormant look (locked until beginCycle)
   order: ['dawn', 'day', 'dusk', 'night'],
   // phase start as a fraction of the cycle; beginCycle() starts at dawn (0)
@@ -1522,6 +1591,17 @@ window.WH_CONFIG.gather = {
   // props. The base mesh here is a PLACEHOLDER for the later bush/grass art
   // asset mission - node meshes are not this order's art pass.
   playtestGlow: true,
+  // Node placement rules (the scratch/gen_gather_nodes.py clearances, now
+  // CONFIG rows). C3 camp deploy reads these SAME rows (CONFIG.camp.deploy)
+  // with CONFIG.scatter.clear (gate / rim) + scatter.keepOut + the dirt path.
+  placement: {
+    treePropM: 4,                   // to a tree-class prop (treeMatch on the asset name)
+    propM: 3,                       // to any other prop
+    treeMatch: 'tree|oak|ash|yew|witchwood',
+    enemyM: 5,                      // to an enemy spawn
+    spawnM: 6,                      // to the region's player spawn
+    spacingM: { hold_outskirts: 9, darkwood_edge: 6 }   // node-to-node, per region
+  },
   marker: {
     size: 0.16,                     // octahedron radius (m, times node scale)
     height: 0.95,                   // float height over the ground (m)

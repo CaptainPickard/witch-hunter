@@ -1358,7 +1358,24 @@
     return result;
   };
 
-  RegionManager.prototype.updateEnemies = function (dt, playerPos, playerAlive, canDamagePlayer, activeId) {
+  // C3 death respawn at a camp in the OTHER region: the 'cross' swap of
+  // tickTransition without walking the gate (target built or revealed, old
+  // region disposed, logic re-pointed). game.js applies lighting / sky /
+  // banner like a cross. Returns false when already active.
+  RegionManager.prototype.switchTo = function (regionId) {
+    var oldId = this.logic.activeId;
+    if (regionId === oldId) return false;
+    this.logic.activeId = regionId;
+    this.logic.prewarmedId = null;
+    this.logic.buildCounts[regionId] = (this.logic.buildCounts[regionId] || 0) + 1;
+    if (this.groups[regionId]) this.groups[regionId].visible = true;
+    else this.buildRegion(regionId, false);
+    if (this.groups[oldId]) this.disposeRegion(oldId);
+    this.enemies[regionId] = this.enemies[regionId] || [];
+    return true;
+  };
+
+  RegionManager.prototype.updateEnemies =function (dt, playerPos, playerAlive, canDamagePlayer, activeId) {
     var list = this.enemies[activeId] || [];
     var boundary = { z: CFG.boundary.z };
     var self = this;
@@ -1409,4 +1426,11 @@
   window.WH_RegionManagerLogic = RegionManagerLogic;
   window.WH_ScatterPlan = whScatterPlan;   // Round E: pure, for debug/tests
   window.WH_WallPlan = whWallPlan;         // Round F: pure, for debug/tests
+  // C3 camp deploy clearances (js/camp.js): the same pure helpers the
+  // scatter uses for the dirt path band, the gate corridor and the rim
+  window.WH_RegionGeom = {
+    distToPath: whDistToPath,
+    meetsCorridor: whMeetsCorridor,
+    playRadius: whPlayRadius
+  };
 })();

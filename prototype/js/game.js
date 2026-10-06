@@ -552,12 +552,32 @@
     }
   }
 
+  // C3: a camp respawn point (tent menu Save / Save and Heal) wins over the
+  // region spawn; a camp in the OTHER region switches regions first (no
+  // gate walk). Death clears nothing else (buffs, meals, fires persist).
   function respawnPlayer() {
     var rid = game.regionManager.logic.activeId;
     var region = window.WH_REGION_DEFS.regions[rid];
+    var cr = game.camp && game.camp.respawn;
     breakLockOn();
-    game.player.respawnAt(region.spawn.x, region.spawn.z);
+    if (cr) {
+      if (cr.regionId !== rid) switchRegion(cr.regionId);
+      game.player.respawnAt(cr.x, cr.z);
+      if (cr.face) game.player.faceTowards(cr.face.x, cr.face.z);
+    } else {
+      game.player.respawnAt(region.spawn.x, region.spawn.z);
+    }
     setDeathOverlay(false);
+  }
+
+  // The tickTransition 'cross' steps minus the gate walk: region swap,
+  // lighting, the area's sky variant, the name banner.
+  function switchRegion(regionId) {
+    if (!game.regionManager.switchTo(regionId)) return;
+    applyRegionLighting(regionId);
+    game.dayNight.setSkyArea(regionId);
+    showRegionName(window.WH_REGION_DEFS.regions[regionId].name);
+    setGateHint(false);
   }
 
   // ---- lock-on (D3) ------------------------------------------------------------
@@ -1130,6 +1150,7 @@
     });
     document.addEventListener('keydown', function (e) {
       if (e.code !== CFG.inventoryUI.pickupKey || e.repeat) return;
+      if (game.camp && game.camp.onInteractKey()) return;   // C3: E confirms camp placement
       interact();
     });
   }
@@ -1137,12 +1158,13 @@
   // S3b: the one world-interact entry point - E key, touch USE button
   // (WH_DEBUG.interact) and future chests/doors all route through here.
   // A ground item in reach wins (G-drop boxes), then an unlooted corpse,
-  // then a cooking station (C1), else the nearest ready node.
+  // then a cooking station (C1), then a camp sleep module (C3 tent menu),
+  // else the nearest ready node.
   function interact() {
     if (game.player.inputSuspended || game.player.state !== 'alive') return false;
     var p = game.player.pos;
     return tryPickup() || lootCorpseNearest(p.x, p.z, CFG.corpseLoot.lootRadius) ||
-      tryCookStation() || tryGather();
+      tryCookStation() || tryCampSleep() || tryGather();
   }
 
   // ---- C1 cooking stations (CONFIG.cooking, js/cooking.js) -----------------------
@@ -1156,6 +1178,20 @@
     var st = nearestCookStation();
     if (!st) return false;
     game.cooking.interactStation(st);
+    return true;
+  }
+
+  // ---- C3 camps (CONFIG.camp, js/camp.js) ------------------------------------------
+  function nearestCampSleep() {
+    var p = game.player.pos;
+    return game.camp ? game.camp.nearestSleep(p.x, p.z, game.regionManager.logic.activeId) : null;
+  }
+
+  // E: bedroll / tent in reach = the TENT MENU (Save / Save and Heal)
+  function tryCampSleep() {
+    var hit = nearestCampSleep();
+    if (!hit) return false;
+    game.camp.interactSleep(hit);
     return true;
   }
 
@@ -1300,6 +1336,8 @@
         text = CFG.corpseLoot.promptText;
       } else if ((st = nearestCookStation())) {
         text = game.cooking.promptFor(st);   // C1: cook / burnt / too low
+      } else if (nearestCampSleep()) {
+        text = CFG.camp.text.prompt;         // C3: tent menu
       } else {
         var node = nearestGatherNode();
         if (node) text = CFG.gather.promptText.replace('{name}', CFG.gather.nodeTypes[node.type].name);
@@ -1315,13 +1353,16 @@
   function setupDebugHooks() {
     window.WH_DEBUG = {
       version: 'v1',
-      // C2: day/night clock readout + manual cycle start (C3 wires sleep)
+      // C2: day/night clock readout (C3: only a camp Save and Heal starts
+      // the cycle - no debug beginCycle)
       get dayNight() {
         var dn = game.dayNight;
         return { dormant: dn.dormant, day: dn.day, phase: dn.phase,
           timeOfDay: dn.timeOfDay, nightMatches: dn.nightMatches };
       },
-      beginCycle: function () { game.dayNight.beginCycle(); },
+      // C3 camps: placement state, sites (+ kit fire fuel), world camps, respawn
+      get camp() { return game.camp ? game.camp.debugState() : null; },
+      getCamp: function () { return game.camp; },
       getPlayerPosition: function () {
         var p = game.player.pos;
         return { x: p.x, y: p.y, z: p.z };
@@ -1621,6 +1662,22 @@
       game.player.faceTowards(0, 0);     // boot spawn faces map center (Nicko 10-03)
       applyRegionLighting(CFG.regionA.id);
       showRegionName(region.name);
+      // C3 camps: deploy (CAMP button), world camps, tent menu, respawn point.
+      // Built after the region manager (clearance checks read it).
+      game.camp = new window.WH_CAMP.Camp({
+        scene: game.scene,
+        camera: game.camera,
+        player: game.player,
+        cooking: game.cooking,
+        dayNight: game.dayNight,
+        regionManager: function () { return game.regionManager; },
+        toast: function (text) { game.inventoryUI.toast(text); },
+        applyBuffStats: applyBuffStats,
+        onOpenChange: function (open) {
+          game.inventoryUI.blocked = open;
+          game.player.setInputSuspended(open);
+        }
+      });
       // 2026-10-03: smooth fade-out of the boot overlay from CONFIG
       // (hud.bootOverlayFadeMs); .hidden also releases pointer-events, and
       // game.hud.loadNote stays in the DOM for any later reuse.
@@ -1661,6 +1718,8 @@
     if (!rm) return out;
     var reg = window.WH_REGION_DEFS.regions[rm.logic.activeId];
     var props = reg && reg.cfg && reg.cfg.props ? reg.cfg.props : [];
+    // C3: deployed kit fires light like any CONFIG fire prop
+    if (game.camp) props = props.concat(game.camp.fireProps(rm.logic.activeId));
     var S = CFG.lightSockets;
     for (var i = 0; i < props.length; i++) {
       var p = props[i];
@@ -1858,6 +1917,7 @@
     skyTick();      // 10-03 order 4: star twinkle clock
     // C1: fire burn + cook channel (after combat so this frame's hits interrupt)
     game.cooking.update(dt);
+    game.camp.update();   // C3: camp groups per region, placement ghost, menu close on death
     applyBuffStats();   // C1: effective hpMax from active food buffs
     updateHud(dt);
     updateInteractPrompt();

@@ -5,12 +5,14 @@
 // HOLDS the row exactly (hold = straight copy, never a lerp at t=1, so the
 // night hold is bit-identical to the approved CONFIG look).
 // TUTORIAL LAW: boots DORMANT on startPhase (clock frozen, nothing moves);
-// beginCycle() starts dawn and the free-running cycle (C3: first sleep).
+// beginCycle() starts dawn and the free-running cycle (C3: the first Save
+// and Heal at a camp - no timer, no hatch).
 // Pure state - game.js applyDayNight() pushes .state into the scene.
 // Exposes window.WH_DAYNIGHT:
 //   DayNight   constructor (game.js owns the one instance)
 //     .tick(dt)       advance (frozen while dormant)
-//     .beginCycle()   dormant -> dawn, new day
+//     .beginCycle()   dormant -> dawn, new day (ONLY js/camp.js calls it: first rest)
+//     .nextDawn()     free-running -> next day's dawn (C3 Save and Heal)
 //     .dormant .day .timeOfDay (0..1) .phase .dayDelta (days this tick)
 //     .state          blended look { hemiSky, hemiGround (THREE.Color), ... }
 //     .nightMatches   boot check: night row == today's CONFIG values
@@ -123,7 +125,6 @@
     this.dormant = true;
     this.day = 0;                     // 0 = the tutorial's first night; +1 per new day
     this.clock = 0;                   // seconds into the current cycle
-    this.bootT = 0;                   // PLAYTEST hatch timer (autoBeginSec)
     this.dayDelta = 0;
     this.phase = D.startPhase;
     this.timeOfDay = D.bounds[D.startPhase];
@@ -138,6 +139,19 @@
     this.dormant = false;
     this.clock = 0;
     this.day++;
+    this.fresh = true;
+  };
+
+  // C3 rest while free-running: the next day's dawn (day++, clock 0). Same
+  // day/clock law as the natural night -> dawn wrap, so dayCounterOf and
+  // the sky rotation see an ordinary new day. No-op while dormant (the
+  // first rest is beginCycle).
+  DayNight.prototype.nextDawn = function () {
+    if (this.dormant) return;
+    this.clock = 0;
+    this.day++;
+    this.fresh = true;
+    if (this.sky) this.sky.phase = null;   // re-target: the new day's dawn variant
   };
 
   DayNight.prototype.phaseAt = function (f) {
@@ -150,15 +164,10 @@
 
   DayNight.prototype.tick = function (dt) {
     this.dayDelta = 0;
-    if (this.dormant) {
-      // !!! PLAYTEST-ONLY HATCH (C3 deletes): auto-begin after autoBeginSec
-      if (D.autoBeginSec > 0) {
-        this.bootT += dt;
-        if (this.bootT >= D.autoBeginSec) this.beginCycle();
-      }
-      if (this.dormant) return;       // frozen: state stays the startPhase row
-      dt = 0;                         // the cycle starts at exactly dawn this frame
-    }
+    // dormant = frozen forever on the startPhase row until the camp's first
+    // Save and Heal calls beginCycle() (js/camp.js; tutorial law)
+    if (this.dormant) return;
+    if (this.fresh) { this.fresh = false; dt = 0; }   // a new dawn starts at exactly 0
     var len = D.dayLengthSec;
     this.clock += dt;
     this.dayDelta = dt / len;

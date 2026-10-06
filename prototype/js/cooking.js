@@ -145,6 +145,11 @@
     return n;
   };
 
+  // C3 Save and Heal: every buff ends (game.js recomputes hpMax after)
+  BuffSet.prototype.clear = function () {
+    this.active = {};
+  };
+
   BuffSet.prototype.list = function () {
     var self = this;
     return Object.keys(this.active).map(function (id) { return self.active[id]; });
@@ -153,6 +158,7 @@
   // ---- Cooking (registry + panel + channel) -----------------------------------------
   // opts: { inventory, player, toast(text), onOpenChange(open),
   //         dropAtFeet(id, count), dayNight }.
+  // onKitButton: set by the camp manager (C3, js/camp.js) - the CAMP press.
   function Cooking(opts) {
     var self = this;
     this.inv = opts.inventory;
@@ -160,6 +166,7 @@
     this.toastFn = opts.toast;
     this.onOpenChange = opts.onOpenChange || null;
     this.dropAtFeet = opts.dropAtFeet || null;
+    this.onKitButton = null;
     this.stations = [];
     for (var i = 0; i < C.stations.length; i++) this.addStation(C.stations[i]);
     this.open = false;
@@ -173,7 +180,7 @@
     this.dayNight = opts.dayNight || null;   // C2: js/daynight.js clock
     this.buffs = new BuffSet(this.dayNight);
     this.mealDay = -1;                // C2: dayNight.day the day's dayMeal was eaten
-    this.kitAcquired = false;         // C1 campsite-kit moment (button is inert until C3)
+    this.kitAcquired = false;         // C1 campsite-kit moment (C3: the camp deploy gate)
     this.buildPanel();
     this.buildKitButton();
     document.addEventListener('keydown', function (e) { self.onKey(e); });
@@ -184,6 +191,21 @@
     var st = new Station(row);
     this.stations.push(st);
     return st;
+  };
+
+  // C3: a packed-up camp takes its fire out of the registry
+  Cooking.prototype.removeStation = function (st) {
+    var i = this.stations.indexOf(st);
+    if (i < 0) return;
+    if (this.channel && this.channel.station === st) this.interrupt();
+    if (this.station === st) this.setOpen(false);
+    this.stations.splice(i, 1);
+  };
+
+  // C3 Save and Heal: the day's meal slot is empty again (the new day's
+  // first dayMeal applies)
+  Cooking.prototype.clearMealSlot = function () {
+    this.mealDay = -1;
   };
 
   Cooking.prototype.nearestStation = function (x, z, regionId) {
@@ -574,7 +596,7 @@
     return true;
   };
 
-  // ---- campsite kit (C1 stub: INERT HUD button, C3 owns deploy) ------------------
+  // ---- campsite kit HUD button (C1 reveal; C3 js/camp.js owns deploy) -----------
   // Same body-level button pattern as the INV button: pointerdown acts,
   // the mouse events are swallowed so no swing / camera drag leaks through.
   Cooking.prototype.buildKitButton = function () {
@@ -583,14 +605,14 @@
     btn.id = 'wh-camp-btn';
     btn.type = 'button';
     btn.tabIndex = -1;
-    btn.title = 'Campsite kit';
+    btn.title = 'Set up camp';
     btn.style.left = K.left + 'px';
     btn.style.bottom = K.bottom + 'px';
     btn.style.display = 'none';       // revealed on the first recipe learned
     btn.addEventListener('pointerdown', function (e) {
       e.preventDefault();
       e.stopPropagation();
-      self.toast(C.text.kitClickToast);
+      if (self.onKitButton) self.onKitButton();
     });
     ['mousedown', 'click', 'contextmenu'].forEach(function (t) {
       btn.addEventListener(t, function (e) {

@@ -65,6 +65,9 @@
     // R2: darkwood light-socket props (doc 61 batches B2/B3)
     banditCampfire: 'art-direction/3d/assets/biome_library/m15-bandit-campfire-pixelated.glb',
     lanternWaymarker: 'art-direction/3d/assets/biome_library/b3-waymarker-pixelated.glb',
+    // C3 camps (js/camp.js): the bandit camp's world bedroll + the kit's
+    // placeholder bedroll (CONFIG.camp.assets)
+    banditBedroll: 'art-direction/3d/assets/biome_library/m16-bandit-bedroll-pixelated.glb',
 
     // church-kit props + trees
     // Round K (io/roundK-provenance.md): Meshy lantern-post-v2, one welded piece, decimated
