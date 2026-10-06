@@ -15,23 +15,45 @@ moment (inert HUD button stub; deploy is C3), and bakes the first food buffs.
 - NO automated runs of the game: no harness, no headless browser, no chromium
   smoke. Syntax checks only (playwright driver node --check per edited file).
 - ONE change order: C1 scope only. No day/night cycle, no campsite deploy, no
-  tent/bedroll work, no save system (C2-C4 own those).
+  chest/bench work, no save system (C2-C4 own those).
 - OTHER SESSION ACTIVE IN THIS REPO: work ONLY in the /tmp/wh-worldfeat
   worktree on feat/world-visuals. NEVER touch /workspace/witch-hunter (dev
   checkout), the dev or main branches, 8793 container state, or any branch
   except feat/world-visuals. BEFORE starting: reconcile with remote
-  (`git -C /tmp/wh-worldfeat fetch https://github.com/CaptainPickard/
-  witch-hunter.git feat/world-visuals` then compare tip). If the tip moved
-  with changes outside io/missions, STOP and report to IO. Commit in small
-  units and push immediately after each (git push origin feat/world-visuals;
-  HTTPS remote credentials are in the credential store).
+  (fetch https://github.com/CaptainPickard/witch-hunter.git feat/world-visuals
+  and compare tip). If the tip moved with changes in prototype/ or tools/,
+  STOP and report to IO. Commit in small units and push immediately after
+  each (git push origin feat/world-visuals; HTTPS creds in credential store).
 - Commit identity: CaptainPickard <pickard.nicko@gmail.com>.
 - Never read/commit scratch/.mixamo-credentials.txt or .mixamo-storage.json.
 - Player copy: never the word "free".
 - CONFIG-first: every tunable number lives in CONFIG with a comment.
 
-## STATE (verified 2026-10-05, feat tip before this brief)
-- feat/world-visuals worktree /tmp/wh-worldfeat clean at the brief's parent.
+## CAMP GROWTH LAW (design canon, Nicko 10-05 - binds C3 and every camp order after)
+The campsite system is MODULAR and GROWS. From C1 onward, camp-facing code is
+written as data-driven modules (per-module {id, prop asset, interact hook,
+CONFIG row}), never hard-wired into camp logic. Roadmap already decided:
+- C3 deploys the starter kit: campfire + bedroll + tent (3 modules).
+- Quest-gated additions follow: STORAGE CHEST and CRAFT BENCH modules (gated
+  by quests; bench = doc 05 station tier 1 Field Kit).
+- Over time the camp scales LARGER in footprint and content: more tents,
+  more modules, eventually NPC-inhabited - the full WARP CAMP (docs 09/11/50:
+  tiers, cook's tent kitchen, retinue, decoration prestige).
+Implementation consequence for C1: name the systems for reuse (CONFIG.cooking,
+a camp-module-friendly interact registry) and do NOT special-case the bandit
+fire in a way C3 must unwind.
+
+## EXPLORATION-REWARD LAW (design canon, Nicko 10-05)
+The game rewards exploration with capability, never handouts. Region B has NO
+mushroom nodes BY DESIGN: players who explore Region A to its fullest earn the
+wildMushrooms that make Grave Soup possible. NEVER "fix" missing ingredients
+by adding nodes to a region whose identity is scarcity. Future mechanics keep
+this shape: capability is earned through the world, not the menu.
+
+## STATE (verified 2026-10-05, feat tip after mouse-bind Order A landed)
+- feat/world-visuals worktree /tmp/wh-worldfeat clean at 21cebb2 (mouse-bind
+  Order A landed: build v8). Build tool is now tools/build_v8.py ->
+  prototype/builds/v8-playable.html. Do NOT touch the mouse/pointer-lock keys.
 - Serving: 8793 host container + WebUI /playtest-feat/ both serve the worktree
   live (no-store). No deploy step for game files; do a build commit (below).
 - Existing hooks C1 builds on:
@@ -41,8 +63,10 @@ moment (inert HUD button stub; deploy is C3), and bakes the first food buffs.
   - Items: CONFIG.js items registry (bandage pattern for a usable item);
     ingredients forestHerb/deadwood/wildMushroom/graveMoss/boneShard exist
     (category 'ingredient'); cooking ingredients never drop from enemies.
-  - Gather: js/gather.js WH_GATHER; Region B nodes today = graveMoss x5 +
-    bonePile x4 ONLY (no mushrooms in B - fix in scope below).
+  - Gather: js/gather.js WH_GATHER. Region A nodes: herbBundle x6,
+    deadwoodPile x4, mushroomCluster x4 (yield wildMushroom x2 each).
+    Region B nodes: graveMoss x5, bonePile x4 ONLY - and that sparity is
+    CANON (see EXPLORATION-REWARD LAW). Do not add Region B nodes.
   - Vitals: CONFIG.player hpMax 100, hpRegenPerSec 0.0 (no passive regen).
     HUD hp bar computes from p.hp/p.hpMax (auto-adapts to bigger hpMax).
   - No buff system exists anywhere - C1 introduces it.
@@ -69,12 +93,15 @@ moment (inert HUD button stub; deploy is C3), and bakes the first food buffs.
      clear. NO dish preview (gamble). Buttons: Cook, Cancel.
    - Learned-recipe list section: once a recipe is known, click it to
      auto-fill its slots from inventory and start the channel.
+   - If the player has NO wildMushroom in inventory, the panel shows the
+     one-time-per-session hint line: "Mushrooms favor the older woods."
+     (points back to Region A; EXPLORATION-REWARD LAW made kind, not loud).
 3. RECIPES + DISCOVERY (CONFIG.cooking.recipes).
    - Grave Soup: graveMoss + wildMushroom + boneShard. Result item graveSoup
      ('food', glyph 'GS', weight 20). Effect: +20 max HP for 1 in-game day
      (pre-C2: CONFIG.cooking.buffDurationFallbackSec = 480 real seconds,
      comment notes it converts to day-length in C2). Stacks nothing: one
-     instance max (re-eat refreshes duration).
+     instance max (re-eat refreshes duration). Needs 1 of each ingredient.
    - Bland Mush: any other trio at a campfire. Result item blandMush ('food',
      glyph 'BM', weight 15). Edible, grants NO buff, flavor copy
      "A sad grey mush". The gamble's waste.
@@ -84,8 +111,8 @@ moment (inert HUD button stub; deploy is C3), and bakes the first food buffs.
    - Extensible: recipes[] rows carry {id, name, ingredients[3], result,
      effect}; known flag; unknown trio = Bland Mush path. No preview ever.
 4. CHANNELLED COOK.
-   - CONFIG.cooking.channelSeconds = 7. Player stands still; progress bar in
-     the cook panel (or HUD top-center if panel must close - keep panel open).
+   - CONFIG.cooking.channelSeconds = 3. Player stands still; progress bar in
+     the cook panel (keep panel open during the channel).
    - Interrupt: movement input, damage, fire dying mid-channel, Cancel.
      Interrupt = ingredients returned in full, fuel for that cook refunded,
      toast "Cooking interrupted". No partial results.
@@ -96,20 +123,13 @@ moment (inert HUD button stub; deploy is C3), and bakes the first food buffs.
    - Eating graveSoup: buff {stat 'hpMax', amount +20} while active. Effective
      hpMax = CONFIG base + active buffs; clamp current hp inside new max.
      Buff row on HUD (icon + remaining time), CONFIG-driven label "Grave Soup".
-6. GATHER NODE FIX (data): add 2-3 mushroomCluster nodes to regionB.nodes in
-   the existing darkwood band (|x| < 42, z -82..-31), obeying the band's
-   clearance rules (props 3-4m, enemies 5m, spawn 6m, nodes 6m apart). Extend
-   scratch/gen_gather_nodes.py or hand-place with a checked-clearance script;
-   commit the chosen coords in CONFIG. Target: mushrooms findable within an
-   easy walk of the bandit campfire.
-7. CAMPSITE-KIT MOMENT (stub only): on first successful cook (same beat as
+6. CAMPSITE-KIT MOMENT (stub only): on first successful cook (same beat as
    recipe learn), toast "Campsite kit acquired" and reveal a small HUD
    campsite button (camp icon, CONFIG-styled). C1 it is INERT: click shows
    tooltip toast "Set up camp - needs open ground (coming soon)". C3 owns
    real deploy. No inventory item is granted (kit is a UI button, per design).
-8. TUTORIAL TOASTS (minimal, no quest system): first approach to the lit
-   bandit fire: "The fire still burns. E to cook." (fireside prompt suffices -
-   use the standard interact prompt; extra hint toast only if trivial).
+7. TUTORIAL TOASTS (minimal, no quest system): the fireside interact prompt
+   is the tutorial ("E to cook"); no quest beats in C1.
 
 ## ACCEPTANCE (Nicko playtest, his verdict is the gate)
 A1. Bandit campfire in Region B: E opens the cook panel while lit.
@@ -118,41 +138,42 @@ A2. Cooking graveMoss+wildMushroom+boneShard yields Grave Soup, learns the
 A3. Wrong trio yields Bland Mush; ingredients consumed; Bland Mush edible,
     no buff.
 A4. Recipe known: one-click cook from the recipe list when ingredients exist.
-A5. Channel: moving/cancelling/taking a hit interrupts, ingredients return,
-    fire fuel refunded.
+A5. Channel: moving/cancelling/taking a hit within 3s interrupts, ingredients
+    return, fire fuel refunded.
 A6. Fuel: fire burns down over time (visible light-out); E + deadwood
     relights; cooking blocked when burnt out or too low on fuel.
 A7. Eating Grave Soup: HP bar max visibly extends (+20), HUD buff chip with
     countdown. No other stat moves. Bandage still works as before.
-A8. Region A campfire (Region A dressing) unchanged; no other fire cooks.
-A9. All edited files pass node --check; build bundle contains C1 markers.
+A8. Region A campfire (dressing) unchanged; no other fire cooks. No new
+    gather nodes anywhere.
+A9. Cook panel without mushrooms in the bag shows the "older woods" hint
+    (once per session).
+A10. All edited files pass node --check; v8 bundle contains C1 markers.
 
 ## FILES
-- prototype/js/CONFIG.js (cooking block, items, regionB mushroom nodes)
+- prototype/js/CONFIG.js (CONFIG.cooking block + graveSoup/blandMush items;
+  NO node changes, NO mouse keys)
 - prototype/js/cooking.js (NEW; declared in index.html script order +
-  tools/build_v7.py concatenation list, before game.js, after inventory.js)
+  tools/build_v8.py concatenation list, before game.js, after inventory.js)
 - prototype/js/game.js (interact branch, fuel tick hook, buff application)
 - prototype/js/inventory.js (food use path, cook panel inventory calls)
-- prototype/js/hud.js or the HUD section it owns existing equivalents
-  (buff chip row) - follow the file layout that exists; do not restructure
+- HUD buff chip row - follow the existing HUD file layout; do not restructure
 - prototype/index.html, prototype/style.css (panel + button + chip)
-- tools/build_v7.py only if the concat list needs the new file
+- tools/build_v8.py only if the concat list needs the new file
 - io/missions/2026-10-05-cc-c1-cooking.md (this file, already committed)
-- scratch/ placement-checkscript allowed (committed if repo-pattern says so)
 
 ## COMMITS (feat/world-visuals, push after each)
-1. feat(cooking): CONFIG cooking block + graveSoup/blandMush + regionB
-   mushroom nodes
+1. feat(cooking): CONFIG cooking block + graveSoup/blandMush items
 2. feat(cooking): station fuel + cook channel + panel (js/cooking.js + hooks)
 3. feat(cooking): buff layer + food use + HUD buff chip + kit stub
-4. build: v7 bundle (worktree only) - run tools/build_v7.py in the worktree;
-   grep -c graveSoup prototype/builds/v7-playable.html must be non-zero
-5. After push: refresh the host clean checkout for 8793 ONLY if the other
-   session has not moved the tip:
+4. build: v8 bundle (worktree only) - run tools/build_v8.py in the worktree;
+   grep -c graveSoup prototype/builds/v8-playable.html must be non-zero
+5. After push: refresh the host clean checkout for 8793 ONLY after checking
+   the remote tip still equals the pushed sha:
    host-side `git -C /tmp/wh-worldfeat-clean checkout --detach <new-sha>`,
    then curl the bundle for HTTP 200. Report both surface states.
 
 ## REPORT (<= 50 lines)
-Files + CONFIG knobs added (with defaults), fuel/channel numbers, node coords
-added + clearance math summary, commits table, push + serving confirmation,
-watch items (anything you could not verify without running the game).
+Files + CONFIG knobs added (with defaults), fuel/channel numbers, commits
+table, push + serving confirmation, watch items (anything you could not
+verify without running the game).
