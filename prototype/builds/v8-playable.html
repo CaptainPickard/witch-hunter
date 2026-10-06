@@ -87869,7 +87869,7 @@ window.WH_CONFIG.items = {
                     weight: 20, useHint: { kind: 'eat', buff: 'graveSoup' },
                     flavor: 'Earthy, bitter, strangely fortifying' },
   blandMush:      { id: 'blandMush', name: 'Bland Mush', glyph: 'BM', category: 'food',
-                    weight: 15, useHint: { kind: 'eat' },
+                    weight: 15, useHint: { kind: 'eat', buff: 'blandMush' },
                     flavor: 'A sad grey mush' }
 };
 
@@ -87884,8 +87884,9 @@ window.WH_CONFIG.cooking = {
   channelSeconds: 3,                // cook channel; stand still (move / hit / Cancel interrupts)
   // keys that break a running channel (movement + roll; player.js bindings)
   interruptKeys: ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space'],
-  // Buff length. Pre-C2 there is no day clock, so 1 in-game day = this many
-  // REAL seconds; C2 converts it to the day length.
+  // C2: day buffs last buffs[].days in-game days (CONFIG.dayNight
+  // dayLengthSec, counted down by the day clock). FALLBACK ONLY: if the
+  // daynight module is missing, 1 day = this many REAL seconds.
   buffDurationFallbackSec: 480,
   fire: {
     startFuelSec: 240,              // stations with startLit begin with this much fuel (generous for the playtest)
@@ -87910,9 +87911,18 @@ window.WH_CONFIG.cooking = {
   ],
   fallbackResult: 'blandMush',
   // Buffs (first buff system). One instance per id; re-eating refreshes the
-  // duration (no stacking). stat 'hpMax' adds amount to CONFIG.player.hpMax.
+  // duration (no stacking); different ids coexist. stat 'hpMax' adds amount
+  // to CONFIG.player.hpMax for days in-game days. dayMeal: true = the day's
+  // ONE stat meal (doc 10): a second dayMeal meal the same day is eaten but
+  // grants nothing (text.alreadyAteToast); a new day (clock wrap / C3 rest)
+  // clears the slot. kind 'hot' = heal over time: rate HP every tickSec for
+  // durationSec REAL seconds (never day-scaled, never meal-capped), gain
+  // clamped to hpMax.
   buffs: {
-    graveSoup: { label: 'Grave Soup', glyph: 'GS', stat: 'hpMax', amount: 20 }
+    graveSoup: { label: 'Grave Soup', glyph: 'GS', stat: 'hpMax', amount: 20,
+                 days: 1, dayMeal: true },
+    blandMush: { label: 'Bland Mush', glyph: 'BM', kind: 'hot', rate: 2,
+                 tickSec: 1, durationSec: 30 }
   },
   hint: {
     noMushroomText: 'Mushrooms favor the dead...',   // cryptic by intent (CEMETERY ECOLOGY)
@@ -87932,6 +87942,7 @@ window.WH_CONFIG.cooking = {
     learnedToast: 'Recipe learned: {name}',
     interruptToast: 'Cooking interrupted',
     eatToast: 'Ate {name}',
+    alreadyAteToast: 'You have already eaten today',   // C2 meal cap (dayMeal buff refused)
     kitToast: 'Campsite kit acquired',
     kitClickToast: 'Set up camp - needs open ground (coming soon)'
   },
@@ -87942,6 +87953,92 @@ window.WH_CONFIG.cooking = {
   kitButton: { label: 'CAMP', glyph: '▲', left: 76, bottom: 20 },
   // HUD buff chip row under the bars (icon + remaining time)
   buffHud: { warnSec: 30 }          // chip blinks under this many seconds left
+};
+
+// C2 (io/missions/2026-10-05-cc-c2-daynight.md): day/night cycle
+// (js/daynight.js WH_DAYNIGHT). One cycle = dawn > day > dusk > night over
+// dayLengthSec. Each phase row is the look the phase HOLDS; the first
+// blendFrac of every phase smoothsteps from the previous row into it (no
+// pops), the rest holds the row exactly. TUTORIAL LAW: the clock boots
+// DORMANT on startPhase (frozen, night = today's look) and only free-runs
+// after beginCycle() (C3: the first sleep).
+window.WH_CONFIG.dayNight = {
+  // PLAYTEST DEFAULT 60s per in-game day = 15s per phase, so a 15s wait
+  // visibly moves the sky. REAL GAME: 600 (doc 10 day-buff scale) - a later
+  // CONFIG tune; day-length buffs (CONFIG.cooking.buffs[].days) follow it.
+  dayLengthSec: 60,
+  // !!! PLAYTEST-ONLY HATCH (C3 DELETES IT) !!! The dormant clock calls
+  // beginCycle() this many seconds after boot so the cycle can be seen
+  // without the sleep action. 0 = off (tutorial law: day only after sleep).
+  autoBeginSec: 15,
+  startPhase: 'night',              // dormant look (locked until beginCycle)
+  order: ['dawn', 'day', 'dusk', 'night'],
+  // phase start as a fraction of the cycle; beginCycle() starts at dawn (0)
+  bounds: { dawn: 0, day: 0.25, dusk: 0.5, night: 0.75 },
+  blendFrac: 0.5,                   // first half of each phase blends in from the previous phase
+  // Row keys: hemi colors + hemiFillMult (x hemiBaseIntensity x region
+  // ambientLightLevel x regionBFillMult), the ONE directional (moon by
+  // night, sun by day - no new light objects) color / intensity / azimuth /
+  // elevation, exposureMult (x renderer.toneMappingExposure), fog per region
+  // id (cem* = regionA cemeteryFog ramp target), sky dome colors, star
+  // visibility, sky disc (moon / sun sprite) colors + opacity.
+  phases: {
+    // NIGHT = TODAY'S APPROVED LOOK. Every value is copied verbatim from
+    // CONFIG.lighting / regionA / regionA.cemeteryFog / regionB / sky; mults
+    // are exactly 1. daynight.js verifies this match at boot (console.warn).
+    night: {
+      hemiSkyColor: 0x4a5a80, hemiGroundColor: 0x16181e, hemiFillMult: 1.0,
+      lightColor: 0xa8bce6, lightIntensity: 0.9, azimuthDeg: 0, elevationDeg: 30,
+      exposureMult: 1.0,
+      fog: {
+        hold_outskirts: { color: 0x9aa0a3, density: 0.012, cemColor: 0x7f8ea6, cemDensity: 0.030 },
+        darkwood_edge: { color: 0x6f7477, density: 0.024 }
+      },
+      zenithColor: 0x070a18, horizonBand: 0x2b3350, horizonGlow: 0x8f98ad,
+      stars: 1.0,
+      discColor: 0xdfe7f2, discGlowColor: 0xa8bce6, discOpacity: 1.0
+    },
+    // dawn: low cold-rose light from the east, mist still heavy
+    dawn: {
+      hemiSkyColor: 0x6a6878, hemiGroundColor: 0x1e1c1e, hemiFillMult: 1.5,
+      lightColor: 0xc9a88e, lightIntensity: 0.8, azimuthDeg: 80, elevationDeg: 10,
+      exposureMult: 1.0,
+      fog: {
+        hold_outskirts: { color: 0xa29a98, density: 0.011, cemColor: 0x8e8c9c, cemDensity: 0.026 },
+        darkwood_edge: { color: 0x77736f, density: 0.021 }
+      },
+      zenithColor: 0x262c44, horizonBand: 0x6e5e66, horizonGlow: 0xa8948a,
+      stars: 0.35,
+      discColor: 0xf0d2b0, discGlowColor: 0xb08870, discOpacity: 0.9
+    },
+    // day: pale overcast daylight - gothic but readable, darkwood ash/olive
+    // palette (no blue sky, no saturation)
+    day: {
+      hemiSkyColor: 0x8a929c, hemiGroundColor: 0x2a2a22, hemiFillMult: 2.4,
+      lightColor: 0xd8d0bc, lightIntensity: 1.25, azimuthDeg: 160, elevationDeg: 50,
+      exposureMult: 1.0,
+      fog: {
+        hold_outskirts: { color: 0xa4a8a6, density: 0.008, cemColor: 0x9aa1a8, cemDensity: 0.020 },
+        darkwood_edge: { color: 0x80857f, density: 0.017 }
+      },
+      zenithColor: 0x56606e, horizonBand: 0x868d92, horizonGlow: 0xa9adab,
+      stars: 0.0,
+      discColor: 0xf0e6cc, discGlowColor: 0xb8ae94, discOpacity: 0.85
+    },
+    // dusk: sun sinks west, bruised-rose band, mist thickens back
+    dusk: {
+      hemiSkyColor: 0x5e5a6e, hemiGroundColor: 0x1a181c, hemiFillMult: 1.4,
+      lightColor: 0xc0907a, lightIntensity: 0.75, azimuthDeg: 250, elevationDeg: 10,
+      exposureMult: 1.0,
+      fog: {
+        hold_outskirts: { color: 0x9c9496, density: 0.012, cemColor: 0x868aa0, cemDensity: 0.027 },
+        darkwood_edge: { color: 0x726e6c, density: 0.022 }
+      },
+      zenithColor: 0x1c2238, horizonBand: 0x664e58, horizonGlow: 0x9c8478,
+      stars: 0.25,
+      discColor: 0xe8b894, discGlowColor: 0xa07060, discOpacity: 0.9
+    }
+  }
 };
 
 // Stage 2 (Nicko 10-05): static gather nodes (js/gather.js WH_GATHER).
@@ -89861,6 +89958,8 @@ window.WH_CONFIG.inventoryUI = {
 //   Station   one fire station { id, kind, regionId, asset, x, z, fuel }
 //   matchRecipe(ids) -> recipe row | null (order-free)
 //   BuffSet   the first buff system (food buffs; game.js applies the stats)
+// C2: day buffs count down on the day clock (js/daynight.js, opts.dayNight),
+// dayMeal buffs obey the one-meal-per-day cap, 'hot' buffs heal over time.
 
 (function () {
   'use strict';
@@ -89931,22 +90030,57 @@ window.WH_CONFIG.inventoryUI = {
 
   // ---- buffs (C1: the first buff system) --------------------------------------------
   // One instance per buff id (CONFIG.cooking.buffs); add() on an active id
-  // refreshes its duration, never stacks. Durations are real seconds until
-  // C2's day clock (CONFIG.cooking.buffDurationFallbackSec).
-  function BuffSet() {
-    this.active = {};                 // id -> { id, remaining, duration }
+  // refreshes its duration, never stacks; different ids coexist. C2: stat
+  // buffs last def.days in-game DAYS, counted down by the day clock
+  // (dayNight.dayDelta; frozen while the clock is dormant); without a
+  // dayNight, 1 day = buffDurationFallbackSec real seconds. 'hot' buffs
+  // run on REAL seconds (def.durationSec). remaining = seconds left (HUD).
+  function BuffSet(dayNight) {
+    this.dayNight = dayNight || null;
+    this.active = {};                 // id -> { id, kind, unit, remaining, days?, acc? }
   }
 
-  BuffSet.prototype.add = function (id, seconds) {
-    var dur = seconds || C.buffDurationFallbackSec;
-    this.active[id] = { id: id, remaining: dur, duration: dur };
+  BuffSet.prototype.add = function (id) {
+    var def = C.buffs[id] || {};
+    var old = this.active[id];
+    var b = { id: id, kind: def.kind || 'stat' };
+    if (b.kind === 'hot') {
+      b.unit = 'sec';
+      b.remaining = b.duration = def.durationSec;
+      b.acc = old ? old.acc : 0;      // refresh keeps the tick phase (no double tick)
+    } else if (this.dayNight) {
+      b.unit = 'day';
+      b.days = def.days || 1;
+      b.remaining = b.duration = b.days * CFG.dayNight.dayLengthSec;
+    } else {
+      b.unit = 'sec';
+      b.remaining = b.duration = (def.days || 1) * C.buffDurationFallbackSec;
+    }
+    this.active[id] = b;
   };
 
-  BuffSet.prototype.update = function (dt) {
+  // Counts every buff down; returns the HP that 'hot' buffs heal this frame
+  // (Cooking.update applies it AFTER the cook-interrupt hit test, so regen
+  // never masks or fakes a hit).
+  BuffSet.prototype.update = function (dt, dayDelta) {
+    var heal = 0;
     for (var id in this.active) {
-      this.active[id].remaining -= dt;
-      if (this.active[id].remaining <= 0) delete this.active[id];
+      var b = this.active[id];
+      if (b.kind === 'hot') {
+        var def = C.buffs[id];
+        b.acc += Math.min(dt, b.remaining);
+        // eps: 30s of summed dt still lands all 30 ticks
+        while (b.acc >= def.tickSec - 1e-6) { b.acc -= def.tickSec; heal += def.rate; }
+      }
+      if (b.unit === 'day') {
+        b.days -= dayDelta || 0;
+        b.remaining = b.days * CFG.dayNight.dayLengthSec;
+      } else {
+        b.remaining -= dt;
+      }
+      if (b.remaining <= 1e-6) delete this.active[id];
     }
+    return heal;
   };
 
   // summed amount of every active buff on stat ('hpMax')
@@ -89966,7 +90100,7 @@ window.WH_CONFIG.inventoryUI = {
 
   // ---- Cooking (registry + panel + channel) -----------------------------------------
   // opts: { inventory, player, toast(text), onOpenChange(open),
-  //         dropAtFeet(id, count) }.
+  //         dropAtFeet(id, count), dayNight }.
   function Cooking(opts) {
     var self = this;
     this.inv = opts.inventory;
@@ -89984,7 +90118,9 @@ window.WH_CONFIG.inventoryUI = {
     this.showHint = false;
     this.lastHp = this.player.hp;
     this.toastTimers = [];
-    this.buffs = new BuffSet();
+    this.dayNight = opts.dayNight || null;   // C2: js/daynight.js clock
+    this.buffs = new BuffSet(this.dayNight);
+    this.mealDay = -1;                // C2: dayNight.day the day's dayMeal was eaten
     this.kitAcquired = false;         // C1 campsite-kit moment (button is inert until C3)
     this.buildPanel();
     this.buildKitButton();
@@ -90268,7 +90404,7 @@ window.WH_CONFIG.inventoryUI = {
   // fire out), panel auto-close on death.
   Cooking.prototype.update = function (dt) {
     for (var i = 0; i < this.stations.length; i++) this.stations[i].update(dt);
-    this.buffs.update(dt);
+    var heal = this.buffs.update(dt, this.dayNight ? this.dayNight.dayDelta : 0);
     var p = this.player;
     if (this.channel) {
       // a hit = hp dropped below last frame (a buff-expiry clamp lands
@@ -90281,6 +90417,9 @@ window.WH_CONFIG.inventoryUI = {
         if (this.channel.t >= C.channelSeconds) this.finishCook();
       }
     }
+    // C2 heal over time (Bland Mush) lands after the hit test; lastHp takes
+    // the healed value so the next frame only compares real drops
+    if (heal > 0 && p.state === 'alive') p.hp = Math.min(p.hpMax, p.hp + heal);
     this.lastHp = p.hp;
     if (this.open && p.state !== 'alive') this.setOpen(false);
     if (this.open) this.renderLive();
@@ -90361,14 +90500,25 @@ window.WH_CONFIG.inventoryUI = {
   };
 
   // Eat 1 from slot i: its buff (if any) starts / refreshes. Returns true when eaten.
+  // C2 meal cap: a dayMeal buff fills the day's one meal slot; a further
+  // dayMeal meal that day is eaten (consumed) but grants no buff. Refresh
+  // counts as the day's meal. Non-dayMeal food (Bland Mush) is never capped.
   Cooking.prototype.eat = function (slotIndex) {
     var s = this.inv.slotAt(slotIndex);
     if (!s || !this.canEat(s.id) || this.player.state !== 'alive') return false;
     var d = INV.itemDef(s.id);
+    var bid = d.useHint.buff, bdef = bid ? C.buffs[bid] : null;
     this.inv.removeFromSlot(slotIndex, 1);
-    if (d.useHint.buff && C.buffs[d.useHint.buff]) this.buffs.add(d.useHint.buff);
+    if (bdef && bdef.dayMeal && this.dayNight) {
+      if (this.mealDay === this.dayNight.day) {
+        this.toast(C.text.alreadyAteToast);
+        return true;
+      }
+      this.mealDay = this.dayNight.day;
+    }
+    if (bdef) this.buffs.add(bid);
     this.toast(C.text.eatToast.replace('{name}', d.name) +
-      (d.useHint.buff ? '' : ' - ' + d.flavor));
+      (bdef && bdef.stat ? '' : ' - ' + d.flavor));
     return true;
   };
 
@@ -90405,6 +90555,190 @@ window.WH_CONFIG.inventoryUI = {
     Cooking: Cooking,
     Station: Station,
     matchRecipe: matchRecipe
+  };
+})();
+
+</script>
+<script>
+// Witch Hunter prototype - day/night cycle (C2, io/missions/2026-10-05-cc-c2-daynight.md).
+// One clock over CONFIG.dayNight.dayLengthSec: dawn > day > dusk > night
+// (phase starts = CONFIG bounds fractions). The first blendFrac of each
+// phase smoothsteps from the previous phase row into this one; the rest
+// HOLDS the row exactly (hold = straight copy, never a lerp at t=1, so the
+// night hold is bit-identical to the approved CONFIG look).
+// TUTORIAL LAW: boots DORMANT on startPhase (clock frozen, nothing moves);
+// beginCycle() starts dawn and the free-running cycle (C3: first sleep).
+// Pure state - game.js applyDayNight() pushes .state into the scene.
+// Exposes window.WH_DAYNIGHT:
+//   DayNight   constructor (game.js owns the one instance)
+//     .tick(dt)       advance (frozen while dormant)
+//     .beginCycle()   dormant -> dawn, new day
+//     .dormant .day .timeOfDay (0..1) .phase .dayDelta (days this tick)
+//     .state          blended look { hemiSky, hemiGround (THREE.Color), ... }
+//     .nightMatches   boot check: night row == today's CONFIG values
+
+(function () {
+  'use strict';
+
+  var CFG = window.WH_CONFIG;
+  var D = CFG.dayNight;
+
+  var COLOR_KEYS = ['hemiSkyColor', 'hemiGroundColor', 'lightColor', 'zenithColor',
+    'horizonBand', 'horizonGlow', 'discColor', 'discGlowColor'];
+  var NUM_KEYS = ['hemiFillMult', 'lightIntensity', 'elevationDeg', 'exposureMult',
+    'stars', 'discOpacity'];
+
+  function smooth(t) {
+    t = Math.min(1, Math.max(0, t));
+    return t * t * (3 - 2 * t);
+  }
+
+  // shortest-arc angle lerp in degrees (dusk 250 -> night 0 goes +110)
+  function lerpDeg(a, b, t) {
+    var d = ((b - a) % 360 + 540) % 360 - 180;
+    return a + d * t;
+  }
+
+  function makeState() {
+    var s = { fog: {} };
+    COLOR_KEYS.forEach(function (k) { s[k] = new THREE.Color(); });
+    return s;
+  }
+
+  // state = row exactly (no arithmetic on the values)
+  function copyRow(s, row) {
+    var i, k;
+    for (i = 0; i < COLOR_KEYS.length; i++) s[COLOR_KEYS[i]].setHex(row[COLOR_KEYS[i]]);
+    for (i = 0; i < NUM_KEYS.length; i++) s[NUM_KEYS[i]] = row[NUM_KEYS[i]];
+    s.azimuthDeg = row.azimuthDeg;
+    for (k in row.fog) {
+      var f = row.fog[k], o = s.fog[k] || (s.fog[k] = { color: new THREE.Color(), cemColor: new THREE.Color() });
+      o.color.setHex(f.color);
+      o.density = f.density;
+      o.hasCem = f.cemColor !== undefined;
+      if (o.hasCem) { o.cemColor.setHex(f.cemColor); o.cemDensity = f.cemDensity; }
+    }
+  }
+
+  var tmpA = new THREE.Color(), tmpB = new THREE.Color();
+  function lerpRow(s, a, b, t) {
+    var i, k;
+    for (i = 0; i < COLOR_KEYS.length; i++) {
+      k = COLOR_KEYS[i];
+      s[k].lerpColors(tmpA.setHex(a[k]), tmpB.setHex(b[k]), t);
+    }
+    for (i = 0; i < NUM_KEYS.length; i++) {
+      k = NUM_KEYS[i];
+      s[k] = a[k] + (b[k] - a[k]) * t;
+    }
+    s.azimuthDeg = lerpDeg(a.azimuthDeg, b.azimuthDeg, t);
+    for (k in b.fog) {
+      var fa = a.fog[k] || b.fog[k], fb = b.fog[k];
+      var o = s.fog[k] || (s.fog[k] = { color: new THREE.Color(), cemColor: new THREE.Color() });
+      o.color.lerpColors(tmpA.setHex(fa.color), tmpB.setHex(fb.color), t);
+      o.density = fa.density + (fb.density - fa.density) * t;
+      o.hasCem = fb.cemColor !== undefined && fa.cemColor !== undefined;
+      if (o.hasCem) {
+        o.cemColor.lerpColors(tmpA.setHex(fa.cemColor), tmpB.setHex(fb.cemColor), t);
+        o.cemDensity = fa.cemDensity + (fb.cemDensity - fa.cemDensity) * t;
+      }
+    }
+  }
+
+  // Boot check: the night row must equal today's approved CONFIG values.
+  function verifyNight() {
+    var n = D.phases.night, L = CFG.lighting, S = CFG.sky, A = CFG.regionA, B = CFG.regionB;
+    var checks = [
+      ['hemiSkyColor', n.hemiSkyColor, L.hemiSkyColor],
+      ['hemiGroundColor', n.hemiGroundColor, L.hemiGroundColor],
+      ['hemiFillMult', n.hemiFillMult, 1],
+      ['lightColor', n.lightColor, L.moonColor],
+      ['lightIntensity', n.lightIntensity, L.moonIntensity],
+      ['azimuthDeg', n.azimuthDeg, L.moonAzimuthDeg],
+      ['elevationDeg', n.elevationDeg, L.moonElevationDeg],
+      ['exposureMult', n.exposureMult, 1],
+      ['fogA.color', n.fog[A.id].color, A.fogColor],
+      ['fogA.density', n.fog[A.id].density, A.fogDensity],
+      ['fogA.cemColor', n.fog[A.id].cemColor, A.cemeteryFog.color],
+      ['fogA.cemDensity', n.fog[A.id].cemDensity, A.cemeteryFog.density],
+      ['fogB.color', n.fog[B.id].color, B.fogColor],
+      ['fogB.density', n.fog[B.id].density, B.fogDensity],
+      ['zenithColor', n.zenithColor, S.zenithColor],
+      ['horizonBand', n.horizonBand, S.horizonBand],
+      ['horizonGlow', n.horizonGlow, S.horizonGlow],
+      ['stars', n.stars, 1],
+      ['discColor', n.discColor, S.moonColor],
+      ['discGlowColor', n.discGlowColor, S.moonGlowColor],
+      ['discOpacity', n.discOpacity, 1]
+    ];
+    var bad = checks.filter(function (c) { return c[1] !== c[2]; });
+    if (bad.length) {
+      console.warn('[WH_DAYNIGHT] night row drifts from the approved look:',
+        bad.map(function (c) { return c[0] + ' ' + c[1] + ' != ' + c[2]; }).join(', '));
+    }
+    return bad.length === 0;
+  }
+
+  function DayNight() {
+    this.dormant = true;
+    this.day = 0;                     // 0 = the tutorial's first night; +1 per new day
+    this.clock = 0;                   // seconds into the current cycle
+    this.bootT = 0;                   // PLAYTEST hatch timer (autoBeginSec)
+    this.dayDelta = 0;
+    this.phase = D.startPhase;
+    this.timeOfDay = D.bounds[D.startPhase];
+    this.state = makeState();
+    this.nightMatches = verifyNight();
+    copyRow(this.state, D.phases[D.startPhase]);
+  }
+
+  // dormant -> dawn. A new day (C3: rest/sleep = morning).
+  DayNight.prototype.beginCycle = function () {
+    if (!this.dormant) return;
+    this.dormant = false;
+    this.clock = 0;
+    this.day++;
+  };
+
+  DayNight.prototype.phaseAt = function (f) {
+    var cur = D.order[0];
+    for (var i = 0; i < D.order.length; i++) {
+      if (f >= D.bounds[D.order[i]]) cur = D.order[i];
+    }
+    return cur;
+  };
+
+  DayNight.prototype.tick = function (dt) {
+    this.dayDelta = 0;
+    if (this.dormant) {
+      // !!! PLAYTEST-ONLY HATCH (C3 deletes): auto-begin after autoBeginSec
+      if (D.autoBeginSec > 0) {
+        this.bootT += dt;
+        if (this.bootT >= D.autoBeginSec) this.beginCycle();
+      }
+      if (this.dormant) return;       // frozen: state stays the startPhase row
+      dt = 0;                         // the cycle starts at exactly dawn this frame
+    }
+    var len = D.dayLengthSec;
+    this.clock += dt;
+    this.dayDelta = dt / len;
+    while (this.clock >= len) { this.clock -= len; this.day++; }
+    var f = this.clock / len;
+    this.timeOfDay = f;
+    var ph = this.phaseAt(f);
+    this.phase = ph;
+    var idx = D.order.indexOf(ph);
+    var prev = D.order[(idx + D.order.length - 1) % D.order.length];
+    var start = D.bounds[ph];
+    var end = idx + 1 < D.order.length ? D.bounds[D.order[idx + 1]] : 1;
+    var u = (f - start) / (end - start);
+    var w = smooth(u / D.blendFrac);
+    if (w >= 1) copyRow(this.state, D.phases[ph]);
+    else lerpRow(this.state, D.phases[prev], D.phases[ph], w);
+  };
+
+  window.WH_DAYNIGHT = {
+    DayNight: DayNight
   };
 })();
 
@@ -95987,7 +96321,8 @@ window.WH_CONFIG.inventoryUI = {
         icon.textContent = def.glyph;
         var label = document.createElement('span');
         label.className = 'buff-label';
-        label.textContent = def.label + (def.stat === 'hpMax' ? ' +' + def.amount + ' max HP' : '');
+        label.textContent = def.label + (def.stat === 'hpMax' ? ' +' + def.amount + ' max HP' :
+          def.kind === 'hot' ? ' +' + def.rate + ' HP/s' : '');
         c.time.className = 'buff-time';
         c.root.appendChild(icon);
         c.root.appendChild(label);
@@ -96308,13 +96643,22 @@ window.WH_CONFIG.inventoryUI = {
       cemFog = { zone: zone, baseDensity: base.fogDensity,
         baseColor: new THREE.Color(base.fogColor), color: new THREE.Color(CF.color) };
     }
+    // C2: base + target follow the day/night phase (night row = the CONFIG
+    // values cached above, so the night ramp is unchanged)
+    var baseDensity = cemFog.baseDensity, baseColor = cemFog.baseColor;
+    var cemDensity = CF.density, cemColor = cemFog.color;
+    var dnFog = game.dayNight && game.dayNight.state.fog[CFG.regionA.id];
+    if (dnFog) {
+      baseDensity = dnFog.density; baseColor = dnFog.color;
+      if (dnFog.hasCem) { cemDensity = dnFog.cemDensity; cemColor = dnFog.cemColor; }
+    }
     var Z = cemFog.zone;
     var nx = (game.player.pos.x - Z.x) / Z.rx, nz = (game.player.pos.z - Z.z) / Z.rz;
     var d = Math.sqrt(nx * nx + nz * nz);
     var t = Math.min(1, Math.max(0, (d - CF.rampStart) / (CF.rampEnd - CF.rampStart)));
     var w = t * t * (3 - 2 * t);
-    game.scene.fog.density = cemFog.baseDensity + (CF.density - cemFog.baseDensity) * w;
-    game.scene.fog.color.lerpColors(cemFog.baseColor, cemFog.color, w);
+    game.scene.fog.density = baseDensity + (cemDensity - baseDensity) * w;
+    game.scene.fog.color.lerpColors(baseColor, cemColor, w);
   }
 
   // 10-03 order 4: starry night sky. Dome sphere (BackSide, fog:false,
@@ -96415,7 +96759,8 @@ window.WH_CONFIG.inventoryUI = {
       blending: THREE.AdditiveBlending,
       uniforms: {
         map: { value: buildStarTexture() },
-        time: { value: 0 }
+        time: { value: 0 },
+        vis: { value: 1.0 }           // C2: star visibility (daynight phase; night = 1)
       },
       vertexShader: [
         'attribute float aSize;',
@@ -96433,11 +96778,12 @@ window.WH_CONFIG.inventoryUI = {
       ].join('\n'),
       fragmentShader: [
         'uniform sampler2D map;',
+        'uniform float vis;',
         'varying vec3 vColor;',
         'varying float vTw;',
         'void main() {',
         '  vec4 tx = texture2D(map, gl_PointCoord);',
-        '  gl_FragColor = vec4(vColor * vTw, 1.0) * tx;',
+        '  gl_FragColor = vec4(vColor * vTw, 1.0) * tx * vis;',
         '}'
       ].join('\n'),
       vertexColors: true
@@ -96484,7 +96830,8 @@ window.WH_CONFIG.inventoryUI = {
     group.add(glow);
     group.add(core);
 
-    game.sky = { group: group, stars: stars, starMat: starMat };
+    game.sky = { group: group, stars: stars, starMat: starMat, domeMat: domeMat,
+      glow: glow, core: core };
     game.scene.add(group);
   }
 
@@ -96492,6 +96839,62 @@ window.WH_CONFIG.inventoryUI = {
   function skyTick() {
     if (game.sky && game.sky.starMat) {
       game.sky.starMat.uniforms.time.value = performance.now() / 1000;
+    }
+  }
+
+  // C2: push the day/night look (js/daynight.js state) into the scene. Same
+  // formulas as setupLights / setupSky / applyRegionLighting with the phase
+  // row in place of the CONFIG constants; the night row IS those constants
+  // and its mults are 1, so night renders exactly today's look. The one
+  // moon directional doubles as the sun (no new lights; pool untouched).
+  var dnDir = null;
+  function applyDayNight() {
+    var dn = game.dayNight;
+    if (!dn) return;
+    var S = dn.state, L = CFG.lighting;
+    var rid = game.regionManager ? game.regionManager.logic.activeId : CFG.regionA.id;
+    var region = window.WH_REGION_DEFS.regions[rid];
+    if (game.hemiLight) {
+      game.hemiLight.color.copy(S.hemiSkyColor);
+      game.hemiLight.groundColor.copy(S.hemiGroundColor);
+      var mult = rid === CFG.regionB.id ? (L.regionBFillMult || 1.0) : 1.0;
+      game.hemiLight.intensity = L.hemiBaseIntensity * region.ambientLightLevel * mult * S.hemiFillMult;
+    }
+    var az = (S.azimuthDeg || 0) * Math.PI / 180;
+    var el = (S.elevationDeg || 30) * Math.PI / 180;
+    if (game.moonLight) {
+      var dir = L.moonDirectionDistance || 60;
+      game.moonLight.color.copy(S.lightColor);
+      game.moonLight.intensity = S.lightIntensity;
+      game.moonLight.position.set(
+        Math.round(Math.sin(az) * Math.cos(el) * dir * 10) / 10,
+        Math.round(Math.sin(el) * dir * 10) / 10,
+        -Math.round(Math.cos(az) * Math.cos(el) * dir * 10) / 10
+      );
+    }
+    game.renderer.toneMappingExposure = CFG.renderer.toneMappingExposure * S.exposureMult;
+    var f = S.fog[rid];
+    if (f && game.scene.fog) {
+      game.scene.fog.color.copy(f.color);
+      game.scene.fog.density = f.density;
+    }
+    if (game.sky) {
+      var U = game.sky.domeMat.uniforms;
+      U.zenith.value.copy(S.zenithColor);
+      U.band.value.copy(S.horizonBand);
+      U.glow.value.copy(S.horizonGlow);
+      game.sky.starMat.uniforms.vis.value = S.stars;
+      game.sky.stars.visible = S.stars > 0;
+      // sky disc: moon by night, sun by day, on the directional's bearing
+      if (!dnDir) dnDir = new THREE.Vector3();
+      dnDir.set(Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el))
+        .multiplyScalar(CFG.sky.moonDistance);
+      game.sky.core.position.copy(dnDir);
+      game.sky.glow.position.copy(dnDir);
+      game.sky.core.material.color.copy(S.discColor);
+      game.sky.glow.material.color.copy(S.discGlowColor);
+      game.sky.core.material.opacity = S.discOpacity;
+      game.sky.glow.material.opacity = S.discOpacity;
     }
   }
 
@@ -96608,7 +97011,8 @@ window.WH_CONFIG.inventoryUI = {
         game.inventoryUI.blocked = open;
         p.setInputSuspended(open);
       },
-      dropAtFeet: dropAtFeet
+      dropAtFeet: dropAtFeet,
+      dayNight: game.dayNight         // C2: day buffs + meal cap ride the day clock
     });
     document.addEventListener('keydown', function (e) {
       if (e.code !== CFG.inventoryUI.pickupKey || e.repeat) return;
@@ -96797,6 +97201,13 @@ window.WH_CONFIG.inventoryUI = {
   function setupDebugHooks() {
     window.WH_DEBUG = {
       version: 'v1',
+      // C2: day/night clock readout + manual cycle start (C3 wires sleep)
+      get dayNight() {
+        var dn = game.dayNight;
+        return { dormant: dn.dormant, day: dn.day, phase: dn.phase,
+          timeOfDay: dn.timeOfDay, nightMatches: dn.nightMatches };
+      },
+      beginCycle: function () { game.dayNight.beginCycle(); },
       getPlayerPosition: function () {
         var p = game.player.pos;
         return { x: p.x, y: p.y, z: p.z };
@@ -97021,6 +97432,8 @@ window.WH_CONFIG.inventoryUI = {
       60, window.innerWidth / window.innerHeight, 0.1, 500);
     setupLights();
     setupSky();           // 10-03 order 4: starry night dome + stars + moon
+    // C2: day/night clock - boots DORMANT on today's night look (tutorial law)
+    game.dayNight = new window.WH_DAYNIGHT.DayNight();
     setupHud();
     bindResTunerKeys();   // 10-03 F1/F2 pixel-fidelity keys
     showResReadout();     // visible at boot so the knob is discoverable; dims after 2.5s
@@ -97323,6 +97736,8 @@ window.WH_CONFIG.inventoryUI = {
     // 10-05: earned player light - hand lights follow hands + bindings this
     // frame, projectile lights follow live bolts (flicker per light)
     game.playerLight.update(game.player, game.firebolts);
+    game.dayNight.tick(dt);   // C2: day/night clock (frozen while dormant)
+    applyDayNight();    // C2: phase look -> lights / fog / sky (before the cemetery ramp)
     cemeteryFogTick();  // Round H: graveyard fog ramp (region A)
     skyTick();      // 10-03 order 4: star twinkle clock
     // C1: fire burn + cook channel (after combat so this frame's hits interrupt)
