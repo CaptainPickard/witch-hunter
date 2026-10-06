@@ -68,6 +68,11 @@
     // C3 camps (js/camp.js): the bandit camp's world bedroll + the kit's
     // placeholder bedroll (CONFIG.camp.assets)
     banditBedroll: 'art-direction/3d/assets/biome_library/m16-bandit-bedroll-pixelated.glb',
+    // C3.1c (Nicko 10-06): HIS Meshy tent (share C78d78, task 01a1130b) -
+    // dreary medieval 1-person canvas, door +Z, bed roll modeled inside.
+    // 1584k tris raw -> 30k decimated, per-face UV medoid, 512+5bit.
+    // (scratch/tent_bake_c31c.py + tent_rebake_nodefault.py)
+    whTent: 'art-direction/3d/assets/camp/wh-tent-pixelated.glb',
 
     // church-kit props + trees
     // Round K (io/roundK-provenance.md): Meshy lantern-post-v2, one welded piece, decimated

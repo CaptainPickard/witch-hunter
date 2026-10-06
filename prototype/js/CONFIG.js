@@ -1417,7 +1417,9 @@ window.WH_CONFIG.camp = {
   assets: {
     fire:    { glb: 'banditCampfire', scale: 1.0 },
     bedroll: { glb: 'banditBedroll', scale: 1.0 },
-    tent:    { glb: null, scale: 1.0 }
+    // C3.1c: the REAL tent = Nicko's Meshy generation (door +Z on the GLB,
+    // rotY rows aim it). Scale 2.2 lifts the ~1.9m raw mesh to tent size.
+    tent:    { glb: 'whTent', scale: 2.2 }
   },
   tentPlaceholder: { width: 2.0, length: 2.4, height: 1.4, color: 0x2e2a24, poleColor: 0x4a3b2a },
   // The deployable kit (fire + bedroll + tent). offset = [right, back] m in
@@ -1433,18 +1435,17 @@ window.WH_CONFIG.camp = {
   ],
   respawnStepM: 1.5,                // respawn = the menu anchor + this far toward its door (clear of the fire ring)
   // WORLD CAMPS: module rows bound to a fixed world spot (no kit, no deploy).
-  // Tutorial anchor: a TENT beside the Region B bandit fire (x 2.5 z -52,
-  // 3.6m off: outside both interact radii). C3.1 (Nicko 10-06): the m16
-  // bedroll read as a dead log - a TENT is the unambiguous "you sleep here"
-  // visual; the same asset key as the kit's tent, so the Astrabot campkit
-  // GLB replaces both in one edit. The bandit fire itself stays the
-  // CONFIG.cooking station - sleep-only here.
+  // Tutorial anchor: the TENT beside the Region B bandit fire (x 2.5 z -52).
+  // C3.1c (Nicko 10-06): tent moved OPPOSITE its first spot - mirrored
+  // through the fire center (x 0 -> 5.0, z -49.4 -> -54.6), respawn spot
+  // mirrored with it; door rotY -0.77 aims the +Z door AT the fire.
+  // The bandit fire itself stays the CONFIG.cooking station - sleep-only here.
   worldCamps: [
     { id: 'banditCamp', regionId: 'darkwood_edge',
       modules: [
-        { id: 'tent', hook: 'sleep', asset: 'tent', x: 0.0, z: -49.4, rotY: -0.77 }
+        { id: 'tent', hook: 'sleep', asset: 'tent', x: 5.0, z: -54.6, rotY: -0.77 }
       ],
-      respawn: { x: -1.0, z: -48.3 }, face: { x: 2.5, z: -52 } }
+      respawn: { x: 6.0, z: -55.7 }, face: { x: 2.5, z: -52 } }
   ],
   deploy: {
     maxSites: 1,                    // one kit: a new deploy packs up the old site (fire fuel starts fresh)
