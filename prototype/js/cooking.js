@@ -9,6 +9,7 @@
 //   Cooking   constructor (game.js owns the one instance)
 //   Station   one fire station { id, kind, regionId, asset, x, z, fuel }
 //   matchRecipe(ids) -> recipe row | null (order-free)
+//   BuffSet   the first buff system (food buffs; game.js applies the stats)
 
 (function () {
   'use strict';
@@ -77,6 +78,41 @@
     }
   };
 
+  // ---- buffs (C1: the first buff system) --------------------------------------------
+  // One instance per buff id (CONFIG.cooking.buffs); add() on an active id
+  // refreshes its duration, never stacks. Durations are real seconds until
+  // C2's day clock (CONFIG.cooking.buffDurationFallbackSec).
+  function BuffSet() {
+    this.active = {};                 // id -> { id, remaining, duration }
+  }
+
+  BuffSet.prototype.add = function (id, seconds) {
+    var dur = seconds || C.buffDurationFallbackSec;
+    this.active[id] = { id: id, remaining: dur, duration: dur };
+  };
+
+  BuffSet.prototype.update = function (dt) {
+    for (var id in this.active) {
+      this.active[id].remaining -= dt;
+      if (this.active[id].remaining <= 0) delete this.active[id];
+    }
+  };
+
+  // summed amount of every active buff on stat ('hpMax')
+  BuffSet.prototype.statBonus = function (stat) {
+    var n = 0;
+    for (var id in this.active) {
+      var def = C.buffs[id];
+      if (def && def.stat === stat) n += def.amount;
+    }
+    return n;
+  };
+
+  BuffSet.prototype.list = function () {
+    var self = this;
+    return Object.keys(this.active).map(function (id) { return self.active[id]; });
+  };
+
   // ---- Cooking (registry + panel + channel) -----------------------------------------
   // opts: { inventory, player, toast(text), onOpenChange(open),
   //         dropAtFeet(id, count) }.
@@ -97,7 +133,10 @@
     this.showHint = false;
     this.lastHp = this.player.hp;
     this.toastTimers = [];
+    this.buffs = new BuffSet();
+    this.kitAcquired = false;         // C1 campsite-kit moment (button is inert until C3)
     this.buildPanel();
+    this.buildKitButton();
     document.addEventListener('keydown', function (e) { self.onKey(e); });
   }
 
@@ -349,7 +388,12 @@
     if (recipe && !recipe.known) {
       recipe.known = true;
       lines.push(C.text.learnedToast.replace('{name}', recipe.name));
-      if (this.onRecipeLearned) this.onRecipeLearned(recipe, lines);
+      // campsite-kit moment: same beat as the first recipe learned
+      if (!this.kitAcquired) {
+        this.kitAcquired = true;
+        lines.push(C.text.kitToast);
+        this.kitBtn.style.display = '';
+      }
     }
     this.toastChain(lines);
     this.slots = [null, null, null];
@@ -360,6 +404,7 @@
   // fire out), panel auto-close on death.
   Cooking.prototype.update = function (dt) {
     for (var i = 0; i < this.stations.length; i++) this.stations[i].update(dt);
+    this.buffs.update(dt);
     var p = this.player;
     if (this.channel) {
       // a hit = hp dropped below last frame (a buff-expiry clamp lands
@@ -440,7 +485,55 @@
     this.renderLive();
   };
 
+  // ---- food use (inventory screen EAT / E on a selected food stack) ---------------
+
+  Cooking.prototype.canEat = function (id) {
+    var d = INV.itemDef(id);
+    return !!(d && d.category === 'food' && d.useHint && d.useHint.kind === 'eat');
+  };
+
+  // Eat 1 from slot i: its buff (if any) starts / refreshes. Returns true when eaten.
+  Cooking.prototype.eat = function (slotIndex) {
+    var s = this.inv.slotAt(slotIndex);
+    if (!s || !this.canEat(s.id) || this.player.state !== 'alive') return false;
+    var d = INV.itemDef(s.id);
+    this.inv.removeFromSlot(slotIndex, 1);
+    if (d.useHint.buff && C.buffs[d.useHint.buff]) this.buffs.add(d.useHint.buff);
+    this.toast(C.text.eatToast.replace('{name}', d.name) +
+      (d.useHint.buff ? '' : ' - ' + d.flavor));
+    return true;
+  };
+
+  // ---- campsite kit (C1 stub: INERT HUD button, C3 owns deploy) ------------------
+  // Same body-level button pattern as the INV button: pointerdown acts,
+  // the mouse events are swallowed so no swing / camera drag leaks through.
+  Cooking.prototype.buildKitButton = function () {
+    var self = this, K = C.kitButton;
+    var btn = el('button', '', K.glyph + ' ' + K.label);
+    btn.id = 'wh-camp-btn';
+    btn.type = 'button';
+    btn.tabIndex = -1;
+    btn.title = 'Campsite kit';
+    btn.style.left = K.left + 'px';
+    btn.style.bottom = K.bottom + 'px';
+    btn.style.display = 'none';       // revealed on the first recipe learned
+    btn.addEventListener('pointerdown', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      self.toast(C.text.kitClickToast);
+    });
+    ['mousedown', 'click', 'contextmenu'].forEach(function (t) {
+      btn.addEventListener(t, function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+    });
+    document.body.appendChild(btn);
+    this.kitBtn = btn;
+  };
+
   window.WH_COOKING = {
+    BuffSet: BuffSet,
     Cooking: Cooking,
     Station: Station,
     matchRecipe: matchRecipe

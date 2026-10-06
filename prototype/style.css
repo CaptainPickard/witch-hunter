@@ -915,3 +915,85 @@ html, body {
   display: flex;
   justify-content: space-between;
 }
+
+/* C1: buff chips under the bars (game.js updateBuffHud) */
+#wh-buffs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.buff-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 6px 2px 2px;
+  font-family: monospace;
+  font-size: 11px;
+  color: #d8d2c0;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid #5a5344;
+}
+
+.buff-icon {
+  padding: 1px 3px;
+  font-weight: bold;
+  color: #1a1510;
+  background: #c07a3a;
+}
+
+.buff-time {
+  color: #d8b24a;
+}
+
+.buff-chip.warn .buff-time {
+  animation: wh-buff-blink 1s steps(2, start) infinite;
+}
+
+@keyframes wh-buff-blink {
+  to { visibility: hidden; }
+}
+
+/* C1: EAT button under the grid (selected food stack) */
+.inv-use-btn {
+  display: block;
+  margin: 8px auto 0;
+  min-width: 84px;
+  height: 26px;
+  font-family: monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #e3d27a;
+  background: #221c15;
+  border: 2px solid #d8b24a;
+  cursor: pointer;
+}
+
+.inv-tip-flavor {
+  font-style: italic;
+}
+
+/* C1: campsite-kit button (INERT stub, C3 deploys). Same frame as the INV
+   button; left/bottom inline from CONFIG.cooking.kitButton. */
+#wh-camp-btn {
+  position: fixed;
+  z-index: 46;
+  min-width: 44px;
+  height: 30px;
+  padding: 0 8px;
+  font-family: monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #c9bf9f;
+  background: #1a1510;
+  border: 2px solid #4a4034;
+  box-shadow: 0 0 0 2px #14110e, inset 0 0 0 1px #2a231b;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+#wh-camp-btn:hover {
+  border-color: #c9a94a;
+}

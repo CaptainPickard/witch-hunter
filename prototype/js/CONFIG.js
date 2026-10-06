@@ -1447,6 +1447,8 @@ window.WH_CONFIG.inventoryUI = {
   closeKeys: ['KeyI', 'Escape'],
   dropKey: 'KeyG',                  // drop 1 of the selected stack; Shift+G = whole stack
   pickupKey: 'KeyE',                // world: collect the nearest item entity in pickupRadius
+  useKey: 'KeyE',                   // C1: screen open = eat the selected food stack
+  useLabel: 'EAT',                  // C1: grid use button (touch path)
   gridCols: 6,                      // 24 slots -> 6 x 4
   toastSeconds: 1.8,                // "Dropped X x1" / "Inventory full" toast lifetime
   // Order B: clickable HUD button, same toggle as the I key. left / bottom

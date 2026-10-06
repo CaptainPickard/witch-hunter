@@ -168,6 +168,8 @@
     this.inv = opts.inventory;
     this.onOpenChange = opts.onOpenChange || null;
     this.onDrop = opts.onDrop || null;
+    this.onUse = opts.onUse || null;  // C1: (slotIndex) eat a food stack
+    this.canUse = opts.canUse || null;  // C1: (itemId) -> usable from the grid?
     this.equip = opts.equip || null;
     this.open = false;
     this.tab = 'inventory';
@@ -210,6 +212,11 @@
       self.slotEls.push({ root: s, glyph: glyph, count: count });
     });
     this.invBody.appendChild(grid);
+    // C1: EAT button, shown while the selected stack is usable (food)
+    this.useBtn = el('button', 'inv-use-btn', UI.useLabel + ' [' + keyLabel(UI.useKey) + ']');
+    this.useBtn.type = 'button';
+    this.useBtn.addEventListener('click', function () { self.useSelected(); });
+    this.invBody.appendChild(this.useBtn);
     this.invBody.appendChild(el('div', 'inv-hint',
       keyLabel(UI.dropKey) + ' drop 1  -  Shift+' + keyLabel(UI.dropKey) +
       ' drop stack  -  ' + UI.closeKeys.map(keyLabel).join(' / ') + ' close'));
@@ -223,8 +230,10 @@
     this.tip = el('div', 'inv-tip');
     this.tipName = el('div', 'inv-tip-name');
     this.tipCat = el('div', 'inv-tip-cat');
+    this.tipFlavor = el('div', 'inv-tip-cat inv-tip-flavor');
     this.tip.appendChild(this.tipName);
     this.tip.appendChild(this.tipCat);
+    this.tip.appendChild(this.tipFlavor);
     root.appendChild(this.tip);
 
     document.getElementById('wh-root').appendChild(root);
@@ -294,7 +303,23 @@
           this.inv.slots[this.selected] && this.onDrop) {
         this.onDrop(this.selected, e.shiftKey);
       }
+    } else if (e.code === UI.useKey) {
+      e.preventDefault();
+      if (this.tab === 'inventory') this.useSelected();
     }
+  };
+
+  // C1: the selected stack is usable (food) -> onUse (game.js -> cooking.eat)
+  InventoryUI.prototype.selectedUsable = function () {
+    var s = this.selected >= 0 ? this.inv.slots[this.selected] : null;
+    return !!(s && this.onUse && this.canUse && this.canUse(s.id));
+  };
+
+  InventoryUI.prototype.useSelected = function () {
+    if (!this.selectedUsable()) return;
+    this.onUse(this.selected);
+    if (!this.inv.slots[this.selected]) this.selected = -1;
+    this.render();
   };
 
   // blocked: another modal owns the screen (C1 cook panel) - I / INV ignored
@@ -337,6 +362,7 @@
       // count on every stackable item (x1 included); gear (cap 1) shows none
       v.count.textContent = s && stackCapOf(s.id) > 1 ? String(s.count) : '';
     }
+    this.useBtn.style.display = this.selectedUsable() ? '' : 'none';
     if (this.tipSlot >= 0) this.fillTip(this.tipSlot);
     if (this.tab === 'character') this.renderCharacter();
   };
@@ -485,7 +511,8 @@
     gear: 'Gear - equip on the CHARACTER tab',
     consumable: 'Consumable',
     valuable: 'Valuable',
-    ingredient: 'Ingredient'
+    ingredient: 'Ingredient',
+    food: 'Food - select + ' + keyLabel(CFG.inventoryUI.useKey) + ' to eat'
   };
 
   InventoryUI.prototype.fillTip = function (i) {
@@ -494,6 +521,8 @@
     if (!d) { this.tip.style.display = 'none'; return false; }
     this.tipName.textContent = d.name;
     this.tipCat.textContent = CATEGORY_TIP[d.category] || d.category;
+    this.tipFlavor.textContent = d.flavor || '';
+    this.tipFlavor.style.display = d.flavor ? '' : 'none';
     this.tip.style.display = 'block';
     return true;
   };

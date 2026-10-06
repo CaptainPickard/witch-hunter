@@ -245,6 +245,15 @@
     document.getElementById('wh-bars').appendChild(focusOuter);
     game.hud.focusBar = focusFill;
 
+    // C1: buff chip row under the bars (icon + remaining time), one chip per
+    // active buff, rebuilt only when the set changes (updateBuffHud)
+    game.hud.hpBarOuter = document.getElementById('wh-hp-bar-outer');
+    var buffRow = document.createElement('div');
+    buffRow.id = 'wh-buffs';
+    document.getElementById('wh-bars').appendChild(buffRow);
+    game.hud.buffRow = buffRow;
+    game.hud.buffChips = {};
+
     // v7: bottom-center belt row: 5 spell slots | divider | 2 consumables
     // | divider | 2 loadout pips I/II
     var belt = document.createElement('div');
@@ -401,9 +410,57 @@
     game.hud.death.classList.toggle('visible', visible);
   }
 
+  // C1 buff layer: effective stats = CONFIG base + active buffs. hpMax only
+  // for now; current hp is clamped inside the new max (buff expiry).
+  function applyBuffStats() {
+    var p = game.player;
+    p.hpMax = CFG.player.hpMax + game.cooking.buffs.statBonus('hpMax');
+    if (p.hp > p.hpMax) p.hp = p.hpMax;
+  }
+
+  // C1: one chip per active buff: glyph + CONFIG label + m:ss left
+  function updateBuffHud() {
+    var chips = game.hud.buffChips;
+    var list = game.cooking.buffs.list();
+    var live = {};
+    for (var i = 0; i < list.length; i++) {
+      var b = list[i], def = CFG.cooking.buffs[b.id];
+      live[b.id] = true;
+      var c = chips[b.id];
+      if (!c) {
+        c = { root: document.createElement('div'), time: document.createElement('span') };
+        c.root.className = 'buff-chip';
+        var icon = document.createElement('span');
+        icon.className = 'buff-icon';
+        icon.textContent = def.glyph;
+        var label = document.createElement('span');
+        label.className = 'buff-label';
+        label.textContent = def.label + (def.stat === 'hpMax' ? ' +' + def.amount + ' max HP' : '');
+        c.time.className = 'buff-time';
+        c.root.appendChild(icon);
+        c.root.appendChild(label);
+        c.root.appendChild(c.time);
+        game.hud.buffRow.appendChild(c.root);
+        chips[b.id] = c;
+      }
+      var secs = Math.max(0, Math.ceil(b.remaining));
+      var txt = Math.floor(secs / 60) + ':' + ('0' + (secs % 60)).slice(-2);
+      if (c.time.textContent !== txt) c.time.textContent = txt;
+      c.root.classList.toggle('warn', b.remaining <= CFG.cooking.buffHud.warnSec);
+    }
+    for (var id in chips) {
+      if (live[id]) continue;
+      game.hud.buffRow.removeChild(chips[id].root);
+      delete chips[id];
+    }
+  }
+
   function updateHud(dt) {
     var p = game.player;
     game.hud.hpBar.style.width = (p.hp / p.hpMax * 100) + '%';
+    // C1: a buffed hpMax visibly lengthens the HP bar (base max = 100% width)
+    game.hud.hpBarOuter.style.width = (p.hpMax / CFG.player.hpMax * 100) + '%';
+    updateBuffHud();
     game.hud.stamBar.style.width = (p.stamina / p.staminaMax * 100) + '%';
     // v7: armed state = weapon emissive pulse while armedTimer > 0
     if (p.sword && p.sword.material) {
@@ -964,6 +1021,9 @@
       inventory: game.inventory,
       onOpenChange: function (open) { p.setInputSuspended(open); },
       onDrop: dropFromSlot,
+      // C1: food eaten from the grid (EAT / E) - cooking owns buffs
+      onUse: function (i) { return game.cooking.eat(i); },
+      canUse: function (id) { return game.cooking.canEat(id); },
       // Order B CHARACTER tab: the UI only calls these, player owns the rules
       equip: {
         hands: function () { return p.hands; },
@@ -1715,6 +1775,7 @@
     skyTick();      // 10-03 order 4: star twinkle clock
     // C1: fire burn + cook channel (after combat so this frame's hits interrupt)
     game.cooking.update(dt);
+    applyBuffStats();   // C1: effective hpMax from active food buffs
     updateHud(dt);
     updateInteractPrompt();
     game.renderer.render(game.scene, game.camera);
