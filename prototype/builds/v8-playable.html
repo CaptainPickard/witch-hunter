@@ -87924,6 +87924,7 @@ window.WH_CONFIG.cooking = {
     promptLow: 'Fire too low - E to add Deadwood (fuel)',
     refuelToast: 'The fire takes.',
     noFuelToast: 'You need Deadwood to feed the fire',
+    addWoodBtn: 'ADD WOOD',
     tooLowToast: 'The fire is too low to cook',
     needThreeToast: 'Add three ingredients',
     missingToast: 'Missing ingredients',
@@ -90078,6 +90079,19 @@ window.WH_CONFIG.inventoryUI = {
     panel.appendChild(el('div', 'inv-title', 'COOKING'));
     this.fuelEl = el('div', 'cook-fuel');
     panel.appendChild(this.fuelEl);
+    // fuel top-up: the fire lasts as long as the player keeps feeding it
+    // (1 deadwood per click, same math as the ground refuel prompt)
+    this.fuelBtnRow = el('div', 'cook-btns cook-fuel-row');
+    this.fuelBtn = el('button', 'cook-btn cook-fuel-btn', C.text.addWoodBtn);
+    this.fuelBtn.type = 'button';
+    this.fuelBtn.tabIndex = -1;
+    this.fuelBtn.addEventListener('click', function () {
+      if (self.channel) return;
+      self.refuel(self.station);
+      self.render();
+    });
+    this.fuelBtnRow.appendChild(this.fuelBtn);
+    panel.appendChild(this.fuelBtnRow);
     this.hintEl = el('div', 'cook-hint', C.hint.noMushroomText);
     panel.appendChild(this.hintEl);
 
@@ -90282,6 +90296,10 @@ window.WH_CONFIG.inventoryUI = {
     if (this.fuelEl.textContent !== txt) this.fuelEl.textContent = txt;
     var frac = this.channel ? Math.min(1, this.channel.t / C.channelSeconds) : 0;
     this.progFill.style.width = (frac * 100) + '%';
+    if (this.fuelBtn) {
+      this.fuelBtn.disabled = !!this.channel ||
+        this.inv.countOf(C.fire.fuelItem) < 1;
+    }
   };
 
   Cooking.prototype.render = function () {
