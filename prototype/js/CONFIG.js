@@ -1327,6 +1327,7 @@ window.WH_CONFIG.cooking = {
     promptLow: 'Fire too low - E to add Deadwood (fuel)',
     refuelToast: 'The fire takes.',
     noFuelToast: 'You need Deadwood to feed the fire',
+    addWoodBtn: 'ADD WOOD',
     tooLowToast: 'The fire is too low to cook',
     needThreeToast: 'Add three ingredients',
     missingToast: 'Missing ingredients',
