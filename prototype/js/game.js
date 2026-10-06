@@ -756,13 +756,22 @@
       cemFog = { zone: zone, baseDensity: base.fogDensity,
         baseColor: new THREE.Color(base.fogColor), color: new THREE.Color(CF.color) };
     }
+    // C2: base + target follow the day/night phase (night row = the CONFIG
+    // values cached above, so the night ramp is unchanged)
+    var baseDensity = cemFog.baseDensity, baseColor = cemFog.baseColor;
+    var cemDensity = CF.density, cemColor = cemFog.color;
+    var dnFog = game.dayNight && game.dayNight.state.fog[CFG.regionA.id];
+    if (dnFog) {
+      baseDensity = dnFog.density; baseColor = dnFog.color;
+      if (dnFog.hasCem) { cemDensity = dnFog.cemDensity; cemColor = dnFog.cemColor; }
+    }
     var Z = cemFog.zone;
     var nx = (game.player.pos.x - Z.x) / Z.rx, nz = (game.player.pos.z - Z.z) / Z.rz;
     var d = Math.sqrt(nx * nx + nz * nz);
     var t = Math.min(1, Math.max(0, (d - CF.rampStart) / (CF.rampEnd - CF.rampStart)));
     var w = t * t * (3 - 2 * t);
-    game.scene.fog.density = cemFog.baseDensity + (CF.density - cemFog.baseDensity) * w;
-    game.scene.fog.color.lerpColors(cemFog.baseColor, cemFog.color, w);
+    game.scene.fog.density = baseDensity + (cemDensity - baseDensity) * w;
+    game.scene.fog.color.lerpColors(baseColor, cemColor, w);
   }
 
   // 10-03 order 4: starry night sky. Dome sphere (BackSide, fog:false,
@@ -863,7 +872,8 @@
       blending: THREE.AdditiveBlending,
       uniforms: {
         map: { value: buildStarTexture() },
-        time: { value: 0 }
+        time: { value: 0 },
+        vis: { value: 1.0 }           // C2: star visibility (daynight phase; night = 1)
       },
       vertexShader: [
         'attribute float aSize;',
@@ -881,11 +891,12 @@
       ].join('\n'),
       fragmentShader: [
         'uniform sampler2D map;',
+        'uniform float vis;',
         'varying vec3 vColor;',
         'varying float vTw;',
         'void main() {',
         '  vec4 tx = texture2D(map, gl_PointCoord);',
-        '  gl_FragColor = vec4(vColor * vTw, 1.0) * tx;',
+        '  gl_FragColor = vec4(vColor * vTw, 1.0) * tx * vis;',
         '}'
       ].join('\n'),
       vertexColors: true
@@ -932,7 +943,8 @@
     group.add(glow);
     group.add(core);
 
-    game.sky = { group: group, stars: stars, starMat: starMat };
+    game.sky = { group: group, stars: stars, starMat: starMat, domeMat: domeMat,
+      glow: glow, core: core };
     game.scene.add(group);
   }
 
@@ -940,6 +952,62 @@
   function skyTick() {
     if (game.sky && game.sky.starMat) {
       game.sky.starMat.uniforms.time.value = performance.now() / 1000;
+    }
+  }
+
+  // C2: push the day/night look (js/daynight.js state) into the scene. Same
+  // formulas as setupLights / setupSky / applyRegionLighting with the phase
+  // row in place of the CONFIG constants; the night row IS those constants
+  // and its mults are 1, so night renders exactly today's look. The one
+  // moon directional doubles as the sun (no new lights; pool untouched).
+  var dnDir = null;
+  function applyDayNight() {
+    var dn = game.dayNight;
+    if (!dn) return;
+    var S = dn.state, L = CFG.lighting;
+    var rid = game.regionManager ? game.regionManager.logic.activeId : CFG.regionA.id;
+    var region = window.WH_REGION_DEFS.regions[rid];
+    if (game.hemiLight) {
+      game.hemiLight.color.copy(S.hemiSkyColor);
+      game.hemiLight.groundColor.copy(S.hemiGroundColor);
+      var mult = rid === CFG.regionB.id ? (L.regionBFillMult || 1.0) : 1.0;
+      game.hemiLight.intensity = L.hemiBaseIntensity * region.ambientLightLevel * mult * S.hemiFillMult;
+    }
+    var az = (S.azimuthDeg || 0) * Math.PI / 180;
+    var el = (S.elevationDeg || 30) * Math.PI / 180;
+    if (game.moonLight) {
+      var dir = L.moonDirectionDistance || 60;
+      game.moonLight.color.copy(S.lightColor);
+      game.moonLight.intensity = S.lightIntensity;
+      game.moonLight.position.set(
+        Math.round(Math.sin(az) * Math.cos(el) * dir * 10) / 10,
+        Math.round(Math.sin(el) * dir * 10) / 10,
+        -Math.round(Math.cos(az) * Math.cos(el) * dir * 10) / 10
+      );
+    }
+    game.renderer.toneMappingExposure = CFG.renderer.toneMappingExposure * S.exposureMult;
+    var f = S.fog[rid];
+    if (f && game.scene.fog) {
+      game.scene.fog.color.copy(f.color);
+      game.scene.fog.density = f.density;
+    }
+    if (game.sky) {
+      var U = game.sky.domeMat.uniforms;
+      U.zenith.value.copy(S.zenithColor);
+      U.band.value.copy(S.horizonBand);
+      U.glow.value.copy(S.horizonGlow);
+      game.sky.starMat.uniforms.vis.value = S.stars;
+      game.sky.stars.visible = S.stars > 0;
+      // sky disc: moon by night, sun by day, on the directional's bearing
+      if (!dnDir) dnDir = new THREE.Vector3();
+      dnDir.set(Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el))
+        .multiplyScalar(CFG.sky.moonDistance);
+      game.sky.core.position.copy(dnDir);
+      game.sky.glow.position.copy(dnDir);
+      game.sky.core.material.color.copy(S.discColor);
+      game.sky.glow.material.color.copy(S.discGlowColor);
+      game.sky.core.material.opacity = S.discOpacity;
+      game.sky.glow.material.opacity = S.discOpacity;
     }
   }
 
@@ -1245,6 +1313,13 @@
   function setupDebugHooks() {
     window.WH_DEBUG = {
       version: 'v1',
+      // C2: day/night clock readout + manual cycle start (C3 wires sleep)
+      get dayNight() {
+        var dn = game.dayNight;
+        return { dormant: dn.dormant, day: dn.day, phase: dn.phase,
+          timeOfDay: dn.timeOfDay, nightMatches: dn.nightMatches };
+      },
+      beginCycle: function () { game.dayNight.beginCycle(); },
       getPlayerPosition: function () {
         var p = game.player.pos;
         return { x: p.x, y: p.y, z: p.z };
@@ -1469,6 +1544,8 @@
       60, window.innerWidth / window.innerHeight, 0.1, 500);
     setupLights();
     setupSky();           // 10-03 order 4: starry night dome + stars + moon
+    // C2: day/night clock - boots DORMANT on today's night look (tutorial law)
+    game.dayNight = new window.WH_DAYNIGHT.DayNight();
     setupHud();
     bindResTunerKeys();   // 10-03 F1/F2 pixel-fidelity keys
     showResReadout();     // visible at boot so the knob is discoverable; dims after 2.5s
@@ -1771,6 +1848,8 @@
     // 10-05: earned player light - hand lights follow hands + bindings this
     // frame, projectile lights follow live bolts (flicker per light)
     game.playerLight.update(game.player, game.firebolts);
+    game.dayNight.tick(dt);   // C2: day/night clock (frozen while dormant)
+    applyDayNight();    // C2: phase look -> lights / fog / sky (before the cemetery ramp)
     cemeteryFogTick();  // Round H: graveyard fog ramp (region A)
     skyTick();      // 10-03 order 4: star twinkle clock
     // C1: fire burn + cook channel (after combat so this frame's hits interrupt)
