@@ -1455,7 +1455,8 @@ window.WH_CONFIG.camp = {
     // node spacing) + CONFIG.scatter.clear (gateM, edgeM) + scatter.keepOut,
     // tested at every module of the kit; other camps count as props
     ghostColor: 0xd23a2a,
-    ghostOpacity: 0.45
+    ghostOpacity: 0.45,
+    ghostOkColor: 0x3ad26a          // FIX 10-06b: green = placeable right now
   },
   sleepFadeSec: 0.6,                // Save and Heal: fade to black, rest, fade back
   text: {
@@ -1497,13 +1498,16 @@ window.WH_CONFIG.dayNight = {
   // cross-fade on their own CONFIG (skyPool.blendSec).
   // C4+ dev knob: point a DEV build's dayNight.debugTimeScale at a number to
   // speed the CLOCK (beginCycle still owns the start - no auto-start hatch).
+  // FIX 10-06b (real arithmetic, was inverted/double-counted): per-phase
+  // seconds dawn 300 + day 2700 + dusk 300 + night 2700 = 6000s = 100min.
   dayLengthSec: 6000,
-  daySegmentSec: 450,               // Nicko tuning: day 450s / night 450s real
+  daySegmentSec: 2700,              // Nicko tuning: day 2700s / night 2700s real
   startPhase: 'night',              // dormant look (locked until beginCycle)
   order: ['dawn', 'day', 'dusk', 'night'],
   // phase start as a fraction of the cycle; beginCycle() starts at dawn (0)
-  // 300s = dawn, 4550s = day, 4900s = dusk (450s of slow blend), 6550s = night
-  bounds: { dawn: 0, day: 0.455, dusk: 0.49, night: 0.655 },
+  // dawn 0..0.05 (300s), day 0.05..0.50 (2700s = 45min),
+  // dusk 0.50..0.55 (300s), night 0.55..1.0 (2700s = 45min)
+  bounds: { dawn: 0, day: 0.05, dusk: 0.5, night: 0.55 },
   blendFrac: 0.5,                   // LEGACY pano window; replaced by blendSec below
   blendSec: 90,                     // C3.1: the slow transition (real seconds)
   // Row keys: hemi colors + hemiFillMult (x hemiBaseIntensity x region

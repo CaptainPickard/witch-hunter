@@ -347,6 +347,16 @@
     this.ghostPos = { x: v.x, z: v.z };
     this.ghost.position.set(v.x, 0, v.z);
     this.ghost.rotation.y = siteYaw(this.ghostF);
+    // FIX 10-06b: the ghost colors LIVE - green = a valid spot, red = the
+    // same clearance check confirm() will run (no red spot is placeable).
+    var pts = K.modules.map(function (row) {
+      return moduleWorld(this.ghostPos.x, this.ghostPos.z, this.ghostF, row);
+    }, this);
+    this.ghostWhy = this.refuseReason(this.placeRegion, pts);
+    if (this.ghostMat) {
+      this.ghostMat.color.setHex(this.ghostWhy ?
+        K.deploy.ghostColor : (K.deploy.ghostOkColor || 0x3ad26a));
+    }
   };
 
   // raycast the pointer to the ground plane y = 0 (sky = keep the last spot)
@@ -363,6 +373,8 @@
   };
 
   // click / E / PLACE: clearance check -> place, or refusal toast (ghost stays)
+  // FIX 10-06b: the check re-runs here with the live result the ghost already
+  // showed (this.ghostWhy) - the red / green preview IS the verdict.
   Camp.prototype.confirm = function () {
     if (!this.placing) return false;
     var c = this.ghostPos, f = this.ghostF;
