@@ -982,8 +982,8 @@ html, body {
   font-style: italic;
 }
 
-/* C1: campsite-kit button (INERT stub, C3 deploys). Same frame as the INV
-   button; left/bottom inline from CONFIG.cooking.kitButton. */
+/* C1: campsite-kit button (C3: press = camp placement, js/camp.js). Same
+   frame as the INV button; left/bottom inline from CONFIG.cooking.kitButton. */
 #wh-camp-btn {
   position: fixed;
   z-index: 46;
@@ -1004,6 +1004,81 @@ html, body {
 
 #wh-camp-btn:hover {
   border-color: #c9a94a;
+}
+
+#wh-camp-btn.active {
+  color: #e3d27a;
+  border-color: #d8b24a;
+}
+
+/* --- C3 camps (js/camp.js): TENT MENU = the cook panel's modal + frame,
+       one button row per option (touch-sized); placement PLACE / CANCEL
+       bar; Save and Heal fade to black. --- */
+#wh-camp-menu {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 4, 3, 0.55);
+  z-index: 20;
+  font-family: monospace;
+  color: #d8d2c0;
+  image-rendering: pixelated;
+  user-select: none;
+}
+
+#wh-camp-menu.open {
+  display: flex;
+}
+
+.camp-menu-panel {
+  width: 240px;
+}
+
+.camp-menu-btns {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.camp-menu-btn {
+  height: 36px;
+}
+
+#wh-camp-place {
+  position: absolute;
+  left: 50%;
+  bottom: 84px;
+  transform: translateX(-50%);
+  display: none;
+  z-index: 21;
+  margin: 0;
+}
+
+#wh-camp-place.open {
+  display: flex;
+}
+
+#wh-camp-place .cook-btn {
+  height: 34px;
+  background: #1a1510;
+  touch-action: manipulation;
+}
+
+#wh-sleep-fade {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  transition-property: opacity;
+  transition-timing-function: ease;
+  z-index: 25;
+}
+
+#wh-sleep-fade.on {
+  opacity: 1;
 }
 
 </style>
@@ -87943,16 +88018,89 @@ window.WH_CONFIG.cooking = {
     interruptToast: 'Cooking interrupted',
     eatToast: 'Ate {name}',
     alreadyAteToast: 'You have already eaten today',   // C2 meal cap (dayMeal buff refused)
-    kitToast: 'Campsite kit acquired',
-    kitClickToast: 'Set up camp - needs open ground (coming soon)'
+    kitToast: 'Campsite kit acquired'
   },
   toastChainSec: 2.0,               // gap between chained toasts (cooked -> learned -> kit)
-  // C1 campsite-kit moment: an INERT HUD button revealed on the first recipe
-  // learned (C3 owns deploy). left / bottom px from the viewport's
-  // bottom-left (sits right of the INV button).
+  // C1 campsite-kit moment: the CAMP HUD button revealed on the first recipe
+  // learned; a press enters camp placement (C3, CONFIG.camp / js/camp.js).
+  // left / bottom px from the viewport's bottom-left (right of the INV button).
   kitButton: { label: 'CAMP', glyph: '▲', left: 76, bottom: 20 },
   // HUD buff chip row under the bars (icon + remaining time)
   buffHud: { warnSec: 30 }          // chip blinks under this many seconds left
+};
+
+// C3 (io/missions/2026-10-06-cc-c3-sleep-tent.md): camps (js/camp.js
+// WH_CAMP). A camp is a set of MODULE ROWS - each row = one prop + one
+// interact hook ('cook' registers a CONFIG.cooking station row through
+// Cooking.addStation, same shape as the bandit fire; 'sleep' opens the TENT
+// MENU: Save / Save and Heal). Future modules (storage chest, craft bench,
+// warp camp) are new rows + a new hook, nothing else. The deployed kit is
+// session-only (C4 save rides after); sites live on the camp manager, never
+// in region content, so region swaps never eat them.
+window.WH_CONFIG.camp = {
+  interactRadius: 2.5,              // m from a sleep module to open the tent menu (cooking feel)
+  // One row per visual piece; swapping in the Astrabot wh-campkit GLB is a
+  // one-line edit per piece (glb = an assets.js manifest name; tent: null =
+  // the procedural dark-canvas A-frame placeholder below).
+  assets: {
+    fire:    { glb: 'banditCampfire', scale: 1.0 },
+    bedroll: { glb: 'banditBedroll', scale: 1.0 },
+    tent:    { glb: null, scale: 1.0 }
+  },
+  tentPlaceholder: { width: 2.0, length: 2.4, height: 1.4, color: 0x2e2a24, poleColor: 0x4a3b2a },
+  // The deployable kit (fire + bedroll + tent). offset = [right, back] m in
+  // the site frame (back = away from where the player stood when placing);
+  // rotY = extra yaw on top of the site yaw (tent: door faces the fire).
+  // Sleep modules sit > cooking.interactRadius from the fire so the fire
+  // keeps its cook prompt and the bedroll / tent keep theirs.
+  modules: [
+    { id: 'fire', hook: 'cook', asset: 'fire', offset: [0, 0], rotY: 0,
+      station: { kind: 'cookFire', startLit: true } },   // fuel = CONFIG.cooking.fire rules
+    { id: 'bedroll', hook: 'sleep', asset: 'bedroll', offset: [3.0, 1.0], rotY: Math.PI / 2 },
+    { id: 'tent', hook: 'sleep', asset: 'tent', offset: [0, 3.6], rotY: 0, menuAnchor: true }
+  ],
+  respawnStepM: 1.5,                // respawn = the menu anchor + this far toward its door (clear of the fire ring)
+  // WORLD CAMPS: module rows bound to a fixed world spot (no kit, no deploy).
+  // Tutorial anchor: the Region B bandit camp's bedroll (beside the bandit
+  // fire x 2.5 z -52, 3.6m off: outside both interact radii). The bandit
+  // fire itself stays the CONFIG.cooking station - sleep-only here.
+  worldCamps: [
+    { id: 'banditCamp', regionId: 'darkwood_edge',
+      modules: [
+        { id: 'bedroll', hook: 'sleep', asset: 'bedroll', x: 0.0, z: -49.4, rotY: -0.77 }
+      ],
+      respawn: { x: -1.0, z: -48.3 }, face: { x: 2.5, z: -52 } }
+  ],
+  deploy: {
+    maxSites: 1,                    // one kit: a new deploy packs up the old site (fire fuel starts fresh)
+    maxReachM: 9,                   // ghost stays within this of the player
+    startAheadM: 4,                 // ghost start: this far ahead of the player
+    pathBand: 2.5,                  // m beyond the dirt path half-width (gather on_path margin)
+    // clearances: CONFIG.gather.placement (props / trees / enemies / spawn /
+    // node spacing) + CONFIG.scatter.clear (gateM, edgeM) + scatter.keepOut,
+    // tested at every module of the kit; other camps count as props
+    ghostColor: 0xd23a2a,
+    ghostOpacity: 0.45
+  },
+  sleepFadeSec: 0.6,                // Save and Heal: fade to black, rest, fade back
+  text: {
+    prompt: 'E - Camp',
+    menuTitle: 'CAMP',
+    save: 'Save',
+    saveHeal: 'Save and Heal',
+    cancel: 'Cancel',
+    savedToast: 'Respawn point set',
+    restedToast: 'You wake at dawn - Day {day}',
+    placingToast: 'Choose open ground - click / E to camp, Esc / CAMP to cancel',
+    placedToast: 'Camp set up',
+    refuseToast: 'No room to camp here - {why}',
+    why: {
+      edge: 'too close to the edge', gate: 'too close to the gate', path: 'too close to the path',
+      keepOut: 'too close to the graveyard', spawn: 'too close to the trailhead',
+      tree: 'too close to a tree', prop: 'something is in the way', enemy: 'enemies nearby',
+      node: 'too close to forage', camp: 'too close to another camp'
+    }
+  }
 };
 
 // C2 (io/missions/2026-10-05-cc-c2-daynight.md): day/night cycle
@@ -87967,10 +88115,6 @@ window.WH_CONFIG.dayNight = {
   // visibly moves the sky. REAL GAME: 600 (doc 10 day-buff scale) - a later
   // CONFIG tune; day-length buffs (CONFIG.cooking.buffs[].days) follow it.
   dayLengthSec: 60,
-  // !!! PLAYTEST-ONLY HATCH (C3 DELETES IT) !!! The dormant clock calls
-  // beginCycle() this many seconds after boot so the cycle can be seen
-  // without the sleep action. 0 = off (tutorial law: day only after sleep).
-  autoBeginSec: 15,
   startPhase: 'night',              // dormant look (locked until beginCycle)
   order: ['dawn', 'day', 'dusk', 'night'],
   // phase start as a fraction of the cycle; beginCycle() starts at dawn (0)
@@ -88119,6 +88263,17 @@ window.WH_CONFIG.gather = {
   // props. The base mesh here is a PLACEHOLDER for the later bush/grass art
   // asset mission - node meshes are not this order's art pass.
   playtestGlow: true,
+  // Node placement rules (the scratch/gen_gather_nodes.py clearances, now
+  // CONFIG rows). C3 camp deploy reads these SAME rows (CONFIG.camp.deploy)
+  // with CONFIG.scatter.clear (gate / rim) + scatter.keepOut + the dirt path.
+  placement: {
+    treePropM: 4,                   // to a tree-class prop (treeMatch on the asset name)
+    propM: 3,                       // to any other prop
+    treeMatch: 'tree|oak|ash|yew|witchwood',
+    enemyM: 5,                      // to an enemy spawn
+    spawnM: 6,                      // to the region's player spawn
+    spacingM: { hold_outskirts: 9, darkwood_edge: 6 }   // node-to-node, per region
+  },
   marker: {
     size: 0.16,                     // octahedron radius (m, times node scale)
     height: 0.95,                   // float height over the ground (m)
@@ -88384,6 +88539,9 @@ window.WH_CONFIG.inventoryUI = {
     // R2: darkwood light-socket props (doc 61 batches B2/B3)
     banditCampfire: 'art-direction/3d/assets/biome_library/m15-bandit-campfire-pixelated.glb',
     lanternWaymarker: 'art-direction/3d/assets/biome_library/b3-waymarker-pixelated.glb',
+    // C3 camps (js/camp.js): the bandit camp's world bedroll + the kit's
+    // placeholder bedroll (CONFIG.camp.assets)
+    banditBedroll: 'art-direction/3d/assets/biome_library/m16-bandit-bedroll-pixelated.glb',
 
     // church-kit props + trees
     // Round K (io/roundK-provenance.md): Meshy lantern-post-v2, one welded piece, decimated
@@ -90136,6 +90294,11 @@ window.WH_CONFIG.inventoryUI = {
     return n;
   };
 
+  // C3 Save and Heal: every buff ends (game.js recomputes hpMax after)
+  BuffSet.prototype.clear = function () {
+    this.active = {};
+  };
+
   BuffSet.prototype.list = function () {
     var self = this;
     return Object.keys(this.active).map(function (id) { return self.active[id]; });
@@ -90144,6 +90307,7 @@ window.WH_CONFIG.inventoryUI = {
   // ---- Cooking (registry + panel + channel) -----------------------------------------
   // opts: { inventory, player, toast(text), onOpenChange(open),
   //         dropAtFeet(id, count), dayNight }.
+  // onKitButton: set by the camp manager (C3, js/camp.js) - the CAMP press.
   function Cooking(opts) {
     var self = this;
     this.inv = opts.inventory;
@@ -90151,6 +90315,7 @@ window.WH_CONFIG.inventoryUI = {
     this.toastFn = opts.toast;
     this.onOpenChange = opts.onOpenChange || null;
     this.dropAtFeet = opts.dropAtFeet || null;
+    this.onKitButton = null;
     this.stations = [];
     for (var i = 0; i < C.stations.length; i++) this.addStation(C.stations[i]);
     this.open = false;
@@ -90164,7 +90329,7 @@ window.WH_CONFIG.inventoryUI = {
     this.dayNight = opts.dayNight || null;   // C2: js/daynight.js clock
     this.buffs = new BuffSet(this.dayNight);
     this.mealDay = -1;                // C2: dayNight.day the day's dayMeal was eaten
-    this.kitAcquired = false;         // C1 campsite-kit moment (button is inert until C3)
+    this.kitAcquired = false;         // C1 campsite-kit moment (C3: the camp deploy gate)
     this.buildPanel();
     this.buildKitButton();
     document.addEventListener('keydown', function (e) { self.onKey(e); });
@@ -90175,6 +90340,21 @@ window.WH_CONFIG.inventoryUI = {
     var st = new Station(row);
     this.stations.push(st);
     return st;
+  };
+
+  // C3: a packed-up camp takes its fire out of the registry
+  Cooking.prototype.removeStation = function (st) {
+    var i = this.stations.indexOf(st);
+    if (i < 0) return;
+    if (this.channel && this.channel.station === st) this.interrupt();
+    if (this.station === st) this.setOpen(false);
+    this.stations.splice(i, 1);
+  };
+
+  // C3 Save and Heal: the day's meal slot is empty again (the new day's
+  // first dayMeal applies)
+  Cooking.prototype.clearMealSlot = function () {
+    this.mealDay = -1;
   };
 
   Cooking.prototype.nearestStation = function (x, z, regionId) {
@@ -90565,7 +90745,7 @@ window.WH_CONFIG.inventoryUI = {
     return true;
   };
 
-  // ---- campsite kit (C1 stub: INERT HUD button, C3 owns deploy) ------------------
+  // ---- campsite kit HUD button (C1 reveal; C3 js/camp.js owns deploy) -----------
   // Same body-level button pattern as the INV button: pointerdown acts,
   // the mouse events are swallowed so no swing / camera drag leaks through.
   Cooking.prototype.buildKitButton = function () {
@@ -90574,14 +90754,14 @@ window.WH_CONFIG.inventoryUI = {
     btn.id = 'wh-camp-btn';
     btn.type = 'button';
     btn.tabIndex = -1;
-    btn.title = 'Campsite kit';
+    btn.title = 'Set up camp';
     btn.style.left = K.left + 'px';
     btn.style.bottom = K.bottom + 'px';
     btn.style.display = 'none';       // revealed on the first recipe learned
     btn.addEventListener('pointerdown', function (e) {
       e.preventDefault();
       e.stopPropagation();
-      self.toast(C.text.kitClickToast);
+      if (self.onKitButton) self.onKitButton();
     });
     ['mousedown', 'click', 'contextmenu'].forEach(function (t) {
       btn.addEventListener(t, function (e) {
@@ -90610,12 +90790,14 @@ window.WH_CONFIG.inventoryUI = {
 // HOLDS the row exactly (hold = straight copy, never a lerp at t=1, so the
 // night hold is bit-identical to the approved CONFIG look).
 // TUTORIAL LAW: boots DORMANT on startPhase (clock frozen, nothing moves);
-// beginCycle() starts dawn and the free-running cycle (C3: first sleep).
+// beginCycle() starts dawn and the free-running cycle (C3: the first Save
+// and Heal at a camp - no timer, no hatch).
 // Pure state - game.js applyDayNight() pushes .state into the scene.
 // Exposes window.WH_DAYNIGHT:
 //   DayNight   constructor (game.js owns the one instance)
 //     .tick(dt)       advance (frozen while dormant)
-//     .beginCycle()   dormant -> dawn, new day
+//     .beginCycle()   dormant -> dawn, new day (ONLY js/camp.js calls it: first rest)
+//     .nextDawn()     free-running -> next day's dawn (C3 Save and Heal)
 //     .dormant .day .timeOfDay (0..1) .phase .dayDelta (days this tick)
 //     .state          blended look { hemiSky, hemiGround (THREE.Color), ... }
 //     .nightMatches   boot check: night row == today's CONFIG values
@@ -90728,7 +90910,6 @@ window.WH_CONFIG.inventoryUI = {
     this.dormant = true;
     this.day = 0;                     // 0 = the tutorial's first night; +1 per new day
     this.clock = 0;                   // seconds into the current cycle
-    this.bootT = 0;                   // PLAYTEST hatch timer (autoBeginSec)
     this.dayDelta = 0;
     this.phase = D.startPhase;
     this.timeOfDay = D.bounds[D.startPhase];
@@ -90743,6 +90924,19 @@ window.WH_CONFIG.inventoryUI = {
     this.dormant = false;
     this.clock = 0;
     this.day++;
+    this.fresh = true;
+  };
+
+  // C3 rest while free-running: the next day's dawn (day++, clock 0). Same
+  // day/clock law as the natural night -> dawn wrap, so dayCounterOf and
+  // the sky rotation see an ordinary new day. No-op while dormant (the
+  // first rest is beginCycle).
+  DayNight.prototype.nextDawn = function () {
+    if (this.dormant) return;
+    this.clock = 0;
+    this.day++;
+    this.fresh = true;
+    if (this.sky) this.sky.phase = null;   // re-target: the new day's dawn variant
   };
 
   DayNight.prototype.phaseAt = function (f) {
@@ -90755,15 +90949,10 @@ window.WH_CONFIG.inventoryUI = {
 
   DayNight.prototype.tick = function (dt) {
     this.dayDelta = 0;
-    if (this.dormant) {
-      // !!! PLAYTEST-ONLY HATCH (C3 deletes): auto-begin after autoBeginSec
-      if (D.autoBeginSec > 0) {
-        this.bootT += dt;
-        if (this.bootT >= D.autoBeginSec) this.beginCycle();
-      }
-      if (this.dormant) return;       // frozen: state stays the startPhase row
-      dt = 0;                         // the cycle starts at exactly dawn this frame
-    }
+    // dormant = frozen forever on the startPhase row until the camp's first
+    // Save and Heal calls beginCycle() (js/camp.js; tutorial law)
+    if (this.dormant) return;
+    if (this.fresh) { this.fresh = false; dt = 0; }   // a new dawn starts at exactly 0
     var len = D.dayLengthSec;
     this.clock += dt;
     this.dayDelta = dt / len;
@@ -95419,7 +95608,24 @@ window.WH_CONFIG.inventoryUI = {
     return result;
   };
 
-  RegionManager.prototype.updateEnemies = function (dt, playerPos, playerAlive, canDamagePlayer, activeId) {
+  // C3 death respawn at a camp in the OTHER region: the 'cross' swap of
+  // tickTransition without walking the gate (target built or revealed, old
+  // region disposed, logic re-pointed). game.js applies lighting / sky /
+  // banner like a cross. Returns false when already active.
+  RegionManager.prototype.switchTo = function (regionId) {
+    var oldId = this.logic.activeId;
+    if (regionId === oldId) return false;
+    this.logic.activeId = regionId;
+    this.logic.prewarmedId = null;
+    this.logic.buildCounts[regionId] = (this.logic.buildCounts[regionId] || 0) + 1;
+    if (this.groups[regionId]) this.groups[regionId].visible = true;
+    else this.buildRegion(regionId, false);
+    if (this.groups[oldId]) this.disposeRegion(oldId);
+    this.enemies[regionId] = this.enemies[regionId] || [];
+    return true;
+  };
+
+  RegionManager.prototype.updateEnemies =function (dt, playerPos, playerAlive, canDamagePlayer, activeId) {
     var list = this.enemies[activeId] || [];
     var boundary = { z: CFG.boundary.z };
     var self = this;
@@ -95470,7 +95676,580 @@ window.WH_CONFIG.inventoryUI = {
   window.WH_RegionManagerLogic = RegionManagerLogic;
   window.WH_ScatterPlan = whScatterPlan;   // Round E: pure, for debug/tests
   window.WH_WallPlan = whWallPlan;         // Round F: pure, for debug/tests
+  // C3 camp deploy clearances (js/camp.js): the same pure helpers the
+  // scatter uses for the dirt path band, the gate corridor and the rim
+  window.WH_RegionGeom = {
+    distToPath: whDistToPath,
+    meetsCorridor: whMeetsCorridor,
+    playRadius: whPlayRadius
+  };
 })();
+</script>
+<script>
+// Witch Hunter prototype - camps (C3, io/missions/2026-10-06-cc-c3-sleep-tent.md).
+// A camp = MODULE ROWS (CONFIG.camp.modules / worldCamps): one prop + one
+// interact hook each. 'cook' registers a cooking station row through
+// WH_COOKING Cooking.addStation (same row shape as the bandit fire - CAMP
+// GROWTH LAW); 'sleep' opens the TENT MENU (Save / Save and Heal). Future
+// modules (chest, bench, warp) = a new row + a new hook.
+// The manager owns: the deploy gate (cooking.kitAcquired), placement mode
+// (red ghost on the ground, clearance check = the gather-node rules), the
+// deployed sites (session-only) and their scene groups - added straight to
+// the scene, never to a region group, so region dispose / rebuild can not
+// eat a site - plus the world camps (the Region B bandit bedroll) and the
+// respawn point the death flow honors (game.js respawnPlayer).
+// TUTORIAL LAW: Save and Heal is the ONLY caller of dayNight.beginCycle()
+// (first rest ever = day 1 dawn); later rests roll the day (nextDawn).
+// Exposes window.WH_CAMP = { Camp } (game.js owns the one instance).
+
+(function () {
+  'use strict';
+
+  var CFG = window.WH_CONFIG;
+  var K = CFG.camp;
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  // ---- pieces --------------------------------------------------------------------
+  // Placeholder tent (CONFIG.camp.tentPlaceholder): two dark canvas panels
+  // meeting at a ridge pole, open ends along local z (door = +z). Geometry
+  // and the solid materials are shared by every tent.
+  var tentGeo = null, tentMats = null;
+  function buildTent(ghostMat) {
+    var T = K.tentPlaceholder;
+    var hw = T.width / 2;
+    var slant = Math.sqrt(hw * hw + T.height * T.height);
+    var ang = Math.atan2(T.height, hw);
+    if (!tentGeo) {
+      tentGeo = {
+        panel: new THREE.BoxGeometry(slant, 0.05, T.length),
+        pole: new THREE.BoxGeometry(0.08, 0.08, T.length + 0.3)
+      };
+      tentMats = {
+        canvas: new THREE.MeshStandardMaterial({ color: T.color, roughness: 1, metalness: 0 }),
+        pole: new THREE.MeshStandardMaterial({ color: T.poleColor, roughness: 1, metalness: 0 })
+      };
+    }
+    var g = new THREE.Group();
+    [-1, 1].forEach(function (s) {
+      var p = new THREE.Mesh(tentGeo.panel, ghostMat || tentMats.canvas);
+      p.position.set(s * hw / 2, T.height / 2, 0);
+      p.rotation.z = -s * ang;
+      g.add(p);
+    });
+    var pole = new THREE.Mesh(tentGeo.pole, ghostMat || tentMats.pole);
+    pole.position.y = T.height + 0.02;
+    g.add(pole);
+    return g;
+  }
+
+  // One CONFIG.camp.assets piece: a manifest GLB (scaled like a prop) or the
+  // procedural tent. ghostMat swaps every material on the clone.
+  function makePiece(key, ghostMat) {
+    var A = K.assets[key];
+    var obj = A.glb ? window.WH_ASSETS.instance(A.glb) : buildTent(ghostMat);
+    obj.scale.setScalar(A.scale);
+    if (ghostMat && A.glb) {
+      obj.traverse(function (o) { if (o.isMesh) o.material = ghostMat; });
+    }
+    return obj;
+  }
+
+  // Site frame: f = unit vector from the site center toward the player at
+  // placement; group yaw = atan2(f.x, f.z) maps local +z onto f, so a module
+  // offset [right, back] sits at local (right, 0, -back).
+  function siteYaw(f) { return Math.atan2(f.x, f.z); }
+
+  function moduleWorld(cx, cz, f, row) {
+    var r = row.offset[0], b = row.offset[1];
+    return { x: cx + f.z * r - f.x * b, z: cz - f.x * r - f.z * b };
+  }
+
+  function buildSiteGroup(cx, cz, f, ghostMat) {
+    var g = new THREE.Group();
+    g.name = ghostMat ? 'camp-ghost' : 'camp-site';
+    g.position.set(cx, 0, cz);
+    g.rotation.y = siteYaw(f);
+    K.modules.forEach(function (row) {
+      var obj = makePiece(row.asset, ghostMat);
+      obj.position.set(row.offset[0], 0, -row.offset[1]);
+      obj.rotation.y = row.rotY || 0;
+      g.add(obj);
+    });
+    return g;
+  }
+
+  // ---- Camp manager --------------------------------------------------------------
+  // opts: { scene, camera, player, cooking, dayNight, regionManager() getter,
+  //         toast(text), applyBuffStats(), onOpenChange(open) }
+  function Camp(opts) {
+    var self = this;
+    this.scene = opts.scene;
+    this.camera = opts.camera;
+    this.player = opts.player;
+    this.cooking = opts.cooking;
+    this.dayNight = opts.dayNight;
+    this.rm = opts.regionManager;
+    this.toast = opts.toast;
+    this.applyBuffStats = opts.applyBuffStats;
+    this.onOpenChange = opts.onOpenChange || function () {};
+    this.sites = [];                  // deployed kits (session-only; C4 saves them)
+    this.siteSeq = 0;
+    this.worldCamps = K.worldCamps.map(function (wc) {
+      return { id: wc.id, regionId: wc.regionId, world: true, group: null,
+        modules: wc.modules.map(function (row) { return { row: row, x: row.x, z: row.z }; }),
+        respawn: { regionId: wc.regionId, x: wc.respawn.x, z: wc.respawn.z,
+                   face: wc.face, campId: wc.id } };
+    });
+    this.respawn = null;              // { regionId, x, z, face, campId } (Save / Save and Heal)
+    this.placing = false;
+    this.placeRegion = null;
+    this.ghost = null;
+    this.ghostPos = { x: 0, z: 0 };
+    this.ghostF = { x: 0, z: 1 };
+    this.pointer = null;              // last pointer client px while placing
+    this.pointerDirty = false;
+    this.menuCamp = null;             // camp the tent menu is open on
+    this.resting = false;             // Save and Heal fade in flight
+    this.raycaster = new THREE.Raycaster();
+    this.ndc = new THREE.Vector2();
+    this.ground = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+    this.hitPt = new THREE.Vector3();
+    this.clampV = new THREE.Vector3();
+    this.buildMenu();
+    this.buildPlaceBar();
+    this.fadeEl = el('div');
+    this.fadeEl.id = 'wh-sleep-fade';
+    this.fadeEl.style.transitionDuration = K.sleepFadeSec + 's';
+    document.getElementById('wh-root').appendChild(this.fadeEl);
+    this.cooking.onKitButton = function () { self.togglePlacing(); };
+    document.addEventListener('keydown', function (e) { self.onKey(e); });
+    document.addEventListener('pointermove', function (e) {
+      if (!self.placing) return;
+      self.pointer = { x: e.clientX, y: e.clientY };
+      self.pointerDirty = true;
+    });
+    // canvas press while placing: the ghost jumps there; a mouse click also
+    // confirms (touch taps only move it - the PLACE button confirms).
+    // preventDefault drops the compatibility mousedown, so a confirm that
+    // lifts the input suspension never lands as a sword swing.
+    document.getElementById('wh-canvas').addEventListener('pointerdown', function (e) {
+      if (!self.placing) return;
+      e.preventDefault();
+      self.pointer = { x: e.clientX, y: e.clientY };
+      self.followPointer();
+      if (e.pointerType === 'mouse' && e.button === 0) self.confirm();
+    });
+  }
+
+  Camp.prototype.activeId = function () { return this.rm().logic.activeId; };
+
+  Camp.prototype.camps = function () { return this.worldCamps.concat(this.sites); };
+
+  // ---- interact (game.js interact chain: after cook stations, before gather) -----
+
+  // nearest 'sleep' module within CONFIG.camp.interactRadius -> { camp, module }
+  Camp.prototype.nearestSleep = function (x, z, regionId) {
+    var best = null, bestD2 = K.interactRadius * K.interactRadius;
+    this.camps().forEach(function (c) {
+      if (c.regionId !== regionId) return;
+      c.modules.forEach(function (m) {
+        if (m.row.hook !== 'sleep') return;
+        var dx = m.x - x, dz = m.z - z, d2 = dx * dx + dz * dz;
+        if (d2 <= bestD2) { bestD2 = d2; best = { camp: c, module: m }; }
+      });
+    });
+    return best;
+  };
+
+  Camp.prototype.interactSleep = function (hit) {
+    this.setMenu(hit.camp);
+  };
+
+  // ---- tent menu (DOM modal, cook-panel pattern; buttons = touch rows) ------------
+
+  Camp.prototype.buildMenu = function () {
+    var self = this, T = K.text;
+    var root = el('div');
+    root.id = 'wh-camp-menu';
+    var panel = el('div', 'inv-panel camp-menu-panel');
+    root.appendChild(panel);
+    panel.appendChild(el('div', 'inv-title', T.menuTitle));
+    var rows = el('div', 'cook-btns camp-menu-btns');
+    [[T.save, function () { self.save(); }],
+     [T.saveHeal, function () { self.saveAndHeal(); }],
+     [T.cancel, function () { self.setMenu(null); }]].forEach(function (b) {
+      var btn = el('button', 'cook-btn camp-menu-btn', b[0]);
+      btn.type = 'button';
+      btn.tabIndex = -1;
+      btn.addEventListener('click', b[1]);
+      rows.appendChild(btn);
+    });
+    panel.appendChild(rows);
+    panel.appendChild(el('div', 'inv-hint', 'Esc cancel'));
+    document.getElementById('wh-root').appendChild(root);
+    this.menuEl = root;
+  };
+
+  // camp = open on it, null = close
+  Camp.prototype.setMenu = function (camp) {
+    var open = !!camp;
+    if (!!this.menuCamp === open && this.menuCamp === camp) return;
+    var was = !!this.menuCamp;
+    this.menuCamp = camp || null;
+    this.menuEl.classList.toggle('open', open);
+    if (was !== open) this.onOpenChange(open);
+  };
+
+  // Save: respawn point only. No heal, no buff / meal change, no clock change.
+  Camp.prototype.save = function () {
+    var c = this.menuCamp;
+    if (!c) return;
+    this.setRespawn(c);
+    this.setMenu(null);
+    this.toast(K.text.savedToast);
+  };
+
+  Camp.prototype.setRespawn = function (c) {
+    var r = c.respawn;
+    this.respawn = { regionId: r.regionId, x: r.x, z: r.z,
+      face: r.face ? { x: r.face.x, z: r.face.z } : null, campId: r.campId };
+  };
+
+  // Save and Heal: the rest life cycle under a short fade to black (input
+  // stays suspended through the fade; the world keeps running).
+  Camp.prototype.saveAndHeal = function () {
+    var c = this.menuCamp;
+    if (!c || this.resting) return;
+    var self = this, ms = K.sleepFadeSec * 1000;
+    this.resting = true;
+    this.menuEl.classList.remove('open');   // menu gone, suspension held
+    this.fadeEl.classList.add('on');
+    setTimeout(function () {
+      if (self.player.state === 'alive') self.rest(c);
+      self.fadeEl.classList.remove('on');
+      setTimeout(function () {
+        self.resting = false;
+        self.menuCamp = null;
+        self.onOpenChange(false);
+      }, ms);
+    }, ms);
+  };
+
+  // The rest itself (order matters, mission D4).
+  Camp.prototype.rest = function (c) {
+    var p = this.player, dn = this.dayNight;
+    this.cooking.buffs.clear();       // 1) every buff ends; hpMax drops back (clamps hp)
+    this.applyBuffStats();
+    p.hp = p.hpMax;                   // 2) full heal + stamina
+    p.stamina = p.staminaMax;
+    this.cooking.clearMealSlot();     // 3) the day's meal slot is empty
+    this.setRespawn(c);               // 4) respawn point
+    if (dn.dormant) dn.beginCycle();  // 5) first rest ever = day 1 dawn (tutorial law)
+    else dn.nextDawn();               //    later rests = the next day's dawn
+    // campfire fuel: untouched everywhere (kit fire + world fires)
+    this.toast(K.text.restedToast.replace('{day}', dn.day));
+  };
+
+  // ---- placement ----------------------------------------------------------------
+
+  Camp.prototype.buildPlaceBar = function () {
+    var self = this;
+    var bar = el('div', 'cook-btns');
+    bar.id = 'wh-camp-place';
+    [['PLACE', function () { self.confirm(); }],
+     ['CANCEL', function () { self.stopPlacing(); }]].forEach(function (b) {
+      var btn = el('button', 'cook-btn', b[0]);
+      btn.type = 'button';
+      btn.tabIndex = -1;
+      btn.addEventListener('pointerdown', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        b[1]();
+      });
+      btn.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); });
+      bar.appendChild(btn);
+    });
+    document.getElementById('wh-root').appendChild(bar);
+    this.placeBar = bar;
+  };
+
+  Camp.prototype.togglePlacing = function () {
+    if (this.placing) this.stopPlacing();
+    else this.startPlacing();
+  };
+
+  // CAMP button: the kit is the only gate; no other modal may be open.
+  Camp.prototype.startPlacing = function () {
+    var p = this.player;
+    if (!this.cooking.kitAcquired || p.state !== 'alive' || p.inputSuspended) return;
+    this.placing = true;
+    this.placeRegion = this.activeId();
+    this.pointer = null;
+    this.pointerDirty = false;
+    if (!this.ghost) {
+      this.ghostMat = new THREE.MeshBasicMaterial({ color: K.deploy.ghostColor,
+        transparent: true, opacity: K.deploy.ghostOpacity, depthWrite: false });
+      this.ghost = buildSiteGroup(0, 0, { x: 0, z: 1 }, this.ghostMat);
+      this.scene.add(this.ghost);
+    }
+    var fx = Math.sin(p.yaw), fz = Math.cos(p.yaw);
+    this.setGhost(p.pos.x + fx * K.deploy.startAheadM, p.pos.z + fz * K.deploy.startAheadM);
+    this.ghost.visible = true;
+    this.placeBar.classList.add('open');
+    if (this.cooking.kitBtn) this.cooking.kitBtn.classList.add('active');
+    this.onOpenChange(true);
+    this.toast(K.text.placingToast);
+  };
+
+  // cancel / done: silent
+  Camp.prototype.stopPlacing = function () {
+    if (!this.placing) return;
+    this.placing = false;
+    if (this.ghost) this.ghost.visible = false;
+    this.placeBar.classList.remove('open');
+    if (this.cooking.kitBtn) this.cooking.kitBtn.classList.remove('active');
+    this.onOpenChange(false);
+  };
+
+  // ghost center: within maxReachM of the player, inside the active
+  // region's playable bounds (plane + rim, the player clamp); the kit faces
+  // the player
+  Camp.prototype.setGhost = function (x, z) {
+    var p = this.player.pos, R = K.deploy.maxReachM;
+    var dx = x - p.x, dz = z - p.z, d = Math.sqrt(dx * dx + dz * dz);
+    if (d > R) { x = p.x + dx / d * R; z = p.z + dz / d * R; }
+    var v = this.clampV.set(x, 0, z);
+    this.rm().logic.clampPlayer(v);
+    dx = p.x - v.x; dz = p.z - v.z; d = Math.sqrt(dx * dx + dz * dz);
+    if (d > 0.01) this.ghostF = { x: dx / d, z: dz / d };
+    this.ghostPos = { x: v.x, z: v.z };
+    this.ghost.position.set(v.x, 0, v.z);
+    this.ghost.rotation.y = siteYaw(this.ghostF);
+  };
+
+  // raycast the pointer to the ground plane y = 0 (sky = keep the last spot)
+  Camp.prototype.followPointer = function () {
+    this.pointerDirty = false;
+    if (!this.pointer) return;
+    var r = document.getElementById('wh-canvas').getBoundingClientRect();
+    this.ndc.set((this.pointer.x - r.left) / r.width * 2 - 1,
+      -((this.pointer.y - r.top) / r.height) * 2 + 1);
+    this.raycaster.setFromCamera(this.ndc, this.camera);
+    if (this.raycaster.ray.intersectPlane(this.ground, this.hitPt)) {
+      this.setGhost(this.hitPt.x, this.hitPt.z);
+    }
+  };
+
+  // click / E / PLACE: clearance check -> place, or refusal toast (ghost stays)
+  Camp.prototype.confirm = function () {
+    if (!this.placing) return false;
+    var c = this.ghostPos, f = this.ghostF;
+    var pts = K.modules.map(function (row) { return moduleWorld(c.x, c.z, f, row); });
+    var why = this.refuseReason(this.placeRegion, pts);
+    if (why) {
+      this.toast(K.text.refuseToast.replace('{why}', K.text.why[why] || why));
+      return true;
+    }
+    this.place(this.placeRegion, c.x, c.z, f);
+    this.stopPlacing();
+    this.toast(K.text.placedToast);
+    return true;
+  };
+
+  // The gather-node placement rules (CONFIG.gather.placement) + the scatter's
+  // gate / rim rows (CONFIG.scatter.clear) + keep-out ellipses + the dirt
+  // path band, tested at every module of the kit. Returns a CONFIG.camp.text
+  // .why key, or null = open ground.
+  Camp.prototype.refuseReason = function (rid, pts) {
+    var GP = CFG.gather.placement, SC = CFG.scatter.clear, D = K.deploy;
+    var GEO = window.WH_RegionGeom;
+    var reg = window.WH_REGION_DEFS.regions[rid], cfg = reg.cfg;
+    var rm = this.rm();
+    var plane = CFG.boundary.z;
+    var DP = CFG.world.dirtPath;
+    var treeRe = new RegExp(GP.treeMatch, 'i');
+    var keepOut = (CFG.scatter.keepOut || []).filter(function (k) { return k.regionId === rid; });
+    var trees = rm.scatterPlan(rid).trees;
+    var enemies = rm.getEnemies(rid).filter(function (e) { return e.fsm !== 'dead'; });
+    var spacing = GP.spacingM[rid] || 0;
+    var camps = this.camps().filter(function (c) { return c.regionId === rid; });
+    if (this.sites.length >= D.maxSites) {
+      var packed = this.sites[0];    // packs up on this deploy: not in the way
+      camps = camps.filter(function (c) { return c !== packed; });
+    }
+    function near(p, x, z, m) {
+      var dx = p.x - x, dz = p.z - z;
+      return dx * dx + dz * dz < m * m;
+    }
+    for (var i = 0; i < pts.length; i++) {
+      var p = pts[i], j;
+      if (Math.sqrt(p.x * p.x + p.z * p.z) > GEO.playRadius() - SC.edgeM) return 'edge';
+      if (reg.side === 1 ? p.z < plane + SC.edgeM : p.z > plane - SC.edgeM) return 'edge';
+      if (near(p, CFG.chokepoint.centerX, plane, SC.gateM) || GEO.meetsCorridor(p.x, p.z, 0)) return 'gate';
+      if (DP && DP.regionId === rid && GEO.distToPath(DP, p.x, p.z) < DP.halfWidth + D.pathBand) return 'path';
+      for (j = 0; j < keepOut.length; j++) {
+        var kx = (p.x - keepOut[j].x) / keepOut[j].rx, kz = (p.z - keepOut[j].z) / keepOut[j].rz;
+        if (kx * kx + kz * kz < 1) return 'keepOut';
+      }
+      if (near(p, reg.spawn.x, reg.spawn.z, GP.spawnM)) return 'spawn';
+      for (j = 0; j < cfg.props.length; j++) {
+        var pr = cfg.props[j], isTree = treeRe.test(pr.asset);
+        if (near(p, pr.x, pr.z, isTree ? GP.treePropM : GP.propM)) return isTree ? 'tree' : 'prop';
+      }
+      for (j = 0; j < trees.length; j++) {
+        if (near(p, trees[j].x, trees[j].z, GP.treePropM)) return 'tree';
+      }
+      for (j = 0; j < (cfg.enemies || []).length; j++) {
+        if (near(p, cfg.enemies[j].x, cfg.enemies[j].z, GP.enemyM)) return 'enemy';
+      }
+      for (j = 0; j < enemies.length; j++) {
+        if (near(p, enemies[j].pos.x, enemies[j].pos.z, GP.enemyM)) return 'enemy';
+      }
+      for (j = 0; j < (cfg.nodes || []).length; j++) {
+        if (near(p, cfg.nodes[j].x, cfg.nodes[j].z, spacing)) return 'node';
+      }
+      for (j = 0; j < camps.length; j++) {
+        for (var k = 0; k < camps[j].modules.length; k++) {
+          var m = camps[j].modules[k];
+          if (near(p, m.x, m.z, GP.propM)) return 'camp';
+        }
+      }
+    }
+    return null;
+  };
+
+  // Deploy a kit site: one scene group (not region content), the fire module
+  // registers its cooking station row, maxSites packs up the oldest.
+  Camp.prototype.place = function (rid, cx, cz, f) {
+    while (this.sites.length >= K.deploy.maxSites) this.packUp(this.sites[0]);
+    var site = { id: 'camp' + (++this.siteSeq), regionId: rid, x: cx, z: cz,
+      f: { x: f.x, z: f.z }, world: false, group: null, stations: [], modules: [] };
+    var yaw = siteYaw(f);
+    var self = this;
+    K.modules.forEach(function (row) {
+      var w = moduleWorld(cx, cz, f, row);
+      site.modules.push({ row: row, x: w.x, z: w.z });
+      if (row.hook === 'cook') {
+        var st = row.station;
+        site.stations.push(self.cooking.addStation({ id: site.id + ':' + row.id,
+          kind: st.kind, regionId: rid, asset: K.assets[row.asset].glb,
+          x: w.x, z: w.z, startLit: st.startLit }));
+      }
+    });
+    // respawn: the menu anchor's door side, respawnStepM out (fire ring stays clear)
+    var anchor = site.modules.filter(function (m) { return m.row.menuAnchor; })[0] || site.modules[0];
+    var dy = yaw + (anchor.row.rotY || 0);
+    var fire = site.modules.filter(function (m) { return m.row.hook === 'cook'; })[0];
+    site.respawn = { regionId: rid,
+      x: anchor.x + Math.sin(dy) * K.respawnStepM, z: anchor.z + Math.cos(dy) * K.respawnStepM,
+      face: fire ? { x: fire.x, z: fire.z } : { x: cx, z: cz }, campId: site.id };
+    this.sites.push(site);
+    return site;
+  };
+
+  Camp.prototype.packUp = function (site) {
+    if (site.group) this.scene.remove(site.group);   // shared template meshes: nothing to dispose
+    var self = this;
+    site.stations.forEach(function (st) { self.cooking.removeStation(st); });
+    this.sites.splice(this.sites.indexOf(site), 1);
+  };
+
+  // ---- per frame ----------------------------------------------------------------
+
+  Camp.prototype.update = function () {
+    var rid = this.activeId();
+    var self = this;
+    // camps render only in their region: built on first need, then just
+    // shown / hidden (region swaps never touch them)
+    this.camps().forEach(function (c) {
+      var on = c.regionId === rid;
+      if (on && !c.group) {
+        if (c.world) {
+          c.group = new THREE.Group();
+          c.group.name = 'camp-world-' + c.id;
+          c.modules.forEach(function (m) {
+            var obj = makePiece(m.row.asset, null);
+            obj.position.set(m.x, 0, m.z);
+            obj.rotation.y = m.row.rotY || 0;
+            c.group.add(obj);
+          });
+        } else {
+          c.group = buildSiteGroup(c.x, c.z, c.f, null);
+        }
+        self.scene.add(c.group);
+      }
+      if (c.group) c.group.visible = on;
+    });
+    var p = this.player;
+    if (this.placing) {
+      // death or a region change while placing: cancel silently
+      if (p.state !== 'alive' || rid !== this.placeRegion) this.stopPlacing();
+      else if (this.pointerDirty) this.followPointer();
+    }
+    if (this.menuCamp && !this.resting && p.state !== 'alive') this.setMenu(null);
+  };
+
+  // kit fire props of a region, shaped like CONFIG region props for the
+  // light-pool socket pass (game.js computeFireSockets)
+  Camp.prototype.fireProps = function (rid) {
+    var out = [];
+    this.sites.forEach(function (s) {
+      if (s.regionId !== rid) return;
+      var yaw = siteYaw(s.f);
+      s.modules.forEach(function (m) {
+        if (m.row.hook !== 'cook') return;
+        var A = K.assets[m.row.asset];
+        out.push({ asset: A.glb, x: m.x, z: m.z, rotY: yaw + (m.row.rotY || 0), scale: A.scale });
+      });
+    });
+    return out;
+  };
+
+  // E key route (game.js): true = the camp consumed the press
+  Camp.prototype.onInteractKey = function () {
+    if (this.placing) { this.confirm(); return true; }
+    return false;
+  };
+
+  Camp.prototype.onKey = function (e) {
+    if (e.code !== 'Escape' || e.repeat) return;
+    if (this.placing) { e.preventDefault(); this.stopPlacing(); }
+    else if (this.menuCamp && !this.resting) { e.preventDefault(); this.setMenu(null); }
+  };
+
+  // WH_DEBUG.camp summary
+  Camp.prototype.debugState = function () {
+    return {
+      kitAcquired: this.cooking.kitAcquired,
+      placing: this.placing,
+      placeRegion: this.placeRegion,
+      ghost: this.placing ? { x: this.ghostPos.x, z: this.ghostPos.z } : null,
+      menuOpen: !!this.menuCamp,
+      resting: this.resting,
+      respawn: this.respawn,
+      sites: this.sites.map(function (s) {
+        return { id: s.id, regionId: s.regionId, x: s.x, z: s.z,
+          fuel: s.stations.map(function (st) { return st.fuel; }),
+          modules: s.modules.map(function (m) { return { id: m.row.id, x: m.x, z: m.z }; }) };
+      }),
+      worldCamps: this.worldCamps.map(function (c) {
+        return { id: c.id, regionId: c.regionId,
+          modules: c.modules.map(function (m) { return { id: m.row.id, x: m.x, z: m.z }; }) };
+      })
+    };
+  };
+
+  window.WH_CAMP = {
+    Camp: Camp
+  };
+})();
+
 </script>
 <script>
 // Witch Hunter - touch controls layer (2026-10-03, Nicko change order).
@@ -96737,12 +97516,32 @@ window.WH_CONFIG.inventoryUI = {
     }
   }
 
+  // C3: a camp respawn point (tent menu Save / Save and Heal) wins over the
+  // region spawn; a camp in the OTHER region switches regions first (no
+  // gate walk). Death clears nothing else (buffs, meals, fires persist).
   function respawnPlayer() {
     var rid = game.regionManager.logic.activeId;
     var region = window.WH_REGION_DEFS.regions[rid];
+    var cr = game.camp && game.camp.respawn;
     breakLockOn();
-    game.player.respawnAt(region.spawn.x, region.spawn.z);
+    if (cr) {
+      if (cr.regionId !== rid) switchRegion(cr.regionId);
+      game.player.respawnAt(cr.x, cr.z);
+      if (cr.face) game.player.faceTowards(cr.face.x, cr.face.z);
+    } else {
+      game.player.respawnAt(region.spawn.x, region.spawn.z);
+    }
     setDeathOverlay(false);
+  }
+
+  // The tickTransition 'cross' steps minus the gate walk: region swap,
+  // lighting, the area's sky variant, the name banner.
+  function switchRegion(regionId) {
+    if (!game.regionManager.switchTo(regionId)) return;
+    applyRegionLighting(regionId);
+    game.dayNight.setSkyArea(regionId);
+    showRegionName(window.WH_REGION_DEFS.regions[regionId].name);
+    setGateHint(false);
   }
 
   // ---- lock-on (D3) ------------------------------------------------------------
@@ -97315,6 +98114,7 @@ window.WH_CONFIG.inventoryUI = {
     });
     document.addEventListener('keydown', function (e) {
       if (e.code !== CFG.inventoryUI.pickupKey || e.repeat) return;
+      if (game.camp && game.camp.onInteractKey()) return;   // C3: E confirms camp placement
       interact();
     });
   }
@@ -97322,12 +98122,13 @@ window.WH_CONFIG.inventoryUI = {
   // S3b: the one world-interact entry point - E key, touch USE button
   // (WH_DEBUG.interact) and future chests/doors all route through here.
   // A ground item in reach wins (G-drop boxes), then an unlooted corpse,
-  // then a cooking station (C1), else the nearest ready node.
+  // then a cooking station (C1), then a camp sleep module (C3 tent menu),
+  // else the nearest ready node.
   function interact() {
     if (game.player.inputSuspended || game.player.state !== 'alive') return false;
     var p = game.player.pos;
     return tryPickup() || lootCorpseNearest(p.x, p.z, CFG.corpseLoot.lootRadius) ||
-      tryCookStation() || tryGather();
+      tryCookStation() || tryCampSleep() || tryGather();
   }
 
   // ---- C1 cooking stations (CONFIG.cooking, js/cooking.js) -----------------------
@@ -97341,6 +98142,20 @@ window.WH_CONFIG.inventoryUI = {
     var st = nearestCookStation();
     if (!st) return false;
     game.cooking.interactStation(st);
+    return true;
+  }
+
+  // ---- C3 camps (CONFIG.camp, js/camp.js) ------------------------------------------
+  function nearestCampSleep() {
+    var p = game.player.pos;
+    return game.camp ? game.camp.nearestSleep(p.x, p.z, game.regionManager.logic.activeId) : null;
+  }
+
+  // E: bedroll / tent in reach = the TENT MENU (Save / Save and Heal)
+  function tryCampSleep() {
+    var hit = nearestCampSleep();
+    if (!hit) return false;
+    game.camp.interactSleep(hit);
     return true;
   }
 
@@ -97485,6 +98300,8 @@ window.WH_CONFIG.inventoryUI = {
         text = CFG.corpseLoot.promptText;
       } else if ((st = nearestCookStation())) {
         text = game.cooking.promptFor(st);   // C1: cook / burnt / too low
+      } else if (nearestCampSleep()) {
+        text = CFG.camp.text.prompt;         // C3: tent menu
       } else {
         var node = nearestGatherNode();
         if (node) text = CFG.gather.promptText.replace('{name}', CFG.gather.nodeTypes[node.type].name);
@@ -97500,13 +98317,16 @@ window.WH_CONFIG.inventoryUI = {
   function setupDebugHooks() {
     window.WH_DEBUG = {
       version: 'v1',
-      // C2: day/night clock readout + manual cycle start (C3 wires sleep)
+      // C2: day/night clock readout (C3: only a camp Save and Heal starts
+      // the cycle - no debug beginCycle)
       get dayNight() {
         var dn = game.dayNight;
         return { dormant: dn.dormant, day: dn.day, phase: dn.phase,
           timeOfDay: dn.timeOfDay, nightMatches: dn.nightMatches };
       },
-      beginCycle: function () { game.dayNight.beginCycle(); },
+      // C3 camps: placement state, sites (+ kit fire fuel), world camps, respawn
+      get camp() { return game.camp ? game.camp.debugState() : null; },
+      getCamp: function () { return game.camp; },
       getPlayerPosition: function () {
         var p = game.player.pos;
         return { x: p.x, y: p.y, z: p.z };
@@ -97806,6 +98626,22 @@ window.WH_CONFIG.inventoryUI = {
       game.player.faceTowards(0, 0);     // boot spawn faces map center (Nicko 10-03)
       applyRegionLighting(CFG.regionA.id);
       showRegionName(region.name);
+      // C3 camps: deploy (CAMP button), world camps, tent menu, respawn point.
+      // Built after the region manager (clearance checks read it).
+      game.camp = new window.WH_CAMP.Camp({
+        scene: game.scene,
+        camera: game.camera,
+        player: game.player,
+        cooking: game.cooking,
+        dayNight: game.dayNight,
+        regionManager: function () { return game.regionManager; },
+        toast: function (text) { game.inventoryUI.toast(text); },
+        applyBuffStats: applyBuffStats,
+        onOpenChange: function (open) {
+          game.inventoryUI.blocked = open;
+          game.player.setInputSuspended(open);
+        }
+      });
       // 2026-10-03: smooth fade-out of the boot overlay from CONFIG
       // (hud.bootOverlayFadeMs); .hidden also releases pointer-events, and
       // game.hud.loadNote stays in the DOM for any later reuse.
@@ -97846,6 +98682,8 @@ window.WH_CONFIG.inventoryUI = {
     if (!rm) return out;
     var reg = window.WH_REGION_DEFS.regions[rm.logic.activeId];
     var props = reg && reg.cfg && reg.cfg.props ? reg.cfg.props : [];
+    // C3: deployed kit fires light like any CONFIG fire prop
+    if (game.camp) props = props.concat(game.camp.fireProps(rm.logic.activeId));
     var S = CFG.lightSockets;
     for (var i = 0; i < props.length; i++) {
       var p = props[i];
@@ -98043,6 +98881,7 @@ window.WH_CONFIG.inventoryUI = {
     skyTick();      // 10-03 order 4: star twinkle clock
     // C1: fire burn + cook channel (after combat so this frame's hits interrupt)
     game.cooking.update(dt);
+    game.camp.update();   // C3: camp groups per region, placement ghost, menu close on death
     applyBuffStats();   // C1: effective hpMax from active food buffs
     updateHud(dt);
     updateInteractPrompt();
