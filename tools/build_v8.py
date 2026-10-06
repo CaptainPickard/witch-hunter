@@ -27,8 +27,8 @@ def inline_js(match):
 html = re.sub(r'<script src="([^"]+)"></script>', inline_js, html)
 
 # 3. title
-html = html.replace('<title>Witch Hunter</title>', '<title>Witch Hunter v8 - Mouse Bind Cam</title>')
-html = re.sub(r'<title>.*?</title>', '<title>Witch Hunter v8 - Mouse Bind Cam</title>', html, count=1, flags=re.S)
+html = html.replace('<title>Witch Hunter</title>', '<title>Witch Hunter v9 - EPR1 Combat</title>')
+html = re.sub(r'<title>.*?</title>', '<title>Witch Hunter v9 - EPR1 Combat</title>', html, count=1, flags=re.S)
 
 OUT.write_text(html)
 print('wrote', OUT, OUT.stat().st_size, 'bytes')

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Witch Hunter v8 - Mouse Bind Cam</title>
+<title>Witch Hunter v9 - EPR1 Combat</title>
 
 <style>
 /* Witch Hunter prototype v1 - HUD + overlay styling */
@@ -87273,7 +87273,7 @@ window.WH_CONFIG = {
     sprintStaminaPerSec: 18.0,
     rollSpeed: 14.0,
     rollDuration: 0.45,               // seconds
-    rollIFrameWindow: 0.35,           // seconds of i-frames within a roll
+    rollIFrameWindow: 0.433,          // EPR1: s of i-frames (ER medium roll = 13 frames @ 30 Hz)
     rollStaminaCost: 25.0,
     // 10-04: player attack timing/damage/sweep/stamina moved to
     // CONFIG.moveset.weapons[*].moves (per-weapon moveset framework).
@@ -87540,7 +87540,9 @@ window.WH_CONFIG = {
     runMetersPerCycle: 6,
     attackClipStrikeFraction: 0.25
   },
-  // v3: procedural animation feel (transform-only; assets are unrigged).
+  // v3: procedural animation feel. Since whanim2 pose values drive
+  // only the rigid stand-in fallback (skinned bodies play animRt
+  // clips; whanim2 stage fractions = combat FSM clock for both paths).
   // 10-04: stage durations + lunge are per move in CONFIG.moveset.weapons;
   // windup crouch / recover lean are per pose (WH_MOVESET crouch/bodyLean).
   anim: {
@@ -87694,6 +87696,18 @@ window.WH_CONFIG = {
 //    its full recover, then starts a fresh chain at chain[0];
 //  - roll may cancel RECOVER only (never windup/strike) and resets the chain.
 // chainCap = moves per chain AND landed hits that arm the v7 finisher.
+// EPR1 (io/specs/devbot-spec-wh-erparity-combat.md, 2026-10-06) replaces the
+// windup / roll rules above with per-move data (ER-style cancel matrix):
+//  - move.cancel = EARLIEST point each input type may interrupt the swing,
+//    as a fraction of windup+strike+recover: dodge = a queued dodge (pressed
+//    in any stage) rolls out; guard = a held RMB raises the block while the
+//    swing plays out; move = walk restores to combat.er.moveCancelWalkMult x
+//    player.walkSpeed. The light (chain) column stays chainOpenSec.
+//  - LMB in windup: ignored before move.bufferFrom x windup, buffered from
+//    it; such a press starts its inputBufferSec lifetime at the strike.
+//  - move.rootMotion = cumulative forward metres per stage [start, end]
+//    (frame-anchored, player.js applyRootMotion) x lunge (legacy multiplier,
+//    1.0); moves without a table keep the legacy strike lunge (metres).
 window.WH_CONFIG.moveset = {
   idlePose: { pos: [0.7, 1.0, -0.3], rot: [2.2, -0.7, 0.6] },
   banditStageMult: 1.6,
@@ -87709,20 +87723,28 @@ window.WH_CONFIG.moveset = {
       moveMultWhileAttacking: { windup: 0.3, strike: 0, recover: 0 },
       bladeAxisY: -1,               // mesh-local blade axis (-Y tip, see setWeapon)
       // Round D: durations derived from Mixamo impact frames (scratch/swordpack_probe4_rD.json); totals equal clip durations.
+      // EPR1 (spec 3.2-3.3; DESIGN values, playtest-tunable): cancel / bufferFrom /
+      // rootMotion per move; lunge (was 0.8 / 0.8 / 1.4 m) is now the 1.0 table multiplier.
       moves: {
         slashR2L: { pose: 'm2', windup: 0.57, strike: 0.20, recover: 0.73,
                     chainOpenSec: 0.20,
-                    damage: 34, range: 3.2, halfAngleDeg: 70, lunge: 0.8,
-                    staminaCost: 15, damageGhoulMult: 1.15 },
+                    damage: 34, range: 3.2, halfAngleDeg: 70, lunge: 1.0,
+                    staminaCost: 15, damageGhoulMult: 1.15,
+                    cancel: { dodge: 0.90, guard: 0.95, move: 0.65 }, bufferFrom: 0.5,
+                    rootMotion: { windup: [0, 0], strike: [0, 0.9], recover: [0.9, 1.0] } },
         slashL2R: { pose: 'm1', windup: 0.80, strike: 0.26, recover: 0.61,
                     chainOpenSec: 0.26,
-                    damage: 34, range: 3.2, halfAngleDeg: 70, lunge: 0.8,
-                    staminaCost: 15, damageGhoulMult: 1.15 },
+                    damage: 34, range: 3.2, halfAngleDeg: 70, lunge: 1.0,
+                    staminaCost: 15, damageGhoulMult: 1.15,
+                    cancel: { dodge: 0.90, guard: 0.95, move: 0.65 }, bufferFrom: 0.5,
+                    rootMotion: { windup: [0, 0], strike: [0, 0.9], recover: [0.9, 1.0] } },
         // thrust = narrow, longer reach, more damage, heavier recover
         thrust:   { pose: 'm4', windup: 0.40, strike: 0.43, recover: 0.17,
                     chainOpenSec: 0.40,   // last move: full recover anyway
-                    damage: 40, range: 3.8, halfAngleDeg: 22, lunge: 1.4,
-                    staminaCost: 20, damageGhoulMult: 1.15 }
+                    damage: 40, range: 3.8, halfAngleDeg: 22, lunge: 1.0,
+                    staminaCost: 20, damageGhoulMult: 1.15,
+                    cancel: { dodge: 0.90, guard: 0.95, move: 0.80 }, bufferFrom: 0.5,
+                    rootMotion: { windup: [0, 0], strike: [0, 1.5], recover: [1.5, 1.7] } }
       }
     },
     // Quick 2-hit hatchet chain: faster, shorter, lower damage per hit.
@@ -87731,16 +87753,38 @@ window.WH_CONFIG.moveset = {
       chain: ['hack', 'chop'],
       moveMultWhileAttacking: { windup: 0.4, strike: 0, recover: 0 },
       bladeAxisY: 1,                // axe bit along mesh-local +Y (as enemy.js)
+      // EPR1 F3: neutral cancel columns mirroring the longsword slashes; no bufferFrom
+      // (windup LMB stays ignored) and no rootMotion table (legacy lunge metres).
       moves: {
         hack: { pose: 'claw', windup: 0.10, strike: 0.14, recover: 0.22,
                 chainOpenSec: 0.08,
                 damage: 22, range: 2.6, halfAngleDeg: 60, lunge: 0.5,
-                staminaCost: 10, damageGhoulMult: 1.15 },
+                staminaCost: 10, damageGhoulMult: 1.15,
+                cancel: { dodge: 0.90, guard: 0.95, move: 0.65 } },
         chop: { pose: 'm3', windup: 0.12, strike: 0.14, recover: 0.30,
                 chainOpenSec: 0.30,
                 damage: 27, range: 2.7, halfAngleDeg: 35, lunge: 0.7,
-                staminaCost: 12, damageGhoulMult: 1.15 }
+                staminaCost: 12, damageGhoulMult: 1.15,
+                cancel: { dodge: 0.90, guard: 0.95, move: 0.65 } }
       }
+    }
+  }
+};
+
+// EPR1 (2026-10-06, io/specs/devbot-spec-wh-erparity-combat.md): ER-parity input
+// grammar shared by every move (per-move cancel / bufferFrom / rootMotion are on the
+// CONFIG.moveset moves above). Seconds are the number of record; harness gates
+// convert at the 1 / loop.maxDt = 20 Hz game clock (EPR1-A1).
+window.WH_CONFIG.combat = {
+  er: {
+    dodgeHoldSec: 0.35,             // Space held >= this (inclusive: 7 frames @20 Hz) = sprint, release no roll; shorter = dodge on release
+    guardRaiseSec: 0.13,            // block accept -> blockActive for the hit checks (~ER 4-frame raise)
+    moveCancelWalkMult: 0.5,        // walk from move.cancel.move to the swing's end, x player.walkSpeed
+    backstep: {                     // keyboard dodge tap with no move direction, from neutral
+      duration: 0.30,               // s, backwards hop along facing
+      speedMult: 0.9,               // x player.walkSpeed
+      iframes: 0.20,                // s
+      staminaCost: 20
     }
   }
 };
@@ -88830,12 +88874,95 @@ window.WH_CONFIG.inventoryUI = {
     });
   }
 
+  // CSP-safe embedded-texture intake (whanim3, 8f777bb): the manager
+  // modifier is synchronous; populate it before the parser starts resolving
+  // texture URLs. GLB image bufferViews are converted only once.
+  var embeddedDataUris = new Map();
+  var imageUrls = [];
+
+  function registerEmbeddedImagePlugin(loader, mgr) {
+    // CSP forbids even an attempted fetch(blob:) on enforced origins. Read
+    // the RESPONSE POLICY, not the route name, before choosing the path.
+    if (!registerEmbeddedImagePlugin.blobPolicy) {
+      registerEmbeddedImagePlugin.blobPolicy =
+        fetch(document.baseURI, { credentials: 'same-origin' })
+          .then(function (response) {
+            var csp = response.headers.get('content-security-policy');
+            if (!csp) return true;
+            var match = csp.match(/(?:^|;)\s*connect-src\s+([^;]+)/i);
+            return !match || /(?:^|\s)blob:(?:\s|$)/i.test(match[1]);
+          }).catch(function (err) {
+            console.warn('[WH assets] cannot inspect CSP; using FileReader for embedded images:', err);
+            return false;
+          });
+    }
+    function asDataUri(blob) {
+      return new Promise(function (accept, reject) {
+        var reader = new FileReader();
+        reader.onload = function () { accept(reader.result); };
+        reader.onerror = function () { reject(reader.error || new Error('image FileReader failed')); };
+        reader.readAsDataURL(blob);
+      });
+    }
+    function releaseAll() {
+      imageUrls.forEach(function (u) {
+        URL.revokeObjectURL(u);
+        embeddedDataUris.delete(u);
+      });
+      imageUrls.length = 0;
+    }
+    mgr.setURLModifier(function (resourceUrl) {
+      return resourceUrl.indexOf('blob:') === 0 && embeddedDataUris.has(resourceUrl) ?
+        embeddedDataUris.get(resourceUrl) : resourceUrl;
+    });
+    loader.register(function (parser) {
+      return {
+        name: 'WH_embedded_image_data',
+        beforeRoot: function () {
+          var sources = parser.json.images || [];
+          return registerEmbeddedImagePlugin.blobPolicy.then(function (canFetchBlob) {
+            // ImageBitmapLoader decodes via fetch(data:), also forbidden by
+            // connect-src on CSP origins. ImageLoader uses img-src instead.
+            if (!canFetchBlob) parser.textureLoader = new THREE.TextureLoader(mgr);
+            return Promise.all(sources.map(function (source) {
+              if (source.bufferView === undefined || !/^image\//.test(source.mimeType || '')) {
+                return Promise.resolve();
+              }
+              return parser.getDependency('bufferView', source.bufferView).then(function (bytes) {
+                var blob = new Blob([bytes], { type: source.mimeType });
+                var imageUrl = URL.createObjectURL(blob);
+                imageUrls.push(imageUrl);
+                var conversion = canFetchBlob ?
+                  fetch(imageUrl).then(function (response) {
+                    if (!response.ok) throw new Error('image fetch status ' + response.status);
+                    return response.blob();
+                  }).then(asDataUri).catch(function () { return asDataUri(blob); }) :
+                  asDataUri(blob);
+                return conversion.then(function (dataUri) {
+                  embeddedDataUris.set(imageUrl, dataUri);
+                  source.uri = imageUrl;
+                  delete source.bufferView;
+                });
+              });
+            }));
+          }).catch(function (err) {
+            releaseAll();
+            throw err;
+          });
+        },
+        afterRoot: function () { releaseAll(); }
+      };
+    });
+  }
+
   // One load attempt, racing the per-attempt timeout. Resolves {ok:true,gltf}
   // or {ok:false,info:{reason,msg}}; never rejects.
   function loadAttempt(name, url) {
     return new Promise(function (resolve) {
-      var loader = new window.WHGLTFLoader();
       var settled = false;
+      var mgr = new THREE.LoadingManager();
+      var loader = new window.WHGLTFLoader(mgr);
+      registerEmbeddedImagePlugin(loader, mgr);
       var timer = setTimeout(function () {
         if (settled) return;
         settled = true;
@@ -89135,6 +89262,9 @@ window.WH_CONFIG.inventoryUI = {
     if (seconds) next.fadeIn(seconds);
     next.play();
     this.clip = state;
+    // A superseded hit clip fades out disabled and never emits 'finished';
+    // release the latch here or setLocomotion stays blocked indefinitely.
+    if (state !== 'hit') this.hitActive = false;
   };
 
   CharacterAnim.prototype.setLocomotion = function (speed, running) {
@@ -89164,7 +89294,7 @@ window.WH_CONFIG.inventoryUI = {
     if (this.dead || !this.actions.death) return;
     this.dead = true;
     this.hitActive = false;
-    this.transition('death', CFG.oneShotFadeSeconds);
+    this.transition('death', alreadyDead ? 0 : CFG.oneShotFadeSeconds);
     if (alreadyDead) {
       this.actions.death.time = this.actions.death.getClip().duration;
       this.actions.death.paused = true;
@@ -89280,7 +89410,8 @@ window.WH_CONFIG.inventoryUI = {
 
   CharacterAnim.prototype.syncEnemy = function (enemy, dt) {
     if (enemy.fsm === 'dead') {
-      this.death();
+      // deadFall 1 before any death clip ran = corpse restored by a region rebuild
+      this.death(enemy.deadFall >= 1);
     } else if (enemy.fsm === 'attack') {
       this.enemyAttack(enemy.attackPhase, enemy.attackPhaseT, enemy.cfg.attackPhase);
     } else {
@@ -91914,9 +92045,10 @@ window.WH_CONFIG.inventoryUI = {
 // Witch Hunter prototype v2 - third-person player controller.
 // D2: movement basis is CAMERA yaw (W = camera forward on screen, S = back,
 // A/D = strafe). v1 had the strafe right-vector inverted; fixed.
-// D3: souls-style lock-on: hard yaw track to target, camera follow, strafe.
-// Transform-only procedural animation (assets are unrigged). All tunables
-// from CONFIG.
+// D3: souls-style lock-on: camera follow, strafe; idle lock faces the target
+// (combat-ds1 P0-4: windup tracking is rate-limited, strike/recover frozen).
+// whanim2: skinned bodies are posed by WH_CharacterAnim clips; the procedural
+// pose code below is the rigid stand-in fallback. All tunables from CONFIG.
 
 (function () {
   'use strict';
@@ -91931,6 +92063,8 @@ window.WH_CONFIG.inventoryUI = {
   var WL = ANIM.walk;
   var V7 = window.WH_CONFIG;          // v7 sections: spell/belt/loadout/armed/consumable
   var MV = window.WH_CONFIG.moveset;  // 10-04: per-weapon moveset framework
+  var ER = window.WH_CONFIG.combat.er; // EPR1: ER-parity input grammar / backstep / guard raise
+  var GATE_EPS = 1e-6;                // EPR1: float slack - a cancel point hit exactly counts as reached
 
   function deg2rad(d) { return d * Math.PI / 180; }
   function smooth(p) { return p * p * (3 - 2 * p); }   // smoothstep ease
@@ -91964,6 +92098,17 @@ window.WH_CONFIG.inventoryUI = {
     this.rolling = false;
     this.rollTimer = 0;
     this.rollDir = new THREE.Vector3(0, 0, 1);
+    this.backstep = false;            // EPR1: no-direction dodge tap = backwards hop
+    this.backstepTimer = 0;
+    // EPR1: keyboard Space grammar (tap = dodge on release, hold = sprint),
+    // sampled once per sim frame by sampleDodgeInput()
+    this.dodgeKeyDown = false;        // raw Space state from key events
+    this.dodgePressLatch = false;     // a press since the last sim-frame sample
+    this.dodgeHeld = false;           // sampled hold in progress
+    this.dodgeHoldMs = 0;             // integer ms held (sum of round(dt * 1000))
+    this.dodgeSprint = false;         // hold reached combat.er.dodgeHoldSec
+    this.dodgeQueued = false;         // dodge waiting for the swing's dodge cancel point
+    this.dodgeDir = { x: 0, z: 0 };   // input direction at the queued release (0 = none)
     this.attacking = false;
     this.attackTimer = 0;
     this.attackDidHit = false;
@@ -91971,6 +92116,10 @@ window.WH_CONFIG.inventoryUI = {
     this.idleTime = 0;                // seconds without movement input
     this.idlePhase = 0;               // breathing phase
     this.lungeLeft = 0;               // strike lunge distance remaining
+    this.rootMotionApplied = 0;       // EPR1: metres of the swing's rootMotion table applied
+    this.rootMotionStage = null;      // EPR1: stage the frame-anchored progress tracks
+    this.rootMotionT0 = 0;            // EPR1: first sampled time into that stage
+    this.rootMotionSpan = 0;          // EPR1: last-frame time minus rootMotionT0
     this.comboIndex = 0;              // v5: chain position of the current swing
     this.comboQueued = false;         // v5: next chain input buffered (strike/recover)
     this.comboBufferTimer = 0;        // 10-04: seconds the buffered input stays fresh
@@ -91986,6 +92135,9 @@ window.WH_CONFIG.inventoryUI = {
     this.parryTimer = 0;              // seconds left in the parry window
     this.guardBroken = false;         // guard break active (cannot block)
     this.guardBreakTimer = 0;         // seconds left of guard-break stun
+    this.blockActive = false;         // EPR1-A3: guard raised (guardRaiseSec after accept); hit checks read this
+    this.guardRaiseTimer = 0;         // EPR1: seconds until blockActive
+    this.guardQueued = false;         // EPR1: RMB held in a swing, before its guard cancel point
 
     // v7: focus pool (mirrors the stamina pattern)
     this.focus = CFG.focusMax;
@@ -92061,9 +92213,8 @@ window.WH_CONFIG.inventoryUI = {
   Player.prototype.setBody = function (meshRoot) {
     if (this.body) this.yawFrame.remove(this.body);
     this.body = meshRoot;
-    // Bob/tilt animation writes body.position.y absolutely; wrap the
-    // ground-aligned template in an inner holder so animation only moves
-    // the holder and the template's own ground offset is preserved.
+    // meshRoot is the assets.js ground-align holder; stand-in bob/tilt
+    // writes are offsets from its placement, so keep that base.
     this.bodyBaseY = meshRoot.position.y || 0;
     this.bodyBaseX = meshRoot.position.x || 0;
     this.yawFrame.add(this.body);
@@ -92237,7 +92388,9 @@ window.WH_CONFIG.inventoryUI = {
       if (self.inputSuspended) return;   // 10-05: inventory screen open
       if (e.code === 'Space') {
         e.preventDefault();
-        self.tryRoll();
+        // EPR1 (A1-A3): the dodge acts on RELEASE (sampleDodgeInput); latch the
+        // press so a down+up inside one sim frame still counts as a tap.
+        if (!e.repeat) { self.dodgeKeyDown = true; self.dodgePressLatch = true; }
       }
       if (e.code === 'KeyF' && !e.repeat) {
         e.preventDefault();
@@ -92258,6 +92411,7 @@ window.WH_CONFIG.inventoryUI = {
     });
     document.addEventListener('keyup', function (e) {
       self.keys[e.code] = false;
+      if (e.code === 'Space') self.dodgeKeyDown = false;   // EPR1: release -> sampleDodgeInput
     });
     document.addEventListener('mousedown', function (e) {
       if (self.inputSuspended) return;   // 10-05: clicks belong to the inventory screen
@@ -92395,7 +92549,8 @@ window.WH_CONFIG.inventoryUI = {
     if (k['KeyD']) ix += 1;
     this.moveInput.x = ix;
     this.moveInput.z = iz;
-    this.sprinting = !!(k['ShiftLeft'] || k['ShiftRight']);
+    // EPR1 (A3): a held dodge (>= combat.er.dodgeHoldSec) sprints like Shift
+    this.sprinting = !!(k['ShiftLeft'] || k['ShiftRight']) || this.dodgeSprint;
   };
 
   // 10-05 inventory Order A: suspend / restore player input. Suspending
@@ -92421,42 +92576,130 @@ window.WH_CONFIG.inventoryUI = {
   // and strike are committed. Attack cannot start during roll. v7: also
   // refused during the loadout toggle busy window.
   Player.prototype.tryRoll = function () {
-    if (this.state !== 'alive' || this.rolling || this.toggling) return;
-    if (this.stamina < CFG.rollStaminaCost) return;
+    this.requestDodge(false);
+  };
+
+  // EPR1: single dodge entry. allowBackstep = keyboard tap, where a tap
+  // with no move direction from neutral is a backstep. During a swing the
+  // dodge is queued from any stage and rolls out at the move's dodge cancel
+  // point (CONFIG move.cancel.dodge replaces the 10-04 recover-only rule);
+  // it replaces a buffered LMB (latest input wins). Refused during a roll /
+  // backstep and (v7) during the loadout toggle busy window.
+  Player.prototype.requestDodge = function (allowBackstep) {
+    if (this.state !== 'alive' || this.rolling || this.backstep || this.toggling) return;
+    var dir = this.inputDirWorld();
     if (this.attacking) {
-      if (this.getAttackStage() !== 'recover') return;  // windup/strike locked
-      this.cancelAttack();                              // roll out of recovery
+      this.dodgeQueued = true;
+      this.dodgeDir.x = dir ? dir.x : 0;
+      this.dodgeDir.z = dir ? dir.z : 0;
+      this.comboQueued = false;
+      this.comboBufferTimer = 0;
+      if (this.cancelOpen('dodge')) this.consumeQueuedDodge();
+      return;
     }
+    if (!dir && allowBackstep) this.startBackstep();
+    else this.startRoll(dir);
+  };
+
+  // EPR1: fire the queued dodge (dodge point reached, or the swing is over)
+  // as a ROLL: live input direction, else the direction at release, else
+  // facing. Refused (dead / toggling / stamina) it is dropped, swing kept.
+  Player.prototype.consumeQueuedDodge = function () {
+    this.dodgeQueued = false;
+    if (this.state !== 'alive' || this.toggling) return;
+    if (this.stamina < CFG.rollStaminaCost) return;
+    var dir = this.inputDirWorld();
+    if (!dir && (this.dodgeDir.x !== 0 || this.dodgeDir.z !== 0)) dir = this.dodgeDir;
+    if (this.attacking) this.cancelAttack();          // roll out of the swing (chain resets)
+    this.startRoll(dir);
+  };
+
+  Player.prototype.startRoll = function (dir) {
+    if (this.stamina < CFG.rollStaminaCost) return false;
     this.spendStamina(CFG.rollStaminaCost);
     this.rolling = true;
     this.rollTimer = CFG.rollDuration;
     this.iframes = CFG.rollIFrameWindow;
     this.endBlock();                        // v6: roll takes priority over block
-    // roll direction: current move input direction, or facing if idle
-    var dir = new THREE.Vector3(this.moveDirWorld.x, 0, this.moveDirWorld.z);
-    if (dir.lengthSq() < 0.01) {
-      dir.set(Math.sin(this.yaw), 0, Math.cos(this.yaw));
+    // roll direction: the input direction, or facing when there is none
+    var d = new THREE.Vector3(dir ? dir.x : 0, 0, dir ? dir.z : 0);
+    if (d.lengthSq() < 0.01) {
+      d.set(Math.sin(this.yaw), 0, Math.cos(this.yaw));
     }
-    dir.normalize();
-    this.rollDir.copy(dir);
+    d.normalize();
+    this.rollDir.copy(d);
+    return true;
   };
 
-  // v6: RMB down. Refused while rolling, attacking (any stage), staggered
-  // (dying/dead), or guard-broken. On success opens the parry window.
-  // Cannot re-block until stamina has recovered past guardBreakMinStamina.
+  // EPR1 (A2): backstep = procedural backwards hop along facing (update()
+  // slides the group; no clip change), short i-frames, chain reset.
+  Player.prototype.startBackstep = function () {
+    var BS = ER.backstep;
+    if (this.stamina < BS.staminaCost) return false;
+    this.spendStamina(BS.staminaCost);
+    this.backstep = true;
+    this.backstepTimer = BS.duration;
+    this.iframes = BS.iframes;
+    this.endBlock();
+    this.endCombo();
+    return true;
+  };
+
+  // EPR1 (A1-A3, EPR1-A2/A6): keyboard Space grammar, sampled once per sim
+  // frame by update(). A press latched since the last frame counts as held
+  // for this frame, so a tap inside one frame still registers; its release
+  // acts on the next frame. Hold time sums round(dt * 1000) ms per frame
+  // (exactly 50 at the 20 Hz clamp): an integer boundary, no float drift.
+  // Held >= dodgeHoldSec (inclusive: 7 frames = sprint side) sprints while
+  // held and the release does nothing; a shorter hold dodges on release.
+  Player.prototype.sampleDodgeInput = function (dt) {
+    var down = this.dodgeKeyDown || this.dodgePressLatch;
+    var holdMs = Math.round(ER.dodgeHoldSec * 1000);
+    this.dodgePressLatch = false;
+    if (down) {
+      if (!this.dodgeHeld) { this.dodgeHeld = true; this.dodgeHoldMs = 0; }
+      this.dodgeHoldMs += Math.round(dt * 1000);
+      this.dodgeSprint = this.dodgeHoldMs >= holdMs;
+      return;
+    }
+    if (!this.dodgeHeld) return;
+    var tap = this.dodgeHoldMs < holdMs;
+    this.dodgeHeld = false;
+    this.dodgeHoldMs = 0;
+    this.dodgeSprint = false;
+    if (tap) this.requestDodge(true);
+  };
+
+  // v6: RMB down. Refused while rolling (EPR1: or backstepping), dying/dead,
+  // or guard-broken. On success opens the parry window. Cannot re-block until
+  // stamina has recovered past guardBreakMinStamina. EPR1 (B3, EPR1-A5):
+  // blocking still flips on accept; the hit checks read blockActive, set
+  // guardRaiseSec later. During a swing the held RMB is queued and accepted
+  // at the move's guard cancel point (the swing plays out underneath).
   Player.prototype.tryBlock = function () {
     if (this.state !== 'alive' || this.rolling || this.attacking) return;
     if (this.toggling) return;              // Order B: the shield is mid-swap until Q lands
     if (!this.hasShieldLeft()) return;      // Order C: a shield in the LEFT hand
     if (this.guardBroken) return;
     if (this.stamina < window.WH_CONFIG.block.guardBreakMinStamina) return;
+    if (this.attacking && !this.cancelOpen('guard')) {
+      this.guardQueued = true;
+      return;
+    }
+    this.comboQueued = false;               // EPR1: the raised guard wins the buffer
+    this.comboBufferTimer = 0;
     this.blocking = true;
+    this.blockActive = false;
+    this.guardRaiseTimer = ER.guardRaiseSec;
     this.parryTimer = window.WH_CONFIG.block.parryWindow;
   };
 
   Player.prototype.endBlock = function () {
     this.blocking = false;
     this.blockButton = null;
+    this.blockActive = false;
+    this.guardRaiseTimer = 0;
+    this.guardQueued = false;
     this.parryTimer = 0;
   };
 
@@ -92474,8 +92717,9 @@ window.WH_CONFIG.inventoryUI = {
 
   // ====================== v7 WEAVE SLICE ======================================
 
-  // v7: guard-break choke point (called from resolveIncomingHit via
-  // onGuardBreak and by game debug hooks). Clears armed/cross state.
+  // v7: guard-break choke point (called from resolveIncomingHit when a
+  // blocked hit empties stamina, and by game debug hooks). Clears
+  // armed/cross state.
   Player.prototype.guardBreak = function () {
     this.guardBroken = true;
     this.guardBreakTimer = window.WH_CONFIG.block.guardBreakStun;
@@ -92506,10 +92750,11 @@ window.WH_CONFIG.inventoryUI = {
     this.endBlock();                     // shield grip is dropped by the swap
     this.toggling = true;
     this.toggleTimer = V7.loadout.toggleSeconds;
-    // chain reset (spec: toggle resets the active chain)
-    this.comboIndex = 0;
-    this.comboQueued = false;
-    this.recoverFullyElapsed = false;
+    // chain reset (spec: toggle resets the active chain; A-1 ruling
+    // 2026-10-02: a full reset also ENDS the chain, so an idle toggle no
+    // longer starts the next chain at m2 — same bookkeeping as a full
+    // recover, without touching the armedTimer/cross banking below)
+    this.endCombo();
     // armed survives the toggle inside its window; cross-finisher banks
     if (this.armedTimer > 0) this.crossArmed = true;
   };
@@ -93182,6 +93427,9 @@ window.WH_CONFIG.inventoryUI = {
   // 3. blocking + attacker in block arc -> chip damage + stamina drain,
   //    guard break when stamina empties
   // 4. otherwise full damage
+  // EPR1-A5: 2 and 3 read blockActive (guard raised guardRaiseSec after the
+  // RMB accept), not blocking.
+  // Returns true when hp damage (full or chip) was applied.
   Player.prototype.resolveIncomingHit = function (damage, attacker) {
     if (this.state !== 'alive') return false;
     if (this.iframes > 0) return false;      // roll i-frames win (existing)
@@ -93194,18 +93442,14 @@ window.WH_CONFIG.inventoryUI = {
       var dx = attacker.pos.x - this.pos.x;
       var dz = attacker.pos.z - this.pos.z;
       if (dx * dx + dz * dz > 0.0001) {
-        var ang = Math.atan2(dx, dz);
-        var dyaw = ang - this.yaw;
-        while (dyaw > Math.PI) dyaw -= Math.PI * 2;
-        while (dyaw < -Math.PI) dyaw += Math.PI * 2;
-        var halfAngle = BLK.blockArcHalfAngleDeg * Math.PI / 180;
-        attackerInArc = Math.abs(dyaw) <= halfAngle;
+        var dyaw = shortestAngle(Math.atan2(dx, dz) - this.yaw);
+        attackerInArc = Math.abs(dyaw) <= deg2rad(BLK.blockArcHalfAngleDeg);
       }
     }
 
     // 2. parry: timing window open AND attacker in the block arc (spec:
     // attacker behind + blocking = full damage, no parry).
-    if (this.blocking && this.parryTimer > 0 && attacker &&
+    if (this.blockActive && this.parryTimer > 0 && attacker &&
         attacker.enterStagger && attackerInArc) {
       this.spendStamina(BLK.parryStaminaCost);
       attacker.enterStagger(BLK.riposteStaggerDur);
@@ -93217,7 +93461,7 @@ window.WH_CONFIG.inventoryUI = {
     }
 
     // 3. block: only if attacker is within the block arc of player facing
-    if (this.blocking && attacker && attacker.pos && attackerInArc) {
+    if (this.blockActive && attacker && attacker.pos && attackerInArc) {
       var staminaCost = Math.max(1, Math.round(damage * BLK.staminaCostMult));
       this.stamina = Math.max(0, this.stamina - staminaCost);
       this.staminaRegenBlock = CFG.staminaRegenDelay;
@@ -93235,26 +93479,32 @@ window.WH_CONFIG.inventoryUI = {
         if (this.anim && !dead) this.anim.shieldImpact();
         if (this.onBlock) this.onBlock(attacker, chip);
       }
-      return !dead;                          // blocked (or killed by chip)
+      return applied;
     }
 
     // 4. full damage (existing path)
     return this.takeDamage(damage);
   };
 
-  // 10-04 chain gating (Nicko: combo spam -> real chains). Windup presses
-  // are IGNORED; strike/recover presses are BUFFERED for inputBufferSec and
-  // fired by update() once the swing reaches its chain window. A press while
-  // idle always starts the chain at chain[0].
+  // 10-04 chain gating (Nicko: combo spam -> real chains). Strike/recover
+  // presses are BUFFERED for inputBufferSec and fired by update() once the
+  // swing reaches its chain window. EPR1 (B5): windup presses are IGNORED
+  // before move.bufferFrom x windup and BUFFERED from it (their lifetime
+  // starts at the strike); a buffered LMB replaces a queued dodge. A press
+  // while idle always starts the chain at chain[0].
   Player.prototype.tryAttack = function () {
     if (this.state !== 'alive' || this.rolling || this.toggling) return;
     if (!this.hasMeleeRight()) return;     // Order B: chain needs melee in the RIGHT hand
     if (this.blocking) return;              // v6: must release RMB to attack
     if (this.attacking) {
       var stage = this.getAttackStage();
-      if (stage === 'strike' || stage === 'recover') {
+      var M = this.attackMove;
+      if (stage === 'strike' || stage === 'recover' ||
+          (typeof M.bufferFrom === 'number' &&
+           this.attackTotal - this.attackTimer + GATE_EPS >= M.bufferFrom * M.windup)) {
         this.comboQueued = true;
         this.comboBufferTimer = MV.inputBufferSec;
+        this.dodgeQueued = false;
       }
       return;
     }
@@ -93276,9 +93526,10 @@ window.WH_CONFIG.inventoryUI = {
     this.attackSerial++;
     this.attackDidHit = false;
     this.lungeLeft = M.lunge;
+    this.rootMotionApplied = 0;             // EPR1: each swing runs its own rootMotion table
+    this.rootMotionStage = null;
     // v7: armed finisher consumption (armedTimer > 0 = attack at 1.5x;
     // crossArmed = cross-finisher at 2.0x; both consumed on this attack)
-    this.pendingArmedMult = 1;
     if (this.armedTimer > 0 && this.crossArmed) {
       this.pendingDamageMult = V7.armed.crossDamageMult;
       this.crossArmed = false;
@@ -93309,9 +93560,22 @@ window.WH_CONFIG.inventoryUI = {
     this.comboIndex = 0;
     this.comboQueued = false;
     this.comboBufferTimer = 0;
+    this.dodgeQueued = false;                // EPR1
     this.chainHits = 0;
     this.recoverFullyElapsed = true;
     this.resetWeaponPose();
+  };
+
+  // A swing that ends without chaining (full recover, windup roll-cancel,
+  // respawn) closes the chain: the next press is a fresh m1 with no carried
+  // chain hits, so comboIndex stays inside 0..cap-1. EPR1: restored - the
+  // 33d0d80 definition was lost on origin/dev while toggleLoadout() and
+  // respawnAt() still call it (KeyQ threw "endCombo is not a function").
+  Player.prototype.endCombo = function () {
+    this.recoverFullyElapsed = true;
+    this.comboIndex = 0;
+    this.chainHits = 0;
+    this.comboQueued = false;
   };
 
   // 10-04: stage + phase clock of the current swing from its CONFIG move.
@@ -93335,6 +93599,25 @@ window.WH_CONFIG.inventoryUI = {
   Player.prototype.getAttackStage = function () {
     var ph = this.getAttackPhase();
     return ph ? ph.stage : null;
+  };
+
+  // EPR1 cancel matrix: elapsed (s) from which input type col ('dodge' |
+  // 'guard' | 'move') may interrupt the current swing = CONFIG
+  // move.cancel[col] x (windup + strike + recover). Without the column the
+  // pre-EPR1 law holds: dodge from recover start, guard / move never. The
+  // light column stays chainOpenSec (update()).
+  Player.prototype.getCancelPoint = function (col) {
+    var M = this.attackMove;
+    if (!M) return 0;
+    if (M.cancel && typeof M.cancel[col] === 'number') return M.cancel[col] * this.attackTotal;
+    return col === 'dodge' ? M.windup + M.strike : Infinity;
+  };
+
+  // True once the current swing has reached its cancel point for col (a
+  // point reached exactly, up to float noise, counts as reached).
+  Player.prototype.cancelOpen = function (col) {
+    if (!this.attacking) return false;
+    return this.attackTotal - this.attackTimer + GATE_EPS >= this.getCancelPoint(col);
   };
 
   Player.prototype.spendStamina = function (amount) {
@@ -93399,6 +93682,58 @@ window.WH_CONFIG.inventoryUI = {
     }
   };
 
+  // Strike root motion along facing: velocity model. The old target-delta
+  // formula (strikeLunge * se - (strikeLunge - lungeLeft)) stranded the
+  // remainder whenever the STRIKE stage spanned few frames (hitches clamped
+  // at maxDt), leaving the lunge at ~0.09 of 0.25. A dt-scaled velocity
+  // drains the full lunge at any frame rate, on the clip and stand-in paths.
+  Player.prototype.applyStrikeLunge = function (dt) {
+    if (this.lungeLeft <= 0) return;
+    var lungeVel = AW.strikeLunge / (CFG.attackDuration * AW.strikeFrac);
+    var lungeStep = Math.min(lungeVel * dt, this.lungeLeft);
+    this.pos.x += Math.sin(this.yaw) * lungeStep;
+    this.pos.z += Math.cos(this.yaw) * lungeStep;
+    this.lungeLeft -= lungeStep;
+  };
+
+  // EPR1 (spec 3.3, C1-C3): attack root motion along facing from the move's
+  // FRAME TABLE (CONFIG move.rootMotion[stage] = cumulative forward metres
+  // [start, end], times move.lunge). Frame-anchored: a stage's first sim
+  // frame sits at its start value and its last at its end value, linear in
+  // frame index between, so the stage-change frame adds nothing (20 Hz
+  // slashR2L strike = 4 frames: 0 / 0.3 / 0.6 / 0.9 m). The last-frame time
+  // is predicted from the current dt; a shortfall lands on the next stage's
+  // first frame. Moves without a table keep the legacy strike lunge
+  // (move.lunge metres drained over the strike, unchanged).
+  Player.prototype.applyRootMotion = function (dt) {
+    var M = this.attackMove;
+    var ph = this.getAttackPhase();
+    if (!M.rootMotion) {
+      if (ph.stage !== 'strike' || this.lungeLeft <= 0) return;
+      var lungeVel = M.lunge / M.strike;
+      var lungeStep = Math.min(lungeVel * dt, this.lungeLeft);
+      this.pos.x += Math.sin(this.yaw) * lungeStep;
+      this.pos.z += Math.cos(this.yaw) * lungeStep;
+      this.lungeLeft -= lungeStep;
+      return;
+    }
+    var seg = M.rootMotion[ph.stage];
+    if (!seg) return;
+    if (this.rootMotionStage !== ph.stage) {
+      this.rootMotionStage = ph.stage;
+      this.rootMotionT0 = ph.t;
+      this.rootMotionSpan = Math.max(0, Math.floor((ph.dur - ph.t - GATE_EPS) / dt)) * dt;
+    }
+    var p = this.rootMotionSpan > 0 ?
+      Math.min(1, Math.max(0, (ph.t - this.rootMotionT0) / this.rootMotionSpan)) : 1;
+    var scale = typeof M.lunge === 'number' ? M.lunge : 1;
+    var step = (seg[0] + (seg[1] - seg[0]) * p) * scale - this.rootMotionApplied;
+    if (step <= 0) return;
+    this.pos.x += Math.sin(this.yaw) * step;
+    this.pos.z += Math.cos(this.yaw) * step;
+    this.rootMotionApplied += step;
+  };
+
   Player.prototype.update = function (dt, clampToBounds) {
     this.stateTime += dt;
 
@@ -93411,6 +93746,12 @@ window.WH_CONFIG.inventoryUI = {
       if (this.guardBreakTimer <= 0) this.guardBroken = false;
     }
     if (this.blocking && (this.rolling || this.state !== 'alive')) this.endBlock();
+    // EPR1 (B3, EPR1-A5): the accepted block turns ACTIVE for the hit checks
+    // guardRaiseSec later (3 frames at the 20 Hz clamp).
+    if (this.blocking) {
+      if (this.guardRaiseTimer > 0) this.guardRaiseTimer = Math.max(0, this.guardRaiseTimer - dt);
+      this.blockActive = this.guardRaiseTimer <= 0;
+    }
     if (this.staminaRegenBlock > 0) {
       this.staminaRegenBlock -= dt;
     } else if (this.stamina < this.staminaMax) {
@@ -93454,6 +93795,9 @@ window.WH_CONFIG.inventoryUI = {
     // Order C: a guard needs a shield in the LEFT hand
     if (this.blocking && !this.hasShieldLeft()) this.endBlock();
 
+    // EPR1: keyboard Space grammar (dodge on release / sprint while held)
+    this.sampleDodgeInput(dt);
+
     if (this.state === 'dying') {
       this.deathTilt = Math.min(Math.PI / 2, this.deathTilt + dt * 3);
       if (this.body && !this.anim) this.body.rotation.x = -this.deathTilt;
@@ -93464,8 +93808,10 @@ window.WH_CONFIG.inventoryUI = {
 
     if (this.attacking) {
       this.attackTimer -= dt;
-      // 10-04: buffered input expires after inputBufferSec.
-      if (this.comboQueued) {
+      // 10-04: buffered input expires after inputBufferSec. EPR1 (B5): a
+      // press buffered in windup (from bufferFrom) starts its lifetime at
+      // the strike, so it survives to the chain window.
+      if (this.comboQueued && this.getAttackStage() !== 'windup') {
         this.comboBufferTimer -= dt;
         if (this.comboBufferTimer <= 0) { this.comboQueued = false; this.comboBufferTimer = 0; }
       }
@@ -93478,6 +93824,11 @@ window.WH_CONFIG.inventoryUI = {
           ph.t >= this.attackMove.chainOpenSec) {
         this.startAttack(this.comboIndex + 1);
       }
+      // EPR1 cancel matrix: a queued dodge rolls out at the move's dodge
+      // point; a held RMB raises the guard at its guard point while the
+      // swing plays out (hits wait for blockActive).
+      if (this.dodgeQueued && this.cancelOpen('dodge')) this.consumeQueuedDodge();
+      if (this.guardQueued && this.cancelOpen('guard')) this.tryBlock();
       if (this.attacking && this.attackTimer <= 0) {
         var rebuffered = this.comboQueued;
         this.attacking = false;
@@ -93489,6 +93840,12 @@ window.WH_CONFIG.inventoryUI = {
         // chain fully resolved: a still-fresh press starts a new chain
         if (rebuffered) this.startAttack(0);
       }
+    }
+    // EPR1: inputs still queued once the swing is over (fully recovered or
+    // cancelled) act now.
+    if (!this.attacking) {
+      if (this.dodgeQueued) this.consumeQueuedDodge();
+      if (this.guardQueued) this.tryBlock();
     }
 
     this.updateLockTracking(dt);
@@ -93515,6 +93872,14 @@ window.WH_CONFIG.inventoryUI = {
         if (this.body) { this.body.rotation.x = 0; this.body.rotation.z = 0; }
         this.resetWeaponPose();
       }
+    } else if (this.backstep) {
+      // EPR1 (A2): backwards hop along facing - the group slides, the body
+      // keeps its pose (no clip change).
+      this.backstepTimer -= dt;
+      var bsStep = CFG.walkSpeed * ER.backstep.speedMult * dt;
+      this.pos.x -= Math.sin(this.yaw) * bsStep;
+      this.pos.z -= Math.cos(this.yaw) * bsStep;
+      if (this.backstepTimer <= 0) this.backstep = false;
     } else {
       // camera-relative movement
       this.collectMoveInput();
@@ -93593,16 +93958,10 @@ window.WH_CONFIG.inventoryUI = {
       }
     }
 
-    // Strike lunge along facing (FSM-owned for both the clip and stand-in
-    // paths): velocity = move.lunge / move.strike, dt-scaled so the full
-    // lunge drains at any frame rate. Runs before the bounds clamp.
-    if (this.attacking && this.getAttackStage() === 'strike' && this.lungeLeft > 0) {
-      var lungeVel = this.attackMove.lunge / this.attackMove.strike;
-      var lungeStep = Math.min(lungeVel * dt, this.lungeLeft);
-      this.pos.x += Math.sin(this.yaw) * lungeStep;
-      this.pos.z += Math.cos(this.yaw) * lungeStep;
-      this.lungeLeft -= lungeStep;
-    }
+    // Attack root motion along facing (FSM-owned for both the clip and
+    // stand-in paths): EPR1 rootMotion table, or the legacy strike lunge
+    // without one (applyRootMotion). Runs before the bounds clamp (C3).
+    if (this.attacking) this.applyRootMotion(dt);
 
     if (clampToBounds) clampToBounds(this);
     this.yawFrame.rotation.y = this.yaw;
@@ -93730,7 +94089,14 @@ window.WH_CONFIG.inventoryUI = {
     this.state = 'alive';
     this.stateTime = 0;
     this.rolling = false;
+    this.backstep = false;                  // EPR1
+    this.backstepTimer = 0;
+    this.dodgeQueued = false;
     this.attacking = false;
+    this.attackTimer = 0;
+    this.attackDidHit = false;
+    this.lungeLeft = 0;
+    this.endCombo();                        // a death mid-chain must not carry comboIndex/chainHits
     this.iframes = 0;
     this.endBlock();                        // v6: clear block state
     this.guardBroken = false;
@@ -93755,6 +94121,7 @@ window.WH_CONFIG.inventoryUI = {
 
   window.WH_Player = Player;
 })();
+
 </script>
 <script>
 // Witch Hunter prototype v1 - enemies: bandit and ghoul FSMs.
@@ -93769,6 +94136,12 @@ window.WH_CONFIG.inventoryUI = {
   var ANIM = window.WH_CONFIG.anim;
 
   function smooth(p) { return p * p * (3 - 2 * p); }   // smoothstep ease
+
+  function wrapAngle(a) {
+    while (a > Math.PI) a -= Math.PI * 2;
+    while (a < -Math.PI) a += Math.PI * 2;
+    return a;
+  }
 
   function cfgFor(type) {
     return CFG[type] || CFG.bandit;
@@ -93877,8 +94250,11 @@ window.WH_CONFIG.inventoryUI = {
   // The FSM stops on death, but the visual fall must continue to settle.
   Enemy.prototype.updateDeathVisual = function (dt) {
     if (!this.body) return;
-    if (this.anim) {
-      this.anim.death();
+    // A rig without WH_Death (CharacterAnim warns) takes the rigid fall below.
+    if (this.anim && this.anim.actions.death) {
+      // deadFall 1 before the clip ever ran = corpse restored by a region
+      // rebuild: pose it at the clip end instead of replaying the death.
+      this.anim.death(this.deadFall >= 1);
       this.root.position.copy(this.pos);
       this.yawFrame.rotation.y = this.yaw;
       var deathAction = this.anim.actions.death;
@@ -93921,9 +94297,9 @@ window.WH_CONFIG.inventoryUI = {
   };
 
   // FSM sense/aggression update. playerPos: THREE.Vector3, canDamagePlayer:
-  // callback(amount, attacker) applies damage through the combat layer if the
-  // player is vulnerable (returns true if it landed). boundary: {z, holdMargin} clamps
-  // movement to home side.
+  // callback(amount, attacker) routes damage through the combat layer
+  // (block/parry/i-frames; its return value is unused). boundary:
+  // {z, holdMargin} clamps movement to home side.
   Enemy.prototype.update = function (dt, playerPos, playerAlive, canDamagePlayer, boundary, regionManager) {
     if (this.fsm === 'dead') {
       this.updateDeathVisual(dt);
@@ -93985,10 +94361,7 @@ window.WH_CONFIG.inventoryUI = {
         if (this.attackPhase === 'windup') {
           // combat-ds1 P0-6: only windup may track; freeze facing for the hit.
           if (distToPlayer > 0.001) {
-            var wantYaw = Math.atan2(toPlayerX, toPlayerZ);
-            var deltaYaw = wantYaw - this.yaw;
-            while (deltaYaw > Math.PI) deltaYaw -= Math.PI * 2;
-            while (deltaYaw < -Math.PI) deltaYaw += Math.PI * 2;
+            var deltaYaw = wrapAngle(Math.atan2(toPlayerX, toPlayerZ) - this.yaw);
             var maxYaw = phase.trackDegPerSec * Math.PI / 180 * dt;
             this.yaw += Math.max(-maxYaw, Math.min(maxYaw, deltaYaw));
           }
@@ -93997,11 +94370,12 @@ window.WH_CONFIG.inventoryUI = {
             this.attackPhaseT = 0;
             // One damage opportunity at active entry; range and facing must
             // both hold after tracking ends. The callback owns parry/i-frames.
-            var hitYaw = Math.atan2(toPlayerX, toPlayerZ) - this.yaw;
-            while (hitYaw > Math.PI) hitYaw -= Math.PI * 2;
-            while (hitYaw < -Math.PI) hitYaw += Math.PI * 2;
+            var hitYaw = wrapAngle(Math.atan2(toPlayerX, toPlayerZ) - this.yaw);
+            // A-2 ruling 2026-10-02: hitArcDeg is a HALF-angle (±50°), per
+            // the audit of record (doc 60 L221 arcHalfDeg 50); D1 renamed
+            // the key only. /180 == *deg/2 in radians.
             if (distToPlayer <= this.cfg.attackRange + window.WH_CONFIG.player.radius &&
-                Math.abs(hitYaw) <= phase.hitArcDeg * Math.PI / 360) {
+                Math.abs(hitYaw) <= phase.hitArcDeg * Math.PI / 180) {
               canDamagePlayer(this.cfg.attackDamage, this);
             }
           }
@@ -94023,9 +94397,7 @@ window.WH_CONFIG.inventoryUI = {
       }
     } else if (this.fsm === 'idle' || this.fsm === 'aggro') {
       if (playerAlive && distToPlayer <= this.cfg.sightRadius) {
-        this.setFsm(this.fsm === 'idle' ? 'aggro' : 'aggro');
-      } else if (distToSpawn > this.cfg.leashRadius) {
-        // will walk home below
+        this.setFsm('aggro');            // idle/aggro both walk home below
       }
       if (playerAlive && distToPlayer <= this.cfg.sightRadius * 0.8) {
         this.setFsm('chase');
@@ -94248,6 +94620,10 @@ window.WH_CONFIG.inventoryUI = {
   Enemy.prototype.takeDamage = function (amount, fromDir) {
     if (this.fsm === 'dead') return false;
     this.hp -= amount;
+    // A hit cancels the swing (stagger or death): no phase leak, as in
+    // enterStagger. The next attack entry re-arms windup.
+    this.attackPhase = 'idle';
+    this.attackPhaseT = 0;
     if (this.hp <= 0) {
       this.hp = 0;
       this.setFsm('dead');
@@ -94273,7 +94649,9 @@ window.WH_CONFIG.inventoryUI = {
   };
 
   // Circle push-out against a list of other circles (enemies + player).
-  // others: [{pos: THREE.Vector3, radius: number}]
+  // others: [{pos: THREE.Vector3, radius: number}]. Only this enemy moves.
+  // A non-finite distance (a NaN position written from outside) is skipped
+  // so it cannot spread to every neighbour through the push.
   Enemy.prototype.separateFrom = function (others, strength, dt) {
     for (var i = 0; i < others.length; i++) {
       var o = others[i];
@@ -94281,15 +94659,11 @@ window.WH_CONFIG.inventoryUI = {
       var dz = this.pos.z - o.pos.z;
       var minDist = this.cfg.radius + o.radius;
       var d2 = dx * dx + dz * dz;
-      if (d2 >= minDist * minDist || d2 === 0) continue;
+      if (!(d2 > 0 && d2 < minDist * minDist)) continue;
       var d = Math.sqrt(d2);
       var push = (minDist - d) * strength * dt;
       this.pos.x += (dx / d) * push;
       this.pos.z += (dz / d) * push;
-      if (o.pushedBy !== undefined) {
-        o.pos.x -= (dx / d) * push * 0.5;
-        o.pos.z -= (dz / d) * push * 0.5;
-      }
     }
   };
 
@@ -97027,6 +97401,12 @@ window.WH_CONFIG.inventoryUI = {
 
   var CFG = window.WH_CONFIG;
 
+  function wrapAngle(a) {
+    while (a > Math.PI) a -= Math.PI * 2;
+    while (a < -Math.PI) a += Math.PI * 2;
+    return a;
+  }
+
   var game = {
     renderer: null,
     scene: null,
@@ -97483,26 +97863,30 @@ window.WH_CONFIG.inventoryUI = {
     game.hud.hpBarOuter.style.width = (p.hpMax / CFG.player.hpMax * 100) + '%';
     updateBuffHud();
     game.hud.stamBar.style.width = (p.stamina / p.staminaMax * 100) + '%';
-    // v7: armed state = weapon emissive pulse while armedTimer > 0
-    if (p.sword && p.sword.material) {
-      if (!p.swordBaseEmissive && p.sword.material.emissive) {
-        p.swordBaseEmissive = {
-          hex: p.sword.material.emissive.getHex(),
-          intensity: p.sword.material.emissiveIntensity !== undefined
-            ? p.sword.material.emissiveIntensity : 1
-        };
+    // v7: armed state = weapon emissive pulse while armedTimer > 0. p.sword is
+    // the ground-align holder Group, so pulse the materials of its meshes.
+    if (p.sword) {
+      if (!p.swordEmissives) {
+        p.swordEmissives = [];
+        p.sword.traverse(function (obj) {
+          if (!obj.isMesh) return;
+          var mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+          mats.forEach(function (m) {
+            if (m && m.emissive) {
+              p.swordEmissives.push({ mat: m, hex: m.emissive.getHex(),
+                intensity: m.emissiveIntensity !== undefined ? m.emissiveIntensity : 1 });
+            }
+          });
+        });
       }
-      if (p.armedTimer > 0) {
-        var pulse = 0.5 + 0.5 * Math.sin(performance.now() / 1000 * 8);
-        var armedHex = p.crossArmed ? 0xffd24a : 0xff7722;  // gold cross / orange armed
-        p.sword.material.emissive.setHex(armedHex);
-        if (p.sword.material.emissiveIntensity !== undefined) {
-          p.sword.material.emissiveIntensity = 0.4 + pulse * 0.9;
-        }
-      } else if (p.swordBaseEmissive) {
-        p.sword.material.emissive.setHex(p.swordBaseEmissive.hex);
-        if (p.sword.material.emissiveIntensity !== undefined) {
-          p.sword.material.emissiveIntensity = p.swordBaseEmissive.intensity;
+      var armedOn = p.armedTimer > 0;
+      var pulse = 0.5 + 0.5 * Math.sin(performance.now() / 1000 * 8);
+      var armedHex = p.crossArmed ? 0xffd24a : 0xff7722;  // gold cross / orange armed
+      for (var se = 0; se < p.swordEmissives.length; se++) {
+        var sm = p.swordEmissives[se];
+        sm.mat.emissive.setHex(armedOn ? armedHex : sm.hex);
+        if (sm.mat.emissiveIntensity !== undefined) {
+          sm.mat.emissiveIntensity = armedOn ? 0.4 + pulse * 0.9 : sm.intensity;
         }
       }
     }
@@ -97637,10 +98021,7 @@ window.WH_CONFIG.inventoryUI = {
       var dx = e.pos.x - p.pos.x, dz = e.pos.z - p.pos.z;
       var dist = Math.sqrt(dx * dx + dz * dz);
       if (dist > L.maxDistance || dist < 0.001) continue;
-      var ang = Math.atan2(dx, dz);
-      var dyaw = ang - Math.atan2(fx, fz);
-      while (dyaw > Math.PI) dyaw -= Math.PI * 2;
-      while (dyaw < -Math.PI) dyaw += Math.PI * 2;
+      var dyaw = wrapAngle(Math.atan2(dx, dz) - Math.atan2(fx, fz));
       if (Math.abs(dyaw) > halfCone) continue;
       if (dist >= bestDist) continue;
       if (!isLit(e)) { game.lockSkippedDark = true; continue; }
@@ -98471,17 +98852,8 @@ window.WH_CONFIG.inventoryUI = {
       getParryWindowRemaining: function () {
         return game.player.getParryWindowRemaining();
       },
-      forceGuardBreak: function () {
-        var p = game.player;
-        p.guardBroken = true;
-        p.guardBreakTimer = CFG.block.guardBreakStun;
-        p.endBlock();
-        p.stamina = 0;
-        // v7: guard break counterplay clears armed finisher state
-        p.armedTimer = 0;
-        p.crossArmed = false;
-        if (p.onGuardBreak) p.onGuardBreak();
-      },
+      // v7: the player's guard-break choke point also clears armed state
+      forceGuardBreak: function () { game.player.guardBreak(); },
       isGuardBroken: function () { return game.player.guardBroken; },
       forceStagger: function (idx, dur) {
         var list = game.regionManager.getEnemies(game.regionManager.logic.activeId);
@@ -98879,10 +99251,7 @@ window.WH_CONFIG.inventoryUI = {
         var dz = e.pos.z - sweep.origin.z;
         var dist = Math.sqrt(dx * dx + dz * dz);
         if (dist > sweep.range) continue;
-        var ang = Math.atan2(dx, dz);
-        var dyaw = ang - game.player.yaw;
-        while (dyaw > Math.PI) dyaw -= Math.PI * 2;
-        while (dyaw < -Math.PI) dyaw += Math.PI * 2;
+        var dyaw = wrapAngle(Math.atan2(dx, dz) - game.player.yaw);
         if (Math.abs(dyaw) > sweep.halfAngle) continue;
         var dmg = sweep.damage * (e.type === 'ghoul' ? sweep.ghoulMult : 1);
         // v6: riposte - staggered enemies take bonus damage, flag consumed
