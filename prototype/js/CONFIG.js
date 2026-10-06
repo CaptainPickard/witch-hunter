@@ -1347,6 +1347,92 @@ window.WH_CONFIG.cooking = {
   buffHud: { warnSec: 30 }          // chip blinks under this many seconds left
 };
 
+// C2 (io/missions/2026-10-05-cc-c2-daynight.md): day/night cycle
+// (js/daynight.js WH_DAYNIGHT). One cycle = dawn > day > dusk > night over
+// dayLengthSec. Each phase row is the look the phase HOLDS; the first
+// blendFrac of every phase smoothsteps from the previous row into it (no
+// pops), the rest holds the row exactly. TUTORIAL LAW: the clock boots
+// DORMANT on startPhase (frozen, night = today's look) and only free-runs
+// after beginCycle() (C3: the first sleep).
+window.WH_CONFIG.dayNight = {
+  // PLAYTEST DEFAULT 60s per in-game day = 15s per phase, so a 15s wait
+  // visibly moves the sky. REAL GAME: 600 (doc 10 day-buff scale) - a later
+  // CONFIG tune; day-length buffs (CONFIG.cooking.buffs[].days) follow it.
+  dayLengthSec: 60,
+  // !!! PLAYTEST-ONLY HATCH (C3 DELETES IT) !!! The dormant clock calls
+  // beginCycle() this many seconds after boot so the cycle can be seen
+  // without the sleep action. 0 = off (tutorial law: day only after sleep).
+  autoBeginSec: 15,
+  startPhase: 'night',              // dormant look (locked until beginCycle)
+  order: ['dawn', 'day', 'dusk', 'night'],
+  // phase start as a fraction of the cycle; beginCycle() starts at dawn (0)
+  bounds: { dawn: 0, day: 0.25, dusk: 0.5, night: 0.75 },
+  blendFrac: 0.5,                   // first half of each phase blends in from the previous phase
+  // Row keys: hemi colors + hemiFillMult (x hemiBaseIntensity x region
+  // ambientLightLevel x regionBFillMult), the ONE directional (moon by
+  // night, sun by day - no new light objects) color / intensity / azimuth /
+  // elevation, exposureMult (x renderer.toneMappingExposure), fog per region
+  // id (cem* = regionA cemeteryFog ramp target), sky dome colors, star
+  // visibility, sky disc (moon / sun sprite) colors + opacity.
+  phases: {
+    // NIGHT = TODAY'S APPROVED LOOK. Every value is copied verbatim from
+    // CONFIG.lighting / regionA / regionA.cemeteryFog / regionB / sky; mults
+    // are exactly 1. daynight.js verifies this match at boot (console.warn).
+    night: {
+      hemiSkyColor: 0x4a5a80, hemiGroundColor: 0x16181e, hemiFillMult: 1.0,
+      lightColor: 0xa8bce6, lightIntensity: 0.9, azimuthDeg: 0, elevationDeg: 30,
+      exposureMult: 1.0,
+      fog: {
+        hold_outskirts: { color: 0x9aa0a3, density: 0.012, cemColor: 0x7f8ea6, cemDensity: 0.030 },
+        darkwood_edge: { color: 0x6f7477, density: 0.024 }
+      },
+      zenithColor: 0x070a18, horizonBand: 0x2b3350, horizonGlow: 0x8f98ad,
+      stars: 1.0,
+      discColor: 0xdfe7f2, discGlowColor: 0xa8bce6, discOpacity: 1.0
+    },
+    // dawn: low cold-rose light from the east, mist still heavy
+    dawn: {
+      hemiSkyColor: 0x6a6878, hemiGroundColor: 0x1e1c1e, hemiFillMult: 1.5,
+      lightColor: 0xc9a88e, lightIntensity: 0.8, azimuthDeg: 80, elevationDeg: 10,
+      exposureMult: 1.0,
+      fog: {
+        hold_outskirts: { color: 0xa29a98, density: 0.011, cemColor: 0x8e8c9c, cemDensity: 0.026 },
+        darkwood_edge: { color: 0x77736f, density: 0.021 }
+      },
+      zenithColor: 0x262c44, horizonBand: 0x6e5e66, horizonGlow: 0xa8948a,
+      stars: 0.35,
+      discColor: 0xf0d2b0, discGlowColor: 0xb08870, discOpacity: 0.9
+    },
+    // day: pale overcast daylight - gothic but readable, darkwood ash/olive
+    // palette (no blue sky, no saturation)
+    day: {
+      hemiSkyColor: 0x8a929c, hemiGroundColor: 0x2a2a22, hemiFillMult: 2.4,
+      lightColor: 0xd8d0bc, lightIntensity: 1.25, azimuthDeg: 160, elevationDeg: 50,
+      exposureMult: 1.0,
+      fog: {
+        hold_outskirts: { color: 0xa4a8a6, density: 0.008, cemColor: 0x9aa1a8, cemDensity: 0.020 },
+        darkwood_edge: { color: 0x80857f, density: 0.017 }
+      },
+      zenithColor: 0x56606e, horizonBand: 0x868d92, horizonGlow: 0xa9adab,
+      stars: 0.0,
+      discColor: 0xf0e6cc, discGlowColor: 0xb8ae94, discOpacity: 0.85
+    },
+    // dusk: sun sinks west, bruised-rose band, mist thickens back
+    dusk: {
+      hemiSkyColor: 0x5e5a6e, hemiGroundColor: 0x1a181c, hemiFillMult: 1.4,
+      lightColor: 0xc0907a, lightIntensity: 0.75, azimuthDeg: 250, elevationDeg: 10,
+      exposureMult: 1.0,
+      fog: {
+        hold_outskirts: { color: 0x9c9496, density: 0.012, cemColor: 0x868aa0, cemDensity: 0.027 },
+        darkwood_edge: { color: 0x726e6c, density: 0.022 }
+      },
+      zenithColor: 0x1c2238, horizonBand: 0x664e58, horizonGlow: 0x9c8478,
+      stars: 0.25,
+      discColor: 0xe8b894, discGlowColor: 0xa07060, discOpacity: 0.9
+    }
+  }
+};
+
 // Stage 2 (Nicko 10-05): static gather nodes (js/gather.js WH_GATHER).
 // Placements live in regionA/regionB .nodes. E harvests the nearest READY
 // node within interactRadius; a full inventory refuses (node stays ready).
