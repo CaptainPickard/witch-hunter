@@ -1,7 +1,8 @@
 // Witch Hunter prototype - day/night cycle (C2, io/missions/2026-10-05-cc-c2-daynight.md).
 // One clock over CONFIG.dayNight.dayLengthSec: dawn > day > dusk > night
-// (phase starts = CONFIG bounds fractions). The first blendFrac of each
-// phase smoothsteps from the previous phase row into this one; the rest
+// (phase starts = CONFIG bounds fractions). The first blendSec (C3.1:
+// real seconds, 90) of each phase smoothsteps from the previous row into
+// this one; the rest
 // HOLDS the row exactly (hold = straight copy, never a lerp at t=1, so the
 // night hold is bit-identical to the approved CONFIG look).
 // TUTORIAL LAW: boots DORMANT on startPhase (clock frozen, nothing moves);
@@ -133,25 +134,40 @@
     copyRow(this.state, D.phases[D.startPhase]);
   }
 
+  // WAKE-SNAP (Nicko 10-06, C3.1): a sleep roll lands at the END of dawn's
+  // blend window (blendSec in), not at dawn's start - the rest fade lifts
+  // onto the HELD dawn look (no "still night, then it eases up"). Natural
+  // phase flows keep the full slow blend; only the sleep path snaps.
+  var wakeBlendSec = D.blendSec;
+
+  // camp.js calls this BEFORE starting the rest fade: pre-warm the wake
+  // pano (the dawn variant of the day the sleeper wakes into) so the
+  // texture is in cache when nextDawn/beginCycle retarget 'wake'.
+  DayNight.prototype.prepareWake = function () {
+    if (!this.sky) return;
+    this.sky.request(this.sky.variantUrl('dawn', Math.max(0, this.day)));
+  };
+
   // dormant -> dawn. A new day (C3: rest/sleep = morning).
   DayNight.prototype.beginCycle = function () {
     if (!this.dormant) return;
     this.dormant = false;
-    this.clock = 0;
+    this.clock = wakeBlendSec;
     this.day++;
     this.fresh = true;
+    if (this.sky) this.sky.retarget('wake');   // commit dawn paint immediately
   };
 
   // C3 rest while free-running: the next day's dawn (day++, clock 0). Same
   // day/clock law as the natural night -> dawn wrap, so dayCounterOf and
   // the sky rotation see an ordinary new day. No-op while dormant (the
-  // first rest is beginCycle).
+  // first rest is beginCycle). WAKE-SNAP: clock = blendSec (held dawn).
   DayNight.prototype.nextDawn = function () {
     if (this.dormant) return;
-    this.clock = 0;
+    this.clock = wakeBlendSec;
     this.day++;
     this.fresh = true;
-    if (this.sky) this.sky.phase = null;   // re-target: the new day's dawn variant
+    if (this.sky) this.sky.retarget('wake');   // commit dawn paint immediately
   };
 
   DayNight.prototype.phaseAt = function (f) {
@@ -167,7 +183,7 @@
     // dormant = frozen forever on the startPhase row until the camp's first
     // Save and Heal calls beginCycle() (js/camp.js; tutorial law)
     if (this.dormant) return;
-    if (this.fresh) { this.fresh = false; dt = 0; }   // a new dawn starts at exactly 0
+    if (this.fresh) { this.fresh = false; dt = 0; }   // wake-snap: the roll landed at blendSec (held dawn)
     var len = D.dayLengthSec;
     this.clock += dt;
     this.dayDelta = dt / len;
@@ -180,8 +196,14 @@
     var prev = D.order[(idx + D.order.length - 1) % D.order.length];
     var start = D.bounds[ph];
     var end = idx + 1 < D.order.length ? D.bounds[D.order[idx + 1]] : 1;
+    // C3.1 SLOW TRANSITION: the blend weight is REAL SECONDS into the phase
+    // (D.blendSec, 90s in dawn/dusk; day/night rows are uniform so a 90s ease
+    // rides the phase start too). Old blendFrac = fraction of the phase -
+    // with 100min phases the old window was minutes of flat mush, with 15s
+    // phases it was an abrupt jump; blendSec keeps the transition time the
+    // same at every cycle length. After blendSec the phase HOLDS its row.
     var u = (f - start) / (end - start);
-    var w = smooth(u / D.blendFrac);
+    var w = smooth((u * (end - start) * len) / D.blendSec);
     if (w >= 1) copyRow(this.state, D.phases[ph]);
     else lerpRow(this.state, D.phases[prev], D.phases[ph], w);
   };
@@ -190,7 +212,7 @@
   // (io/missions/2026-10-06-cc-c2b-skydome-pools.md) Two inside-out spheres
   // just under the gradient dome paint the phase panos (CONFIG.dayNight.pools).
   // Layer A holds the current pano at opacity 1; on phase enter layer B takes
-  // the new phase's pano and fades in over that phase's blendFrac window (the
+  // the new phase's pano and fades in over that phase's blendSec window (the
   // lighting's own smoothstep), then A := B and B idles. The gradient dome
   // stays the UNDERLAY until a pano is live (never a black sky) and returns if
   // none is; the moon/sun disc sprites retire while panos show. The live star
@@ -235,12 +257,14 @@
     return window.WH_ASSETS ? window.WH_ASSETS.resolveUrl(rel) : rel;
   }
 
-  // blend weight of the current phase (same math as DayNight.tick)
+  // blend weight of the current phase (same math as DayNight.tick; C3.1:
+  // real-second window - smooth over the first D.blendSec of the phase)
   function phaseBlend(dn) {
     var idx = D.order.indexOf(dn.phase);
     var start = D.bounds[dn.phase];
     var end = idx + 1 < D.order.length ? D.bounds[D.order[idx + 1]] : 1;
-    return smooth((dn.timeOfDay - start) / (end - start) / D.blendFrac);
+    var len = D.dayLengthSec;
+    return smooth(((dn.timeOfDay - start) * len) / D.blendSec);
   }
 
   function SkyPool(sky, dn, areaId) {
@@ -362,7 +386,9 @@
   };
 
   // point B at the current phase's pano. mode 'phase' fades over the
-  // blendFrac window; 'time' over areaFadeSec.
+  // blendSec window; 'time' over areaFadeSec; 'wake' (sleep roll, black
+  // screen up) COMMITS the new pano on the same frame - the fade lifts
+  // onto the held dawn paint, never the night sky.
   SkyPool.prototype.retarget = function (mode) {
     var url = this.variantUrl(this.phase, dayCounterOf(this.dn));
     var old = this.cache[url];
@@ -374,6 +400,17 @@
       else this.dropFade();
     }
     if (url === this.aUrl) return;
+    if (mode === 'wake') {
+      var e = this.request(url);
+      if (e.ready) {                      // prepared (prepareWake): hard commit behind the fade
+        var a = this.a.material, b = this.b.material;
+        if (b.map !== e.tex) { b.map = e.tex; b.needsUpdate = true; }
+        this.commit();
+        return;
+      }
+      this.fade = { url: url, mode: 'time', t: 0 };   // not ready: fast fade as fallback
+      return;
+    }
     this.fade = { url: url, mode: mode, t: 0 };
     this.request(url);
   };

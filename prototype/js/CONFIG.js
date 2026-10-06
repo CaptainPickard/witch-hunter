@@ -1389,13 +1389,16 @@ window.WH_CONFIG.camp = {
   ],
   respawnStepM: 1.5,                // respawn = the menu anchor + this far toward its door (clear of the fire ring)
   // WORLD CAMPS: module rows bound to a fixed world spot (no kit, no deploy).
-  // Tutorial anchor: the Region B bandit camp's bedroll (beside the bandit
-  // fire x 2.5 z -52, 3.6m off: outside both interact radii). The bandit
-  // fire itself stays the CONFIG.cooking station - sleep-only here.
+  // Tutorial anchor: a TENT beside the Region B bandit fire (x 2.5 z -52,
+  // 3.6m off: outside both interact radii). C3.1 (Nicko 10-06): the m16
+  // bedroll read as a dead log - a TENT is the unambiguous "you sleep here"
+  // visual; the same asset key as the kit's tent, so the Astrabot campkit
+  // GLB replaces both in one edit. The bandit fire itself stays the
+  // CONFIG.cooking station - sleep-only here.
   worldCamps: [
     { id: 'banditCamp', regionId: 'darkwood_edge',
       modules: [
-        { id: 'bedroll', hook: 'sleep', asset: 'bedroll', x: 0.0, z: -49.4, rotY: -0.77 }
+        { id: 'tent', hook: 'sleep', asset: 'tent', x: 0.0, z: -49.4, rotY: -0.77 }
       ],
       respawn: { x: -1.0, z: -48.3 }, face: { x: 2.5, z: -52 } }
   ],
@@ -1434,20 +1437,31 @@ window.WH_CONFIG.camp = {
 // C2 (io/missions/2026-10-05-cc-c2-daynight.md): day/night cycle
 // (js/daynight.js WH_DAYNIGHT). One cycle = dawn > day > dusk > night over
 // dayLengthSec. Each phase row is the look the phase HOLDS; the first
-// blendFrac of every phase smoothsteps from the previous row into it (no
-// pops), the rest holds the row exactly. TUTORIAL LAW: the clock boots
+// blendSec (C3.1: real seconds) of every phase smoothsteps from the previous
+// row into it (no pops), the rest holds the row exactly. TUTORIAL LAW: the clock boots
 // DORMANT on startPhase (frozen, night = today's look) and only free-runs
 // after beginCycle() (C3: the first sleep).
 window.WH_CONFIG.dayNight = {
-  // PLAYTEST DEFAULT 60s per in-game day = 15s per phase, so a 15s wait
-  // visibly moves the sky. REAL GAME: 600 (doc 10 day-buff scale) - a later
-  // CONFIG tune; day-length buffs (CONFIG.cooking.buffs[].days) follow it.
-  dayLengthSec: 60,
+  // CYCLE LAW (Nicko 10-06): dawn 5min > DAY 45min > dusk 5min > NIGHT 45min
+  // = 100min total. Day and night are EQUAL on purpose (mechanics, not tone):
+  // the Dark Court flip makes night a full playable "day" for that faction
+  // (sleep during the day; dusk = the Dark Court's morning), so night can
+  // never be short downtime. Dawn/dusk stay short transition sessions.
+  // C3.1 SLOW TRANSITION: the first blendSec (90s) of dawn/dusk eases from
+  // the neighbouring phase (organic, not the old blendFrac jump); the rest
+  // of the window holds its row. Light rows (this block) only - sky panos
+  // cross-fade on their own CONFIG (skyPool.blendSec).
+  // C4+ dev knob: point a DEV build's dayNight.debugTimeScale at a number to
+  // speed the CLOCK (beginCycle still owns the start - no auto-start hatch).
+  dayLengthSec: 6000,
+  daySegmentSec: 450,               // Nicko tuning: day 450s / night 450s real
   startPhase: 'night',              // dormant look (locked until beginCycle)
   order: ['dawn', 'day', 'dusk', 'night'],
   // phase start as a fraction of the cycle; beginCycle() starts at dawn (0)
-  bounds: { dawn: 0, day: 0.25, dusk: 0.5, night: 0.75 },
-  blendFrac: 0.5,                   // first half of each phase blends in from the previous phase
+  // 300s = dawn, 4550s = day, 4900s = dusk (450s of slow blend), 6550s = night
+  bounds: { dawn: 0, day: 0.455, dusk: 0.49, night: 0.655 },
+  blendFrac: 0.5,                   // LEGACY pano window; replaced by blendSec below
+  blendSec: 90,                     // C3.1: the slow transition (real seconds)
   // Row keys: hemi colors + hemiFillMult (x hemiBaseIntensity x region
   // ambientLightLevel x regionBFillMult), the ONE directional (moon by
   // night, sun by day - no new light objects) color / intensity / azimuth /
@@ -1513,8 +1527,8 @@ window.WH_CONFIG.dayNight = {
   },
   // C2b (io/missions/2026-10-06-cc-c2b-skydome-pools.md) WH_SKYPOOL: painted
   // panorama pools for the dome (js/daynight.js SkyPool). Each phase shows
-  // one pano from its pool, cross-faded over the same blendFrac window as
-  // the lighting. Paths are repo-relative and ride WH_ASSETS.resolveUrl like
+  // one pano from its pool, cross-faded over the same blendSec window as
+  // the lighting (C3.1: real seconds, skyPool.blendSec). Paths are repo-relative and ride WH_ASSETS.resolveUrl like
   // the GLBs. 10-06 HD re-emit (Nicko: skies too pixelated): NO posterize,
   // smooth 2048x682 JPEGs; night = v2 moon-contract set (moon LOW-LEFT,
   // yawDeg 29). Bottom edge = horizon, top = zenith. Rows above = LIGHTING;
@@ -1550,6 +1564,7 @@ window.WH_CONFIG.dayNight = {
     // player's LEFT of the path (-z) - "above the graveyard path" (Nicko).
     // All three v2 nights use the same contract so one yaw lines them up.
     yawDeg: 29,
+    blendSec: 90,                   // C3.1: pano cross-fade = the slow transition
     areaFadeSec: 1.0,               // region-cross variant swap (brief value)
     preloadFrac: 0.2,               // load the NEXT phase's pano in this first part of a phase
     cacheMax: 6                     // textures alive at once (LRU, shown panos pinned)

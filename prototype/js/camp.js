@@ -235,12 +235,16 @@
 
   // Save and Heal: the rest life cycle under a short fade to black (input
   // stays suspended through the fade; the world keeps running).
+  // C3.1 WAKE-SNAP: prepareWake() pre-warms the dawn pano while the screen
+  // is black; the rest rolls to HELD dawn (daynight wakeBlendSec) and the
+  // wake pano hard-commits behind the fade - you open your eyes at dawn.
   Camp.prototype.saveAndHeal = function () {
     var c = this.menuCamp;
     if (!c || this.resting) return;
     var self = this, ms = K.sleepFadeSec * 1000;
     this.resting = true;
     this.menuEl.classList.remove('open');   // menu gone, suspension held
+    if (this.dayNight.prepareWake) this.dayNight.prepareWake();
     this.fadeEl.classList.add('on');
     setTimeout(function () {
       if (self.player.state === 'alive') self.rest(c);

@@ -88061,13 +88061,16 @@ window.WH_CONFIG.camp = {
   ],
   respawnStepM: 1.5,                // respawn = the menu anchor + this far toward its door (clear of the fire ring)
   // WORLD CAMPS: module rows bound to a fixed world spot (no kit, no deploy).
-  // Tutorial anchor: the Region B bandit camp's bedroll (beside the bandit
-  // fire x 2.5 z -52, 3.6m off: outside both interact radii). The bandit
-  // fire itself stays the CONFIG.cooking station - sleep-only here.
+  // Tutorial anchor: a TENT beside the Region B bandit fire (x 2.5 z -52,
+  // 3.6m off: outside both interact radii). C3.1 (Nicko 10-06): the m16
+  // bedroll read as a dead log - a TENT is the unambiguous "you sleep here"
+  // visual; the same asset key as the kit's tent, so the Astrabot campkit
+  // GLB replaces both in one edit. The bandit fire itself stays the
+  // CONFIG.cooking station - sleep-only here.
   worldCamps: [
     { id: 'banditCamp', regionId: 'darkwood_edge',
       modules: [
-        { id: 'bedroll', hook: 'sleep', asset: 'bedroll', x: 0.0, z: -49.4, rotY: -0.77 }
+        { id: 'tent', hook: 'sleep', asset: 'tent', x: 0.0, z: -49.4, rotY: -0.77 }
       ],
       respawn: { x: -1.0, z: -48.3 }, face: { x: 2.5, z: -52 } }
   ],
@@ -88106,20 +88109,31 @@ window.WH_CONFIG.camp = {
 // C2 (io/missions/2026-10-05-cc-c2-daynight.md): day/night cycle
 // (js/daynight.js WH_DAYNIGHT). One cycle = dawn > day > dusk > night over
 // dayLengthSec. Each phase row is the look the phase HOLDS; the first
-// blendFrac of every phase smoothsteps from the previous row into it (no
-// pops), the rest holds the row exactly. TUTORIAL LAW: the clock boots
+// blendSec (C3.1: real seconds) of every phase smoothsteps from the previous
+// row into it (no pops), the rest holds the row exactly. TUTORIAL LAW: the clock boots
 // DORMANT on startPhase (frozen, night = today's look) and only free-runs
 // after beginCycle() (C3: the first sleep).
 window.WH_CONFIG.dayNight = {
-  // PLAYTEST DEFAULT 60s per in-game day = 15s per phase, so a 15s wait
-  // visibly moves the sky. REAL GAME: 600 (doc 10 day-buff scale) - a later
-  // CONFIG tune; day-length buffs (CONFIG.cooking.buffs[].days) follow it.
-  dayLengthSec: 60,
+  // CYCLE LAW (Nicko 10-06): dawn 5min > DAY 45min > dusk 5min > NIGHT 45min
+  // = 100min total. Day and night are EQUAL on purpose (mechanics, not tone):
+  // the Dark Court flip makes night a full playable "day" for that faction
+  // (sleep during the day; dusk = the Dark Court's morning), so night can
+  // never be short downtime. Dawn/dusk stay short transition sessions.
+  // C3.1 SLOW TRANSITION: the first blendSec (90s) of dawn/dusk eases from
+  // the neighbouring phase (organic, not the old blendFrac jump); the rest
+  // of the window holds its row. Light rows (this block) only - sky panos
+  // cross-fade on their own CONFIG (skyPool.blendSec).
+  // C4+ dev knob: point a DEV build's dayNight.debugTimeScale at a number to
+  // speed the CLOCK (beginCycle still owns the start - no auto-start hatch).
+  dayLengthSec: 6000,
+  daySegmentSec: 450,               // Nicko tuning: day 450s / night 450s real
   startPhase: 'night',              // dormant look (locked until beginCycle)
   order: ['dawn', 'day', 'dusk', 'night'],
   // phase start as a fraction of the cycle; beginCycle() starts at dawn (0)
-  bounds: { dawn: 0, day: 0.25, dusk: 0.5, night: 0.75 },
-  blendFrac: 0.5,                   // first half of each phase blends in from the previous phase
+  // 300s = dawn, 4550s = day, 4900s = dusk (450s of slow blend), 6550s = night
+  bounds: { dawn: 0, day: 0.455, dusk: 0.49, night: 0.655 },
+  blendFrac: 0.5,                   // LEGACY pano window; replaced by blendSec below
+  blendSec: 90,                     // C3.1: the slow transition (real seconds)
   // Row keys: hemi colors + hemiFillMult (x hemiBaseIntensity x region
   // ambientLightLevel x regionBFillMult), the ONE directional (moon by
   // night, sun by day - no new light objects) color / intensity / azimuth /
@@ -88185,8 +88199,8 @@ window.WH_CONFIG.dayNight = {
   },
   // C2b (io/missions/2026-10-06-cc-c2b-skydome-pools.md) WH_SKYPOOL: painted
   // panorama pools for the dome (js/daynight.js SkyPool). Each phase shows
-  // one pano from its pool, cross-faded over the same blendFrac window as
-  // the lighting. Paths are repo-relative and ride WH_ASSETS.resolveUrl like
+  // one pano from its pool, cross-faded over the same blendSec window as
+  // the lighting (C3.1: real seconds, skyPool.blendSec). Paths are repo-relative and ride WH_ASSETS.resolveUrl like
   // the GLBs. 10-06 HD re-emit (Nicko: skies too pixelated): NO posterize,
   // smooth 2048x682 JPEGs; night = v2 moon-contract set (moon LOW-LEFT,
   // yawDeg 29). Bottom edge = horizon, top = zenith. Rows above = LIGHTING;
@@ -88222,6 +88236,7 @@ window.WH_CONFIG.dayNight = {
     // player's LEFT of the path (-z) - "above the graveyard path" (Nicko).
     // All three v2 nights use the same contract so one yaw lines them up.
     yawDeg: 29,
+    blendSec: 90,                   // C3.1: pano cross-fade = the slow transition
     areaFadeSec: 1.0,               // region-cross variant swap (brief value)
     preloadFrac: 0.2,               // load the NEXT phase's pano in this first part of a phase
     cacheMax: 6                     // textures alive at once (LRU, shown panos pinned)
@@ -90785,8 +90800,9 @@ window.WH_CONFIG.inventoryUI = {
 <script>
 // Witch Hunter prototype - day/night cycle (C2, io/missions/2026-10-05-cc-c2-daynight.md).
 // One clock over CONFIG.dayNight.dayLengthSec: dawn > day > dusk > night
-// (phase starts = CONFIG bounds fractions). The first blendFrac of each
-// phase smoothsteps from the previous phase row into this one; the rest
+// (phase starts = CONFIG bounds fractions). The first blendSec (C3.1:
+// real seconds, 90) of each phase smoothsteps from the previous row into
+// this one; the rest
 // HOLDS the row exactly (hold = straight copy, never a lerp at t=1, so the
 // night hold is bit-identical to the approved CONFIG look).
 // TUTORIAL LAW: boots DORMANT on startPhase (clock frozen, nothing moves);
@@ -90918,25 +90934,40 @@ window.WH_CONFIG.inventoryUI = {
     copyRow(this.state, D.phases[D.startPhase]);
   }
 
+  // WAKE-SNAP (Nicko 10-06, C3.1): a sleep roll lands at the END of dawn's
+  // blend window (blendSec in), not at dawn's start - the rest fade lifts
+  // onto the HELD dawn look (no "still night, then it eases up"). Natural
+  // phase flows keep the full slow blend; only the sleep path snaps.
+  var wakeBlendSec = D.blendSec;
+
+  // camp.js calls this BEFORE starting the rest fade: pre-warm the wake
+  // pano (the dawn variant of the day the sleeper wakes into) so the
+  // texture is in cache when nextDawn/beginCycle retarget 'wake'.
+  DayNight.prototype.prepareWake = function () {
+    if (!this.sky) return;
+    this.sky.request(this.sky.variantUrl('dawn', Math.max(0, this.day)));
+  };
+
   // dormant -> dawn. A new day (C3: rest/sleep = morning).
   DayNight.prototype.beginCycle = function () {
     if (!this.dormant) return;
     this.dormant = false;
-    this.clock = 0;
+    this.clock = wakeBlendSec;
     this.day++;
     this.fresh = true;
+    if (this.sky) this.sky.retarget('wake');   // commit dawn paint immediately
   };
 
   // C3 rest while free-running: the next day's dawn (day++, clock 0). Same
   // day/clock law as the natural night -> dawn wrap, so dayCounterOf and
   // the sky rotation see an ordinary new day. No-op while dormant (the
-  // first rest is beginCycle).
+  // first rest is beginCycle). WAKE-SNAP: clock = blendSec (held dawn).
   DayNight.prototype.nextDawn = function () {
     if (this.dormant) return;
-    this.clock = 0;
+    this.clock = wakeBlendSec;
     this.day++;
     this.fresh = true;
-    if (this.sky) this.sky.phase = null;   // re-target: the new day's dawn variant
+    if (this.sky) this.sky.retarget('wake');   // commit dawn paint immediately
   };
 
   DayNight.prototype.phaseAt = function (f) {
@@ -90952,7 +90983,7 @@ window.WH_CONFIG.inventoryUI = {
     // dormant = frozen forever on the startPhase row until the camp's first
     // Save and Heal calls beginCycle() (js/camp.js; tutorial law)
     if (this.dormant) return;
-    if (this.fresh) { this.fresh = false; dt = 0; }   // a new dawn starts at exactly 0
+    if (this.fresh) { this.fresh = false; dt = 0; }   // wake-snap: the roll landed at blendSec (held dawn)
     var len = D.dayLengthSec;
     this.clock += dt;
     this.dayDelta = dt / len;
@@ -90965,8 +90996,14 @@ window.WH_CONFIG.inventoryUI = {
     var prev = D.order[(idx + D.order.length - 1) % D.order.length];
     var start = D.bounds[ph];
     var end = idx + 1 < D.order.length ? D.bounds[D.order[idx + 1]] : 1;
+    // C3.1 SLOW TRANSITION: the blend weight is REAL SECONDS into the phase
+    // (D.blendSec, 90s in dawn/dusk; day/night rows are uniform so a 90s ease
+    // rides the phase start too). Old blendFrac = fraction of the phase -
+    // with 100min phases the old window was minutes of flat mush, with 15s
+    // phases it was an abrupt jump; blendSec keeps the transition time the
+    // same at every cycle length. After blendSec the phase HOLDS its row.
     var u = (f - start) / (end - start);
-    var w = smooth(u / D.blendFrac);
+    var w = smooth((u * (end - start) * len) / D.blendSec);
     if (w >= 1) copyRow(this.state, D.phases[ph]);
     else lerpRow(this.state, D.phases[prev], D.phases[ph], w);
   };
@@ -90975,7 +91012,7 @@ window.WH_CONFIG.inventoryUI = {
   // (io/missions/2026-10-06-cc-c2b-skydome-pools.md) Two inside-out spheres
   // just under the gradient dome paint the phase panos (CONFIG.dayNight.pools).
   // Layer A holds the current pano at opacity 1; on phase enter layer B takes
-  // the new phase's pano and fades in over that phase's blendFrac window (the
+  // the new phase's pano and fades in over that phase's blendSec window (the
   // lighting's own smoothstep), then A := B and B idles. The gradient dome
   // stays the UNDERLAY until a pano is live (never a black sky) and returns if
   // none is; the moon/sun disc sprites retire while panos show. The live star
@@ -91020,12 +91057,14 @@ window.WH_CONFIG.inventoryUI = {
     return window.WH_ASSETS ? window.WH_ASSETS.resolveUrl(rel) : rel;
   }
 
-  // blend weight of the current phase (same math as DayNight.tick)
+  // blend weight of the current phase (same math as DayNight.tick; C3.1:
+  // real-second window - smooth over the first D.blendSec of the phase)
   function phaseBlend(dn) {
     var idx = D.order.indexOf(dn.phase);
     var start = D.bounds[dn.phase];
     var end = idx + 1 < D.order.length ? D.bounds[D.order[idx + 1]] : 1;
-    return smooth((dn.timeOfDay - start) / (end - start) / D.blendFrac);
+    var len = D.dayLengthSec;
+    return smooth(((dn.timeOfDay - start) * len) / D.blendSec);
   }
 
   function SkyPool(sky, dn, areaId) {
@@ -91147,7 +91186,9 @@ window.WH_CONFIG.inventoryUI = {
   };
 
   // point B at the current phase's pano. mode 'phase' fades over the
-  // blendFrac window; 'time' over areaFadeSec.
+  // blendSec window; 'time' over areaFadeSec; 'wake' (sleep roll, black
+  // screen up) COMMITS the new pano on the same frame - the fade lifts
+  // onto the held dawn paint, never the night sky.
   SkyPool.prototype.retarget = function (mode) {
     var url = this.variantUrl(this.phase, dayCounterOf(this.dn));
     var old = this.cache[url];
@@ -91159,6 +91200,17 @@ window.WH_CONFIG.inventoryUI = {
       else this.dropFade();
     }
     if (url === this.aUrl) return;
+    if (mode === 'wake') {
+      var e = this.request(url);
+      if (e.ready) {                      // prepared (prepareWake): hard commit behind the fade
+        var a = this.a.material, b = this.b.material;
+        if (b.map !== e.tex) { b.map = e.tex; b.needsUpdate = true; }
+        this.commit();
+        return;
+      }
+      this.fade = { url: url, mode: 'time', t: 0 };   // not ready: fast fade as fallback
+      return;
+    }
     this.fade = { url: url, mode: mode, t: 0 };
     this.request(url);
   };
@@ -95923,12 +95975,16 @@ window.WH_CONFIG.inventoryUI = {
 
   // Save and Heal: the rest life cycle under a short fade to black (input
   // stays suspended through the fade; the world keeps running).
+  // C3.1 WAKE-SNAP: prepareWake() pre-warms the dawn pano while the screen
+  // is black; the rest rolls to HELD dawn (daynight wakeBlendSec) and the
+  // wake pano hard-commits behind the fade - you open your eyes at dawn.
   Camp.prototype.saveAndHeal = function () {
     var c = this.menuCamp;
     if (!c || this.resting) return;
     var self = this, ms = K.sleepFadeSec * 1000;
     this.resting = true;
     this.menuEl.classList.remove('open');   // menu gone, suspension held
+    if (this.dayNight.prepareWake) this.dayNight.prepareWake();
     this.fadeEl.classList.add('on');
     setTimeout(function () {
       if (self.player.state === 'alive') self.rest(c);
