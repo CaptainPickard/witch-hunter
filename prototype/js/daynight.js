@@ -247,35 +247,117 @@
     sky.group.add(this.a);
     sky.group.add(this.b);
     this.aUrl = null;
-    this.cache = {};                  // url -> { tex, ready, failed }
+    this.cache = {};                  // url -> { tex, ready, failed, tries, used, dead }
+    this.useClock = 0;                // LRU stamp
+    this.preUrl = null;               // the next phase's pano being preloaded
     this.fade = null;                 // B fade-in { url, mode: 'phase' | 'time', t }
     this.phase = dn.phase;
-    this.retarget('time');            // dormant night pano loads at boot
+    this.retarget('time');            // dormant night pano loads at boot (A7)
   }
 
-  SkyPool.prototype.variantUrl = function (phase) {
-    return D.pools[phase][0];
+  // ROTATION LAW: variant = (dayCounter + areaPoolOffset[area]) % pool.length.
+  // dayCounter = full clock wraps since beginCycle: day 0 (dormant) and day 1
+  // (first cycle) are both 0.
+  function dayCounterOf(dn) { return Math.max(0, dn.day - 1); }
+
+  SkyPool.prototype.variantUrl = function (phase, dayCounter) {
+    var pool = D.pools[phase];
+    var off = D.areaPoolOffset[this.area] || 0;
+    return pool[(dayCounter + off) % pool.length];
   };
 
+  // Texture cache by URL, at most cacheMax alive. A load attempt races
+  // assets.timeoutMs; a failed / timed-out attempt retries ONCE, then the
+  // entry fails (console.warn) and the shown pano or gradient stays.
   SkyPool.prototype.request = function (url) {
     var e = this.cache[url];
-    if (e) return e;
-    e = this.cache[url] = { tex: null, ready: false, failed: false };
+    if (!e) {
+      e = this.cache[url] = { tex: null, ready: false, failed: false, tries: 0, used: 0, dead: false };
+      this.load(url, e);
+      this.evict();
+    }
+    e.used = ++this.useClock;
+    return e;
+  };
+
+  SkyPool.prototype.load = function (url, e) {
+    var self = this, settled = false, ms = CFG.assets.timeoutMs;
+    e.tries++;
+    function fail(msg) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (e.ready || e.dead) return;
+      if (e.tries < 2) {
+        console.warn('[WH_SKYPOOL] ' + url + ' failed (' + msg + '), retrying once');
+        self.load(url, e);
+      } else {
+        e.failed = true;
+        console.warn('[WH_SKYPOOL] ' + url + ' failed twice (' + msg + '): keeping the previous sky');
+      }
+    }
+    var timer = setTimeout(function () { fail('timeout/abort after ' + ms + 'ms'); }, ms);
     new THREE.TextureLoader().load(resolvePano(url), function (tex) {
+      if (!settled) { settled = true; clearTimeout(timer); }
+      // a timed-out attempt that lands late still counts if nothing else has
+      if (e.ready || e.dead) { tex.dispose(); return; }
       setupPanoTex(tex);
       e.tex = tex;
       e.ready = true;
-    }, undefined, function (err) {
-      e.failed = true;
-      console.warn('[WH_SKYPOOL] ' + url + ' failed (' + err + '): keeping the previous sky');
-    });
-    return e;
+      e.failed = false;
+    }, undefined, function (err) { fail(String((err && err.message) || err)); });
+  };
+
+  // drop least-recently-used entries past cacheMax; the shown (A), fading (B)
+  // and preloading panos are pinned, in-flight loads are never cut
+  SkyPool.prototype.evict = function () {
+    var keys = Object.keys(this.cache);
+    while (keys.length > P.cacheMax) {
+      var best = null;
+      for (var i = 0; i < keys.length; i++) {
+        var k = keys[i], e = this.cache[k];
+        if (k === this.aUrl || k === this.preUrl || (this.fade && k === this.fade.url)) continue;
+        if (!e.ready && !e.failed) continue;
+        if (!best || e.used < this.cache[best].used) best = k;
+      }
+      if (!best) return;
+      var d = this.cache[best];
+      d.dead = true;
+      if (d.tex) d.tex.dispose();
+      delete this.cache[best];
+      keys.splice(keys.indexOf(best), 1);
+    }
+  };
+
+  // first preloadFrac of each phase: load the NEXT phase's pano for this area
+  SkyPool.prototype.preload = function () {
+    var dn = this.dn, next, dc = dayCounterOf(dn);
+    if (dn.dormant) next = D.order[0];      // beginCycle -> dawn, dayCounter stays 0
+    else {
+      var idx = D.order.indexOf(dn.phase);
+      var start = D.bounds[dn.phase];
+      var end = idx + 1 < D.order.length ? D.bounds[D.order[idx + 1]] : 1;
+      if ((dn.timeOfDay - start) / (end - start) >= P.preloadFrac) return;
+      next = D.order[(idx + 1) % D.order.length];
+      if (idx + 1 === D.order.length) dc++;  // night -> dawn wraps the day
+    }
+    this.preUrl = this.variantUrl(next, dc);
+    this.request(this.preUrl);
+  };
+
+  // region cross: fast cross-fade to the new area's variant of this phase
+  SkyPool.prototype.setArea = function (areaId) {
+    if (areaId === this.area) return;
+    this.area = areaId;
+    this.retarget('time');
   };
 
   // point B at the current phase's pano. mode 'phase' fades over the
   // blendFrac window; 'time' over areaFadeSec.
   SkyPool.prototype.retarget = function (mode) {
-    var url = this.variantUrl(this.phase);
+    var url = this.variantUrl(this.phase, dayCounterOf(this.dn));
+    var old = this.cache[url];
+    if (old && old.failed) { old.dead = true; delete this.cache[url]; }   // fresh try per phase enter
     if (this.fade) {
       if (this.fade.url === url) return;
       // a fade still running: keep it if mostly in, else drop it
@@ -308,9 +390,10 @@
       this.phase = dn.phase;
       this.retarget('phase');
     }
+    this.preload();
     var f = this.fade;
     if (f) {
-      var e = this.cache[f.url];
+      var e = this.cache[f.url] || this.request(f.url);
       if (e.failed) this.dropFade();          // previous pano (or gradient) stays
       else if (e.ready) {
         var b = this.b.material;
@@ -334,6 +417,11 @@
   // game.js boot hook: build the pano layers on the sky rig
   DayNight.prototype.attachSky = function (sky, areaId) {
     this.sky = new SkyPool(sky, this, areaId);
+  };
+
+  // game.js region-cross hook: the new area's variant of the current phase
+  DayNight.prototype.setSkyArea = function (areaId) {
+    if (this.sky) this.sky.setArea(areaId);
   };
 
   var coreTick = DayNight.prototype.tick;

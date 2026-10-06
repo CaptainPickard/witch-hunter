@@ -1779,6 +1779,7 @@
       // position already mapped by logic; apply to player
       game.player.pos.set(tr.mappedPos.x, 0, tr.mappedPos.z);
       applyRegionLighting(tr.newActiveId);
+      game.dayNight.setSkyArea(tr.newActiveId);   // C2b: area's sky variant (1s fade)
       showRegionName(window.WH_REGION_DEFS.regions[tr.newActiveId].name);
       setGateHint(false);
     }
