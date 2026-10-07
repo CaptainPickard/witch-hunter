@@ -1409,7 +1409,11 @@
     var p = game.player;
     game.inventoryUI = new INV.InventoryUI({
       inventory: game.inventory,
-      onOpenChange: function (open) { p.setInputSuspended(open); },
+      onOpenChange: function (open) {
+        p.setInputSuspended(open);
+        if (!open) window.WH_LEVEL.commit();   // L1: closing locks this visit's stat points
+      },
+      leveling: window.WH_LEVEL,      // L1: CHARACTER tab level / stats / skills column
       onDrop: dropFromSlot,
       // C1: food eaten from the grid (EAT / E) - cooking owns buffs
       onUse: function (i) { return game.cooking.eat(i); },
@@ -1469,6 +1473,16 @@
     LV.onLevelUp = function (level, pts) {
       game.inventoryUI.toast(T.levelUp.replace('{n}', level).replace('{pts}', pts),
         CFG.leveling.levelToastSeconds);
+    };
+    LV.onRankUp = function (line, rank) {
+      game.inventoryUI.toast(T.rankUp.replace('{name}', CFG.leveling.skillLines[line].name)
+        .replace('{n}', rank), CFG.leveling.rankToastSeconds);
+    };
+    // CHARACTER tab live while open (XP / ranks / +- clicks); the pools
+    // re-derive every frame in applyBuffStats
+    LV.onChange = function () {
+      var ui = game.inventoryUI;
+      if (ui && ui.open && ui.tab === 'character') ui.renderCharacter();
     };
   }
 
@@ -1947,11 +1961,13 @@
     // parry also plays the enemy hit reaction (its stagger read) and the
     // riposte marker (updateRiposteMarkers) shows while the window is open.
     game.player.onParry = function (attacker) {
+      window.WH_LEVEL.useSkill('shieldDefense', 'parry');   // L1: parries train Shield / Defense
       flashScreen(CFG.block.parryFlashSeconds, 'parry');
       if (attacker && attacker.deflect) attacker.deflect(game.player.pos);
       if (attacker && attacker.anim && CFG.block.parryEnemyHitReact) attacker.anim.hit();
     };
     game.player.onBlock = function (attacker) {
+      window.WH_LEVEL.useSkill('shieldDefense', 'block');   // L1: blocked hits train Shield / Defense
       flashScreen(CFG.block.blockFlashSeconds, 'block');
       if (attacker && attacker.deflect) attacker.deflect(game.player.pos);
     };
@@ -2203,14 +2219,21 @@
     var casts = game.player.tickCasts(dt);
     for (var ci = 0; ci < casts.length && window.WH_SPELLS; ci++) {
       var req = casts[ci];
+      // L1: a completed cast trains its school line (CONFIG.leveling.spellLines)
+      var castLine = window.WH_LEVEL.spellLine(req.spellId);
+      if (castLine) window.WH_LEVEL.useSkill(castLine, 'cast');
       if (CFG.spell[req.spellId].kind === 'followLight') {
         castRadiance(req.spellId);
       } else {
         var bolt = window.WH_SPELLS.spawn(
           game.scene, req.spellId, castOrigin(req), req.dirX, req.dirZ);
         // L1 Wisdom: spell power multiplies the bolt's CONFIG damage here
-        // (spells.js stays frozen; the bolt reads this.damage on hit)
-        if (bolt) bolt.damage *= window.WH_LEVEL.statTotal('wisdom');
+        // (spells.js stays frozen; the bolt reads this.damage on hit), then
+        // the school line's damage passive (x1 at rank 1 / no line)
+        if (bolt) {
+          bolt.damage *= window.WH_LEVEL.statTotal('wisdom') *
+            (castLine ? window.WH_LEVEL.skillMult(castLine, 'damage') : 1);
+        }
         if (bolt) game.firebolts.push(bolt);
       }
     }
@@ -2270,6 +2293,9 @@
           dmg *= CFG.block.riposteMult;
           e.riposteArmed = false;
         }
+        // L1 Long Blade rank: damage passive (x1 at rank 1; the longsword
+        // is the only melee weapon, so every sweep is a Long Blade swing)
+        dmg *= window.WH_LEVEL.skillMult('longBlade', 'damage');
         // L1 Precision: melee crit roll (chance 0 with no points = no roll
         // effect; Math.random is the explicit, only randomness here)
         var crit = Math.random() < window.WH_LEVEL.statTotal('precision');
@@ -2280,6 +2306,7 @@
         // v3: pass hit direction (player -> enemy) for stagger knockback
         var hitDir = dist > 0.001 ? { x: dx / dist, z: dz / dist } : null;
         e.takeDamage(dmg, hitDir);
+        window.WH_LEVEL.useSkill('longBlade', 'hit');   // L1: a landed hit trains Long Blade
         // v7: 3rd chain strike landing (consumeAttackSweep consumed) arms
         // the armed finisher window. Use chainHits counter (robust to
         // comboIndex resets from recoverFullyElapsed). 10-04: threshold is

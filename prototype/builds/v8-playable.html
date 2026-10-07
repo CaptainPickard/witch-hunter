@@ -625,6 +625,86 @@ html, body {
   width: 200px;
 }
 
+/* L1: CHARACTER tab level / stats / skills column (inventory.js renderLeveling) */
+.inv-lvl-col {
+  width: 230px;
+  max-height: 62vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.lvl-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+.lvl-badge {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #14110e;
+  background: #d8b24a;
+  padding: 1px 4px;
+}
+
+.lvl-bar {
+  height: 6px;
+  background: #14110e;
+  border: 2px solid #3d382e;
+  margin: 2px 0;
+}
+
+.lvl-bar-fill {
+  height: 100%;
+  background: #d8b24a;
+}
+
+.lvl-cap {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #8a7f70;
+}
+
+.lvl-stat,
+.lvl-skill {
+  margin-bottom: 5px;
+}
+
+.lvl-stat-top {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.lvl-stat-name {
+  flex: 1;
+  color: #d8d2c0;
+}
+
+.lvl-stat-pts {
+  color: #e3d27a;
+  min-width: 22px;
+  text-align: right;
+}
+
+.lvl-skill .lvl-stat-pts {
+  min-width: 0;
+}
+
+.lvl-btn {
+  width: 20px;
+  padding: 0;
+}
+
+.inv-hand-btn.lvl-btn:disabled {
+  color: #3d382e;
+  border-color: #2a231b;
+  cursor: default;
+}
+
 .inv-sec {
   font-size: 11px;
   letter-spacing: 3px;
@@ -90306,6 +90386,7 @@ window.WH_ICONS = {
     this.onUse = opts.onUse || null;  // C1: (slotIndex) eat a food stack
     this.canUse = opts.canUse || null;  // C1: (itemId) -> usable from the grid?
     this.equip = opts.equip || null;
+    this.leveling = opts.leveling || null;   // L1: WH_LEVEL (CHARACTER tab column)
     this.open = false;
     this.tab = 'inventory';
     this.selected = -1;
@@ -90640,6 +90721,92 @@ window.WH_ICONS = {
     if (!any) list.appendChild(el('div', 'inv-soon', 'No gear in inventory'));
     right.appendChild(list);
     body.appendChild(right);
+    if (this.leveling) body.appendChild(this.renderLeveling());
+  };
+
+  // ---- L1 leveling column (opts.leveling = WH_LEVEL) ---------------------------------
+  // LEVEL (xp bar + pending points badge), the nine stats (+ spends a
+  // pending point, - takes back one spent since the screen opened), the
+  // three skill lines (rank + progress bar + passive caption). Plain DOM
+  // buttons, no sounds; every change re-renders through WH_LEVEL.onChange.
+
+  // 0.004 -> '0.4', 0.25 -> '25' (percent, one decimal, trailing .0 trimmed)
+  function pct(v) {
+    return String(Math.round(Math.abs(v) * 1000) / 10);
+  }
+
+  function lvlBar(frac) {
+    var outer = el('div', 'lvl-bar');
+    var fill = el('div', 'lvl-bar-fill');
+    fill.style.width = Math.round(Math.max(0, Math.min(1, frac)) * 100) + '%';
+    outer.appendChild(fill);
+    return outer;
+  }
+
+  function statCaption(LV, key) {
+    var c = CFG.leveling.statCurves[key];
+    var b = LV.statBonus(key);
+    return c.caption.replace('{v}', String(Math.round(b * 10) / 10)).replace('{pct}', pct(b))
+      .replace('{focus}', String(LV.statPoints(key) * (c.focusPerPoint || 0)));
+  }
+
+  function skillCaption(LV, line) {
+    var def = CFG.leveling.skillLines[line];
+    var txt = def.caption;
+    Object.keys(def.passives).forEach(function (k) {
+      var v = LV.skillPassive(line, k);
+      txt = txt.replace('{' + k + 'Ms}', String(Math.round(v * 10000) / 10))
+        .replace('{' + k + '}', pct(v));
+    });
+    return txt;
+  }
+
+  InventoryUI.prototype.renderLeveling = function () {
+    var LV = this.leveling, LC = CFG.leveling, T = LC.text;
+    var col = el('div', 'inv-char-col inv-lvl-col');
+    col.appendChild(el('div', 'inv-sec', 'LEVEL'));
+    var head = el('div', 'lvl-head');
+    head.appendChild(el('span', 'lvl-num', 'Level ' + LV.level()));
+    var pend = LV.pendingPts();
+    if (pend > 0) head.appendChild(el('span', 'lvl-badge', '+' + pend + ' ' + T.allocateHint));
+    col.appendChild(head);
+    col.appendChild(lvlBar(LV.xpFrac()));
+    col.appendChild(el('div', 'lvl-cap', LV.level() >= LC.maxLevel ? 'MAX' :
+      Math.floor(LV.xp()) + ' / ' + LV.xpForNext(LV.level()) + ' XP'));
+
+    col.appendChild(el('div', 'inv-sec', 'STATS'));
+    LC.stats.forEach(function (key) {
+      var row = el('div', 'lvl-stat');
+      var top = el('div', 'lvl-stat-top');
+      top.appendChild(el('span', 'lvl-stat-name', LC.statCurves[key].label));
+      top.appendChild(el('span', 'lvl-stat-pts', String(LV.statPoints(key))));
+      var minus = el('button', 'inv-hand-btn lvl-btn', '-');
+      minus.type = 'button';
+      minus.disabled = !LV.canRecoup(key);
+      minus.addEventListener('click', function (e) { e.stopPropagation(); LV.recoup(key); });
+      var plus = el('button', 'inv-hand-btn lvl-btn', '+');
+      plus.type = 'button';
+      plus.disabled = pend <= 0;
+      plus.addEventListener('click', function (e) { e.stopPropagation(); LV.spend(key); });
+      top.appendChild(minus);
+      top.appendChild(plus);
+      row.appendChild(top);
+      row.appendChild(el('div', 'lvl-cap', statCaption(LV, key)));
+      col.appendChild(row);
+    });
+
+    col.appendChild(el('div', 'inv-sec', 'SKILLS'));
+    Object.keys(LC.skillLines).forEach(function (line) {
+      var row = el('div', 'lvl-skill');
+      var top = el('div', 'lvl-stat-top');
+      top.appendChild(el('span', 'lvl-stat-name', LC.skillLines[line].name));
+      top.appendChild(el('span', 'lvl-stat-pts', 'Rank ' + LV.skillRank(line)));
+      row.appendChild(top);
+      row.appendChild(lvlBar(LV.skillProgress(line)));
+      row.appendChild(el('div', 'lvl-cap', skillCaption(LV, line)));
+      col.appendChild(row);
+    });
+    return col;
   };
 
   var CATEGORY_TIP = {
@@ -93459,7 +93626,9 @@ window.WH_ICONS = {
     this.blocking = true;
     this.blockActive = false;
     this.guardRaiseTimer = ER.guardRaiseSec;
-    this.parryTimer = window.WH_CONFIG.block.parryWindow;
+    // L1 Shield / Defense rank: + up to 0.05 s at rank 100 (0 at rank 1)
+    this.parryTimer = window.WH_CONFIG.block.parryWindow +
+      (window.WH_LEVEL ? window.WH_LEVEL.skillPassive('shieldDefense', 'parryWindow') : 0);
   };
 
   Player.prototype.endBlock = function () {
@@ -93726,8 +93895,11 @@ window.WH_ICONS = {
     return sum;
   };
 
+  // L1: x the spell's school-line focus cost passive (x1 at rank 1 / no line)
   function castCost(spellId) {
-    return V7.spell[spellId].focusCost * CFG.castFocusTaxMult;
+    var LV = window.WH_LEVEL, line = LV ? LV.spellLine(spellId) : null;
+    return V7.spell[spellId].focusCost * CFG.castFocusTaxMult *
+      (line ? LV.skillMult(line, 'focusCost') : 1);
   }
 
   // ---- Order B: hands ---------------------------------------------------------
@@ -94334,7 +94506,9 @@ window.WH_ICONS = {
 
     // 3. block: only if attacker is within the block arc of player facing
     if (this.blockActive && attacker && attacker.pos && attackerInArc) {
-      var staminaCost = Math.max(1, Math.round(damage * BLK.staminaCostMult));
+      // L1 Shield / Defense rank: block stamina drain reduction (x1 at rank 1)
+      var drainMult = window.WH_LEVEL ? window.WH_LEVEL.skillMult('shieldDefense', 'blockDrain') : 1;
+      var staminaCost = Math.max(1, Math.round(damage * BLK.staminaCostMult * drainMult));
       this.stamina = Math.max(0, this.stamina - staminaCost);
       this.staminaRegenBlock = CFG.staminaRegenDelay;
       var chip = damage * (1 - BLK.absorb);
@@ -94351,7 +94525,9 @@ window.WH_ICONS = {
         if (this.anim && !dead) this.anim.shieldImpact();
         if (this.onBlock) this.onBlock(attacker, chip);
       }
-      return applied;
+      // L1: was `return applied` (undeclared since a merge - a ReferenceError
+      // thrown out of every blocked hit); dead holds takeDamage's applied flag
+      return dead;
     }
 
     // 4. full damage (existing path)
@@ -94388,8 +94564,10 @@ window.WH_ICONS = {
     var idx = (typeof nextIndex === 'number') ? nextIndex : 0;
     if (idx >= this.getChainCap()) idx = 0;
     var M = this.getChainMove(idx);
-    if (this.stamina < M.staminaCost) return false;
-    this.spendStamina(M.staminaCost);
+    // L1 Long Blade rank: attack stamina cost reduction (x1 at rank 1)
+    var cost = M.staminaCost * (window.WH_LEVEL ? window.WH_LEVEL.skillMult('longBlade', 'staminaCost') : 1);
+    if (this.stamina < cost) return false;
+    this.spendStamina(cost);
     this.attacking = true;
     this.attackMoveId = this.getWeaponDef().chain[idx];
     this.attackMove = M;
@@ -100017,7 +100195,11 @@ window.WH_ICONS = {
     var p = game.player;
     game.inventoryUI = new INV.InventoryUI({
       inventory: game.inventory,
-      onOpenChange: function (open) { p.setInputSuspended(open); },
+      onOpenChange: function (open) {
+        p.setInputSuspended(open);
+        if (!open) window.WH_LEVEL.commit();   // L1: closing locks this visit's stat points
+      },
+      leveling: window.WH_LEVEL,      // L1: CHARACTER tab level / stats / skills column
       onDrop: dropFromSlot,
       // C1: food eaten from the grid (EAT / E) - cooking owns buffs
       onUse: function (i) { return game.cooking.eat(i); },
@@ -100077,6 +100259,16 @@ window.WH_ICONS = {
     LV.onLevelUp = function (level, pts) {
       game.inventoryUI.toast(T.levelUp.replace('{n}', level).replace('{pts}', pts),
         CFG.leveling.levelToastSeconds);
+    };
+    LV.onRankUp = function (line, rank) {
+      game.inventoryUI.toast(T.rankUp.replace('{name}', CFG.leveling.skillLines[line].name)
+        .replace('{n}', rank), CFG.leveling.rankToastSeconds);
+    };
+    // CHARACTER tab live while open (XP / ranks / +- clicks); the pools
+    // re-derive every frame in applyBuffStats
+    LV.onChange = function () {
+      var ui = game.inventoryUI;
+      if (ui && ui.open && ui.tab === 'character') ui.renderCharacter();
     };
   }
 
@@ -100555,11 +100747,13 @@ window.WH_ICONS = {
     // parry also plays the enemy hit reaction (its stagger read) and the
     // riposte marker (updateRiposteMarkers) shows while the window is open.
     game.player.onParry = function (attacker) {
+      window.WH_LEVEL.useSkill('shieldDefense', 'parry');   // L1: parries train Shield / Defense
       flashScreen(CFG.block.parryFlashSeconds, 'parry');
       if (attacker && attacker.deflect) attacker.deflect(game.player.pos);
       if (attacker && attacker.anim && CFG.block.parryEnemyHitReact) attacker.anim.hit();
     };
     game.player.onBlock = function (attacker) {
+      window.WH_LEVEL.useSkill('shieldDefense', 'block');   // L1: blocked hits train Shield / Defense
       flashScreen(CFG.block.blockFlashSeconds, 'block');
       if (attacker && attacker.deflect) attacker.deflect(game.player.pos);
     };
@@ -100811,14 +101005,21 @@ window.WH_ICONS = {
     var casts = game.player.tickCasts(dt);
     for (var ci = 0; ci < casts.length && window.WH_SPELLS; ci++) {
       var req = casts[ci];
+      // L1: a completed cast trains its school line (CONFIG.leveling.spellLines)
+      var castLine = window.WH_LEVEL.spellLine(req.spellId);
+      if (castLine) window.WH_LEVEL.useSkill(castLine, 'cast');
       if (CFG.spell[req.spellId].kind === 'followLight') {
         castRadiance(req.spellId);
       } else {
         var bolt = window.WH_SPELLS.spawn(
           game.scene, req.spellId, castOrigin(req), req.dirX, req.dirZ);
         // L1 Wisdom: spell power multiplies the bolt's CONFIG damage here
-        // (spells.js stays frozen; the bolt reads this.damage on hit)
-        if (bolt) bolt.damage *= window.WH_LEVEL.statTotal('wisdom');
+        // (spells.js stays frozen; the bolt reads this.damage on hit), then
+        // the school line's damage passive (x1 at rank 1 / no line)
+        if (bolt) {
+          bolt.damage *= window.WH_LEVEL.statTotal('wisdom') *
+            (castLine ? window.WH_LEVEL.skillMult(castLine, 'damage') : 1);
+        }
         if (bolt) game.firebolts.push(bolt);
       }
     }
@@ -100878,6 +101079,9 @@ window.WH_ICONS = {
           dmg *= CFG.block.riposteMult;
           e.riposteArmed = false;
         }
+        // L1 Long Blade rank: damage passive (x1 at rank 1; the longsword
+        // is the only melee weapon, so every sweep is a Long Blade swing)
+        dmg *= window.WH_LEVEL.skillMult('longBlade', 'damage');
         // L1 Precision: melee crit roll (chance 0 with no points = no roll
         // effect; Math.random is the explicit, only randomness here)
         var crit = Math.random() < window.WH_LEVEL.statTotal('precision');
@@ -100888,6 +101092,7 @@ window.WH_ICONS = {
         // v3: pass hit direction (player -> enemy) for stagger knockback
         var hitDir = dist > 0.001 ? { x: dx / dist, z: dz / dist } : null;
         e.takeDamage(dmg, hitDir);
+        window.WH_LEVEL.useSkill('longBlade', 'hit');   // L1: a landed hit trains Long Blade
         // v7: 3rd chain strike landing (consumeAttackSweep consumed) arms
         // the armed finisher window. Use chainHits counter (robust to
         // comboIndex resets from recoverFullyElapsed). 10-04: threshold is

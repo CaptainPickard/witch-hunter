@@ -652,7 +652,9 @@
     this.blocking = true;
     this.blockActive = false;
     this.guardRaiseTimer = ER.guardRaiseSec;
-    this.parryTimer = window.WH_CONFIG.block.parryWindow;
+    // L1 Shield / Defense rank: + up to 0.05 s at rank 100 (0 at rank 1)
+    this.parryTimer = window.WH_CONFIG.block.parryWindow +
+      (window.WH_LEVEL ? window.WH_LEVEL.skillPassive('shieldDefense', 'parryWindow') : 0);
   };
 
   Player.prototype.endBlock = function () {
@@ -919,8 +921,11 @@
     return sum;
   };
 
+  // L1: x the spell's school-line focus cost passive (x1 at rank 1 / no line)
   function castCost(spellId) {
-    return V7.spell[spellId].focusCost * CFG.castFocusTaxMult;
+    var LV = window.WH_LEVEL, line = LV ? LV.spellLine(spellId) : null;
+    return V7.spell[spellId].focusCost * CFG.castFocusTaxMult *
+      (line ? LV.skillMult(line, 'focusCost') : 1);
   }
 
   // ---- Order B: hands ---------------------------------------------------------
@@ -1527,7 +1532,9 @@
 
     // 3. block: only if attacker is within the block arc of player facing
     if (this.blockActive && attacker && attacker.pos && attackerInArc) {
-      var staminaCost = Math.max(1, Math.round(damage * BLK.staminaCostMult));
+      // L1 Shield / Defense rank: block stamina drain reduction (x1 at rank 1)
+      var drainMult = window.WH_LEVEL ? window.WH_LEVEL.skillMult('shieldDefense', 'blockDrain') : 1;
+      var staminaCost = Math.max(1, Math.round(damage * BLK.staminaCostMult * drainMult));
       this.stamina = Math.max(0, this.stamina - staminaCost);
       this.staminaRegenBlock = CFG.staminaRegenDelay;
       var chip = damage * (1 - BLK.absorb);
@@ -1544,7 +1551,9 @@
         if (this.anim && !dead) this.anim.shieldImpact();
         if (this.onBlock) this.onBlock(attacker, chip);
       }
-      return applied;
+      // L1: was `return applied` (undeclared since a merge - a ReferenceError
+      // thrown out of every blocked hit); dead holds takeDamage's applied flag
+      return dead;
     }
 
     // 4. full damage (existing path)
@@ -1581,8 +1590,10 @@
     var idx = (typeof nextIndex === 'number') ? nextIndex : 0;
     if (idx >= this.getChainCap()) idx = 0;
     var M = this.getChainMove(idx);
-    if (this.stamina < M.staminaCost) return false;
-    this.spendStamina(M.staminaCost);
+    // L1 Long Blade rank: attack stamina cost reduction (x1 at rank 1)
+    var cost = M.staminaCost * (window.WH_LEVEL ? window.WH_LEVEL.skillMult('longBlade', 'staminaCost') : 1);
+    if (this.stamina < cost) return false;
+    this.spendStamina(cost);
     this.attacking = true;
     this.attackMoveId = this.getWeaponDef().chain[idx];
     this.attackMove = M;

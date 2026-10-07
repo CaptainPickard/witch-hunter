@@ -197,6 +197,7 @@
     this.onUse = opts.onUse || null;  // C1: (slotIndex) eat a food stack
     this.canUse = opts.canUse || null;  // C1: (itemId) -> usable from the grid?
     this.equip = opts.equip || null;
+    this.leveling = opts.leveling || null;   // L1: WH_LEVEL (CHARACTER tab column)
     this.open = false;
     this.tab = 'inventory';
     this.selected = -1;
@@ -531,6 +532,92 @@
     if (!any) list.appendChild(el('div', 'inv-soon', 'No gear in inventory'));
     right.appendChild(list);
     body.appendChild(right);
+    if (this.leveling) body.appendChild(this.renderLeveling());
+  };
+
+  // ---- L1 leveling column (opts.leveling = WH_LEVEL) ---------------------------------
+  // LEVEL (xp bar + pending points badge), the nine stats (+ spends a
+  // pending point, - takes back one spent since the screen opened), the
+  // three skill lines (rank + progress bar + passive caption). Plain DOM
+  // buttons, no sounds; every change re-renders through WH_LEVEL.onChange.
+
+  // 0.004 -> '0.4', 0.25 -> '25' (percent, one decimal, trailing .0 trimmed)
+  function pct(v) {
+    return String(Math.round(Math.abs(v) * 1000) / 10);
+  }
+
+  function lvlBar(frac) {
+    var outer = el('div', 'lvl-bar');
+    var fill = el('div', 'lvl-bar-fill');
+    fill.style.width = Math.round(Math.max(0, Math.min(1, frac)) * 100) + '%';
+    outer.appendChild(fill);
+    return outer;
+  }
+
+  function statCaption(LV, key) {
+    var c = CFG.leveling.statCurves[key];
+    var b = LV.statBonus(key);
+    return c.caption.replace('{v}', String(Math.round(b * 10) / 10)).replace('{pct}', pct(b))
+      .replace('{focus}', String(LV.statPoints(key) * (c.focusPerPoint || 0)));
+  }
+
+  function skillCaption(LV, line) {
+    var def = CFG.leveling.skillLines[line];
+    var txt = def.caption;
+    Object.keys(def.passives).forEach(function (k) {
+      var v = LV.skillPassive(line, k);
+      txt = txt.replace('{' + k + 'Ms}', String(Math.round(v * 10000) / 10))
+        .replace('{' + k + '}', pct(v));
+    });
+    return txt;
+  }
+
+  InventoryUI.prototype.renderLeveling = function () {
+    var LV = this.leveling, LC = CFG.leveling, T = LC.text;
+    var col = el('div', 'inv-char-col inv-lvl-col');
+    col.appendChild(el('div', 'inv-sec', 'LEVEL'));
+    var head = el('div', 'lvl-head');
+    head.appendChild(el('span', 'lvl-num', 'Level ' + LV.level()));
+    var pend = LV.pendingPts();
+    if (pend > 0) head.appendChild(el('span', 'lvl-badge', '+' + pend + ' ' + T.allocateHint));
+    col.appendChild(head);
+    col.appendChild(lvlBar(LV.xpFrac()));
+    col.appendChild(el('div', 'lvl-cap', LV.level() >= LC.maxLevel ? 'MAX' :
+      Math.floor(LV.xp()) + ' / ' + LV.xpForNext(LV.level()) + ' XP'));
+
+    col.appendChild(el('div', 'inv-sec', 'STATS'));
+    LC.stats.forEach(function (key) {
+      var row = el('div', 'lvl-stat');
+      var top = el('div', 'lvl-stat-top');
+      top.appendChild(el('span', 'lvl-stat-name', LC.statCurves[key].label));
+      top.appendChild(el('span', 'lvl-stat-pts', String(LV.statPoints(key))));
+      var minus = el('button', 'inv-hand-btn lvl-btn', '-');
+      minus.type = 'button';
+      minus.disabled = !LV.canRecoup(key);
+      minus.addEventListener('click', function (e) { e.stopPropagation(); LV.recoup(key); });
+      var plus = el('button', 'inv-hand-btn lvl-btn', '+');
+      plus.type = 'button';
+      plus.disabled = pend <= 0;
+      plus.addEventListener('click', function (e) { e.stopPropagation(); LV.spend(key); });
+      top.appendChild(minus);
+      top.appendChild(plus);
+      row.appendChild(top);
+      row.appendChild(el('div', 'lvl-cap', statCaption(LV, key)));
+      col.appendChild(row);
+    });
+
+    col.appendChild(el('div', 'inv-sec', 'SKILLS'));
+    Object.keys(LC.skillLines).forEach(function (line) {
+      var row = el('div', 'lvl-skill');
+      var top = el('div', 'lvl-stat-top');
+      top.appendChild(el('span', 'lvl-stat-name', LC.skillLines[line].name));
+      top.appendChild(el('span', 'lvl-stat-pts', 'Rank ' + LV.skillRank(line)));
+      row.appendChild(top);
+      row.appendChild(lvlBar(LV.skillProgress(line)));
+      row.appendChild(el('div', 'lvl-cap', skillCaption(LV, line)));
+      col.appendChild(row);
+    });
+    return col;
   };
 
   var CATEGORY_TIP = {

@@ -617,6 +617,86 @@ html, body {
   width: 200px;
 }
 
+/* L1: CHARACTER tab level / stats / skills column (inventory.js renderLeveling) */
+.inv-lvl-col {
+  width: 230px;
+  max-height: 62vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.lvl-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+.lvl-badge {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #14110e;
+  background: #d8b24a;
+  padding: 1px 4px;
+}
+
+.lvl-bar {
+  height: 6px;
+  background: #14110e;
+  border: 2px solid #3d382e;
+  margin: 2px 0;
+}
+
+.lvl-bar-fill {
+  height: 100%;
+  background: #d8b24a;
+}
+
+.lvl-cap {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #8a7f70;
+}
+
+.lvl-stat,
+.lvl-skill {
+  margin-bottom: 5px;
+}
+
+.lvl-stat-top {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.lvl-stat-name {
+  flex: 1;
+  color: #d8d2c0;
+}
+
+.lvl-stat-pts {
+  color: #e3d27a;
+  min-width: 22px;
+  text-align: right;
+}
+
+.lvl-skill .lvl-stat-pts {
+  min-width: 0;
+}
+
+.lvl-btn {
+  width: 20px;
+  padding: 0;
+}
+
+.inv-hand-btn.lvl-btn:disabled {
+  color: #3d382e;
+  border-color: #2a231b;
+  cursor: default;
+}
+
 .inv-sec {
   font-size: 11px;
   letter-spacing: 3px;
