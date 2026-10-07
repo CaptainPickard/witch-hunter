@@ -559,6 +559,8 @@
     var b = LV.statBonus(key);
     return c.caption.replace('{v}', String(Math.round(b * 10) / 10)).replace('{pct}', pct(b))
       .replace('{focus}', String(LV.statPoints(key) * (c.focusPerPoint || 0)));
+    // L1.1: the {focus} placeholder is dead (no curve uses it) - harmless
+    // replace; captions are pure CONFIG rows.
   }
 
   function skillCaption(LV, line) {

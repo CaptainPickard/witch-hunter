@@ -1808,27 +1808,28 @@ window.WH_CONFIG.leveling = {
     discover_node: 10,              // first harvest of each gather node type
     discover_foe: 25                // first kill of each enemy type (stacks with kill_*)
   },
-  // The nine stats (doc 07 LOCKED list). bonus = points * perPoint, clamped
-  // to cap (null = uncapped). PROPOSED, Nicko tunes:
-  //   health    +5 max HP per point            (100 base, buffs stack on top)
-  //   stamina   +5 max stamina per point       (100 base)
-  //   focus     +5 max focus per point         (100 base)
+  // L1.1 (Nicko 10-07 tuning: pools 1/pt, stat renames, Wisdom rebuilt):
+  //   health    +1 max HP per point            (100 base, buffs stack on top)
+  //   stamina   +1 max stamina per point       (100 base)
+  //   focus     +1 max focus per point         (100 base)
   //   speed     +1% walk / sprint per point    (cap +25%; roll / backstep untouched)
-  //   precision +1% melee crit per point       (cap 50%; crit = x critMult damage)
-  //   ward      +1% damage reduction per point (cap 60%, mission row)
-  //   wisdom    +3% spell damage AND +2 max focus per point (doc 15: magic damage + mana)
+  //   dexterity +1% melee crit per point       (cap 50%; crit = x critMult damage)
+  //   defense   +1% damage reduction per point (cap 60%, mission row)
+  //   wisdom    +1% magic damage AND +1% magic defense per point (doc 15 canon:
+  //             the magic stat; the defense half hooks enemy casters when they
+  //             exist - today inert, no enemy casts spells)
   //   carry     +5% stack size per point       (stacks without their own stackCap: 60 -> 63 -> 66..)
   //   luck      +1% extra drop / gather roll per point (cap 50%)
   stats: ['health', 'stamina', 'focus', 'speed', 'precision', 'ward', 'wisdom', 'carry', 'luck'],
   statCurves: {
-    health:    { label: 'Health',       perPoint: 5,    cap: null, caption: '+{v} max HP' },
-    stamina:   { label: 'Stamina',      perPoint: 5,    cap: null, caption: '+{v} max stamina' },
-    focus:     { label: 'Focus',        perPoint: 5,    cap: null, caption: '+{v} max focus' },
+    health:    { label: 'Health',       perPoint: 1,    cap: null, caption: '+{v} max HP' },
+    stamina:   { label: 'Stamina',      perPoint: 1,    cap: null, caption: '+{v} max stamina' },
+    focus:     { label: 'Focus',        perPoint: 1,    cap: null, caption: '+{v} max focus' },
     speed:     { label: 'Speed',        perPoint: 0.01, cap: 0.25, caption: '+{pct}% move speed' },
-    precision: { label: 'Precision',    perPoint: 0.01, cap: 0.50, caption: '{pct}% crit chance' },
-    ward:      { label: 'Ward',         perPoint: 0.01, cap: 0.60, caption: '-{pct}% damage taken' },
-    wisdom:    { label: 'Wisdom',       perPoint: 0.03, cap: null, caption: '+{pct}% spell damage, +{focus} focus',
-                 focusPerPoint: 2 },
+    precision: { label: 'Dexterity',    perPoint: 0.01, cap: 0.50, caption: '{pct}% crit chance' },
+    ward:      { label: 'Defense',      perPoint: 0.01, cap: 0.60, caption: '-{pct}% damage taken' },
+    wisdom:    { label: 'Wisdom',       perPoint: 0.01, cap: null, caption: '+{pct}% magic damage, +{pct}% magic defense',
+                 magicDefensePerPoint: 0.01 },
     carry:     { label: 'Carry Weight', perPoint: 0.05, cap: null, caption: '+{pct}% stack size' },
     luck:      { label: 'Luck',         perPoint: 0.01, cap: 0.50, caption: '{pct}% bonus drop roll' }
   },

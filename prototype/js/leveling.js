@@ -125,10 +125,18 @@
     return (STAT_BASE[key] ? STAT_BASE[key]() : 0) + M.statBonus(key);
   };
 
-  // focusMax bonus = Focus points + Wisdom's focus share (doc 15: Wisdom =
-  // magic damage + mana)
+  // L1.1 (Nicko 10-07): Wisdom no longer adds focus (focus = Focus stat's
+  // job; Wisdom bought magic damage + magic defense instead). Kept for the
+  // C4 restore path; returns just the Focus stat's share (0 extra).
   M.focusBonus = function () {
-    return M.statBonus('focus') + M.statPoints('wisdom') * (L.statCurves.wisdom.focusPerPoint || 0);
+    return M.statBonus('focus');
+  };
+
+  // L1.1: magic defense = Wisdom points * magicDefensePerPoint (hooks enemy
+  // casters when they exist; today nothing enemy-side casts spells).
+  M.magicDefense = function () {
+    var c = L.statCurves.wisdom;
+    return M.statPoints('wisdom') * (c.magicDefensePerPoint || 0);
   };
 
   M.spend = function (key) {
