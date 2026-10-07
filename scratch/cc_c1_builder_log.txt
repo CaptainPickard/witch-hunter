@@ -1,0 +1,90 @@
+=== CC-C1 dispatch start 2026-10-07T23:04:07Z ===
+=== CC-C1 builder summary 2026-10-07 ===
+Artifacts: scratch/region-c-spike/{index.html, region-c-spike.js, measure-node.js, SPIKE-LOG.md}. No commits, no pushes, no build_v8, no browser/harness.
+Verification: node --check on both .js files OK; code read-through; CPU numbers via measure-node.js (node only, pure math + THREE.Raycaster, no renderer).
+Terrain: seed 1337 value-noise fBm 4oct/45u/2.0/0.45, remap p1..p99 -> 0..5, spawn pocket h=0.4 r25 (+20 blend). Grid hashes stable across rebuilds (A4).
+Tris S100/140/180 = 20000/39200/64800; verts 10201/19881/32761; node build 10.4/26.7/55.4 ms.
+Samplers @S140 max|d| vs raycast: A 0.184, B 0.090, B-TRI 7e-15; us/call A 0.12, B 0.06, B-TRI 0.08, C 1984.
+VERDICT: CC-C4 heightAt = B-TRI (grid, mesh-triangle-exact); fallback B > A > C(debug only).
+Slopes facets S140 p50/p90/p99/max = 4.5/8.6/12.5/18.2 deg. Demo climbFactor 0.2 (visibility); production rec 0.6 or a slope-angle cap.
+Recommend S=140. fps table PENDING Nicko browser load (HUD bench, M key exports markdown).
+Path note: brief's ../../vendor/ is wrong depth; page uses ../../prototype/vendor/three.classic.js.
+The spike is built and the CPU-side numbers are measured, but the fps numbers don't exist yet: they only appear once you open the demo in a browser. A 63-second scripted walk runs once at load and fills them in. Nothing is committed or pushed, and I didn't run `build_v8.py`.
+
+**Files created** (all under `scratch/region-c-spike/`)
+| path | bytes |
+|---|---|
+| `index.html` | 1,208 |
+| `region-c-spike.js` | 29,296 |
+| `measure-node.js` | 2,700 |
+| `SPIKE-LOG.md` | 9,407 |
+| `scratch/cc_c1_builder_log.txt` (appended to) | 1,177 total |
+
+`measure-node.js` wasn't in the brief's file list. It runs the same terrain and sampler code under node (plain math, no browser, no renderer, not the game) to get the CPU numbers below. It's inside the allowed directory.
+
+**node --check:** `region-c-spike.js` OK, `measure-node.js` OK.
+
+**git status --short**
+```
+?? scratch/campkit_id.py
+?? scratch/campkit_sheet.py
+?? scratch/cc_c1_builder_log.txt
+?? scratch/cc_c1_dispatch.sh
+?? scratch/hp1_builder_log.txt
+?? scratch/hp1_dispatch.sh
+?? scratch/hp2_builder_log.txt
+?? scratch/hp2_dispatch.sh
+?? scratch/io_icons512/
+?? scratch/region-c-spike/
+```
+`git diff --stat HEAD` is empty, so no tracked file was changed. Every line except `scratch/region-c-spike/` was already untracked when the session started. The only one I touched is the builder log, which I appended to.
+
+**Measurement table** (CPU side, measured with node on this box)
+| S | cell size | verts | terrain tris | build ms | fps / 1% low / renderer tris |
+|---|---|---|---|---|---|
+| 100 | 5.60 | 10,201 | 20,000 | 10.4 | waiting on your browser run |
+| 140 | 4.00 | 19,881 | 39,200 | 26.7 | waiting on your browser run |
+| 180 | 3.11 | 32,761 | 64,800 | 55.4 | waiting on your browser run |
+
+Seed 1337 is deterministic: two builds of each S produce identical height grids (`55f82d9c` / `c5a19f53` / `f2237fff`).
+
+**Sampler comparison** (1,000 seeded points, compared against the raycast)
+| S | A analytic max / mean / µs | B bilinear max / mean / µs | B-TRI max / mean / µs | C raycast µs |
+|---|---|---|---|---|
+| 100 | 0.350 / 0.054 / 0.14 | 0.160 / 0.015 / 0.07 | 0 / 0 / 0.08 | 1263 |
+| 140 | 0.184 / 0.031 / 0.12 | 0.090 / 0.009 / 0.06 | 7e-15 / 0 / 0.08 | 1984 |
+| 180 | 0.147 / 0.020 / 0.13 | 0.070 / 0.006 / 0.03 | 0 / 0 / 0.04 | 3227 |
+
+B-TRI is a fourth sampler I added. It reads the same cached height grid as B, but follows the same two triangles per cell that the mesh draws, so it matches the rendered surface exactly.
+
+**Verdict:** CC-C4's `heightAt` should be B-TRI. Fallback order: B bilinear, then A analytic, then C raycast (debug only). The brief's expectation that A or B would come in under 0.05 at S=140 did not hold. A misses because its finest noise layer has a 5.6-unit wavelength, which the 4-unit mesh cells can't represent. B misses because bilinear blending doesn't follow the mesh's triangles.
+
+**climbFactor and slopes**
+- Slope in degrees (p50 / p90 / p99 / max):
+  - analytic: 4.7 / 9.0 / 12.9 / 19.5
+  - mesh faces at S=140: 4.5 / 8.6 / 12.5 / 18.2
+- The demo ships climbFactor 0.2: running is blocked above 11.3° (2.2% of faces), walking above 16.7° (0.02%).
+- I picked 0.2 only so you can actually see blocking. The hills top out around 18°, so a sensible value like 0.6 would never block anything. You can change it live with `[` and `]`.
+
+**Recommendation:**
+- **Mesh density:** use S=140: 39,200 triangles, about 2% of the 2M budget, one draw call. S=180 adds 65% more triangles for little visible gain with flat shading.
+- **Sampler:** B-TRI is the single source of truth. Player, enemies, props, corpses and the camp ghost all read the grid that built the mesh, with zero error at about 0.08 µs per call.
+- **climbFactor:** ship 0.6 (31° running / 42° walking) as a safety net for rocks, roots and camp edges. Better: switch to a slope-angle cap that doesn't depend on speed. The brief's formula lets a walking actor climb steeper slopes than a running one.
+- **Warnings:**
+  - A raycast costs 1.3–3.2 ms per call because three.js has no acceleration structure for it here. Keep it out of per-frame gameplay.
+  - Building the mesh is synchronous (27 ms at S=140). Build once at region load and never on the fly.
+  - Fog hides the plane's edge from spawn, but not once you're within about 60 units of the edge. CC-C3 needs a margin or a skirt beyond the walkable area.
+  - Any future level-of-detail or re-triangulation of the mesh breaks B-TRI's exactness unless the grid is rebuilt from the final mesh.
+
+**Not finished**
+- **The fps half of the measurement table** needs you to open `scratch/region-c-spike/index.html`, either directly as a file or from a server rooted at the repo.
+  - Let the 63-second walk finish without switching tabs, because a hidden tab invalidates the run.
+  - Then press **M** and paste the markdown into the pending table in `SPIKE-LOG.md`.
+  - The browser timings for the samplers then fill in the on-screen table about 20 seconds later.
+- **Vendor path:** the brief's `../../vendor/three.classic.js` points one directory too shallow from the demo folder. The page uses `../../prototype/vendor/three.classic.js`, as you said.
+=== CC-C1 dispatch end 2026-10-07T23:11:53Z exit=0 ===
+DISPATCH WRAPPED, log tail:
+  - The browser timings for the samplers then fill in the on-screen table about 20 seconds later.
+- **Vendor path:** the brief's `../../vendor/three.classic.js` points one directory too shallow from the demo folder. The page uses `../../prototype/vendor/three.classic.js`, as you said.
+=== CC-C1 dispatch end 2026-10-07T23:11:53Z exit=0 ===
+DISPATCH WRAPPED, log tail:
