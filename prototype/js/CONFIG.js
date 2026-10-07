@@ -849,7 +849,13 @@ window.WH_CONFIG = {
         strafeSpeedMult: 0.75,         // PROPOSED, Nicko tunes - x moveSpeed while circling
         strafeDirFlipSeconds: 1.8,     // PROPOSED, Nicko tunes - orbit direction flips at most this often
         attackRadius: 2.4,             // PROPOSED, Nicko tunes - == attackRange on purpose; do not drift
-        attackBias: 0.55               // PROPOSED, Nicko tunes - per decision tick, chance to press the attack
+        attackBias: 0.55,              // PROPOSED, Nicko tunes - per decision tick, chance to press the attack
+        guardChance: 0.45,             // PROPOSED, Nicko tunes - per decision tick while the player attacks it
+        guardRespondRadius: 6.0,       // PROPOSED, Nicko tunes - must be this close to react at all
+        guardSecondsMax: 1.6,          // PROPOSED, Nicko tunes - guard posture hard cap
+        guardArcDeg: 50,               // PROPOSED, Nicko tunes - guard front arc HALF-angle (== hitArcDeg)
+        guardDamageMult: 0.5           // PROPOSED, Nicko tunes - locked by Nicko Q1: real mitigation, melee
+                                       // AND firebolt (fromDir arc in takeDamage)
       }
     },
     ghoul: {

@@ -33,6 +33,12 @@
     return window.WH_GAME ? window.WH_GAME.player : null;
   }
 
+  // AI1 R6: a cast windup running in either hand
+  function playerCasting(P) {
+    return !!P.cast && ((P.cast.main && P.cast.main.windup > 0) ||
+      (P.cast.off && P.cast.off.windup > 0));
+  }
+
   function Enemy(type, scene, homeRegionId, spawnX, spawnZ) {
     this.type = type;
     this.cfg = cfgFor(type);
@@ -71,6 +77,8 @@
     this.ai1FlipT = 0;                 // seconds since the last orbit flip
     this.ai1Press = false;             // closing in to swing (opening / bias roll)
     this.ai1Strafing = false;          // inside strafeBandOuter this frame
+    this.ai1GuardActive = false;       // guard posture raised (takeDamage mitigation)
+    this.ai1GuardT = 0;                // seconds the guard has been held
   }
 
   Enemy.prototype.setBody = function (meshRoot) {
@@ -298,6 +306,7 @@
       }
       if (ai1) {
         this.ai1Press = false;
+        this.ai1GuardActive = false;   // disengaged: no posture left raised
         // AI1 R2: inside alwaysKnowsRadius the bandit engages even in darkness
         if (playerAlive && distToPlayer < ai1.alwaysKnowsRadius) this.setFsm('chase');
       }
@@ -337,7 +346,11 @@
       // AI1 R3: in the strafe band the bandit circles tangentially (one
       // persistent orbit direction) and gives ground inside the inner edge;
       // beyond the band, or pressing an attack, the chase above closes in.
-      if (ai1 && this.ai1Strafing && !this.ai1Press && distToPlayer > 0.001) {
+      if (ai1 && this.ai1GuardActive) {
+        // AI1 R7: guard posture - root halts, body turns to face the player
+        moveSpeed = 0;
+        ai1Face = distToPlayer > 0.001;
+      } else if (ai1 && this.ai1Strafing && !this.ai1Press && distToPlayer > 0.001) {
         var radial = distToPlayer < ai1.strafeBandInner ? -1 : 0;
         var sx = -dirZ * this.ai1Orbit + dirX * radial;
         var sz = dirX * this.ai1Orbit + dirZ * radial;
@@ -488,6 +501,17 @@
       this.ai1Orbit = -this.ai1Orbit;
       this.ai1FlipT = 0;
     }
+    var P = livePlayer();
+    // R6-R7: a raised guard holds until the player is back to no-attack /
+    // no-cast, capped at guardSecondsMax; while it holds, no decision tick
+    if (this.ai1GuardActive) {
+      this.ai1GuardT += dt;
+      if (!P || !(P.attacking || playerCasting(P)) || this.ai1GuardT >= ai.guardSecondsMax) {
+        this.ai1DropGuard();
+      } else {
+        return;
+      }
+    }
     // a press swings the moment it reaches attackRadius
     if (this.ai1Press && dist <= ai.attackRadius) {
       this.ai1StartAttack();
@@ -502,9 +526,19 @@
     this.ai1Tick = ai.decisionSeconds;
     // a. still recoiling -> skip the tick
     if (this.deflectTimer > 0 || this.staggerTimer > 0) return;
+    // b. R6 guard trigger: the player's swing in windup / strike (not
+    // recover) or a cast windup, inside guardRespondRadius; one roll per tick
+    var stage = P && P.attacking ? P.getAttackStage() : null;
+    if (P && dist < ai.guardRespondRadius &&
+        (stage === 'windup' || stage === 'strike' || playerCasting(P)) &&
+        Math.random() < ai.guardChance) {
+      this.ai1GuardActive = true;
+      this.ai1GuardT = 0;
+      this.ai1Press = false;
+      return;
+    }
     // c. R5 opening: guard broken, or the player recovering inside reach,
     // or the attack bias roll. Out of reach it presses (closes in) first.
-    var P = livePlayer();
     var opening = !!P && (P.guardBroken ||
       (dist <= ai.attackRadius && P.attacking && P.getAttackStage() === 'recover'));
     if (opening || Math.random() < ai.attackBias) {
@@ -512,6 +546,15 @@
       else this.ai1Press = true;
     }
     // d. otherwise keep circling (update steers the orbit / spacing)
+  };
+
+  // AI1 R7: lower the guard; the orbit flips and the loop decides at once
+  Enemy.prototype.ai1DropGuard = function () {
+    this.ai1GuardActive = false;
+    this.ai1GuardT = 0;
+    this.ai1Orbit = -this.ai1Orbit;
+    this.ai1FlipT = 0;
+    this.ai1Tick = 0;
   };
 
   // AI1: enter the existing attack phase FSM exactly as the chase branch
@@ -529,6 +572,7 @@
   // ghoul share this base class), locks the enemy in place for the duration,
   // and arms the riposte flag on the next player hit.
   Enemy.prototype.enterStagger = function (duration) {
+    this.ai1GuardActive = false;         // AI1 R7: stagger always clears guard
     this.riposteStaggerTimer = duration;
     this.riposteArmed = true;
     this.hopTimer = -1;                  // cancel any mid-hop lunge
@@ -543,6 +587,7 @@
   // leans back, the weapon knocks outward, and the root slides away.
   Enemy.prototype.deflect = function (fromPos) {
     if (this.fsm === 'dead') return;
+    this.ai1GuardActive = false;         // AI1 R7: deflect always clears guard
     this.deflectTimer = window.WH_CONFIG.block.deflectEnemyRecoilSec;
     var dx = this.pos.x - fromPos.x;
     var dz = this.pos.z - fromPos.z;
@@ -581,6 +626,16 @@
   };
 
   Enemy.prototype.takeDamage = function (amount, fromDir) {
+    // AI1 R7 (Nicko Q1): a raised guard takes ai1.guardDamageMult from its
+    // front arc. Melee and firebolt both pass fromDir along attacker ->
+    // enemy (the knockback below pushes along +fromDir), so the hit comes
+    // FROM bearing -fromDir, measured against yaw with wrapAngle like hitYaw.
+    if (this.ai1GuardActive && fromDir && this.cfg.ai1) {
+      var guardYaw = wrapAngle(Math.atan2(-fromDir.x, -fromDir.z) - this.yaw);
+      if (Math.abs(guardYaw) <= this.cfg.ai1.guardArcDeg * Math.PI / 180) {
+        amount *= this.cfg.ai1.guardDamageMult;
+      }
+    }
     if (this.fsm === 'dead') return false;
     this.hp -= amount;
     // A hit cancels the swing (stagger or death): no phase leak, as in
