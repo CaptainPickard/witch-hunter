@@ -93149,14 +93149,20 @@ window.WH_ICONS = {
         if (this.onCastRefusal) this.onCastRefusal(b < 0 ? 'empty-slot' : 'no-implement');
         return;
       }
-      // AB1.1 (Nicko 10-06 playtest): a plain bar select retunes EVERY
-      // equipped caster hand (glove in either hand or both switches active
-      // spell); Shift+select keeps the Order C off-hand-ONLY bind.
-      if (shift) { this.pressBeltKey(b, 'off'); return; }
-      var casters = [];
-      if (this.isCasterHand('left')) casters.push('off');
-      if (this.isCasterHand('right')) casters.push('main');
-      for (var ci = 0; ci < casters.length; ci++) this.pressBeltKey(b, casters[ci]);
+      // AB1.1 (Nicko 10-06 playtest): with ONE caster hand, a plain select
+      // retunes it (offhand-only glove now works). With TWO caster hands
+      // (dual gloves), plain = main, Shift = off (Order C per-hand rule
+      // preserved, C5 regression avoided). A Shift when the LEFT hand is
+      // non-caster is a no-op (nothing to retune there).
+      var castRole = null;
+      if (this.isCasterHand('left') && this.isCasterHand('right')) {
+        castRole = shift ? 'off' : 'main';
+      } else if (this.isCasterHand('left')) {
+        castRole = 'off';
+      } else {
+        castRole = 'main';
+      }
+      this.pressBeltKey(b, castRole);
       return;
     }
     if (shift) { this.refuseEquip('Not a spell'); return; }
