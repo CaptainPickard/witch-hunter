@@ -242,6 +242,26 @@
     game.hud.enemyBarsRoot = ehbRoot;
     game.hud.enemyBars = new Map();
 
+    // HP2: day/night clock dial + needle (pure CSS, no numbers). Size/colors
+    // come from CFG.hud.dayClock via CSS vars; updateDayClock shows it only
+    // while the day clock runs (not dormant).
+    var DC = CFG.hud.dayClock;
+    var dayClock = document.createElement('div');
+    dayClock.id = 'wh-day-clock';
+    dayClock.style.setProperty('--dc-size', DC.sizePx + 'px');
+    dayClock.style.setProperty('--dc-top', DC.topPx + 'px');
+    dayClock.style.setProperty('--dc-frame', DC.frameColor);
+    dayClock.style.setProperty('--dc-day', DC.daySeg);
+    dayClock.style.setProperty('--dc-night', DC.nightSeg);
+    dayClock.style.setProperty('--dc-needle', DC.needleColor);
+    dayClock.style.setProperty('--dc-needle-len', Math.round(DC.sizePx * 0.5 * DC.needleLenFrac) + 'px');
+    var dayClockNeedle = document.createElement('div');
+    dayClockNeedle.className = 'wh-dc-needle';
+    dayClock.appendChild(dayClockNeedle);
+    document.getElementById('wh-hud').appendChild(dayClock);
+    game.hud.dayClock = dayClock;
+    game.hud.dayClockNeedle = dayClockNeedle;
+
     // v7: focus bar above the stamina bar (same bar style, blue fill)
     var focusLabel = document.createElement('div');
     focusLabel.className = 'bar-label';
@@ -1026,6 +1046,19 @@
     var b = bars.get(enemy);
     if (b.el.parentNode) b.el.parentNode.removeChild(b.el);
     bars.delete(enemy);
+  }
+
+  // HP2: pure reader of DayNight state. Dormant (day-0 tutorial night) ->
+  // hidden; otherwise needle angle = timeOfDay * 360deg clockwise from top.
+  function updateDayClock() {
+    var dn = game.dayNight;
+    var el = game.hud.dayClock;
+    if (!dn || dn.dormant) {
+      el.style.display = 'none';
+      return;
+    }
+    el.style.display = 'block';
+    game.hud.dayClockNeedle.style.transform = 'rotate(' + (dn.timeOfDay * 360) + 'deg)';
   }
 
   function updateEnemyBars(dt) {
@@ -2458,6 +2491,7 @@
     applyBuffStats();   // C1: effective hpMax from active food buffs
     updateHud(dt);
     updateEnemyBars(dt);   // HP1: after the camera update so bars track this frame
+    updateDayClock();      // HP2: dormant-gated day/night dial
     updateInteractPrompt();
     game.renderer.render(game.scene, game.camera);
   }

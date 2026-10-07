@@ -908,6 +908,17 @@ window.WH_CONFIG = {
       scaleNearM: 6,             // PROPOSED, Nicko tunes - full width at/below this
       scaleFarM: 30,             // PROPOSED, Nicko tunes - width shrinks toward scaleFar, floor 0.8
       deathFadeSec: 1.2          // PROPOSED, Nicko tunes - fade-out once fsm 'dead'
+    },
+    // HP2: day/night clock (top-center circular dial). Hidden while the day
+    // clock is dormant; needle = timeOfDay * 360deg clockwise from top (wake).
+    dayClock: {
+      sizePx: 64,                // PROPOSED, Nicko tunes
+      topPx: 14,                 // PROPOSED, Nicko tunes - #wh-hud top offset
+      frameColor: '#5a5344',     // PROPOSED, Nicko tunes - same family as .bar-outer
+      daySeg: '#8a6b3a',         // PROPOSED, Nicko tunes - right half tint (day, amber-muted)
+      nightSeg: '#23283a',       // PROPOSED, Nicko tunes - left half tint (night, blue-grey)
+      needleColor: '#d8c9a0',    // PROPOSED, Nicko tunes - single accent
+      needleLenFrac: 0.42        // PROPOSED, Nicko tunes - needle length x radius
     }
   },
 

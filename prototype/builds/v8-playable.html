@@ -252,6 +252,43 @@ html, body {
   background: linear-gradient(180deg, #8f2f2a, #5e1d19);
 }
 
+/* --- HP2 day/night clock: top-center circular dial. Right half = day
+       (amber-muted), left half = night (blue-grey); one warm needle pivoting
+       at center, rotated per frame from timeOfDay (top = wake). No numbers,
+       no textures. Size/colors from CFG.hud.dayClock (CSS vars set by
+       game.js). --- */
+#wh-day-clock {
+  position: absolute;
+  top: var(--dc-top, 14px);
+  left: 50%;
+  width: var(--dc-size, 64px);
+  height: var(--dc-size, 64px);
+  margin-left: calc(var(--dc-size, 64px) / -2);
+  display: none;
+  box-sizing: border-box;
+  pointer-events: none;
+  border: 2px solid var(--dc-frame, #5a5344);
+  border-radius: 50%;
+  background: conic-gradient(from 0deg,
+    var(--dc-day, #8a6b3a) 0deg 180deg,
+    var(--dc-night, #23283a) 180deg 360deg);
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.45);
+  image-rendering: pixelated;
+}
+
+.wh-dc-needle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 2px;
+  height: var(--dc-needle-len, 13px);
+  margin-left: -1px;
+  margin-top: calc(var(--dc-needle-len, 13px) * -1);
+  background: var(--dc-needle, #d8c9a0);
+  transform-origin: 50% 100%;
+  transform: rotate(0deg);
+}
+
 /* --- boot loading screen (2026-10-03, darkwood palette; amber = the ONE
        accent, matching the reticle/soul fill #d8b24a) --- */
 #wh-load-note {
@@ -87996,6 +88033,17 @@ window.WH_CONFIG = {
       scaleNearM: 6,             // PROPOSED, Nicko tunes - full width at/below this
       scaleFarM: 30,             // PROPOSED, Nicko tunes - width shrinks toward scaleFar, floor 0.8
       deathFadeSec: 1.2          // PROPOSED, Nicko tunes - fade-out once fsm 'dead'
+    },
+    // HP2: day/night clock (top-center circular dial). Hidden while the day
+    // clock is dormant; needle = timeOfDay * 360deg clockwise from top (wake).
+    dayClock: {
+      sizePx: 64,                // PROPOSED, Nicko tunes
+      topPx: 14,                 // PROPOSED, Nicko tunes - #wh-hud top offset
+      frameColor: '#5a5344',     // PROPOSED, Nicko tunes - same family as .bar-outer
+      daySeg: '#8a6b3a',         // PROPOSED, Nicko tunes - right half tint (day, amber-muted)
+      nightSeg: '#23283a',       // PROPOSED, Nicko tunes - left half tint (night, blue-grey)
+      needleColor: '#d8c9a0',    // PROPOSED, Nicko tunes - single accent
+      needleLenFrac: 0.42        // PROPOSED, Nicko tunes - needle length x radius
     }
   },
 
@@ -99316,6 +99364,26 @@ window.WH_ICONS = {
     game.hud.enemyBarsRoot = ehbRoot;
     game.hud.enemyBars = new Map();
 
+    // HP2: day/night clock dial + needle (pure CSS, no numbers). Size/colors
+    // come from CFG.hud.dayClock via CSS vars; updateDayClock shows it only
+    // while the day clock runs (not dormant).
+    var DC = CFG.hud.dayClock;
+    var dayClock = document.createElement('div');
+    dayClock.id = 'wh-day-clock';
+    dayClock.style.setProperty('--dc-size', DC.sizePx + 'px');
+    dayClock.style.setProperty('--dc-top', DC.topPx + 'px');
+    dayClock.style.setProperty('--dc-frame', DC.frameColor);
+    dayClock.style.setProperty('--dc-day', DC.daySeg);
+    dayClock.style.setProperty('--dc-night', DC.nightSeg);
+    dayClock.style.setProperty('--dc-needle', DC.needleColor);
+    dayClock.style.setProperty('--dc-needle-len', Math.round(DC.sizePx * 0.5 * DC.needleLenFrac) + 'px');
+    var dayClockNeedle = document.createElement('div');
+    dayClockNeedle.className = 'wh-dc-needle';
+    dayClock.appendChild(dayClockNeedle);
+    document.getElementById('wh-hud').appendChild(dayClock);
+    game.hud.dayClock = dayClock;
+    game.hud.dayClockNeedle = dayClockNeedle;
+
     // v7: focus bar above the stamina bar (same bar style, blue fill)
     var focusLabel = document.createElement('div');
     focusLabel.className = 'bar-label';
@@ -100100,6 +100168,19 @@ window.WH_ICONS = {
     var b = bars.get(enemy);
     if (b.el.parentNode) b.el.parentNode.removeChild(b.el);
     bars.delete(enemy);
+  }
+
+  // HP2: pure reader of DayNight state. Dormant (day-0 tutorial night) ->
+  // hidden; otherwise needle angle = timeOfDay * 360deg clockwise from top.
+  function updateDayClock() {
+    var dn = game.dayNight;
+    var el = game.hud.dayClock;
+    if (!dn || dn.dormant) {
+      el.style.display = 'none';
+      return;
+    }
+    el.style.display = 'block';
+    game.hud.dayClockNeedle.style.transform = 'rotate(' + (dn.timeOfDay * 360) + 'deg)';
   }
 
   function updateEnemyBars(dt) {
@@ -101532,6 +101613,7 @@ window.WH_ICONS = {
     applyBuffStats();   // C1: effective hpMax from active food buffs
     updateHud(dt);
     updateEnemyBars(dt);   // HP1: after the camera update so bars track this frame
+    updateDayClock();      // HP2: dormant-gated day/night dial
     updateInteractPrompt();
     game.renderer.render(game.scene, game.camera);
   }

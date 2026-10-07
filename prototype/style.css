@@ -244,6 +244,43 @@ html, body {
   background: linear-gradient(180deg, #8f2f2a, #5e1d19);
 }
 
+/* --- HP2 day/night clock: top-center circular dial. Right half = day
+       (amber-muted), left half = night (blue-grey); one warm needle pivoting
+       at center, rotated per frame from timeOfDay (top = wake). No numbers,
+       no textures. Size/colors from CFG.hud.dayClock (CSS vars set by
+       game.js). --- */
+#wh-day-clock {
+  position: absolute;
+  top: var(--dc-top, 14px);
+  left: 50%;
+  width: var(--dc-size, 64px);
+  height: var(--dc-size, 64px);
+  margin-left: calc(var(--dc-size, 64px) / -2);
+  display: none;
+  box-sizing: border-box;
+  pointer-events: none;
+  border: 2px solid var(--dc-frame, #5a5344);
+  border-radius: 50%;
+  background: conic-gradient(from 0deg,
+    var(--dc-day, #8a6b3a) 0deg 180deg,
+    var(--dc-night, #23283a) 180deg 360deg);
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.45);
+  image-rendering: pixelated;
+}
+
+.wh-dc-needle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 2px;
+  height: var(--dc-needle-len, 13px);
+  margin-left: -1px;
+  margin-top: calc(var(--dc-needle-len, 13px) * -1);
+  background: var(--dc-needle, #d8c9a0);
+  transform-origin: 50% 100%;
+  transform: rotate(0deg);
+}
+
 /* --- boot loading screen (2026-10-03, darkwood palette; amber = the ONE
        accent, matching the reticle/soul fill #d8b24a) --- */
 #wh-load-note {
