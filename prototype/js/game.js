@@ -234,6 +234,14 @@
     game.hud.flashTimer = 0;
     game.hud.flashTimerMax = 0;
 
+    // HP1: enemy health bar pool parent. One .wh-ehb per enemy, created on
+    // demand by updateEnemyBars (Map keyed by the Enemy object).
+    var ehbRoot = document.createElement('div');
+    ehbRoot.id = 'wh-enemy-bars';
+    document.getElementById('wh-hud').appendChild(ehbRoot);
+    game.hud.enemyBarsRoot = ehbRoot;
+    game.hud.enemyBars = new Map();
+
     // v7: focus bar above the stamina bar (same bar style, blue fill)
     var focusLabel = document.createElement('div');
     focusLabel.className = 'bar-label';
@@ -1006,6 +1014,87 @@
 
   function setReticleVisible(visible) {
     game.hud.reticle.style.display = visible ? 'block' : 'none';
+  }
+
+  // HP1: enemy health bars. Display-only: reads enemy hp / fsm and the lock
+  // target, projects above the head with the updateReticle pattern. Visible
+  // when (hp < hpMax) || locked; enemies never heal, so hp < hpMax is the
+  // "damaged this life" predicate. On fsm 'dead' the bar fades out over
+  // deathFadeSec and is then gone (corpses persist for loot - never ride one).
+  var _ehbV = new THREE.Vector3();
+  function releaseEnemyBar(bars, enemy) {
+    var b = bars.get(enemy);
+    if (b.el.parentNode) b.el.parentNode.removeChild(b.el);
+    bars.delete(enemy);
+  }
+
+  function updateEnemyBars(dt) {
+    var H = CFG.hud.hpbars;
+    var bars = game.hud.enemyBars;
+    var rm = game.regionManager;
+    var list = rm.getEnemies(rm.logic.activeId) || [];
+    var p = game.player;
+    var seen = new Set();
+    for (var i = 0; i < list.length; i++) {
+      var e = list[i];
+      seen.add(e);
+      var b = bars.get(e);
+      if (!b) {
+        var el = document.createElement('div');
+        el.className = 'wh-ehb';
+        el.style.width = H.widthPx + 'px';
+        el.style.height = H.heightPx + 'px';
+        var fill = document.createElement('div');
+        fill.className = 'wh-ehb-fill';
+        el.appendChild(fill);
+        game.hud.enemyBarsRoot.appendChild(el);
+        // a corpse restored by a region rebuild (already fallen) never shows
+        var restoredCorpse = (e.fsm === 'dead' || e.hp <= 0) && e.deadFall >= 1;
+        b = { el: el, fill: fill, deathT: 0, done: restoredCorpse };
+        bars.set(e, b);
+      }
+      if (b.done) { b.el.style.display = 'none'; continue; }
+      var dead = e.fsm === 'dead' || e.hp <= 0;
+      var deathAlpha = 1;
+      if (dead) {
+        b.deathT += dt;
+        if (b.deathT >= H.deathFadeSec) {
+          b.done = true;
+          b.el.style.display = 'none';
+          continue;
+        }
+        deathAlpha = 1 - b.deathT / H.deathFadeSec;
+      } else if (!(e.hp < e.hpMax || p.lockTarget === e)) {
+        b.el.style.display = 'none';
+        continue;
+      }
+      var dx = e.pos.x - p.pos.x, dz = e.pos.z - p.pos.z;
+      var dist = Math.sqrt(dx * dx + dz * dz);
+      if (dist > H.hideBeyondM) { b.el.style.display = 'none'; continue; }
+      _ehbV.set(e.pos.x, e.pos.y + H.heightAboveHeadM, e.pos.z);
+      _ehbV.project(game.camera);
+      if (_ehbV.z > 1 || _ehbV.z < -1) { b.el.style.display = 'none'; continue; }
+      var sx = (_ehbV.x * 0.5 + 0.5) * window.innerWidth;
+      var sy = (-_ehbV.y * 0.5 + 0.5) * window.innerHeight;
+      // width: 1 at/below scaleNearM, lerps to the 0.8 floor at scaleFarM
+      var st = Math.min(1, Math.max(0,
+        (dist - H.scaleNearM) / Math.max(0.001, H.scaleFarM - H.scaleNearM)));
+      var scale = 1 - 0.2 * st;
+      // opacity: 1 inside fadeStartM, lerps to minOpacity at fadeEndM+
+      var ft = Math.min(1, Math.max(0,
+        (dist - H.fadeStartM) / Math.max(0.001, H.fadeEndM - H.fadeStartM)));
+      var alpha = (1 - ft * (1 - H.minOpacity)) * deathAlpha;
+      b.el.style.display = 'block';
+      b.el.style.left = Math.round(sx) + 'px';
+      b.el.style.top = Math.round(sy) + 'px';
+      b.el.style.width = Math.round(H.widthPx * scale) + 'px';
+      b.el.style.opacity = alpha.toFixed(3);
+      b.fill.style.width = (Math.max(0, e.hp) / e.hpMax * 100) + '%';
+    }
+    // sweep: bars for enemies no longer in the active list are released
+    var stale = [];
+    bars.forEach(function (_b, enemy) { if (!seen.has(enemy)) stale.push(enemy); });
+    for (var s = 0; s < stale.length; s++) releaseEnemyBar(bars, stale[s]);
   }
 
   // ---- boundary / region flow ------------------------------------------------
@@ -2368,6 +2457,7 @@
     game.camp.update();   // C3: camp groups per region, placement ghost, menu close on death
     applyBuffStats();   // C1: effective hpMax from active food buffs
     updateHud(dt);
+    updateEnemyBars(dt);   // HP1: after the camera update so bars track this frame
     updateInteractPrompt();
     game.renderer.render(game.scene, game.camera);
   }

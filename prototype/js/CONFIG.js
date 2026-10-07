@@ -894,7 +894,21 @@ window.WH_CONFIG = {
     deathFadeSeconds: 0.8,
     fpsUpdateInterval: 0.5,
     // 2026-10-03 boot loading screen: overlay fade-out duration in ms.
-    bootOverlayFadeMs: 900
+    bootOverlayFadeMs: 900,
+    // HP1: enemy health bars (HUD DOM projected above the head). Visible when
+    // damaged this life OR the lock-on target; fade out once fsm 'dead'.
+    hpbars: {
+      widthPx: 46,               // PROPOSED, Nicko tunes
+      heightPx: 6,               // PROPOSED, Nicko tunes
+      heightAboveHeadM: 2.3,     // PROPOSED, Nicko tunes - world Y offset above enemy pos
+      fadeStartM: 16,            // PROPOSED, Nicko tunes - distance where dimming begins
+      fadeEndM: 32,              // PROPOSED, Nicko tunes - distance of minimum opacity
+      minOpacity: 0.45,          // PROPOSED, Nicko tunes - alpha at fadeEndM+
+      hideBeyondM: 40,           // PROPOSED, Nicko tunes - no bars past this
+      scaleNearM: 6,             // PROPOSED, Nicko tunes - full width at/below this
+      scaleFarM: 30,             // PROPOSED, Nicko tunes - width shrinks toward scaleFar, floor 0.8
+      deathFadeSec: 1.2          // PROPOSED, Nicko tunes - fade-out once fsm 'dead'
+    }
   },
 
   lockOn: {

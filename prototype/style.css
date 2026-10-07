@@ -213,6 +213,37 @@ html, body {
   border-radius: 2px;
 }
 
+/* --- HP1 enemy health bars: HUD DOM projected above the head. Player HP
+       bar family fill, .bar-outer frame, pixel register (hard 1px edges).
+       Size comes from CFG.hud.hpbars (set inline by game.js). --- */
+#wh-enemy-bars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.wh-ehb {
+  position: absolute;
+  left: -100px;
+  top: -100px;
+  display: none;
+  pointer-events: none;
+  box-sizing: border-box;
+  transform: translate(-50%, -50%);
+  border: 1px solid #5a5344;
+  border-radius: 1px;
+  background: rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+  image-rendering: pixelated;
+}
+
+.wh-ehb-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(180deg, #8f2f2a, #5e1d19);
+}
+
 /* --- boot loading screen (2026-10-03, darkwood palette; amber = the ONE
        accent, matching the reticle/soul fill #d8b24a) --- */
 #wh-load-note {
