@@ -731,6 +731,9 @@ window.WH_CONFIG = {
   // death writes nothing. Schema v1 = { v, ts, player, inventory, cooking,
   // camp, world } - fresh world spawns (trees / nodes / enemies) are never
   // saved. version guards future migrations (a mismatched v loads as none).
+  // L1 (2026-10-07): + optional leveling block (WH_LEVEL.capture) - an
+  // ADDITIVE field, so version stays 1 on purpose: pre-L1 profiles still
+  // load (no block = fresh level 1) and nothing old is invalidated.
   save: {
     lsKey: 'wh-save-v1',
     version: 1,

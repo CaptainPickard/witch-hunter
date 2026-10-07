@@ -1,6 +1,9 @@
 // Witch Hunter prototype - save profile (C4, io/missions/2026-10-06-cc-c4-save-profile.md).
 // ONE rolling profile in localStorage (CONFIG.save.lsKey 'wh-save-v1'),
-// JSON schema v1 = { v, ts, player, inventory, cooking, camp, world }.
+// JSON schema v1 = { v, ts, player, inventory, cooking, camp, world } +
+// L1 optional leveling = { xp, level, pendingPts, alloc, ranks, discovered }
+// (additive: version stays 1, an older profile without it loads as a
+// fresh level 1 - WH_LEVEL.restore(undefined)).
 // Every save overwrites; load = last save wins. Fresh world spawns (trees,
 // gather nodes, enemies) are never saved. Buffs are derived state: only the
 // dayMeal slot (buff id + day) is stored, applyBuffStats recomputes hpMax.
@@ -91,7 +94,8 @@
         }),
         respawn: copyRespawn(respawn)
       },
-      world: { day: dn.day, phase: dn.phase, timeOfDay: dn.timeOfDay }
+      world: { day: dn.day, phase: dn.phase, timeOfDay: dn.timeOfDay },
+      leveling: window.WH_LEVEL.capture()   // L1 (optional block, schema v1 additive)
     };
   }
 
@@ -165,6 +169,11 @@
     if (ck.channel) { ck.channel.station.cooking = false; ck.channel = null; }
     if (ck.open) ck.setOpen(false);
     if (hooks.breakLockOn) hooks.breakLockOn();
+
+    // 0) L1 leveling: the saved block replaces the live state (no XP dupes
+    // across death -> LOAD); missing (pre-L1 profile) = fresh level 1. The
+    // pools re-derive from it in applyBuffStats (step 8).
+    window.WH_LEVEL.restore(data.leveling);
 
     // 1) inventory first (slot layout as saved)
     var items = Array.isArray(I.items) ? I.items : [];
@@ -262,6 +271,7 @@
     // respawnAt reset both hands' cast state: the restored implements re-grip
     if (p.isCasterHand('right')) p.cast.main.regrip = CFG.belt.regripSeconds;
     if (p.isCasterHand('left')) p.cast.off.regrip = CFG.belt.regripSeconds;
+    window.WH_LEVEL.discover('region', rid, true);   // L1: standing here = known ground
     if (hooks.applyBuffStats) hooks.applyBuffStats();
     p.hp = Math.min(p.hpMax, Math.max(1, num(P.hp, p.hpMax)));
     p.focus = Math.min(p.focusMax, Math.max(0, num(P.focus, p.focusMax)));
