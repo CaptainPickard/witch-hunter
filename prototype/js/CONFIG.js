@@ -725,6 +725,24 @@ window.WH_CONFIG = {
     pickerExclude: ['bandage']        // consumables stay on R/T; gear-only picker
   },
 
+  // C4 (2026-10-06) save profile (js/save.js WH_SAVE): ONE rolling profile
+  // in localStorage under lsKey, every save overwrites. Written by the camp
+  // menu Save / Save and Heal and on page quit (once a cycle has begun);
+  // death writes nothing. Schema v1 = { v, ts, player, inventory, cooking,
+  // camp, world } - fresh world spawns (trees / nodes / enemies) are never
+  // saved. version guards future migrations (a mismatched v loads as none).
+  save: {
+    lsKey: 'wh-save-v1',
+    version: 1,
+    text: {
+      saved: 'Saved.',
+      noSave: 'No save yet',
+      load: 'LOAD',                   // camp menu row (dim until a save exists)
+      continue: 'CONTINUE',           // boot overlay rows (only when a save exists)
+      newGame: 'NEW GAME'
+    }
+  },
+
   // v7: loadout toggle (commit window, doc 04 ruling part C)
   loadout: {
     toggleSeconds: 0.8                // cannot attack/cast/block/roll during toggle
