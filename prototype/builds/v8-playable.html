@@ -93149,7 +93149,14 @@ window.WH_ICONS = {
         if (this.onCastRefusal) this.onCastRefusal(b < 0 ? 'empty-slot' : 'no-implement');
         return;
       }
-      this.pressBeltKey(b, shift ? 'off' : 'main');
+      // AB1.1 (Nicko 10-06 playtest): a plain bar select retunes EVERY
+      // equipped caster hand (glove in either hand or both switches active
+      // spell); Shift+select keeps the Order C off-hand-ONLY bind.
+      if (shift) { this.pressBeltKey(b, 'off'); return; }
+      var casters = [];
+      if (this.isCasterHand('left')) casters.push('off');
+      if (this.isCasterHand('right')) casters.push('main');
+      for (var ci = 0; ci < casters.length; ci++) this.pressBeltKey(b, casters[ci]);
       return;
     }
     if (shift) { this.refuseEquip('Not a spell'); return; }
