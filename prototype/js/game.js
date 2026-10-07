@@ -262,28 +262,49 @@
 
     // v7: bottom-center belt row: 5 spell slots | divider | 2 consumables
     // | divider | 2 loadout pips I/II
+    // AB1: the 5 spell slots are the player-mappable action bar - each slot
+    // = pixel icon (js/icons-data.js) + key digit; tap / click = select,
+    // right-click / long-press = binding picker (setupActionBar)
     var belt = document.createElement('div');
     belt.id = 'wh-belt';
     var B = CFG.belt;
+    game.actionMap = loadActionMap();
     game.hud.beltSlots = [];
-    for (var s = 0; s < B.slots; s++) {
+    game.hud.beltIcons = [];
+    for (var s = 0; s < CFG.actionbar.slots; s++) {
       var slot = document.createElement('div');
       slot.className = 'belt-slot';
-      slot.textContent = String(s + 1);
+      var sIcon = document.createElement('span');
+      sIcon.className = 'belt-icon';
+      var sKey = document.createElement('span');
+      sKey.className = 'belt-key';
+      sKey.textContent = String(s + 1);
+      slot.appendChild(sIcon);
+      slot.appendChild(sKey);
+      bindActionSlotInput(slot, s);
       belt.appendChild(slot);
       game.hud.beltSlots.push(slot);
+      game.hud.beltIcons.push(sIcon);
     }
     var div1 = document.createElement('div');
     div1.className = 'belt-divider spell-divider';
     belt.appendChild(div1);
     game.hud.consSlots = [];
+    game.hud.consIcons = [];
     var consKeys = ['R', 'T'];
     for (var c = 0; c < B.consumableSlots; c++) {
       var cslot = document.createElement('div');
       cslot.className = 'belt-slot consumable';
-      cslot.textContent = consKeys[c] || '';
+      var cIcon = document.createElement('span');
+      cIcon.className = 'belt-icon';
+      var cKey = document.createElement('span');
+      cKey.className = 'belt-key';
+      cKey.textContent = consKeys[c] || '';
+      cslot.appendChild(cIcon);
+      cslot.appendChild(cKey);
       belt.appendChild(cslot);
       game.hud.consSlots.push(cslot);
+      game.hud.consIcons.push(cIcon);
     }
     var div2 = document.createElement('div');
     div2.className = 'belt-divider';
@@ -298,6 +319,7 @@
     }
     document.getElementById('wh-hud').appendChild(belt);
     game.hud.belt = belt;
+    setupActionPicker();
 
     // v7 spell glow, Order C: one orb per hand (keyed 'right' / 'left'),
     // school-colored by that hand's binding
@@ -436,9 +458,8 @@
       if (!c) {
         c = { root: document.createElement('div'), time: document.createElement('span') };
         c.root.className = 'buff-chip';
-        var icon = document.createElement('span');
-        icon.className = 'buff-icon';
-        icon.textContent = def.glyph;
+        // AB1: the buff's food item icon (fallback: the CONFIG glyph chip)
+        var icon = window.WH_INVENTORY.iconEl('buff-icon', buffItemId(b.id), def.glyph);
         var label = document.createElement('span');
         label.className = 'buff-label';
         label.textContent = def.label + (def.stat === 'hpMax' ? ' +' + def.amount + ' max HP' :
@@ -460,6 +481,255 @@
       game.hud.buffRow.removeChild(chips[id].root);
       delete chips[id];
     }
+  }
+
+  // AB1: a buff's food item (CONFIG.items useHint.buff), else the buff id
+  function buffItemId(buffId) {
+    for (var id in CFG.items) {
+      var u = CFG.items[id].useHint;
+      if (u && u.buff === buffId) return id;
+    }
+    return buffId;
+  }
+
+  // ---- AB1 action bar: runtime map + slot input + binding picker ---------------
+  // The HUD owns the map (game.actionMap, persisted in localStorage
+  // CONFIG.actionbar.lsKey) and its editing; the player reads it through
+  // player.actionMapSource / actionSlot(i) and owns validation
+  // (WH_Player.validActionEntry).
+  function defaultActionEntry(i) {
+    var d = CFG.actionbar.defaults[i];
+    return d ? { kind: d.kind, id: d.id } : null;
+  }
+
+  // Stored map, entry by entry: invalid / unknown -> that slot's default;
+  // corrupt JSON / no storage -> full defaults.
+  function loadActionMap() {
+    var AB = CFG.actionbar, raw = null, map = [];
+    try { raw = JSON.parse(window.localStorage.getItem(AB.lsKey) || 'null'); } catch (e) { raw = null; }
+    if (!Array.isArray(raw)) raw = [];
+    for (var i = 0; i < AB.slots; i++) {
+      var e = raw[i];
+      map.push(window.WH_Player.validActionEntry(e) ? { kind: e.kind, id: e.id } : defaultActionEntry(i));
+    }
+    return map;
+  }
+
+  function saveActionMap() {
+    try {
+      window.localStorage.setItem(CFG.actionbar.lsKey, JSON.stringify(game.actionMap));
+    } catch (e) { /* private mode / quota: the map just won't persist */ }
+  }
+
+  // Bind slot i to entry { kind, id }; refused (false) when invalid.
+  function bindActionMapEntry(i, entry) {
+    if (i < 0 || i >= CFG.actionbar.slots) return false;
+    if (!window.WH_Player.validActionEntry(entry)) return false;
+    game.actionMap[i] = { kind: entry.kind, id: entry.id };
+    saveActionMap();
+    return true;
+  }
+
+  function actionEntryName(e) {
+    if (!e) return '';
+    var d = e.kind === 'spell' ? CFG.spell[e.id] : CFG.items[e.id];
+    return (d && d.name) || e.id;
+  }
+
+  function actionEntryGlyph(e) {
+    if (!e) return '';
+    var d = e.kind === 'spell' ? CFG.spell[e.id] : CFG.items[e.id];
+    return (d && d.glyph) || e.id.slice(0, 2).toUpperCase();
+  }
+
+  function setActionSlotIcon(i, e) {
+    window.WH_INVENTORY.setIcon(game.hud.beltIcons[i], e ? e.id : null, actionEntryGlyph(e));
+    var title = e ? actionEntryName(e) + ' [' + (i + 1) + '] - right-click / hold to rebind' : '';
+    var el = game.hud.beltSlots[i];
+    if (el.title !== title) el.title = title;
+  }
+
+  // Slot input: the bar is HUD DOM, so mouse AND touch arrive here as
+  // pointer events. tap / click (release before longPressMs) = the Digit
+  // select path; hold >= longPressMs or right-click = the picker (a hold
+  // never selects). Mouse / touch compat events are swallowed so a bar
+  // press never reaches the canvas LMB attack or the auto-rebind (mouseup
+  // stays live: the document's mouseup must still end a guard / drag).
+  var actionPress = null;   // { pointerId, slot, timer, held }
+
+  function actionBarInputOk() {
+    var p = game.player;
+    return !!(p && game.inventoryUI && p.state === 'alive' && !p.inputSuspended);
+  }
+
+  function clearActionPress() {
+    if (!actionPress) return;
+    clearTimeout(actionPress.timer);
+    game.hud.beltSlots[actionPress.slot].classList.remove('pressing');
+    actionPress = null;
+  }
+
+  function bindActionSlotInput(slot, i) {
+    ['mousedown', 'click', 'contextmenu', 'touchstart', 'touchend'].forEach(function (t) {
+      slot.addEventListener(t, function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+    });
+    slot.addEventListener('pointerdown', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!actionBarInputOk()) return;
+      if (e.pointerType === 'mouse' && e.button === 2) {
+        clearActionPress();
+        openActionPicker(i);
+        return;
+      }
+      if (e.button !== 0 || actionPress) return;
+      if (slot.setPointerCapture) { try { slot.setPointerCapture(e.pointerId); } catch (err) {} }
+      slot.classList.add('pressing');
+      var press = { pointerId: e.pointerId, slot: i, held: false, timer: 0 };
+      press.timer = setTimeout(function () {
+        if (actionPress !== press) return;
+        press.held = true;
+        slot.classList.remove('pressing');
+        openActionPicker(i);
+      }, CFG.actionbar.longPressMs);
+      actionPress = press;
+    });
+    slot.addEventListener('pointerup', function (e) {
+      if (!actionPress || actionPress.pointerId !== e.pointerId) return;
+      var tap = !actionPress.held;
+      clearActionPress();
+      if (tap && actionBarInputOk()) game.player.selectActionSlot(i, e.shiftKey);
+    });
+    slot.addEventListener('pointercancel', function (e) {
+      if (actionPress && actionPress.pointerId === e.pointerId) clearActionPress();
+    });
+  }
+
+  // Binding picker: LEARNED SPELLS (player.getKnownSpells) + GEAR (owned
+  // bindable gear: hands + inventory grid). Opens only alive and with input
+  // live (never under the inventory / cook / camp screens); while open it
+  // suspends combat input and blocks I / INV like the cook panel. Esc, the
+  // X button or a press outside closes it.
+  function setupActionPicker() {
+    var root = document.createElement('div');
+    root.id = 'wh-action-picker';
+    var head = document.createElement('div');
+    head.className = 'ap-head';
+    var title = document.createElement('span');
+    title.className = 'ap-title';
+    var x = document.createElement('button');
+    x.type = 'button';
+    x.className = 'ap-close';
+    x.tabIndex = -1;
+    x.textContent = 'X';
+    x.addEventListener('click', function () { closeActionPicker(); });
+    head.appendChild(title);
+    head.appendChild(x);
+    var body = document.createElement('div');
+    body.className = 'ap-body';
+    root.appendChild(head);
+    root.appendChild(body);
+    // presses inside the panel stay UI-only (no swing / camera drag)
+    ['mousedown', 'contextmenu', 'touchstart'].forEach(function (t) {
+      root.addEventListener(t, function (e) { e.stopPropagation(); if (t === 'contextmenu') e.preventDefault(); });
+    });
+    document.getElementById('wh-hud').appendChild(root);
+    game.actionPicker = { open: false, slot: -1, root: root, title: title, body: body, eatMouse: false };
+
+    // outside press closes; the closing press is consumed (no attack)
+    document.addEventListener('pointerdown', function (e) {
+      var P = game.actionPicker;
+      P.eatMouse = false;     // only ever eats the mousedown of its own press
+      if (!P.open || root.contains(e.target)) return;
+      closeActionPicker();
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.pointerType === 'mouse') P.eatMouse = true;
+    }, true);
+    document.addEventListener('mousedown', function (e) {
+      if (!game.actionPicker.eatMouse) return;
+      game.actionPicker.eatMouse = false;
+      e.preventDefault();
+      e.stopPropagation();
+    }, true);
+    document.addEventListener('keydown', function (e) {
+      if (game.actionPicker.open && e.code === 'Escape') {
+        e.preventDefault();
+        closeActionPicker();
+      }
+    });
+  }
+
+  function pickerSection(label, entries, cur) {
+    var P = game.actionPicker;
+    var sec = document.createElement('div');
+    sec.className = 'ap-sec';
+    sec.textContent = label;
+    P.body.appendChild(sec);
+    if (!entries.length) {
+      var none = document.createElement('div');
+      none.className = 'ap-none';
+      none.textContent = 'None';
+      P.body.appendChild(none);
+      return;
+    }
+    entries.forEach(function (entry) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.tabIndex = -1;
+      b.className = 'ap-entry' + (cur && cur.kind === entry.kind && cur.id === entry.id ? ' current' : '');
+      b.appendChild(window.WH_INVENTORY.iconEl('ap-icon', entry.id, actionEntryGlyph(entry)));
+      var n = document.createElement('span');
+      n.className = 'ap-name';
+      n.textContent = actionEntryName(entry);
+      b.appendChild(n);
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var slot = game.actionPicker.slot;
+        if (bindActionMapEntry(slot, entry)) setActionSlotIcon(slot, game.player.actionSlot(slot));
+        closeActionPicker();
+      });
+      P.body.appendChild(b);
+    });
+  }
+
+  function openActionPicker(i) {
+    var p = game.player, P = game.actionPicker;
+    if (!actionBarInputOk() || P.open) return;
+    P.slot = i;
+    P.title.textContent = 'BIND SLOT ' + (i + 1);
+    P.body.textContent = '';
+    var cur = p.actionSlot(i);
+    var spells = p.getKnownSpells().map(function (sp) { return { kind: 'spell', id: sp.id }; });
+    // owned gear: hands first, then the grid; one entry per id
+    var gear = [], seen = {};
+    function addGear(id) {
+      if (!id || seen[id] || !window.WH_Player.isBindableItem(id)) return;
+      seen[id] = true;
+      gear.push({ kind: 'item', id: id });
+    }
+    addGear(p.hands.right);
+    addGear(p.hands.left);
+    game.inventory.slots.forEach(function (s) { if (s) addGear(s.id); });
+    pickerSection('LEARNED SPELLS', spells, cur);
+    pickerSection('GEAR', gear, cur);
+    P.open = true;
+    P.root.classList.add('open');
+    game.inventoryUI.blocked = true;
+    p.setInputSuspended(true);
+  }
+
+  function closeActionPicker() {
+    var P = game.actionPicker;
+    if (!P.open) return;
+    P.open = false;
+    P.slot = -1;
+    P.root.classList.remove('open');
+    game.inventoryUI.blocked = false;
+    game.player.setInputSuspended(false);
   }
 
   function updateHud(dt) {
@@ -502,9 +772,9 @@
     }
     // v7: belt HUD state (selected tint, active pip)
     if (game.hud.belt) {
-      // Order B: tint = the ACTIVE learned spell (always shown, so belt
-      // keys confirm even with no caster); no caster in hand dims the spell
-      // slots and badges the divider (CSS #wh-belt.stowed)
+      // Order B: tint = the ACTIVE learned spell; no caster in hand badges
+      // the divider (CSS #wh-belt.stowed). AB1: spell slots go .dark (not
+      // pressable) instead of the whole row dimming - item slots stay live
       var stowed = !p.hasCaster();
       game.hud.belt.classList.toggle('stowed', stowed);
       // Order C: the MAIN binding gets the solid school-color border, the OFF
@@ -515,14 +785,27 @@
       var offId = p.getBoundSpellId('off');
       var OC = offId ? CFG.spell[offId].schoolColor : null;
       var offHex = OC ? '#' + ('000000' + OC.toString(16)).slice(-6) : '';
+      // AB1: per slot from the action map - spell slot: main / off binding
+      // of its belt spell + .dark when not castable; item slot: .equipped
+      // while a hand holds it, .pending inside its swap window
       for (var i = 0; i < game.hud.beltSlots.length; i++) {
         var el = game.hud.beltSlots[i];
-        var has = !!p.belt[i];
-        var sel = (i === p.bindings.main);
-        var off = (i === p.bindings.off);
+        var ae = p.actionSlot(i);
+        var isSpell = !!(ae && ae.kind === 'spell');
+        var bi = isSpell ? p.belt.indexOf(ae.id) : -1;
+        var held = !!(ae && !isSpell && p.handOf(ae.id));
+        var has = isSpell ? bi >= 0 :
+          !!(ae && (held || (game.inventory && game.inventory.countOf(ae.id) > 0)));
+        var sel = bi >= 0 && bi === p.bindings.main;
+        var off = bi >= 0 && bi === p.bindings.off;
+        setActionSlotIcon(i, ae);
         el.classList.toggle('filled', has);
         el.classList.toggle('selected', sel);
         el.classList.toggle('off-bound', off);
+        el.classList.toggle('dark', isSpell && !p.actionSpellLive(i));
+        el.classList.toggle('equipped', held);
+        el.classList.toggle('pending', !!(ae && !isSpell && p.toggling && p.pendingQSwap === ae.id));
+        el.classList.toggle('picking', game.actionPicker.open && game.actionPicker.slot === i);
         el.style.borderColor = (sel && SC) ? hex : '';
         el.style.color = (sel && SC) ? hex : '';
         el.style.outlineColor = (off && OC) ? offHex : '';
@@ -531,7 +814,12 @@
         var cs = game.hud.consSlots[ci];
         var cc = p.consumables[ci];
         cs.classList.toggle('filled', !!(cc && cc.charges > 0));
+        var cdef = cc ? CFG.items[cc.id] : null;
+        window.WH_INVENTORY.setIcon(game.hud.consIcons[ci], cc ? cc.id : null,
+          cdef ? cdef.glyph : '');
       }
+      // AB1: the picker never outlives the alive state
+      if (game.actionPicker.open && p.state !== 'alive') closeActionPicker();
       for (var pi = 0; pi < game.hud.loadoutPips.length; pi++) {
         game.hud.loadoutPips[pi].classList.toggle(
           'active', p.activeLoadout === pi + 1);
@@ -1486,6 +1774,12 @@
       getBelt: function () { return game.player.getBelt(); },
       selectBeltSlot: function (i, role) { game.player.selectBeltSlot(i, role); },   // role 'main' (default) / 'off'
       pressBeltKey: function (i, role) { game.player.pressBeltKey(i, role); },
+      // AB1 action bar: select = the Digit / tap path; bind = the picker path
+      getActionMap: function () { return game.actionMap.map(function (e) { return e && { kind: e.kind, id: e.id }; }); },
+      selectActionSlot: function (i, shift) { game.player.selectActionSlot(i, !!shift); },
+      bindActionSlot: function (i, kind, id) { return bindActionMapEntry(i, { kind: kind, id: id }); },
+      openActionPicker: function (i) { openActionPicker(i); },
+      closeActionPicker: function () { closeActionPicker(); },
       // Order B hand hooks
       // Order C: lmb / rmb = what each button does right now
       // ('attack' | 'cast' | 'block' | null)
@@ -1597,6 +1891,8 @@
     game.scene.add(game.player.root);
     // D3: player delegates the F-key toggle to the game's lock-on logic
     game.player.onLockToggle = toggleLockOn;
+    // AB1: the player reads the HUD-owned action bar map through this getter
+    game.player.actionMapSource = function () { return game.actionMap; };
 
     // v7: weave HUD feedback callbacks
     game.player.onCastRefusal = function () {

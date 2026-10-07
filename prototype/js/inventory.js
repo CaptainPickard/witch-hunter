@@ -162,6 +162,27 @@
     return e;
   }
 
+  // AB1: pixel icon on a glyph span from the js/icons-data.js registry
+  // (window.WH_ICONS, id -> data URI). Unknown id -> the fallback glyph text
+  // (never blank); null id -> empty. Skips the write when unchanged, so
+  // per-frame / per-render callers stay cheap.
+  function setIcon(span, id, fallback) {
+    var icons = window.WH_ICONS || {};
+    var uri = id && Object.prototype.hasOwnProperty.call(icons, id) ? icons[id] : null;
+    var key = uri ? id : '#' + (fallback || '');
+    if (span._whIcon === key) return span;
+    span._whIcon = key;
+    span.classList.toggle('wh-icon', !!uri);
+    span.style.backgroundImage = uri ? 'url("' + uri + '")' : '';
+    span.textContent = uri ? '' : (fallback || '');
+    return span;
+  }
+
+  // el() + setIcon in one: an icon span for item / spell id
+  function iconEl(cls, id, fallback) {
+    return setIcon(el('span', cls), id, fallback);
+  }
+
   function InventoryUI(opts) {
     var UI = CFG.inventoryUI;
     var self = this;
@@ -358,7 +379,7 @@
       var d = s ? itemDef(s.id) : null;
       v.root.classList.toggle('filled', !!s);
       v.root.classList.toggle('selected', i === this.selected && !!s);
-      v.glyph.textContent = d ? d.glyph : '';
+      setIcon(v.glyph, d ? s.id : null, d ? d.glyph : '');
       // count on every stackable item (x1 included); gear (cap 1) shows none
       v.count.textContent = s && stackCapOf(s.id) > 1 ? String(s.count) : '';
     }
@@ -407,7 +428,7 @@
       var row = el('div', 'inv-hand' + (d ? ' filled' : ''));
       row.appendChild(el('span', 'inv-hand-label', HAND_LABEL[h]));
       var slot = el('div', 'inv-slot inv-hand-slot' + (d ? ' filled' : ''));
-      slot.appendChild(el('span', 'inv-glyph', d ? d.glyph : ''));
+      slot.appendChild(iconEl('inv-glyph', d ? hands[h] : null, d ? d.glyph : ''));
       row.appendChild(slot);
       row.appendChild(el('span', 'inv-hand-name', d ? d.name : 'Empty'));
       if (d) {
@@ -441,7 +462,7 @@
       spells.forEach(function (sp) { if (sp[c.role]) bound = sp; });
       var cur = el('div', 'inv-bind-cur');
       var tile = el('div', 'inv-slot inv-hand-slot' + (bound ? ' filled' : ''));
-      tile.appendChild(el('span', 'inv-glyph', bound ? spellGlyph(bound.id) : ''));
+      tile.appendChild(iconEl('inv-glyph', bound ? bound.id : null, bound ? spellGlyph(bound.id) : ''));
       cur.appendChild(tile);
       var txt = el('div', 'inv-gear-text');
       txt.appendChild(el('div', 'inv-hand-name', bound ? spellName(bound.id) : 'None'));
@@ -480,7 +501,7 @@
       if (hands[def] === id && d.hands.indexOf(alt) >= 0) def = alt;
       var row = el('div', 'inv-gear');
       var g = el('div', 'inv-slot filled');
-      g.appendChild(el('span', 'inv-glyph', d.glyph));
+      g.appendChild(iconEl('inv-glyph', id, d.glyph));
       row.appendChild(g);
       var txt = el('div', 'inv-gear-text');
       txt.appendChild(el('div', 'inv-gear-name', d.name));
@@ -628,6 +649,8 @@
     stackCapOf: stackCapOf,
     kindOf: kindOf,
     defaultHandOf: defaultHandOf,
+    setIcon: setIcon,                 // AB1: icon registry consumer (belt, buffs, picker)
+    iconEl: iconEl,
     addItem: function (id, count) { return M.active ? M.active.addItem(id, count) : 0; },
     removeItem: function (id, count) { return M.active ? M.active.removeItem(id, count) : 0; },
     countOf: function (id) { return M.active ? M.active.countOf(id) : 0; },

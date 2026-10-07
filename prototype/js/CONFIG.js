@@ -707,6 +707,24 @@ window.WH_CONFIG = {
     consumableSlots: 2                // consumable slots (keys R / T)
   },
 
+  // AB1 (2026-10-07) player-mappable action bar: keys 1-5 / tap select the
+  // slot's binding. kind 'spell' = a learned spell (belt list above) bound
+  // to the main hand (Shift = off hand); kind 'item' = a gear item equipped
+  // into its native hand through the Q-swap window. defaults = boot map,
+  // the player rebinds any slot (right-click / long-press -> picker); the
+  // map persists in localStorage under lsKey (invalid entries fall back to
+  // that slot's default). Bindable items = gear with a hand mount (no
+  // consumables / food / ingredients / valuables).
+  actionbar: {
+    slots: 5,
+    defaults: [ { kind: 'spell', id: 'firebolt' }, { kind: 'spell', id: 'radiance' },
+                { kind: 'item', id: 'roundShield' }, { kind: 'item', id: 'magicGlove' },
+                { kind: 'item', id: 'torch' } ],
+    lsKey: 'wh-actionbar-v1',
+    longPressMs: 400,                 // touch / mouse hold on a slot = rebind picker
+    pickerExclude: ['bandage']        // consumables stay on R/T; gear-only picker
+  },
+
   // v7: loadout toggle (commit window, doc 04 ruling part C)
   loadout: {
     toggleSeconds: 0.8                // cannot attack/cast/block/roll during toggle

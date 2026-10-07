@@ -107,6 +107,10 @@
     this.toggling = false;            // loadout toggle busy window
     this.toggleTimer = 0;
     this.pendingQSwap = null;         // item id Q puts in the left hand on completion
+    this.pendingQSwapHand = 'left';   // AB1: the hand pendingQSwap lands in (bar item slots)
+    // AB1: getter for the HUD-owned action bar map (game.js sets it; null =
+    // CONFIG.actionbar.defaults). Read through actionSlot(i) only.
+    this.actionMapSource = null;
     // Order C (2026-10-05) dual-wield casting: fully independent per-hand
     // cast state ('main' = right hand, 'off' = left hand). Both hands may be
     // mid-windup at once; each completes and cools down on its own.
@@ -355,11 +359,12 @@
       // v7: Q = loadout toggle (busy window, resets chain, keeps armed).
       // Order B: swaps the left hand glove <-> shield.
       if (e.code === 'KeyQ' && !e.repeat) self.toggleLoadout();
-      // Order C: Digit1-5 = MAIN (right) hand binding, Shift+Digit1-5 = OFF
-      // (left) hand binding (never touches hands/chain/armed)
+      // AB1: Digit1-5 = action bar slot select (spell slot -> MAIN binding,
+      // item slot -> equip); Shift+Digit1-5 = OFF binding on spell slots
+      // (Order C semantics, never touches hands/chain/armed)
       if (e.code.indexOf('Digit') === 0 && !e.repeat) {
         var n = parseInt(e.code.slice(5), 10);
-        if (n >= 1 && n <= V7.belt.slots) self.pressBeltKey(n - 1, e.shiftKey ? 'off' : 'main');
+        if (n >= 1 && n <= V7.actionbar.slots) self.selectActionSlot(n - 1, e.shiftKey);
       }
       // v7: R / T = consumable belt slots 1 / 2
       if (e.code === 'KeyR' && !e.repeat) self.useConsumable(0);
@@ -698,11 +703,22 @@
     if (this.state !== 'alive' || this.toggling) return;
     var pair = window.WH_CONFIG.equip.qSwap;
     var target = this.hands.left === pair[0] ? pair[1] : pair[0];
-    if (!this.inventory || this.inventory.countOf(target) <= 0) {
-      this.refuseEquip(itemName(target) + ' not in inventory');
-      return;
+    this.selectItemEquip(target, 'left');
+  };
+
+  // AB1: the Q swap generalized - put item id into hand through the same
+  // busy window (CONFIG.loadout.toggleSeconds), block drop, chain reset and
+  // armed banking as Q. Inventory-only source (swap-parity: the outgoing
+  // item returns to the inventory when the window lands, update()); not
+  // owned = refusal toast, nothing changes. Returns true when the window
+  // started.
+  Player.prototype.selectItemEquip = function (id, hand) {
+    if (this.state !== 'alive' || this.toggling) return false;
+    if (!this.inventory || this.inventory.countOf(id) <= 0) {
+      return this.refuseEquip(itemName(id) + ' not in inventory');
     }
-    this.pendingQSwap = target;
+    this.pendingQSwap = id;
+    this.pendingQSwapHand = hand;
     this.endBlock();                     // shield grip is dropped by the swap
     this.toggling = true;
     this.toggleTimer = V7.loadout.toggleSeconds;
@@ -713,6 +729,86 @@
     this.endCombo();
     // armed survives the toggle inside its window; cross-finisher banks
     if (this.armedTimer > 0) this.crossArmed = true;
+    return true;
+  };
+
+  // ---- AB1: player-mappable action bar ----------------------------------------
+  // Entry { kind: 'spell' | 'item', id } in CONFIG.actionbar.slots slots. The
+  // HUD (game.js) owns the map + editing; the player owns validation and
+  // reads the map only through actionSlot(i).
+  var BINDABLE_KINDS = ['melee', 'shield', 'caster', 'torch'];
+
+  // Gear with a hand mount: same mesh rule as equipItem (dormant shields /
+  // swords are not bindable), minus CONFIG.actionbar.pickerExclude.
+  function isBindableItem(id) {
+    var d = itemDef(id);
+    if (!d || d.category !== 'gear' || !d.hands || !d.hands.length) return false;
+    if (BINDABLE_KINDS.indexOf(d.kind) < 0) return false;
+    if (!d.mesh && (d.kind === 'shield' || d.kind === 'melee')) return false;
+    return (V7.actionbar.pickerExclude || []).indexOf(id) < 0;
+  }
+
+  function isSpellId(id) {
+    return Object.prototype.hasOwnProperty.call(V7.spell, id) &&
+      !!V7.spell[id] && typeof V7.spell[id] === 'object' && !!V7.spell[id].kind;
+  }
+
+  function validActionEntry(e) {
+    if (!e || typeof e !== 'object' || typeof e.id !== 'string') return false;
+    if (e.kind === 'spell') return isSpellId(e.id);
+    if (e.kind === 'item') return isBindableItem(e.id);
+    return false;
+  }
+
+  // The hand a bar item goes in: CONFIG.equip.nativeHand, else the first
+  // allowed hand (shield / torch / glove -> left, longsword -> right).
+  function actionHandOf(id) {
+    var d = itemDef(id);
+    var nat = window.WH_CONFIG.equip.nativeHand[id];
+    return nat && d.hands.indexOf(nat) >= 0 ? nat : d.hands[0];
+  }
+
+  // Slot i's binding (runtime map entry, or that slot's default when the
+  // entry is missing / invalid), or null.
+  Player.prototype.actionSlot = function (i) {
+    var m = this.actionMapSource ? this.actionMapSource() : null;
+    var e = m && m[i];
+    if (validActionEntry(e)) return e;
+    var d = V7.actionbar.defaults[i];
+    return validActionEntry(d) ? d : null;
+  };
+
+  // Is slot i's spell castable right now (learned + an implement in hand)?
+  // false for item slots. The HUD darkens spell slots that fail this.
+  Player.prototype.actionSpellLive = function (i) {
+    var e = this.actionSlot(i);
+    return !!(e && e.kind === 'spell' && this.hasCaster() && this.belt.indexOf(e.id) >= 0);
+  };
+
+  // Digit key / bar tap. spell slot: no implement or not learned = refusal
+  // flash (like an empty slot), else the Order C belt bind (shift = OFF
+  // hand). item slot: shift = 'Not a spell' refusal; held in a hand = no-op;
+  // else the Q-swap window into its native hand (selectItemEquip).
+  Player.prototype.selectActionSlot = function (i, shift) {
+    if (this.state !== 'alive') return;
+    if (i < 0 || i >= V7.actionbar.slots) return;
+    var e = this.actionSlot(i);
+    if (!e) {
+      if (this.onCastRefusal) this.onCastRefusal('empty-slot');
+      return;
+    }
+    if (e.kind === 'spell') {
+      var b = this.belt.indexOf(e.id);
+      if (b < 0 || !this.hasCaster()) {
+        if (this.onCastRefusal) this.onCastRefusal(b < 0 ? 'empty-slot' : 'no-implement');
+        return;
+      }
+      this.pressBeltKey(b, shift ? 'off' : 'main');
+      return;
+    }
+    if (shift) { this.refuseEquip('Not a spell'); return; }
+    if (this.handOf(e.id)) return;           // already active
+    this.selectItemEquip(e.id, actionHandOf(e.id));
   };
 
   Player.prototype.getActiveLoadout = function () {
@@ -1732,9 +1828,10 @@
         this.toggling = false;
         // Order B: the Q swap lands on completion. Inventory-only source,
         // re-checked here (the screen may have moved it meanwhile).
+        // AB1: bar item slots land in their own hand (pendingQSwapHand).
         var qItem = this.pendingQSwap;
         this.pendingQSwap = null;
-        if (qItem) this.equipItem(qItem, 'left', true);
+        if (qItem) this.equipItem(qItem, this.pendingQSwapHand || 'left', true);
       }
     }
     // Order C: per-hand regrip + cooldown (windups tick in tickCasts)
@@ -2065,6 +2162,7 @@
     this.toggling = false;
     this.toggleTimer = 0;
     this.pendingQSwap = null;              // Order B: hands themselves persist through death
+    this.pendingQSwapHand = 'left';
     this.cast = { main: newCastState(), off: newCastState() };   // Order C: both hands
     this.armedTimer = 0;
     this.crossArmed = false;
@@ -2074,6 +2172,11 @@
     if (this.anim) this.anim.revive();
     if (this.body && !this.anim) { this.body.rotation.x = 0; this.body.rotation.y = this.atkYawOffset; }
   };
+
+  // AB1: action bar validation, shared with the HUD map loader / picker
+  Player.validActionEntry = validActionEntry;
+  Player.isBindableItem = isBindableItem;
+  Player.isSpellId = isSpellId;
 
   window.WH_Player = Player;
 })();

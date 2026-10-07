@@ -318,23 +318,68 @@ html, body {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 10px;
+  padding: 4px 10px;
   background: rgba(0, 0, 0, 0.55);
   border: 1px solid #5a5344;
   border-radius: 3px;
   font-family: monospace;
+  /* AB1: the bar is pressable (tap / click / long-press / right-click); the
+     HUD layer itself stays click-through. No z-index: the inventory / cook
+     / camp modals (20+) keep covering it. */
+  pointer-events: auto;
 }
 
+/* AB1: 34px slots around a 24px icon (48px art at 1/2 - 1:1 on 2x screens);
+   the slot digit sits in the corner */
 .belt-slot {
-  width: 30px;
-  height: 30px;
-  line-height: 30px;
+  position: relative;
+  box-sizing: border-box;
+  width: 34px;
+  height: 34px;
+  line-height: 32px;
   text-align: center;
-  font-size: 13px;
+  font-size: 12px;
   color: #6a6350;
   border: 1px solid #3d382e;
   border-radius: 2px;
   background: rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: none;
+}
+
+.belt-slot.consumable {
+  cursor: default;
+}
+
+.belt-icon {
+  display: inline-block;
+  vertical-align: middle;
+  line-height: normal;
+  pointer-events: none;
+}
+
+.belt-icon.wh-icon {
+  width: 24px;
+  height: 24px;
+  opacity: 0.55;
+}
+
+.belt-slot.filled .belt-icon.wh-icon {
+  opacity: 1;
+}
+
+.belt-key {
+  position: absolute;
+  left: 2px;
+  bottom: 1px;
+  font-size: 8px;
+  line-height: 8px;
+  color: #8a7f70;
+  text-shadow: 1px 1px 0 #000;
+  pointer-events: none;
 }
 
 .belt-slot.filled {
@@ -344,7 +389,37 @@ html, body {
 
 .belt-slot.selected {
   border-width: 2px;
-  line-height: 28px;
+  line-height: 30px;
+}
+
+/* AB1: the item slot whose item a hand holds - amber accent; .pending =
+   inside its 0.8s swap window */
+.belt-slot.equipped {
+  border: 2px solid #d8b24a;
+  line-height: 30px;
+  background: rgba(216, 178, 74, 0.12);
+}
+
+.belt-slot.pending {
+  border: 2px dashed #d8b24a;
+  line-height: 30px;
+}
+
+/* AB1 glove-gate: spell slot with no implement in hand (or unlearned) -
+   dark and refused on press */
+.belt-slot.dark {
+  filter: grayscale(1) brightness(0.45);
+  opacity: 0.6;
+}
+
+/* AB1: long-press in progress / slot being rebound in the picker */
+.belt-slot.pressing {
+  background: rgba(216, 178, 74, 0.2);
+}
+
+.belt-slot.picking {
+  outline: 2px solid #d8b24a;
+  outline-offset: 2px;
 }
 
 .belt-slot.consumable {
@@ -399,9 +474,8 @@ html, body {
   position: relative;
 }
 
-#wh-belt.stowed .belt-slot:not(.consumable) {
-  opacity: 0.45;
-}
+/* AB1: the whole-row dim is now per slot - spell slots go .belt-slot.dark,
+   item slots stay pressable (the 'S' divider badge below still marks it) */
 
 #wh-belt.stowed .belt-divider.spell-divider::after {
   content: 'S';
@@ -674,6 +748,31 @@ html, body {
   font-size: 13px;
 }
 
+/* AB1: pixel icons (js/icons-data.js, 48px art) on every glyph surface -
+   nearest-neighbour scaling only, never blurred */
+.wh-icon {
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+}
+
+.inv-glyph.wh-icon {
+  top: 0;
+  left: 0;
+  width: 48px;
+  height: 48px;
+}
+
+.inv-bind-cur .inv-glyph.wh-icon {
+  top: 4px;
+  left: 4px;
+  width: 24px;
+  height: 24px;
+}
+
 .inv-bind-cur .inv-hand-name {
   font-size: 12px;
 }
@@ -943,6 +1042,18 @@ html, body {
   background: #c07a3a;
 }
 
+/* AB1: food item icon in place of the glyph chip */
+.buff-icon.wh-icon {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  /* .buff-icon's background shorthand resets these - restate them */
+  background-color: transparent;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
 .buff-time {
   color: #d8b24a;
 }
@@ -1071,4 +1182,119 @@ html, body {
 
 #wh-sleep-fade.on {
   opacity: 1;
+}
+
+/* --- AB1 action bar binding picker (js/game.js openActionPicker): right-
+       click / long-press a bar slot. Darkwood frame like the inventory
+       screen, amber = the ONE accent (current binding). Sits just above the
+       bar (bar 20px + 44px row + gap), above the touch layer (40). --- */
+#wh-action-picker {
+  position: absolute;
+  left: 50%;
+  bottom: 72px;
+  transform: translateX(-50%);
+  display: none;
+  min-width: 200px;
+  max-width: 90vw;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 6px 8px 8px;
+  background: rgba(15, 12, 9, 0.94);
+  border: 2px solid #4a4034;
+  box-shadow: 0 0 0 2px #14110e, inset 0 0 0 1px #2a231b;
+  font-family: monospace;
+  color: #d8d2c0;
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  z-index: 42;
+}
+
+#wh-action-picker.open {
+  display: block;
+}
+
+.ap-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.ap-title {
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #d8b24a;
+}
+
+.ap-close {
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  font-family: monospace;
+  font-size: 12px;
+  color: #c9bf9f;
+  background: #1a1510;
+  border: 2px solid #4a4034;
+  cursor: pointer;
+}
+
+.ap-close:hover {
+  border-color: #c9a94a;
+}
+
+.ap-sec {
+  margin: 6px 0 3px;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #8a7f70;
+}
+
+.ap-none {
+  font-size: 11px;
+  color: #6a6350;
+  padding: 2px 4px;
+}
+
+.ap-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 36px;
+  margin: 2px 0;
+  padding: 2px 6px 2px 2px;
+  font-family: monospace;
+  font-size: 12px;
+  text-align: left;
+  color: #d8d2c0;
+  background: #0f0c09;
+  border: 2px solid #2a241c;
+  cursor: pointer;
+}
+
+.ap-entry:hover {
+  border-color: #5a5344;
+  background: #221c15;
+}
+
+.ap-entry.current {
+  border-color: #d8b24a;
+}
+
+.ap-icon {
+  flex: none;
+  width: 24px;
+  min-height: 24px;
+  line-height: 24px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: bold;
+  color: #c9bf9f;
+}
+
+.ap-icon.wh-icon {
+  height: 24px;
 }
