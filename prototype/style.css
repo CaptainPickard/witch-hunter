@@ -1015,6 +1015,33 @@ html, body {
   justify-content: space-between;
 }
 
+/* C4: cook panel pixel icons (js/icons-data.js via WH_INVENTORY.setIcon),
+   24px like the AB1 belt slots; centered in the 48px pot / ingredient tiles */
+.inv-glyph.cook-icon.wh-icon {
+  top: 12px;
+  left: 12px;
+  width: 24px;
+  height: 24px;
+}
+
+.cook-recipe .cook-icon.wh-icon {
+  display: inline-block;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  vertical-align: middle;
+}
+
+.cook-recipe .inv-spell-name {
+  flex: 1;
+}
+
+.cook-rec-ings {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
 /* C1: buff chips under the bars (game.js updateBuffHud) */
 #wh-buffs {
   display: flex;

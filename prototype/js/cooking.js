@@ -310,7 +310,7 @@
     for (var i = 0; i < 3; i++) {
       (function (i) {
         var s = el('div', 'inv-slot cook-slot');
-        var g = el('span', 'inv-glyph');
+        var g = el('span', 'inv-glyph cook-icon');   // C4: pixel icon (WH_ICONS)
         s.appendChild(g);
         s.title = 'Click to clear';
         s.addEventListener('click', function () { self.clearSlot(i); });
@@ -522,7 +522,7 @@
     for (var i = 0; i < 3; i++) {
       var d = ids[i] ? INV.itemDef(ids[i]) : null;
       this.slotEls[i].root.classList.toggle('filled', !!d);
-      this.slotEls[i].glyph.textContent = d ? d.glyph : '';
+      INV.setIcon(this.slotEls[i].glyph, d ? ids[i] : null, d ? d.glyph : '');
     }
     this.potNameEl.textContent = ids.map(function (id) {
       return id ? INV.itemDef(id).name : '-';
@@ -531,7 +531,8 @@
     this.cookBtn.disabled = busy || ids.indexOf(null) >= 0;
     this.root.classList.toggle('channel', busy);
 
-    // ingredient stacks in the bag (the fuel item is fuel, never a cook slot)
+    // ingredient stacks in the bag (the fuel item is fuel, never a cook slot).
+    // C4: rows show the WH_ICONS pixel icon (AB1 belt pattern, glyph fallback)
     this.ingEl.textContent = '';
     var seen = {};
     this.inv.forEachSlot(function (s) {
@@ -541,7 +542,7 @@
       seen[s.id] = true;
       var free = self.freeCount(s.id);
       var b = el('div', 'inv-slot' + (free > 0 ? ' filled' : ' cook-spent'));
-      b.appendChild(el('span', 'inv-glyph', d.glyph));
+      b.appendChild(INV.iconEl('inv-glyph cook-icon', s.id, d.glyph));
       b.appendChild(el('span', 'inv-count', String(Math.max(0, free))));
       b.title = d.name;
       b.addEventListener('click', function () { self.addToPot(s.id); });
@@ -549,15 +550,21 @@
     });
     if (!this.ingEl.children.length) this.ingEl.appendChild(el('div', 'inv-soon', 'No ingredients'));
 
-    // learned recipes (one-click cook)
+    // learned recipes (one-click cook). C4: result icon before the name,
+    // ingredient icons in place of the glyph text
     this.recEl.textContent = '';
     C.recipes.forEach(function (r) {
       if (!r.known) return;
       var row = el('div', 'inv-spell cook-recipe');
+      var rd = INV.itemDef(r.result);
+      row.appendChild(INV.iconEl('cook-icon', r.result, rd ? rd.glyph : ''));
       row.appendChild(el('span', 'inv-spell-name', r.name));
-      row.appendChild(el('span', 'inv-gear-hands', r.ingredients.map(function (id) {
-        return INV.itemDef(id).glyph;
-      }).join(' + ')));
+      var ings = el('span', 'inv-gear-hands cook-rec-ings');
+      r.ingredients.forEach(function (id, k) {
+        if (k) ings.appendChild(el('span', 'cook-rec-plus', '+'));
+        ings.appendChild(INV.iconEl('cook-icon', id, INV.itemDef(id).glyph));
+      });
+      row.appendChild(ings);
       row.title = 'Cook ' + r.name;
       row.addEventListener('click', function () { self.cookRecipe(r); });
       self.recEl.appendChild(row);
