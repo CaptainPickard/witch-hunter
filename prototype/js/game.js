@@ -251,6 +251,16 @@
     document.getElementById('wh-bars').appendChild(focusOuter);
     game.hud.focusBar = focusFill;
 
+    // L1 S6: slim XP pip above the HP bar (level progress). Pure read of
+    // window.WH_LEVEL.xpFrac() in updateHud - no other coupling.
+    var xpPip = document.createElement('div');
+    xpPip.id = 'wh-xp-pip';
+    var xpFill = document.createElement('div');
+    xpFill.id = 'wh-xp-pip-fill';
+    xpPip.appendChild(xpFill);
+    document.getElementById('wh-bars').appendChild(xpPip);
+    game.hud.xpPip = xpFill;
+
     // C1: buff chip row under the bars (icon + remaining time), one chip per
     // active buff, rebuilt only when the set changes (updateBuffHud)
     game.hud.hpBarOuter = document.getElementById('wh-hp-bar-outer');
@@ -745,6 +755,10 @@
     game.hud.hpBarOuter.style.width = (p.hpMax / CFG.player.hpMax * 100) + '%';
     updateBuffHud();
     game.hud.stamBar.style.width = (p.stamina / p.staminaMax * 100) + '%';
+    // L1 S6: XP pip = xp / xpForNext(level) fraction (WH_LEVEL owns the math)
+    if (game.hud.xpPip && window.WH_LEVEL) {
+      game.hud.xpPip.style.width = Math.round(window.WH_LEVEL.xpFrac() * 100) + '%';
+    }
     // v7: armed state = weapon emissive pulse while armedTimer > 0. p.sword is
     // the ground-align holder Group, so pulse the materials of its meshes.
     if (p.sword) {

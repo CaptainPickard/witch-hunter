@@ -618,6 +618,21 @@ html, body {
 }
 
 /* L1: CHARACTER tab level / stats / skills column (inventory.js renderLeveling) */
+/* L1 S6 (IO): slim XP pip above the HP bar (level progress; updateHud width) */
+#wh-xp-pip {
+  height: 4px;
+  width: 100%;
+  background: #14110e;
+  border: 1px solid #3d382e;
+  margin-bottom: 3px;
+}
+
+#wh-xp-pip-fill {
+  height: 100%;
+  width: 0%;
+  background: #d8b24a;
+}
+
 .inv-lvl-col {
   width: 230px;
   max-height: 62vh;
