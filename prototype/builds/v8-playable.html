@@ -96884,13 +96884,19 @@ window.WH_ICONS = {
     var c = this.menuCamp;
     if (!c || this.resting) return;
     var self = this, ms = K.sleepFadeSec * 1000;
-    if (this.writeProfile(c)) this.toast(CFG.save.text.saved);   // C4: profile first
+    // C4.1 (IO amend, doc 35 law "camps save on completion"): the profile
+    // write moved to AFTER rest() - the checkpoint is the WAKE state
+    // (healed, dawn, meal cleared, respawn here), not the pre-rest state.
+    // LOAD after a rest must NOT undo the rest.
     this.resting = true;
     this.menuEl.classList.remove('open');   // menu gone, suspension held
     if (this.dayNight.prepareWake) this.dayNight.prepareWake();
     this.fadeEl.classList.add('on');
     setTimeout(function () {
-      if (self.player.state === 'alive') self.rest(c);
+      if (self.player.state === 'alive') {
+        self.rest(c);
+        if (self.writeProfile(c)) self.toast(CFG.save.text.saved);   // C4.1: wake-state checkpoint
+      }
       self.fadeEl.classList.remove('on');
       setTimeout(function () {
         self.resting = false;
