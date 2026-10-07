@@ -1023,6 +1023,33 @@ html, body {
   justify-content: space-between;
 }
 
+/* C4: cook panel pixel icons (js/icons-data.js via WH_INVENTORY.setIcon),
+   24px like the AB1 belt slots; centered in the 48px pot / ingredient tiles */
+.inv-glyph.cook-icon.wh-icon {
+  top: 12px;
+  left: 12px;
+  width: 24px;
+  height: 24px;
+}
+
+.cook-recipe .cook-icon.wh-icon {
+  display: inline-block;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  vertical-align: middle;
+}
+
+.cook-recipe .inv-spell-name {
+  flex: 1;
+}
+
+.cook-rec-ings {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
 /* C1: buff chips under the bars (game.js updateBuffHud) */
 #wh-buffs {
   display: flex;
@@ -1155,6 +1182,38 @@ html, body {
 
 .camp-menu-btn {
   height: 36px;
+}
+
+/* C4: LOAD row while no save exists (still clickable: refusal toast) */
+.camp-menu-btn.dim {
+  color: #5a5344;
+  border-color: #2a241c;
+}
+
+/* C4: boot CONTINUE / NEW GAME rows under the boot bar (only with a save).
+   #wh-hud is pointer-events: none - the rows opt back in. */
+#wh-boot-rows {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  margin-top: 22px;
+  width: 220px;
+  pointer-events: auto;
+}
+
+#wh-load-note.hidden #wh-boot-rows {
+  pointer-events: none;
+}
+
+.boot-row-btn {
+  height: 36px;
+  touch-action: manipulation;
+}
+
+.boot-row-btn.boot-continue {
+  border-color: #d8b24a;
+  color: #d8d2c0;
 }
 
 #wh-camp-place {
@@ -87623,6 +87682,24 @@ window.WH_CONFIG = {
     pickerExclude: ['bandage']        // consumables stay on R/T; gear-only picker
   },
 
+  // C4 (2026-10-06) save profile (js/save.js WH_SAVE): ONE rolling profile
+  // in localStorage under lsKey, every save overwrites. Written by the camp
+  // menu Save / Save and Heal and on page quit (once a cycle has begun);
+  // death writes nothing. Schema v1 = { v, ts, player, inventory, cooking,
+  // camp, world } - fresh world spawns (trees / nodes / enemies) are never
+  // saved. version guards future migrations (a mismatched v loads as none).
+  save: {
+    lsKey: 'wh-save-v1',
+    version: 1,
+    text: {
+      saved: 'Saved.',
+      noSave: 'No save yet',
+      load: 'LOAD',                   // camp menu row (dim until a save exists)
+      continue: 'CONTINUE',           // boot overlay rows (only when a save exists)
+      newGame: 'NEW GAME'
+    }
+  },
+
   // v7: loadout toggle (commit window, doc 04 ruling part C)
   loadout: {
     toggleSeconds: 0.8                // cannot attack/cast/block/roll during toggle
@@ -90907,7 +90984,7 @@ window.WH_ICONS = {
     for (var i = 0; i < 3; i++) {
       (function (i) {
         var s = el('div', 'inv-slot cook-slot');
-        var g = el('span', 'inv-glyph');
+        var g = el('span', 'inv-glyph cook-icon');   // C4: pixel icon (WH_ICONS)
         s.appendChild(g);
         s.title = 'Click to clear';
         s.addEventListener('click', function () { self.clearSlot(i); });
@@ -91119,7 +91196,7 @@ window.WH_ICONS = {
     for (var i = 0; i < 3; i++) {
       var d = ids[i] ? INV.itemDef(ids[i]) : null;
       this.slotEls[i].root.classList.toggle('filled', !!d);
-      this.slotEls[i].glyph.textContent = d ? d.glyph : '';
+      INV.setIcon(this.slotEls[i].glyph, d ? ids[i] : null, d ? d.glyph : '');
     }
     this.potNameEl.textContent = ids.map(function (id) {
       return id ? INV.itemDef(id).name : '-';
@@ -91128,7 +91205,8 @@ window.WH_ICONS = {
     this.cookBtn.disabled = busy || ids.indexOf(null) >= 0;
     this.root.classList.toggle('channel', busy);
 
-    // ingredient stacks in the bag (the fuel item is fuel, never a cook slot)
+    // ingredient stacks in the bag (the fuel item is fuel, never a cook slot).
+    // C4: rows show the WH_ICONS pixel icon (AB1 belt pattern, glyph fallback)
     this.ingEl.textContent = '';
     var seen = {};
     this.inv.forEachSlot(function (s) {
@@ -91138,7 +91216,7 @@ window.WH_ICONS = {
       seen[s.id] = true;
       var free = self.freeCount(s.id);
       var b = el('div', 'inv-slot' + (free > 0 ? ' filled' : ' cook-spent'));
-      b.appendChild(el('span', 'inv-glyph', d.glyph));
+      b.appendChild(INV.iconEl('inv-glyph cook-icon', s.id, d.glyph));
       b.appendChild(el('span', 'inv-count', String(Math.max(0, free))));
       b.title = d.name;
       b.addEventListener('click', function () { self.addToPot(s.id); });
@@ -91146,15 +91224,21 @@ window.WH_ICONS = {
     });
     if (!this.ingEl.children.length) this.ingEl.appendChild(el('div', 'inv-soon', 'No ingredients'));
 
-    // learned recipes (one-click cook)
+    // learned recipes (one-click cook). C4: result icon before the name,
+    // ingredient icons in place of the glyph text
     this.recEl.textContent = '';
     C.recipes.forEach(function (r) {
       if (!r.known) return;
       var row = el('div', 'inv-spell cook-recipe');
+      var rd = INV.itemDef(r.result);
+      row.appendChild(INV.iconEl('cook-icon', r.result, rd ? rd.glyph : ''));
       row.appendChild(el('span', 'inv-spell-name', r.name));
-      row.appendChild(el('span', 'inv-gear-hands', r.ingredients.map(function (id) {
-        return INV.itemDef(id).glyph;
-      }).join(' + ')));
+      var ings = el('span', 'inv-gear-hands cook-rec-ings');
+      r.ingredients.forEach(function (id, k) {
+        if (k) ings.appendChild(el('span', 'cook-rec-plus', '+'));
+        ings.appendChild(INV.iconEl('cook-icon', id, INV.itemDef(id).glyph));
+      });
+      row.appendChild(ings);
       row.title = 'Cook ' + r.name;
       row.addEventListener('click', function () { self.cookRecipe(r); });
       self.recEl.appendChild(row);
@@ -96534,7 +96618,7 @@ window.WH_ICONS = {
 // A camp = MODULE ROWS (CONFIG.camp.modules / worldCamps): one prop + one
 // interact hook each. 'cook' registers a cooking station row through
 // WH_COOKING Cooking.addStation (same row shape as the bandit fire - CAMP
-// GROWTH LAW); 'sleep' opens the TENT MENU (Save / Save and Heal). Future
+// GROWTH LAW); 'sleep' opens the TENT MENU (Save / Save and Heal / C4 Load). Future
 // modules (chest, bench, warp) = a new row + a new hook.
 // The manager owns: the deploy gate (cooking.kitAcquired), placement mode
 // (red ghost on the ground, clearance check = the gather-node rules), the
@@ -96642,7 +96726,9 @@ window.WH_ICONS = {
     this.toast = opts.toast;
     this.applyBuffStats = opts.applyBuffStats;
     this.onOpenChange = opts.onOpenChange || function () {};
-    this.sites = [];                  // deployed kits (session-only; C4 saves them)
+    // C4 save profile (game.js over js/save.js WH_SAVE): { has(), save(camp), restore() }
+    this.profile = opts.profile || null;
+    this.sites = [];                  // deployed kits (C4: the save profile stores them)
     this.siteSeq = 0;
     this.worldCamps = K.worldCamps.map(function (wc) {
       return { id: wc.id, regionId: wc.regionId, world: true, group: null,
@@ -96725,14 +96811,17 @@ window.WH_ICONS = {
     root.appendChild(panel);
     panel.appendChild(el('div', 'inv-title', T.menuTitle));
     var rows = el('div', 'cook-btns camp-menu-btns');
+    // C4: LOAD row (CONFIG.save.text.load), dim while no save exists
     [[T.save, function () { self.save(); }],
      [T.saveHeal, function () { self.saveAndHeal(); }],
+     [CFG.save.text.load, function () { self.load(); }, 'load'],
      [T.cancel, function () { self.setMenu(null); }]].forEach(function (b) {
       var btn = el('button', 'cook-btn camp-menu-btn', b[0]);
       btn.type = 'button';
       btn.tabIndex = -1;
       btn.addEventListener('click', b[1]);
       rows.appendChild(btn);
+      if (b[2] === 'load') self.loadBtn = btn;
     });
     panel.appendChild(rows);
     panel.appendChild(el('div', 'inv-hint', 'Esc cancel'));
@@ -96746,17 +96835,38 @@ window.WH_ICONS = {
     if (!!this.menuCamp === open && this.menuCamp === camp) return;
     var was = !!this.menuCamp;
     this.menuCamp = camp || null;
+    if (open && this.loadBtn) this.loadBtn.classList.toggle('dim', !this.hasSave());
     this.menuEl.classList.toggle('open', open);
     if (was !== open) this.onOpenChange(open);
+  };
+
+  Camp.prototype.hasSave = function () {
+    return !!(this.profile && this.profile.has());
+  };
+
+  // C4: both save rows write the profile FIRST (respawn = this camp's), then
+  // run their existing behavior unchanged.
+  Camp.prototype.writeProfile = function (c) {
+    return !!(this.profile && this.profile.save(c));
   };
 
   // Save: respawn point only. No heal, no buff / meal change, no clock change.
   Camp.prototype.save = function () {
     var c = this.menuCamp;
     if (!c) return;
+    var saved = this.writeProfile(c);
     this.setRespawn(c);
     this.setMenu(null);
-    this.toast(K.text.savedToast);
+    this.toast(saved ? CFG.save.text.saved + ' ' + K.text.savedToast : K.text.savedToast);
+  };
+
+  // C4 LOAD: no save = refusal toast (menu stays); else the menu closes and
+  // the last saved profile replaces the live state.
+  Camp.prototype.load = function () {
+    if (!this.menuCamp || this.resting) return;
+    if (!this.hasSave()) { this.toast(CFG.save.text.noSave); return; }
+    this.setMenu(null);
+    this.profile.restore();
   };
 
   Camp.prototype.setRespawn = function (c) {
@@ -96774,6 +96884,7 @@ window.WH_ICONS = {
     var c = this.menuCamp;
     if (!c || this.resting) return;
     var self = this, ms = K.sleepFadeSec * 1000;
+    if (this.writeProfile(c)) this.toast(CFG.save.text.saved);   // C4: profile first
     this.resting = true;
     this.menuEl.classList.remove('open');   // menu gone, suspension held
     if (this.dayNight.prepareWake) this.dayNight.prepareWake();
@@ -97108,6 +97219,290 @@ window.WH_ICONS = {
   window.WH_CAMP = {
     Camp: Camp
   };
+})();
+
+</script>
+<script>
+// Witch Hunter prototype - save profile (C4, io/missions/2026-10-06-cc-c4-save-profile.md).
+// ONE rolling profile in localStorage (CONFIG.save.lsKey 'wh-save-v1'),
+// JSON schema v1 = { v, ts, player, inventory, cooking, camp, world }.
+// Every save overwrites; load = last save wins. Fresh world spawns (trees,
+// gather nodes, enemies) are never saved. Buffs are derived state: only the
+// dayMeal slot (buff id + day) is stored, applyBuffStats recomputes hpMax.
+// MAGIC CANON: spells are learned knowledge - the belt + per-hand bindings
+// restore exactly as saved (AB1.1 select semantics untouched).
+// All reads / writes go through the existing managers on the game object;
+// game.js hands over the few local helpers it owns as game.c4 =
+// { applyBuffStats, switchRegion, breakLockOn, reloadActionMap }.
+// Exposes window.WH_SAVE:
+//   capture(game, opts) -> plain profile object (opts.respawnCamp: the camp
+//                          the menu Save runs on - its respawn is stored)
+//   restore(game, data)  apply a profile (scene ready, after boot)
+//   save(game, opts)     write { v, ts, ...capture } -> true on success
+//   load(game)           stored profile | null (missing / corrupt / other v)
+//   has()                a loadable profile exists
+
+(function () {
+  'use strict';
+
+  var CFG = window.WH_CONFIG;
+  var S = CFG.save;
+
+  function num(v, fallback) {
+    return typeof v === 'number' && isFinite(v) ? v : fallback;
+  }
+
+  function copyRespawn(r) {
+    if (!r) return null;
+    return { regionId: r.regionId, x: r.x, z: r.z,
+      face: r.face ? { x: r.face.x, z: r.face.z } : null, campId: r.campId };
+  }
+
+  function validRegion(rid) {
+    return !!(rid && window.WH_REGION_DEFS.regions[rid]);
+  }
+
+  // Gear item id that may sit in hand (same rules as Player.equipItem,
+  // minus the inventory source check - the profile is the source).
+  function validHandItem(id, hand) {
+    var d = id && CFG.items[id];
+    if (!d || d.category !== 'gear' || !d.hands || d.hands.indexOf(hand) < 0) return false;
+    return !(!d.mesh && (d.kind === 'shield' || d.kind === 'melee'));
+  }
+
+  function isSpell(id) {
+    var s = id && CFG.spell[id];
+    return !!(s && typeof s === 'object' && s.kind);
+  }
+
+  // ---- capture ---------------------------------------------------------------------
+
+  function capture(game, opts) {
+    opts = opts || {};
+    var p = game.player, dn = game.dayNight, ck = game.cooking, camp = game.camp;
+    var rm = game.regionManager;
+    var actionMap = null;
+    try { actionMap = window.localStorage.getItem(CFG.actionbar.lsKey); } catch (e) { actionMap = null; }
+    var mealBuff = null;
+    ck.buffs.list().forEach(function (b) {
+      var def = CFG.cooking.buffs[b.id];
+      if (def && def.dayMeal) mealBuff = b.id;
+    });
+    var respawn = opts.respawnCamp ? opts.respawnCamp.respawn : camp.respawn;
+    return {
+      player: {
+        hp: p.hp, focus: p.focus, stamina: p.stamina,
+        regionId: rm.logic.activeId,
+        pos: [p.pos.x, p.pos.z],
+        yaw: p.yaw,
+        hands: { right: p.hands.right, left: p.hands.left },
+        belt: p.belt.slice(),
+        bindings: { main: p.bindings.main, off: p.bindings.off },
+        actionMap: actionMap,       // raw CONFIG.actionbar.lsKey JSON (string | null)
+        consumables: p.getConsumables()
+      },
+      inventory: {
+        items: game.inventory.slots.map(function (s) { return s ? { id: s.id, count: s.count } : null; })
+      },
+      cooking: {
+        recipes: CFG.cooking.recipes.filter(function (r) { return r.known; })
+          .map(function (r) { return r.id; }),
+        kitAcquired: !!ck.kitAcquired,
+        dayMeal: { buffId: mealBuff, savedDay: ck.mealDay }
+      },
+      camp: {
+        sites: camp.sites.map(function (s) {
+          return { id: s.id, regionId: s.regionId, x: s.x, z: s.z, face: { x: s.f.x, z: s.f.z } };
+        }),
+        respawn: copyRespawn(respawn)
+      },
+      world: { day: dn.day, phase: dn.phase, timeOfDay: dn.timeOfDay }
+    };
+  }
+
+  // ---- storage ---------------------------------------------------------------------
+
+  function save(game, opts) {
+    var data = capture(game, opts);
+    data.v = S.version;
+    data.ts = Date.now();
+    try {
+      window.localStorage.setItem(S.lsKey, JSON.stringify(data));
+      return true;
+    } catch (e) {
+      return false;                 // private mode / quota: nothing persists
+    }
+  }
+
+  // version guard: only v === CONFIG.save.version loads (future migrations
+  // slot in here, keyed by data.v)
+  function load() {
+    var data = null;
+    try { data = JSON.parse(window.localStorage.getItem(S.lsKey) || 'null'); } catch (e) { data = null; }
+    if (!data || typeof data !== 'object' || data.v !== S.version) return null;
+    if (!data.player || !data.inventory || !data.cooking || !data.camp || !data.world) return null;
+    return data;
+  }
+
+  function has() {
+    return !!load();
+  }
+
+  // internal only (no wipe surface this round, C4 ruling 5)
+  function wipe() {
+    try { window.localStorage.removeItem(S.lsKey); } catch (e) { /* nothing to wipe */ }
+  }
+
+  // ---- restore ---------------------------------------------------------------------
+
+  // Clock: the look is recomputed by one zero-dt tick at the saved time of
+  // day; TUTORIAL LAW - a profile still on the dormant boot night (day 0 on
+  // startPhase) restores dormant, so the first Save and Heal stays the only
+  // beginCycle() caller.
+  function restoreClock(dn, w) {
+    var D = CFG.dayNight, len = D.dayLengthSec;
+    var day = Math.max(0, Math.floor(num(w.day, 0)));
+    var dormant = !(w.phase !== D.startPhase || day > 0);
+    dn.day = day;
+    dn.dormant = false;
+    dn.fresh = false;
+    dn.clock = dormant ? D.bounds[D.startPhase] * len + D.blendSec :
+      Math.min(Math.max(num(w.timeOfDay, 0), 0), 0.999999) * len;
+    dn.tick(0);                      // phase / timeOfDay / blended look at the saved time
+    if (dormant) {
+      dn.dormant = true;
+      dn.clock = 0;
+      dn.phase = D.startPhase;
+      dn.timeOfDay = D.bounds[D.startPhase];
+    }
+    if (dn.sky) dn.sky.retarget('time');   // this day's pano variant
+  }
+
+  function restore(game, data) {
+    if (!data) return;
+    var p = game.player, ck = game.cooking, camp = game.camp, inv = game.inventory;
+    var hooks = game.c4 || {};
+    var P = data.player, I = data.inventory, C = data.cooking, K = data.camp;
+
+    // modal / in-flight state the profile replaces (no refunds: the
+    // inventory is overwritten below)
+    if (camp.placing) camp.stopPlacing();
+    if (ck.channel) { ck.channel.station.cooking = false; ck.channel = null; }
+    if (ck.open) ck.setOpen(false);
+    if (hooks.breakLockOn) hooks.breakLockOn();
+
+    // 1) inventory first (slot layout as saved)
+    var items = Array.isArray(I.items) ? I.items : [];
+    for (var i = 0; i < inv.slots.length; i++) {
+      var s = items[i];
+      inv.slots[i] = s && CFG.items[s.id] && num(s.count, 0) > 0 ?
+        { id: s.id, count: Math.floor(s.count) } : null;
+    }
+
+    // 2) hands: the saved ids overwrite; a hand MISSING from the profile
+    // takes its CONFIG.equip.defaultHands item (equipItem path). Re-applied
+    // through handsChanged -> applyHandVisuals with a regrip reset.
+    var H = P.hands || {};
+    p.toggling = false;
+    p.toggleTimer = 0;
+    p.pendingQSwap = null;
+    p.dropPendingCast('main');
+    p.dropPendingCast('off');
+    p.hands = { right: null, left: null };
+    p.lastHandItems = { right: null, left: null };
+    ['right', 'left'].forEach(function (h) {
+      if (H[h] !== undefined && H[h] !== null && validHandItem(H[h], h)) p.hands[h] = H[h];
+    });
+    p.handsChanged();
+    var dh = CFG.equip.defaultHands;
+    ['right', 'left'].forEach(function (h) {
+      if (H[h] === undefined && dh[h]) p.equipItem(dh[h], h);
+    });
+    inv.changed();
+
+    // 3) belt + per-hand bindings exactly as saved (AB1.1 semantics LOCKED)
+    var slots = CFG.belt.slots;
+    if (Array.isArray(P.belt)) {
+      p.belt = [];
+      for (var b = 0; b < slots; b++) p.belt.push(isSpell(P.belt[b]) ? P.belt[b] : null);
+    }
+    var bd = P.bindings || {};
+    ['main', 'off'].forEach(function (role) {
+      var v = Math.floor(num(bd[role], 0));
+      p.bindings[role] = v >= 0 && v < slots ? v : 0;
+    });
+    if (Array.isArray(P.consumables)) {
+      p.consumables = P.consumables.map(function (c) {
+        return c && typeof c.id === 'string' ? { id: c.id, charges: Math.max(0, Math.floor(num(c.charges, 0))) } : null;
+      });
+    }
+    // the action-bar map rides inside the profile; its own key stays the
+    // live store (bar edits persist independently of wh-save-v1)
+    if (typeof P.actionMap === 'string') {
+      try { window.localStorage.setItem(CFG.actionbar.lsKey, P.actionMap); } catch (e) { /* no storage */ }
+      if (hooks.reloadActionMap) hooks.reloadActionMap();
+    }
+
+    // 4) cooking knowledge + the campsite kit
+    var known = Array.isArray(C.recipes) ? C.recipes : [];
+    CFG.cooking.recipes.forEach(function (r) { r.known = known.indexOf(r.id) >= 0; });
+    ck.kitAcquired = !!C.kitAcquired;
+    if (ck.kitBtn) ck.kitBtn.style.display = ck.kitAcquired ? '' : 'none';
+
+    // 5) clock (before the meal slot: savedDay compares against it)
+    restoreClock(game.dayNight, data.world);
+
+    // 6) camp sites through the manager's own builder (place(); groups are
+    // built lazily by camp.update in their region), then the respawn point
+    camp.sites.slice().forEach(function (site) { camp.packUp(site); });
+    (Array.isArray(K.sites) ? K.sites : []).forEach(function (st) {
+      if (!st || !validRegion(st.regionId)) return;
+      var f = st.face || { x: 0, z: 1 };
+      var fl = Math.sqrt(num(f.x, 0) * num(f.x, 0) + num(f.z, 0) * num(f.z, 0));
+      f = fl > 1e-6 ? { x: f.x / fl, z: f.z / fl } : { x: 0, z: 1 };
+      var seq = parseInt(String(st.id || '').replace(/^camp/, ''), 10);
+      if (seq > 0) camp.siteSeq = seq - 1;           // same site id as saved
+      camp.place(st.regionId, num(st.x, 0), num(st.z, 0), f);
+    });
+    camp.siteSeq = camp.sites.reduce(function (m, s) {
+      return Math.max(m, parseInt(s.id.replace(/^camp/, ''), 10) || 0);
+    }, camp.siteSeq);
+    camp.respawn = K.respawn && validRegion(K.respawn.regionId) ? copyRespawn(K.respawn) : null;
+
+    // 7) dayMeal slot (meal day + its buff), then the derived stats
+    ck.buffs.clear();
+    ck.mealDay = Math.floor(num(C.dayMeal && C.dayMeal.savedDay, -1));
+    var mb = C.dayMeal && C.dayMeal.buffId;
+    if (mb && CFG.cooking.buffs[mb] && ck.mealDay === game.dayNight.day) ck.buffs.add(mb);
+
+    // 8) teleport (region first), then pools clamped to the maxes
+    var rid = validRegion(P.regionId) ? P.regionId : game.regionManager.logic.activeId;
+    if (rid !== game.regionManager.logic.activeId && hooks.switchRegion) hooks.switchRegion(rid);
+    var pos = Array.isArray(P.pos) ? P.pos : [p.pos.x, p.pos.z];
+    p.respawnAt(num(pos[0], p.pos.x), num(pos[1], p.pos.z));   // alive, combat state cleared
+    var yaw = num(P.yaw, p.yaw);
+    p.yaw = yaw;
+    p.camYaw = yaw + Math.PI;
+    if (p.yawFrame) p.yawFrame.rotation.y = yaw;
+    // respawnAt reset both hands' cast state: the restored implements re-grip
+    if (p.isCasterHand('right')) p.cast.main.regrip = CFG.belt.regripSeconds;
+    if (p.isCasterHand('left')) p.cast.off.regrip = CFG.belt.regripSeconds;
+    if (hooks.applyBuffStats) hooks.applyBuffStats();
+    p.hp = Math.min(p.hpMax, Math.max(1, num(P.hp, p.hpMax)));
+    p.focus = Math.min(p.focusMax, Math.max(0, num(P.focus, p.focusMax)));
+    p.stamina = Math.min(p.staminaMax, Math.max(0, num(P.stamina, p.staminaMax)));
+    ck.lastHp = p.hp;                // no phantom cook-interrupt hit
+    if (game.inventoryUI) game.inventoryUI.render();
+  }
+
+  window.WH_SAVE = {
+    capture: capture,
+    restore: restore,
+    save: save,
+    load: load,
+    has: has
+  };
+  void wipe;                        // wipe() stays internal: no UI / key / export reaches it
 })();
 
 </script>
@@ -99754,6 +100149,7 @@ window.WH_ICONS = {
     };
 
     setupDebugHooks();
+    setupSaveHooks();     // C4: game.c4 restore helpers + quit persist
 
     window.WH_ASSETS.preloadAll().then(function () {
       // player body + weapon. Normalize to CFG.world.characterHeight
@@ -99794,21 +100190,86 @@ window.WH_ICONS = {
         onOpenChange: function (open) {
           game.inventoryUI.blocked = open;
           game.player.setInputSuspended(open);
+        },
+        // C4 save profile (js/save.js): camp menu Save / Save and Heal / LOAD
+        profile: {
+          has: function () { return window.WH_SAVE.has(); },
+          save: function (c) { return window.WH_SAVE.save(game, { respawnCamp: c }); },
+          restore: function () { window.WH_SAVE.restore(game, window.WH_SAVE.load(game)); }
         }
       });
-      // 2026-10-03: smooth fade-out of the boot overlay from CONFIG
-      // (hud.bootOverlayFadeMs); .hidden also releases pointer-events, and
-      // game.hud.loadNote stays in the DOM for any later reuse.
-      var fadeMs = (CFG.hud && typeof CFG.hud.bootOverlayFadeMs === 'number') ?
-        CFG.hud.bootOverlayFadeMs : 900;
-      game.hud.loadNote.style.transition =
-        'opacity ' + (fadeMs / 1000) + 's ease';
-      game.hud.loadNote.classList.add('hidden');
-
-      game.running = true;
-      game.lastFrame = performance.now();
-      requestAnimationFrame(loop);
+      // C4 boot CONTINUE: with a save the overlay waits for the player's row
+      // (CONTINUE = restore the profile, NEW GAME = the fresh flow; the
+      // profile is never wiped - the first camp save replaces it). The
+      // profile is only read here, after every asset settled.
+      if (window.WH_SAVE.has()) showBootRows(enterWorld);
+      else enterWorld(false);
     });
+  }
+
+  // C4: local helpers WH_SAVE.restore drives (game.c4)
+  function setupSaveHooks() {
+    game.c4 = {
+      entered: false,               // the world is live (boot rows handled)
+      applyBuffStats: applyBuffStats,
+      switchRegion: switchRegion,
+      breakLockOn: breakLockOn,
+      reloadActionMap: function () { game.actionMap = loadActionMap(); }
+    };
+    // S5 quit persist: tab close / reload writes the same capture() profile,
+    // once, best-effort and quiet - only once a cycle has begun (day > 0 or
+    // a deployed camp), never on a fresh untouched boot, never while dead.
+    var quitSaved = false;
+    function quitPersist() {
+      if (quitSaved || !game.c4.entered || !game.player || game.player.state !== 'alive') return;
+      if (!(game.dayNight.day > 0 || game.camp.sites.length > 0)) return;
+      quitSaved = true;
+      window.WH_SAVE.save(game);
+    }
+    window.addEventListener('beforeunload', quitPersist);
+    window.addEventListener('pagehide', quitPersist);
+    window.addEventListener('pageshow', function (e) { if (e.persisted) quitSaved = false; });
+  }
+
+  // C4: CONTINUE / NEW GAME rows under the boot bar (assets already settled)
+  function showBootRows(done) {
+    var T = CFG.save.text;
+    game.hud.bootSub.textContent = '';
+    var rows = document.createElement('div');
+    rows.id = 'wh-boot-rows';
+    [[T.continue, true], [T.newGame, false]].forEach(function (r) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.tabIndex = -1;
+      btn.className = 'cook-btn boot-row-btn' + (r[1] ? ' boot-continue' : '');
+      btn.textContent = r[0];
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (rows.parentNode) rows.parentNode.removeChild(rows);
+        done(r[1]);
+      });
+      rows.appendChild(btn);
+    });
+    game.hud.loadNote.appendChild(rows);
+  }
+
+  // Boot tail: restore (CONTINUE) on the ready scene, fade the overlay, run.
+  function enterWorld(cont) {
+    if (cont) window.WH_SAVE.restore(game, window.WH_SAVE.load(game));
+    game.c4.entered = true;
+    // 2026-10-03: smooth fade-out of the boot overlay from CONFIG
+    // (hud.bootOverlayFadeMs); .hidden also releases pointer-events, and
+    // game.hud.loadNote stays in the DOM for any later reuse.
+    var fadeMs = (CFG.hud && typeof CFG.hud.bootOverlayFadeMs === 'number') ?
+      CFG.hud.bootOverlayFadeMs : 900;
+    game.hud.loadNote.style.transition =
+      'opacity ' + (fadeMs / 1000) + 's ease';
+    game.hud.loadNote.classList.add('hidden');
+
+    game.running = true;
+    game.lastFrame = performance.now();
+    requestAnimationFrame(loop);
   }
 
   // R2 P1-8: light socket registry. Static sockets come from the CONFIG props
