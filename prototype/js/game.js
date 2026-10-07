@@ -1930,6 +1930,7 @@
     };
 
     setupDebugHooks();
+    setupSaveHooks();     // C4: game.c4 restore helpers + quit persist
 
     window.WH_ASSETS.preloadAll().then(function () {
       // player body + weapon. Normalize to CFG.world.characterHeight
@@ -1970,21 +1971,86 @@
         onOpenChange: function (open) {
           game.inventoryUI.blocked = open;
           game.player.setInputSuspended(open);
+        },
+        // C4 save profile (js/save.js): camp menu Save / Save and Heal / LOAD
+        profile: {
+          has: function () { return window.WH_SAVE.has(); },
+          save: function (c) { return window.WH_SAVE.save(game, { respawnCamp: c }); },
+          restore: function () { window.WH_SAVE.restore(game, window.WH_SAVE.load(game)); }
         }
       });
-      // 2026-10-03: smooth fade-out of the boot overlay from CONFIG
-      // (hud.bootOverlayFadeMs); .hidden also releases pointer-events, and
-      // game.hud.loadNote stays in the DOM for any later reuse.
-      var fadeMs = (CFG.hud && typeof CFG.hud.bootOverlayFadeMs === 'number') ?
-        CFG.hud.bootOverlayFadeMs : 900;
-      game.hud.loadNote.style.transition =
-        'opacity ' + (fadeMs / 1000) + 's ease';
-      game.hud.loadNote.classList.add('hidden');
-
-      game.running = true;
-      game.lastFrame = performance.now();
-      requestAnimationFrame(loop);
+      // C4 boot CONTINUE: with a save the overlay waits for the player's row
+      // (CONTINUE = restore the profile, NEW GAME = the fresh flow; the
+      // profile is never wiped - the first camp save replaces it). The
+      // profile is only read here, after every asset settled.
+      if (window.WH_SAVE.has()) showBootRows(enterWorld);
+      else enterWorld(false);
     });
+  }
+
+  // C4: local helpers WH_SAVE.restore drives (game.c4)
+  function setupSaveHooks() {
+    game.c4 = {
+      entered: false,               // the world is live (boot rows handled)
+      applyBuffStats: applyBuffStats,
+      switchRegion: switchRegion,
+      breakLockOn: breakLockOn,
+      reloadActionMap: function () { game.actionMap = loadActionMap(); }
+    };
+    // S5 quit persist: tab close / reload writes the same capture() profile,
+    // once, best-effort and quiet - only once a cycle has begun (day > 0 or
+    // a deployed camp), never on a fresh untouched boot, never while dead.
+    var quitSaved = false;
+    function quitPersist() {
+      if (quitSaved || !game.c4.entered || !game.player || game.player.state !== 'alive') return;
+      if (!(game.dayNight.day > 0 || game.camp.sites.length > 0)) return;
+      quitSaved = true;
+      window.WH_SAVE.save(game);
+    }
+    window.addEventListener('beforeunload', quitPersist);
+    window.addEventListener('pagehide', quitPersist);
+    window.addEventListener('pageshow', function (e) { if (e.persisted) quitSaved = false; });
+  }
+
+  // C4: CONTINUE / NEW GAME rows under the boot bar (assets already settled)
+  function showBootRows(done) {
+    var T = CFG.save.text;
+    game.hud.bootSub.textContent = '';
+    var rows = document.createElement('div');
+    rows.id = 'wh-boot-rows';
+    [[T.continue, true], [T.newGame, false]].forEach(function (r) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.tabIndex = -1;
+      btn.className = 'cook-btn boot-row-btn' + (r[1] ? ' boot-continue' : '');
+      btn.textContent = r[0];
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (rows.parentNode) rows.parentNode.removeChild(rows);
+        done(r[1]);
+      });
+      rows.appendChild(btn);
+    });
+    game.hud.loadNote.appendChild(rows);
+  }
+
+  // Boot tail: restore (CONTINUE) on the ready scene, fade the overlay, run.
+  function enterWorld(cont) {
+    if (cont) window.WH_SAVE.restore(game, window.WH_SAVE.load(game));
+    game.c4.entered = true;
+    // 2026-10-03: smooth fade-out of the boot overlay from CONFIG
+    // (hud.bootOverlayFadeMs); .hidden also releases pointer-events, and
+    // game.hud.loadNote stays in the DOM for any later reuse.
+    var fadeMs = (CFG.hud && typeof CFG.hud.bootOverlayFadeMs === 'number') ?
+      CFG.hud.bootOverlayFadeMs : 900;
+    game.hud.loadNote.style.transition =
+      'opacity ' + (fadeMs / 1000) + 's ease';
+    game.hud.loadNote.classList.add('hidden');
+
+    game.running = true;
+    game.lastFrame = performance.now();
+    requestAnimationFrame(loop);
   }
 
   // R2 P1-8: light socket registry. Static sockets come from the CONFIG props

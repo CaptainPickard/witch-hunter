@@ -2,7 +2,7 @@
 // A camp = MODULE ROWS (CONFIG.camp.modules / worldCamps): one prop + one
 // interact hook each. 'cook' registers a cooking station row through
 // WH_COOKING Cooking.addStation (same row shape as the bandit fire - CAMP
-// GROWTH LAW); 'sleep' opens the TENT MENU (Save / Save and Heal). Future
+// GROWTH LAW); 'sleep' opens the TENT MENU (Save / Save and Heal / C4 Load). Future
 // modules (chest, bench, warp) = a new row + a new hook.
 // The manager owns: the deploy gate (cooking.kitAcquired), placement mode
 // (red ghost on the ground, clearance check = the gather-node rules), the
@@ -110,7 +110,9 @@
     this.toast = opts.toast;
     this.applyBuffStats = opts.applyBuffStats;
     this.onOpenChange = opts.onOpenChange || function () {};
-    this.sites = [];                  // deployed kits (session-only; C4 saves them)
+    // C4 save profile (game.js over js/save.js WH_SAVE): { has(), save(camp), restore() }
+    this.profile = opts.profile || null;
+    this.sites = [];                  // deployed kits (C4: the save profile stores them)
     this.siteSeq = 0;
     this.worldCamps = K.worldCamps.map(function (wc) {
       return { id: wc.id, regionId: wc.regionId, world: true, group: null,
@@ -193,14 +195,17 @@
     root.appendChild(panel);
     panel.appendChild(el('div', 'inv-title', T.menuTitle));
     var rows = el('div', 'cook-btns camp-menu-btns');
+    // C4: LOAD row (CONFIG.save.text.load), dim while no save exists
     [[T.save, function () { self.save(); }],
      [T.saveHeal, function () { self.saveAndHeal(); }],
+     [CFG.save.text.load, function () { self.load(); }, 'load'],
      [T.cancel, function () { self.setMenu(null); }]].forEach(function (b) {
       var btn = el('button', 'cook-btn camp-menu-btn', b[0]);
       btn.type = 'button';
       btn.tabIndex = -1;
       btn.addEventListener('click', b[1]);
       rows.appendChild(btn);
+      if (b[2] === 'load') self.loadBtn = btn;
     });
     panel.appendChild(rows);
     panel.appendChild(el('div', 'inv-hint', 'Esc cancel'));
@@ -214,17 +219,38 @@
     if (!!this.menuCamp === open && this.menuCamp === camp) return;
     var was = !!this.menuCamp;
     this.menuCamp = camp || null;
+    if (open && this.loadBtn) this.loadBtn.classList.toggle('dim', !this.hasSave());
     this.menuEl.classList.toggle('open', open);
     if (was !== open) this.onOpenChange(open);
+  };
+
+  Camp.prototype.hasSave = function () {
+    return !!(this.profile && this.profile.has());
+  };
+
+  // C4: both save rows write the profile FIRST (respawn = this camp's), then
+  // run their existing behavior unchanged.
+  Camp.prototype.writeProfile = function (c) {
+    return !!(this.profile && this.profile.save(c));
   };
 
   // Save: respawn point only. No heal, no buff / meal change, no clock change.
   Camp.prototype.save = function () {
     var c = this.menuCamp;
     if (!c) return;
+    var saved = this.writeProfile(c);
     this.setRespawn(c);
     this.setMenu(null);
-    this.toast(K.text.savedToast);
+    this.toast(saved ? CFG.save.text.saved + ' ' + K.text.savedToast : K.text.savedToast);
+  };
+
+  // C4 LOAD: no save = refusal toast (menu stays); else the menu closes and
+  // the last saved profile replaces the live state.
+  Camp.prototype.load = function () {
+    if (!this.menuCamp || this.resting) return;
+    if (!this.hasSave()) { this.toast(CFG.save.text.noSave); return; }
+    this.setMenu(null);
+    this.profile.restore();
   };
 
   Camp.prototype.setRespawn = function (c) {
@@ -242,6 +268,7 @@
     var c = this.menuCamp;
     if (!c || this.resting) return;
     var self = this, ms = K.sleepFadeSec * 1000;
+    if (this.writeProfile(c)) this.toast(CFG.save.text.saved);   // C4: profile first
     this.resting = true;
     this.menuEl.classList.remove('open');   // menu gone, suspension held
     if (this.dayNight.prepareWake) this.dayNight.prepareWake();

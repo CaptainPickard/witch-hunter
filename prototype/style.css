@@ -1149,6 +1149,38 @@ html, body {
   height: 36px;
 }
 
+/* C4: LOAD row while no save exists (still clickable: refusal toast) */
+.camp-menu-btn.dim {
+  color: #5a5344;
+  border-color: #2a241c;
+}
+
+/* C4: boot CONTINUE / NEW GAME rows under the boot bar (only with a save).
+   #wh-hud is pointer-events: none - the rows opt back in. */
+#wh-boot-rows {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  margin-top: 22px;
+  width: 220px;
+  pointer-events: auto;
+}
+
+#wh-load-note.hidden #wh-boot-rows {
+  pointer-events: none;
+}
+
+.boot-row-btn {
+  height: 36px;
+  touch-action: manipulation;
+}
+
+.boot-row-btn.boot-continue {
+  border-color: #d8b24a;
+  color: #d8d2c0;
+}
+
 #wh-camp-place {
   position: absolute;
   left: 50%;
