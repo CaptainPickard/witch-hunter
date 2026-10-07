@@ -87582,6 +87582,207 @@ window.WH_CONFIG = {
     ]
   },
 
+  // CC-C2 (io/missions/2026-10-07-cc-c2-region-shell.md, docs/planning/62):
+  // Region C, Forest of the Old King. Its OWN disc (center (0, -366), playable
+  // radius groundRadius - world.playerMargin = 278.5) north of the shared A/B
+  // disc; C spans z -646..-86. Reached ONLY through the B/C door on B's north
+  // edge (plane z = -86, window |x - doorX| <= doorHalfWidth; region-defs
+  // connections[1]). Tutorial law: the door is locked while the day/night
+  // clock is dormant (first camp Save and Heal = beginCycle). FLAT stub ground
+  // (heightfield = CC-C4). Every row below is PROPOSED, Nicko tunes.
+  regionC: {
+    id: 'forest_of_the_old_king',
+    name: 'Forest of the Old King',
+    center: { x: 0, z: -366 },        // PROPOSED, Nicko tunes (doc 62 sec 1 arithmetic)
+    groundRadius: 280,                // PROPOSED, Nicko tunes (R-62.2 band 250-300; A/B read world.groundRadius 90)
+    groundY: -0.05,                   // PROPOSED, Nicko tunes (stub disc under B's y = 0: no z-fight)
+    groundColor: 0x1e2319,            // PROPOSED, Nicko tunes (deep-forest loam, dominant)
+    groundColor2: 0x2c2a1d,           // PROPOSED, Nicko tunes (leaf-litter umber, secondary)
+    groundSeed: 1662061217,           // PROPOSED, Nicko tunes (ground canvas PRNG seed)
+    scatter: false,                   // PROPOSED, Nicko tunes (no Round E scatter in C; CC-C3 full pass)
+    spawn: { x: 0, z: -96 },          // PROPOSED, Nicko tunes (10 m inside C's south rim, the L0 glade)
+    gravityY: -22,
+    fogColor: 0x59625b,               // PROPOSED, Nicko tunes (deep-forest green-grey)
+    fogDensity: 0.033,                // PROPOSED, Nicko tunes (denser than B's 0.024; d95 ~52 m)
+    ambientLightLevel: 0.5,           // PROPOSED, Nicko tunes
+    // B/C door (region-defs connections[1]; region-manager door window +
+    // gate-at-the-line; game.js gate predicate !dayNight.dormant + toast)
+    door: {
+      planeZ: -86,                    // PROPOSED, Nicko tunes (B occupies z >= -86, C z <= -86)
+      doorX: 0,                       // PROPOSED, Nicko tunes
+      doorHalfWidth: 4,               // PROPOSED, Nicko tunes (window = A/B chokepoint width 8)
+      suspendDepthM: 3,               // PROPOSED, Nicko tunes (radial clamp suspended within this of the plane, in the window)
+      interactM: 6,                   // PROPOSED, Nicko tunes (E near the arch while locked -> reason toast)
+      hintM: 12,                      // PROPOSED, Nicko tunes (gate-hint band around the plane)
+      // door arch: mirrors boundaryWall.arch's row shape (b3Gate measured
+      // constants copied); VISUAL ONLY - no colliders, the gate logic is the door
+      arch: { asset: 'b3Gate', x: 0, z: -86, rotY: Math.PI,   // PROPOSED, Nicko tunes (faces north)
+        fitOpening: 5.2, openingFrac: 0.3428, openingCenterFrac: 0.0059,
+        depthScale: 0.45 },
+      wallGapPadM: 0,                 // PROPOSED, Nicko tunes (ring wall segments meeting window + this are not built; 0 = 3 segments, gap hidden behind the arch pillars)
+      text: {
+        locked: 'Rest at a camp first - the forest beyond still sleeps.',
+        prompt: 'E - Examine the arch',                       // PROPOSED, Nicko tunes
+        hint: 'Enter the Forest of the Old King',              // PROPOSED, Nicko tunes
+        hintLocked: 'The forest beyond still sleeps',          // PROPOSED, Nicko tunes
+        hintBack: 'Back to the Darkwood'                       // PROPOSED, Nicko tunes
+      }
+    },
+    enemies: [],                      // nothing spawns in CC-C2
+    // First tree scatter (CC-C2 5.6): hand-placed rows, no runtime random.
+    // 120 trees (yewTree 60% / witchwoodTree 40%, min spacing 8.5 m) + 20
+    // treeStump, generated once offline (seed 20261007, best-candidate) and
+    // pasted. Distance cull: every row lies within propCullM of C's SPAWN (the
+    // arrival glade; C's center is 270 m from it, past fog-opaque) and 4 m
+    // inside C's playable rim; clear of the glade (10 m), the door->glade lane
+    // (|x| < 6, z > -110) and the lantern (6 m). CC-C3 does the full pass + ledger.
+    propCullM: 150,                   // PROPOSED, Nicko tunes
+    props: [
+      // L0 glade furniture: lantern post at the spawn glade (light socket)
+      { asset: 'lanternPost', x: 3.0, z: -99.0, rotY: 0.0, scale: 2.535 },
+      { asset: 'yewTree',       x: 33.1, z: -159.6, rotY: 0.39, scale: 9.92 },
+      { asset: 'witchwoodTree', x: -123.7, z: -157.6, rotY: 2.66, scale: 9.22 },
+      { asset: 'yewTree',       x: -57.0, z: -230.4, rotY: 1.79, scale: 8.06 },
+      { asset: 'yewTree',       x: -49.1, z: -135.8, rotY: 0.53, scale: 9.08 },
+      { asset: 'yewTree',       x: 114.8, z: -136.7, rotY: 2.84, scale: 9.70 },
+      { asset: 'witchwoodTree', x: 83.4, z: -215.3, rotY: 5.70, scale: 8.56 },
+      { asset: 'yewTree',       x: -18.8, z: -194.6, rotY: 0.37, scale: 9.60 },
+      { asset: 'yewTree',       x: -72.2, z: -172.2, rotY: 3.40, scale: 9.95 },
+      { asset: 'yewTree',       x: -2.3, z: -126.4, rotY: 0.11, scale: 9.18 },
+      { asset: 'witchwoodTree', x: 36.2, z: -216.4, rotY: 3.34, scale: 8.64 },
+      { asset: 'witchwoodTree', x: -17.2, z: -238.2, rotY: 5.10, scale: 10.25 },
+      { asset: 'witchwoodTree', x: -88.1, z: -107.6, rotY: 3.29, scale: 9.69 },
+      { asset: 'yewTree',       x: 48.3, z: -112.0, rotY: 3.96, scale: 8.91 },
+      { asset: 'yewTree',       x: -91.6, z: -209.1, rotY: 1.81, scale: 9.98 },
+      { asset: 'yewTree',       x: 80.9, z: -165.8, rotY: 0.16, scale: 9.35 },
+      { asset: 'yewTree',       x: 115.6, z: -181.7, rotY: 3.41, scale: 9.73 },
+      { asset: 'yewTree',       x: 26.5, z: -130.2, rotY: 2.55, scale: 9.91 },
+      { asset: 'yewTree',       x: -26.8, z: -159.7, rotY: 1.78, scale: 8.59 },
+      { asset: 'yewTree',       x: 87.1, z: -106.7, rotY: 4.02, scale: 8.69 },
+      { asset: 'witchwoodTree', x: -45.2, z: -199.8, rotY: 4.45, scale: 8.89 },
+      { asset: 'yewTree',       x: 13.7, z: -195.4, rotY: 4.37, scale: 10.22 },
+      { asset: 'witchwoodTree', x: -50.8, z: -96.4, rotY: 0.59, scale: 8.91 },
+      { asset: 'witchwoodTree', x: 3.4, z: -159.4, rotY: 3.71, scale: 9.47 },
+      { asset: 'yewTree',       x: 132.0, z: -154.1, rotY: 3.55, scale: 8.26 },
+      { asset: 'yewTree',       x: 93.7, z: -184.9, rotY: 2.36, scale: 8.80 },
+      { asset: 'witchwoodTree', x: 108.7, z: -159.1, rotY: 3.61, scale: 8.97 },
+      { asset: 'witchwoodTree', x: -80.4, z: -145.9, rotY: 0.79, scale: 8.15 },
+      { asset: 'yewTree',       x: -26.3, z: -95.6, rotY: 3.07, scale: 10.22 },
+      { asset: 'witchwoodTree', x: 82.9, z: -131.8, rotY: 5.31, scale: 9.49 },
+      { asset: 'witchwoodTree', x: 64.0, z: -146.3, rotY: 0.83, scale: 8.35 },
+      { asset: 'witchwoodTree', x: 60.4, z: -182.3, rotY: 4.86, scale: 8.18 },
+      { asset: 'yewTree',       x: -108.3, z: -130.0, rotY: 5.04, scale: 8.77 },
+      { asset: 'witchwoodTree', x: -50.4, z: -162.0, rotY: 3.82, scale: 9.94 },
+      { asset: 'yewTree',       x: -35.3, z: -222.5, rotY: 4.27, scale: 8.82 },
+      { asset: 'yewTree',       x: 59.9, z: -214.6, rotY: 4.64, scale: 9.31 },
+      { asset: 'witchwoodTree', x: 11.4, z: -98.0, rotY: 1.66, scale: 10.49 },
+      { asset: 'witchwoodTree', x: -25.9, z: -123.0, rotY: 1.97, scale: 9.37 },
+      { asset: 'yewTree',       x: -3.9, z: -212.5, rotY: 5.80, scale: 10.50 },
+      { asset: 'yewTree',       x: -96.2, z: -154.7, rotY: 6.12, scale: 8.67 },
+      { asset: 'yewTree',       x: 49.8, z: -202.5, rotY: 1.76, scale: 9.11 },
+      { asset: 'yewTree',       x: -128.8, z: -131.6, rotY: 4.59, scale: 8.05 },
+      { asset: 'witchwoodTree', x: -8.5, z: -106.5, rotY: 4.23, scale: 8.94 },
+      { asset: 'witchwoodTree', x: 20.3, z: -236.2, rotY: 5.03, scale: 10.04 },
+      { asset: 'witchwoodTree', x: 45.8, z: -232.9, rotY: 1.20, scale: 8.60 },
+      { asset: 'yewTree',       x: -97.6, z: -181.8, rotY: 2.69, scale: 10.06 },
+      { asset: 'witchwoodTree', x: -68.5, z: -124.7, rotY: 2.80, scale: 9.22 },
+      { asset: 'yewTree',       x: 64.2, z: -127.8, rotY: 0.44, scale: 8.67 },
+      { asset: 'yewTree',       x: -65.6, z: -196.2, rotY: 0.95, scale: 8.49 },
+      { asset: 'yewTree',       x: 53.7, z: -162.6, rotY: 5.10, scale: 9.35 },
+      { asset: 'witchwoodTree', x: -51.6, z: -214.6, rotY: 4.76, scale: 9.45 },
+      { asset: 'witchwoodTree', x: 79.9, z: -197.7, rotY: 4.46, scale: 10.13 },
+      { asset: 'witchwoodTree', x: 32.9, z: -189.3, rotY: 1.33, scale: 8.34 },
+      { asset: 'yewTree',       x: -69.0, z: -214.0, rotY: 2.20, scale: 8.64 },
+      { asset: 'witchwoodTree', x: 5.8, z: -227.8, rotY: 2.02, scale: 8.77 },
+      { asset: 'witchwoodTree', x: 33.4, z: -110.9, rotY: 6.08, scale: 9.72 },
+      { asset: 'yewTree',       x: -7.6, z: -142.7, rotY: 5.68, scale: 8.99 },
+      { asset: 'yewTree',       x: -56.5, z: -182.2, rotY: 0.41, scale: 10.16 },
+      { asset: 'yewTree',       x: -107.7, z: -197.2, rotY: 6.04, scale: 9.41 },
+      { asset: 'yewTree',       x: 108.9, z: -117.9, rotY: 0.11, scale: 9.59 },
+      { asset: 'witchwoodTree', x: 9.3, z: -177.7, rotY: 2.12, scale: 9.81 },
+      { asset: 'witchwoodTree', x: -9.0, z: -173.9, rotY: 1.32, scale: 9.82 },
+      { asset: 'witchwoodTree', x: -50.8, z: -118.7, rotY: 5.82, scale: 8.49 },
+      { asset: 'witchwoodTree', x: 133.9, z: -133.1, rotY: 0.26, scale: 9.95 },
+      { asset: 'yewTree',       x: -67.2, z: -104.8, rotY: 1.70, scale: 10.47 },
+      { asset: 'yewTree',       x: -31.9, z: -141.1, rotY: 3.02, scale: 9.61 },
+      { asset: 'witchwoodTree', x: 98.3, z: -208.1, rotY: 5.29, scale: 10.08 },
+      { asset: 'yewTree',       x: 90.7, z: -146.5, rotY: 0.74, scale: 10.42 },
+      { asset: 'yewTree',       x: 28.7, z: -98.0, rotY: 6.15, scale: 9.07 },
+      { asset: 'yewTree',       x: -30.7, z: -208.6, rotY: 0.28, scale: 9.92 },
+      { asset: 'yewTree',       x: 18.1, z: -212.2, rotY: 2.32, scale: 8.20 },
+      { asset: 'yewTree',       x: -36.5, z: -239.9, rotY: 0.38, scale: 10.17 },
+      { asset: 'yewTree',       x: -0.8, z: -245.9, rotY: 0.69, scale: 9.31 },
+      { asset: 'yewTree',       x: -119.8, z: -181.4, rotY: 5.27, scale: 9.06 },
+      { asset: 'yewTree',       x: 71.4, z: -102.3, rotY: 3.15, scale: 8.61 },
+      { asset: 'witchwoodTree', x: 44.4, z: -126.8, rotY: 0.61, scale: 9.90 },
+      { asset: 'witchwoodTree', x: -25.4, z: -179.7, rotY: 4.63, scale: 9.68 },
+      { asset: 'witchwoodTree', x: 14.4, z: -147.4, rotY: 4.97, scale: 9.65 },
+      { asset: 'witchwoodTree', x: 42.1, z: -175.0, rotY: 1.39, scale: 8.82 },
+      { asset: 'witchwoodTree', x: -43.8, z: -183.6, rotY: 4.70, scale: 8.28 },
+      { asset: 'yewTree',       x: -110.8, z: -147.6, rotY: 1.38, scale: 8.79 },
+      { asset: 'yewTree',       x: 44.2, z: -95.9, rotY: 1.78, scale: 8.68 },
+      { asset: 'witchwoodTree', x: -142.2, z: -137.8, rotY: 4.18, scale: 9.50 },
+      { asset: 'yewTree',       x: 44.9, z: -146.9, rotY: 6.13, scale: 8.23 },
+      { asset: 'yewTree',       x: -14.8, z: -155.2, rotY: 4.05, scale: 9.09 },
+      { asset: 'witchwoodTree', x: 22.7, z: -175.3, rotY: 2.93, scale: 8.33 },
+      { asset: 'yewTree',       x: -38.6, z: -105.1, rotY: 0.34, scale: 8.93 },
+      { asset: 'yewTree',       x: -79.4, z: -183.2, rotY: 2.85, scale: 8.49 },
+      { asset: 'yewTree',       x: 27.2, z: -223.0, rotY: 1.45, scale: 8.19 },
+      { asset: 'yewTree',       x: -119.8, z: -120.4, rotY: 4.92, scale: 9.25 },
+      { asset: 'witchwoodTree', x: 128.1, z: -168.4, rotY: 2.71, scale: 10.33 },
+      { asset: 'witchwoodTree', x: -105.8, z: -117.1, rotY: 4.14, scale: 8.20 },
+      { asset: 'yewTree',       x: -84.0, z: -127.4, rotY: 4.56, scale: 10.07 },
+      { asset: 'yewTree',       x: -67.0, z: -155.5, rotY: 4.25, scale: 8.44 },
+      { asset: 'yewTree',       x: -131.4, z: -145.3, rotY: 3.73, scale: 10.07 },
+      { asset: 'yewTree',       x: -87.7, z: -168.2, rotY: 0.08, scale: 9.45 },
+      { asset: 'yewTree',       x: 96.8, z: -131.9, rotY: 1.38, scale: 8.49 },
+      { asset: 'yewTree',       x: -58.8, z: -144.8, rotY: 1.51, scale: 9.52 },
+      { asset: 'witchwoodTree', x: 53.5, z: -137.8, rotY: 4.77, scale: 9.33 },
+      { asset: 'witchwoodTree', x: -6.6, z: -232.1, rotY: 2.77, scale: 9.72 },
+      { asset: 'yewTree',       x: -78.1, z: -206.3, rotY: 3.78, scale: 10.18 },
+      { asset: 'yewTree',       x: -107.9, z: -161.9, rotY: 0.13, scale: 8.15 },
+      { asset: 'witchwoodTree', x: -74.0, z: -162.1, rotY: 4.15, scale: 9.41 },
+      { asset: 'yewTree',       x: 14.2, z: -129.1, rotY: 1.82, scale: 9.97 },
+      { asset: 'yewTree',       x: -16.8, z: -217.7, rotY: 2.87, scale: 9.62 },
+      { asset: 'witchwoodTree', x: 77.8, z: -115.5, rotY: 4.89, scale: 10.33 },
+      { asset: 'witchwoodTree', x: -30.6, z: -190.1, rotY: 3.66, scale: 10.31 },
+      { asset: 'witchwoodTree', x: -44.0, z: -227.8, rotY: 6.08, scale: 9.78 },
+      { asset: 'yewTree',       x: 96.5, z: -118.4, rotY: 1.99, scale: 8.10 },
+      { asset: 'yewTree',       x: 6.5, z: -208.5, rotY: 4.19, scale: 9.29 },
+      { asset: 'witchwoodTree', x: -85.1, z: -157.2, rotY: 3.99, scale: 9.39 },
+      { asset: 'yewTree',       x: 68.5, z: -165.4, rotY: 1.52, scale: 9.16 },
+      { asset: 'witchwoodTree', x: 57.7, z: -103.1, rotY: 0.51, scale: 10.04 },
+      { asset: 'witchwoodTree', x: 15.1, z: -111.9, rotY: 1.86, scale: 10.23 },
+      { asset: 'yewTree',       x: 104.2, z: -190.3, rotY: 5.76, scale: 8.33 },
+      { asset: 'witchwoodTree', x: -3.2, z: -201.3, rotY: 3.20, scale: 9.68 },
+      { asset: 'yewTree',       x: 30.6, z: -204.0, rotY: 4.51, scale: 8.04 },
+      { asset: 'witchwoodTree', x: 21.4, z: -157.1, rotY: 2.65, scale: 9.94 },
+      { asset: 'yewTree',       x: 52.0, z: -191.1, rotY: 5.98, scale: 9.37 },
+      { asset: 'yewTree',       x: -103.9, z: -173.0, rotY: 5.10, scale: 8.46 },
+      { asset: 'witchwoodTree', x: 107.9, z: -128.4, rotY: 4.85, scale: 10.30 },
+      { asset: 'treeStump',     x: 39.0, z: -143.7, rotY: 0.99, scale: 1.14 },
+      { asset: 'treeStump',     x: 59.7, z: -208.3, rotY: 4.09, scale: 1.14 },
+      { asset: 'treeStump',     x: 13.7, z: -106.7, rotY: 6.12, scale: 1.14 },
+      { asset: 'treeStump',     x: -55.4, z: -157.1, rotY: 5.10, scale: 1.07 },
+      { asset: 'treeStump',     x: 102.1, z: -149.1, rotY: 2.47, scale: 1.08 },
+      { asset: 'treeStump',     x: 23.2, z: -190.9, rotY: 3.10, scale: 1.22 },
+      { asset: 'treeStump',     x: -96.4, z: -171.3, rotY: 0.30, scale: 1.26 },
+      { asset: 'treeStump',     x: 58.0, z: -194.5, rotY: 5.33, scale: 1.38 },
+      { asset: 'treeStump',     x: -62.9, z: -102.1, rotY: 2.15, scale: 1.29 },
+      { asset: 'treeStump',     x: 47.3, z: -105.6, rotY: 4.58, scale: 1.15 },
+      { asset: 'treeStump',     x: -2.4, z: -141.2, rotY: 5.18, scale: 1.40 },
+      { asset: 'treeStump',     x: -82.4, z: -136.0, rotY: 1.52, scale: 1.19 },
+      { asset: 'treeStump',     x: 47.8, z: -195.9, rotY: 1.75, scale: 1.41 },
+      { asset: 'treeStump',     x: 21.1, z: -104.6, rotY: 2.73, scale: 1.32 },
+      { asset: 'treeStump',     x: -18.2, z: -99.8, rotY: 2.90, scale: 1.39 },
+      { asset: 'treeStump',     x: 10.4, z: -118.6, rotY: 1.82, scale: 1.23 },
+      { asset: 'treeStump',     x: 79.4, z: -192.5, rotY: 1.52, scale: 1.27 },
+      { asset: 'treeStump',     x: -81.0, z: -216.3, rotY: 5.85, scale: 1.42 },
+      { asset: 'treeStump',     x: -61.4, z: -109.6, rotY: 5.09, scale: 1.02 },
+      { asset: 'treeStump',     x: 26.5, z: -140.2, rotY: 1.85, scale: 1.04 }
+    ]
+  },
+
   // Round E (io/missions/2026-10-05-cc-roundE-veg.md): seeded vegetation
   // scatter, built by region-manager whScatterPlan. PARAMETERS ONLY - no
   // placement tables: every position is a pure function of this block, the
@@ -88746,7 +88947,9 @@ window.WH_CONFIG.dayNight = {
       exposureMult: 1.0,
       fog: {
         hold_outskirts: { color: 0x9aa0a3, density: 0.012, cemColor: 0x7f8ea6, cemDensity: 0.030 },
-        darkwood_edge: { color: 0x6f7477, density: 0.024 }
+        darkwood_edge: { color: 0x6f7477, density: 0.024 },
+        // CC-C2 Region C deep-forest fog (night = CONFIG.regionC verbatim). PROPOSED, Nicko tunes
+        forest_of_the_old_king: { color: 0x59625b, density: 0.033 }
       },
       zenithColor: 0x070a18, horizonBand: 0x2b3350, horizonGlow: 0x8f98ad,
       stars: 1.0,
@@ -88759,7 +88962,9 @@ window.WH_CONFIG.dayNight = {
       exposureMult: 1.0,
       fog: {
         hold_outskirts: { color: 0xa29a98, density: 0.011, cemColor: 0x8e8c9c, cemDensity: 0.026 },
-        darkwood_edge: { color: 0x77736f, density: 0.021 }
+        darkwood_edge: { color: 0x77736f, density: 0.021 },
+        // CC-C2 Region C deep-forest fog (night = CONFIG.regionC verbatim). PROPOSED, Nicko tunes
+        forest_of_the_old_king: { color: 0x5f6660, density: 0.030 }
       },
       zenithColor: 0x262c44, horizonBand: 0x6e5e66, horizonGlow: 0xa8948a,
       stars: 0.35,
@@ -88773,7 +88978,9 @@ window.WH_CONFIG.dayNight = {
       exposureMult: 1.0,
       fog: {
         hold_outskirts: { color: 0xa4a8a6, density: 0.008, cemColor: 0x9aa1a8, cemDensity: 0.020 },
-        darkwood_edge: { color: 0x80857f, density: 0.017 }
+        darkwood_edge: { color: 0x80857f, density: 0.017 },
+        // CC-C2 Region C deep-forest fog (night = CONFIG.regionC verbatim). PROPOSED, Nicko tunes
+        forest_of_the_old_king: { color: 0x6a716a, density: 0.025 }
       },
       zenithColor: 0x56606e, horizonBand: 0x868d92, horizonGlow: 0xa9adab,
       stars: 0.0,
@@ -88786,7 +88993,9 @@ window.WH_CONFIG.dayNight = {
       exposureMult: 1.0,
       fog: {
         hold_outskirts: { color: 0x9c9496, density: 0.012, cemColor: 0x868aa0, cemDensity: 0.027 },
-        darkwood_edge: { color: 0x726e6c, density: 0.022 }
+        darkwood_edge: { color: 0x726e6c, density: 0.022 },
+        // CC-C2 Region C deep-forest fog (night = CONFIG.regionC verbatim). PROPOSED, Nicko tunes
+        forest_of_the_old_king: { color: 0x5c625c, density: 0.031 }
       },
       zenithColor: 0x1c2238, horizonBand: 0x664e58, horizonGlow: 0x9c8478,
       stars: 0.25,
@@ -88825,7 +89034,7 @@ window.WH_CONFIG.dayNight = {
   // per day (day 1 = A skies everywhere, then B, C, D by day count) so each
   // cycle's feel can be judged directly. Restore per-area variation by
   // setting distinct offsets (e.g. darkwood_edge: 2).
-  areaPoolOffset: { hold_outskirts: 0, darkwood_edge: 0 },
+  areaPoolOffset: { hold_outskirts: 0, darkwood_edge: 0, forest_of_the_old_king: 0 },   // CC-C2: C row PROPOSED, Nicko tunes
   skyPool: {
     // pano yaw (deg about +y). 10-06 moon reposition: v2 night panos carry
     // the moon at u ~0.22 (LOW-LEFT contract); yaw 29 puts it ~18 deg to the
@@ -89109,13 +89318,22 @@ window.WH_ICONS = {
       fogDensity: cfgRegion.fogDensity,
       ambientLightLevel: cfgRegion.ambientLightLevel,
       enemies: cfgRegion.enemies,
-      props: cfgRegion.props
+      props: cfgRegion.props,
+      // CC-C2: a region with its own disc (regionC) carries center +
+      // groundRadius; A/B leave them unset = the shared disc at the origin,
+      // radius CFG.world.groundRadius (today's path)
+      center: cfgRegion.center || null,
+      groundRadius: cfgRegion.groundRadius || null
     };
   }
 
   var regions = {};
   regions[CFG.regionA.id] = makeRegion(CFG.regionA, 1);
   regions[CFG.regionB.id] = makeRegion(CFG.regionB, -1);
+  // CC-C2: side is the plane-0 (A/B) convention only; C lies on the -z side
+  // of it but is NOT a member of connections[0]. Door sides live
+  // per-connection (conn.sides) - B is -1 on plane 0 and +1 on the B/C plane.
+  regions[CFG.regionC.id] = makeRegion(CFG.regionC, -1);
 
   // Region adjacency: each region lists the regions reachable from it and the
   // single chokepoint crossing that connects them. Entrances/exits exist ONLY
@@ -89129,8 +89347,30 @@ window.WH_ICONS = {
       fromSide: 1,                      // A side is +z
       chokepointCenterX: CFG.chokepoint.centerX,
       chokepointHalfWidth: CFG.chokepoint.width / 2
+    },
+    // CC-C2: B/C DOOR on B's north edge. The plane z = planeCoord exists
+    // only as a cross-line INSIDE the door window (no wall anywhere else);
+    // sides are per-connection (B occupies z >= -86, C z <= -86). gatedTo:
+    // crossings INTO this region obey the game.js gate predicate (tutorial
+    // law: locked while the day/night clock is dormant).
+    {
+      from: CFG.regionB.id,
+      to: CFG.regionC.id,
+      axis: 'z',
+      planeCoord: CFG.regionC.door.planeZ,
+      sides: {},
+      door: {
+        doorX: CFG.regionC.door.doorX,
+        doorHalfWidth: CFG.regionC.door.doorHalfWidth,
+        suspendDepthM: CFG.regionC.door.suspendDepthM,
+        wallGapPadM: CFG.regionC.door.wallGapPadM,
+        arch: CFG.regionC.door.arch,
+        gatedTo: CFG.regionC.id
+      }
     }
   ];
+  connections[1].sides[CFG.regionB.id] = 1;
+  connections[1].sides[CFG.regionC.id] = -1;
 
   // ---- THREE-free transition helpers (used by region-manager and tests) ------
 
@@ -89149,6 +89389,35 @@ window.WH_ICONS = {
   function insideChokepoint(conn, x) {
     return x >= conn.chokepointCenterX - conn.chokepointHalfWidth &&
            x <= conn.chokepointCenterX + conn.chokepointHalfWidth;
+  }
+
+  // CC-C2: is x inside a door connection's window? (|x - doorX| <= half-width)
+  function insideDoorWindow(conn, x) {
+    return !!conn.door && Math.abs(x - conn.door.doorX) <= conn.door.doorHalfWidth;
+  }
+
+  // CC-C2 per-connection membership + sides. A connection without a sides
+  // table (connections[0], A/B) reads the region's plane-0 side (today's
+  // convention, unchanged).
+  function isMember(conn, regionId) {
+    return conn.from === regionId || conn.to === regionId;
+  }
+
+  function otherEnd(conn, regionId) {
+    return conn.from === regionId ? conn.to : conn.from;
+  }
+
+  function sideIn(conn, regionId) {
+    return conn.sides ? conn.sides[regionId] : regions[regionId].side;
+  }
+
+  // Every connection a region is a member of, in table order.
+  function connectionsOf(regionId) {
+    var out = [];
+    for (var i = 0; i < connections.length; i++) {
+      if (isMember(connections[i], regionId)) out.push(connections[i]);
+    }
+    return out;
   }
 
   // Which side of the boundary plane is z on, relative to the connection?
@@ -89180,7 +89449,8 @@ window.WH_ICONS = {
     return sideOfPlane(conn, z) === conn.fromSide;
   }
 
-  // Neighbor id for a region (v1: single neighbor per region).
+  // Neighbor id for a region (v1: first neighbor in table order; CC-C2 the
+  // region manager walks connectionsOf instead).
   function neighborOf(regionId) {
     for (var i = 0; i < connections.length; i++) {
       if (connections[i].from === regionId) return connections[i].to;
@@ -89198,7 +89468,12 @@ window.WH_ICONS = {
     mapPositionAcross: mapPositionAcross,
     distanceToBoundary: distanceToBoundary,
     isOnFromSide: isOnFromSide,
-    neighborOf: neighborOf
+    neighborOf: neighborOf,
+    insideDoorWindow: insideDoorWindow,
+    isMember: isMember,
+    otherEnd: otherEnd,
+    sideIn: sideIn,
+    connectionsOf: connectionsOf
   };
 })();
 </script>
@@ -96076,56 +96351,137 @@ window.WH_ICONS = {
 
   // Returns null, 'prewarm' (neighbor built hidden), 'dispose' (pre-warm
   // thrown away), or 'cross' (region swap; newActiveId set).
+  // CC-C2: walks EVERY connection of the active region (B has two: the A/B
+  // chokepoint plane and the B/C door). A region with one connection (A,
+  // C) runs exactly the single-connection logic of before.
   RegionManagerLogic.prototype.tickTransition = function (x, z) {
     var result = { action: null, newActiveId: null, mappedPos: null };
-    var conn = DEFS.connectionBetween(this.activeId, DEFS.neighborOf(this.activeId));
-    if (!conn) return result;
+    var conns = DEFS.connectionsOf(this.activeId);
+    if (!conns.length) return result;
 
-    var dist = DEFS.distanceToBoundary(conn, z);
-    var neighborId = DEFS.neighborOf(this.activeId);
-    var insideChoke = DEFS.insideChokepoint(conn, x);
-
-    // crossing: player crossed the plane inside the chokepoint corridor.
+    // crossing: player crossed the plane inside the chokepoint corridor (or
+    // a door's window; a locked door never crosses - game.js gate predicate).
     // Direction-agnostic: fires when the player's plane side differs from the
     // ACTIVE region's home side (walking into the neighbor's half), so both
     // A->B and B->A crossings trigger. (The old code compared against the
     // fixed conn.fromSide, which made B->A returns impossible.)
-    var sideNow = DEFS.sideOfPlane(conn, z);
-    var activeSide = DEFS.regions[this.activeId].side;
-    if (insideChoke && sideNow !== activeSide) {
-      // map position across, preserving approach direction: place the player
-      // just past the plane ON THE NEIGHBOR'S HOME SIDE (not merely the
-      // opposite of their current side, which can re-trigger a cross back).
-      var mapped = DEFS.mapPositionAcross(conn, x, z, 2,
-        DEFS.regions[neighborId].side);
-      result.action = 'cross';
-      result.newActiveId = neighborId;
-      result.mappedPos = mapped;
-      this.stateFor(this.activeId).crossed++;
-      this.stateFor(neighborId).crossed++;
-      this.activeId = neighborId;
-      this.prewarmedId = null;         // consumed by the swap
-      this.buildCounts[neighborId] = (this.buildCounts[neighborId] || 0) + 1;
-      return result;
+    for (var i = 0; i < conns.length; i++) {
+      var conn = conns[i];
+      var neighborId = DEFS.otherEnd(conn, this.activeId);
+      var open = conn.door ?
+        DEFS.insideDoorWindow(conn, x) && !this.doorLocked(conn, neighborId) :
+        DEFS.insideChokepoint(conn, x);
+      var sideNow = DEFS.sideOfPlane(conn, z);
+      var activeSide = DEFS.sideIn(conn, this.activeId);
+      if (open && sideNow !== activeSide) {
+        // map position across, preserving approach direction: place the player
+        // just past the plane ON THE NEIGHBOR'S HOME SIDE (not merely the
+        // opposite of their current side, which can re-trigger a cross back).
+        var mapped = DEFS.mapPositionAcross(conn, x, z, 2,
+          DEFS.sideIn(conn, neighborId));
+        result.action = 'cross';
+        result.newActiveId = neighborId;
+        result.mappedPos = mapped;
+        this.stateFor(this.activeId).crossed++;
+        this.stateFor(neighborId).crossed++;
+        this.activeId = neighborId;
+        this.prewarmedId = null;         // consumed by the swap
+        this.buildCounts[neighborId] = (this.buildCounts[neighborId] || 0) + 1;
+        return result;
+      }
     }
 
-    // pre-warm: close to boundary, approach direction faces the neighbor
-    if (dist <= this.preWarmDistance && this.prewarmedId !== neighborId) {
-      this.prewarmedId = neighborId;
-      this.buildCounts[neighborId] = (this.buildCounts[neighborId] || 0) + 1;
+    // pre-warm: close to the NEAREST connection's plane, approach direction
+    // faces that neighbor. One pre-warm slot: a held pre-warm is only
+    // replaced after the hysteresis below disposes it (no rebuild thrash
+    // between B's two planes; with one connection this is the old
+    // prewarmedId !== neighborId test).
+    var near = conns[0];
+    for (var j = 1; j < conns.length; j++) {
+      if (DEFS.distanceToBoundary(conns[j], z) < DEFS.distanceToBoundary(near, z)) near = conns[j];
+    }
+    var dist = DEFS.distanceToBoundary(near, z);
+    var nearId = DEFS.otherEnd(near, this.activeId);
+    if (dist <= this.preWarmDistance && this.prewarmedId === null) {
+      this.prewarmedId = nearId;
+      this.buildCounts[nearId] = (this.buildCounts[nearId] || 0) + 1;
       result.action = 'prewarm';
       return result;
     }
 
-    // hysteresis: player turned back beyond pre-warm band -> dispose pre-warm
-    if (this.prewarmedId !== null &&
-        dist > this.preWarmDistance + this.hysteresisDistance) {
-      this.prewarmedId = null;
-      result.action = 'dispose';
-      return result;
+    // hysteresis: player turned back beyond pre-warm band of the pre-warmed
+    // neighbor's own plane -> dispose pre-warm
+    if (this.prewarmedId !== null) {
+      var pc = DEFS.connectionBetween(this.activeId, this.prewarmedId);
+      if (!pc || DEFS.distanceToBoundary(pc, z) > this.preWarmDistance + this.hysteresisDistance) {
+        this.prewarmedId = null;
+        result.action = 'dispose';
+        return result;
+      }
     }
 
     return result;
+  };
+
+  // CC-C2 tutorial-law gate: crossings INTO conn.door.gatedTo are locked
+  // while the predicate game.js installs (doorGate = !dayNight.dormant
+  // inverted: true = locked) says so. No predicate = open.
+  RegionManagerLogic.prototype.doorGate = null;
+  RegionManagerLogic.prototype.doorLocked = function (conn, toId) {
+    return !!(conn.door && conn.door.gatedTo === toId && this.doorGate && this.doorGate(conn));
+  };
+
+  // CC-C2 radial suspension: inside an OPEN door window within suspendDepthM
+  // of the plane the active region's rim clamp does not apply, so a player
+  // whose disc ends short of the line (C: rim z = -87.5, line -86) can reach
+  // and cross it. The far half of the band only while the door is open
+  // (that frame crosses); a locked door keeps the rim on the far half, so
+  // a player in B's north strip never gains ground past B's rim.
+  RegionManagerLogic.prototype.inOpenDoorBand = function (pos) {
+    var conns = DEFS.connectionsOf(this.activeId);
+    for (var i = 0; i < conns.length; i++) {
+      var conn = conns[i];
+      if (!conn.door || !DEFS.insideDoorWindow(conn, pos.x)) continue;
+      var d = DEFS.sideIn(conn, this.activeId) * (pos.z - conn.planeCoord);
+      if (d > conn.door.suspendDepthM || -d > conn.door.suspendDepthM) continue;
+      if (d >= 0 || !this.doorLocked(conn, DEFS.otherEnd(conn, this.activeId))) return true;
+    }
+    return false;
+  };
+
+  // CC-C2 gate AT the line: on the frame the player would cross a LOCKED
+  // door plane out of the active region's home half inside the window, z
+  // is held at the line (crossing-frame hold, not a positional yank).
+  // prevZ = this frame's pre-move z (game.js). A player already past the
+  // line (stepped sideways into the window from B's north strip) is never
+  // held; moving back toward home is always free.
+  RegionManagerLogic.prototype.holdAtLockedDoor = function (prevZ, pos) {
+    var conns = DEFS.connectionsOf(this.activeId);
+    var held = false;
+    for (var i = 0; i < conns.length; i++) {
+      var conn = conns[i];
+      if (!conn.door || !DEFS.insideDoorWindow(conn, pos.x)) continue;
+      if (!this.doorLocked(conn, DEFS.otherEnd(conn, this.activeId))) continue;
+      var s = DEFS.sideIn(conn, this.activeId);
+      if (s * (prevZ - conn.planeCoord) >= 0 && s * (pos.z - conn.planeCoord) < 0) {
+        pos.z = conn.planeCoord;
+        held = true;
+      }
+    }
+    return held;
+  };
+
+  // CC-C2: is the player near a door's arch while it is locked toward the
+  // other side? (game.js reason toast + interact prompt)
+  RegionManagerLogic.prototype.lockedDoorNear = function (pos, radius) {
+    var conns = DEFS.connectionsOf(this.activeId);
+    for (var i = 0; i < conns.length; i++) {
+      var conn = conns[i];
+      if (!conn.door || !this.doorLocked(conn, DEFS.otherEnd(conn, this.activeId))) continue;
+      var dx = pos.x - conn.door.doorX, dz = pos.z - conn.planeCoord;
+      if (dx * dx + dz * dz <= radius * radius) return conn;
+    }
+    return null;
   };
 
   // Boundary clamp for the player: blocked everywhere except inside the
@@ -96134,9 +96490,13 @@ window.WH_ICONS = {
   // position's current side: a player who walks past the plane outside the
   // corridor is trespassing on the neighbor's side and must be pushed back
   // into their own region, regardless of which side they are now on.
+  // CC-C2: plane 0 applies to its members only (C is not on it); door
+  // connections have NO plane clamp (the plane is a cross-line in the
+  // window, see holdAtLockedDoor).
   RegionManagerLogic.prototype.clampPlayerPlane = function (pos) {
     var conn = DEFS.connections[0];
     if (!conn) return false;
+    if (!DEFS.isMember(conn, this.activeId)) return false;
     var insideChoke = DEFS.insideChokepoint(conn, pos.x);
     if (insideChoke) return false;     // free passage in the corridor
     var homeSide = DEFS.regions[this.activeId].side;   // +1 for A, -1 for B
@@ -96151,10 +96511,27 @@ window.WH_ICONS = {
   };
 
   // Enemies never cross: hold at the boundary on the home-region side.
+  // CC-C2: per-connection. A/B homes run today's plane-0 rules unchanged;
+  // a home off plane 0 (C) holds margin-deep on its side of EVERY
+  // connection it is a member of, then inside its own disc. (C spawns no
+  // enemies in CC-C2: the rows exist for the next order.)
   RegionManagerLogic.prototype.clampEnemyToHomeSide = function (enemy, boundary) {
     var conn = DEFS.connections[0];
     if (!conn) return false;
     var margin = CFG.enemy.holdAtBoundaryMargin;
+    if (!DEFS.isMember(conn, enemy.homeRegionId)) {
+      var held = false;
+      var homeConns = DEFS.connectionsOf(enemy.homeRegionId);
+      for (var c = 0; c < homeConns.length; c++) {
+        var hs = DEFS.sideIn(homeConns[c], enemy.homeRegionId);
+        var lim = homeConns[c].planeCoord + hs * margin;
+        if (hs * (enemy.pos.z - lim) < 0) { enemy.pos.z = lim; held = true; }
+      }
+      var home = DEFS.regions[enemy.homeRegionId];
+      if (home && home.center &&
+          whClampRadialAt(enemy.pos, whPlayRadius(enemy.homeRegionId), home.center)) held = true;
+      return held;
+    }
     var isHomeA = enemy.homeRegionId === CFG.regionA.id;
     var clamped = false;
     if (isHomeA) {
@@ -96177,8 +96554,16 @@ window.WH_ICONS = {
   // ---- R5 P0-5: world bounds + prop colliders (no THREE import) -------------
 
   // Playable disc radius: player and enemies are held inside it.
-  function whPlayRadius() {
-    return CFG.world.groundRadius - CFG.world.playerMargin;
+  // CC-C2: per region (regionId optional): a region's own groundRadius
+  // (C = 280) else the global CFG.world.groundRadius (A/B, and every
+  // no-argument caller: today's value). playerMargin stays global.
+  function whGroundRadius(regionId) {
+    var reg = regionId ? DEFS.regions[regionId] : null;
+    return (reg && reg.groundRadius) || CFG.world.groundRadius;
+  }
+
+  function whPlayRadius(regionId) {
+    return whGroundRadius(regionId) - CFG.world.playerMargin;
   }
 
   // Visual ground radius per region. FogExp2 is 95% opaque at
@@ -96188,7 +96573,8 @@ window.WH_ICONS = {
     var W = CFG.world;
     var d95 = Math.sqrt(-Math.log(1 - W.fogOpaqueFrac)) /
       DEFS.regions[regionId].fogDensity;
-    return Math.max(W.groundRadius, whPlayRadius() + W.visualGroundFogMult * d95);
+    return Math.max(whGroundRadius(regionId),
+      whPlayRadius(regionId) + W.visualGroundFogMult * d95);
   }
 
   // Radial rim clamp that respects a home-side plane limit (limitZ null = no
@@ -96205,6 +96591,17 @@ window.WH_ICONS = {
       pos.x = (pos.x < 0 ? -1 : 1) * Math.sqrt(Math.max(0, r * r - limitZ * limitZ));
     }
     return true;
+  }
+
+  // CC-C2: rim clamp for a region with its own disc center (no plane limit:
+  // C's sides are door cross-lines, not walls).
+  function whClampRadialAt(pos, r, center) {
+    pos.x -= center.x;
+    pos.z -= center.z;
+    var hit = whClampRadial(pos, r, 1, null);
+    pos.x += center.x;
+    pos.z += center.z;
+    return hit;
   }
 
   // Does a prop circle meet the gate corridor rectangle (chokepoint x-span,
@@ -96262,7 +96659,9 @@ window.WH_ICONS = {
           x: t.x, z: t.z, r: t.r });
       }
     }
-    if (wall) {
+    // CC-C2: the world wall bounds the shared A/B disc only (plane-0
+    // members); C's own disc never takes its circles
+    if (wall && DEFS.isMember(DEFS.connections[0], regionId)) {
       if (!wall.complete) out.complete = false;
       var side = DEFS.regions[regionId].side;
       for (var k = 0; k < wall.colliders.length; k++) {
@@ -96279,8 +96678,16 @@ window.WH_ICONS = {
   // Full player clamp = boundary plane + radial rim in ONE call (game.js
   // clampPlayerToBounds returns early on true, so the rim must not depend on
   // the plane clamp not firing). Returns true if either clamp fired.
+  // CC-C2: inside an open door band the rim is suspended (inOpenDoorBand);
+  // a region with its own disc (C) clamps to that disc; A/B unchanged.
   RegionManagerLogic.prototype.clampPlayer = function (pos) {
     var plane = this.clampPlayerPlane(pos);
+    if (this.inOpenDoorBand(pos)) return plane;
+    var reg = DEFS.regions[this.activeId];
+    if (reg.center) {
+      var rimC = whClampRadialAt(pos, whPlayRadius(this.activeId), reg.center);
+      return plane || rimC;
+    }
     var conn = DEFS.connections[0];
     var limitZ = (conn && !DEFS.insideChokepoint(conn, pos.x)) ? conn.planeCoord : null;
     var rim = whClampRadial(pos, whPlayRadius(), DEFS.regions[this.activeId].side, limitZ);
@@ -96356,6 +96763,14 @@ window.WH_ICONS = {
     var moss = whHexToRgb(0x56583a);
     var puddle = whHexToRgb(0x15171a);
     var rand = whRng(isA ? 1013904223 : 2040042217);
+    // CC-C2: a region with its own ground palette (C deep forest) paints
+    // the same recipe from its CONFIG tones + seed
+    var rc = DEFS.regions[regionId].cfg;
+    if (rc.groundColor !== undefined) {
+      dominant = whHexToRgb(rc.groundColor);
+      secondary = whHexToRgb(rc.groundColor2);
+      rand = whRng(rc.groundSeed);
+    }
 
     // Base: dominant tone.
     ctx.fillStyle = whCss(dominant, 0, rand);
@@ -96426,6 +96841,8 @@ window.WH_ICONS = {
     tex.anisotropy = Math.min(4, caps ? caps.getMaxAnisotropy() : 4);
     tex.colorSpace = THREE.SRGBColorSpace;
     // R5: repeat scales with the visual disc so texel density stays repeat/90
+    // (CC-C2: per-region visual radius, global 90 reference: C's r ~336
+    // disc gets ~45 repeats = the same ~15 m per tile as A/B)
     var rep = gtc.repeat * whVisualGroundRadius(regionId) / CFG.world.groundRadius;
     tex.repeat.set(rep, rep);
     return tex;
@@ -96607,6 +97024,7 @@ window.WH_ICONS = {
     if (!SC || !SC.enabled) return plan;
     var reg = DEFS.regions[regionId];
     var cfg = reg.cfg;
+    if (cfg.scatter === false) return plan;   // CC-C2: C has no Round E scatter (CC-C3)
     var C = SC.clear;
     var side = reg.side;
     var plane = CFG.boundary.z;
@@ -96645,12 +97063,19 @@ window.WH_ICONS = {
       if (Math.sqrt(x * x + z * z) > rPlay - pad) return false;
       return side === 1 ? z > plane + pad : z < plane - pad;
     }
-    // spawn + gate (point and collider corridor) + path band
+    // CC-C2: door mouths of this region's door connections stay clear like
+    // the A/B gate point (gateM); A has none
+    var doors = DEFS.connectionsOf(regionId).filter(function (c) { return !!c.door; });
+    // spawn + gate (point and collider corridor) + door mouths + path band
     function clearOfWorld(x, z, pathM) {
       var dx = x - reg.spawn.x, dz = z - reg.spawn.z;
       if (dx * dx + dz * dz < C.spawnM * C.spawnM) return false;
       dx = x - gx; dz = z - plane;
       if (dx * dx + dz * dz < C.gateM * C.gateM) return false;
+      for (var d = 0; d < doors.length; d++) {
+        dx = x - doors[d].door.doorX; dz = z - doors[d].planeCoord;
+        if (dx * dx + dz * dz < C.gateM * C.gateM) return false;
+      }
       if (whMeetsCorridor(x, z, 0)) return false;
       if (hasPath && whDistToPath(DP, x, z) < pathM) return false;
       return true;
@@ -96797,9 +97222,10 @@ window.WH_ICONS = {
   function whWallPlan(meta) {
     var W = CFG.boundaryWall;
     var plan = { segments: [], colliders: [], arch: null, lantern: null, sockets: [],
+      doorArches: [],
       complete: true,
       stats: { ring: 0, chordE: 0, chordW: 0, nudged: 0, drops: 0, dropReasons: [],
-               overDropLimit: false, colliders: 0 } };
+               overDropLimit: false, colliders: 0, doorGap: 0 } };
     if (!W || !W.enabled) return plan;
     var TWO_PI = Math.PI * 2;
     var DEG = Math.PI / 180;
@@ -96868,6 +97294,18 @@ window.WH_ICONS = {
     // 1. ring: N segments around the full circle, chord <= length - overlap
     // so neighbours butt; asset alternates; radial jitter is a circular
     // 1-2-1 smoothing of per-segment uniform draws (no hard steps).
+    // CC-C2: door connections cut the ring - a segment whose x-extent meets
+    // the door window (+ wallGapPadM) near the door plane is not built (no
+    // mesh, no colliders); draws are taken first, so no other segment moves
+    var doorConns = DEFS.connections.filter(function (c) { return !!c.door; });
+    function inDoorGap(x, z) {
+      for (var d = 0; d < doorConns.length; d++) {
+        var dr = doorConns[d].door;
+        if (Math.abs(x - dr.doorX) < dr.doorHalfWidth + dr.wallGapPadM + L / 2 &&
+            Math.abs(z - doorConns[d].planeCoord) < L) return true;
+      }
+      return false;
+    }
     var R = W.radius;
     var N = Math.ceil(TWO_PI * R / (L - W.overlapM));
     var rr = stream('ring');
@@ -96884,6 +97322,7 @@ window.WH_ICONS = {
       // front face) then points at the disc center
       var rot = -th - Math.PI / 2 + rotJ[i];
       var asset = W.assets[i % W.assets.length];
+      if (inDoorGap(r0 * Math.cos(th), r0 * Math.sin(th))) { plan.stats.doorGap++; continue; }
       var placed = false, why = null;
       for (var nd = 0; nd <= EX.nudgeMaxM + 1e-9; nd += EX.nudgeStepM) {
         var rx = (r0 - nd) * Math.cos(th), rz = (r0 - nd) * Math.sin(th);
@@ -96992,6 +97431,18 @@ window.WH_ICONS = {
         }
       }
     }
+    // 5. CC-C2 door arches (region-defs conn.door.arch): the gate-arch fit
+    // math on the door's own row; VISUAL ONLY (no leg colliders - the
+    // door's gate logic is the door; region-manager holdAtLockedDoor)
+    doorConns.forEach(function (c) {
+      var DA = c.door.arch;
+      var dm = DA ? m(DA.asset) : null;
+      if (!dm || !(dm.width > 0)) return;
+      var ds = DA.fitOpening / (DA.openingFrac * dm.width);
+      plan.doorArches.push({ asset: DA.asset, x: DA.x, z: DA.z, rotY: DA.rotY,
+        offsetX: -DA.openingCenterFrac * dm.width * ds,
+        scale: ds, scaleZ: ds * DA.depthScale });
+    });
     plan.stats.colliders = plan.colliders.length;
     return plan;
   }
@@ -97146,6 +97597,18 @@ window.WH_ICONS = {
       }
       group.add(arch);
     }
+    // CC-C2: door arches (world group: seen from both sides of the door)
+    plan.doorArches.forEach(function (D) {
+      var da = new THREE.Group();          // unscaled: origin = opening center
+      da.name = 'door-arch';
+      da.position.set(D.x, 0, D.z);
+      da.rotation.y = D.rotY;
+      var dg = window.WH_ASSETS.instance(D.asset);
+      dg.position.x = D.offsetX;
+      dg.scale.set(D.scale, D.scale, D.scaleZ);
+      da.add(dg);
+      group.add(da);
+    });
     this.scene.add(group);
     this.worldGroup = group;
     return group;
@@ -97252,6 +97715,11 @@ window.WH_ICONS = {
       groundMat
     );
     ground.rotation.x = -Math.PI / 2;
+    // CC-C2: own-disc region (C): centered on its disc, sunk to groundY
+    // (B's disc is y = 0) so the two never z-fight
+    if (region.center) {
+      ground.position.set(region.center.x, region.cfg.groundY || 0, region.center.z);
+    }
     ground.name = 'ground';
     group.add(ground);
 
@@ -97369,19 +97837,28 @@ window.WH_ICONS = {
 
   // Main per-frame entry. Applies transition logic to live scene. Returns the
   // transition result for the caller (HUD updates etc).
+  // CC-C2: with more than one neighbor the hidden (pre-warm) group and the
+  // region left behind are tracked by id, not by neighborOf (single
+  // neighbor: the same groups as before).
+  RegionManager.prototype.disposeHiddenExcept = function (keepId) {
+    var self = this;
+    Object.keys(this.groups).forEach(function (rid) {
+      if (rid !== keepId && rid !== self.logic.activeId && !self.groups[rid].visible) {
+        self.disposeRegion(rid);
+      }
+    });
+  };
+
   RegionManager.prototype.tickTransition = function (x, z) {
+    var prevActiveId = this.logic.activeId;
     var result = this.logic.tickTransition(x, z);
     if (result.action === 'prewarm') {
       this.buildRegion(result.newActiveId || this.logic.prewarmedId, true);
     } else if (result.action === 'dispose') {
-      var pid = this.logic.prewarmedId;
-      // logic already cleared prewarmedId; find what it was via groups
-      var neighbor = DEFS.neighborOf(this.logic.activeId);
-      if (neighbor && this.groups[neighbor] && !this.groups[neighbor].visible) {
-        this.disposeRegion(neighbor);
-      }
+      // logic already cleared prewarmedId: every hidden group goes
+      this.disposeHiddenExcept(null);
     } else if (result.action === 'cross') {
-      var oldId = DEFS.neighborOf(result.newActiveId);
+      var oldId = prevActiveId;
       // reveal the pre-warmed neighbor (instant swap: already built)
       var newGroup = this.groups[result.newActiveId];
       if (newGroup) {
@@ -97391,6 +97868,7 @@ window.WH_ICONS = {
       }
       // unload old region
       if (this.groups[oldId]) this.disposeRegion(oldId);
+      this.disposeHiddenExcept(null);   // CC-C2: no stale pre-warm of a third region
       this.enemies[result.newActiveId] = this.enemies[result.newActiveId] || [];
     }
     return result;
@@ -97409,6 +97887,7 @@ window.WH_ICONS = {
     if (this.groups[regionId]) this.groups[regionId].visible = true;
     else this.buildRegion(regionId, false);
     if (this.groups[oldId]) this.disposeRegion(oldId);
+    this.disposeHiddenExcept(null);     // CC-C2: no stale pre-warm of a third region
     this.enemies[regionId] = this.enemies[regionId] || [];
     return true;
   };
@@ -99590,8 +100069,14 @@ window.WH_ICONS = {
     }, CFG.hud.regionNameFadeSeconds * 1000);
   }
 
-  function setGateHint(visible) {
-    game.hud.gateHint.classList.toggle('visible', visible);
+  // CC-C2: optional text (the B/C door); no text = the element's own
+  // index.html text (the A/B gate hint, unchanged)
+  function setGateHint(visible, text) {
+    var el = game.hud.gateHint;
+    if (game.gateHintText === undefined) game.gateHintText = el.textContent;
+    var t = text || game.gateHintText;
+    if (el.textContent !== t) el.textContent = t;
+    el.classList.toggle('visible', visible);
   }
 
   function setDeathOverlay(visible) {
@@ -100266,11 +100751,28 @@ window.WH_ICONS = {
     if (rm.pushOutOfProps(player.pos, CFG.player.radius)) {
       blocked = rm.logic.clampPlayer(player.pos) || blocked;
     }
+    // CC-C2 tutorial-law gate AT the line (after every clamp, so no push-out
+    // carries the player over): the frame that would cross a locked door
+    // plane in its window holds z on the line. game.doorPrevZ = pre-move z.
+    if (game.doorPrevZ !== undefined &&
+        rm.logic.holdAtLockedDoor(game.doorPrevZ, player.pos)) blocked = true;
     if (blocked) return;
     // near gate: show hint when close to the chokepoint on the A side
     var distGate = Math.abs(player.pos.x - CFG.chokepoint.centerX);
     var nearBoundary = Math.abs(player.pos.z - CFG.boundary.z) < CFG.preWarm.distance;
-    setGateHint(nearBoundary && distGate < CFG.chokepoint.width * 2);
+    var nearGate = nearBoundary && distGate < CFG.chokepoint.width * 2;
+    // CC-C2: the B/C door hint (only where the A/B hint is not showing)
+    var D = CFG.regionC.door;
+    var aid = rm.logic.activeId;
+    var nearDoor = !nearGate && (aid === CFG.regionB.id || aid === CFG.regionC.id) &&
+      Math.abs(player.pos.z - D.planeZ) < D.hintM &&
+      Math.abs(player.pos.x - D.doorX) < D.doorHalfWidth * 2;
+    if (nearDoor) {
+      setGateHint(true, aid === CFG.regionC.id ? D.text.hintBack :
+        (game.dayNight.dormant ? D.text.hintLocked : D.text.hint));
+    } else {
+      setGateHint(nearGate);
+    }
   }
 
   // ---- camera shake (v3 D4) ---------------------------------------------------
@@ -100300,6 +100802,8 @@ window.WH_ICONS = {
   // R2 P0-3: region lighting = fog swap + hemi fill scaled to the region's
   // ambientLightLevel (fill = hemiBaseIntensity * ambientLightLevel). The old
   // keyLight is gone; moon and lantern are region-independent.
+  // CC-C2: region C rides the same path (its CONFIG fog + ambientLightLevel;
+  // the B fill mult stays B-only; day/night fog rows per phase in CONFIG).
   function applyRegionLighting(regionId) {
     var region = window.WH_REGION_DEFS.regions[regionId];
     // 10-03 order 4: background stays near-black (sky dome owns the view);
@@ -100533,6 +101037,18 @@ window.WH_ICONS = {
     if (game.sky && game.sky.starMat) {
       game.sky.starMat.uniforms.time.value = performance.now() / 1000;
     }
+    // CC-C2: the dome (r 400, camera far 500) is anchored at the origin for
+    // the shared A/B disc; in a region with its own disc (C spans z -646..
+    // -86) it rides the camera so it never clips or gets walked through
+    var rm = game.regionManager;
+    if (game.sky && game.sky.group && rm) {
+      var reg = window.WH_REGION_DEFS.regions[rm.logic.activeId];
+      if (reg && reg.center) {
+        game.sky.group.position.set(game.camera.position.x, 0, game.camera.position.z);
+      } else if (game.sky.group.position.x !== 0 || game.sky.group.position.z !== 0) {
+        game.sky.group.position.set(0, 0, 0);
+      }
+    }
   }
 
   // C2: push the day/night look (js/daynight.js state) into the scene. Same
@@ -100753,7 +101269,20 @@ window.WH_ICONS = {
     if (game.player.inputSuspended || game.player.state !== 'alive') return false;
     var p = game.player.pos;
     return tryPickup() || lootCorpseNearest(p.x, p.z, CFG.corpseLoot.lootRadius) ||
-      tryCookStation() || tryCampSleep() || tryGather();
+      tryCookStation() || tryCampSleep() || tryDoorway() || tryGather();
+  }
+
+  // ---- CC-C2 B/C doorway (CONFIG.regionC.door) -----------------------------------
+  // E near the arch while the door is locked (tutorial law: the day/night
+  // clock is dormant until the first camp Save and Heal) names the reason.
+  function lockedDoorNear() {
+    return game.regionManager.logic.lockedDoorNear(game.player.pos, CFG.regionC.door.interactM);
+  }
+
+  function tryDoorway() {
+    if (!lockedDoorNear()) return false;
+    game.inventoryUI.toast(CFG.regionC.door.text.locked);
+    return true;
   }
 
   // ---- C1 cooking stations (CONFIG.cooking, js/cooking.js) -----------------------
@@ -100942,6 +101471,8 @@ window.WH_ICONS = {
         text = game.cooking.promptFor(st);   // C1: cook / burnt / too low
       } else if (nearestCampSleep()) {
         text = CFG.camp.text.prompt;         // C3: tent menu
+      } else if (lockedDoorNear()) {
+        text = CFG.regionC.door.text.prompt; // CC-C2: locked B/C door
       } else {
         var node = nearestGatherNode();
         if (node) text = CFG.gather.promptText.replace('{name}', CFG.gather.nodeTypes[node.type].name);
@@ -101262,6 +101793,10 @@ window.WH_ICONS = {
 
       // initial region A
       game.regionManager = new window.WH_RegionManager(game.scene);
+      // CC-C2 tutorial law: the B/C door is locked while the clock is
+      // dormant - the same !dayNight.dormant predicate as every
+      // first-sleep-gated thing (js/daynight.js; js/camp.js owns beginCycle)
+      game.regionManager.logic.doorGate = function () { return game.dayNight.dormant; };
       game.regionManager.buildRegion(CFG.regionA.id, false);
       var region = window.WH_REGION_DEFS.regions[CFG.regionA.id];
       game.player.pos.set(region.spawn.x, 0, region.spawn.z);
@@ -101470,6 +102005,7 @@ window.WH_ICONS = {
     var rm = game.regionManager;
 
     // player + transition logic
+    game.doorPrevZ = game.player.pos.z;   // CC-C2: door gate crossing-frame test
     game.player.update(dt, clampPlayerToBounds);
 
     // ---- v7: cast windup tick (fires the bolt at windup end). Order C: both

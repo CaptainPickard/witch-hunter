@@ -468,8 +468,14 @@
     }, CFG.hud.regionNameFadeSeconds * 1000);
   }
 
-  function setGateHint(visible) {
-    game.hud.gateHint.classList.toggle('visible', visible);
+  // CC-C2: optional text (the B/C door); no text = the element's own
+  // index.html text (the A/B gate hint, unchanged)
+  function setGateHint(visible, text) {
+    var el = game.hud.gateHint;
+    if (game.gateHintText === undefined) game.gateHintText = el.textContent;
+    var t = text || game.gateHintText;
+    if (el.textContent !== t) el.textContent = t;
+    el.classList.toggle('visible', visible);
   }
 
   function setDeathOverlay(visible) {
@@ -1144,11 +1150,28 @@
     if (rm.pushOutOfProps(player.pos, CFG.player.radius)) {
       blocked = rm.logic.clampPlayer(player.pos) || blocked;
     }
+    // CC-C2 tutorial-law gate AT the line (after every clamp, so no push-out
+    // carries the player over): the frame that would cross a locked door
+    // plane in its window holds z on the line. game.doorPrevZ = pre-move z.
+    if (game.doorPrevZ !== undefined &&
+        rm.logic.holdAtLockedDoor(game.doorPrevZ, player.pos)) blocked = true;
     if (blocked) return;
     // near gate: show hint when close to the chokepoint on the A side
     var distGate = Math.abs(player.pos.x - CFG.chokepoint.centerX);
     var nearBoundary = Math.abs(player.pos.z - CFG.boundary.z) < CFG.preWarm.distance;
-    setGateHint(nearBoundary && distGate < CFG.chokepoint.width * 2);
+    var nearGate = nearBoundary && distGate < CFG.chokepoint.width * 2;
+    // CC-C2: the B/C door hint (only where the A/B hint is not showing)
+    var D = CFG.regionC.door;
+    var aid = rm.logic.activeId;
+    var nearDoor = !nearGate && (aid === CFG.regionB.id || aid === CFG.regionC.id) &&
+      Math.abs(player.pos.z - D.planeZ) < D.hintM &&
+      Math.abs(player.pos.x - D.doorX) < D.doorHalfWidth * 2;
+    if (nearDoor) {
+      setGateHint(true, aid === CFG.regionC.id ? D.text.hintBack :
+        (game.dayNight.dormant ? D.text.hintLocked : D.text.hint));
+    } else {
+      setGateHint(nearGate);
+    }
   }
 
   // ---- camera shake (v3 D4) ---------------------------------------------------
@@ -1178,6 +1201,8 @@
   // R2 P0-3: region lighting = fog swap + hemi fill scaled to the region's
   // ambientLightLevel (fill = hemiBaseIntensity * ambientLightLevel). The old
   // keyLight is gone; moon and lantern are region-independent.
+  // CC-C2: region C rides the same path (its CONFIG fog + ambientLightLevel;
+  // the B fill mult stays B-only; day/night fog rows per phase in CONFIG).
   function applyRegionLighting(regionId) {
     var region = window.WH_REGION_DEFS.regions[regionId];
     // 10-03 order 4: background stays near-black (sky dome owns the view);
@@ -1411,6 +1436,18 @@
     if (game.sky && game.sky.starMat) {
       game.sky.starMat.uniforms.time.value = performance.now() / 1000;
     }
+    // CC-C2: the dome (r 400, camera far 500) is anchored at the origin for
+    // the shared A/B disc; in a region with its own disc (C spans z -646..
+    // -86) it rides the camera so it never clips or gets walked through
+    var rm = game.regionManager;
+    if (game.sky && game.sky.group && rm) {
+      var reg = window.WH_REGION_DEFS.regions[rm.logic.activeId];
+      if (reg && reg.center) {
+        game.sky.group.position.set(game.camera.position.x, 0, game.camera.position.z);
+      } else if (game.sky.group.position.x !== 0 || game.sky.group.position.z !== 0) {
+        game.sky.group.position.set(0, 0, 0);
+      }
+    }
   }
 
   // C2: push the day/night look (js/daynight.js state) into the scene. Same
@@ -1631,7 +1668,20 @@
     if (game.player.inputSuspended || game.player.state !== 'alive') return false;
     var p = game.player.pos;
     return tryPickup() || lootCorpseNearest(p.x, p.z, CFG.corpseLoot.lootRadius) ||
-      tryCookStation() || tryCampSleep() || tryGather();
+      tryCookStation() || tryCampSleep() || tryDoorway() || tryGather();
+  }
+
+  // ---- CC-C2 B/C doorway (CONFIG.regionC.door) -----------------------------------
+  // E near the arch while the door is locked (tutorial law: the day/night
+  // clock is dormant until the first camp Save and Heal) names the reason.
+  function lockedDoorNear() {
+    return game.regionManager.logic.lockedDoorNear(game.player.pos, CFG.regionC.door.interactM);
+  }
+
+  function tryDoorway() {
+    if (!lockedDoorNear()) return false;
+    game.inventoryUI.toast(CFG.regionC.door.text.locked);
+    return true;
   }
 
   // ---- C1 cooking stations (CONFIG.cooking, js/cooking.js) -----------------------
@@ -1820,6 +1870,8 @@
         text = game.cooking.promptFor(st);   // C1: cook / burnt / too low
       } else if (nearestCampSleep()) {
         text = CFG.camp.text.prompt;         // C3: tent menu
+      } else if (lockedDoorNear()) {
+        text = CFG.regionC.door.text.prompt; // CC-C2: locked B/C door
       } else {
         var node = nearestGatherNode();
         if (node) text = CFG.gather.promptText.replace('{name}', CFG.gather.nodeTypes[node.type].name);
@@ -2140,6 +2192,10 @@
 
       // initial region A
       game.regionManager = new window.WH_RegionManager(game.scene);
+      // CC-C2 tutorial law: the B/C door is locked while the clock is
+      // dormant - the same !dayNight.dormant predicate as every
+      // first-sleep-gated thing (js/daynight.js; js/camp.js owns beginCycle)
+      game.regionManager.logic.doorGate = function () { return game.dayNight.dormant; };
       game.regionManager.buildRegion(CFG.regionA.id, false);
       var region = window.WH_REGION_DEFS.regions[CFG.regionA.id];
       game.player.pos.set(region.spawn.x, 0, region.spawn.z);
@@ -2348,6 +2404,7 @@
     var rm = game.regionManager;
 
     // player + transition logic
+    game.doorPrevZ = game.player.pos.z;   // CC-C2: door gate crossing-frame test
     game.player.update(dt, clampPlayerToBounds);
 
     // ---- v7: cast windup tick (fires the bolt at windup end). Order C: both

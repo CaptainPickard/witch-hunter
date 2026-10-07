@@ -38,56 +38,137 @@
 
   // Returns null, 'prewarm' (neighbor built hidden), 'dispose' (pre-warm
   // thrown away), or 'cross' (region swap; newActiveId set).
+  // CC-C2: walks EVERY connection of the active region (B has two: the A/B
+  // chokepoint plane and the B/C door). A region with one connection (A,
+  // C) runs exactly the single-connection logic of before.
   RegionManagerLogic.prototype.tickTransition = function (x, z) {
     var result = { action: null, newActiveId: null, mappedPos: null };
-    var conn = DEFS.connectionBetween(this.activeId, DEFS.neighborOf(this.activeId));
-    if (!conn) return result;
+    var conns = DEFS.connectionsOf(this.activeId);
+    if (!conns.length) return result;
 
-    var dist = DEFS.distanceToBoundary(conn, z);
-    var neighborId = DEFS.neighborOf(this.activeId);
-    var insideChoke = DEFS.insideChokepoint(conn, x);
-
-    // crossing: player crossed the plane inside the chokepoint corridor.
+    // crossing: player crossed the plane inside the chokepoint corridor (or
+    // a door's window; a locked door never crosses - game.js gate predicate).
     // Direction-agnostic: fires when the player's plane side differs from the
     // ACTIVE region's home side (walking into the neighbor's half), so both
     // A->B and B->A crossings trigger. (The old code compared against the
     // fixed conn.fromSide, which made B->A returns impossible.)
-    var sideNow = DEFS.sideOfPlane(conn, z);
-    var activeSide = DEFS.regions[this.activeId].side;
-    if (insideChoke && sideNow !== activeSide) {
-      // map position across, preserving approach direction: place the player
-      // just past the plane ON THE NEIGHBOR'S HOME SIDE (not merely the
-      // opposite of their current side, which can re-trigger a cross back).
-      var mapped = DEFS.mapPositionAcross(conn, x, z, 2,
-        DEFS.regions[neighborId].side);
-      result.action = 'cross';
-      result.newActiveId = neighborId;
-      result.mappedPos = mapped;
-      this.stateFor(this.activeId).crossed++;
-      this.stateFor(neighborId).crossed++;
-      this.activeId = neighborId;
-      this.prewarmedId = null;         // consumed by the swap
-      this.buildCounts[neighborId] = (this.buildCounts[neighborId] || 0) + 1;
-      return result;
+    for (var i = 0; i < conns.length; i++) {
+      var conn = conns[i];
+      var neighborId = DEFS.otherEnd(conn, this.activeId);
+      var open = conn.door ?
+        DEFS.insideDoorWindow(conn, x) && !this.doorLocked(conn, neighborId) :
+        DEFS.insideChokepoint(conn, x);
+      var sideNow = DEFS.sideOfPlane(conn, z);
+      var activeSide = DEFS.sideIn(conn, this.activeId);
+      if (open && sideNow !== activeSide) {
+        // map position across, preserving approach direction: place the player
+        // just past the plane ON THE NEIGHBOR'S HOME SIDE (not merely the
+        // opposite of their current side, which can re-trigger a cross back).
+        var mapped = DEFS.mapPositionAcross(conn, x, z, 2,
+          DEFS.sideIn(conn, neighborId));
+        result.action = 'cross';
+        result.newActiveId = neighborId;
+        result.mappedPos = mapped;
+        this.stateFor(this.activeId).crossed++;
+        this.stateFor(neighborId).crossed++;
+        this.activeId = neighborId;
+        this.prewarmedId = null;         // consumed by the swap
+        this.buildCounts[neighborId] = (this.buildCounts[neighborId] || 0) + 1;
+        return result;
+      }
     }
 
-    // pre-warm: close to boundary, approach direction faces the neighbor
-    if (dist <= this.preWarmDistance && this.prewarmedId !== neighborId) {
-      this.prewarmedId = neighborId;
-      this.buildCounts[neighborId] = (this.buildCounts[neighborId] || 0) + 1;
+    // pre-warm: close to the NEAREST connection's plane, approach direction
+    // faces that neighbor. One pre-warm slot: a held pre-warm is only
+    // replaced after the hysteresis below disposes it (no rebuild thrash
+    // between B's two planes; with one connection this is the old
+    // prewarmedId !== neighborId test).
+    var near = conns[0];
+    for (var j = 1; j < conns.length; j++) {
+      if (DEFS.distanceToBoundary(conns[j], z) < DEFS.distanceToBoundary(near, z)) near = conns[j];
+    }
+    var dist = DEFS.distanceToBoundary(near, z);
+    var nearId = DEFS.otherEnd(near, this.activeId);
+    if (dist <= this.preWarmDistance && this.prewarmedId === null) {
+      this.prewarmedId = nearId;
+      this.buildCounts[nearId] = (this.buildCounts[nearId] || 0) + 1;
       result.action = 'prewarm';
       return result;
     }
 
-    // hysteresis: player turned back beyond pre-warm band -> dispose pre-warm
-    if (this.prewarmedId !== null &&
-        dist > this.preWarmDistance + this.hysteresisDistance) {
-      this.prewarmedId = null;
-      result.action = 'dispose';
-      return result;
+    // hysteresis: player turned back beyond pre-warm band of the pre-warmed
+    // neighbor's own plane -> dispose pre-warm
+    if (this.prewarmedId !== null) {
+      var pc = DEFS.connectionBetween(this.activeId, this.prewarmedId);
+      if (!pc || DEFS.distanceToBoundary(pc, z) > this.preWarmDistance + this.hysteresisDistance) {
+        this.prewarmedId = null;
+        result.action = 'dispose';
+        return result;
+      }
     }
 
     return result;
+  };
+
+  // CC-C2 tutorial-law gate: crossings INTO conn.door.gatedTo are locked
+  // while the predicate game.js installs (doorGate = !dayNight.dormant
+  // inverted: true = locked) says so. No predicate = open.
+  RegionManagerLogic.prototype.doorGate = null;
+  RegionManagerLogic.prototype.doorLocked = function (conn, toId) {
+    return !!(conn.door && conn.door.gatedTo === toId && this.doorGate && this.doorGate(conn));
+  };
+
+  // CC-C2 radial suspension: inside an OPEN door window within suspendDepthM
+  // of the plane the active region's rim clamp does not apply, so a player
+  // whose disc ends short of the line (C: rim z = -87.5, line -86) can reach
+  // and cross it. The far half of the band only while the door is open
+  // (that frame crosses); a locked door keeps the rim on the far half, so
+  // a player in B's north strip never gains ground past B's rim.
+  RegionManagerLogic.prototype.inOpenDoorBand = function (pos) {
+    var conns = DEFS.connectionsOf(this.activeId);
+    for (var i = 0; i < conns.length; i++) {
+      var conn = conns[i];
+      if (!conn.door || !DEFS.insideDoorWindow(conn, pos.x)) continue;
+      var d = DEFS.sideIn(conn, this.activeId) * (pos.z - conn.planeCoord);
+      if (d > conn.door.suspendDepthM || -d > conn.door.suspendDepthM) continue;
+      if (d >= 0 || !this.doorLocked(conn, DEFS.otherEnd(conn, this.activeId))) return true;
+    }
+    return false;
+  };
+
+  // CC-C2 gate AT the line: on the frame the player would cross a LOCKED
+  // door plane out of the active region's home half inside the window, z
+  // is held at the line (crossing-frame hold, not a positional yank).
+  // prevZ = this frame's pre-move z (game.js). A player already past the
+  // line (stepped sideways into the window from B's north strip) is never
+  // held; moving back toward home is always free.
+  RegionManagerLogic.prototype.holdAtLockedDoor = function (prevZ, pos) {
+    var conns = DEFS.connectionsOf(this.activeId);
+    var held = false;
+    for (var i = 0; i < conns.length; i++) {
+      var conn = conns[i];
+      if (!conn.door || !DEFS.insideDoorWindow(conn, pos.x)) continue;
+      if (!this.doorLocked(conn, DEFS.otherEnd(conn, this.activeId))) continue;
+      var s = DEFS.sideIn(conn, this.activeId);
+      if (s * (prevZ - conn.planeCoord) >= 0 && s * (pos.z - conn.planeCoord) < 0) {
+        pos.z = conn.planeCoord;
+        held = true;
+      }
+    }
+    return held;
+  };
+
+  // CC-C2: is the player near a door's arch while it is locked toward the
+  // other side? (game.js reason toast + interact prompt)
+  RegionManagerLogic.prototype.lockedDoorNear = function (pos, radius) {
+    var conns = DEFS.connectionsOf(this.activeId);
+    for (var i = 0; i < conns.length; i++) {
+      var conn = conns[i];
+      if (!conn.door || !this.doorLocked(conn, DEFS.otherEnd(conn, this.activeId))) continue;
+      var dx = pos.x - conn.door.doorX, dz = pos.z - conn.planeCoord;
+      if (dx * dx + dz * dz <= radius * radius) return conn;
+    }
+    return null;
   };
 
   // Boundary clamp for the player: blocked everywhere except inside the
@@ -96,9 +177,13 @@
   // position's current side: a player who walks past the plane outside the
   // corridor is trespassing on the neighbor's side and must be pushed back
   // into their own region, regardless of which side they are now on.
+  // CC-C2: plane 0 applies to its members only (C is not on it); door
+  // connections have NO plane clamp (the plane is a cross-line in the
+  // window, see holdAtLockedDoor).
   RegionManagerLogic.prototype.clampPlayerPlane = function (pos) {
     var conn = DEFS.connections[0];
     if (!conn) return false;
+    if (!DEFS.isMember(conn, this.activeId)) return false;
     var insideChoke = DEFS.insideChokepoint(conn, pos.x);
     if (insideChoke) return false;     // free passage in the corridor
     var homeSide = DEFS.regions[this.activeId].side;   // +1 for A, -1 for B
@@ -113,10 +198,27 @@
   };
 
   // Enemies never cross: hold at the boundary on the home-region side.
+  // CC-C2: per-connection. A/B homes run today's plane-0 rules unchanged;
+  // a home off plane 0 (C) holds margin-deep on its side of EVERY
+  // connection it is a member of, then inside its own disc. (C spawns no
+  // enemies in CC-C2: the rows exist for the next order.)
   RegionManagerLogic.prototype.clampEnemyToHomeSide = function (enemy, boundary) {
     var conn = DEFS.connections[0];
     if (!conn) return false;
     var margin = CFG.enemy.holdAtBoundaryMargin;
+    if (!DEFS.isMember(conn, enemy.homeRegionId)) {
+      var held = false;
+      var homeConns = DEFS.connectionsOf(enemy.homeRegionId);
+      for (var c = 0; c < homeConns.length; c++) {
+        var hs = DEFS.sideIn(homeConns[c], enemy.homeRegionId);
+        var lim = homeConns[c].planeCoord + hs * margin;
+        if (hs * (enemy.pos.z - lim) < 0) { enemy.pos.z = lim; held = true; }
+      }
+      var home = DEFS.regions[enemy.homeRegionId];
+      if (home && home.center &&
+          whClampRadialAt(enemy.pos, whPlayRadius(enemy.homeRegionId), home.center)) held = true;
+      return held;
+    }
     var isHomeA = enemy.homeRegionId === CFG.regionA.id;
     var clamped = false;
     if (isHomeA) {
@@ -139,8 +241,16 @@
   // ---- R5 P0-5: world bounds + prop colliders (no THREE import) -------------
 
   // Playable disc radius: player and enemies are held inside it.
-  function whPlayRadius() {
-    return CFG.world.groundRadius - CFG.world.playerMargin;
+  // CC-C2: per region (regionId optional): a region's own groundRadius
+  // (C = 280) else the global CFG.world.groundRadius (A/B, and every
+  // no-argument caller: today's value). playerMargin stays global.
+  function whGroundRadius(regionId) {
+    var reg = regionId ? DEFS.regions[regionId] : null;
+    return (reg && reg.groundRadius) || CFG.world.groundRadius;
+  }
+
+  function whPlayRadius(regionId) {
+    return whGroundRadius(regionId) - CFG.world.playerMargin;
   }
 
   // Visual ground radius per region. FogExp2 is 95% opaque at
@@ -150,7 +260,8 @@
     var W = CFG.world;
     var d95 = Math.sqrt(-Math.log(1 - W.fogOpaqueFrac)) /
       DEFS.regions[regionId].fogDensity;
-    return Math.max(W.groundRadius, whPlayRadius() + W.visualGroundFogMult * d95);
+    return Math.max(whGroundRadius(regionId),
+      whPlayRadius(regionId) + W.visualGroundFogMult * d95);
   }
 
   // Radial rim clamp that respects a home-side plane limit (limitZ null = no
@@ -167,6 +278,17 @@
       pos.x = (pos.x < 0 ? -1 : 1) * Math.sqrt(Math.max(0, r * r - limitZ * limitZ));
     }
     return true;
+  }
+
+  // CC-C2: rim clamp for a region with its own disc center (no plane limit:
+  // C's sides are door cross-lines, not walls).
+  function whClampRadialAt(pos, r, center) {
+    pos.x -= center.x;
+    pos.z -= center.z;
+    var hit = whClampRadial(pos, r, 1, null);
+    pos.x += center.x;
+    pos.z += center.z;
+    return hit;
   }
 
   // Does a prop circle meet the gate corridor rectangle (chokepoint x-span,
@@ -224,7 +346,9 @@
           x: t.x, z: t.z, r: t.r });
       }
     }
-    if (wall) {
+    // CC-C2: the world wall bounds the shared A/B disc only (plane-0
+    // members); C's own disc never takes its circles
+    if (wall && DEFS.isMember(DEFS.connections[0], regionId)) {
       if (!wall.complete) out.complete = false;
       var side = DEFS.regions[regionId].side;
       for (var k = 0; k < wall.colliders.length; k++) {
@@ -241,8 +365,16 @@
   // Full player clamp = boundary plane + radial rim in ONE call (game.js
   // clampPlayerToBounds returns early on true, so the rim must not depend on
   // the plane clamp not firing). Returns true if either clamp fired.
+  // CC-C2: inside an open door band the rim is suspended (inOpenDoorBand);
+  // a region with its own disc (C) clamps to that disc; A/B unchanged.
   RegionManagerLogic.prototype.clampPlayer = function (pos) {
     var plane = this.clampPlayerPlane(pos);
+    if (this.inOpenDoorBand(pos)) return plane;
+    var reg = DEFS.regions[this.activeId];
+    if (reg.center) {
+      var rimC = whClampRadialAt(pos, whPlayRadius(this.activeId), reg.center);
+      return plane || rimC;
+    }
     var conn = DEFS.connections[0];
     var limitZ = (conn && !DEFS.insideChokepoint(conn, pos.x)) ? conn.planeCoord : null;
     var rim = whClampRadial(pos, whPlayRadius(), DEFS.regions[this.activeId].side, limitZ);
@@ -318,6 +450,14 @@
     var moss = whHexToRgb(0x56583a);
     var puddle = whHexToRgb(0x15171a);
     var rand = whRng(isA ? 1013904223 : 2040042217);
+    // CC-C2: a region with its own ground palette (C deep forest) paints
+    // the same recipe from its CONFIG tones + seed
+    var rc = DEFS.regions[regionId].cfg;
+    if (rc.groundColor !== undefined) {
+      dominant = whHexToRgb(rc.groundColor);
+      secondary = whHexToRgb(rc.groundColor2);
+      rand = whRng(rc.groundSeed);
+    }
 
     // Base: dominant tone.
     ctx.fillStyle = whCss(dominant, 0, rand);
@@ -388,6 +528,8 @@
     tex.anisotropy = Math.min(4, caps ? caps.getMaxAnisotropy() : 4);
     tex.colorSpace = THREE.SRGBColorSpace;
     // R5: repeat scales with the visual disc so texel density stays repeat/90
+    // (CC-C2: per-region visual radius, global 90 reference: C's r ~336
+    // disc gets ~45 repeats = the same ~15 m per tile as A/B)
     var rep = gtc.repeat * whVisualGroundRadius(regionId) / CFG.world.groundRadius;
     tex.repeat.set(rep, rep);
     return tex;
@@ -569,6 +711,7 @@
     if (!SC || !SC.enabled) return plan;
     var reg = DEFS.regions[regionId];
     var cfg = reg.cfg;
+    if (cfg.scatter === false) return plan;   // CC-C2: C has no Round E scatter (CC-C3)
     var C = SC.clear;
     var side = reg.side;
     var plane = CFG.boundary.z;
@@ -607,12 +750,19 @@
       if (Math.sqrt(x * x + z * z) > rPlay - pad) return false;
       return side === 1 ? z > plane + pad : z < plane - pad;
     }
-    // spawn + gate (point and collider corridor) + path band
+    // CC-C2: door mouths of this region's door connections stay clear like
+    // the A/B gate point (gateM); A has none
+    var doors = DEFS.connectionsOf(regionId).filter(function (c) { return !!c.door; });
+    // spawn + gate (point and collider corridor) + door mouths + path band
     function clearOfWorld(x, z, pathM) {
       var dx = x - reg.spawn.x, dz = z - reg.spawn.z;
       if (dx * dx + dz * dz < C.spawnM * C.spawnM) return false;
       dx = x - gx; dz = z - plane;
       if (dx * dx + dz * dz < C.gateM * C.gateM) return false;
+      for (var d = 0; d < doors.length; d++) {
+        dx = x - doors[d].door.doorX; dz = z - doors[d].planeCoord;
+        if (dx * dx + dz * dz < C.gateM * C.gateM) return false;
+      }
       if (whMeetsCorridor(x, z, 0)) return false;
       if (hasPath && whDistToPath(DP, x, z) < pathM) return false;
       return true;
@@ -759,9 +909,10 @@
   function whWallPlan(meta) {
     var W = CFG.boundaryWall;
     var plan = { segments: [], colliders: [], arch: null, lantern: null, sockets: [],
+      doorArches: [],
       complete: true,
       stats: { ring: 0, chordE: 0, chordW: 0, nudged: 0, drops: 0, dropReasons: [],
-               overDropLimit: false, colliders: 0 } };
+               overDropLimit: false, colliders: 0, doorGap: 0 } };
     if (!W || !W.enabled) return plan;
     var TWO_PI = Math.PI * 2;
     var DEG = Math.PI / 180;
@@ -830,6 +981,18 @@
     // 1. ring: N segments around the full circle, chord <= length - overlap
     // so neighbours butt; asset alternates; radial jitter is a circular
     // 1-2-1 smoothing of per-segment uniform draws (no hard steps).
+    // CC-C2: door connections cut the ring - a segment whose x-extent meets
+    // the door window (+ wallGapPadM) near the door plane is not built (no
+    // mesh, no colliders); draws are taken first, so no other segment moves
+    var doorConns = DEFS.connections.filter(function (c) { return !!c.door; });
+    function inDoorGap(x, z) {
+      for (var d = 0; d < doorConns.length; d++) {
+        var dr = doorConns[d].door;
+        if (Math.abs(x - dr.doorX) < dr.doorHalfWidth + dr.wallGapPadM + L / 2 &&
+            Math.abs(z - doorConns[d].planeCoord) < L) return true;
+      }
+      return false;
+    }
     var R = W.radius;
     var N = Math.ceil(TWO_PI * R / (L - W.overlapM));
     var rr = stream('ring');
@@ -846,6 +1009,7 @@
       // front face) then points at the disc center
       var rot = -th - Math.PI / 2 + rotJ[i];
       var asset = W.assets[i % W.assets.length];
+      if (inDoorGap(r0 * Math.cos(th), r0 * Math.sin(th))) { plan.stats.doorGap++; continue; }
       var placed = false, why = null;
       for (var nd = 0; nd <= EX.nudgeMaxM + 1e-9; nd += EX.nudgeStepM) {
         var rx = (r0 - nd) * Math.cos(th), rz = (r0 - nd) * Math.sin(th);
@@ -954,6 +1118,18 @@
         }
       }
     }
+    // 5. CC-C2 door arches (region-defs conn.door.arch): the gate-arch fit
+    // math on the door's own row; VISUAL ONLY (no leg colliders - the
+    // door's gate logic is the door; region-manager holdAtLockedDoor)
+    doorConns.forEach(function (c) {
+      var DA = c.door.arch;
+      var dm = DA ? m(DA.asset) : null;
+      if (!dm || !(dm.width > 0)) return;
+      var ds = DA.fitOpening / (DA.openingFrac * dm.width);
+      plan.doorArches.push({ asset: DA.asset, x: DA.x, z: DA.z, rotY: DA.rotY,
+        offsetX: -DA.openingCenterFrac * dm.width * ds,
+        scale: ds, scaleZ: ds * DA.depthScale });
+    });
     plan.stats.colliders = plan.colliders.length;
     return plan;
   }
@@ -1108,6 +1284,18 @@
       }
       group.add(arch);
     }
+    // CC-C2: door arches (world group: seen from both sides of the door)
+    plan.doorArches.forEach(function (D) {
+      var da = new THREE.Group();          // unscaled: origin = opening center
+      da.name = 'door-arch';
+      da.position.set(D.x, 0, D.z);
+      da.rotation.y = D.rotY;
+      var dg = window.WH_ASSETS.instance(D.asset);
+      dg.position.x = D.offsetX;
+      dg.scale.set(D.scale, D.scale, D.scaleZ);
+      da.add(dg);
+      group.add(da);
+    });
     this.scene.add(group);
     this.worldGroup = group;
     return group;
@@ -1214,6 +1402,11 @@
       groundMat
     );
     ground.rotation.x = -Math.PI / 2;
+    // CC-C2: own-disc region (C): centered on its disc, sunk to groundY
+    // (B's disc is y = 0) so the two never z-fight
+    if (region.center) {
+      ground.position.set(region.center.x, region.cfg.groundY || 0, region.center.z);
+    }
     ground.name = 'ground';
     group.add(ground);
 
@@ -1331,19 +1524,28 @@
 
   // Main per-frame entry. Applies transition logic to live scene. Returns the
   // transition result for the caller (HUD updates etc).
+  // CC-C2: with more than one neighbor the hidden (pre-warm) group and the
+  // region left behind are tracked by id, not by neighborOf (single
+  // neighbor: the same groups as before).
+  RegionManager.prototype.disposeHiddenExcept = function (keepId) {
+    var self = this;
+    Object.keys(this.groups).forEach(function (rid) {
+      if (rid !== keepId && rid !== self.logic.activeId && !self.groups[rid].visible) {
+        self.disposeRegion(rid);
+      }
+    });
+  };
+
   RegionManager.prototype.tickTransition = function (x, z) {
+    var prevActiveId = this.logic.activeId;
     var result = this.logic.tickTransition(x, z);
     if (result.action === 'prewarm') {
       this.buildRegion(result.newActiveId || this.logic.prewarmedId, true);
     } else if (result.action === 'dispose') {
-      var pid = this.logic.prewarmedId;
-      // logic already cleared prewarmedId; find what it was via groups
-      var neighbor = DEFS.neighborOf(this.logic.activeId);
-      if (neighbor && this.groups[neighbor] && !this.groups[neighbor].visible) {
-        this.disposeRegion(neighbor);
-      }
+      // logic already cleared prewarmedId: every hidden group goes
+      this.disposeHiddenExcept(null);
     } else if (result.action === 'cross') {
-      var oldId = DEFS.neighborOf(result.newActiveId);
+      var oldId = prevActiveId;
       // reveal the pre-warmed neighbor (instant swap: already built)
       var newGroup = this.groups[result.newActiveId];
       if (newGroup) {
@@ -1353,6 +1555,7 @@
       }
       // unload old region
       if (this.groups[oldId]) this.disposeRegion(oldId);
+      this.disposeHiddenExcept(null);   // CC-C2: no stale pre-warm of a third region
       this.enemies[result.newActiveId] = this.enemies[result.newActiveId] || [];
     }
     return result;
@@ -1371,6 +1574,7 @@
     if (this.groups[regionId]) this.groups[regionId].visible = true;
     else this.buildRegion(regionId, false);
     if (this.groups[oldId]) this.disposeRegion(oldId);
+    this.disposeHiddenExcept(null);     // CC-C2: no stale pre-warm of a third region
     this.enemies[regionId] = this.enemies[regionId] || [];
     return true;
   };

@@ -457,6 +457,207 @@ window.WH_CONFIG = {
     ]
   },
 
+  // CC-C2 (io/missions/2026-10-07-cc-c2-region-shell.md, docs/planning/62):
+  // Region C, Forest of the Old King. Its OWN disc (center (0, -366), playable
+  // radius groundRadius - world.playerMargin = 278.5) north of the shared A/B
+  // disc; C spans z -646..-86. Reached ONLY through the B/C door on B's north
+  // edge (plane z = -86, window |x - doorX| <= doorHalfWidth; region-defs
+  // connections[1]). Tutorial law: the door is locked while the day/night
+  // clock is dormant (first camp Save and Heal = beginCycle). FLAT stub ground
+  // (heightfield = CC-C4). Every row below is PROPOSED, Nicko tunes.
+  regionC: {
+    id: 'forest_of_the_old_king',
+    name: 'Forest of the Old King',
+    center: { x: 0, z: -366 },        // PROPOSED, Nicko tunes (doc 62 sec 1 arithmetic)
+    groundRadius: 280,                // PROPOSED, Nicko tunes (R-62.2 band 250-300; A/B read world.groundRadius 90)
+    groundY: -0.05,                   // PROPOSED, Nicko tunes (stub disc under B's y = 0: no z-fight)
+    groundColor: 0x1e2319,            // PROPOSED, Nicko tunes (deep-forest loam, dominant)
+    groundColor2: 0x2c2a1d,           // PROPOSED, Nicko tunes (leaf-litter umber, secondary)
+    groundSeed: 1662061217,           // PROPOSED, Nicko tunes (ground canvas PRNG seed)
+    scatter: false,                   // PROPOSED, Nicko tunes (no Round E scatter in C; CC-C3 full pass)
+    spawn: { x: 0, z: -96 },          // PROPOSED, Nicko tunes (10 m inside C's south rim, the L0 glade)
+    gravityY: -22,
+    fogColor: 0x59625b,               // PROPOSED, Nicko tunes (deep-forest green-grey)
+    fogDensity: 0.033,                // PROPOSED, Nicko tunes (denser than B's 0.024; d95 ~52 m)
+    ambientLightLevel: 0.5,           // PROPOSED, Nicko tunes
+    // B/C door (region-defs connections[1]; region-manager door window +
+    // gate-at-the-line; game.js gate predicate !dayNight.dormant + toast)
+    door: {
+      planeZ: -86,                    // PROPOSED, Nicko tunes (B occupies z >= -86, C z <= -86)
+      doorX: 0,                       // PROPOSED, Nicko tunes
+      doorHalfWidth: 4,               // PROPOSED, Nicko tunes (window = A/B chokepoint width 8)
+      suspendDepthM: 3,               // PROPOSED, Nicko tunes (radial clamp suspended within this of the plane, in the window)
+      interactM: 6,                   // PROPOSED, Nicko tunes (E near the arch while locked -> reason toast)
+      hintM: 12,                      // PROPOSED, Nicko tunes (gate-hint band around the plane)
+      // door arch: mirrors boundaryWall.arch's row shape (b3Gate measured
+      // constants copied); VISUAL ONLY - no colliders, the gate logic is the door
+      arch: { asset: 'b3Gate', x: 0, z: -86, rotY: Math.PI,   // PROPOSED, Nicko tunes (faces north)
+        fitOpening: 5.2, openingFrac: 0.3428, openingCenterFrac: 0.0059,
+        depthScale: 0.45 },
+      wallGapPadM: 0,                 // PROPOSED, Nicko tunes (ring wall segments meeting window + this are not built; 0 = 3 segments, gap hidden behind the arch pillars)
+      text: {
+        locked: 'Rest at a camp first - the forest beyond still sleeps.',
+        prompt: 'E - Examine the arch',                       // PROPOSED, Nicko tunes
+        hint: 'Enter the Forest of the Old King',              // PROPOSED, Nicko tunes
+        hintLocked: 'The forest beyond still sleeps',          // PROPOSED, Nicko tunes
+        hintBack: 'Back to the Darkwood'                       // PROPOSED, Nicko tunes
+      }
+    },
+    enemies: [],                      // nothing spawns in CC-C2
+    // First tree scatter (CC-C2 5.6): hand-placed rows, no runtime random.
+    // 120 trees (yewTree 60% / witchwoodTree 40%, min spacing 8.5 m) + 20
+    // treeStump, generated once offline (seed 20261007, best-candidate) and
+    // pasted. Distance cull: every row lies within propCullM of C's SPAWN (the
+    // arrival glade; C's center is 270 m from it, past fog-opaque) and 4 m
+    // inside C's playable rim; clear of the glade (10 m), the door->glade lane
+    // (|x| < 6, z > -110) and the lantern (6 m). CC-C3 does the full pass + ledger.
+    propCullM: 150,                   // PROPOSED, Nicko tunes
+    props: [
+      // L0 glade furniture: lantern post at the spawn glade (light socket)
+      { asset: 'lanternPost', x: 3.0, z: -99.0, rotY: 0.0, scale: 2.535 },
+      { asset: 'yewTree',       x: 33.1, z: -159.6, rotY: 0.39, scale: 9.92 },
+      { asset: 'witchwoodTree', x: -123.7, z: -157.6, rotY: 2.66, scale: 9.22 },
+      { asset: 'yewTree',       x: -57.0, z: -230.4, rotY: 1.79, scale: 8.06 },
+      { asset: 'yewTree',       x: -49.1, z: -135.8, rotY: 0.53, scale: 9.08 },
+      { asset: 'yewTree',       x: 114.8, z: -136.7, rotY: 2.84, scale: 9.70 },
+      { asset: 'witchwoodTree', x: 83.4, z: -215.3, rotY: 5.70, scale: 8.56 },
+      { asset: 'yewTree',       x: -18.8, z: -194.6, rotY: 0.37, scale: 9.60 },
+      { asset: 'yewTree',       x: -72.2, z: -172.2, rotY: 3.40, scale: 9.95 },
+      { asset: 'yewTree',       x: -2.3, z: -126.4, rotY: 0.11, scale: 9.18 },
+      { asset: 'witchwoodTree', x: 36.2, z: -216.4, rotY: 3.34, scale: 8.64 },
+      { asset: 'witchwoodTree', x: -17.2, z: -238.2, rotY: 5.10, scale: 10.25 },
+      { asset: 'witchwoodTree', x: -88.1, z: -107.6, rotY: 3.29, scale: 9.69 },
+      { asset: 'yewTree',       x: 48.3, z: -112.0, rotY: 3.96, scale: 8.91 },
+      { asset: 'yewTree',       x: -91.6, z: -209.1, rotY: 1.81, scale: 9.98 },
+      { asset: 'yewTree',       x: 80.9, z: -165.8, rotY: 0.16, scale: 9.35 },
+      { asset: 'yewTree',       x: 115.6, z: -181.7, rotY: 3.41, scale: 9.73 },
+      { asset: 'yewTree',       x: 26.5, z: -130.2, rotY: 2.55, scale: 9.91 },
+      { asset: 'yewTree',       x: -26.8, z: -159.7, rotY: 1.78, scale: 8.59 },
+      { asset: 'yewTree',       x: 87.1, z: -106.7, rotY: 4.02, scale: 8.69 },
+      { asset: 'witchwoodTree', x: -45.2, z: -199.8, rotY: 4.45, scale: 8.89 },
+      { asset: 'yewTree',       x: 13.7, z: -195.4, rotY: 4.37, scale: 10.22 },
+      { asset: 'witchwoodTree', x: -50.8, z: -96.4, rotY: 0.59, scale: 8.91 },
+      { asset: 'witchwoodTree', x: 3.4, z: -159.4, rotY: 3.71, scale: 9.47 },
+      { asset: 'yewTree',       x: 132.0, z: -154.1, rotY: 3.55, scale: 8.26 },
+      { asset: 'yewTree',       x: 93.7, z: -184.9, rotY: 2.36, scale: 8.80 },
+      { asset: 'witchwoodTree', x: 108.7, z: -159.1, rotY: 3.61, scale: 8.97 },
+      { asset: 'witchwoodTree', x: -80.4, z: -145.9, rotY: 0.79, scale: 8.15 },
+      { asset: 'yewTree',       x: -26.3, z: -95.6, rotY: 3.07, scale: 10.22 },
+      { asset: 'witchwoodTree', x: 82.9, z: -131.8, rotY: 5.31, scale: 9.49 },
+      { asset: 'witchwoodTree', x: 64.0, z: -146.3, rotY: 0.83, scale: 8.35 },
+      { asset: 'witchwoodTree', x: 60.4, z: -182.3, rotY: 4.86, scale: 8.18 },
+      { asset: 'yewTree',       x: -108.3, z: -130.0, rotY: 5.04, scale: 8.77 },
+      { asset: 'witchwoodTree', x: -50.4, z: -162.0, rotY: 3.82, scale: 9.94 },
+      { asset: 'yewTree',       x: -35.3, z: -222.5, rotY: 4.27, scale: 8.82 },
+      { asset: 'yewTree',       x: 59.9, z: -214.6, rotY: 4.64, scale: 9.31 },
+      { asset: 'witchwoodTree', x: 11.4, z: -98.0, rotY: 1.66, scale: 10.49 },
+      { asset: 'witchwoodTree', x: -25.9, z: -123.0, rotY: 1.97, scale: 9.37 },
+      { asset: 'yewTree',       x: -3.9, z: -212.5, rotY: 5.80, scale: 10.50 },
+      { asset: 'yewTree',       x: -96.2, z: -154.7, rotY: 6.12, scale: 8.67 },
+      { asset: 'yewTree',       x: 49.8, z: -202.5, rotY: 1.76, scale: 9.11 },
+      { asset: 'yewTree',       x: -128.8, z: -131.6, rotY: 4.59, scale: 8.05 },
+      { asset: 'witchwoodTree', x: -8.5, z: -106.5, rotY: 4.23, scale: 8.94 },
+      { asset: 'witchwoodTree', x: 20.3, z: -236.2, rotY: 5.03, scale: 10.04 },
+      { asset: 'witchwoodTree', x: 45.8, z: -232.9, rotY: 1.20, scale: 8.60 },
+      { asset: 'yewTree',       x: -97.6, z: -181.8, rotY: 2.69, scale: 10.06 },
+      { asset: 'witchwoodTree', x: -68.5, z: -124.7, rotY: 2.80, scale: 9.22 },
+      { asset: 'yewTree',       x: 64.2, z: -127.8, rotY: 0.44, scale: 8.67 },
+      { asset: 'yewTree',       x: -65.6, z: -196.2, rotY: 0.95, scale: 8.49 },
+      { asset: 'yewTree',       x: 53.7, z: -162.6, rotY: 5.10, scale: 9.35 },
+      { asset: 'witchwoodTree', x: -51.6, z: -214.6, rotY: 4.76, scale: 9.45 },
+      { asset: 'witchwoodTree', x: 79.9, z: -197.7, rotY: 4.46, scale: 10.13 },
+      { asset: 'witchwoodTree', x: 32.9, z: -189.3, rotY: 1.33, scale: 8.34 },
+      { asset: 'yewTree',       x: -69.0, z: -214.0, rotY: 2.20, scale: 8.64 },
+      { asset: 'witchwoodTree', x: 5.8, z: -227.8, rotY: 2.02, scale: 8.77 },
+      { asset: 'witchwoodTree', x: 33.4, z: -110.9, rotY: 6.08, scale: 9.72 },
+      { asset: 'yewTree',       x: -7.6, z: -142.7, rotY: 5.68, scale: 8.99 },
+      { asset: 'yewTree',       x: -56.5, z: -182.2, rotY: 0.41, scale: 10.16 },
+      { asset: 'yewTree',       x: -107.7, z: -197.2, rotY: 6.04, scale: 9.41 },
+      { asset: 'yewTree',       x: 108.9, z: -117.9, rotY: 0.11, scale: 9.59 },
+      { asset: 'witchwoodTree', x: 9.3, z: -177.7, rotY: 2.12, scale: 9.81 },
+      { asset: 'witchwoodTree', x: -9.0, z: -173.9, rotY: 1.32, scale: 9.82 },
+      { asset: 'witchwoodTree', x: -50.8, z: -118.7, rotY: 5.82, scale: 8.49 },
+      { asset: 'witchwoodTree', x: 133.9, z: -133.1, rotY: 0.26, scale: 9.95 },
+      { asset: 'yewTree',       x: -67.2, z: -104.8, rotY: 1.70, scale: 10.47 },
+      { asset: 'yewTree',       x: -31.9, z: -141.1, rotY: 3.02, scale: 9.61 },
+      { asset: 'witchwoodTree', x: 98.3, z: -208.1, rotY: 5.29, scale: 10.08 },
+      { asset: 'yewTree',       x: 90.7, z: -146.5, rotY: 0.74, scale: 10.42 },
+      { asset: 'yewTree',       x: 28.7, z: -98.0, rotY: 6.15, scale: 9.07 },
+      { asset: 'yewTree',       x: -30.7, z: -208.6, rotY: 0.28, scale: 9.92 },
+      { asset: 'yewTree',       x: 18.1, z: -212.2, rotY: 2.32, scale: 8.20 },
+      { asset: 'yewTree',       x: -36.5, z: -239.9, rotY: 0.38, scale: 10.17 },
+      { asset: 'yewTree',       x: -0.8, z: -245.9, rotY: 0.69, scale: 9.31 },
+      { asset: 'yewTree',       x: -119.8, z: -181.4, rotY: 5.27, scale: 9.06 },
+      { asset: 'yewTree',       x: 71.4, z: -102.3, rotY: 3.15, scale: 8.61 },
+      { asset: 'witchwoodTree', x: 44.4, z: -126.8, rotY: 0.61, scale: 9.90 },
+      { asset: 'witchwoodTree', x: -25.4, z: -179.7, rotY: 4.63, scale: 9.68 },
+      { asset: 'witchwoodTree', x: 14.4, z: -147.4, rotY: 4.97, scale: 9.65 },
+      { asset: 'witchwoodTree', x: 42.1, z: -175.0, rotY: 1.39, scale: 8.82 },
+      { asset: 'witchwoodTree', x: -43.8, z: -183.6, rotY: 4.70, scale: 8.28 },
+      { asset: 'yewTree',       x: -110.8, z: -147.6, rotY: 1.38, scale: 8.79 },
+      { asset: 'yewTree',       x: 44.2, z: -95.9, rotY: 1.78, scale: 8.68 },
+      { asset: 'witchwoodTree', x: -142.2, z: -137.8, rotY: 4.18, scale: 9.50 },
+      { asset: 'yewTree',       x: 44.9, z: -146.9, rotY: 6.13, scale: 8.23 },
+      { asset: 'yewTree',       x: -14.8, z: -155.2, rotY: 4.05, scale: 9.09 },
+      { asset: 'witchwoodTree', x: 22.7, z: -175.3, rotY: 2.93, scale: 8.33 },
+      { asset: 'yewTree',       x: -38.6, z: -105.1, rotY: 0.34, scale: 8.93 },
+      { asset: 'yewTree',       x: -79.4, z: -183.2, rotY: 2.85, scale: 8.49 },
+      { asset: 'yewTree',       x: 27.2, z: -223.0, rotY: 1.45, scale: 8.19 },
+      { asset: 'yewTree',       x: -119.8, z: -120.4, rotY: 4.92, scale: 9.25 },
+      { asset: 'witchwoodTree', x: 128.1, z: -168.4, rotY: 2.71, scale: 10.33 },
+      { asset: 'witchwoodTree', x: -105.8, z: -117.1, rotY: 4.14, scale: 8.20 },
+      { asset: 'yewTree',       x: -84.0, z: -127.4, rotY: 4.56, scale: 10.07 },
+      { asset: 'yewTree',       x: -67.0, z: -155.5, rotY: 4.25, scale: 8.44 },
+      { asset: 'yewTree',       x: -131.4, z: -145.3, rotY: 3.73, scale: 10.07 },
+      { asset: 'yewTree',       x: -87.7, z: -168.2, rotY: 0.08, scale: 9.45 },
+      { asset: 'yewTree',       x: 96.8, z: -131.9, rotY: 1.38, scale: 8.49 },
+      { asset: 'yewTree',       x: -58.8, z: -144.8, rotY: 1.51, scale: 9.52 },
+      { asset: 'witchwoodTree', x: 53.5, z: -137.8, rotY: 4.77, scale: 9.33 },
+      { asset: 'witchwoodTree', x: -6.6, z: -232.1, rotY: 2.77, scale: 9.72 },
+      { asset: 'yewTree',       x: -78.1, z: -206.3, rotY: 3.78, scale: 10.18 },
+      { asset: 'yewTree',       x: -107.9, z: -161.9, rotY: 0.13, scale: 8.15 },
+      { asset: 'witchwoodTree', x: -74.0, z: -162.1, rotY: 4.15, scale: 9.41 },
+      { asset: 'yewTree',       x: 14.2, z: -129.1, rotY: 1.82, scale: 9.97 },
+      { asset: 'yewTree',       x: -16.8, z: -217.7, rotY: 2.87, scale: 9.62 },
+      { asset: 'witchwoodTree', x: 77.8, z: -115.5, rotY: 4.89, scale: 10.33 },
+      { asset: 'witchwoodTree', x: -30.6, z: -190.1, rotY: 3.66, scale: 10.31 },
+      { asset: 'witchwoodTree', x: -44.0, z: -227.8, rotY: 6.08, scale: 9.78 },
+      { asset: 'yewTree',       x: 96.5, z: -118.4, rotY: 1.99, scale: 8.10 },
+      { asset: 'yewTree',       x: 6.5, z: -208.5, rotY: 4.19, scale: 9.29 },
+      { asset: 'witchwoodTree', x: -85.1, z: -157.2, rotY: 3.99, scale: 9.39 },
+      { asset: 'yewTree',       x: 68.5, z: -165.4, rotY: 1.52, scale: 9.16 },
+      { asset: 'witchwoodTree', x: 57.7, z: -103.1, rotY: 0.51, scale: 10.04 },
+      { asset: 'witchwoodTree', x: 15.1, z: -111.9, rotY: 1.86, scale: 10.23 },
+      { asset: 'yewTree',       x: 104.2, z: -190.3, rotY: 5.76, scale: 8.33 },
+      { asset: 'witchwoodTree', x: -3.2, z: -201.3, rotY: 3.20, scale: 9.68 },
+      { asset: 'yewTree',       x: 30.6, z: -204.0, rotY: 4.51, scale: 8.04 },
+      { asset: 'witchwoodTree', x: 21.4, z: -157.1, rotY: 2.65, scale: 9.94 },
+      { asset: 'yewTree',       x: 52.0, z: -191.1, rotY: 5.98, scale: 9.37 },
+      { asset: 'yewTree',       x: -103.9, z: -173.0, rotY: 5.10, scale: 8.46 },
+      { asset: 'witchwoodTree', x: 107.9, z: -128.4, rotY: 4.85, scale: 10.30 },
+      { asset: 'treeStump',     x: 39.0, z: -143.7, rotY: 0.99, scale: 1.14 },
+      { asset: 'treeStump',     x: 59.7, z: -208.3, rotY: 4.09, scale: 1.14 },
+      { asset: 'treeStump',     x: 13.7, z: -106.7, rotY: 6.12, scale: 1.14 },
+      { asset: 'treeStump',     x: -55.4, z: -157.1, rotY: 5.10, scale: 1.07 },
+      { asset: 'treeStump',     x: 102.1, z: -149.1, rotY: 2.47, scale: 1.08 },
+      { asset: 'treeStump',     x: 23.2, z: -190.9, rotY: 3.10, scale: 1.22 },
+      { asset: 'treeStump',     x: -96.4, z: -171.3, rotY: 0.30, scale: 1.26 },
+      { asset: 'treeStump',     x: 58.0, z: -194.5, rotY: 5.33, scale: 1.38 },
+      { asset: 'treeStump',     x: -62.9, z: -102.1, rotY: 2.15, scale: 1.29 },
+      { asset: 'treeStump',     x: 47.3, z: -105.6, rotY: 4.58, scale: 1.15 },
+      { asset: 'treeStump',     x: -2.4, z: -141.2, rotY: 5.18, scale: 1.40 },
+      { asset: 'treeStump',     x: -82.4, z: -136.0, rotY: 1.52, scale: 1.19 },
+      { asset: 'treeStump',     x: 47.8, z: -195.9, rotY: 1.75, scale: 1.41 },
+      { asset: 'treeStump',     x: 21.1, z: -104.6, rotY: 2.73, scale: 1.32 },
+      { asset: 'treeStump',     x: -18.2, z: -99.8, rotY: 2.90, scale: 1.39 },
+      { asset: 'treeStump',     x: 10.4, z: -118.6, rotY: 1.82, scale: 1.23 },
+      { asset: 'treeStump',     x: 79.4, z: -192.5, rotY: 1.52, scale: 1.27 },
+      { asset: 'treeStump',     x: -81.0, z: -216.3, rotY: 5.85, scale: 1.42 },
+      { asset: 'treeStump',     x: -61.4, z: -109.6, rotY: 5.09, scale: 1.02 },
+      { asset: 'treeStump',     x: 26.5, z: -140.2, rotY: 1.85, scale: 1.04 }
+    ]
+  },
+
   // Round E (io/missions/2026-10-05-cc-roundE-veg.md): seeded vegetation
   // scatter, built by region-manager whScatterPlan. PARAMETERS ONLY - no
   // placement tables: every position is a pure function of this block, the
@@ -1621,7 +1822,9 @@ window.WH_CONFIG.dayNight = {
       exposureMult: 1.0,
       fog: {
         hold_outskirts: { color: 0x9aa0a3, density: 0.012, cemColor: 0x7f8ea6, cemDensity: 0.030 },
-        darkwood_edge: { color: 0x6f7477, density: 0.024 }
+        darkwood_edge: { color: 0x6f7477, density: 0.024 },
+        // CC-C2 Region C deep-forest fog (night = CONFIG.regionC verbatim). PROPOSED, Nicko tunes
+        forest_of_the_old_king: { color: 0x59625b, density: 0.033 }
       },
       zenithColor: 0x070a18, horizonBand: 0x2b3350, horizonGlow: 0x8f98ad,
       stars: 1.0,
@@ -1634,7 +1837,9 @@ window.WH_CONFIG.dayNight = {
       exposureMult: 1.0,
       fog: {
         hold_outskirts: { color: 0xa29a98, density: 0.011, cemColor: 0x8e8c9c, cemDensity: 0.026 },
-        darkwood_edge: { color: 0x77736f, density: 0.021 }
+        darkwood_edge: { color: 0x77736f, density: 0.021 },
+        // CC-C2 Region C deep-forest fog (night = CONFIG.regionC verbatim). PROPOSED, Nicko tunes
+        forest_of_the_old_king: { color: 0x5f6660, density: 0.030 }
       },
       zenithColor: 0x262c44, horizonBand: 0x6e5e66, horizonGlow: 0xa8948a,
       stars: 0.35,
@@ -1648,7 +1853,9 @@ window.WH_CONFIG.dayNight = {
       exposureMult: 1.0,
       fog: {
         hold_outskirts: { color: 0xa4a8a6, density: 0.008, cemColor: 0x9aa1a8, cemDensity: 0.020 },
-        darkwood_edge: { color: 0x80857f, density: 0.017 }
+        darkwood_edge: { color: 0x80857f, density: 0.017 },
+        // CC-C2 Region C deep-forest fog (night = CONFIG.regionC verbatim). PROPOSED, Nicko tunes
+        forest_of_the_old_king: { color: 0x6a716a, density: 0.025 }
       },
       zenithColor: 0x56606e, horizonBand: 0x868d92, horizonGlow: 0xa9adab,
       stars: 0.0,
@@ -1661,7 +1868,9 @@ window.WH_CONFIG.dayNight = {
       exposureMult: 1.0,
       fog: {
         hold_outskirts: { color: 0x9c9496, density: 0.012, cemColor: 0x868aa0, cemDensity: 0.027 },
-        darkwood_edge: { color: 0x726e6c, density: 0.022 }
+        darkwood_edge: { color: 0x726e6c, density: 0.022 },
+        // CC-C2 Region C deep-forest fog (night = CONFIG.regionC verbatim). PROPOSED, Nicko tunes
+        forest_of_the_old_king: { color: 0x5c625c, density: 0.031 }
       },
       zenithColor: 0x1c2238, horizonBand: 0x664e58, horizonGlow: 0x9c8478,
       stars: 0.25,
@@ -1700,7 +1909,7 @@ window.WH_CONFIG.dayNight = {
   // per day (day 1 = A skies everywhere, then B, C, D by day count) so each
   // cycle's feel can be judged directly. Restore per-area variation by
   // setting distinct offsets (e.g. darkwood_edge: 2).
-  areaPoolOffset: { hold_outskirts: 0, darkwood_edge: 0 },
+  areaPoolOffset: { hold_outskirts: 0, darkwood_edge: 0, forest_of_the_old_king: 0 },   // CC-C2: C row PROPOSED, Nicko tunes
   skyPool: {
     // pano yaw (deg about +y). 10-06 moon reposition: v2 night panos carry
     // the moon at u ~0.22 (LOW-LEFT contract); yaw 29 puts it ~18 deg to the
