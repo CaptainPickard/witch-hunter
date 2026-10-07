@@ -166,6 +166,7 @@
     this.toastFn = opts.toast;
     this.onOpenChange = opts.onOpenChange || null;
     this.dropAtFeet = opts.dropAtFeet || null;
+    this.onCooked = opts.onCooked || null;   // L1: fn(resultId, learnedRecipe)
     this.onKitButton = null;
     this.stations = [];
     for (var i = 0; i < C.stations.length; i++) this.addStation(C.stations[i]);
@@ -459,6 +460,7 @@
     if (added < 1 && this.dropAtFeet) this.dropAtFeet(resultId, 1);
     var name = INV.itemDef(resultId).name;
     var lines = [C.text.cookedToast.replace('{name}', name)];
+    var learned = !!(recipe && !recipe.known);
     if (recipe && !recipe.known) {
       recipe.known = true;
       lines.push(C.text.learnedToast.replace('{name}', recipe.name));
@@ -472,6 +474,8 @@
     this.toastChain(lines);
     this.slots = [null, null, null];
     this.render();
+    // L1: cook / recipe-learn XP (game.js -> WH_LEVEL)
+    if (this.onCooked) this.onCooked(resultId, learned);
   };
 
   // Per frame: station burn, channel progress + interrupts (hit / death /

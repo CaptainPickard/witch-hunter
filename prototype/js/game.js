@@ -401,7 +401,7 @@
   // v6: HUD screen-edge flash pulse (DOM opacity, no WebGL work).
   function flashScreen(durationSec, kind) {
     var el = game.hud.blockFlash;
-    el.classList.remove('parry', 'block', 'guardbreak');
+    el.classList.remove('parry', 'block', 'guardbreak', 'crit');
     void el.offsetWidth;                     // restart the CSS transition
     el.classList.add(kind);
     game.hud.flashTimer = durationSec;
@@ -440,10 +440,16 @@
 
   // C1 buff layer: effective stats = CONFIG base + active buffs. hpMax only
   // for now; current hp is clamped inside the new max (buff expiry).
+  // L1: + the Health / Stamina / Focus (+ Wisdom focus share) stat bonuses
+  // (WH_LEVEL; 0 with no points spent). Same clamp for all three pools.
   function applyBuffStats() {
-    var p = game.player;
-    p.hpMax = CFG.player.hpMax + game.cooking.buffs.statBonus('hpMax');
+    var p = game.player, LV = window.WH_LEVEL;
+    p.hpMax = CFG.player.hpMax + game.cooking.buffs.statBonus('hpMax') + LV.statBonus('health');
     if (p.hp > p.hpMax) p.hp = p.hpMax;
+    p.staminaMax = CFG.player.staminaMax + LV.statBonus('stamina');
+    if (p.stamina > p.staminaMax) p.stamina = p.staminaMax;
+    p.focusMax = CFG.player.focusMax + LV.focusBonus();
+    if (p.focus > p.focusMax) p.focus = p.focusMax;
   }
 
   // C1: one chip per active buff: glyph + CONFIG label + m:ss left
@@ -1422,6 +1428,7 @@
       flashScreen(CFG.block.blockFlashSeconds, 'block');
     };
     p.onHandsChanged = function () { game.inventoryUI.render(); };
+    setupLevelHooks();
     game.worldItems = new INV.WorldItems(game.scene);
     // region manager is built after setupInventory - hand over a getter
     game.corpseLoot = new window.WH_CORPSE_LOOT.Manager(game.scene,
@@ -1441,13 +1448,28 @@
         p.setInputSuspended(open);
       },
       dropAtFeet: dropAtFeet,
-      dayNight: game.dayNight         // C2: day buffs + meal cap ride the day clock
+      dayNight: game.dayNight,        // C2: day buffs + meal cap ride the day clock
+      // L1: every finished cook + the first cook of a recipe earn XP
+      onCooked: function (resultId, learned) {
+        window.WH_LEVEL.awardXP('cook_meal');
+        if (learned) window.WH_LEVEL.awardXP('recipe_learn');
+      }
     });
     document.addEventListener('keydown', function (e) {
       if (e.code !== CFG.inventoryUI.pickupKey || e.repeat) return;
       if (game.camp && game.camp.onInteractKey()) return;   // C3: E confirms camp placement
       interact();
     });
+  }
+
+  // ---- L1 leveling (CONFIG.leveling, js/leveling.js WH_LEVEL) --------------------
+  // WH_LEVEL is pure state; game.js feeds it events and surfaces its moments.
+  function setupLevelHooks() {
+    var LV = window.WH_LEVEL, T = CFG.leveling.text;
+    LV.onLevelUp = function (level, pts) {
+      game.inventoryUI.toast(T.levelUp.replace('{n}', level).replace('{pts}', pts),
+        CFG.leveling.levelToastSeconds);
+    };
   }
 
   // S3b: the one world-interact entry point - E key, touch USE button
@@ -1535,6 +1557,9 @@
   }
 
   // S1 roll: the guaranteed stack plus a bonusChance weighted bonus item.
+  // L1 Luck: then one extra weighted bonus pick at the Luck chance
+  // (statTotal('luck') = points x perPoint, 0 with no points; explicit
+  // Math.random, independent of the base bonus roll).
   function rollDrops() {
     var D = CFG.drops;
     var items = [{ id: D.guaranteed.id, count: D.guaranteed.count }];
@@ -1542,13 +1567,21 @@
       var b = weightedPick(D.bonusPool);
       if (b) items.push({ id: b.id, count: 1 });
     }
+    if (Math.random() < window.WH_LEVEL.statTotal('luck')) {
+      var lb = weightedPick(D.bonusPool);
+      if (lb) items.push({ id: lb.id, count: 1 });
+    }
     return items;
   }
 
   // Enemy.onKilled (S4): the roll is stored ON the corpse (enemy.corpseLoot),
   // never spawned as boxes - the body glows until it is looted empty.
+  // L1: the same one kill entry point awards the kill XP (enemy.js never
+  // imports WH_LEVEL) + the first-of-kind foe discovery.
   function storeCorpseLoot(enemy) {
     game.corpseLoot.attach(enemy, rollDrops());
+    window.WH_LEVEL.awardXP('kill_' + enemy.type);
+    window.WH_LEVEL.discover('foe', enemy.type);
   }
 
   // USE / E: everything that fits off the nearest unlooted corpse in reach;
@@ -1605,7 +1638,8 @@
   function tryGather() {
     var node = nearestGatherNode();
     if (!node) return false;
-    var r = game.gatherNodes.harvest(node, game.inventory);
+    var r = game.gatherNodes.harvest(node, game.inventory,
+      window.WH_LEVEL.statTotal('luck'));     // L1 Luck: extra-unit roll
     if (!r.ok) {
       game.inventoryUI.toast(CFG.gather.fullText);
       return true;
@@ -1613,6 +1647,9 @@
     game.inventoryUI.toast(CFG.gather.gatherToast
       .replace('{name}', window.WH_INVENTORY.itemDef(r.itemId).name)
       .replace('{n}', r.count));
+    // L1: gather XP + first harvest of this node type
+    window.WH_LEVEL.awardXP('gather');
+    window.WH_LEVEL.discover('node', node.type);
     return true;
   }
 
@@ -2038,6 +2075,8 @@
   // Boot tail: restore (CONTINUE) on the ready scene, fade the overlay, run.
   function enterWorld(cont) {
     if (cont) window.WH_SAVE.restore(game, window.WH_SAVE.load(game));
+    // L1: the region you stand in at entry is known ground (no XP)
+    window.WH_LEVEL.discover('region', game.regionManager.logic.activeId, true);
     game.c4.entered = true;
     // 2026-10-03: smooth fade-out of the boot overlay from CONFIG
     // (hud.bootOverlayFadeMs); .hidden also releases pointer-events, and
@@ -2169,6 +2208,9 @@
       } else {
         var bolt = window.WH_SPELLS.spawn(
           game.scene, req.spellId, castOrigin(req), req.dirX, req.dirZ);
+        // L1 Wisdom: spell power multiplies the bolt's CONFIG damage here
+        // (spells.js stays frozen; the bolt reads this.damage on hit)
+        if (bolt) bolt.damage *= window.WH_LEVEL.statTotal('wisdom');
         if (bolt) game.firebolts.push(bolt);
       }
     }
@@ -2201,6 +2243,7 @@
       game.dayNight.setSkyArea(tr.newActiveId);   // C2b: area's sky variant (1s fade)
       showRegionName(window.WH_REGION_DEFS.regions[tr.newActiveId].name);
       setGateHint(false);
+      window.WH_LEVEL.discover('region', tr.newActiveId);   // L1: first entry XP
     }
 
     // enemies (active region only)
@@ -2226,6 +2269,13 @@
         if (e.riposteArmed && e.isStaggered && e.isStaggered()) {
           dmg *= CFG.block.riposteMult;
           e.riposteArmed = false;
+        }
+        // L1 Precision: melee crit roll (chance 0 with no points = no roll
+        // effect; Math.random is the explicit, only randomness here)
+        var crit = Math.random() < window.WH_LEVEL.statTotal('precision');
+        if (crit) {
+          dmg *= CFG.leveling.critMult;
+          flashScreen(CFG.leveling.critFlashSeconds, 'crit');
         }
         // v3: pass hit direction (player -> enemy) for stagger knockback
         var hitDir = dist > 0.001 ? { x: dx / dist, z: dz / dist } : null;

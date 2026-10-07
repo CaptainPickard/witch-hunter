@@ -295,6 +295,11 @@ html, body {
   box-shadow: inset 0 0 100px 30px rgba(200, 40, 40, 0.6);
   background: rgba(180, 30, 30, 0.12);
 }
+#wh-block-flash.crit {
+  /* L1 Precision: gold screen-edge flash on a melee crit */
+  box-shadow: inset 0 0 90px 24px rgba(216, 178, 74, 0.7);
+  background: rgba(216, 178, 74, 0.08);
+}
 #wh-guard-break-text {
   position: absolute;
   left: 50%;
@@ -88734,6 +88739,100 @@ window.WH_CONFIG.inventoryUI = {
   openButton: { enabled: true, label: 'INV', left: 16, bottom: 20 }
 };
 
+// L1 (2026-10-07, io/missions/2026-10-07-cc-l1-leveling.md) LEVELING -
+// js/leveling.js WH_LEVEL. Layer 1 (doc 07): XP -> character level -> 5
+// stat points per level -> the NINE stats (list LOCKED). Layer 2 (doc 18):
+// three skill lines rank by use, per-rank primary passives only (NO tier-up
+// menus this round). LEVEL DOES NOT SCALE POWER (doc 07 lock): the level is
+// a point budget; nothing reads the level number except the point grant.
+// EVERY NUMBER BELOW IS PROPOSED, NICKO TUNES (doc 07 RULING PASS: XP
+// budgets / stat caps are GDD tuning against a playable build). Level 1
+// with 0 points spent = today's numbers exactly (all bonuses start at 0).
+window.WH_CONFIG.leveling = {
+  pointsPerLevel: 5,                // doc 07 LOCKED (5 stat points per level)
+  maxLevel: 50,                     // PROPOSED ceiling (XP past it just banks)
+  // xpForNext(level) = round(base * level ^ exp)   PROPOSED, Nicko tunes
+  //   L1->2 100, L2->3 283, L3->4 520, L4->5 800, L5->6 1118, L10->11 3162
+  xpCurve: { base: 100, exp: 1.5 },
+  // XP per source (PROPOSED, Nicko tunes). Kills key 'kill_' + enemy.type;
+  // discover_* = first-of-kind, once per character (ids kept in the save).
+  // No quest XP (L1 ruling).
+  xpSources: {
+    kill_bandit: 35,                // bandit hpMax 70
+    kill_ghoul: 25,                 // ghoul hpMax 45
+    gather: 5,                      // per harvested node
+    cook_meal: 15,                  // per finished cook (recipe or Bland Mush)
+    recipe_learn: 40,               // the first cook of a recipe (stacks with cook_meal)
+    discover_region: 50,            // first entry into a region (the boot region is pre-known)
+    discover_node: 10,              // first harvest of each gather node type
+    discover_foe: 25                // first kill of each enemy type (stacks with kill_*)
+  },
+  // The nine stats (doc 07 LOCKED list). bonus = points * perPoint, clamped
+  // to cap (null = uncapped). PROPOSED, Nicko tunes:
+  //   health    +5 max HP per point            (100 base, buffs stack on top)
+  //   stamina   +5 max stamina per point       (100 base)
+  //   focus     +5 max focus per point         (100 base)
+  //   speed     +1% walk / sprint per point    (cap +25%; roll / backstep untouched)
+  //   precision +1% melee crit per point       (cap 50%; crit = x critMult damage)
+  //   ward      +1% damage reduction per point (cap 60%, mission row)
+  //   wisdom    +3% spell damage AND +2 max focus per point (doc 15: magic damage + mana)
+  //   carry     +5% stack size per point       (stacks without their own stackCap: 60 -> 63 -> 66..)
+  //   luck      +1% extra drop / gather roll per point (cap 50%)
+  stats: ['health', 'stamina', 'focus', 'speed', 'precision', 'ward', 'wisdom', 'carry', 'luck'],
+  statCurves: {
+    health:    { label: 'Health',       perPoint: 5,    cap: null, caption: '+{v} max HP' },
+    stamina:   { label: 'Stamina',      perPoint: 5,    cap: null, caption: '+{v} max stamina' },
+    focus:     { label: 'Focus',        perPoint: 5,    cap: null, caption: '+{v} max focus' },
+    speed:     { label: 'Speed',        perPoint: 0.01, cap: 0.25, caption: '+{pct}% move speed' },
+    precision: { label: 'Precision',    perPoint: 0.01, cap: 0.50, caption: '{pct}% crit chance' },
+    ward:      { label: 'Ward',         perPoint: 0.01, cap: 0.60, caption: '-{pct}% damage taken' },
+    wisdom:    { label: 'Wisdom',       perPoint: 0.03, cap: null, caption: '+{pct}% spell damage, +{focus} focus',
+                 focusPerPoint: 2 },
+    carry:     { label: 'Carry Weight', perPoint: 0.05, cap: null, caption: '+{pct}% stack size' },
+    luck:      { label: 'Luck',         perPoint: 0.01, cap: 0.50, caption: '{pct}% bonus drop roll' }
+  },
+  critMult: 1.5,                    // PROPOSED: precision crit damage multiplier
+  critFlashSeconds: 0.18,           // gold screen-edge flash on a crit (#wh-block-flash.crit)
+  // Skill lines (doc 15 canonical lines for the three prototype verbs; the
+  // brief's working names longsword / block / spell school map to them).
+  // id -> { name, perUse rank XP per use kind, passives }. Passive value =
+  // (rank - 1) * perRank, clamped to +-max (PROPOSED, Nicko tunes):
+  //   longBlade      damage +1%/rank (max +60%), attack stamina -0.4%/rank (max -35%)
+  //   shieldDefense  block stamina drain -0.5%/rank (max -40%),
+  //                  parry window +0.0005 s/rank (max +0.05 s = rank 100, mission cap)
+  //   pyromancy      spell damage +1%/rank (max +60%), focus cost -0.4%/rank (max -35%)
+  skillLines: {
+    longBlade: { name: 'Long Blade', perUse: { hit: 1 },
+      passives: { damage: { perRank: 0.01, max: 0.60 }, staminaCost: { perRank: -0.004, max: 0.35 } },
+      caption: '+{damage}% damage, -{staminaCost}% attack stamina' },
+    shieldDefense: { name: 'Shield / Defense', perUse: { block: 1, parry: 2 },
+      passives: { blockDrain: { perRank: -0.005, max: 0.40 }, parryWindow: { perRank: 0.0005, max: 0.05 } },
+      caption: '-{blockDrain}% block drain, +{parryWindowMs}ms parry' },
+    pyromancy: { name: 'Pyromancy', perUse: { cast: 1 },
+      passives: { damage: { perRank: 0.01, max: 0.60 }, focusCost: { perRank: -0.004, max: 0.35 } },
+      caption: '+{damage}% spell damage, -{focusCost}% focus cost' }
+  },
+  // Which line a completed cast trains + takes passives from. Radiance is
+  // light magic (doc 15 Holy Wards, not a prototype line this round): null =
+  // no line. PROPOSED - set radiance: 'pyromancy' to have it train too.
+  spellLines: { firebolt: 'pyromancy', radiance: null },
+  // Rank curve (doc 18 LOCKED shape: full speed to 50, ~2x slower by 75,
+  // ~3x by 95, no decay). rank XP to the next rank = perRank * slow(rank),
+  // slow = 1 below slowFrom, else 1 + (rank - slowFrom) / slowSpan
+  //   -> rank 75 = 2.0x, rank 95 = 2.8x. 5 uses per rank early: rank 50 at
+  //   ~245 uses, Grandmaster (100) at ~740 uses. PROPOSED, Nicko tunes.
+  rankCurve: { perRank: 5, slowFrom: 50, slowSpan: 25, maxRank: 100 },
+  text: {
+    levelUp: 'Level {n} reached - +{pts} stat points',
+    rankUp: '{name} rank {n}',
+    allocateHint: 'ALLOCATE',       // CHARACTER tab badge while points are pending
+    levelLabel: 'Lv {n}',           // HUD XP pip label
+    crit: 'CRIT'
+  },
+  levelToastSeconds: 2.6,           // #wh-level-toast lifetime
+  rankToastSeconds: 1.6
+};
+
 </script>
 <script>
 // AB1 icon registry (IO asset lane 2026-10-06): id -> data URI.
@@ -90047,10 +90146,15 @@ window.WH_ICONS = {
   }
 
   // Gear carries stackCap 1; consumables fall back to the inventory default.
+  // L1 Carry Weight: the default cap scales by WH_LEVEL statTotal('carry')
+  // (1 with no points = 60); items with their own stackCap (gear 1, coin
+  // 999) keep it. Read live at pickup / join, so points apply at once.
   function stackCapOf(id) {
     var d = itemDef(id);
     if (!d) return 0;
-    return d.stackCap || CFG.inventory.defaultStackCap;
+    if (d.stackCap) return d.stackCap;
+    var carry = window.WH_LEVEL ? window.WH_LEVEL.statTotal('carry') : 1;
+    return Math.round(CFG.inventory.defaultStackCap * carry);
   }
 
   // ---- data model ---------------------------------------------------------------
@@ -90840,6 +90944,7 @@ window.WH_ICONS = {
     this.toastFn = opts.toast;
     this.onOpenChange = opts.onOpenChange || null;
     this.dropAtFeet = opts.dropAtFeet || null;
+    this.onCooked = opts.onCooked || null;   // L1: fn(resultId, learnedRecipe)
     this.onKitButton = null;
     this.stations = [];
     for (var i = 0; i < C.stations.length; i++) this.addStation(C.stations[i]);
@@ -91133,6 +91238,7 @@ window.WH_ICONS = {
     if (added < 1 && this.dropAtFeet) this.dropAtFeet(resultId, 1);
     var name = INV.itemDef(resultId).name;
     var lines = [C.text.cookedToast.replace('{name}', name)];
+    var learned = !!(recipe && !recipe.known);
     if (recipe && !recipe.known) {
       recipe.known = true;
       lines.push(C.text.learnedToast.replace('{name}', recipe.name));
@@ -91146,6 +91252,8 @@ window.WH_ICONS = {
     this.toastChain(lines);
     this.slots = [null, null, null];
     this.render();
+    // L1: cook / recipe-learn XP (game.js -> WH_LEVEL)
+    if (this.onCooked) this.onCooked(resultId, learned);
   };
 
   // Per frame: station burn, channel progress + interrupts (hit / death /
@@ -92106,17 +92214,21 @@ window.WH_ICONS = {
   };
 
   // inventory.addItem the whole yield; a partial fit is taken back out and
-  // refused (node stays ready). Returns { ok, itemId, count }.
-  NodeManager.prototype.harvest = function (node, inventory) {
+  // refused (node stays ready). Returns { ok, itemId, count, bonus }.
+  // L1 Luck: bonusChance (0..1, game.js passes WH_LEVEL Luck) rolls ONE
+  // extra unit after the full yield landed - explicit Math.random, kept only
+  // if it fits (never refuses the harvest).
+  NodeManager.prototype.harvest = function (node, inventory, bonusChance) {
     var y = G.nodeTypes[node.type].yield;
     var added = inventory.addItem(y.id, y.count);
     if (added < y.count) {
       if (added > 0) inventory.removeItem(y.id, added);
-      return { ok: false, itemId: y.id, count: 0 };
+      return { ok: false, itemId: y.id, count: 0, bonus: 0 };
     }
+    var bonus = bonusChance > 0 && Math.random() < bonusChance ? inventory.addItem(y.id, 1) : 0;
     node.state = 'dormant';
     node.readyAt = this.now() + this.respawnDelay(G.nodeTypes[node.type]);
-    return { ok: true, itemId: y.id, count: y.count };
+    return { ok: true, itemId: y.id, count: y.count + bonus, bonus: bonus };
   };
 
   // Real-game reshuffle: move to a random pool spot no other node of the
@@ -92424,6 +92536,271 @@ window.WH_ICONS = {
   };
 
   window.WH_CORPSE_LOOT = { Manager: Manager };
+})();
+
+</script>
+<!-- L1: WH_LEVEL before player.js (player / inventory / game read it at
+     runtime; the first read is game.js boot applyBuffStats - save.js has no
+     load-order tie to it) -->
+<script>
+// Witch Hunter prototype - leveling (L1, io/missions/2026-10-07-cc-l1-leveling.md).
+// Layer 1 (doc 07): XP -> character level -> CONFIG.leveling.pointsPerLevel
+// stat points per level -> the nine stats. Layer 2 (doc 18): three skill
+// lines rank by use with per-rank primary passives (no tier-up menus).
+// LEVEL DOES NOT SCALE POWER: nothing reads the level number except the
+// point grant; the stats and ranks are the power. All numbers from
+// CONFIG.leveling (PROPOSED, Nicko tunes). Level 1 with no points spent and
+// rank 1 lines = every multiplier 1 / every bonus 0 (today's numbers).
+// Pure state + math: no DOM, no player / enemy imports. game.js feeds the
+// events in (kills, gathers, cooks, hits, blocks, casts) and reads the
+// numbers out (applyBuffStats, crit, ward, speed, spell power, stack caps).
+// Exposes window.WH_LEVEL:
+//   awardXP(source, amount)   amount defaults to CONFIG.leveling.xpSources[source];
+//                             returns the levels gained (chains past several)
+//   discover(kind, id)        first-of-kind XP ('discover_' + kind), once per id
+//   xpForNext(level)          XP from level to level + 1
+//   statPoints(key) / statBonus(key) / statTotal(key) / focusBonus()
+//   spend(key) / recoup(key) / canRecoup(key) / commit()   CHARACTER tab +/-
+//   useSkill(line, kind)      rank XP per use (CONFIG skillLines perUse)
+//   skillRank(line) / skillProgress(line) / skillPassive(line, effect) /
+//   skillMult(line, effect)
+//   capture() / restore(data) / reset()   C4 save block (save.js)
+//   onLevelUp(level, pts) / onRankUp(line, rank) / onChange()  hooks (game.js)
+
+(function () {
+  'use strict';
+
+  var CFG = window.WH_CONFIG;
+  var L = CFG.leveling;
+
+  function num(v, fallback) {
+    return typeof v === 'number' && isFinite(v) ? v : fallback;
+  }
+
+  function freshState() {
+    var alloc = {}, committed = {}, ranks = {};
+    L.stats.forEach(function (k) { alloc[k] = 0; committed[k] = 0; });
+    Object.keys(L.skillLines).forEach(function (id) { ranks[id] = { rank: 1, xp: 0 }; });
+    return { xp: 0, level: 1, pendingPts: 0, alloc: alloc, committed: committed,
+      ranks: ranks, discovered: {} };
+  }
+
+  var st = freshState();
+
+  var M = {
+    onLevelUp: null,
+    onRankUp: null,
+    onChange: null
+  };
+
+  function changed() {
+    if (M.onChange) M.onChange();
+  }
+
+  // ---- Layer 1: XP + level --------------------------------------------------------
+
+  // round(base * level ^ exp): 100 / 283 / 520 / 800 ... (CONFIG.leveling.xpCurve)
+  M.xpForNext = function (level) {
+    return Math.max(1, Math.round(L.xpCurve.base * Math.pow(Math.max(1, level), L.xpCurve.exp)));
+  };
+
+  M.awardXP = function (source, amount) {
+    var n = typeof amount === 'number' ? amount : num(L.xpSources[source], 0);
+    if (!(n > 0)) return 0;
+    st.xp += n;
+    var gained = 0;
+    while (st.level < L.maxLevel && st.xp >= M.xpForNext(st.level)) {
+      st.xp -= M.xpForNext(st.level);
+      st.level++;
+      st.pendingPts += L.pointsPerLevel;
+      gained++;
+      if (M.onLevelUp) M.onLevelUp(st.level, L.pointsPerLevel);
+    }
+    changed();
+    return gained;
+  };
+
+  // First-of-kind discovery: one award per (kind, id) per character.
+  M.discover = function (kind, id, silent) {
+    var key = kind + ':' + id;
+    if (st.discovered[key]) return false;
+    st.discovered[key] = true;
+    if (!silent) M.awardXP('discover_' + kind);
+    return true;
+  };
+
+  M.isDiscovered = function (kind, id) {
+    return !!st.discovered[kind + ':' + id];
+  };
+
+  M.level = function () { return st.level; };
+  M.xp = function () { return st.xp; };
+  M.pendingPts = function () { return st.pendingPts; };
+  M.xpFrac = function () {
+    return st.level >= L.maxLevel ? 1 : Math.min(1, st.xp / M.xpForNext(st.level));
+  };
+
+  // ---- the nine stats ---------------------------------------------------------------
+
+  M.statPoints = function (key) { return st.alloc[key] || 0; };
+
+  // points * perPoint, clamped to the curve cap (null = uncapped)
+  M.statBonus = function (key) {
+    var c = L.statCurves[key];
+    if (!c) return 0;
+    var v = M.statPoints(key) * c.perPoint;
+    return c.cap != null ? Math.min(c.cap, v) : v;
+  };
+
+  // base (today's number) + bonus. Pools read CONFIG.player live; the
+  // multipliers start at 1, the chances / reductions at 0.
+  var STAT_BASE = {
+    health: function () { return CFG.player.hpMax; },
+    stamina: function () { return CFG.player.staminaMax; },
+    focus: function () { return CFG.player.focusMax; },
+    speed: function () { return 1; },
+    precision: function () { return 0; },
+    ward: function () { return 0; },
+    wisdom: function () { return 1; },
+    carry: function () { return 1; },
+    luck: function () { return 0; }
+  };
+
+  M.statTotal = function (key) {
+    return (STAT_BASE[key] ? STAT_BASE[key]() : 0) + M.statBonus(key);
+  };
+
+  // focusMax bonus = Focus points + Wisdom's focus share (doc 15: Wisdom =
+  // magic damage + mana)
+  M.focusBonus = function () {
+    return M.statBonus('focus') + M.statPoints('wisdom') * (L.statCurves.wisdom.focusPerPoint || 0);
+  };
+
+  M.spend = function (key) {
+    if (st.pendingPts <= 0 || !(key in st.alloc)) return false;
+    st.alloc[key]++;
+    st.pendingPts--;
+    changed();
+    return true;
+  };
+
+  // '-' only takes back points spent since the last commit (the CHARACTER
+  // screen closing commits): no free respec of earlier choices.
+  M.canRecoup = function (key) {
+    return (st.alloc[key] || 0) > (st.committed[key] || 0);
+  };
+
+  M.recoup = function (key) {
+    if (!M.canRecoup(key)) return false;
+    st.alloc[key]--;
+    st.pendingPts++;
+    changed();
+    return true;
+  };
+
+  M.commit = function () {
+    L.stats.forEach(function (k) { st.committed[k] = st.alloc[k]; });
+  };
+
+  // ---- Layer 2: skill lines by use --------------------------------------------------
+
+  // doc 18 shape: full speed to slowFrom, then 1 + (rank - slowFrom) / slowSpan
+  M.rankXpForNext = function (rank) {
+    var R = L.rankCurve;
+    var slow = rank < R.slowFrom ? 1 : 1 + (rank - R.slowFrom) / R.slowSpan;
+    return Math.max(1, Math.round(R.perRank * slow));
+  };
+
+  M.useSkill = function (line, kind) {
+    var def = L.skillLines[line], r = st.ranks[line];
+    if (!def || !r) return 0;
+    var n = num(def.perUse[kind], 0);
+    if (!(n > 0) || r.rank >= L.rankCurve.maxRank) return 0;
+    r.xp += n;
+    var gained = 0;
+    while (r.rank < L.rankCurve.maxRank && r.xp >= M.rankXpForNext(r.rank)) {
+      r.xp -= M.rankXpForNext(r.rank);
+      r.rank++;
+      gained++;
+      if (M.onRankUp) M.onRankUp(line, r.rank);
+    }
+    if (r.rank >= L.rankCurve.maxRank) r.xp = 0;
+    changed();
+    return gained;
+  };
+
+  M.skillRank = function (line) {
+    return st.ranks[line] ? st.ranks[line].rank : 1;
+  };
+
+  M.skillProgress = function (line) {
+    var r = st.ranks[line];
+    if (!r || r.rank >= L.rankCurve.maxRank) return 1;
+    return Math.min(1, r.xp / M.rankXpForNext(r.rank));
+  };
+
+  // (rank - 1) * perRank clamped to +-max: signed (staminaCost -0.04 = 4% cheaper)
+  M.skillPassive = function (line, effect) {
+    var def = L.skillLines[line];
+    var p = def && def.passives[effect];
+    if (!p) return 0;
+    var v = (M.skillRank(line) - 1) * p.perRank;
+    return Math.max(-p.max, Math.min(p.max, v));
+  };
+
+  M.skillMult = function (line, effect) {
+    return 1 + M.skillPassive(line, effect);
+  };
+
+  // CONFIG.leveling.spellLines: the line a spell trains (null = none)
+  M.spellLine = function (spellId) {
+    return (L.spellLines && L.spellLines[spellId]) || null;
+  };
+
+  // ---- C4 save block ----------------------------------------------------------------
+
+  M.capture = function () {
+    var ranks = {};
+    Object.keys(st.ranks).forEach(function (id) {
+      ranks[id] = { rank: st.ranks[id].rank, xp: st.ranks[id].xp };
+    });
+    var alloc = {};
+    L.stats.forEach(function (k) { alloc[k] = st.alloc[k]; });
+    return { xp: st.xp, level: st.level, pendingPts: st.pendingPts, alloc: alloc,
+      ranks: ranks, discovered: Object.keys(st.discovered) };
+  };
+
+  // Load-safe: a missing block (pre-L1 save) or bad fields = fresh defaults.
+  // Restored points count as committed (no recoup of loaded choices).
+  M.restore = function (data) {
+    st = freshState();
+    var d = data && typeof data === 'object' ? data : null;
+    if (d) {
+      st.level = Math.max(1, Math.min(L.maxLevel, Math.floor(num(d.level, 1))));
+      st.xp = Math.max(0, num(d.xp, 0));
+      st.pendingPts = Math.max(0, Math.floor(num(d.pendingPts, 0)));
+      var a = d.alloc || {};
+      L.stats.forEach(function (k) {
+        st.alloc[k] = Math.max(0, Math.floor(num(a[k], 0)));
+        st.committed[k] = st.alloc[k];
+      });
+      var rk = d.ranks || {};
+      Object.keys(st.ranks).forEach(function (id) {
+        var r = rk[id];
+        if (!r) return;
+        st.ranks[id].rank = Math.max(1, Math.min(L.rankCurve.maxRank, Math.floor(num(r.rank, 1))));
+        st.ranks[id].xp = Math.max(0, num(r.xp, 0));
+      });
+      if (Array.isArray(d.discovered)) {
+        d.discovered.forEach(function (k) { if (typeof k === 'string') st.discovered[k] = true; });
+      }
+    }
+    changed();
+  };
+
+  M.reset = function () { M.restore(null); };
+
+  window.WH_LEVEL = M;
 })();
 
 </script>
@@ -94122,6 +94499,9 @@ window.WH_ICONS = {
 
   Player.prototype.takeDamage = function (amount) {
     if (this.iframes > 0 || this.state !== 'alive') return false;
+    // L1 Ward: damage reduction after the enemy / chip numbers (0 with no
+    // points; CONFIG.leveling.statCurves.ward cap 60%)
+    if (window.WH_LEVEL) amount *= 1 - window.WH_LEVEL.statTotal('ward');
     this.hp = Math.max(0, this.hp - amount);
     if (this.anim) this.anim.hit();
     // v7: hp loss during a cast windup fizzles the cast (no focus spent)
@@ -94387,6 +94767,9 @@ window.WH_ICONS = {
         var len = Math.sqrt(mx * mx + mz * mz);
         mx /= len; mz /= len;
         var speed = sprintingNow ? CFG.sprintSpeed : CFG.walkSpeed;
+        // L1 Speed: walk / sprint pace only (1 with no points); roll and
+        // backstep keep their EPR1 curves
+        if (window.WH_LEVEL) speed *= window.WH_LEVEL.statTotal('speed');
         if (sprintingNow) {
           this.spendStamina(CFG.sprintStaminaPerSec * dt);
         }
@@ -98626,7 +99009,7 @@ window.WH_ICONS = {
   // v6: HUD screen-edge flash pulse (DOM opacity, no WebGL work).
   function flashScreen(durationSec, kind) {
     var el = game.hud.blockFlash;
-    el.classList.remove('parry', 'block', 'guardbreak');
+    el.classList.remove('parry', 'block', 'guardbreak', 'crit');
     void el.offsetWidth;                     // restart the CSS transition
     el.classList.add(kind);
     game.hud.flashTimer = durationSec;
@@ -98665,10 +99048,16 @@ window.WH_ICONS = {
 
   // C1 buff layer: effective stats = CONFIG base + active buffs. hpMax only
   // for now; current hp is clamped inside the new max (buff expiry).
+  // L1: + the Health / Stamina / Focus (+ Wisdom focus share) stat bonuses
+  // (WH_LEVEL; 0 with no points spent). Same clamp for all three pools.
   function applyBuffStats() {
-    var p = game.player;
-    p.hpMax = CFG.player.hpMax + game.cooking.buffs.statBonus('hpMax');
+    var p = game.player, LV = window.WH_LEVEL;
+    p.hpMax = CFG.player.hpMax + game.cooking.buffs.statBonus('hpMax') + LV.statBonus('health');
     if (p.hp > p.hpMax) p.hp = p.hpMax;
+    p.staminaMax = CFG.player.staminaMax + LV.statBonus('stamina');
+    if (p.stamina > p.staminaMax) p.stamina = p.staminaMax;
+    p.focusMax = CFG.player.focusMax + LV.focusBonus();
+    if (p.focus > p.focusMax) p.focus = p.focusMax;
   }
 
   // C1: one chip per active buff: glyph + CONFIG label + m:ss left
@@ -99647,6 +100036,7 @@ window.WH_ICONS = {
       flashScreen(CFG.block.blockFlashSeconds, 'block');
     };
     p.onHandsChanged = function () { game.inventoryUI.render(); };
+    setupLevelHooks();
     game.worldItems = new INV.WorldItems(game.scene);
     // region manager is built after setupInventory - hand over a getter
     game.corpseLoot = new window.WH_CORPSE_LOOT.Manager(game.scene,
@@ -99666,13 +100056,28 @@ window.WH_ICONS = {
         p.setInputSuspended(open);
       },
       dropAtFeet: dropAtFeet,
-      dayNight: game.dayNight         // C2: day buffs + meal cap ride the day clock
+      dayNight: game.dayNight,        // C2: day buffs + meal cap ride the day clock
+      // L1: every finished cook + the first cook of a recipe earn XP
+      onCooked: function (resultId, learned) {
+        window.WH_LEVEL.awardXP('cook_meal');
+        if (learned) window.WH_LEVEL.awardXP('recipe_learn');
+      }
     });
     document.addEventListener('keydown', function (e) {
       if (e.code !== CFG.inventoryUI.pickupKey || e.repeat) return;
       if (game.camp && game.camp.onInteractKey()) return;   // C3: E confirms camp placement
       interact();
     });
+  }
+
+  // ---- L1 leveling (CONFIG.leveling, js/leveling.js WH_LEVEL) --------------------
+  // WH_LEVEL is pure state; game.js feeds it events and surfaces its moments.
+  function setupLevelHooks() {
+    var LV = window.WH_LEVEL, T = CFG.leveling.text;
+    LV.onLevelUp = function (level, pts) {
+      game.inventoryUI.toast(T.levelUp.replace('{n}', level).replace('{pts}', pts),
+        CFG.leveling.levelToastSeconds);
+    };
   }
 
   // S3b: the one world-interact entry point - E key, touch USE button
@@ -99760,6 +100165,9 @@ window.WH_ICONS = {
   }
 
   // S1 roll: the guaranteed stack plus a bonusChance weighted bonus item.
+  // L1 Luck: then one extra weighted bonus pick at the Luck chance
+  // (statTotal('luck') = points x perPoint, 0 with no points; explicit
+  // Math.random, independent of the base bonus roll).
   function rollDrops() {
     var D = CFG.drops;
     var items = [{ id: D.guaranteed.id, count: D.guaranteed.count }];
@@ -99767,13 +100175,21 @@ window.WH_ICONS = {
       var b = weightedPick(D.bonusPool);
       if (b) items.push({ id: b.id, count: 1 });
     }
+    if (Math.random() < window.WH_LEVEL.statTotal('luck')) {
+      var lb = weightedPick(D.bonusPool);
+      if (lb) items.push({ id: lb.id, count: 1 });
+    }
     return items;
   }
 
   // Enemy.onKilled (S4): the roll is stored ON the corpse (enemy.corpseLoot),
   // never spawned as boxes - the body glows until it is looted empty.
+  // L1: the same one kill entry point awards the kill XP (enemy.js never
+  // imports WH_LEVEL) + the first-of-kind foe discovery.
   function storeCorpseLoot(enemy) {
     game.corpseLoot.attach(enemy, rollDrops());
+    window.WH_LEVEL.awardXP('kill_' + enemy.type);
+    window.WH_LEVEL.discover('foe', enemy.type);
   }
 
   // USE / E: everything that fits off the nearest unlooted corpse in reach;
@@ -99830,7 +100246,8 @@ window.WH_ICONS = {
   function tryGather() {
     var node = nearestGatherNode();
     if (!node) return false;
-    var r = game.gatherNodes.harvest(node, game.inventory);
+    var r = game.gatherNodes.harvest(node, game.inventory,
+      window.WH_LEVEL.statTotal('luck'));     // L1 Luck: extra-unit roll
     if (!r.ok) {
       game.inventoryUI.toast(CFG.gather.fullText);
       return true;
@@ -99838,6 +100255,9 @@ window.WH_ICONS = {
     game.inventoryUI.toast(CFG.gather.gatherToast
       .replace('{name}', window.WH_INVENTORY.itemDef(r.itemId).name)
       .replace('{n}', r.count));
+    // L1: gather XP + first harvest of this node type
+    window.WH_LEVEL.awardXP('gather');
+    window.WH_LEVEL.discover('node', node.type);
     return true;
   }
 
@@ -100263,6 +100683,8 @@ window.WH_ICONS = {
   // Boot tail: restore (CONTINUE) on the ready scene, fade the overlay, run.
   function enterWorld(cont) {
     if (cont) window.WH_SAVE.restore(game, window.WH_SAVE.load(game));
+    // L1: the region you stand in at entry is known ground (no XP)
+    window.WH_LEVEL.discover('region', game.regionManager.logic.activeId, true);
     game.c4.entered = true;
     // 2026-10-03: smooth fade-out of the boot overlay from CONFIG
     // (hud.bootOverlayFadeMs); .hidden also releases pointer-events, and
@@ -100394,6 +100816,9 @@ window.WH_ICONS = {
       } else {
         var bolt = window.WH_SPELLS.spawn(
           game.scene, req.spellId, castOrigin(req), req.dirX, req.dirZ);
+        // L1 Wisdom: spell power multiplies the bolt's CONFIG damage here
+        // (spells.js stays frozen; the bolt reads this.damage on hit)
+        if (bolt) bolt.damage *= window.WH_LEVEL.statTotal('wisdom');
         if (bolt) game.firebolts.push(bolt);
       }
     }
@@ -100426,6 +100851,7 @@ window.WH_ICONS = {
       game.dayNight.setSkyArea(tr.newActiveId);   // C2b: area's sky variant (1s fade)
       showRegionName(window.WH_REGION_DEFS.regions[tr.newActiveId].name);
       setGateHint(false);
+      window.WH_LEVEL.discover('region', tr.newActiveId);   // L1: first entry XP
     }
 
     // enemies (active region only)
@@ -100451,6 +100877,13 @@ window.WH_ICONS = {
         if (e.riposteArmed && e.isStaggered && e.isStaggered()) {
           dmg *= CFG.block.riposteMult;
           e.riposteArmed = false;
+        }
+        // L1 Precision: melee crit roll (chance 0 with no points = no roll
+        // effect; Math.random is the explicit, only randomness here)
+        var crit = Math.random() < window.WH_LEVEL.statTotal('precision');
+        if (crit) {
+          dmg *= CFG.leveling.critMult;
+          flashScreen(CFG.leveling.critFlashSeconds, 'crit');
         }
         // v3: pass hit direction (player -> enemy) for stagger knockback
         var hitDir = dist > 0.001 ? { x: dx / dist, z: dz / dist } : null;

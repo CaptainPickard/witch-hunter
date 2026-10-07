@@ -37,10 +37,15 @@
   }
 
   // Gear carries stackCap 1; consumables fall back to the inventory default.
+  // L1 Carry Weight: the default cap scales by WH_LEVEL statTotal('carry')
+  // (1 with no points = 60); items with their own stackCap (gear 1, coin
+  // 999) keep it. Read live at pickup / join, so points apply at once.
   function stackCapOf(id) {
     var d = itemDef(id);
     if (!d) return 0;
-    return d.stackCap || CFG.inventory.defaultStackCap;
+    if (d.stackCap) return d.stackCap;
+    var carry = window.WH_LEVEL ? window.WH_LEVEL.statTotal('carry') : 1;
+    return Math.round(CFG.inventory.defaultStackCap * carry);
   }
 
   // ---- data model ---------------------------------------------------------------

@@ -54,6 +54,10 @@
 <script src="js/light.js"></script>
 <script src="js/gather.js"></script>
 <script src="js/corpse-loot.js"></script>
+<!-- L1: WH_LEVEL before player.js (player / inventory / game read it at
+     runtime; the first read is game.js boot applyBuffStats - save.js has no
+     load-order tie to it) -->
+<script src="js/leveling.js"></script>
 <script src="js/player.js"></script>
 <script src="js/enemy.js"></script>
 <script src="js/region-manager.js"></script>

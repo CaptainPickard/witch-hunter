@@ -1776,3 +1776,97 @@ window.WH_CONFIG.inventoryUI = {
   // are px from the viewport's bottom-left corner.
   openButton: { enabled: true, label: 'INV', left: 16, bottom: 20 }
 };
+
+// L1 (2026-10-07, io/missions/2026-10-07-cc-l1-leveling.md) LEVELING -
+// js/leveling.js WH_LEVEL. Layer 1 (doc 07): XP -> character level -> 5
+// stat points per level -> the NINE stats (list LOCKED). Layer 2 (doc 18):
+// three skill lines rank by use, per-rank primary passives only (NO tier-up
+// menus this round). LEVEL DOES NOT SCALE POWER (doc 07 lock): the level is
+// a point budget; nothing reads the level number except the point grant.
+// EVERY NUMBER BELOW IS PROPOSED, NICKO TUNES (doc 07 RULING PASS: XP
+// budgets / stat caps are GDD tuning against a playable build). Level 1
+// with 0 points spent = today's numbers exactly (all bonuses start at 0).
+window.WH_CONFIG.leveling = {
+  pointsPerLevel: 5,                // doc 07 LOCKED (5 stat points per level)
+  maxLevel: 50,                     // PROPOSED ceiling (XP past it just banks)
+  // xpForNext(level) = round(base * level ^ exp)   PROPOSED, Nicko tunes
+  //   L1->2 100, L2->3 283, L3->4 520, L4->5 800, L5->6 1118, L10->11 3162
+  xpCurve: { base: 100, exp: 1.5 },
+  // XP per source (PROPOSED, Nicko tunes). Kills key 'kill_' + enemy.type;
+  // discover_* = first-of-kind, once per character (ids kept in the save).
+  // No quest XP (L1 ruling).
+  xpSources: {
+    kill_bandit: 35,                // bandit hpMax 70
+    kill_ghoul: 25,                 // ghoul hpMax 45
+    gather: 5,                      // per harvested node
+    cook_meal: 15,                  // per finished cook (recipe or Bland Mush)
+    recipe_learn: 40,               // the first cook of a recipe (stacks with cook_meal)
+    discover_region: 50,            // first entry into a region (the boot region is pre-known)
+    discover_node: 10,              // first harvest of each gather node type
+    discover_foe: 25                // first kill of each enemy type (stacks with kill_*)
+  },
+  // The nine stats (doc 07 LOCKED list). bonus = points * perPoint, clamped
+  // to cap (null = uncapped). PROPOSED, Nicko tunes:
+  //   health    +5 max HP per point            (100 base, buffs stack on top)
+  //   stamina   +5 max stamina per point       (100 base)
+  //   focus     +5 max focus per point         (100 base)
+  //   speed     +1% walk / sprint per point    (cap +25%; roll / backstep untouched)
+  //   precision +1% melee crit per point       (cap 50%; crit = x critMult damage)
+  //   ward      +1% damage reduction per point (cap 60%, mission row)
+  //   wisdom    +3% spell damage AND +2 max focus per point (doc 15: magic damage + mana)
+  //   carry     +5% stack size per point       (stacks without their own stackCap: 60 -> 63 -> 66..)
+  //   luck      +1% extra drop / gather roll per point (cap 50%)
+  stats: ['health', 'stamina', 'focus', 'speed', 'precision', 'ward', 'wisdom', 'carry', 'luck'],
+  statCurves: {
+    health:    { label: 'Health',       perPoint: 5,    cap: null, caption: '+{v} max HP' },
+    stamina:   { label: 'Stamina',      perPoint: 5,    cap: null, caption: '+{v} max stamina' },
+    focus:     { label: 'Focus',        perPoint: 5,    cap: null, caption: '+{v} max focus' },
+    speed:     { label: 'Speed',        perPoint: 0.01, cap: 0.25, caption: '+{pct}% move speed' },
+    precision: { label: 'Precision',    perPoint: 0.01, cap: 0.50, caption: '{pct}% crit chance' },
+    ward:      { label: 'Ward',         perPoint: 0.01, cap: 0.60, caption: '-{pct}% damage taken' },
+    wisdom:    { label: 'Wisdom',       perPoint: 0.03, cap: null, caption: '+{pct}% spell damage, +{focus} focus',
+                 focusPerPoint: 2 },
+    carry:     { label: 'Carry Weight', perPoint: 0.05, cap: null, caption: '+{pct}% stack size' },
+    luck:      { label: 'Luck',         perPoint: 0.01, cap: 0.50, caption: '{pct}% bonus drop roll' }
+  },
+  critMult: 1.5,                    // PROPOSED: precision crit damage multiplier
+  critFlashSeconds: 0.18,           // gold screen-edge flash on a crit (#wh-block-flash.crit)
+  // Skill lines (doc 15 canonical lines for the three prototype verbs; the
+  // brief's working names longsword / block / spell school map to them).
+  // id -> { name, perUse rank XP per use kind, passives }. Passive value =
+  // (rank - 1) * perRank, clamped to +-max (PROPOSED, Nicko tunes):
+  //   longBlade      damage +1%/rank (max +60%), attack stamina -0.4%/rank (max -35%)
+  //   shieldDefense  block stamina drain -0.5%/rank (max -40%),
+  //                  parry window +0.0005 s/rank (max +0.05 s = rank 100, mission cap)
+  //   pyromancy      spell damage +1%/rank (max +60%), focus cost -0.4%/rank (max -35%)
+  skillLines: {
+    longBlade: { name: 'Long Blade', perUse: { hit: 1 },
+      passives: { damage: { perRank: 0.01, max: 0.60 }, staminaCost: { perRank: -0.004, max: 0.35 } },
+      caption: '+{damage}% damage, -{staminaCost}% attack stamina' },
+    shieldDefense: { name: 'Shield / Defense', perUse: { block: 1, parry: 2 },
+      passives: { blockDrain: { perRank: -0.005, max: 0.40 }, parryWindow: { perRank: 0.0005, max: 0.05 } },
+      caption: '-{blockDrain}% block drain, +{parryWindowMs}ms parry' },
+    pyromancy: { name: 'Pyromancy', perUse: { cast: 1 },
+      passives: { damage: { perRank: 0.01, max: 0.60 }, focusCost: { perRank: -0.004, max: 0.35 } },
+      caption: '+{damage}% spell damage, -{focusCost}% focus cost' }
+  },
+  // Which line a completed cast trains + takes passives from. Radiance is
+  // light magic (doc 15 Holy Wards, not a prototype line this round): null =
+  // no line. PROPOSED - set radiance: 'pyromancy' to have it train too.
+  spellLines: { firebolt: 'pyromancy', radiance: null },
+  // Rank curve (doc 18 LOCKED shape: full speed to 50, ~2x slower by 75,
+  // ~3x by 95, no decay). rank XP to the next rank = perRank * slow(rank),
+  // slow = 1 below slowFrom, else 1 + (rank - slowFrom) / slowSpan
+  //   -> rank 75 = 2.0x, rank 95 = 2.8x. 5 uses per rank early: rank 50 at
+  //   ~245 uses, Grandmaster (100) at ~740 uses. PROPOSED, Nicko tunes.
+  rankCurve: { perRank: 5, slowFrom: 50, slowSpan: 25, maxRank: 100 },
+  text: {
+    levelUp: 'Level {n} reached - +{pts} stat points',
+    rankUp: '{name} rank {n}',
+    allocateHint: 'ALLOCATE',       // CHARACTER tab badge while points are pending
+    levelLabel: 'Lv {n}',           // HUD XP pip label
+    crit: 'CRIT'
+  },
+  levelToastSeconds: 2.6,           // #wh-level-toast lifetime
+  rankToastSeconds: 1.6
+};

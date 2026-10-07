@@ -108,17 +108,21 @@
   };
 
   // inventory.addItem the whole yield; a partial fit is taken back out and
-  // refused (node stays ready). Returns { ok, itemId, count }.
-  NodeManager.prototype.harvest = function (node, inventory) {
+  // refused (node stays ready). Returns { ok, itemId, count, bonus }.
+  // L1 Luck: bonusChance (0..1, game.js passes WH_LEVEL Luck) rolls ONE
+  // extra unit after the full yield landed - explicit Math.random, kept only
+  // if it fits (never refuses the harvest).
+  NodeManager.prototype.harvest = function (node, inventory, bonusChance) {
     var y = G.nodeTypes[node.type].yield;
     var added = inventory.addItem(y.id, y.count);
     if (added < y.count) {
       if (added > 0) inventory.removeItem(y.id, added);
-      return { ok: false, itemId: y.id, count: 0 };
+      return { ok: false, itemId: y.id, count: 0, bonus: 0 };
     }
+    var bonus = bonusChance > 0 && Math.random() < bonusChance ? inventory.addItem(y.id, 1) : 0;
     node.state = 'dormant';
     node.readyAt = this.now() + this.respawnDelay(G.nodeTypes[node.type]);
-    return { ok: true, itemId: y.id, count: y.count };
+    return { ok: true, itemId: y.id, count: y.count + bonus, bonus: bonus };
   };
 
   // Real-game reshuffle: move to a random pool spot no other node of the

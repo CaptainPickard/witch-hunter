@@ -1692,6 +1692,9 @@
 
   Player.prototype.takeDamage = function (amount) {
     if (this.iframes > 0 || this.state !== 'alive') return false;
+    // L1 Ward: damage reduction after the enemy / chip numbers (0 with no
+    // points; CONFIG.leveling.statCurves.ward cap 60%)
+    if (window.WH_LEVEL) amount *= 1 - window.WH_LEVEL.statTotal('ward');
     this.hp = Math.max(0, this.hp - amount);
     if (this.anim) this.anim.hit();
     // v7: hp loss during a cast windup fizzles the cast (no focus spent)
@@ -1957,6 +1960,9 @@
         var len = Math.sqrt(mx * mx + mz * mz);
         mx /= len; mz /= len;
         var speed = sprintingNow ? CFG.sprintSpeed : CFG.walkSpeed;
+        // L1 Speed: walk / sprint pace only (1 with no points); roll and
+        // backstep keep their EPR1 curves
+        if (window.WH_LEVEL) speed *= window.WH_LEVEL.statTotal('speed');
         if (sprintingNow) {
           this.spendStamina(CFG.sprintStaminaPerSec * dt);
         }
