@@ -100,6 +100,12 @@ window.WH_CONFIG = {
                         offset: [-0.30, 0.0] },
     banditCampfire:   { heightFraction: 0.55, intensity: 3.2,
                         offset: [0.0, 0.0] },
+    // CK1: deployed-kit firepit (CONFIG.camp.assets.fire glb). groundHeight
+    // is the WHOLE kit (~1.56 m, the tent) -> 0.25 = ~0.39 m above the pit;
+    // offset [0, 0] = the firepit sits on the module origin (makePiece
+    // counter-offset).
+    whCampkit:        { heightFraction: 0.25, intensity: 3.2,   // PROPOSED
+                        offset: [0.0, 0.0] },
     lanternWaymarker: { heightFraction: 0.67, intensity: 9.5,
                         offset: [0.0, 0.35] },
     // Round F: gate-arch lantern (WORLD socket, both regions; not a region
@@ -1471,11 +1477,16 @@ window.WH_CONFIG.camp = {
   // one-line edit per piece (glb = an assets.js manifest name; tent: null =
   // the procedural dark-canvas A-frame placeholder below).
   assets: {
-    fire:    { glb: 'banditCampfire', scale: 1.0 },
-    bedroll: { glb: 'banditBedroll', scale: 1.0 },
+    // CK1 (Nicko 10-07): kit stone-ring firepit + kit bedroll (node = a
+    // whCampkit node, camp.js makePiece). Rollback = glb 'banditCampfire' /
+    // 'banditBedroll', no node.
+    fire:    { glb: 'whCampkit', node: 'firepit', scale: 1.0 },
+    bedroll: { glb: 'whCampkit', node: 'bedroll', scale: 1.0 },
     // C3.1c: the REAL tent = Nicko's Meshy generation (door +Z on the GLB,
     // rotY rows aim it). Scale 2.2 lifts the ~1.9m raw mesh to tent size.
-    tent:    { glb: 'whTent', scale: 2.2 }
+    // CK1: the kit tent stays unwired (optional swap: { glb: 'whCampkit', node: 'tent' }).
+    tent:    { glb: 'whTent', scale: 2.2 },
+    pegs:    { glb: 'whCampkit', node: 'pegs', scale: 1.6 }   // PROPOSED - Nicko tunes: ring vs the whTent footprint
   },
   tentPlaceholder: { width: 2.0, length: 2.4, height: 1.4, color: 0x2e2a24, poleColor: 0x4a3b2a },
   // The deployable kit (fire + bedroll + tent). offset = [right, back] m in
@@ -1487,7 +1498,9 @@ window.WH_CONFIG.camp = {
     { id: 'fire', hook: 'cook', asset: 'fire', offset: [0, 0], rotY: 0,
       station: { kind: 'cookFire', startLit: true } },   // fuel = CONFIG.cooking.fire rules
     { id: 'bedroll', hook: 'sleep', asset: 'bedroll', offset: [3.0, 1.0], rotY: Math.PI / 2 },
-    { id: 'tent', hook: 'sleep', asset: 'tent', offset: [0, 3.6], rotY: 0, menuAnchor: true }
+    { id: 'tent', hook: 'sleep', asset: 'tent', offset: [0, 3.6], rotY: 0, menuAnchor: true },
+    // CK1: decorative kit pegs ring riding the tent spot (hook 'none' = inert)
+    { id: 'pegs', hook: 'none', asset: 'pegs', offset: [0, 3.6], rotY: 0 }
   ],
   respawnStepM: 1.5,                // respawn = the menu anchor + this far toward its door (clear of the fire ring)
   // WORLD CAMPS: module rows bound to a fixed world spot (no kit, no deploy).

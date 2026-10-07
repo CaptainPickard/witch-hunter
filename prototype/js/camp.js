@@ -60,11 +60,38 @@
     return g;
   }
 
+  // CK1: one node of a composed kit GLB (A.node = exact node name). The node is
+  // wrapped in a Group and counter-offset by its baked kit-local center (raw kit
+  // units) so the module row's offset / rotY own placement from zero.
+  var KIT_CENTER = {                // PROPOSED - per-node bounds centers (10-07 GLB parse)
+    firepit: [1.13, 0, -0.05],
+    bedroll: [0.40, 0, 0.005]
+  };
+  // Missing node (stand-in / renamed GLB): the pre-kit placeholder props.
+  var KIT_FALLBACK = { firepit: 'banditCampfire', bedroll: 'banditBedroll' };
+
+  function kitNode(A) {
+    var src = window.WH_ASSETS.instance(A.glb), hit = null;
+    src.traverse(function (o) { if (!hit && o.name === A.node) hit = o; });
+    if (!hit) {
+      console.warn('[WH camp] kit node missing: ' + A.glb + '#' + A.node + ' - placeholder');
+      var fb = KIT_FALLBACK[A.node];
+      return fb ? window.WH_ASSETS.instance(fb) : new THREE.Group();
+    }
+    var c = KIT_CENTER[A.node] || [0, 0, 0];
+    var wrap = new THREE.Group();
+    wrap.name = 'kit-' + A.node;
+    wrap.add(hit);
+    hit.position.set(-c[0], -c[1], -c[2]);
+    return wrap;
+  }
+
   // One CONFIG.camp.assets piece: a manifest GLB (scaled like a prop) or the
   // procedural tent. ghostMat swaps every material on the clone.
   function makePiece(key, ghostMat) {
     var A = K.assets[key];
-    var obj = A.glb ? window.WH_ASSETS.instance(A.glb) : buildTent(ghostMat);
+    var obj = A.node ? kitNode(A) : null;
+    if (!obj) obj = A.glb ? window.WH_ASSETS.instance(A.glb) : buildTent(ghostMat);
     obj.scale.setScalar(A.scale);
     if (ghostMat && A.glb) {
       obj.traverse(function (o) { if (o.isMesh) o.material = ghostMat; });

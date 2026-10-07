@@ -73,6 +73,9 @@
     // 1584k tris raw -> 30k decimated, per-face UV medoid, 512+5bit.
     // (scratch/tent_bake_c31c.py + tent_rebake_nodefault.py)
     whTent: 'art-direction/3d/assets/camp/wh-tent-pixelated.glb',
+    // CK1 (Nicko 10-07): the player camp kit - ONE composed site, 4 root nodes
+    // (tent / bedroll / firepit / pegs); camp.js makePiece extracts per node.
+    whCampkit: 'art-direction/3d/assets/camp/wh-campkit-pixelated.glb',
 
     // church-kit props + trees
     // Round K (io/roundK-provenance.md): Meshy lantern-post-v2, one welded piece, decimated
