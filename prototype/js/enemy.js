@@ -21,6 +21,18 @@
     return CFG[type] || CFG.bandit;
   }
 
+  // AI1: the decision-loop rows, or null when the type opts out (ghoul
+  // guardMode 0) - a null here makes every AI1 branch skip.
+  function ai1For(enemy) {
+    var a = enemy.cfg.ai1;
+    return a && a.guardMode !== 0 ? a : null;
+  }
+
+  // AI1: the live player (read-only; attacking / getAttackStage / guardBroken)
+  function livePlayer() {
+    return window.WH_GAME ? window.WH_GAME.player : null;
+  }
+
   function Enemy(type, scene, homeRegionId, spawnX, spawnZ) {
     this.type = type;
     this.cfg = cfgFor(type);
@@ -53,6 +65,12 @@
     // Order D: shield deflect recoil (presentation overlay, see deflect())
     this.deflectTimer = 0;
     this.deflectDir = { x: 0, z: 0 };
+    // AI1: bandit decision-loop state (ephemeral, never persisted - R10)
+    this.ai1Tick = 0;                  // seconds to the next decision tick
+    this.ai1Orbit = Math.random() < 0.5 ? 1 : -1;   // strafe orbit direction
+    this.ai1FlipT = 0;                 // seconds since the last orbit flip
+    this.ai1Press = false;             // closing in to swing (opening / bias roll)
+    this.ai1Strafing = false;          // inside strafeBandOuter this frame
   }
 
   Enemy.prototype.setBody = function (meshRoot) {
@@ -199,6 +217,7 @@
       (this.pos.x - this.spawn.x) * (this.pos.x - this.spawn.x) +
       (this.pos.z - this.spawn.z) * (this.pos.z - this.spawn.z)
     );
+    var ai1 = ai1For(this);
 
     // ---- transitions ----
     // v6: parry stagger. Full lockdown while riposteStaggerTimer runs: no FSM
@@ -259,7 +278,8 @@
             this.attackPhaseT = 0;
           }
         } else if (this.attackPhase === 'recover' && this.attackPhaseT >= phase.recover) {
-          if (distToPlayer <= this.cfg.attackRange * 1.4) {
+          // AI1: one swing per decision - the bandit returns to the loop
+          if (!ai1 && distToPlayer <= this.cfg.attackRange * 1.4) {
             this.attackPhase = 'windup';
             this.attackPhaseT = 0;
           } else {
@@ -276,9 +296,16 @@
       if (playerAlive && distToPlayer <= this.cfg.sightRadius * 0.8) {
         this.setFsm('chase');
       }
+      if (ai1) {
+        this.ai1Press = false;
+        // AI1 R2: inside alwaysKnowsRadius the bandit engages even in darkness
+        if (playerAlive && distToPlayer < ai1.alwaysKnowsRadius) this.setFsm('chase');
+      }
     } else if (this.fsm === 'chase') {
       if (!playerAlive || distToPlayer > this.cfg.leashRadius || distToSpawn > this.cfg.leashRadius) {
         this.setFsm('idle');           // leash: disengage, walk home
+      } else if (ai1) {
+        this.ai1Decide(dt, ai1, distToPlayer);
       } else if (distToPlayer <= this.cfg.attackRange) {
         // v3: ghoul telegraphs the strike with a short forward hop
         if (this.type === 'ghoul' && ANIM.ghoulHop.duration > 0) {
@@ -299,12 +326,26 @@
     // ---- movement per state ----
     var moveSpeed = 0;
     var dirX = 0, dirZ = 0;
+    var ai1Face = false;               // AI1: face the player, not the step
 
     if (this.fsm === 'chase') {
       moveSpeed = this.cfg.chaseSpeed;
       if (distToPlayer > 0.001) {
         dirX = toPlayerX / distToPlayer;
         dirZ = toPlayerZ / distToPlayer;
+      }
+      // AI1 R3: in the strafe band the bandit circles tangentially (one
+      // persistent orbit direction) and gives ground inside the inner edge;
+      // beyond the band, or pressing an attack, the chase above closes in.
+      if (ai1 && this.ai1Strafing && !this.ai1Press && distToPlayer > 0.001) {
+        var radial = distToPlayer < ai1.strafeBandInner ? -1 : 0;
+        var sx = -dirZ * this.ai1Orbit + dirX * radial;
+        var sz = dirX * this.ai1Orbit + dirZ * radial;
+        var sLen = Math.sqrt(sx * sx + sz * sz);
+        dirX = sx / sLen;
+        dirZ = sz / sLen;
+        moveSpeed = this.cfg.moveSpeed * ai1.strafeSpeedMult;
+        ai1Face = true;
       }
     } else if (this.fsm === 'idle' || this.fsm === 'aggro') {
       if (distToSpawn > 0.5) {
@@ -326,6 +367,7 @@
       // decay toward 0 so the layered cycle does not freeze mid-pose
       this.bobPhase += dt * 3;
     }
+    if (ai1Face) this.yaw = Math.atan2(toPlayerX, toPlayerZ);
 
     // v3: ghoul lunge hop progress (0.25 over 0.25s, fired at chase->attack)
     if (this.hopTimer >= 0) {
@@ -434,6 +476,53 @@
     if (this.fsm === next) return;
     this.fsm = next;
     this.fsmTime = 0;
+  };
+
+  // AI1 R3-R5: the bandit decision loop, run from the chase state. Movement
+  // stays in update (this only sets ai1Strafing / ai1Press / ai1Orbit); every
+  // swing enters the EXISTING attack phase FSM via ai1StartAttack.
+  Enemy.prototype.ai1Decide = function (dt, ai, dist) {
+    this.ai1Strafing = dist <= ai.strafeBandOuter;
+    this.ai1FlipT += dt;
+    if (this.ai1FlipT >= ai.strafeDirFlipSeconds) {
+      this.ai1Orbit = -this.ai1Orbit;
+      this.ai1FlipT = 0;
+    }
+    // a press swings the moment it reaches attackRadius
+    if (this.ai1Press && dist <= ai.attackRadius) {
+      this.ai1StartAttack();
+      return;
+    }
+    if (!this.ai1Strafing) {
+      this.ai1Tick = 0;                // decide on the first frame back in the band
+      return;
+    }
+    this.ai1Tick -= dt;
+    if (this.ai1Tick > 0) return;
+    this.ai1Tick = ai.decisionSeconds;
+    // a. still recoiling -> skip the tick
+    if (this.deflectTimer > 0 || this.staggerTimer > 0) return;
+    // c. R5 opening: guard broken, or the player recovering inside reach,
+    // or the attack bias roll. Out of reach it presses (closes in) first.
+    var P = livePlayer();
+    var opening = !!P && (P.guardBroken ||
+      (dist <= ai.attackRadius && P.attacking && P.getAttackStage() === 'recover'));
+    if (opening || Math.random() < ai.attackBias) {
+      if (dist <= ai.attackRadius) this.ai1StartAttack();
+      else this.ai1Press = true;
+    }
+    // d. otherwise keep circling (update steers the orbit / spacing)
+  };
+
+  // AI1: enter the existing attack phase FSM exactly as the chase branch
+  // does; the orbit flips after each attack (R3).
+  Enemy.prototype.ai1StartAttack = function () {
+    this.ai1Press = false;
+    this.ai1Orbit = -this.ai1Orbit;
+    this.ai1FlipT = 0;
+    this.setFsm('attack');
+    this.attackPhase = 'windup';
+    this.attackPhaseT = 0;
   };
 
   // v6: parry stagger. Cancels the current attack state entirely (bandit and

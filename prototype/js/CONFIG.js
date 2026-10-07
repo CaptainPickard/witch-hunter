@@ -840,6 +840,16 @@ window.WH_CONFIG = {
         recover: 0.8,                  // combat-ds1 P0-6
         hitArcDeg: 50,                 // combat-ds1 P0-6
         trackDegPerSec: 180            // combat-ds1 P0-6
+      },
+      ai1: {                           // AI1 2026-10-07: lock-on / strafe / decision loop
+        decisionSeconds: 0.4,          // PROPOSED, Nicko tunes - decision loop cadence while in the strafe band
+        alwaysKnowsRadius: 4.0,        // PROPOSED, Nicko tunes - engages even in darkness inside this range
+        strafeBandInner: 3.4,          // PROPOSED, Nicko tunes - inside this -> give ground (back out)
+        strafeBandOuter: 7.0,          // PROPOSED, Nicko tunes - outside this -> close (existing chase path)
+        strafeSpeedMult: 0.75,         // PROPOSED, Nicko tunes - x moveSpeed while circling
+        strafeDirFlipSeconds: 1.8,     // PROPOSED, Nicko tunes - orbit direction flips at most this often
+        attackRadius: 2.4,             // PROPOSED, Nicko tunes - == attackRange on purpose; do not drift
+        attackBias: 0.55               // PROPOSED, Nicko tunes - per decision tick, chance to press the attack
       }
     },
     ghoul: {
@@ -860,7 +870,8 @@ window.WH_CONFIG = {
         recover: 0.5,                  // combat-ds1 P0-6
         hitArcDeg: 50,                 // combat-ds1 P0-6
         trackDegPerSec: 180            // combat-ds1 P0-6
-      }
+      },
+      ai1: { guardMode: 0 }            // PROPOSED, Nicko tunes - 0 = zombie stays a zombie (every AI1 branch skips)
     },
     separationPush: 6.0,              // circle push-out strength
     holdAtBoundaryMargin: 1.5         // enemies stop this far before the boundary
