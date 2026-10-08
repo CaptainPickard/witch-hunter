@@ -544,13 +544,15 @@
   // cemetery). Visual-only decal strip through region A's south clearing;
   // trees/lanterns are placed by CONFIG generation relative to the same sway
   // centerline x = swayAmp*sin(2pi(z-zFrom)/swayPeriod). No collider.
-  function buildDirtPathCanvas() {
+  // CC-C4a: seed (optional) = a CFG.roads row's textureSeed; A's ribbon
+  // calls with none = today's canvas.
+  function buildDirtPathCanvas(seed) {
     var size = 128;
     var canvas = document.createElement('canvas');
     canvas.width = size;
     canvas.height = size;
     var ctx = canvas.getContext('2d');
-    var rand = whRng(78002024);
+    var rand = whRng(seed || 78002024);
     var dirt = whHexToRgb(0x5a4a33);      // packed-dirt umber (darkwood canon)
     var dirtDark = whHexToRgb(0x463a27);  // wet-mud tone
     var pebble = whHexToRgb(0x6e5f45);
@@ -680,6 +682,157 @@
     return mesh;
   }
 
+  // ---- CC-C4a: the King's Roads (CONFIG.roads polyline rows) ----------------
+  // A road row is A's dirtPath recipe (halfWidth, tileLengthMeters,
+  // repeatAcrossWidth, the dirt canvas) on a WAYPOINT centerline instead of
+  // the z-swayed line: points = [[x, z], ...] through a Catmull-Rom curve
+  // (or ring = {x, z, r}: a closed circle), resampled every ROAD_STEP_M of
+  // arc, then pushed sideways by swayAmp * sin(2pi s / swayPeriod), ramped
+  // to 0 over swayRampM at both ends so junctions + notch mouths stay put.
+  // A's CFG.world.dirtPath row is NOT migrated: whRoadsFor lists it first
+  // for its region and every caller reads it through whDistToPath exactly as
+  // before (A byte-identical); rows here carry points/ring and take the
+  // polyline path. Lines are pure (no THREE), cached per row id.
+  var ROAD_STEP_M = 2;
+  var ROAD_LINES = {};
+  function whRoadLine(R) {
+    if (ROAD_LINES[R.id]) return ROAD_LINES[R.id];
+    var raw = [], i, k;
+    if (R.ring) {
+      var nr = Math.ceil(2 * Math.PI * R.ring.r / ROAD_STEP_M);
+      for (i = 0; i <= nr; i++) {
+        var th = 2 * Math.PI * i / nr;
+        raw.push(R.ring.x + R.ring.r * Math.cos(th), R.ring.z + R.ring.r * Math.sin(th));
+      }
+    } else {
+      var P = R.points;
+      for (i = 0; i < P.length - 1; i++) {
+        var p0 = P[Math.max(0, i - 1)], p1 = P[i], p2 = P[i + 1], p3 = P[Math.min(P.length - 1, i + 2)];
+        var segN = Math.max(1, Math.ceil(Math.sqrt((p2[0] - p1[0]) * (p2[0] - p1[0]) +
+          (p2[1] - p1[1]) * (p2[1] - p1[1])) / ROAD_STEP_M));
+        for (k = 0; k < segN; k++) {
+          var t = k / segN, t2 = t * t, t3 = t2 * t;
+          raw.push(
+            0.5 * (2 * p1[0] + (p2[0] - p0[0]) * t + (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 +
+              (3 * p1[0] - p0[0] - 3 * p2[0] + p3[0]) * t3),
+            0.5 * (2 * p1[1] + (p2[1] - p0[1]) * t + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 +
+              (3 * p1[1] - p0[1] - 3 * p2[1] + p3[1]) * t3));
+        }
+      }
+      raw.push(P[P.length - 1][0], P[P.length - 1][1]);
+    }
+    var n = raw.length / 2, s = [0];
+    for (i = 1; i < n; i++) {
+      var ex = raw[2 * i] - raw[2 * i - 2], ez = raw[2 * i + 1] - raw[2 * i - 1];
+      s.push(s[i - 1] + Math.sqrt(ex * ex + ez * ez));
+    }
+    var L = s[n - 1], amp = R.swayAmp || 0, ramp = R.swayRampM || 1;
+    var pts = [], minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+    for (i = 0; i < n; i++) {
+      var a = Math.max(0, i - 1), b = Math.min(n - 1, i + 1);
+      var tx = raw[2 * b] - raw[2 * a], tz = raw[2 * b + 1] - raw[2 * a + 1];
+      var tl = Math.sqrt(tx * tx + tz * tz) || 1;
+      var w = Math.min(1, s[i] / ramp, (L - s[i]) / ramp);
+      w = w * w * (3 - 2 * w);
+      var off = amp ? amp * w * Math.sin(2 * Math.PI * s[i] / R.swayPeriod) : 0;
+      var x = raw[2 * i] + tz / tl * off, z = raw[2 * i + 1] - tx / tl * off;
+      pts.push(x, z);
+      minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+      minZ = Math.min(minZ, z); maxZ = Math.max(maxZ, z);
+    }
+    return (ROAD_LINES[R.id] = { pts: pts, n: n,
+      minX: minX, maxX: maxX, minZ: minZ, maxZ: maxZ });
+  }
+
+  // Every road of a region: A's dirtPath row (if its region) + CFG.roads rows.
+  function whRoadsFor(regionId) {
+    var out = [], DP = CFG.world.dirtPath;
+    if (DP && DP.regionId === regionId) out.push(DP);
+    (CFG.roads || []).forEach(function (R) { if (R.regionId === regionId) out.push(R); });
+    return out;
+  }
+
+  // Horizontal distance from (x, z) to a road's centerline. A's dirtPath row:
+  // whDistToPath (unchanged). Polyline rows: exact within ROAD_FAR_M of the
+  // line's bounding box, else the box distance (a lower bound - every caller
+  // only asks "closer than a band <= ROAD_FAR_M?").
+  var ROAD_FAR_M = 30;
+  function whDistToRoad(R, x, z) {
+    if (!R.points && !R.ring) return whDistToPath(R, x, z);
+    var Ln = whRoadLine(R);
+    var bx = Math.max(Ln.minX - x, 0, x - Ln.maxX), bz = Math.max(Ln.minZ - z, 0, z - Ln.maxZ);
+    var bd = Math.sqrt(bx * bx + bz * bz);
+    if (bd > ROAD_FAR_M) return bd;
+    var p = Ln.pts, best = Infinity;
+    for (var i = 0; i < Ln.n - 1; i++) {
+      var ax = p[2 * i], az = p[2 * i + 1];
+      var ex = p[2 * i + 2] - ax, ez = p[2 * i + 3] - az;
+      var len2 = ex * ex + ez * ez;
+      var t = len2 > 0 ? ((x - ax) * ex + (z - az) * ez) / len2 : 0;
+      t = Math.max(0, Math.min(1, t));
+      var dx = x - (ax + ex * t), dz = z - (az + ez * t);
+      var d = dx * dx + dz * dz;
+      if (d < best) best = d;
+    }
+    return Math.sqrt(best);
+  }
+
+  // Ribbon for one CFG.roads row: 3 vertices across (edge, center, edge) so a
+  // cross-slope crease of the heightfield cannot swallow the middle; every
+  // vertex seats on WH_GROUND.heightAt + R.lift in a heightfield region
+  // (else R.lift over y 0). Same decal material recipe as A's ribbon.
+  var ROAD_CANVAS = {};
+  function buildRoad(regionId, R) {
+    var Ln = whRoadLine(R), p = Ln.pts, hw = R.halfWidth;
+    var G = window.WH_GROUND, terr = G && G.has(regionId);
+    var positions = [], uvs = [], indices = [], arc = 0;
+    for (var i = 0; i < Ln.n; i++) {
+      var a = Math.max(0, i - 1), b = Math.min(Ln.n - 1, i + 1);
+      var tx = p[2 * b] - p[2 * a], tz = p[2 * b + 1] - p[2 * a + 1];
+      var tl = Math.sqrt(tx * tx + tz * tz) || 1;
+      var nx = tz / tl, nz = -tx / tl;    // left normal in XZ (A's convention)
+      if (i > 0) {
+        var dx = p[2 * i] - p[2 * i - 2], dz = p[2 * i + 1] - p[2 * i - 1];
+        arc += Math.sqrt(dx * dx + dz * dz);
+      }
+      for (var c = -1; c <= 1; c++) {
+        var vx = p[2 * i] + nx * hw * c, vz = p[2 * i + 1] + nz * hw * c;
+        positions.push(vx, (terr ? G.heightAt(regionId, vx, vz) : 0) + R.lift, vz);
+        uvs.push((c + 1) / 2 * R.repeatAcrossWidth, arc / R.tileLengthMeters);
+      }
+      if (i > 0) {
+        var q = i * 3;
+        indices.push(q - 3, q, q - 2,  q - 2, q, q + 1,
+                     q - 2, q + 1, q - 1,  q - 1, q + 1, q + 2);
+      }
+    }
+    var geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3));
+    geo.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(uvs), 2));
+    geo.setIndex(indices);
+    geo.computeVertexNormals();
+    var cv = ROAD_CANVAS[R.textureSeed] = ROAD_CANVAS[R.textureSeed] ||
+      buildDirtPathCanvas(R.textureSeed);
+    var tex = new THREE.CanvasTexture(cv);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.magFilter = THREE.NearestFilter;
+    tex.minFilter = THREE.NearestMipmapLinearFilter;
+    tex.generateMipmaps = true;
+    tex.colorSpace = THREE.SRGBColorSpace;
+    var caps = window.WH_GAME && window.WH_GAME.renderer &&
+      window.WH_GAME.renderer.capabilities;
+    tex.anisotropy = Math.min(4, caps ? caps.getMaxAnisotropy() : 4);
+    var mat = new THREE.MeshStandardMaterial({
+      color: 0xffffff, map: tex,
+      roughness: 1.0, metalness: 0.0, side: THREE.DoubleSide,
+      polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1
+    });
+    var mesh = new THREE.Mesh(geo, mat);
+    mesh.name = 'road-' + R.id;
+    return mesh;
+  }
+
   // ---- Round E: seeded vegetation scatter (THREE-free, pure) -----------------
   // whScatterPlan(regionId, meta) is a pure function of CONFIG (scatter block,
   // region props/spawn/enemies/nodes, dirt path, boundary/chokepoint) and the
@@ -708,23 +861,53 @@
     return rows[rows.length - 1];
   }
 
+  // CC-C4a: a region's scatter params = CFG.scatter with the region's
+  // cfg.scatterOverrides laid over it (one level deep: an object key merges
+  // key-by-key, anything else - arrays, numbers - replaces). No override
+  // row (A/B) = CFG.scatter itself, the very same object.
+  function whScatterCfg(cfg) {
+    var SC = CFG.scatter, O = cfg.scatterOverrides;
+    if (!O) return SC;
+    var out = {};
+    Object.keys(SC).forEach(function (k) { out[k] = SC[k]; });
+    Object.keys(O).forEach(function (k) {
+      var base = SC[k], ov = O[k];
+      if (base && ov && typeof base === 'object' && typeof ov === 'object' &&
+          !Array.isArray(base) && !Array.isArray(ov)) {
+        var m = {};
+        Object.keys(base).forEach(function (j) { m[j] = base[j]; });
+        Object.keys(ov).forEach(function (j) { m[j] = ov[j]; });
+        out[k] = m;
+      } else {
+        out[k] = ov;
+      }
+    });
+    return out;
+  }
+
+  // meta(name) -> {width, height}; CC-C4a: meta.heightAt(x, z) (optional) =
+  // the terrain seat, carried on every instance as y (the plan stays pure:
+  // the caller hands the height function in; none = no y, A/B as before).
   function whScatterPlan(regionId, meta) {
-    var SC = CFG.scatter;
     var plan = { trees: [], instances: {}, complete: true,
       stats: { trees: 0, treeMisses: 0, ringBushes: 0, ringSkipped: 0,
                freeBushes: 0, grass: 0 } };
-    if (!SC || !SC.enabled) return plan;
+    if (!CFG.scatter || !CFG.scatter.enabled) return plan;
     var reg = DEFS.regions[regionId];
     var cfg = reg.cfg;
-    if (cfg.scatter === false) return plan;   // CC-C2: C has no Round E scatter (CC-C3)
+    if (cfg.scatter === false) return plan;   // CC-C2 gate (a region may still opt out)
+    var SC = whScatterCfg(cfg);
     var C = SC.clear;
     var side = reg.side;
     var plane = CFG.boundary.z;
-    var rPlay = whPlayRadius();
-    var DP = CFG.world.dirtPath;
-    var hasPath = !!(DP && DP.regionId === regionId);
+    // CC-C4a: an own-disc region (C) samples + bounds on its disc; A/B: the
+    // shared disc at the origin with the plane side test (unchanged calls)
+    var ctr = reg.center;
+    var rPlay = ctr ? whPlayRadius(regionId) : whPlayRadius();
+    var roads = whRoadsFor(regionId);
     var gx = CFG.chokepoint.centerX;
     var TWO_PI = Math.PI * 2;
+    var heightAt = meta.heightAt || null;
 
     function m(name) {
       var v = meta(name);
@@ -752,8 +935,22 @@
     var enemyCount = (cfg.enemies || []).length;
 
     function inRegion(x, z, pad) {
+      if (ctr) {
+        var cx = x - ctr.x, cz = z - ctr.z;
+        return Math.sqrt(cx * cx + cz * cz) <= rPlay - pad;
+      }
       if (Math.sqrt(x * x + z * z) > rPlay - pad) return false;
       return side === 1 ? z > plane + pad : z < plane - pad;
+    }
+    // road bands: pathM = a fixed band from every centerline (trees, free
+    // bushes); null = each road's own ribbon half-width + grass.pathPadM
+    // (grass, rings, colonies). A: its one dirtPath row, the same tests.
+    function nearRoad(x, z, pathM) {
+      for (var r = 0; r < roads.length; r++) {
+        var lim = pathM === null ? roads[r].halfWidth + SC.grass.pathPadM : pathM;
+        if (whDistToRoad(roads[r], x, z) < lim) return true;
+      }
+      return false;
     }
     // CC-C2: door mouths of this region's door connections stay clear like
     // the A/B gate point (gateM); A has none
@@ -769,7 +966,7 @@
         if (dx * dx + dz * dz < C.gateM * C.gateM) return false;
       }
       if (whMeetsCorridor(x, z, 0)) return false;
-      if (hasPath && whDistToPath(DP, x, z) < pathM) return false;
+      if (nearRoad(x, z, pathM)) return false;
       return true;
     }
     var keepOut = (SC.keepOut || []).filter(function (k) { return k.regionId === regionId; });
@@ -800,11 +997,13 @@
     function sampleDisc(rand) {
       var rr = rPlay * Math.sqrt(rand());
       var th = TWO_PI * rand();
+      if (ctr) return { x: ctr.x + rr * Math.cos(th), z: ctr.z + rr * Math.sin(th) };
       return { x: rr * Math.cos(th), z: rr * Math.sin(th) };
     }
     function addInstance(name, x, z, rotY, scale) {
-      (plan.instances[name] = plan.instances[name] || []).push(
-        { x: x, z: z, rotY: rotY, scale: scale });
+      var it = { x: x, z: z, rotY: rotY, scale: scale };
+      if (heightAt) it.y = heightAt(x, z);   // CC-C4a: exact terrain seat (C)
+      (plan.instances[name] = plan.instances[name] || []).push(it);
     }
 
     // 1. extra trees: best-candidate - of N valid samples keep the one
@@ -846,7 +1045,7 @@
     plan.stats.trees = plan.trees.length;
 
     var B = SC.bushes;
-    var grassPathM = hasPath ? DP.halfWidth + SC.grass.pathPadM : 0;
+    var grassPathM = null;               // per-road ribbon band (nearRoad)
     function bushPick(rand, rows) {
       var bp = whPickWeighted(rand, rows);
       var h = lerp([bp[2], bp[3]], rand());
@@ -858,6 +1057,9 @@
 
     // 2. bush rings around EVERY tree (CONFIG ring hosts, then scatter trees)
     var R = B.atTreeRing;
+    // CC-C4a: R.pathM (optional, C) = rings keep the trees' centerline band;
+    // unset (A/B) = the ribbon band, as before
+    var ringPathM = R.pathM !== undefined ? R.pathM : grassPathM;
     var rr2 = stream('rings');
     for (var h = 0; h < trees.length; h++) {
       var host = trees[h];
@@ -868,7 +1070,7 @@
         var rad = host.trunk * lerp(R.radiusFrac, rr2());
         var bp2 = bushPick(rr2, R.assets || B.assets);
         var bx = host.x + Math.cos(ang) * rad, bz = host.z + Math.sin(ang) * rad;
-        if (!inRegion(bx, bz, 0) || !clearOfWorld(bx, bz, grassPathM) ||
+        if (!inRegion(bx, bz, 0) || !clearOfWorld(bx, bz, ringPathM) ||
             hitsCircles(bx, bz, bp2.own, host)) { plan.stats.ringSkipped++; continue; }
         addInstance(bp2.name, bx, bz, bp2.rotY, bp2.scale);
         plan.stats.ringBushes++;
@@ -901,6 +1103,41 @@
       addInstance(G.asset, gs.x, gs.z, grot, gsc);
       plan.stats.grass++;
     }
+
+    // 5. CC-C4a ground colonies (SC.groundLayers, absent for A/B): per layer
+    // `clusters` colonies of [min,max] items within spreadM of a seed point;
+    // seeds obey the tree/free-bush rules (+ nearTreeFrac of them start at a
+    // ring host's trunk band), items the grass rules. Fixed draws per item.
+    (SC.groundLayers || []).forEach(function (L) {
+      var lm = m(L.asset);
+      var rl = stream('layer:' + L.id);
+      var made = 0, items = 0;
+      for (var la = 0; la < L.clusters * 30 && made < L.clusters; la++) {
+        var ls = sampleDisc(rl);
+        var nu = rl(), npick = rl(), nang = rl() * TWO_PI, nrad = rl();
+        if (trees.length && nu < L.nearTreeFrac) {
+          var th2 = trees[Math.floor(npick * trees.length)];
+          var rad2 = th2.trunk * lerp(L.treeBandFrac, nrad);
+          ls = { x: th2.x + Math.cos(nang) * rad2, z: th2.z + Math.sin(nang) * rad2 };
+        }
+        if (!inRegion(ls.x, ls.z, C.edgeM) || !clearOfWorld(ls.x, ls.z, C.pathM) ||
+            !clearOfPoints(ls.x, ls.z)) continue;
+        made++;
+        var nItems = L.perCluster[0] + Math.floor(rl() * (L.perCluster[1] - L.perCluster[0] + 1));
+        for (var li = 0; li < nItems; li++) {
+          var lr = L.spreadM * Math.sqrt(rl()), lth = rl() * TWO_PI;
+          var lh = lerp(L.height, rl());
+          var lrot = rl() * TWO_PI;
+          var lsc = lm && lm.height > 0 ? lh / lm.height : 1;
+          var lx = ls.x + lr * Math.cos(lth), lz = ls.z + lr * Math.sin(lth);
+          if (!inRegion(lx, lz, 0) || !clearOfWorld(lx, lz, grassPathM) ||
+              hitsCircles(lx, lz, lm ? lm.width * lsc / 2 : 0, null)) continue;
+          addInstance(L.asset, lx, lz, lrot, lsc);
+          items++;
+        }
+      }
+      plan.stats['layer:' + L.id] = made + '/' + items;
+    });
     return plan;
   }
 
@@ -1311,9 +1548,16 @@
   RegionManager.prototype.scatterPlan = function (regionId) {
     this.scatterPlans = this.scatterPlans || {};
     if (this.scatterPlans[regionId]) return this.scatterPlans[regionId];
-    var plan = whScatterPlan(regionId, function (name) {
+    var meta = function (name) {
       return window.WH_ASSETS.getMeta(name);
-    });
+    };
+    // CC-C4a: a heightfield region seats every instance on the exact B-TRI
+    // ground (tiny ground cover: the exact seat, not footY); A/B: none
+    var G = window.WH_GROUND;
+    if (G && G.has(regionId)) {
+      meta.heightAt = function (x, z) { return G.heightAt(regionId, x, z); };
+    }
+    var plan = whScatterPlan(regionId, meta);
     if (plan.complete) {
       this.scatterPlans[regionId] = plan;
       console.log('[WH scatter] ' + regionId + ' ' + JSON.stringify(plan.stats));
@@ -1462,6 +1706,11 @@
     // CFG.world.dirtPath.regionId; no collider, polygon-offset decal).
     var dirtPath = buildDirtPath(regionId);
     if (dirtPath) group.add(dirtPath);
+    // CC-C4a: the region's CFG.roads ribbons (C: the King's Roads; unlit -
+    // no light rows exist for roads; one mesh per road = 5 draw calls in C)
+    (CFG.roads || []).forEach(function (R) {
+      if (R.regionId === regionId) group.add(buildRoad(regionId, R));
+    });
 
     // props from manifest
     var regionCfg = region.cfg;
@@ -1492,9 +1741,37 @@
     }
     this.cullLists = this.cullLists || {};
     if (cullList) this.cullLists[regionId] = cullList;
+    // CC-C4a: a region with scatterCellM (C) buckets each asset's instances
+    // into scatterCellM grid cells: one InstancedMesh per (asset, cell) that
+    // joins the cull list as ONE object at its centroid, hidden whole when the
+    // player is past scatterCullM + the cell's radius (no per-instance
+    // culling). A/B: one InstancedMesh per asset, frustum culling only.
+    var cellM = regionCfg.scatterCellM;
     Object.keys(plan.instances).forEach(function (name) {
-      whBuildInstanced(name, plan.instances[name]).forEach(function (im) {
-        group.add(im);
+      var all = plan.instances[name];
+      if (!cellM || !cullList) {
+        whBuildInstanced(name, all).forEach(function (im) { group.add(im); });
+        return;
+      }
+      var cells = {};
+      all.forEach(function (it) {
+        var key = Math.floor(it.x / cellM) + ':' + Math.floor(it.z / cellM);
+        (cells[key] = cells[key] || []).push(it);
+      });
+      Object.keys(cells).forEach(function (key) {
+        var list = cells[key], cx = 0, cz = 0, r = 0, q;
+        for (q = 0; q < list.length; q++) { cx += list[q].x; cz += list[q].z; }
+        cx /= list.length; cz /= list.length;
+        for (q = 0; q < list.length; q++) {
+          r = Math.max(r, Math.sqrt((list[q].x - cx) * (list[q].x - cx) +
+            (list[q].z - cz) * (list[q].z - cz)));
+        }
+        var hide = regionCfg.scatterCullM + r;
+        var show = regionCfg.scatterCullM * regionCfg.cullShowFrac + r;
+        whBuildInstanced(name, list).forEach(function (im) {
+          group.add(im);
+          cullList.push({ obj: im, x: cx, z: cz, hide2: hide * hide, show2: show * show });
+        });
       });
     });
 
@@ -1570,9 +1847,10 @@
     var show = cfg.cullDistanceM * cfg.cullShowFrac, show2 = show * show;
     for (var i = 0; i < list.length; i++) {
       var c = list[i], dx = c.x - x, dz = c.z - z, d2 = dx * dx + dz * dz;
+      // CC-C4a: a scatter cell carries its own bands (scatterCullM + radius)
       if (c.obj.visible) {
-        if (d2 > hide2) c.obj.visible = false;
-      } else if (d2 < show2) {
+        if (d2 > (c.hide2 || hide2)) c.obj.visible = false;
+      } else if (d2 < (c.show2 || show2)) {
         c.obj.visible = true;
       }
     }
@@ -1694,6 +1972,8 @@
   // scatter uses for the dirt path band, the gate corridor and the rim
   window.WH_RegionGeom = {
     distToPath: whDistToPath,
+    roadsFor: whRoadsFor,             // CC-C4a: A's dirtPath + CFG.roads rows
+    distToRoad: whDistToRoad,
     meetsCorridor: whMeetsCorridor,
     playRadius: whPlayRadius
   };

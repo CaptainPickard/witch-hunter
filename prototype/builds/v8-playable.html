@@ -87599,7 +87599,47 @@ window.WH_CONFIG = {
     groundColor: 0x1a2116,            // PROPOSED, Nicko tunes (CC-C3 old-king floor: deeper mossy loam, dominant; CC-C2 0x1e2319)
     groundColor2: 0x28261a,           // PROPOSED, Nicko tunes (CC-C3 deeper leaf-litter umber, secondary; CC-C2 0x2c2a1d)
     groundSeed: 1662061217,           // PROPOSED, Nicko tunes (ground canvas PRNG seed)
-    scatter: false,                   // PROPOSED, Nicko tunes (no Round E scatter in C; CC-C3 full pass)
+    // CC-C4a FLORA PASS (R-62.7, io/missions/2026-10-08-cc-c4a-flora-roads.md):
+    // Round E scatter ON for C through per-region override rows laid over
+    // CONFIG.scatter (region-manager whScatterCfg: one level deep, object keys
+    // merge, arrays/numbers replace). A/B carry no override row = CONFIG.scatter
+    // itself, byte-identical. Instances seat on WH_GROUND.heightAt (exact).
+    // TYPO LAW (assets.js grep 2026-10-08): bushA bushB bramble whBushSnare
+    // grassTuft mossBoulder deadTree are manifest keys; moonbell bracken
+    // leaves pebbles stonefrags stoneSingle are NOT (GLBs on disk, no manifest
+    // row) - their layers are SKIPPED until IO adds the rows; each is then
+    // one groundLayers row (moonbell colonies, leaves/pebbles spreads) or a
+    // freeBushes asset row (bracken). "Roses" v1 = the snare bush's ash-rose
+    // vertex paint in the giant rings + bushB/bramble + grass colonies.
+    scatterOverrides: {
+      clear: { spawnM: 14 },          // PROPOSED, Nicko tunes (arrival glade stays open ground)
+      // the Stone plaza (assembly + ring road) keeps its breathing room
+      keepOut: [{ regionId: 'forest_of_the_old_king', x: 0, z: -366, rx: 30, rz: 30 }],
+      // NO auto trees: giants are hand rows (CC-C3), the 55 m law holds
+      treesExtra: { targetCount: { forest_of_the_old_king: 0 } },
+      bushes: {
+        // free bushes in the gaps (bracken weight 3 lands with its manifest row)
+        assets: [['bramble', 1, 1.6, 2.4], ['bushB', 2, 1.0, 1.6], ['bushA', 2, 0.9, 1.4]],
+        // rings at EVERY giant: radius = trunk r (width * scale / 2 * 0.25,
+        // scale-aware) * radiusFrac; bigger bodies than A/B so a ring reads
+        // at the base of a 50 m giant. Snare (ash-rose roses) weighted 2.
+        // count [2, 4] (brief proposed [3, 6]): the 2M tri ledger (cullShowFrac row)
+        // pathM: rings keep scatter.clear.pathM (6 m) off every road centerline
+        atTreeRing: { count: [2, 4], radiusFrac: [1.1, 1.8], pathM: 6,
+          assets: [['bushA', 1, 1.2, 2.0], ['bushB', 1, 1.4, 2.4], ['whBushSnare', 2, 1.4, 2.2]] },
+        freeBushes: 40
+      },
+      grass: { count: 320 },
+      // ground colonies (region-manager whScatterPlan step 5): clusters of
+      // perCluster items within spreadM; nearTreeFrac of the colony seeds
+      // start in a giant's trunk band (treeBandFrac x trunk r), the rest in
+      // clearings. v1 = grass-tuft colonies; moonbell/leaves/pebbles rows
+      // join here once manifest keys exist.
+      groundLayers: [
+        { id: 'tuftColonies', asset: 'grassTuft', clusters: 36, perCluster: [3, 8],
+          spreadM: 5, height: [0.5, 0.95], nearTreeFrac: 0.5, treeBandFrac: [2.2, 4.0] }
+      ]
+    },
     spawn: { x: 0, z: -96 },          // PROPOSED, Nicko tunes (10 m inside C's south rim, the L0 glade)
     gravityY: -22,
     fogColor: 0x59625b,               // PROPOSED, Nicko tunes (deep-forest green-grey)
@@ -87660,6 +87700,26 @@ window.WH_CONFIG = {
     // Frustum culling only lowers these.
     cullDistanceM: 170,               // PROPOSED, Nicko tunes (hide band, m from the player)
     cullShowFrac: 0.92,               // PROPOSED, Nicko tunes (show band = cullDistanceM * this)
+    // CC-C4a SCATTER CELLS: C's instanced scatter is bucketed per asset into
+    // scatterCellM grid cells; each cell's InstancedMesh joins cullProps as ONE
+    // object (centroid + radius r): hidden past scatterCullM + r from the
+    // player, shown inside scatterCullM * cullShowFrac + r. Fog coherence: an
+    // instance can only be seen within 94.2 m (thinnest-fog 1/255 depth) of the
+    // camera, <= 94.2 + 14 (camMaxDistance) = 108.2 m from the player; the show
+    // band 110.4 + r is past it - no visible pop. NO per-instance culling.
+    // LEDGER (measured GLB tris; CC-C3 rows + CC-C4a rows): deadTree 30174
+    // (brief assumed ~2k: hence 10 rows, not ~24), mossBoulder 21599 (20 field
+    // rows + fork slab, not ~40); instanced bushA 2321, bushB 2836, whBushSnare
+    // 3000, bramble 2288, grassTuft 848. Plan: 229 ring + 40 free bushes, 320
+    // grass + 36 tuft colonies (195) = 784 instances / 1,178,820 tris in 143
+    // cell meshes (max cell r 65 m). WORST CASE (2 m grid over the playable
+    // disc): props in 170 m + live cells = 1,821,626 at (-14.5, -462.5) (61
+    // props = 1,419,156 + 37 cells) + terrain 39,200 + road ribbons 2,256 =
+    // 1,863,082 = 93.2% of 2M. Draw calls there: 61 props + 37 cells + 6
+    // roads + terrain. Without cells (5 whole-disc layers, never distance-
+    // culled) the same plan peaks at 2,637,176 - over budget.
+    scatterCellM: 90,                 // PROPOSED, Nicko tunes
+    scatterCullM: 120,                // PROPOSED, Nicko tunes
     // CC-C3 world-edge fix: the visual disc (fog formula = 336 m) left the
     // edge only ~43 m from a rim camera (camMaxDistance 14 outward) - visible
     // through day fog 0.025. Floor the visual radius so the edge sits past
@@ -87827,7 +87887,49 @@ window.WH_CONFIG = {
       { asset: 'treeStump',     x: 183.7, z: -278.0, rotY: 4.57, scale: 2.49 },
       { asset: 'treeStump',     x: -101.6, z: -580.6, rotY: 2.41, scale: 2.93 },
       { asset: 'treeStump',     x: -156.7, z: -245.8, rotY: 5.95, scale: 3.31 },
-      { asset: 'treeStump',     x: 162.8, z: -232.1, rotY: 3.84, scale: 2.96 }
+      { asset: 'treeStump',     x: 162.8, z: -232.1, rotY: 3.84, scale: 2.96 },
+      // CC-C4a BOULDER FIELDS (R-62.7): 2 king boulders (scale 8-10) + 18 in 5 fields
+      // of 3-5 (field lead 3.5-6, mates 1.5-4.5) in the gaps between giants: >= 3 m
+      // edge gap to trunks, 4 m to other props, 42 m from the Stone, off the CC-C3
+      // silhouette lane, road centerline >= max(6, r + halfWidth + 3). Generated once
+      // offline (mulberry32 seed 20261008 ^ 0xC4A, best-candidate field centers).
+      { asset: 'mossBoulder',      x: -124.1, z: -180.9, rotY: 1.94, scale: 8.84 },
+      { asset: 'mossBoulder',      x: -99.0, z: -396.6, rotY: 5.21, scale: 9.77 },
+      { asset: 'mossBoulder',      x: -88.9, z: -118.9, rotY: 0.63, scale: 4.18 },
+      { asset: 'mossBoulder',      x: -104.2, z: -116.7, rotY: 3.50, scale: 2.07 },
+      { asset: 'mossBoulder',      x: -101.1, z: -113.4, rotY: 3.32, scale: 1.70 },
+      { asset: 'mossBoulder',      x: 43.9, z: -577.8, rotY: 2.59, scale: 4.98 },
+      { asset: 'mossBoulder',      x: 36.4, z: -580.4, rotY: 4.93, scale: 4.31 },
+      { asset: 'mossBoulder',      x: 41.5, z: -592.6, rotY: 4.02, scale: 2.63 },
+      { asset: 'mossBoulder',      x: 46.9, z: -596.2, rotY: 1.35, scale: 2.81 },
+      { asset: 'mossBoulder',      x: 35.9, z: -595.0, rotY: 4.30, scale: 2.88 },
+      { asset: 'mossBoulder',      x: 24.2, z: -199.5, rotY: 1.48, scale: 4.14 },
+      { asset: 'mossBoulder',      x: 16.3, z: -194.6, rotY: 3.65, scale: 2.04 },
+      { asset: 'mossBoulder',      x: 19.6, z: -209.1, rotY: 0.46, scale: 1.93 },
+      { asset: 'mossBoulder',      x: -84.8, z: -208.2, rotY: 1.25, scale: 5.17 },
+      { asset: 'mossBoulder',      x: -90.7, z: -207.4, rotY: 1.07, scale: 1.51 },
+      { asset: 'mossBoulder',      x: -75.5, z: -202.1, rotY: 1.78, scale: 2.13 },
+      { asset: 'mossBoulder',      x: -80.8, z: -199.4, rotY: 1.59, scale: 2.47 },
+      { asset: 'mossBoulder',      x: 130.8, z: -494.4, rotY: 5.81, scale: 5.59 },
+      { asset: 'mossBoulder',      x: 123.9, z: -488.7, rotY: 0.35, scale: 3.54 },
+      { asset: 'mossBoulder',      x: 134.5, z: -487.8, rotY: 4.21, scale: 3.11 },
+      // CC-C4a NORMAL DEAD TREES (A/B size 8-9.85: the age contrast), >= 30 m to any
+      // tree/boulder (min 38.8), CC-C3 zones (glade, lane, Stone 50 m, rim 4 m), road
+      // centerline >= 8 m + trunk. Ring hosts (deadTree is in scatter ringHosts).
+      { asset: 'deadTree',         x: -21.2, z: -430.2, rotY: 2.77, scale: 9.36 },
+      { asset: 'deadTree',         x: -193.5, z: -550.8, rotY: 0.85, scale: 8.71 },
+      { asset: 'deadTree',         x: 136.9, z: -199.8, rotY: 6.04, scale: 8.29 },
+      { asset: 'deadTree',         x: -160.3, z: -158.0, rotY: 1.38, scale: 9.25 },
+      { asset: 'deadTree',         x: -40.5, z: -534.1, rotY: 3.41, scale: 9.36 },
+      { asset: 'deadTree',         x: 99.2, z: -173.9, rotY: 5.66, scale: 8.05 },
+      { asset: 'deadTree',         x: -209.5, z: -346.3, rotY: 3.28, scale: 8.29 },
+      { asset: 'deadTree',         x: -70.9, z: -306.2, rotY: 2.98, scale: 9.23 },
+      { asset: 'deadTree',         x: 173.7, z: -338.1, rotY: 2.74, scale: 9.80 },
+      { asset: 'deadTree',         x: -111.3, z: -560.1, rotY: 0.67, scale: 8.79 },
+      // CC-C4a FORK MARKER (UNLIT): a standing moss slab beside the spine at the
+      // ring's south junction - stands in for b3-waymarker (its only manifest key,
+      // lanternWaymarker, carries a lightSockets row: a prop row would light the fork)
+      { asset: 'mossBoulder',      x: -6.5, z: -326.0, rotY: 1.57, scale: 2.40 }
     ]
   },
 
@@ -87895,6 +87997,56 @@ window.WH_CONFIG = {
       pathPadM: 0.4                   // beyond the path half-width
     }
   },
+
+  // CC-C4a THE KING'S ROADS (R-62.7): per-region road rows (region-manager
+  // whRoadsFor / whRoadLine / buildRoad). A's road stays CONFIG.world.dirtPath
+  // (NOT migrated - the smaller diff: whRoadsFor lists it first for A and every
+  // reader measures it with whDistToPath exactly as before). Rows here: a
+  // waypoint centerline (points, Catmull-Rom, 2 m resample) or a closed ring,
+  // + a lateral sine sway ramped to 0 over swayRampM at both ends; the ribbon
+  // seats on the heightfield (+ lift; ring/branches lifted apart so the
+  // overlapping junction decals never z-fight). Keep-outs: the scatter's
+  // pathM band (trees/free bushes) and halfWidth + grass.pathPadM (grass,
+  // rings, colonies); camp.js refuses a deploy inside halfWidth + pathBand.
+  // UNLIT LAW: no light rows exist for roads; the one fork marker is a stone.
+  // Waypoints were nudged off the brief's proposal onto gentler ground (max
+  // 10 m grade: spine 8.9 deg, ring 1.7, N 4.2, E 4.7, W 10.4) and >= 8 m
+  // from every tree centerline (tightest: W road vs witchwood (-55, -348.3)
+  // 8.2 m). The ring sits at r 34, not ~16: r 16 IS the CC-C3 boulder ring
+  // and the gate pair spans r 20-30.5, so the ring runs outside the assembly
+  // and the spine continues straight through the gate pair (stoneApproach).
+  // CC-C4b NOTCH MOUTHS = the last point of north/east/west (0, -596),
+  // (240, -366), (-240, -366): the roads stop there, inside the playable
+  // rim; NO blocker/toast in C4a (the rim clamp holds the player). C4b
+  // carves the rim notches + adds the soft blockers. Note for C4b: yewTree
+  // (272.4, -369) stands on the east road's notch line. All PROPOSED, Nicko tunes.
+  roads: [
+    { id: 'kingsRoad', regionId: 'forest_of_the_old_king',   // glade -> the ring's south point
+      points: [[0, -88], [-2.5, -104], [4, -138], [2, -168], [4, -215], [-3, -255],
+        [0, -300], [0, -332]],
+      halfWidth: 2.2, swayAmp: 7, swayPeriod: 90, swayRampM: 24,
+      lift: 0.10, tileLengthMeters: 3.0, repeatAcrossWidth: 1, textureSeed: 20261008 },
+    { id: 'stoneApproach', regionId: 'forest_of_the_old_king', // straight through the gate pair
+      points: [[0, -332], [0, -352]],
+      halfWidth: 2.2, swayAmp: 0,
+      lift: 0.10, tileLengthMeters: 3.0, repeatAcrossWidth: 1, textureSeed: 20261008 },
+    { id: 'stoneRing', regionId: 'forest_of_the_old_king',     // the crossroads around the Stone
+      ring: { x: 0, z: -366, r: 34 },
+      halfWidth: 2.2, swayAmp: 0,
+      lift: 0.16, tileLengthMeters: 3.0, repeatAcrossWidth: 1, textureSeed: 20261008 },
+    { id: 'northRoad', regionId: 'forest_of_the_old_king',     // C4b notch mouth (0, -596)
+      points: [[0, -400], [-3, -420], [-12, -460], [5, -500], [-5, -540], [0, -596]],
+      halfWidth: 2.2, swayAmp: 6, swayPeriod: 90, swayRampM: 24,
+      lift: 0.13, tileLengthMeters: 3.0, repeatAcrossWidth: 1, textureSeed: 20261008 },
+    { id: 'eastRoad', regionId: 'forest_of_the_old_king',      // C4b notch mouth (240, -366)
+      points: [[34, -366], [62, -356], [100, -370], [150, -368], [200, -368], [240, -366]],
+      halfWidth: 2.2, swayAmp: 6, swayPeriod: 90, swayRampM: 24,
+      lift: 0.13, tileLengthMeters: 3.0, repeatAcrossWidth: 1, textureSeed: 20261008 },
+    { id: 'westRoad', regionId: 'forest_of_the_old_king',      // C4b notch mouth (-240, -366)
+      points: [[-34, -366], [-66, -362], [-100, -370], [-150, -357], [-200, -370], [-240, -366]],
+      halfWidth: 2.2, swayAmp: 6, swayPeriod: 90, swayRampM: 24,
+      lift: 0.13, tileLengthMeters: 3.0, repeatAcrossWidth: 1, textureSeed: 20261008 }
+  ],
 
   // Boundary between A and B: the plane z = CONFIG.boundary.z.
   // Region A occupies z > boundaryZ, region B occupies z < boundaryZ.
@@ -97188,13 +97340,15 @@ window.WH_ICONS = {
   // cemetery). Visual-only decal strip through region A's south clearing;
   // trees/lanterns are placed by CONFIG generation relative to the same sway
   // centerline x = swayAmp*sin(2pi(z-zFrom)/swayPeriod). No collider.
-  function buildDirtPathCanvas() {
+  // CC-C4a: seed (optional) = a CFG.roads row's textureSeed; A's ribbon
+  // calls with none = today's canvas.
+  function buildDirtPathCanvas(seed) {
     var size = 128;
     var canvas = document.createElement('canvas');
     canvas.width = size;
     canvas.height = size;
     var ctx = canvas.getContext('2d');
-    var rand = whRng(78002024);
+    var rand = whRng(seed || 78002024);
     var dirt = whHexToRgb(0x5a4a33);      // packed-dirt umber (darkwood canon)
     var dirtDark = whHexToRgb(0x463a27);  // wet-mud tone
     var pebble = whHexToRgb(0x6e5f45);
@@ -97324,6 +97478,157 @@ window.WH_ICONS = {
     return mesh;
   }
 
+  // ---- CC-C4a: the King's Roads (CONFIG.roads polyline rows) ----------------
+  // A road row is A's dirtPath recipe (halfWidth, tileLengthMeters,
+  // repeatAcrossWidth, the dirt canvas) on a WAYPOINT centerline instead of
+  // the z-swayed line: points = [[x, z], ...] through a Catmull-Rom curve
+  // (or ring = {x, z, r}: a closed circle), resampled every ROAD_STEP_M of
+  // arc, then pushed sideways by swayAmp * sin(2pi s / swayPeriod), ramped
+  // to 0 over swayRampM at both ends so junctions + notch mouths stay put.
+  // A's CFG.world.dirtPath row is NOT migrated: whRoadsFor lists it first
+  // for its region and every caller reads it through whDistToPath exactly as
+  // before (A byte-identical); rows here carry points/ring and take the
+  // polyline path. Lines are pure (no THREE), cached per row id.
+  var ROAD_STEP_M = 2;
+  var ROAD_LINES = {};
+  function whRoadLine(R) {
+    if (ROAD_LINES[R.id]) return ROAD_LINES[R.id];
+    var raw = [], i, k;
+    if (R.ring) {
+      var nr = Math.ceil(2 * Math.PI * R.ring.r / ROAD_STEP_M);
+      for (i = 0; i <= nr; i++) {
+        var th = 2 * Math.PI * i / nr;
+        raw.push(R.ring.x + R.ring.r * Math.cos(th), R.ring.z + R.ring.r * Math.sin(th));
+      }
+    } else {
+      var P = R.points;
+      for (i = 0; i < P.length - 1; i++) {
+        var p0 = P[Math.max(0, i - 1)], p1 = P[i], p2 = P[i + 1], p3 = P[Math.min(P.length - 1, i + 2)];
+        var segN = Math.max(1, Math.ceil(Math.sqrt((p2[0] - p1[0]) * (p2[0] - p1[0]) +
+          (p2[1] - p1[1]) * (p2[1] - p1[1])) / ROAD_STEP_M));
+        for (k = 0; k < segN; k++) {
+          var t = k / segN, t2 = t * t, t3 = t2 * t;
+          raw.push(
+            0.5 * (2 * p1[0] + (p2[0] - p0[0]) * t + (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 +
+              (3 * p1[0] - p0[0] - 3 * p2[0] + p3[0]) * t3),
+            0.5 * (2 * p1[1] + (p2[1] - p0[1]) * t + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 +
+              (3 * p1[1] - p0[1] - 3 * p2[1] + p3[1]) * t3));
+        }
+      }
+      raw.push(P[P.length - 1][0], P[P.length - 1][1]);
+    }
+    var n = raw.length / 2, s = [0];
+    for (i = 1; i < n; i++) {
+      var ex = raw[2 * i] - raw[2 * i - 2], ez = raw[2 * i + 1] - raw[2 * i - 1];
+      s.push(s[i - 1] + Math.sqrt(ex * ex + ez * ez));
+    }
+    var L = s[n - 1], amp = R.swayAmp || 0, ramp = R.swayRampM || 1;
+    var pts = [], minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+    for (i = 0; i < n; i++) {
+      var a = Math.max(0, i - 1), b = Math.min(n - 1, i + 1);
+      var tx = raw[2 * b] - raw[2 * a], tz = raw[2 * b + 1] - raw[2 * a + 1];
+      var tl = Math.sqrt(tx * tx + tz * tz) || 1;
+      var w = Math.min(1, s[i] / ramp, (L - s[i]) / ramp);
+      w = w * w * (3 - 2 * w);
+      var off = amp ? amp * w * Math.sin(2 * Math.PI * s[i] / R.swayPeriod) : 0;
+      var x = raw[2 * i] + tz / tl * off, z = raw[2 * i + 1] - tx / tl * off;
+      pts.push(x, z);
+      minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+      minZ = Math.min(minZ, z); maxZ = Math.max(maxZ, z);
+    }
+    return (ROAD_LINES[R.id] = { pts: pts, n: n,
+      minX: minX, maxX: maxX, minZ: minZ, maxZ: maxZ });
+  }
+
+  // Every road of a region: A's dirtPath row (if its region) + CFG.roads rows.
+  function whRoadsFor(regionId) {
+    var out = [], DP = CFG.world.dirtPath;
+    if (DP && DP.regionId === regionId) out.push(DP);
+    (CFG.roads || []).forEach(function (R) { if (R.regionId === regionId) out.push(R); });
+    return out;
+  }
+
+  // Horizontal distance from (x, z) to a road's centerline. A's dirtPath row:
+  // whDistToPath (unchanged). Polyline rows: exact within ROAD_FAR_M of the
+  // line's bounding box, else the box distance (a lower bound - every caller
+  // only asks "closer than a band <= ROAD_FAR_M?").
+  var ROAD_FAR_M = 30;
+  function whDistToRoad(R, x, z) {
+    if (!R.points && !R.ring) return whDistToPath(R, x, z);
+    var Ln = whRoadLine(R);
+    var bx = Math.max(Ln.minX - x, 0, x - Ln.maxX), bz = Math.max(Ln.minZ - z, 0, z - Ln.maxZ);
+    var bd = Math.sqrt(bx * bx + bz * bz);
+    if (bd > ROAD_FAR_M) return bd;
+    var p = Ln.pts, best = Infinity;
+    for (var i = 0; i < Ln.n - 1; i++) {
+      var ax = p[2 * i], az = p[2 * i + 1];
+      var ex = p[2 * i + 2] - ax, ez = p[2 * i + 3] - az;
+      var len2 = ex * ex + ez * ez;
+      var t = len2 > 0 ? ((x - ax) * ex + (z - az) * ez) / len2 : 0;
+      t = Math.max(0, Math.min(1, t));
+      var dx = x - (ax + ex * t), dz = z - (az + ez * t);
+      var d = dx * dx + dz * dz;
+      if (d < best) best = d;
+    }
+    return Math.sqrt(best);
+  }
+
+  // Ribbon for one CFG.roads row: 3 vertices across (edge, center, edge) so a
+  // cross-slope crease of the heightfield cannot swallow the middle; every
+  // vertex seats on WH_GROUND.heightAt + R.lift in a heightfield region
+  // (else R.lift over y 0). Same decal material recipe as A's ribbon.
+  var ROAD_CANVAS = {};
+  function buildRoad(regionId, R) {
+    var Ln = whRoadLine(R), p = Ln.pts, hw = R.halfWidth;
+    var G = window.WH_GROUND, terr = G && G.has(regionId);
+    var positions = [], uvs = [], indices = [], arc = 0;
+    for (var i = 0; i < Ln.n; i++) {
+      var a = Math.max(0, i - 1), b = Math.min(Ln.n - 1, i + 1);
+      var tx = p[2 * b] - p[2 * a], tz = p[2 * b + 1] - p[2 * a + 1];
+      var tl = Math.sqrt(tx * tx + tz * tz) || 1;
+      var nx = tz / tl, nz = -tx / tl;    // left normal in XZ (A's convention)
+      if (i > 0) {
+        var dx = p[2 * i] - p[2 * i - 2], dz = p[2 * i + 1] - p[2 * i - 1];
+        arc += Math.sqrt(dx * dx + dz * dz);
+      }
+      for (var c = -1; c <= 1; c++) {
+        var vx = p[2 * i] + nx * hw * c, vz = p[2 * i + 1] + nz * hw * c;
+        positions.push(vx, (terr ? G.heightAt(regionId, vx, vz) : 0) + R.lift, vz);
+        uvs.push((c + 1) / 2 * R.repeatAcrossWidth, arc / R.tileLengthMeters);
+      }
+      if (i > 0) {
+        var q = i * 3;
+        indices.push(q - 3, q, q - 2,  q - 2, q, q + 1,
+                     q - 2, q + 1, q - 1,  q - 1, q + 1, q + 2);
+      }
+    }
+    var geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3));
+    geo.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(uvs), 2));
+    geo.setIndex(indices);
+    geo.computeVertexNormals();
+    var cv = ROAD_CANVAS[R.textureSeed] = ROAD_CANVAS[R.textureSeed] ||
+      buildDirtPathCanvas(R.textureSeed);
+    var tex = new THREE.CanvasTexture(cv);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.magFilter = THREE.NearestFilter;
+    tex.minFilter = THREE.NearestMipmapLinearFilter;
+    tex.generateMipmaps = true;
+    tex.colorSpace = THREE.SRGBColorSpace;
+    var caps = window.WH_GAME && window.WH_GAME.renderer &&
+      window.WH_GAME.renderer.capabilities;
+    tex.anisotropy = Math.min(4, caps ? caps.getMaxAnisotropy() : 4);
+    var mat = new THREE.MeshStandardMaterial({
+      color: 0xffffff, map: tex,
+      roughness: 1.0, metalness: 0.0, side: THREE.DoubleSide,
+      polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1
+    });
+    var mesh = new THREE.Mesh(geo, mat);
+    mesh.name = 'road-' + R.id;
+    return mesh;
+  }
+
   // ---- Round E: seeded vegetation scatter (THREE-free, pure) -----------------
   // whScatterPlan(regionId, meta) is a pure function of CONFIG (scatter block,
   // region props/spawn/enemies/nodes, dirt path, boundary/chokepoint) and the
@@ -97352,23 +97657,53 @@ window.WH_ICONS = {
     return rows[rows.length - 1];
   }
 
+  // CC-C4a: a region's scatter params = CFG.scatter with the region's
+  // cfg.scatterOverrides laid over it (one level deep: an object key merges
+  // key-by-key, anything else - arrays, numbers - replaces). No override
+  // row (A/B) = CFG.scatter itself, the very same object.
+  function whScatterCfg(cfg) {
+    var SC = CFG.scatter, O = cfg.scatterOverrides;
+    if (!O) return SC;
+    var out = {};
+    Object.keys(SC).forEach(function (k) { out[k] = SC[k]; });
+    Object.keys(O).forEach(function (k) {
+      var base = SC[k], ov = O[k];
+      if (base && ov && typeof base === 'object' && typeof ov === 'object' &&
+          !Array.isArray(base) && !Array.isArray(ov)) {
+        var m = {};
+        Object.keys(base).forEach(function (j) { m[j] = base[j]; });
+        Object.keys(ov).forEach(function (j) { m[j] = ov[j]; });
+        out[k] = m;
+      } else {
+        out[k] = ov;
+      }
+    });
+    return out;
+  }
+
+  // meta(name) -> {width, height}; CC-C4a: meta.heightAt(x, z) (optional) =
+  // the terrain seat, carried on every instance as y (the plan stays pure:
+  // the caller hands the height function in; none = no y, A/B as before).
   function whScatterPlan(regionId, meta) {
-    var SC = CFG.scatter;
     var plan = { trees: [], instances: {}, complete: true,
       stats: { trees: 0, treeMisses: 0, ringBushes: 0, ringSkipped: 0,
                freeBushes: 0, grass: 0 } };
-    if (!SC || !SC.enabled) return plan;
+    if (!CFG.scatter || !CFG.scatter.enabled) return plan;
     var reg = DEFS.regions[regionId];
     var cfg = reg.cfg;
-    if (cfg.scatter === false) return plan;   // CC-C2: C has no Round E scatter (CC-C3)
+    if (cfg.scatter === false) return plan;   // CC-C2 gate (a region may still opt out)
+    var SC = whScatterCfg(cfg);
     var C = SC.clear;
     var side = reg.side;
     var plane = CFG.boundary.z;
-    var rPlay = whPlayRadius();
-    var DP = CFG.world.dirtPath;
-    var hasPath = !!(DP && DP.regionId === regionId);
+    // CC-C4a: an own-disc region (C) samples + bounds on its disc; A/B: the
+    // shared disc at the origin with the plane side test (unchanged calls)
+    var ctr = reg.center;
+    var rPlay = ctr ? whPlayRadius(regionId) : whPlayRadius();
+    var roads = whRoadsFor(regionId);
     var gx = CFG.chokepoint.centerX;
     var TWO_PI = Math.PI * 2;
+    var heightAt = meta.heightAt || null;
 
     function m(name) {
       var v = meta(name);
@@ -97396,8 +97731,22 @@ window.WH_ICONS = {
     var enemyCount = (cfg.enemies || []).length;
 
     function inRegion(x, z, pad) {
+      if (ctr) {
+        var cx = x - ctr.x, cz = z - ctr.z;
+        return Math.sqrt(cx * cx + cz * cz) <= rPlay - pad;
+      }
       if (Math.sqrt(x * x + z * z) > rPlay - pad) return false;
       return side === 1 ? z > plane + pad : z < plane - pad;
+    }
+    // road bands: pathM = a fixed band from every centerline (trees, free
+    // bushes); null = each road's own ribbon half-width + grass.pathPadM
+    // (grass, rings, colonies). A: its one dirtPath row, the same tests.
+    function nearRoad(x, z, pathM) {
+      for (var r = 0; r < roads.length; r++) {
+        var lim = pathM === null ? roads[r].halfWidth + SC.grass.pathPadM : pathM;
+        if (whDistToRoad(roads[r], x, z) < lim) return true;
+      }
+      return false;
     }
     // CC-C2: door mouths of this region's door connections stay clear like
     // the A/B gate point (gateM); A has none
@@ -97413,7 +97762,7 @@ window.WH_ICONS = {
         if (dx * dx + dz * dz < C.gateM * C.gateM) return false;
       }
       if (whMeetsCorridor(x, z, 0)) return false;
-      if (hasPath && whDistToPath(DP, x, z) < pathM) return false;
+      if (nearRoad(x, z, pathM)) return false;
       return true;
     }
     var keepOut = (SC.keepOut || []).filter(function (k) { return k.regionId === regionId; });
@@ -97444,11 +97793,13 @@ window.WH_ICONS = {
     function sampleDisc(rand) {
       var rr = rPlay * Math.sqrt(rand());
       var th = TWO_PI * rand();
+      if (ctr) return { x: ctr.x + rr * Math.cos(th), z: ctr.z + rr * Math.sin(th) };
       return { x: rr * Math.cos(th), z: rr * Math.sin(th) };
     }
     function addInstance(name, x, z, rotY, scale) {
-      (plan.instances[name] = plan.instances[name] || []).push(
-        { x: x, z: z, rotY: rotY, scale: scale });
+      var it = { x: x, z: z, rotY: rotY, scale: scale };
+      if (heightAt) it.y = heightAt(x, z);   // CC-C4a: exact terrain seat (C)
+      (plan.instances[name] = plan.instances[name] || []).push(it);
     }
 
     // 1. extra trees: best-candidate - of N valid samples keep the one
@@ -97490,7 +97841,7 @@ window.WH_ICONS = {
     plan.stats.trees = plan.trees.length;
 
     var B = SC.bushes;
-    var grassPathM = hasPath ? DP.halfWidth + SC.grass.pathPadM : 0;
+    var grassPathM = null;               // per-road ribbon band (nearRoad)
     function bushPick(rand, rows) {
       var bp = whPickWeighted(rand, rows);
       var h = lerp([bp[2], bp[3]], rand());
@@ -97502,6 +97853,9 @@ window.WH_ICONS = {
 
     // 2. bush rings around EVERY tree (CONFIG ring hosts, then scatter trees)
     var R = B.atTreeRing;
+    // CC-C4a: R.pathM (optional, C) = rings keep the trees' centerline band;
+    // unset (A/B) = the ribbon band, as before
+    var ringPathM = R.pathM !== undefined ? R.pathM : grassPathM;
     var rr2 = stream('rings');
     for (var h = 0; h < trees.length; h++) {
       var host = trees[h];
@@ -97512,7 +97866,7 @@ window.WH_ICONS = {
         var rad = host.trunk * lerp(R.radiusFrac, rr2());
         var bp2 = bushPick(rr2, R.assets || B.assets);
         var bx = host.x + Math.cos(ang) * rad, bz = host.z + Math.sin(ang) * rad;
-        if (!inRegion(bx, bz, 0) || !clearOfWorld(bx, bz, grassPathM) ||
+        if (!inRegion(bx, bz, 0) || !clearOfWorld(bx, bz, ringPathM) ||
             hitsCircles(bx, bz, bp2.own, host)) { plan.stats.ringSkipped++; continue; }
         addInstance(bp2.name, bx, bz, bp2.rotY, bp2.scale);
         plan.stats.ringBushes++;
@@ -97545,6 +97899,41 @@ window.WH_ICONS = {
       addInstance(G.asset, gs.x, gs.z, grot, gsc);
       plan.stats.grass++;
     }
+
+    // 5. CC-C4a ground colonies (SC.groundLayers, absent for A/B): per layer
+    // `clusters` colonies of [min,max] items within spreadM of a seed point;
+    // seeds obey the tree/free-bush rules (+ nearTreeFrac of them start at a
+    // ring host's trunk band), items the grass rules. Fixed draws per item.
+    (SC.groundLayers || []).forEach(function (L) {
+      var lm = m(L.asset);
+      var rl = stream('layer:' + L.id);
+      var made = 0, items = 0;
+      for (var la = 0; la < L.clusters * 30 && made < L.clusters; la++) {
+        var ls = sampleDisc(rl);
+        var nu = rl(), npick = rl(), nang = rl() * TWO_PI, nrad = rl();
+        if (trees.length && nu < L.nearTreeFrac) {
+          var th2 = trees[Math.floor(npick * trees.length)];
+          var rad2 = th2.trunk * lerp(L.treeBandFrac, nrad);
+          ls = { x: th2.x + Math.cos(nang) * rad2, z: th2.z + Math.sin(nang) * rad2 };
+        }
+        if (!inRegion(ls.x, ls.z, C.edgeM) || !clearOfWorld(ls.x, ls.z, C.pathM) ||
+            !clearOfPoints(ls.x, ls.z)) continue;
+        made++;
+        var nItems = L.perCluster[0] + Math.floor(rl() * (L.perCluster[1] - L.perCluster[0] + 1));
+        for (var li = 0; li < nItems; li++) {
+          var lr = L.spreadM * Math.sqrt(rl()), lth = rl() * TWO_PI;
+          var lh = lerp(L.height, rl());
+          var lrot = rl() * TWO_PI;
+          var lsc = lm && lm.height > 0 ? lh / lm.height : 1;
+          var lx = ls.x + lr * Math.cos(lth), lz = ls.z + lr * Math.sin(lth);
+          if (!inRegion(lx, lz, 0) || !clearOfWorld(lx, lz, grassPathM) ||
+              hitsCircles(lx, lz, lm ? lm.width * lsc / 2 : 0, null)) continue;
+          addInstance(L.asset, lx, lz, lrot, lsc);
+          items++;
+        }
+      }
+      plan.stats['layer:' + L.id] = made + '/' + items;
+    });
     return plan;
   }
 
@@ -97955,9 +98344,16 @@ window.WH_ICONS = {
   RegionManager.prototype.scatterPlan = function (regionId) {
     this.scatterPlans = this.scatterPlans || {};
     if (this.scatterPlans[regionId]) return this.scatterPlans[regionId];
-    var plan = whScatterPlan(regionId, function (name) {
+    var meta = function (name) {
       return window.WH_ASSETS.getMeta(name);
-    });
+    };
+    // CC-C4a: a heightfield region seats every instance on the exact B-TRI
+    // ground (tiny ground cover: the exact seat, not footY); A/B: none
+    var G = window.WH_GROUND;
+    if (G && G.has(regionId)) {
+      meta.heightAt = function (x, z) { return G.heightAt(regionId, x, z); };
+    }
+    var plan = whScatterPlan(regionId, meta);
     if (plan.complete) {
       this.scatterPlans[regionId] = plan;
       console.log('[WH scatter] ' + regionId + ' ' + JSON.stringify(plan.stats));
@@ -98106,6 +98502,11 @@ window.WH_ICONS = {
     // CFG.world.dirtPath.regionId; no collider, polygon-offset decal).
     var dirtPath = buildDirtPath(regionId);
     if (dirtPath) group.add(dirtPath);
+    // CC-C4a: the region's CFG.roads ribbons (C: the King's Roads; unlit -
+    // no light rows exist for roads; one mesh per road = 5 draw calls in C)
+    (CFG.roads || []).forEach(function (R) {
+      if (R.regionId === regionId) group.add(buildRoad(regionId, R));
+    });
 
     // props from manifest
     var regionCfg = region.cfg;
@@ -98136,9 +98537,37 @@ window.WH_ICONS = {
     }
     this.cullLists = this.cullLists || {};
     if (cullList) this.cullLists[regionId] = cullList;
+    // CC-C4a: a region with scatterCellM (C) buckets each asset's instances
+    // into scatterCellM grid cells: one InstancedMesh per (asset, cell) that
+    // joins the cull list as ONE object at its centroid, hidden whole when the
+    // player is past scatterCullM + the cell's radius (no per-instance
+    // culling). A/B: one InstancedMesh per asset, frustum culling only.
+    var cellM = regionCfg.scatterCellM;
     Object.keys(plan.instances).forEach(function (name) {
-      whBuildInstanced(name, plan.instances[name]).forEach(function (im) {
-        group.add(im);
+      var all = plan.instances[name];
+      if (!cellM || !cullList) {
+        whBuildInstanced(name, all).forEach(function (im) { group.add(im); });
+        return;
+      }
+      var cells = {};
+      all.forEach(function (it) {
+        var key = Math.floor(it.x / cellM) + ':' + Math.floor(it.z / cellM);
+        (cells[key] = cells[key] || []).push(it);
+      });
+      Object.keys(cells).forEach(function (key) {
+        var list = cells[key], cx = 0, cz = 0, r = 0, q;
+        for (q = 0; q < list.length; q++) { cx += list[q].x; cz += list[q].z; }
+        cx /= list.length; cz /= list.length;
+        for (q = 0; q < list.length; q++) {
+          r = Math.max(r, Math.sqrt((list[q].x - cx) * (list[q].x - cx) +
+            (list[q].z - cz) * (list[q].z - cz)));
+        }
+        var hide = regionCfg.scatterCullM + r;
+        var show = regionCfg.scatterCullM * regionCfg.cullShowFrac + r;
+        whBuildInstanced(name, list).forEach(function (im) {
+          group.add(im);
+          cullList.push({ obj: im, x: cx, z: cz, hide2: hide * hide, show2: show * show });
+        });
       });
     });
 
@@ -98214,9 +98643,10 @@ window.WH_ICONS = {
     var show = cfg.cullDistanceM * cfg.cullShowFrac, show2 = show * show;
     for (var i = 0; i < list.length; i++) {
       var c = list[i], dx = c.x - x, dz = c.z - z, d2 = dx * dx + dz * dz;
+      // CC-C4a: a scatter cell carries its own bands (scatterCullM + radius)
       if (c.obj.visible) {
-        if (d2 > hide2) c.obj.visible = false;
-      } else if (d2 < show2) {
+        if (d2 > (c.hide2 || hide2)) c.obj.visible = false;
+      } else if (d2 < (c.show2 || show2)) {
         c.obj.visible = true;
       }
     }
@@ -98338,6 +98768,8 @@ window.WH_ICONS = {
   // scatter uses for the dirt path band, the gate corridor and the rim
   window.WH_RegionGeom = {
     distToPath: whDistToPath,
+    roadsFor: whRoadsFor,             // CC-C4a: A's dirtPath + CFG.roads rows
+    distToRoad: whDistToRoad,
     meetsCorridor: whMeetsCorridor,
     playRadius: whPlayRadius
   };
@@ -98831,7 +99263,7 @@ window.WH_ICONS = {
     var reg = window.WH_REGION_DEFS.regions[rid], cfg = reg.cfg;
     var rm = this.rm();
     var plane = CFG.boundary.z;
-    var DP = CFG.world.dirtPath;
+    var roads = GEO.roadsFor(rid);    // CC-C4a: A's dirt path + C's King's Roads
     var treeRe = new RegExp(GP.treeMatch, 'i');
     var keepOut = (CFG.scatter.keepOut || []).filter(function (k) { return k.regionId === rid; });
     var trees = rm.scatterPlan(rid).trees;
@@ -98854,7 +99286,9 @@ window.WH_ICONS = {
       if (Math.sqrt(ex * ex + ez * ez) > GEO.playRadius(rid) - SC.edgeM) return 'edge';
       if (reg.side === 1 ? p.z < plane + SC.edgeM : p.z > plane - SC.edgeM) return 'edge';
       if (near(p, CFG.chokepoint.centerX, plane, SC.gateM) || GEO.meetsCorridor(p.x, p.z, 0)) return 'gate';
-      if (DP && DP.regionId === rid && GEO.distToPath(DP, p.x, p.z) < DP.halfWidth + D.pathBand) return 'path';
+      for (var r = 0; r < roads.length; r++) {
+        if (GEO.distToRoad(roads[r], p.x, p.z) < roads[r].halfWidth + D.pathBand) return 'path';
+      }
       for (j = 0; j < keepOut.length; j++) {
         var kx = (p.x - keepOut[j].x) / keepOut[j].rx, kz = (p.z - keepOut[j].z) / keepOut[j].rz;
         if (kx * kx + kz * kz < 1) return 'keepOut';

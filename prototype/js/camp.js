@@ -485,7 +485,7 @@
     var reg = window.WH_REGION_DEFS.regions[rid], cfg = reg.cfg;
     var rm = this.rm();
     var plane = CFG.boundary.z;
-    var DP = CFG.world.dirtPath;
+    var roads = GEO.roadsFor(rid);    // CC-C4a: A's dirt path + C's King's Roads
     var treeRe = new RegExp(GP.treeMatch, 'i');
     var keepOut = (CFG.scatter.keepOut || []).filter(function (k) { return k.regionId === rid; });
     var trees = rm.scatterPlan(rid).trees;
@@ -508,7 +508,9 @@
       if (Math.sqrt(ex * ex + ez * ez) > GEO.playRadius(rid) - SC.edgeM) return 'edge';
       if (reg.side === 1 ? p.z < plane + SC.edgeM : p.z > plane - SC.edgeM) return 'edge';
       if (near(p, CFG.chokepoint.centerX, plane, SC.gateM) || GEO.meetsCorridor(p.x, p.z, 0)) return 'gate';
-      if (DP && DP.regionId === rid && GEO.distToPath(DP, p.x, p.z) < DP.halfWidth + D.pathBand) return 'path';
+      for (var r = 0; r < roads.length; r++) {
+        if (GEO.distToRoad(roads[r], p.x, p.z) < roads[r].halfWidth + D.pathBand) return 'path';
+      }
       for (j = 0; j < keepOut.length; j++) {
         var kx = (p.x - keepOut[j].x) / keepOut[j].rx, kz = (p.z - keepOut[j].z) / keepOut[j].rz;
         if (kx * kx + kz * kz < 1) return 'keepOut';

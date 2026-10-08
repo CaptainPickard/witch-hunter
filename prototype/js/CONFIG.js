@@ -474,7 +474,47 @@ window.WH_CONFIG = {
     groundColor: 0x1a2116,            // PROPOSED, Nicko tunes (CC-C3 old-king floor: deeper mossy loam, dominant; CC-C2 0x1e2319)
     groundColor2: 0x28261a,           // PROPOSED, Nicko tunes (CC-C3 deeper leaf-litter umber, secondary; CC-C2 0x2c2a1d)
     groundSeed: 1662061217,           // PROPOSED, Nicko tunes (ground canvas PRNG seed)
-    scatter: false,                   // PROPOSED, Nicko tunes (no Round E scatter in C; CC-C3 full pass)
+    // CC-C4a FLORA PASS (R-62.7, io/missions/2026-10-08-cc-c4a-flora-roads.md):
+    // Round E scatter ON for C through per-region override rows laid over
+    // CONFIG.scatter (region-manager whScatterCfg: one level deep, object keys
+    // merge, arrays/numbers replace). A/B carry no override row = CONFIG.scatter
+    // itself, byte-identical. Instances seat on WH_GROUND.heightAt (exact).
+    // TYPO LAW (assets.js grep 2026-10-08): bushA bushB bramble whBushSnare
+    // grassTuft mossBoulder deadTree are manifest keys; moonbell bracken
+    // leaves pebbles stonefrags stoneSingle are NOT (GLBs on disk, no manifest
+    // row) - their layers are SKIPPED until IO adds the rows; each is then
+    // one groundLayers row (moonbell colonies, leaves/pebbles spreads) or a
+    // freeBushes asset row (bracken). "Roses" v1 = the snare bush's ash-rose
+    // vertex paint in the giant rings + bushB/bramble + grass colonies.
+    scatterOverrides: {
+      clear: { spawnM: 14 },          // PROPOSED, Nicko tunes (arrival glade stays open ground)
+      // the Stone plaza (assembly + ring road) keeps its breathing room
+      keepOut: [{ regionId: 'forest_of_the_old_king', x: 0, z: -366, rx: 30, rz: 30 }],
+      // NO auto trees: giants are hand rows (CC-C3), the 55 m law holds
+      treesExtra: { targetCount: { forest_of_the_old_king: 0 } },
+      bushes: {
+        // free bushes in the gaps (bracken weight 3 lands with its manifest row)
+        assets: [['bramble', 1, 1.6, 2.4], ['bushB', 2, 1.0, 1.6], ['bushA', 2, 0.9, 1.4]],
+        // rings at EVERY giant: radius = trunk r (width * scale / 2 * 0.25,
+        // scale-aware) * radiusFrac; bigger bodies than A/B so a ring reads
+        // at the base of a 50 m giant. Snare (ash-rose roses) weighted 2.
+        // count [2, 4] (brief proposed [3, 6]): the 2M tri ledger (cullShowFrac row)
+        // pathM: rings keep scatter.clear.pathM (6 m) off every road centerline
+        atTreeRing: { count: [2, 4], radiusFrac: [1.1, 1.8], pathM: 6,
+          assets: [['bushA', 1, 1.2, 2.0], ['bushB', 1, 1.4, 2.4], ['whBushSnare', 2, 1.4, 2.2]] },
+        freeBushes: 40
+      },
+      grass: { count: 320 },
+      // ground colonies (region-manager whScatterPlan step 5): clusters of
+      // perCluster items within spreadM; nearTreeFrac of the colony seeds
+      // start in a giant's trunk band (treeBandFrac x trunk r), the rest in
+      // clearings. v1 = grass-tuft colonies; moonbell/leaves/pebbles rows
+      // join here once manifest keys exist.
+      groundLayers: [
+        { id: 'tuftColonies', asset: 'grassTuft', clusters: 36, perCluster: [3, 8],
+          spreadM: 5, height: [0.5, 0.95], nearTreeFrac: 0.5, treeBandFrac: [2.2, 4.0] }
+      ]
+    },
     spawn: { x: 0, z: -96 },          // PROPOSED, Nicko tunes (10 m inside C's south rim, the L0 glade)
     gravityY: -22,
     fogColor: 0x59625b,               // PROPOSED, Nicko tunes (deep-forest green-grey)
@@ -535,6 +575,26 @@ window.WH_CONFIG = {
     // Frustum culling only lowers these.
     cullDistanceM: 170,               // PROPOSED, Nicko tunes (hide band, m from the player)
     cullShowFrac: 0.92,               // PROPOSED, Nicko tunes (show band = cullDistanceM * this)
+    // CC-C4a SCATTER CELLS: C's instanced scatter is bucketed per asset into
+    // scatterCellM grid cells; each cell's InstancedMesh joins cullProps as ONE
+    // object (centroid + radius r): hidden past scatterCullM + r from the
+    // player, shown inside scatterCullM * cullShowFrac + r. Fog coherence: an
+    // instance can only be seen within 94.2 m (thinnest-fog 1/255 depth) of the
+    // camera, <= 94.2 + 14 (camMaxDistance) = 108.2 m from the player; the show
+    // band 110.4 + r is past it - no visible pop. NO per-instance culling.
+    // LEDGER (measured GLB tris; CC-C3 rows + CC-C4a rows): deadTree 30174
+    // (brief assumed ~2k: hence 10 rows, not ~24), mossBoulder 21599 (20 field
+    // rows + fork slab, not ~40); instanced bushA 2321, bushB 2836, whBushSnare
+    // 3000, bramble 2288, grassTuft 848. Plan: 229 ring + 40 free bushes, 320
+    // grass + 36 tuft colonies (195) = 784 instances / 1,178,820 tris in 143
+    // cell meshes (max cell r 65 m). WORST CASE (2 m grid over the playable
+    // disc): props in 170 m + live cells = 1,821,626 at (-14.5, -462.5) (61
+    // props = 1,419,156 + 37 cells) + terrain 39,200 + road ribbons 2,256 =
+    // 1,863,082 = 93.2% of 2M. Draw calls there: 61 props + 37 cells + 6
+    // roads + terrain. Without cells (5 whole-disc layers, never distance-
+    // culled) the same plan peaks at 2,637,176 - over budget.
+    scatterCellM: 90,                 // PROPOSED, Nicko tunes
+    scatterCullM: 120,                // PROPOSED, Nicko tunes
     // CC-C3 world-edge fix: the visual disc (fog formula = 336 m) left the
     // edge only ~43 m from a rim camera (camMaxDistance 14 outward) - visible
     // through day fog 0.025. Floor the visual radius so the edge sits past
@@ -702,7 +762,49 @@ window.WH_CONFIG = {
       { asset: 'treeStump',     x: 183.7, z: -278.0, rotY: 4.57, scale: 2.49 },
       { asset: 'treeStump',     x: -101.6, z: -580.6, rotY: 2.41, scale: 2.93 },
       { asset: 'treeStump',     x: -156.7, z: -245.8, rotY: 5.95, scale: 3.31 },
-      { asset: 'treeStump',     x: 162.8, z: -232.1, rotY: 3.84, scale: 2.96 }
+      { asset: 'treeStump',     x: 162.8, z: -232.1, rotY: 3.84, scale: 2.96 },
+      // CC-C4a BOULDER FIELDS (R-62.7): 2 king boulders (scale 8-10) + 18 in 5 fields
+      // of 3-5 (field lead 3.5-6, mates 1.5-4.5) in the gaps between giants: >= 3 m
+      // edge gap to trunks, 4 m to other props, 42 m from the Stone, off the CC-C3
+      // silhouette lane, road centerline >= max(6, r + halfWidth + 3). Generated once
+      // offline (mulberry32 seed 20261008 ^ 0xC4A, best-candidate field centers).
+      { asset: 'mossBoulder',      x: -124.1, z: -180.9, rotY: 1.94, scale: 8.84 },
+      { asset: 'mossBoulder',      x: -99.0, z: -396.6, rotY: 5.21, scale: 9.77 },
+      { asset: 'mossBoulder',      x: -88.9, z: -118.9, rotY: 0.63, scale: 4.18 },
+      { asset: 'mossBoulder',      x: -104.2, z: -116.7, rotY: 3.50, scale: 2.07 },
+      { asset: 'mossBoulder',      x: -101.1, z: -113.4, rotY: 3.32, scale: 1.70 },
+      { asset: 'mossBoulder',      x: 43.9, z: -577.8, rotY: 2.59, scale: 4.98 },
+      { asset: 'mossBoulder',      x: 36.4, z: -580.4, rotY: 4.93, scale: 4.31 },
+      { asset: 'mossBoulder',      x: 41.5, z: -592.6, rotY: 4.02, scale: 2.63 },
+      { asset: 'mossBoulder',      x: 46.9, z: -596.2, rotY: 1.35, scale: 2.81 },
+      { asset: 'mossBoulder',      x: 35.9, z: -595.0, rotY: 4.30, scale: 2.88 },
+      { asset: 'mossBoulder',      x: 24.2, z: -199.5, rotY: 1.48, scale: 4.14 },
+      { asset: 'mossBoulder',      x: 16.3, z: -194.6, rotY: 3.65, scale: 2.04 },
+      { asset: 'mossBoulder',      x: 19.6, z: -209.1, rotY: 0.46, scale: 1.93 },
+      { asset: 'mossBoulder',      x: -84.8, z: -208.2, rotY: 1.25, scale: 5.17 },
+      { asset: 'mossBoulder',      x: -90.7, z: -207.4, rotY: 1.07, scale: 1.51 },
+      { asset: 'mossBoulder',      x: -75.5, z: -202.1, rotY: 1.78, scale: 2.13 },
+      { asset: 'mossBoulder',      x: -80.8, z: -199.4, rotY: 1.59, scale: 2.47 },
+      { asset: 'mossBoulder',      x: 130.8, z: -494.4, rotY: 5.81, scale: 5.59 },
+      { asset: 'mossBoulder',      x: 123.9, z: -488.7, rotY: 0.35, scale: 3.54 },
+      { asset: 'mossBoulder',      x: 134.5, z: -487.8, rotY: 4.21, scale: 3.11 },
+      // CC-C4a NORMAL DEAD TREES (A/B size 8-9.85: the age contrast), >= 30 m to any
+      // tree/boulder (min 38.8), CC-C3 zones (glade, lane, Stone 50 m, rim 4 m), road
+      // centerline >= 8 m + trunk. Ring hosts (deadTree is in scatter ringHosts).
+      { asset: 'deadTree',         x: -21.2, z: -430.2, rotY: 2.77, scale: 9.36 },
+      { asset: 'deadTree',         x: -193.5, z: -550.8, rotY: 0.85, scale: 8.71 },
+      { asset: 'deadTree',         x: 136.9, z: -199.8, rotY: 6.04, scale: 8.29 },
+      { asset: 'deadTree',         x: -160.3, z: -158.0, rotY: 1.38, scale: 9.25 },
+      { asset: 'deadTree',         x: -40.5, z: -534.1, rotY: 3.41, scale: 9.36 },
+      { asset: 'deadTree',         x: 99.2, z: -173.9, rotY: 5.66, scale: 8.05 },
+      { asset: 'deadTree',         x: -209.5, z: -346.3, rotY: 3.28, scale: 8.29 },
+      { asset: 'deadTree',         x: -70.9, z: -306.2, rotY: 2.98, scale: 9.23 },
+      { asset: 'deadTree',         x: 173.7, z: -338.1, rotY: 2.74, scale: 9.80 },
+      { asset: 'deadTree',         x: -111.3, z: -560.1, rotY: 0.67, scale: 8.79 },
+      // CC-C4a FORK MARKER (UNLIT): a standing moss slab beside the spine at the
+      // ring's south junction - stands in for b3-waymarker (its only manifest key,
+      // lanternWaymarker, carries a lightSockets row: a prop row would light the fork)
+      { asset: 'mossBoulder',      x: -6.5, z: -326.0, rotY: 1.57, scale: 2.40 }
     ]
   },
 
@@ -770,6 +872,56 @@ window.WH_CONFIG = {
       pathPadM: 0.4                   // beyond the path half-width
     }
   },
+
+  // CC-C4a THE KING'S ROADS (R-62.7): per-region road rows (region-manager
+  // whRoadsFor / whRoadLine / buildRoad). A's road stays CONFIG.world.dirtPath
+  // (NOT migrated - the smaller diff: whRoadsFor lists it first for A and every
+  // reader measures it with whDistToPath exactly as before). Rows here: a
+  // waypoint centerline (points, Catmull-Rom, 2 m resample) or a closed ring,
+  // + a lateral sine sway ramped to 0 over swayRampM at both ends; the ribbon
+  // seats on the heightfield (+ lift; ring/branches lifted apart so the
+  // overlapping junction decals never z-fight). Keep-outs: the scatter's
+  // pathM band (trees/free bushes) and halfWidth + grass.pathPadM (grass,
+  // rings, colonies); camp.js refuses a deploy inside halfWidth + pathBand.
+  // UNLIT LAW: no light rows exist for roads; the one fork marker is a stone.
+  // Waypoints were nudged off the brief's proposal onto gentler ground (max
+  // 10 m grade: spine 8.9 deg, ring 1.7, N 4.2, E 4.7, W 10.4) and >= 8 m
+  // from every tree centerline (tightest: W road vs witchwood (-55, -348.3)
+  // 8.2 m). The ring sits at r 34, not ~16: r 16 IS the CC-C3 boulder ring
+  // and the gate pair spans r 20-30.5, so the ring runs outside the assembly
+  // and the spine continues straight through the gate pair (stoneApproach).
+  // CC-C4b NOTCH MOUTHS = the last point of north/east/west (0, -596),
+  // (240, -366), (-240, -366): the roads stop there, inside the playable
+  // rim; NO blocker/toast in C4a (the rim clamp holds the player). C4b
+  // carves the rim notches + adds the soft blockers. Note for C4b: yewTree
+  // (272.4, -369) stands on the east road's notch line. All PROPOSED, Nicko tunes.
+  roads: [
+    { id: 'kingsRoad', regionId: 'forest_of_the_old_king',   // glade -> the ring's south point
+      points: [[0, -88], [-2.5, -104], [4, -138], [2, -168], [4, -215], [-3, -255],
+        [0, -300], [0, -332]],
+      halfWidth: 2.2, swayAmp: 7, swayPeriod: 90, swayRampM: 24,
+      lift: 0.10, tileLengthMeters: 3.0, repeatAcrossWidth: 1, textureSeed: 20261008 },
+    { id: 'stoneApproach', regionId: 'forest_of_the_old_king', // straight through the gate pair
+      points: [[0, -332], [0, -352]],
+      halfWidth: 2.2, swayAmp: 0,
+      lift: 0.10, tileLengthMeters: 3.0, repeatAcrossWidth: 1, textureSeed: 20261008 },
+    { id: 'stoneRing', regionId: 'forest_of_the_old_king',     // the crossroads around the Stone
+      ring: { x: 0, z: -366, r: 34 },
+      halfWidth: 2.2, swayAmp: 0,
+      lift: 0.16, tileLengthMeters: 3.0, repeatAcrossWidth: 1, textureSeed: 20261008 },
+    { id: 'northRoad', regionId: 'forest_of_the_old_king',     // C4b notch mouth (0, -596)
+      points: [[0, -400], [-3, -420], [-12, -460], [5, -500], [-5, -540], [0, -596]],
+      halfWidth: 2.2, swayAmp: 6, swayPeriod: 90, swayRampM: 24,
+      lift: 0.13, tileLengthMeters: 3.0, repeatAcrossWidth: 1, textureSeed: 20261008 },
+    { id: 'eastRoad', regionId: 'forest_of_the_old_king',      // C4b notch mouth (240, -366)
+      points: [[34, -366], [62, -356], [100, -370], [150, -368], [200, -368], [240, -366]],
+      halfWidth: 2.2, swayAmp: 6, swayPeriod: 90, swayRampM: 24,
+      lift: 0.13, tileLengthMeters: 3.0, repeatAcrossWidth: 1, textureSeed: 20261008 },
+    { id: 'westRoad', regionId: 'forest_of_the_old_king',      // C4b notch mouth (-240, -366)
+      points: [[-34, -366], [-66, -362], [-100, -370], [-150, -357], [-200, -370], [-240, -366]],
+      halfWidth: 2.2, swayAmp: 6, swayPeriod: 90, swayRampM: 24,
+      lift: 0.13, tileLengthMeters: 3.0, repeatAcrossWidth: 1, textureSeed: 20261008 }
+  ],
 
   // Boundary between A and B: the plane z = CONFIG.boundary.z.
   // Region A occupies z > boundaryZ, region B occupies z < boundaryZ.
