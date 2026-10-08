@@ -470,7 +470,7 @@ window.WH_CONFIG = {
     name: 'Forest of the Old King',
     center: { x: 0, z: -366 },        // PROPOSED, Nicko tunes (doc 62 sec 1 arithmetic)
     groundRadius: 280,                // PROPOSED, Nicko tunes (R-62.2 band 250-300; A/B read world.groundRadius 90)
-    groundY: -0.05,                   // PROPOSED, Nicko tunes (stub disc under B's y = 0: no z-fight)
+    groundY: -0.05,                   // PROPOSED, Nicko tunes (stub disc under B's y = 0: no z-fight). CC-C4: with terrain.enabled C walks on the heightfield mesh; this disc survives only as the flat SKIRT under/outside the 560 m mesh square (visual radius 400), never walked
     groundColor: 0x1a2116,            // PROPOSED, Nicko tunes (CC-C3 old-king floor: deeper mossy loam, dominant; CC-C2 0x1e2319)
     groundColor2: 0x28261a,           // PROPOSED, Nicko tunes (CC-C3 deeper leaf-litter umber, secondary; CC-C2 0x2c2a1d)
     groundSeed: 1662061217,           // PROPOSED, Nicko tunes (ground canvas PRNG seed)
@@ -541,6 +541,56 @@ window.WH_CONFIG = {
     // the 1/255 fog depth (94.2 m) from ANY reachable camera:
     // 400 - (278.5 + 14) = 107.5 m. A/B leave it unset (formula unchanged).
     visualGroundMinRadius: 400,       // PROPOSED, Nicko tunes
+    // CC-C4 HEIGHTFIELD (R-62.1, io/missions/2026-10-08-cc-c4-heightfield-landing.md;
+    // js/wh-ground.js). Field constants = the CC-C1 spike EXACTLY (seed 1337,
+    // playtest-approved): fBm 4 oct, wavelength 45, lacunarity 2, gain 0.45,
+    // remap clamp((n - 0.22) / 0.57) * 5. Mesh PlaneGeometry(560, 560, 140, 140)
+    // centered on C's disc (39,200 tris), built once at region load; ground
+    // y = the B-TRI sampler over the same Float32 grid (exact to the render).
+    // Only regions carrying an enabled terrain row walk on a heightfield
+    // (WH_GROUND.has): A/B have none and run the flat y = 0 path untouched.
+    terrain: {
+      enabled: true,
+      S: 140,                         // spike verdict (S=180 rejected: +65% tris)
+      plane: 560,                     // = 2 * groundRadius (covers the disc, z -646..-86)
+      seed: 1337,
+      baseWavelength: 45,
+      octaves: 4,
+      lacunarity: 2.0,
+      gain: 0.45,
+      hMax: 5,
+      nLo: 0.22,                      // ~p1 of fbm01 at seed 1337 (spike)
+      nHi: 0.79,                      // ~p99
+      // ARRIVAL GLADE pocket (world coords): flat h inside r, smoothstep blend
+      // to the raw hills by r + blend. Spike FLAT_R / FLAT_BLEND / FLAT_H moved
+      // from the plane center to the glade: the door (z -86) -> glade lane is
+      // flat 0.4 (raw hills here are ~4.65 m: the pocket is a hollow of calm).
+      pocket: { x: 0, z: -96, r: 25, blend: 20, h: 0.4 },
+      // OLD KING'S STONE pad (world coords): h null = the UNflattened height at
+      // the pad center (h(0, -366) = 1.404). r 28 covers the whole assembly
+      // (statue, boulder ring r 16, gate pair 25.3 m out); raw ground inside r
+      // 28 spans 0.89..2.73, so every piece sits on one level. PROPOSED, Nicko tunes
+      stonePad: { x: 0, z: -366, r: 28, blend: 16, h: null },
+      // RIM FADE (builder decision, logged): the 560 m mesh SQUARE meets the
+      // r 280 disc at 4 points, so the playable rim (278.5) is <= 1.5 m from
+      // the mesh edge. Heights fade to 0 between r from..to so the mesh edge is
+      // flush with the flat skirt (groundY) instead of a floating cliff lip.
+      rim: { from: 240, to: 280 },    // PROPOSED, Nicko tunes
+      // SLOPE GUARD (game.js clampPlayerToBounds): an uphill move is blocked
+      // when dh > climbFactor * sprintSpeed * dt (the spike's maxStepPerFrame,
+      // uphill only) = tan(cap) = climbFactor * sprintSpeed / speed: sprint
+      // (10) ~31 deg, walk (6) ~45 deg (stepSlopeCapDeg). Natural C terrain
+      // tops out ~19 deg: a safety net that almost never binds. Rolls exempt.
+      // KNOWN QUIRK (spike): a walker can climb steeper than a runner (v1 OK).
+      climbFactor: 0.6,
+      stepSlopeCapDeg: 45,            // PROPOSED (walk-pace equivalent of climbFactor 0.6; informational)
+      camMinAboveGround: 0.8,         // PROPOSED, Nicko tunes (camera floor over the terrain under it)
+      propFootR: 1.2,                 // PROPOSED, Nicko tunes (prop seat = min ground at center + 4 points at this r)
+      meshColorMoss: 0x2c4424,        // low ground (spike)
+      meshColorStone: 0x8c7b5e,       // high ground (spike)
+      debugAssert: false,             // true: rebuild the grid once at load + log the hash check
+      gridHash: '8ae6983'            // FNV-1a of this row's S=140 grid (CC-C4 self-check; spike's own field = c5a19f53)
+    },
     props: [
       // L0 glade furniture: lantern post at the spawn glade (light socket)
       { asset: 'lanternPost', x: 3.0, z: -99.0, rotY: 0.0, scale: 2.535 },

@@ -1381,6 +1381,15 @@
     return report;
   };
 
+  // CC-C4 prop y-feed: the terrain seat under a prop's footprint (min ground
+  // at its center + 4 points at terrain.propFootR) in a heightfield region;
+  // 0 everywhere else (A/B: today's y).
+  function whGroundFeed(regionId, x, z) {
+    var G = window.WH_GROUND;
+    if (!G || !G.has(regionId)) return 0;
+    return G.footY(regionId, x, z, DEFS.regions[regionId].cfg.terrain.propFootR);
+  }
+
   // Build a region group from CONFIG data (props + ground + enemies). Pre-warm
   // builds set visible=false.
   RegionManager.prototype.buildRegion = function (regionId, hidden) {
@@ -1397,7 +1406,16 @@
 
     // ground disc: procedural pixel-art canvas texture (boot-time, cached),
     // region-biased blotch mix (A olive-dominant, B charcoal-dominant)
-    var groundMat = new THREE.MeshStandardMaterial({
+    // CC-C4: a heightfield region (WH_GROUND.has: C only) walks on the
+    // seeded terrain mesh; its flat disc stays only as the SKIRT under and
+    // outside the 560 m mesh square, plain-colored at the mesh's rim color
+    // (the rim fades to h 0, so mesh edge and skirt meet flush). A/B: the
+    // textured flat disc exactly as before.
+    var hasTerrain = window.WH_GROUND && window.WH_GROUND.has(regionId);
+    var groundMat = hasTerrain ? new THREE.MeshStandardMaterial({
+      color: region.cfg.terrain.meshColorMoss,
+      roughness: 0.95, metalness: 0.0, side: THREE.DoubleSide
+    }) : new THREE.MeshStandardMaterial({
       color: 0xffffff,
       map: makeGroundTexture(regionId),
       roughness: 1.0, metalness: 0.0, side: THREE.DoubleSide
@@ -1414,6 +1432,9 @@
     }
     ground.name = 'ground';
     group.add(ground);
+    // CC-C4: the terrain mesh (built once, ~27 ms, cached by WH_GROUND; a
+    // region dispose frees its GPU buffers, three re-uploads on re-entry)
+    if (hasTerrain) group.add(window.WH_GROUND.mesh(regionId));
 
     // Cheap mist layer (CONFIG.mistPlane): one large flat semi-transparent
     // plane at low height. Visual only, no collider. Region-gated by id.
@@ -1450,7 +1471,7 @@
     for (var i = 0; i < regionCfg.props.length; i++) {
       var p = regionCfg.props[i];
       var obj = window.WH_ASSETS.instance(p.asset);
-      obj.position.set(p.x, p.y || 0, p.z);
+      obj.position.set(p.x, whGroundFeed(regionId, p.x, p.z) + (p.y || 0), p.z);
       obj.rotation.y = p.rotY;
       obj.scale.setScalar(p.scale);
       group.add(obj);
@@ -1463,7 +1484,7 @@
     for (var si = 0; si < plan.trees.length; si++) {
       var sTree = plan.trees[si];
       var tObj = window.WH_ASSETS.instance(sTree.asset);
-      tObj.position.set(sTree.x, 0, sTree.z);
+      tObj.position.set(sTree.x, whGroundFeed(regionId, sTree.x, sTree.z), sTree.z);
       tObj.rotation.y = sTree.rotY;
       tObj.scale.setScalar(sTree.scale);
       group.add(tObj);

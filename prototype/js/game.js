@@ -1138,6 +1138,54 @@
 
   // ---- boundary / region flow ------------------------------------------------
 
+  // ---- CC-C4 heightfield y-feed ---------------------------------------------
+  // ONE ground helper for every grounded system: the active region's B-TRI
+  // terrain height (WH_GROUND, C only), else 0 (A/B: today's flat y).
+  function groundHas() {
+    var G = window.WH_GROUND, rm = game.regionManager;
+    return !!(G && rm && G.has(rm.logic.activeId));
+  }
+  function groundYAt(x, z) {
+    return groundHas() ? window.WH_GROUND.heightAt(game.regionManager.logic.activeId, x, z) : 0;
+  }
+  game.groundYAt = groundYAt;
+
+  // Slope guard (heightfield regions only): an UPHILL move steeper than the
+  // climb cap is rejected - dh > climbFactor * sprintSpeed * dt (the spike's
+  // maxStepPerFrame; tan(cap) = climbFactor * sprintSpeed / speed). The
+  // blocked move first slides along one axis, else holds the pre-move spot
+  // (already clamped last frame). Rolls are exempt; no falls in CC-C4.
+  function slopeGuard(player) {
+    if (player.rolling || game.groundPrevX === undefined) return;
+    var px = game.groundPrevX, pz = game.doorPrevZ;
+    var dx = player.pos.x - px, dz = player.pos.z - pz;
+    if (dx * dx + dz * dz < 1e-10) return;
+    var T = window.WH_REGION_DEFS.regions[game.regionManager.logic.activeId].cfg.terrain;
+    var maxUp = T.climbFactor * CFG.player.sprintSpeed * (game.groundDt || 0);
+    var h0 = groundYAt(px, pz);
+    if (groundYAt(player.pos.x, player.pos.z) - h0 <= maxUp) return;
+    if (groundYAt(player.pos.x, pz) - h0 <= maxUp * Math.abs(dx) / Math.sqrt(dx * dx + dz * dz)) {
+      player.pos.z = pz;
+    } else if (groundYAt(px, player.pos.z) - h0 <= maxUp * Math.abs(dz) / Math.sqrt(dx * dx + dz * dz)) {
+      player.pos.x = px;
+    } else {
+      player.pos.x = px; player.pos.z = pz;
+    }
+  }
+
+  // Camera floor over the terrain (heightfield regions only; A/B keep the
+  // player.js floor y = camGroundClearance): the camera never sinks under the
+  // ground beneath it.
+  function cameraGroundFloor() {
+    if (!groundHas()) return;
+    var cam = game.camera, p = game.player.pos;
+    var T = window.WH_REGION_DEFS.regions[game.regionManager.logic.activeId].cfg.terrain;
+    var floorY = groundYAt(cam.position.x, cam.position.z) + T.camMinAboveGround;
+    if (cam.position.y >= floorY) return;
+    cam.position.y = floorY;
+    cam.lookAt(p.x, p.y + CFG.player.camHeight, p.z);
+  }
+
   // Player boundary clamp + region transitions. Passed into player.update.
   function clampPlayerToBounds(player) {
     var rm = game.regionManager;
@@ -1155,6 +1203,12 @@
     // plane in its window holds z on the line. game.doorPrevZ = pre-move z.
     if (game.doorPrevZ !== undefined &&
         rm.logic.holdAtLockedDoor(game.doorPrevZ, player.pos)) blocked = true;
+    // CC-C4 y-feed (after the clamp / push / door sequence, order kept):
+    // slope guard, then the player stands on the ground. A/B: no terrain,
+    // pos.y stays 0 (the assignment only fires on a change, e.g. C -> B).
+    if (groundHas()) slopeGuard(player);
+    var gy = groundYAt(player.pos.x, player.pos.z);
+    if (player.pos.y !== gy) player.pos.y = gy;
     if (blocked) return;
     // near gate: show hint when close to the chokepoint on the A side
     var distGate = Math.abs(player.pos.x - CFG.chokepoint.centerX);
@@ -1897,6 +1951,11 @@
       // C3 camps: placement state, sites (+ kit fire fuel), world camps, respawn
       get camp() { return game.camp ? game.camp.debugState() : null; },
       getCamp: function () { return game.camp; },
+      // CC-C4: the ground y-feed (active region; A/B 0) + dev-only raycast
+      groundYAt: function (x, z) { return groundYAt(x, z); },
+      groundRaycast: function (x, z) {
+        return window.WH_GROUND ? window.WH_GROUND.debugRaycast(game.regionManager.logic.activeId, x, z) : NaN;
+      },
       getPlayerPosition: function () {
         var p = game.player.pos;
         return { x: p.x, y: p.y, z: p.z };
@@ -2344,6 +2403,9 @@
       // C1: a burnt-out cooking station's socket goes dark
       var inten = game.cooking ? game.cooking.socketIntensity(rm.logic.activeId, p, sd.intensity)
         : sd.intensity;
+      // CC-C4: sockets ride the prop's terrain seat (A/B: + 0)
+      if (groundHas()) h += window.WH_GROUND.footY(rm.logic.activeId, p.x, p.z,
+        window.WH_REGION_DEFS.regions[rm.logic.activeId].cfg.terrain.propFootR);
       out.push({ id: p.asset + '@' + p.x + ',' + p.z, x: sx, y: h, z: sz,
                  intensity: inten, weight: 1 });
     }
@@ -2405,6 +2467,8 @@
 
     // player + transition logic
     game.doorPrevZ = game.player.pos.z;   // CC-C2: door gate crossing-frame test
+    game.groundPrevX = game.player.pos.x; // CC-C4: slope guard pre-move spot (+ doorPrevZ)
+    game.groundDt = dt;
     game.player.update(dt, clampPlayerToBounds);
 
     // ---- v7: cast windup tick (fires the bolt at windup end). Order C: both
@@ -2533,6 +2597,7 @@
     updateLockOn();
 
     game.player.updateCamera(dt);
+    cameraGroundFloor();   // CC-C4 (C only)
     applyCameraShake(dt);
     poolTick(dt);   // R2: fixed light pool nearest-socket handoff
     // 10-05: earned player light - hand lights follow hands + bindings this

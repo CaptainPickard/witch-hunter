@@ -160,10 +160,13 @@
       var deathAction = this.anim.actions.death;
       if (this.corpseFinalY === null &&
           deathAction.time >= deathAction.getClip().duration - 0.001) {
-        this.root.position.y = 0;
+        this.root.position.y = 0;      // measure the body offset over a y = 0 root
         this.root.updateMatrixWorld(true);
         var finalMinY = new THREE.Box3().setFromObject(this.root).min.y;
-        this.corpseFinalY = isFinite(finalMinY) ? -finalMinY + 0.01 : 0;
+        // CC-C4 y-feed: the corpse settles on its region's ground (A/B: + 0)
+        var G = window.WH_GROUND;
+        var groundY = G && G.has(this.homeRegionId) ? G.heightAt(this.homeRegionId, this.pos.x, this.pos.z) : 0;
+        this.corpseFinalY = (isFinite(finalMinY) ? -finalMinY + 0.01 : 0) + groundY;
       }
       if (this.corpseFinalY !== null) {
         this.root.position.y = this.corpseFinalY;

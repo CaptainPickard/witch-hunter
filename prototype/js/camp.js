@@ -109,7 +109,27 @@
     return { x: cx + f.z * r - f.x * b, z: cz - f.x * r - f.z * b };
   }
 
-  function buildSiteGroup(cx, cz, f, ghostMat) {
+  // CC-C4 y-feed: the terrain seat (min ground under the piece, like CONFIG
+  // props) in a heightfield region (C); 0 elsewhere (A/B: today's y = 0).
+  // Sites keep x / z only (save rows unchanged): y is re-derived every build.
+  function groundAt(rid, x, z) {
+    var G = window.WH_GROUND;
+    if (!G || !rid || !G.has(rid)) return 0;
+    return G.footY(rid, x, z, window.WH_REGION_DEFS.regions[rid].cfg.terrain.propFootR);
+  }
+
+  // site group at its center's seat, each module at its own seat (children
+  // = K.modules order)
+  function seatSite(g, cx, cz, f, rid) {
+    var gc = groundAt(rid, cx, cz);
+    g.position.y = gc;
+    K.modules.forEach(function (row, i) {
+      var w = moduleWorld(cx, cz, f, row);
+      g.children[i].position.y = groundAt(rid, w.x, w.z) - gc;
+    });
+  }
+
+  function buildSiteGroup(cx, cz, f, ghostMat, rid) {
     var g = new THREE.Group();
     g.name = ghostMat ? 'camp-ghost' : 'camp-site';
     g.position.set(cx, 0, cz);
@@ -120,6 +140,7 @@
       obj.rotation.y = row.rotY || 0;
       g.add(obj);
     });
+    if (rid) seatSite(g, cx, cz, f, rid);   // CC-C4
     return g;
   }
 
@@ -407,6 +428,7 @@
     this.ghostPos = { x: v.x, z: v.z };
     this.ghost.position.set(v.x, 0, v.z);
     this.ghost.rotation.y = siteYaw(this.ghostF);
+    seatSite(this.ghost, v.x, v.z, this.ghostF, this.placeRegion);   // CC-C4: ghost follows the terrain
     // FIX 10-06b: the ghost colors LIVE - green = a valid spot, red = the
     // same clearance check confirm() will run (no red spot is placeable).
     var pts = K.modules.map(function (row) {
@@ -427,6 +449,9 @@
     this.ndc.set((this.pointer.x - r.left) / r.width * 2 - 1,
       -((this.pointer.y - r.top) / r.height) * 2 + 1);
     this.raycaster.setFromCamera(this.ndc, this.camera);
+    // CC-C4: the pointer plane sits at the player's ground (A/B: y = 0)
+    var gy = groundAt(this.activeId(), this.player.pos.x, this.player.pos.z);
+    this.ground.constant = gy ? -gy : 0;
     if (this.raycaster.ray.intersectPlane(this.ground, this.hitPt)) {
       this.setGhost(this.hitPt.x, this.hitPt.z);
     }
@@ -566,12 +591,12 @@
           c.group.name = 'camp-world-' + c.id;
           c.modules.forEach(function (m) {
             var obj = makePiece(m.row.asset, null);
-            obj.position.set(m.x, 0, m.z);
+            obj.position.set(m.x, groundAt(c.regionId, m.x, m.z), m.z);   // CC-C4 y-feed
             obj.rotation.y = m.row.rotY || 0;
             c.group.add(obj);
           });
         } else {
-          c.group = buildSiteGroup(c.x, c.z, c.f, null);
+          c.group = buildSiteGroup(c.x, c.z, c.f, null, c.regionId);
         }
         self.scene.add(c.group);
       }

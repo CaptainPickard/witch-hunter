@@ -144,9 +144,12 @@
         if (rec.t < C.appearDelaySec || e.corpseFinalY === null) continue;
         e.root.updateMatrixWorld(true);
         rec.center = new THREE.Box3().setFromObject(e.root).getCenter(new THREE.Vector3());
-        rec.center.y = Math.max(0.05, Math.min(rec.center.y, 0.6));
-        rec.glow.position.set(rec.center.x, C.glowHeight, rec.center.z);
-        if (rec.ground) rec.ground.position.set(rec.center.x, 0.03, rec.center.z);
+        // CC-C4 y-read: bands ride the corpse's ground (A/B: groundY 0, today's y)
+        var G = window.WH_GROUND;
+        var groundY = G && G.has(e.homeRegionId) ? G.heightAt(e.homeRegionId, rec.center.x, rec.center.z) : 0;
+        rec.center.y = groundY + Math.max(0.05, Math.min(rec.center.y - groundY, 0.6));
+        rec.glow.position.set(rec.center.x, groundY + C.glowHeight, rec.center.z);
+        if (rec.ground) rec.ground.position.set(rec.center.x, groundY + 0.03, rec.center.z);
         for (var k = 0; k < rec.sparks.length; k++) respawnSpark(rec.sparks[k], rec.center, true);
         rec.state = 'live';
         rec.t = 0;
