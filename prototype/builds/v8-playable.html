@@ -87612,9 +87612,16 @@ window.WH_CONFIG = {
     // freeBushes asset row (bracken). "Roses" v1 = the snare bush's ash-rose
     // vertex paint in the giant rings + bushB/bramble + grass colonies.
     scatterOverrides: {
-      clear: { spawnM: 14 },          // PROPOSED, Nicko tunes (arrival glade stays open ground)
-      // the Stone plaza (assembly + ring road) keeps its breathing room
-      keepOut: [{ regionId: 'forest_of_the_old_king', x: 0, z: -366, rx: 30, rz: 30 }],
+      // CC-C4b floraMaxH: no scatter instance (trees, rings, bushes, grass,
+      // colonies) on ground higher than this (natural hills top out at hMax 5
+      // + the Stone pad 2.7): the cliff band stays bare rock. PROPOSED, Nicko tunes
+      clear: { spawnM: 14, floraMaxH: 6 },  // PROPOSED, Nicko tunes (arrival glade stays open ground)
+      // the Stone plaza (assembly + ring road) keeps its breathing room;
+      // CC-C4b: the three notch mouths (window halfWidth 10 + shoulder 8)
+      keepOut: [{ regionId: 'forest_of_the_old_king', x: 0, z: -366, rx: 30, rz: 30 },
+        { regionId: 'forest_of_the_old_king', x: 0, z: -596, rx: 18, rz: 18 },
+        { regionId: 'forest_of_the_old_king', x: 240, z: -366, rx: 18, rz: 18 },
+        { regionId: 'forest_of_the_old_king', x: -240, z: -366, rx: 18, rz: 18 }],
       // NO auto trees: giants are hand rows (CC-C3), the 55 m law holds
       treesExtra: { targetCount: { forest_of_the_old_king: 0 } },
       bushes: {
@@ -87627,16 +87634,20 @@ window.WH_CONFIG = {
         // pathM: rings keep scatter.clear.pathM (6 m) off every road centerline
         atTreeRing: { count: [2, 4], radiusFrac: [1.1, 1.8], pathM: 6,
           assets: [['bushA', 1, 1.2, 2.0], ['bushB', 1, 1.4, 2.4], ['whBushSnare', 2, 1.4, 2.2]] },
-        freeBushes: 40
+        // CC-C4b: x 0.8144 = the playable disc's share below floraMaxH (the
+        // bare ring would otherwise push its share inward: same interior
+        // density as C4a, the 2M ledger holds). C4a: freeBushes 40, grass 320,
+        // tuftColonies clusters 36.
+        freeBushes: 33
       },
-      grass: { count: 320 },
+      grass: { count: 261 },
       // ground colonies (region-manager whScatterPlan step 5): clusters of
       // perCluster items within spreadM; nearTreeFrac of the colony seeds
       // start in a giant's trunk band (treeBandFrac x trunk r), the rest in
       // clearings. v1 = grass-tuft colonies; moonbell/leaves/pebbles rows
       // join here once manifest keys exist.
       groundLayers: [
-        { id: 'tuftColonies', asset: 'grassTuft', clusters: 36, perCluster: [3, 8],
+        { id: 'tuftColonies', asset: 'grassTuft', clusters: 29, perCluster: [3, 8],
           spreadM: 5, height: [0.5, 0.95], nearTreeFrac: 0.5, treeBandFrac: [2.2, 4.0] }
       ]
     },
@@ -87667,6 +87678,14 @@ window.WH_CONFIG = {
         hintLocked: 'The forest beyond still sleeps',          // PROPOSED, Nicko tunes
         hintBack: 'Back to the Darkwood'                       // PROPOSED, Nicko tunes
       }
+    },
+    // CC-C4b NOTCH SOFT BLOCKERS (terrain.rim.notches blocker rows; game.js
+    // tryNotch + the interact prompt): E within interactM of a mouth names the
+    // reason (dormancy-toast style); the hold line is wh-ground holdAtNotch.
+    notchText: {
+      interactM: 5,                                            // PROPOSED, Nicko tunes
+      locked: 'The road beyond is lost. For now.',             // PROPOSED, Nicko tunes
+      prompt: 'E - Examine the road'                           // PROPOSED, Nicko tunes
     },
     enemies: [],                      // nothing spawns in CC-C2
     // CC-C3 ANCIENT FOREST (R-62.6, io/missions/2026-10-07-cc-c3-ancient-forest.md):
@@ -87718,6 +87737,11 @@ window.WH_CONFIG = {
     // 1,863,082 = 93.2% of 2M. Draw calls there: 61 props + 37 cells + 6
     // roads + terrain. Without cells (5 whole-disc layers, never distance-
     // culled) the same plan peaks at 2,637,176 - over budget.
+    // CC-C4b LEDGER: + 12 scree mossBoulder rows (<= 4 within 170 m of any
+    // playable point = + 86,396) + 3 notch ribbons (180 tris) - 20 cliff-band
+    // rows; scatter counts scaled to the non-ring share (same interior
+    // density): worst case <= 1,863,082 + 86,576 = 1,949,658 = 97.5% of 2M
+    // (upper bound - the dropped rows only lower it). Terrain tris unchanged.
     scatterCellM: 90,                 // PROPOSED, Nicko tunes
     scatterCullM: 120,                // PROPOSED, Nicko tunes
     // CC-C3 world-edge fix: the visual disc (fog formula = 336 m) left the
@@ -87725,6 +87749,20 @@ window.WH_CONFIG = {
     // through day fog 0.025. Floor the visual radius so the edge sits past
     // the 1/255 fog depth (94.2 m) from ANY reachable camera:
     // 400 - (278.5 + 14) = 107.5 m. A/B leave it unset (formula unchanged).
+    // CC-C4b SKYLINE (R-62.8): the rim ring now owns the world edge. From the
+    // farthest reachable spot on every bearing (the cliff guard's foot, or a
+    // notch's hold line) with the camera 10 m up, the sight line to the skirt
+    // edge (r 400) is cut by the ring on 328/360 bearings; the 32 open ones
+    // (3 notches + the glade valley) end >= 121.5 m away (T day 0.025 =
+    // 1e-4, past the 1/255 depth 94.2 m). Fog rows UNCHANGED: FogExp2 is
+    // opaque at 110 m (T night 1.9e-6, day 5.2e-4; even 0.026 gives 2.8e-4)
+    // and at 240 m for any density in the proposed 0.026-0.028 band, so a
+    // lower density buys no ring visibility. The ring reads two ways: up
+    // close (the glade valley walls 40 m from spawn, T day 0.37 / night
+    // 0.17) and as SILHOUETTE - fog-saturated terrain renders fog colour
+    // against the UNfogged sky dome (game.js setupSky), so the crest
+    // (25.7-37.7 m, 5.9-8.6 deg above the Stone's horizon) cuts a jagged
+    // fog-colour skyline instead of the flat fog/horizon line.
     visualGroundMinRadius: 400,       // PROPOSED, Nicko tunes
     // CC-C4 HEIGHTFIELD (R-62.1, io/missions/2026-10-08-cc-c4-heightfield-landing.md;
     // js/wh-ground.js). Field constants = the CC-C1 spike EXACTLY (seed 1337,
@@ -87760,12 +87798,39 @@ window.WH_CONFIG = {
       // r 280 disc at 4 points, so the playable rim (278.5) is <= 1.5 m from
       // the mesh edge. Heights fade to 0 between r from..to so the mesh edge is
       // flush with the flat skirt (groundY) instead of a floating cliff lip.
-      rim: { from: 240, to: 280 },    // PROPOSED, Nicko tunes
+      // CC-C4b RIM MOUNTAINS (R-62.8, io/missions/2026-10-08-cc-c4b-rim-mountains.md;
+      // wh-ground makeField ridge term): the fade above stays (the notch beds +
+      // the mesh edge keep C4's flush-to-skirt ground); a ridge is ADDED: foot
+      // from +- footJitterM (lump noise), smoothstep rise over blend to peakH *
+      // (0.75 + 0.45 * lump) (lump = 2-octave value noise, salt seed +
+      // lumpSalt, wavelength lumpWavelength), faded to 0 over the last
+      // edgeFadeM before the 560 m square's edge, cut by the notch windows.
+      // cliffSlopeDeg = the CLIFF GUARD (game.js slopeGuard): no uphill step
+      // onto ground steeper than this (rolls + switchbacks included; natural
+      // C terrain tops out ~19 deg, so it binds only on the ring). Stone
+      // vertex band: ridge vertices lerp to meshColorStone over
+      // stoneFromH..stoneToH (moss foothills, stone upper slopes).
+      // NOTCHES (the King's Roads' C4a mouths): window halfWidth on the notch
+      // axis (center -> mouth), smoothstep shoulder; blocker rows hold the
+      // player notchHoldM past the mouth (wh-ground holdAtNotch) + E toast
+      // (notchText). The 'door' notch is the arrival glade's valley (the B/C
+      // door + the spine stay on C4's ground; no blocker). All PROPOSED, Nicko tunes.
+      rim: { from: 240, to: 280, blend: 30, peakH: 34, cliffSlopeDeg: 38,
+        footJitterM: 6, lumpWavelength: 70, lumpSalt: 7919, edgeFadeM: 15,
+        stoneFromH: 6, stoneToH: 16, notchShoulderM: 8, notchHoldM: 0,
+        notches: [
+          { id: 'north', x: 0, z: -596, halfWidth: 10, blocker: true },
+          { id: 'east', x: 240, z: -366, halfWidth: 10, blocker: true },
+          { id: 'west', x: -240, z: -366, halfWidth: 10, blocker: true },
+          { id: 'door', x: 0, z: -86, halfWidth: 30, shoulder: 18 }
+        ] },
       // SLOPE GUARD (game.js clampPlayerToBounds): an uphill move is blocked
       // when dh > climbFactor * sprintSpeed * dt (the spike's maxStepPerFrame,
       // uphill only) = tan(cap) = climbFactor * sprintSpeed / speed: sprint
       // (10) ~31 deg, walk (6) ~45 deg (stepSlopeCapDeg). Natural C terrain
       // tops out ~19 deg: a safety net that almost never binds. Rolls exempt.
+      // CC-C4b: the rim ring's faces run 52-74 deg (> every cap); the cliff
+      // guard (rim.cliffSlopeDeg) closes the switchback/roll/slow-walk gaps.
       // KNOWN QUIRK (spike): a walker can climb steeper than a runner (v1 OK).
       climbFactor: 0.6,
       stepSlopeCapDeg: 45,            // PROPOSED (walk-pace equivalent of climbFactor 0.6; informational)
@@ -87773,9 +87838,19 @@ window.WH_CONFIG = {
       propFootR: 1.2,                 // PROPOSED, Nicko tunes (prop seat = min ground at center + 4 points at this r)
       meshColorMoss: 0x2c4424,        // low ground (spike)
       meshColorStone: 0x8c7b5e,       // high ground (spike)
+      // CC-C4b: the flat skirt under/outside the mesh square takes the stone
+      // colour (the ring now owns the world edge; through a notch the skirt
+      // reads as the mountains' rock floor fading into fog). PROPOSED, Nicko tunes
+      skirtColor: 0x8c7b5e,
       debugAssert: false,             // true: rebuild the grid once at load + log the hash check
-      gridHash: '8ae6983'            // FNV-1a of this row's S=140 grid (CC-C4 self-check; spike's own field = c5a19f53)
+      gridHash: '7ca52bd3'           // FNV-1a of this row's S=140 grid (CC-C4b rim mountains; CC-C4 flat-rim field = 8ae6983, spike's own = c5a19f53)
     },
+    // CC-C4b: rows marked '// C4b-CLIFF' seated on the new ring at a slope
+    // steeper than the sprint cap (31 deg: their footY seat would float the
+    // downhill side of the trunk) - 14 giants, 2 dead trees, 2 stumps, 2
+    // boulders; '// C4b-NOTCH' = the yew standing in the east notch bed (C4a
+    // note). Commented out, not deleted (restore = uncomment). Crest rows
+    // (slope <= 31 deg) stay: giants on the skyline. All PROPOSED, Nicko tunes.
     props: [
       // L0 glade furniture: lantern post at the spawn glade (light socket)
       { asset: 'lanternPost', x: 3.0, z: -99.0, rotY: 0.0, scale: 2.535 },
@@ -87809,7 +87884,7 @@ window.WH_CONFIG = {
       { asset: 'witchwoodTree', x: 35.9, z: -498.1, rotY: 3.28, scale: 20.74 },
       { asset: 'witchwoodTree', x: -55.0, z: -348.3, rotY: 1.52, scale: 24.40 },
       { asset: 'yewTree',       x: -109.2, z: -337.1, rotY: 5.97, scale: 16.98 },
-      { asset: 'yewTree',       x: 79.8, z: -120.5, rotY: 1.76, scale: 17.44 },
+      // C4b-CLIFF { asset: 'yewTree',       x: 79.8, z: -120.5, rotY: 1.76, scale: 17.44 },
       { asset: 'yewTree',       x: -50.1, z: -245.3, rotY: 3.37, scale: 21.49 },
       { asset: 'yewTree',       x: 103.5, z: -513.8, rotY: 4.77, scale: 22.99 },
       { asset: 'witchwoodTree', x: -126.7, z: -281.9, rotY: 4.90, scale: 23.08 },
@@ -87823,26 +87898,26 @@ window.WH_CONFIG = {
       { asset: 'witchwoodTree', x: 111.3, z: -406.2, rotY: 3.47, scale: 19.09 },
       { asset: 'yewTree',       x: 56.0, z: -349.0, rotY: 5.87, scale: 24.35 },
       { asset: 'witchwoodTree', x: 15.1, z: -446.0, rotY: 2.01, scale: 19.14 },
-      { asset: 'witchwoodTree', x: -51.9, z: -115.1, rotY: 0.97, scale: 24.73 },
-      { asset: 'yewTree',       x: 27.9, z: -626.2, rotY: 3.88, scale: 20.17 },
+      // C4b-CLIFF { asset: 'witchwoodTree', x: -51.9, z: -115.1, rotY: 0.97, scale: 24.73 },
+      // C4b-CLIFF { asset: 'yewTree',       x: 27.9, z: -626.2, rotY: 3.88, scale: 20.17 },
       { asset: 'witchwoodTree', x: 166.7, z: -514.8, rotY: 2.29, scale: 17.33 },
       { asset: 'witchwoodTree', x: -19.3, z: -499.0, rotY: 2.08, scale: 17.17 },
       { asset: 'yewTree',       x: 82.6, z: -276.2, rotY: 3.71, scale: 20.35 },
       { asset: 'witchwoodTree', x: 10.4, z: -551.8, rotY: 2.47, scale: 24.72 },
-      { asset: 'yewTree',       x: 213.5, z: -485.0, rotY: 0.29, scale: 24.29 },
+      // C4b-CLIFF { asset: 'yewTree',       x: 213.5, z: -485.0, rotY: 0.29, scale: 24.29 },
       { asset: 'witchwoodTree', x: 133.6, z: -133.8, rotY: 0.83, scale: 23.07 },
       { asset: 'witchwoodTree', x: 257.7, z: -451.6, rotY: 0.40, scale: 21.53 },
       { asset: 'yewTree',       x: -176.1, z: -254.5, rotY: 5.39, scale: 20.42 },
       { asset: 'yewTree',       x: -172.3, z: -199.5, rotY: 1.21, scale: 20.27 },
-      { asset: 'witchwoodTree', x: 170.5, z: -175.1, rotY: 4.18, scale: 25.92 },
+      // C4b-CLIFF { asset: 'witchwoodTree', x: 170.5, z: -175.1, rotY: 4.18, scale: 25.92 },
       { asset: 'witchwoodTree', x: -174.5, z: -312.4, rotY: 6.28, scale: 19.49 },
       { asset: 'witchwoodTree', x: 215.3, z: -208.5, rotY: 4.54, scale: 21.10 },
-      { asset: 'yewTree',       x: -128.5, z: -135.7, rotY: 3.79, scale: 23.96 },
+      // C4b-CLIFF { asset: 'yewTree',       x: -128.5, z: -135.7, rotY: 3.79, scale: 23.96 },
       { asset: 'yewTree',       x: -70.6, z: -476.1, rotY: 0.66, scale: 17.22 },
       { asset: 'yewTree',       x: 153.1, z: -460.7, rotY: 4.43, scale: 24.56 },
       { asset: 'yewTree',       x: 166.7, z: -405.7, rotY: 3.46, scale: 21.21 },
       { asset: 'witchwoodTree', x: -178.2, z: -424.2, rotY: 3.80, scale: 18.06 },
-      { asset: 'witchwoodTree', x: 234.8, z: -262.1, rotY: 0.64, scale: 22.96 },
+      // C4b-CLIFF { asset: 'witchwoodTree', x: 234.8, z: -262.1, rotY: 0.64, scale: 22.96 },
       { asset: 'yewTree',       x: -225.0, z: -453.3, rotY: 3.29, scale: 18.43 },
       { asset: 'witchwoodTree', x: -124.3, z: -436.8, rotY: 2.66, scale: 21.83 },
       { asset: 'yewTree',       x: 229.5, z: -404.2, rotY: 1.94, scale: 21.67 },
@@ -87851,24 +87926,24 @@ window.WH_CONFIG = {
       { asset: 'witchwoodTree', x: 213.9, z: -351.0, rotY: 5.37, scale: 19.05 },
       { asset: 'witchwoodTree', x: -225.1, z: -281.7, rotY: 5.06, scale: 24.34 },
       { asset: 'yewTree',       x: 134.1, z: -353.5, rotY: 3.67, scale: 25.62 },
-      { asset: 'witchwoodTree', x: -27.4, z: -626.8, rotY: 1.85, scale: 16.17 },
-      { asset: 'yewTree',       x: -223.2, z: -508.4, rotY: 2.75, scale: 16.17 },
-      { asset: 'witchwoodTree', x: -82.5, z: -615.5, rotY: 2.89, scale: 19.50 },
+      // C4b-CLIFF { asset: 'witchwoodTree', x: -27.4, z: -626.8, rotY: 1.85, scale: 16.17 },
+      // C4b-CLIFF { asset: 'yewTree',       x: -223.2, z: -508.4, rotY: 2.75, scale: 16.17 },
+      // C4b-CLIFF { asset: 'witchwoodTree', x: -82.5, z: -615.5, rotY: 2.89, scale: 19.50 },
       { asset: 'yewTree',       x: -44.9, z: -574.4, rotY: 4.00, scale: 25.82 },
       { asset: 'yewTree',       x: -233.6, z: -398.8, rotY: 1.10, scale: 18.37 },
-      { asset: 'witchwoodTree', x: -257.6, z: -326.4, rotY: 3.82, scale: 22.80 },
-      { asset: 'yewTree',       x: -133.9, z: -595.6, rotY: 1.92, scale: 18.84 },
+      // C4b-CLIFF { asset: 'witchwoodTree', x: -257.6, z: -326.4, rotY: 3.82, scale: 22.80 },
+      // C4b-CLIFF { asset: 'yewTree',       x: -133.9, z: -595.6, rotY: 1.92, scale: 18.84 },
       { asset: 'yewTree',       x: -172.1, z: -487.9, rotY: 3.54, scale: 25.24 },
       { asset: 'yewTree',       x: -87.1, z: -528.6, rotY: 1.31, scale: 19.80 },
       { asset: 'yewTree',       x: -153.6, z: -544.1, rotY: 0.28, scale: 24.45 },
-      { asset: 'yewTree',       x: 254.5, z: -313.8, rotY: 4.53, scale: 17.00 },
+      // C4b-CLIFF { asset: 'yewTree',       x: 254.5, z: -313.8, rotY: 4.53, scale: 17.00 },
       { asset: 'yewTree',       x: 136.1, z: -293.7, rotY: 4.93, scale: 22.37 },
       { asset: 'witchwoodTree', x: 47.4, z: -179.1, rotY: 3.90, scale: 24.15 },
       { asset: 'yewTree',       x: 27.0, z: -298.1, rotY: 3.88, scale: 17.84 },
       { asset: 'yewTree',       x: -224.8, z: -216.6, rotY: 5.98, scale: 22.85 },
-      { asset: 'yewTree',       x: 272.4, z: -369.0, rotY: 3.76, scale: 25.93 },
+      // C4b-NOTCH { asset: 'yewTree',       x: 272.4, z: -369.0, rotY: 3.76, scale: 25.93 },
       // ancient stumps (R-62.6 scale 2.4-3.4)
-      { asset: 'treeStump',     x: -194.5, z: -194.7, rotY: 4.64, scale: 3.00 },
+      // C4b-CLIFF { asset: 'treeStump',     x: -194.5, z: -194.7, rotY: 4.64, scale: 3.00 },
       { asset: 'treeStump',     x: -37.3, z: -478.7, rotY: 3.45, scale: 2.61 },
       { asset: 'treeStump',     x: -141.2, z: -470.1, rotY: 1.37, scale: 2.55 },
       { asset: 'treeStump',     x: 119.6, z: -318.7, rotY: 0.05, scale: 2.43 },
@@ -87878,7 +87953,7 @@ window.WH_CONFIG = {
       { asset: 'treeStump',     x: -91.3, z: -260.5, rotY: 2.28, scale: 2.85 },
       { asset: 'treeStump',     x: 57.2, z: -511.2, rotY: 4.62, scale: 2.64 },
       { asset: 'treeStump',     x: -146.0, z: -306.7, rotY: 1.93, scale: 3.22 },
-      { asset: 'treeStump',     x: 45.6, z: -112.6, rotY: 0.08, scale: 2.64 },
+      // C4b-CLIFF { asset: 'treeStump',     x: 45.6, z: -112.6, rotY: 0.08, scale: 2.64 },
       { asset: 'treeStump',     x: 158.4, z: -313.6, rotY: 2.58, scale: 3.06 },
       { asset: 'treeStump',     x: 74.5, z: -338.4, rotY: 1.59, scale: 2.61 },
       { asset: 'treeStump',     x: 91.7, z: -558.7, rotY: 5.30, scale: 3.02 },
@@ -87895,8 +87970,8 @@ window.WH_CONFIG = {
       // offline (mulberry32 seed 20261008 ^ 0xC4A, best-candidate field centers).
       { asset: 'mossBoulder',      x: -124.1, z: -180.9, rotY: 1.94, scale: 8.84 },
       { asset: 'mossBoulder',      x: -99.0, z: -396.6, rotY: 5.21, scale: 9.77 },
-      { asset: 'mossBoulder',      x: -88.9, z: -118.9, rotY: 0.63, scale: 4.18 },
-      { asset: 'mossBoulder',      x: -104.2, z: -116.7, rotY: 3.50, scale: 2.07 },
+      // C4b-CLIFF { asset: 'mossBoulder',      x: -88.9, z: -118.9, rotY: 0.63, scale: 4.18 },
+      // C4b-CLIFF { asset: 'mossBoulder',      x: -104.2, z: -116.7, rotY: 3.50, scale: 2.07 },
       { asset: 'mossBoulder',      x: -101.1, z: -113.4, rotY: 3.32, scale: 1.70 },
       { asset: 'mossBoulder',      x: 43.9, z: -577.8, rotY: 2.59, scale: 4.98 },
       { asset: 'mossBoulder',      x: 36.4, z: -580.4, rotY: 4.93, scale: 4.31 },
@@ -87917,9 +87992,9 @@ window.WH_CONFIG = {
       // tree/boulder (min 38.8), CC-C3 zones (glade, lane, Stone 50 m, rim 4 m), road
       // centerline >= 8 m + trunk. Ring hosts (deadTree is in scatter ringHosts).
       { asset: 'deadTree',         x: -21.2, z: -430.2, rotY: 2.77, scale: 9.36 },
-      { asset: 'deadTree',         x: -193.5, z: -550.8, rotY: 0.85, scale: 8.71 },
+      // C4b-CLIFF { asset: 'deadTree',         x: -193.5, z: -550.8, rotY: 0.85, scale: 8.71 },
       { asset: 'deadTree',         x: 136.9, z: -199.8, rotY: 6.04, scale: 8.29 },
-      { asset: 'deadTree',         x: -160.3, z: -158.0, rotY: 1.38, scale: 9.25 },
+      // C4b-CLIFF { asset: 'deadTree',         x: -160.3, z: -158.0, rotY: 1.38, scale: 9.25 },
       { asset: 'deadTree',         x: -40.5, z: -534.1, rotY: 3.41, scale: 9.36 },
       { asset: 'deadTree',         x: 99.2, z: -173.9, rotY: 5.66, scale: 8.05 },
       { asset: 'deadTree',         x: -209.5, z: -346.3, rotY: 3.28, scale: 8.29 },
@@ -87929,7 +88004,25 @@ window.WH_CONFIG = {
       // CC-C4a FORK MARKER (UNLIT): a standing moss slab beside the spine at the
       // ring's south junction - stands in for b3-waymarker (its only manifest key,
       // lanternWaymarker, carries a lightSockets row: a prop row would light the fork)
-      { asset: 'mossBoulder',      x: -6.5, z: -326.0, rotY: 1.57, scale: 2.40 }
+      { asset: 'mossBoulder',      x: -6.5, z: -326.0, rotY: 1.57, scale: 2.40 },
+      // CC-C4b SCREE FOOT (R-62.8): 12 rockfall boulders at the ring's foot (local
+      // r 225-240, seat slope <= 22 deg over the footprint, no ridge under them):
+      // one flanking each side of the N/E/W notch mouths (lat 14-23 m) + 6 spread
+      // along the foot (best-candidate). Road centerline >= max(6, r + 2.2 + 3),
+      // >= 9 m + r from trunks, 4 m edge gap to other props, the glade valley
+      // left open. Generated once offline (mulberry32 seed 20261008 ^ 0xC4B).
+      { asset: 'mossBoulder',      x: 17.7, z: -592.8, rotY: 0.17, scale: 2.41 },
+      { asset: 'mossBoulder',      x: -19.5, z: -592.3, rotY: 2.12, scale: 3.48 },
+      { asset: 'mossBoulder',      x: 232.7, z: -349.0, rotY: 5.95, scale: 2.25 },
+      { asset: 'mossBoulder',      x: 230.8, z: -382.3, rotY: 0.66, scale: 3.69 },
+      { asset: 'mossBoulder',      x: -233.2, z: -382.0, rotY: 4.00, scale: 2.94 },
+      { asset: 'mossBoulder',      x: -239.4, z: -350.8, rotY: 4.71, scale: 3.36 },
+      { asset: 'mossBoulder',      x: -57.3, z: -143.4, rotY: 2.74, scale: 3.88 },
+      { asset: 'mossBoulder',      x: 139.5, z: -173.0, rotY: 5.92, scale: 3.05 },
+      { asset: 'mossBoulder',      x: -167.5, z: -528.4, rotY: 1.24, scale: 3.91 },
+      { asset: 'mossBoulder',      x: 163.2, z: -533.8, rotY: 2.27, scale: 2.79 },
+      { asset: 'mossBoulder',      x: -179.6, z: -214.3, rotY: 6.08, scale: 3.75 },
+      { asset: 'mossBoulder',      x: 195.7, z: -255.0, rotY: 5.23, scale: 3.35 }
     ]
   },
 
@@ -88045,7 +88138,25 @@ window.WH_CONFIG = {
     { id: 'westRoad', regionId: 'forest_of_the_old_king',      // C4b notch mouth (-240, -366)
       points: [[-34, -366], [-66, -362], [-100, -370], [-150, -357], [-200, -370], [-240, -366]],
       halfWidth: 2.2, swayAmp: 6, swayPeriod: 90, swayRampM: 24,
-      lift: 0.13, tileLengthMeters: 3.0, repeatAcrossWidth: 1, textureSeed: 20261008 }
+      lift: 0.13, tileLengthMeters: 3.0, repeatAcrossWidth: 1, textureSeed: 20261008 },
+    // CC-C4b NOTCH BEDS: each branch road continues 30 m past its mouth down
+    // the notch axis (straight, no sway), past the soft blocker's rim line
+    // into fog: the ground there is C4's faded bed (wh-ground rim fade
+    // 240..280), so the bed descends toward the skirt. Separate rows so the
+    // branch rows above stay byte-identical; lift 0.14 (between branch 0.13
+    // and ring 0.16) so the shared mouth edge never z-fights.
+    { id: 'northNotch', regionId: 'forest_of_the_old_king',
+      points: [[0, -596], [0, -626]],
+      halfWidth: 2.2, swayAmp: 0,
+      lift: 0.14, tileLengthMeters: 3.0, repeatAcrossWidth: 1, textureSeed: 20261008 },
+    { id: 'eastNotch', regionId: 'forest_of_the_old_king',
+      points: [[240, -366], [270, -366]],
+      halfWidth: 2.2, swayAmp: 0,
+      lift: 0.14, tileLengthMeters: 3.0, repeatAcrossWidth: 1, textureSeed: 20261008 },
+    { id: 'westNotch', regionId: 'forest_of_the_old_king',
+      points: [[-240, -366], [-270, -366]],
+      halfWidth: 2.2, swayAmp: 0,
+      lift: 0.14, tileLengthMeters: 3.0, repeatAcrossWidth: 1, textureSeed: 20261008 }
   ],
 
   // Boundary between A and B: the plane z = CONFIG.boundary.z.
@@ -89480,6 +89591,8 @@ window.WH_CONFIG.leveling = {
 //   .heightAt(regionId, x, z) B-TRI ground y at WORLD (x, z); 0 off the disc
 //   .footY(regionId, x, z, r) min ground under a prop footprint (props / trees)
 //   .mesh(regionId)           the terrain mesh (positioned at (center.x, 0, center.z))
+//   .slopeTan(regionId, x, z) CC-C4b: ground steepness (tan) at WORLD (x, z)
+//   .notchNear(regionId, x, z, r) / .holdAtNotch(regionId, pos)  CC-C4b rim notch blockers
 //   .debugRaycast(regionId, x, z)  DEV ONLY (raycast, 1-3 ms/call, never per-frame)
 // WORLD -> GRID mapping: the 560 x 560 plane is centered on the region's disc
 // center, so local = (x - center.x, z - center.z) (C: (x, z + 366)); grid
@@ -89523,9 +89636,19 @@ window.WH_CONFIG.leveling = {
   // [{ x, z, r, blend, h }] applied in order (h null = the raw fBm height at
   // the flat's center: a pad that keeps its hill's level); rim = { from, to }
   // fades the height to 0 radially (null = no fade, the spike's field).
-  function makeField(T, flats, rim) {
+  // CC-C4b RIM MOUNTAINS (rim.peakH set; absent = the fade alone, C4's
+  // field): a ridge term ADDED on top of the faded fBm - rises over a
+  // smoothstep band foot..foot + blend (foot = rim.from +- footJitterM of
+  // lump noise), height peakH * (0.75 + 0.45 * lump), lump = 2-octave value
+  // noise on the T.seed salt stream (seed + lumpSalt); faded to 0 over the
+  // last edgeFadeM before the plane SQUARE's edge (mesh edge flush with the
+  // skirt); multiplied by (1 - window) of every notch (LOCAL rows, see
+  // notchRows). Zero ridge = exactly C4's height (+ 0 is bit-exact).
+  function makeField(T, flats, rim, notches) {
     var SEED = T.seed, BW = T.baseWavelength, OCT = T.octaves, LAC = T.lacunarity, GAIN = T.gain;
     var H_MAX = T.hMax, N_LO = T.nLo, N_HI = T.nHi;
+    var MTN = rim && rim.peakH ? rim : null, HALF = T.plane / 2;
+    var NOT = notches || [];
 
     // fBm, normalised to [0, 1]. Per-octave salt + offset so lattices don't align at the origin.
     function fbm01(x, z) {
@@ -89549,13 +89672,43 @@ window.WH_CONFIG.leveling = {
                h: q.h === null || q.h === undefined ? raw(q.x, q.z) : q.h };
     });
 
+    // CC-C4b notch window in [0, 1]: 1 on the notch axis within halfWidth,
+    // smoothstep to 0 by halfWidth + shoulder (outward half-plane only).
+    function notchOpen(x, z) {
+      var open = 1;
+      for (var i = 0; i < NOT.length; i++) {
+        var q = NOT[i];
+        if (x * q.ux + z * q.uz <= 0) continue;
+        var lat = Math.abs(x * q.uz - z * q.ux);
+        if (lat < q.hw + q.sh) open *= smoothstep(q.hw, q.hw + q.sh, lat);
+      }
+      return open;
+    }
+
+    // CC-C4b ridge height (0 inside the foot, exactly).
+    function ridge(x, z) {
+      var rr = Math.sqrt(x * x + z * z);
+      if (rr <= MTN.from - MTN.footJitterM) return 0;
+      var salt = SEED + MTN.lumpSalt, LW = MTN.lumpWavelength;
+      var foot = MTN.from + MTN.footJitterM * (2 * valueNoise(x / LW + 3.7, z / LW - 1.3, salt + 2) - 1);
+      if (rr <= foot) return 0;
+      var lump = 0.65 * valueNoise(x / LW, z / LW, salt) +
+        0.35 * valueNoise(x * 3 / LW + 5.1, z * 3 / LW + 8.3, salt + 1);
+      var edge = HALF - Math.max(Math.abs(x), Math.abs(z));
+      var r = MTN.peakH * (0.75 + 0.45 * lump) * smoothstep(foot, foot + MTN.blend, rr) *
+        smoothstep(0, MTN.edgeFadeM, edge);
+      return r === 0 ? 0 : r * notchOpen(x, z);
+    }
+
     // Strategy A (ANALYTIC): the continuous height; also feeds the mesh vertices.
-    function heightA(x, z) {
+    // noRidge = C4's field (the vertex-color base under the mountains).
+    function heightA(x, z, noRidge) {
       var h = raw(x, z);
       if (rim) {
         var rr = Math.sqrt(x * x + z * z);
         if (rr > rim.from) h = h * (1 - smoothstep(rim.from, rim.to, rr));
       }
+      if (MTN && !noRidge) h += ridge(x, z);
       for (var i = 0; i < F.length; i++) {
         var q = F[i], dx = x - q.x, dz = z - q.z, r2 = dx * dx + dz * dz;
         // guard kept from the spike: outside rOut the height is untouched
@@ -89565,7 +89718,21 @@ window.WH_CONFIG.leveling = {
       return h;
     }
 
-    return { fbm01: fbm01, raw: raw, heightA: heightA, flats: F, T: T };
+    return { fbm01: fbm01, raw: raw, heightA: heightA, flats: F, T: T,
+             ridge: MTN ? ridge : null, notchOpen: notchOpen, notches: NOT };
+  }
+
+  // CC-C4b: CONFIG rim.notches (WORLD mouths) -> LOCAL rows for makeField:
+  // unit outward axis (ux, uz) from the disc center through the mouth, mouth
+  // distance d, window halfWidth hw + shoulder sh (row or rim.notchShoulderM).
+  function notchRows(rim, center) {
+    if (!rim || !rim.notches) return [];
+    return rim.notches.map(function (q) {
+      var lx = q.x - center.x, lz = q.z - center.z, d = Math.sqrt(lx * lx + lz * lz);
+      return { id: q.id, x: q.x, z: q.z, ux: lx / d, uz: lz / d, d: d, hw: q.halfWidth,
+               sh: q.shoulder !== undefined ? q.shoulder : rim.notchShoulderM,
+               blocker: !!q.blocker, bedM: q.bedM || 0 };
+    });
   }
 
   // One PlaneGeometry(PLANE, PLANE, S, S), rotated flat, vertex y = heightA.
@@ -89589,8 +89756,14 @@ window.WH_CONFIG.leveling = {
       pos.setY(i, h);
       var ix = Math.round((x + HALF) / seg), iz = Math.round((z + HALF) / seg);
       grid[iz * W + ix] = pos.getY(i); // read back -> identical Float32 to the mesh
-      var t = smoothstep(0.3, H_MAX * 0.9, h);
+      // CC-C4b stone band: a ridge vertex takes C4's moss->stone lerp of
+      // the UNridged height (low faded rim ground = moss foothills), then
+      // lerps to stone by smoothstep(stoneFromH, stoneToH, h) (upper slopes).
+      // Ridge-free vertices: C4's colour exactly.
+      var rg = field.ridge ? field.ridge(x, z) : 0;
+      var t = smoothstep(0.3, H_MAX * 0.9, rg > 0 ? field.heightA(x, z, true) : h);
       col.copy(colLow).lerp(colHigh, t);
+      if (rg > 0) col.lerp(colHigh, smoothstep(T.rim.stoneFromH, T.rim.stoneToH, h));
       colors[i * 3] = col.r; colors[i * 3 + 1] = col.g; colors[i * 3 + 2] = col.b;
     }
     geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
@@ -89634,12 +89807,13 @@ window.WH_CONFIG.leveling = {
     [T.pocket, T.stonePad].forEach(function (q) {
       if (q) flats.push({ x: q.x - center.x, z: q.z - center.z, r: q.r, blend: q.blend, h: q.h });
     });
-    return makeField(T, flats, T.rim || null);
+    return makeField(T, flats, T.rim || null, notchRows(T.rim, center));
   }
 
   var CORE = {
     hash2: hash2, valueNoise: valueNoise, smoothstep: smoothstep, makeField: makeField,
-    fieldFor: fieldFor, buildTerrain: buildTerrain, gridTri: gridTri, gridHash: gridHash
+    fieldFor: fieldFor, buildTerrain: buildTerrain, gridTri: gridTri, gridHash: gridHash,
+    notchRows: notchRows
   };
 
   // ================================================================= RUNTIME
@@ -89720,6 +89894,48 @@ window.WH_CONFIG.leveling = {
     return rec ? rec.mesh : null;
   }
 
+  // CC-C4b: ground steepness (tan of the slope angle) at WORLD (x, z): central
+  // differences over the B-TRI surface, +-0.5 m (game.js cliff guard).
+  function slopeTan(regionId, x, z) {
+    var gx = heightAt(regionId, x + 0.5, z) - heightAt(regionId, x - 0.5, z);
+    var gz = heightAt(regionId, x, z + 0.5) - heightAt(regionId, x, z - 0.5);
+    return Math.sqrt(gx * gx + gz * gz);
+  }
+
+  // CC-C4b soft blockers: the blocker notch whose mouth is within r of
+  // WORLD (x, z), else null (game.js interact toast + prompt).
+  function notchNear(regionId, x, z, r) {
+    var rec = cache[regionId] || build(regionId);
+    if (!rec) return null;
+    var N = rec.field.notches;
+    for (var i = 0; i < N.length; i++) {
+      var dx = x - N[i].x, dz = z - N[i].z;
+      if (N[i].blocker && dx * dx + dz * dz <= r * r) return N[i];
+    }
+    return null;
+  }
+
+  // CC-C4b: hold the player at a blocker notch's rim line (the mouth +
+  // rim.notchHoldM along the notch axis) across the whole window + shoulder
+  // band; beyond the band the cliff guard holds. Returns true if held.
+  function holdAtNotch(regionId, pos) {
+    var rec = cache[regionId] || build(regionId);
+    if (!rec) return false;
+    var N = rec.field.notches, held = false, hold = rec.field.T.rim.notchHoldM || 0;
+    for (var i = 0; i < N.length; i++) {
+      var q = N[i];
+      if (!q.blocker) continue;
+      var lx = pos.x - rec.center.x, lz = pos.z - rec.center.z;
+      var along = lx * q.ux + lz * q.uz, lat = Math.abs(lx * q.uz - lz * q.ux);
+      if (lat < q.hw + q.sh && along > q.d + hold) {
+        pos.x -= q.ux * (along - q.d - hold);
+        pos.z -= q.uz * (along - q.d - hold);
+        held = true;
+      }
+    }
+    return held;
+  }
+
   // DEV ONLY: straight-down raycast on the mesh (the spike's strategy C).
   // Never called from a gameplay path.
   function debugRaycast(regionId, x, z) {
@@ -89734,6 +89950,7 @@ window.WH_CONFIG.leveling = {
 
   root.WH_GROUND = {
     has: has, build: build, heightAt: heightAt, footY: footY, mesh: mesh,
+    slopeTan: slopeTan, notchNear: notchNear, holdAtNotch: holdAtNotch,
     debugRaycast: debugRaycast,
     gridHash: function (regionId) { var rec = cache[regionId]; return rec ? rec.hash : null; },
     CORE: CORE
@@ -97733,6 +97950,8 @@ window.WH_ICONS = {
     function inRegion(x, z, pad) {
       if (ctr) {
         var cx = x - ctr.x, cz = z - ctr.z;
+        // CC-C4b: no flora on the rim ring (clear.floraMaxH, C only)
+        if (heightAt && C.floraMaxH !== undefined && heightAt(x, z) > C.floraMaxH) return false;
         return Math.sqrt(cx * cx + cz * cz) <= rPlay - pad;
       }
       if (Math.sqrt(x * x + z * z) > rPlay - pad) return false;
@@ -98450,10 +98669,12 @@ window.WH_ICONS = {
     // seeded terrain mesh; its flat disc stays only as the SKIRT under and
     // outside the 560 m mesh square, plain-colored at the mesh's rim color
     // (the rim fades to h 0, so mesh edge and skirt meet flush). A/B: the
-    // textured flat disc exactly as before.
+    // textured flat disc exactly as before. CC-C4b: skirt = terrain.skirtColor
+    // (stone) when set - the rim mountains' edge fade lands on it.
     var hasTerrain = window.WH_GROUND && window.WH_GROUND.has(regionId);
     var groundMat = hasTerrain ? new THREE.MeshStandardMaterial({
-      color: region.cfg.terrain.meshColorMoss,
+      color: region.cfg.terrain.skirtColor !== undefined ? region.cfg.terrain.skirtColor :
+        region.cfg.terrain.meshColorMoss,
       roughness: 0.95, metalness: 0.0, side: THREE.DoubleSide
     }) : new THREE.MeshStandardMaterial({
       color: 0xffffff,
@@ -101609,18 +101830,30 @@ window.WH_ICONS = {
   // maxStepPerFrame; tan(cap) = climbFactor * sprintSpeed / speed). The
   // blocked move first slides along one axis, else holds the pre-move spot
   // (already clamped last frame). Rolls are exempt; no falls in CC-C4.
+  // CC-C4b CLIFF GUARD (terrain.rim.cliffSlopeDeg): no UPHILL step onto
+  // ground steeper than the cliff slope, whatever the pace or heading - the
+  // per-frame cap alone lets a switchback, a slow (analog) walk or a roll
+  // creep up the rim faces. Applies to rolls too; natural C terrain (<= ~19
+  // deg) never reaches it, so off the ring the guard is C4's exactly.
   function slopeGuard(player) {
-    if (player.rolling || game.groundPrevX === undefined) return;
+    if (game.groundPrevX === undefined) return;
     var px = game.groundPrevX, pz = game.doorPrevZ;
     var dx = player.pos.x - px, dz = player.pos.z - pz;
     if (dx * dx + dz * dz < 1e-10) return;
-    var T = window.WH_REGION_DEFS.regions[game.regionManager.logic.activeId].cfg.terrain;
-    var maxUp = T.climbFactor * CFG.player.sprintSpeed * (game.groundDt || 0);
+    var rid = game.regionManager.logic.activeId;
+    var T = window.WH_REGION_DEFS.regions[rid].cfg.terrain;
+    var cliffTan = T.rim && T.rim.cliffSlopeDeg ? Math.tan(T.rim.cliffSlopeDeg * Math.PI / 180) : 0;
+    if (player.rolling && !cliffTan) return;
+    var maxUp = player.rolling ? Infinity : T.climbFactor * CFG.player.sprintSpeed * (game.groundDt || 0);
     var h0 = groundYAt(px, pz);
-    if (groundYAt(player.pos.x, player.pos.z) - h0 <= maxUp) return;
-    if (groundYAt(player.pos.x, pz) - h0 <= maxUp * Math.abs(dx) / Math.sqrt(dx * dx + dz * dz)) {
+    function blocked(x, z, up) {
+      var dh = groundYAt(x, z) - h0;
+      return dh > up || (cliffTan && dh > 0 && window.WH_GROUND.slopeTan(rid, x, z) > cliffTan);
+    }
+    if (!blocked(player.pos.x, player.pos.z, maxUp)) return;
+    if (!blocked(player.pos.x, pz, maxUp * Math.abs(dx) / Math.sqrt(dx * dx + dz * dz))) {
       player.pos.z = pz;
-    } else if (groundYAt(px, player.pos.z) - h0 <= maxUp * Math.abs(dz) / Math.sqrt(dx * dx + dz * dz)) {
+    } else if (!blocked(px, player.pos.z, maxUp * Math.abs(dz) / Math.sqrt(dx * dx + dz * dz))) {
       player.pos.x = px;
     } else {
       player.pos.x = px; player.pos.z = pz;
@@ -101657,6 +101890,9 @@ window.WH_ICONS = {
     // plane in its window holds z on the line. game.doorPrevZ = pre-move z.
     if (game.doorPrevZ !== undefined &&
         rm.logic.holdAtLockedDoor(game.doorPrevZ, player.pos)) blocked = true;
+    // CC-C4b notch soft blockers: the road runs on into fog, the player
+    // stops at the rim line (wh-ground holdAtNotch; E there = the reason toast)
+    if (groundHas() && window.WH_GROUND.holdAtNotch(rm.logic.activeId, player.pos)) blocked = true;
     // CC-C4 y-feed (after the clamp / push / door sequence, order kept):
     // slope guard, then the player stands on the ground. A/B: no terrain,
     // pos.y stays 0 (the assignment only fires on a change, e.g. C -> B).
@@ -102176,7 +102412,7 @@ window.WH_ICONS = {
     if (game.player.inputSuspended || game.player.state !== 'alive') return false;
     var p = game.player.pos;
     return tryPickup() || lootCorpseNearest(p.x, p.z, CFG.corpseLoot.lootRadius) ||
-      tryCookStation() || tryCampSleep() || tryDoorway() || tryGather();
+      tryCookStation() || tryCampSleep() || tryDoorway() || tryNotch() || tryGather();
   }
 
   // ---- CC-C2 B/C doorway (CONFIG.regionC.door) -----------------------------------
@@ -102189,6 +102425,20 @@ window.WH_ICONS = {
   function tryDoorway() {
     if (!lockedDoorNear()) return false;
     game.inventoryUI.toast(CFG.regionC.door.text.locked);
+    return true;
+  }
+
+  // ---- CC-C4b notch soft blockers (CONFIG.regionC.notchText) --------------------
+  // E near a rim notch's mouth names the reason (the toast surface above).
+  function notchNear() {
+    var p = game.player.pos;
+    return groundHas() ? window.WH_GROUND.notchNear(game.regionManager.logic.activeId,
+      p.x, p.z, CFG.regionC.notchText.interactM) : null;
+  }
+
+  function tryNotch() {
+    if (!notchNear()) return false;
+    game.inventoryUI.toast(CFG.regionC.notchText.locked);
     return true;
   }
 
@@ -102380,6 +102630,8 @@ window.WH_ICONS = {
         text = CFG.camp.text.prompt;         // C3: tent menu
       } else if (lockedDoorNear()) {
         text = CFG.regionC.door.text.prompt; // CC-C2: locked B/C door
+      } else if (notchNear()) {
+        text = CFG.regionC.notchText.prompt; // CC-C4b: rim notch mouth
       } else {
         var node = nearestGatherNode();
         if (node) text = CFG.gather.promptText.replace('{name}', CFG.gather.nodeTypes[node.type].name);

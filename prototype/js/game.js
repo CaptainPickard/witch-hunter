@@ -1155,18 +1155,30 @@
   // maxStepPerFrame; tan(cap) = climbFactor * sprintSpeed / speed). The
   // blocked move first slides along one axis, else holds the pre-move spot
   // (already clamped last frame). Rolls are exempt; no falls in CC-C4.
+  // CC-C4b CLIFF GUARD (terrain.rim.cliffSlopeDeg): no UPHILL step onto
+  // ground steeper than the cliff slope, whatever the pace or heading - the
+  // per-frame cap alone lets a switchback, a slow (analog) walk or a roll
+  // creep up the rim faces. Applies to rolls too; natural C terrain (<= ~19
+  // deg) never reaches it, so off the ring the guard is C4's exactly.
   function slopeGuard(player) {
-    if (player.rolling || game.groundPrevX === undefined) return;
+    if (game.groundPrevX === undefined) return;
     var px = game.groundPrevX, pz = game.doorPrevZ;
     var dx = player.pos.x - px, dz = player.pos.z - pz;
     if (dx * dx + dz * dz < 1e-10) return;
-    var T = window.WH_REGION_DEFS.regions[game.regionManager.logic.activeId].cfg.terrain;
-    var maxUp = T.climbFactor * CFG.player.sprintSpeed * (game.groundDt || 0);
+    var rid = game.regionManager.logic.activeId;
+    var T = window.WH_REGION_DEFS.regions[rid].cfg.terrain;
+    var cliffTan = T.rim && T.rim.cliffSlopeDeg ? Math.tan(T.rim.cliffSlopeDeg * Math.PI / 180) : 0;
+    if (player.rolling && !cliffTan) return;
+    var maxUp = player.rolling ? Infinity : T.climbFactor * CFG.player.sprintSpeed * (game.groundDt || 0);
     var h0 = groundYAt(px, pz);
-    if (groundYAt(player.pos.x, player.pos.z) - h0 <= maxUp) return;
-    if (groundYAt(player.pos.x, pz) - h0 <= maxUp * Math.abs(dx) / Math.sqrt(dx * dx + dz * dz)) {
+    function blocked(x, z, up) {
+      var dh = groundYAt(x, z) - h0;
+      return dh > up || (cliffTan && dh > 0 && window.WH_GROUND.slopeTan(rid, x, z) > cliffTan);
+    }
+    if (!blocked(player.pos.x, player.pos.z, maxUp)) return;
+    if (!blocked(player.pos.x, pz, maxUp * Math.abs(dx) / Math.sqrt(dx * dx + dz * dz))) {
       player.pos.z = pz;
-    } else if (groundYAt(px, player.pos.z) - h0 <= maxUp * Math.abs(dz) / Math.sqrt(dx * dx + dz * dz)) {
+    } else if (!blocked(px, player.pos.z, maxUp * Math.abs(dz) / Math.sqrt(dx * dx + dz * dz))) {
       player.pos.x = px;
     } else {
       player.pos.x = px; player.pos.z = pz;
@@ -1203,6 +1215,9 @@
     // plane in its window holds z on the line. game.doorPrevZ = pre-move z.
     if (game.doorPrevZ !== undefined &&
         rm.logic.holdAtLockedDoor(game.doorPrevZ, player.pos)) blocked = true;
+    // CC-C4b notch soft blockers: the road runs on into fog, the player
+    // stops at the rim line (wh-ground holdAtNotch; E there = the reason toast)
+    if (groundHas() && window.WH_GROUND.holdAtNotch(rm.logic.activeId, player.pos)) blocked = true;
     // CC-C4 y-feed (after the clamp / push / door sequence, order kept):
     // slope guard, then the player stands on the ground. A/B: no terrain,
     // pos.y stays 0 (the assignment only fires on a change, e.g. C -> B).
@@ -1722,7 +1737,7 @@
     if (game.player.inputSuspended || game.player.state !== 'alive') return false;
     var p = game.player.pos;
     return tryPickup() || lootCorpseNearest(p.x, p.z, CFG.corpseLoot.lootRadius) ||
-      tryCookStation() || tryCampSleep() || tryDoorway() || tryGather();
+      tryCookStation() || tryCampSleep() || tryDoorway() || tryNotch() || tryGather();
   }
 
   // ---- CC-C2 B/C doorway (CONFIG.regionC.door) -----------------------------------
@@ -1735,6 +1750,20 @@
   function tryDoorway() {
     if (!lockedDoorNear()) return false;
     game.inventoryUI.toast(CFG.regionC.door.text.locked);
+    return true;
+  }
+
+  // ---- CC-C4b notch soft blockers (CONFIG.regionC.notchText) --------------------
+  // E near a rim notch's mouth names the reason (the toast surface above).
+  function notchNear() {
+    var p = game.player.pos;
+    return groundHas() ? window.WH_GROUND.notchNear(game.regionManager.logic.activeId,
+      p.x, p.z, CFG.regionC.notchText.interactM) : null;
+  }
+
+  function tryNotch() {
+    if (!notchNear()) return false;
+    game.inventoryUI.toast(CFG.regionC.notchText.locked);
     return true;
   }
 
@@ -1926,6 +1955,8 @@
         text = CFG.camp.text.prompt;         // C3: tent menu
       } else if (lockedDoorNear()) {
         text = CFG.regionC.door.text.prompt; // CC-C2: locked B/C door
+      } else if (notchNear()) {
+        text = CFG.regionC.notchText.prompt; // CC-C4b: rim notch mouth
       } else {
         var node = nearestGatherNode();
         if (node) text = CFG.gather.promptText.replace('{name}', CFG.gather.nodeTypes[node.type].name);

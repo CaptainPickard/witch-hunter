@@ -487,9 +487,16 @@ window.WH_CONFIG = {
     // freeBushes asset row (bracken). "Roses" v1 = the snare bush's ash-rose
     // vertex paint in the giant rings + bushB/bramble + grass colonies.
     scatterOverrides: {
-      clear: { spawnM: 14 },          // PROPOSED, Nicko tunes (arrival glade stays open ground)
-      // the Stone plaza (assembly + ring road) keeps its breathing room
-      keepOut: [{ regionId: 'forest_of_the_old_king', x: 0, z: -366, rx: 30, rz: 30 }],
+      // CC-C4b floraMaxH: no scatter instance (trees, rings, bushes, grass,
+      // colonies) on ground higher than this (natural hills top out at hMax 5
+      // + the Stone pad 2.7): the cliff band stays bare rock. PROPOSED, Nicko tunes
+      clear: { spawnM: 14, floraMaxH: 6 },  // PROPOSED, Nicko tunes (arrival glade stays open ground)
+      // the Stone plaza (assembly + ring road) keeps its breathing room;
+      // CC-C4b: the three notch mouths (window halfWidth 10 + shoulder 8)
+      keepOut: [{ regionId: 'forest_of_the_old_king', x: 0, z: -366, rx: 30, rz: 30 },
+        { regionId: 'forest_of_the_old_king', x: 0, z: -596, rx: 18, rz: 18 },
+        { regionId: 'forest_of_the_old_king', x: 240, z: -366, rx: 18, rz: 18 },
+        { regionId: 'forest_of_the_old_king', x: -240, z: -366, rx: 18, rz: 18 }],
       // NO auto trees: giants are hand rows (CC-C3), the 55 m law holds
       treesExtra: { targetCount: { forest_of_the_old_king: 0 } },
       bushes: {
@@ -502,16 +509,20 @@ window.WH_CONFIG = {
         // pathM: rings keep scatter.clear.pathM (6 m) off every road centerline
         atTreeRing: { count: [2, 4], radiusFrac: [1.1, 1.8], pathM: 6,
           assets: [['bushA', 1, 1.2, 2.0], ['bushB', 1, 1.4, 2.4], ['whBushSnare', 2, 1.4, 2.2]] },
-        freeBushes: 40
+        // CC-C4b: x 0.8144 = the playable disc's share below floraMaxH (the
+        // bare ring would otherwise push its share inward: same interior
+        // density as C4a, the 2M ledger holds). C4a: freeBushes 40, grass 320,
+        // tuftColonies clusters 36.
+        freeBushes: 33
       },
-      grass: { count: 320 },
+      grass: { count: 261 },
       // ground colonies (region-manager whScatterPlan step 5): clusters of
       // perCluster items within spreadM; nearTreeFrac of the colony seeds
       // start in a giant's trunk band (treeBandFrac x trunk r), the rest in
       // clearings. v1 = grass-tuft colonies; moonbell/leaves/pebbles rows
       // join here once manifest keys exist.
       groundLayers: [
-        { id: 'tuftColonies', asset: 'grassTuft', clusters: 36, perCluster: [3, 8],
+        { id: 'tuftColonies', asset: 'grassTuft', clusters: 29, perCluster: [3, 8],
           spreadM: 5, height: [0.5, 0.95], nearTreeFrac: 0.5, treeBandFrac: [2.2, 4.0] }
       ]
     },
@@ -542,6 +553,14 @@ window.WH_CONFIG = {
         hintLocked: 'The forest beyond still sleeps',          // PROPOSED, Nicko tunes
         hintBack: 'Back to the Darkwood'                       // PROPOSED, Nicko tunes
       }
+    },
+    // CC-C4b NOTCH SOFT BLOCKERS (terrain.rim.notches blocker rows; game.js
+    // tryNotch + the interact prompt): E within interactM of a mouth names the
+    // reason (dormancy-toast style); the hold line is wh-ground holdAtNotch.
+    notchText: {
+      interactM: 5,                                            // PROPOSED, Nicko tunes
+      locked: 'The road beyond is lost. For now.',             // PROPOSED, Nicko tunes
+      prompt: 'E - Examine the road'                           // PROPOSED, Nicko tunes
     },
     enemies: [],                      // nothing spawns in CC-C2
     // CC-C3 ANCIENT FOREST (R-62.6, io/missions/2026-10-07-cc-c3-ancient-forest.md):
@@ -593,6 +612,11 @@ window.WH_CONFIG = {
     // 1,863,082 = 93.2% of 2M. Draw calls there: 61 props + 37 cells + 6
     // roads + terrain. Without cells (5 whole-disc layers, never distance-
     // culled) the same plan peaks at 2,637,176 - over budget.
+    // CC-C4b LEDGER: + 12 scree mossBoulder rows (<= 4 within 170 m of any
+    // playable point = + 86,396) + 3 notch ribbons (180 tris) - 20 cliff-band
+    // rows; scatter counts scaled to the non-ring share (same interior
+    // density): worst case <= 1,863,082 + 86,576 = 1,949,658 = 97.5% of 2M
+    // (upper bound - the dropped rows only lower it). Terrain tris unchanged.
     scatterCellM: 90,                 // PROPOSED, Nicko tunes
     scatterCullM: 120,                // PROPOSED, Nicko tunes
     // CC-C3 world-edge fix: the visual disc (fog formula = 336 m) left the
@@ -600,6 +624,20 @@ window.WH_CONFIG = {
     // through day fog 0.025. Floor the visual radius so the edge sits past
     // the 1/255 fog depth (94.2 m) from ANY reachable camera:
     // 400 - (278.5 + 14) = 107.5 m. A/B leave it unset (formula unchanged).
+    // CC-C4b SKYLINE (R-62.8): the rim ring now owns the world edge. From the
+    // farthest reachable spot on every bearing (the cliff guard's foot, or a
+    // notch's hold line) with the camera 10 m up, the sight line to the skirt
+    // edge (r 400) is cut by the ring on 328/360 bearings; the 32 open ones
+    // (3 notches + the glade valley) end >= 121.5 m away (T day 0.025 =
+    // 1e-4, past the 1/255 depth 94.2 m). Fog rows UNCHANGED: FogExp2 is
+    // opaque at 110 m (T night 1.9e-6, day 5.2e-4; even 0.026 gives 2.8e-4)
+    // and at 240 m for any density in the proposed 0.026-0.028 band, so a
+    // lower density buys no ring visibility. The ring reads two ways: up
+    // close (the glade valley walls 40 m from spawn, T day 0.37 / night
+    // 0.17) and as SILHOUETTE - fog-saturated terrain renders fog colour
+    // against the UNfogged sky dome (game.js setupSky), so the crest
+    // (25.7-37.7 m, 5.9-8.6 deg above the Stone's horizon) cuts a jagged
+    // fog-colour skyline instead of the flat fog/horizon line.
     visualGroundMinRadius: 400,       // PROPOSED, Nicko tunes
     // CC-C4 HEIGHTFIELD (R-62.1, io/missions/2026-10-08-cc-c4-heightfield-landing.md;
     // js/wh-ground.js). Field constants = the CC-C1 spike EXACTLY (seed 1337,
@@ -635,12 +673,39 @@ window.WH_CONFIG = {
       // r 280 disc at 4 points, so the playable rim (278.5) is <= 1.5 m from
       // the mesh edge. Heights fade to 0 between r from..to so the mesh edge is
       // flush with the flat skirt (groundY) instead of a floating cliff lip.
-      rim: { from: 240, to: 280 },    // PROPOSED, Nicko tunes
+      // CC-C4b RIM MOUNTAINS (R-62.8, io/missions/2026-10-08-cc-c4b-rim-mountains.md;
+      // wh-ground makeField ridge term): the fade above stays (the notch beds +
+      // the mesh edge keep C4's flush-to-skirt ground); a ridge is ADDED: foot
+      // from +- footJitterM (lump noise), smoothstep rise over blend to peakH *
+      // (0.75 + 0.45 * lump) (lump = 2-octave value noise, salt seed +
+      // lumpSalt, wavelength lumpWavelength), faded to 0 over the last
+      // edgeFadeM before the 560 m square's edge, cut by the notch windows.
+      // cliffSlopeDeg = the CLIFF GUARD (game.js slopeGuard): no uphill step
+      // onto ground steeper than this (rolls + switchbacks included; natural
+      // C terrain tops out ~19 deg, so it binds only on the ring). Stone
+      // vertex band: ridge vertices lerp to meshColorStone over
+      // stoneFromH..stoneToH (moss foothills, stone upper slopes).
+      // NOTCHES (the King's Roads' C4a mouths): window halfWidth on the notch
+      // axis (center -> mouth), smoothstep shoulder; blocker rows hold the
+      // player notchHoldM past the mouth (wh-ground holdAtNotch) + E toast
+      // (notchText). The 'door' notch is the arrival glade's valley (the B/C
+      // door + the spine stay on C4's ground; no blocker). All PROPOSED, Nicko tunes.
+      rim: { from: 240, to: 280, blend: 30, peakH: 34, cliffSlopeDeg: 38,
+        footJitterM: 6, lumpWavelength: 70, lumpSalt: 7919, edgeFadeM: 15,
+        stoneFromH: 6, stoneToH: 16, notchShoulderM: 8, notchHoldM: 0,
+        notches: [
+          { id: 'north', x: 0, z: -596, halfWidth: 10, blocker: true },
+          { id: 'east', x: 240, z: -366, halfWidth: 10, blocker: true },
+          { id: 'west', x: -240, z: -366, halfWidth: 10, blocker: true },
+          { id: 'door', x: 0, z: -86, halfWidth: 30, shoulder: 18 }
+        ] },
       // SLOPE GUARD (game.js clampPlayerToBounds): an uphill move is blocked
       // when dh > climbFactor * sprintSpeed * dt (the spike's maxStepPerFrame,
       // uphill only) = tan(cap) = climbFactor * sprintSpeed / speed: sprint
       // (10) ~31 deg, walk (6) ~45 deg (stepSlopeCapDeg). Natural C terrain
       // tops out ~19 deg: a safety net that almost never binds. Rolls exempt.
+      // CC-C4b: the rim ring's faces run 52-74 deg (> every cap); the cliff
+      // guard (rim.cliffSlopeDeg) closes the switchback/roll/slow-walk gaps.
       // KNOWN QUIRK (spike): a walker can climb steeper than a runner (v1 OK).
       climbFactor: 0.6,
       stepSlopeCapDeg: 45,            // PROPOSED (walk-pace equivalent of climbFactor 0.6; informational)
@@ -648,9 +713,19 @@ window.WH_CONFIG = {
       propFootR: 1.2,                 // PROPOSED, Nicko tunes (prop seat = min ground at center + 4 points at this r)
       meshColorMoss: 0x2c4424,        // low ground (spike)
       meshColorStone: 0x8c7b5e,       // high ground (spike)
+      // CC-C4b: the flat skirt under/outside the mesh square takes the stone
+      // colour (the ring now owns the world edge; through a notch the skirt
+      // reads as the mountains' rock floor fading into fog). PROPOSED, Nicko tunes
+      skirtColor: 0x8c7b5e,
       debugAssert: false,             // true: rebuild the grid once at load + log the hash check
-      gridHash: '8ae6983'            // FNV-1a of this row's S=140 grid (CC-C4 self-check; spike's own field = c5a19f53)
+      gridHash: '7ca52bd3'           // FNV-1a of this row's S=140 grid (CC-C4b rim mountains; CC-C4 flat-rim field = 8ae6983, spike's own = c5a19f53)
     },
+    // CC-C4b: rows marked '// C4b-CLIFF' seated on the new ring at a slope
+    // steeper than the sprint cap (31 deg: their footY seat would float the
+    // downhill side of the trunk) - 14 giants, 2 dead trees, 2 stumps, 2
+    // boulders; '// C4b-NOTCH' = the yew standing in the east notch bed (C4a
+    // note). Commented out, not deleted (restore = uncomment). Crest rows
+    // (slope <= 31 deg) stay: giants on the skyline. All PROPOSED, Nicko tunes.
     props: [
       // L0 glade furniture: lantern post at the spawn glade (light socket)
       { asset: 'lanternPost', x: 3.0, z: -99.0, rotY: 0.0, scale: 2.535 },
@@ -684,7 +759,7 @@ window.WH_CONFIG = {
       { asset: 'witchwoodTree', x: 35.9, z: -498.1, rotY: 3.28, scale: 20.74 },
       { asset: 'witchwoodTree', x: -55.0, z: -348.3, rotY: 1.52, scale: 24.40 },
       { asset: 'yewTree',       x: -109.2, z: -337.1, rotY: 5.97, scale: 16.98 },
-      { asset: 'yewTree',       x: 79.8, z: -120.5, rotY: 1.76, scale: 17.44 },
+      // C4b-CLIFF { asset: 'yewTree',       x: 79.8, z: -120.5, rotY: 1.76, scale: 17.44 },
       { asset: 'yewTree',       x: -50.1, z: -245.3, rotY: 3.37, scale: 21.49 },
       { asset: 'yewTree',       x: 103.5, z: -513.8, rotY: 4.77, scale: 22.99 },
       { asset: 'witchwoodTree', x: -126.7, z: -281.9, rotY: 4.90, scale: 23.08 },
@@ -698,26 +773,26 @@ window.WH_CONFIG = {
       { asset: 'witchwoodTree', x: 111.3, z: -406.2, rotY: 3.47, scale: 19.09 },
       { asset: 'yewTree',       x: 56.0, z: -349.0, rotY: 5.87, scale: 24.35 },
       { asset: 'witchwoodTree', x: 15.1, z: -446.0, rotY: 2.01, scale: 19.14 },
-      { asset: 'witchwoodTree', x: -51.9, z: -115.1, rotY: 0.97, scale: 24.73 },
-      { asset: 'yewTree',       x: 27.9, z: -626.2, rotY: 3.88, scale: 20.17 },
+      // C4b-CLIFF { asset: 'witchwoodTree', x: -51.9, z: -115.1, rotY: 0.97, scale: 24.73 },
+      // C4b-CLIFF { asset: 'yewTree',       x: 27.9, z: -626.2, rotY: 3.88, scale: 20.17 },
       { asset: 'witchwoodTree', x: 166.7, z: -514.8, rotY: 2.29, scale: 17.33 },
       { asset: 'witchwoodTree', x: -19.3, z: -499.0, rotY: 2.08, scale: 17.17 },
       { asset: 'yewTree',       x: 82.6, z: -276.2, rotY: 3.71, scale: 20.35 },
       { asset: 'witchwoodTree', x: 10.4, z: -551.8, rotY: 2.47, scale: 24.72 },
-      { asset: 'yewTree',       x: 213.5, z: -485.0, rotY: 0.29, scale: 24.29 },
+      // C4b-CLIFF { asset: 'yewTree',       x: 213.5, z: -485.0, rotY: 0.29, scale: 24.29 },
       { asset: 'witchwoodTree', x: 133.6, z: -133.8, rotY: 0.83, scale: 23.07 },
       { asset: 'witchwoodTree', x: 257.7, z: -451.6, rotY: 0.40, scale: 21.53 },
       { asset: 'yewTree',       x: -176.1, z: -254.5, rotY: 5.39, scale: 20.42 },
       { asset: 'yewTree',       x: -172.3, z: -199.5, rotY: 1.21, scale: 20.27 },
-      { asset: 'witchwoodTree', x: 170.5, z: -175.1, rotY: 4.18, scale: 25.92 },
+      // C4b-CLIFF { asset: 'witchwoodTree', x: 170.5, z: -175.1, rotY: 4.18, scale: 25.92 },
       { asset: 'witchwoodTree', x: -174.5, z: -312.4, rotY: 6.28, scale: 19.49 },
       { asset: 'witchwoodTree', x: 215.3, z: -208.5, rotY: 4.54, scale: 21.10 },
-      { asset: 'yewTree',       x: -128.5, z: -135.7, rotY: 3.79, scale: 23.96 },
+      // C4b-CLIFF { asset: 'yewTree',       x: -128.5, z: -135.7, rotY: 3.79, scale: 23.96 },
       { asset: 'yewTree',       x: -70.6, z: -476.1, rotY: 0.66, scale: 17.22 },
       { asset: 'yewTree',       x: 153.1, z: -460.7, rotY: 4.43, scale: 24.56 },
       { asset: 'yewTree',       x: 166.7, z: -405.7, rotY: 3.46, scale: 21.21 },
       { asset: 'witchwoodTree', x: -178.2, z: -424.2, rotY: 3.80, scale: 18.06 },
-      { asset: 'witchwoodTree', x: 234.8, z: -262.1, rotY: 0.64, scale: 22.96 },
+      // C4b-CLIFF { asset: 'witchwoodTree', x: 234.8, z: -262.1, rotY: 0.64, scale: 22.96 },
       { asset: 'yewTree',       x: -225.0, z: -453.3, rotY: 3.29, scale: 18.43 },
       { asset: 'witchwoodTree', x: -124.3, z: -436.8, rotY: 2.66, scale: 21.83 },
       { asset: 'yewTree',       x: 229.5, z: -404.2, rotY: 1.94, scale: 21.67 },
@@ -726,24 +801,24 @@ window.WH_CONFIG = {
       { asset: 'witchwoodTree', x: 213.9, z: -351.0, rotY: 5.37, scale: 19.05 },
       { asset: 'witchwoodTree', x: -225.1, z: -281.7, rotY: 5.06, scale: 24.34 },
       { asset: 'yewTree',       x: 134.1, z: -353.5, rotY: 3.67, scale: 25.62 },
-      { asset: 'witchwoodTree', x: -27.4, z: -626.8, rotY: 1.85, scale: 16.17 },
-      { asset: 'yewTree',       x: -223.2, z: -508.4, rotY: 2.75, scale: 16.17 },
-      { asset: 'witchwoodTree', x: -82.5, z: -615.5, rotY: 2.89, scale: 19.50 },
+      // C4b-CLIFF { asset: 'witchwoodTree', x: -27.4, z: -626.8, rotY: 1.85, scale: 16.17 },
+      // C4b-CLIFF { asset: 'yewTree',       x: -223.2, z: -508.4, rotY: 2.75, scale: 16.17 },
+      // C4b-CLIFF { asset: 'witchwoodTree', x: -82.5, z: -615.5, rotY: 2.89, scale: 19.50 },
       { asset: 'yewTree',       x: -44.9, z: -574.4, rotY: 4.00, scale: 25.82 },
       { asset: 'yewTree',       x: -233.6, z: -398.8, rotY: 1.10, scale: 18.37 },
-      { asset: 'witchwoodTree', x: -257.6, z: -326.4, rotY: 3.82, scale: 22.80 },
-      { asset: 'yewTree',       x: -133.9, z: -595.6, rotY: 1.92, scale: 18.84 },
+      // C4b-CLIFF { asset: 'witchwoodTree', x: -257.6, z: -326.4, rotY: 3.82, scale: 22.80 },
+      // C4b-CLIFF { asset: 'yewTree',       x: -133.9, z: -595.6, rotY: 1.92, scale: 18.84 },
       { asset: 'yewTree',       x: -172.1, z: -487.9, rotY: 3.54, scale: 25.24 },
       { asset: 'yewTree',       x: -87.1, z: -528.6, rotY: 1.31, scale: 19.80 },
       { asset: 'yewTree',       x: -153.6, z: -544.1, rotY: 0.28, scale: 24.45 },
-      { asset: 'yewTree',       x: 254.5, z: -313.8, rotY: 4.53, scale: 17.00 },
+      // C4b-CLIFF { asset: 'yewTree',       x: 254.5, z: -313.8, rotY: 4.53, scale: 17.00 },
       { asset: 'yewTree',       x: 136.1, z: -293.7, rotY: 4.93, scale: 22.37 },
       { asset: 'witchwoodTree', x: 47.4, z: -179.1, rotY: 3.90, scale: 24.15 },
       { asset: 'yewTree',       x: 27.0, z: -298.1, rotY: 3.88, scale: 17.84 },
       { asset: 'yewTree',       x: -224.8, z: -216.6, rotY: 5.98, scale: 22.85 },
-      { asset: 'yewTree',       x: 272.4, z: -369.0, rotY: 3.76, scale: 25.93 },
+      // C4b-NOTCH { asset: 'yewTree',       x: 272.4, z: -369.0, rotY: 3.76, scale: 25.93 },
       // ancient stumps (R-62.6 scale 2.4-3.4)
-      { asset: 'treeStump',     x: -194.5, z: -194.7, rotY: 4.64, scale: 3.00 },
+      // C4b-CLIFF { asset: 'treeStump',     x: -194.5, z: -194.7, rotY: 4.64, scale: 3.00 },
       { asset: 'treeStump',     x: -37.3, z: -478.7, rotY: 3.45, scale: 2.61 },
       { asset: 'treeStump',     x: -141.2, z: -470.1, rotY: 1.37, scale: 2.55 },
       { asset: 'treeStump',     x: 119.6, z: -318.7, rotY: 0.05, scale: 2.43 },
@@ -753,7 +828,7 @@ window.WH_CONFIG = {
       { asset: 'treeStump',     x: -91.3, z: -260.5, rotY: 2.28, scale: 2.85 },
       { asset: 'treeStump',     x: 57.2, z: -511.2, rotY: 4.62, scale: 2.64 },
       { asset: 'treeStump',     x: -146.0, z: -306.7, rotY: 1.93, scale: 3.22 },
-      { asset: 'treeStump',     x: 45.6, z: -112.6, rotY: 0.08, scale: 2.64 },
+      // C4b-CLIFF { asset: 'treeStump',     x: 45.6, z: -112.6, rotY: 0.08, scale: 2.64 },
       { asset: 'treeStump',     x: 158.4, z: -313.6, rotY: 2.58, scale: 3.06 },
       { asset: 'treeStump',     x: 74.5, z: -338.4, rotY: 1.59, scale: 2.61 },
       { asset: 'treeStump',     x: 91.7, z: -558.7, rotY: 5.30, scale: 3.02 },
@@ -770,8 +845,8 @@ window.WH_CONFIG = {
       // offline (mulberry32 seed 20261008 ^ 0xC4A, best-candidate field centers).
       { asset: 'mossBoulder',      x: -124.1, z: -180.9, rotY: 1.94, scale: 8.84 },
       { asset: 'mossBoulder',      x: -99.0, z: -396.6, rotY: 5.21, scale: 9.77 },
-      { asset: 'mossBoulder',      x: -88.9, z: -118.9, rotY: 0.63, scale: 4.18 },
-      { asset: 'mossBoulder',      x: -104.2, z: -116.7, rotY: 3.50, scale: 2.07 },
+      // C4b-CLIFF { asset: 'mossBoulder',      x: -88.9, z: -118.9, rotY: 0.63, scale: 4.18 },
+      // C4b-CLIFF { asset: 'mossBoulder',      x: -104.2, z: -116.7, rotY: 3.50, scale: 2.07 },
       { asset: 'mossBoulder',      x: -101.1, z: -113.4, rotY: 3.32, scale: 1.70 },
       { asset: 'mossBoulder',      x: 43.9, z: -577.8, rotY: 2.59, scale: 4.98 },
       { asset: 'mossBoulder',      x: 36.4, z: -580.4, rotY: 4.93, scale: 4.31 },
@@ -792,9 +867,9 @@ window.WH_CONFIG = {
       // tree/boulder (min 38.8), CC-C3 zones (glade, lane, Stone 50 m, rim 4 m), road
       // centerline >= 8 m + trunk. Ring hosts (deadTree is in scatter ringHosts).
       { asset: 'deadTree',         x: -21.2, z: -430.2, rotY: 2.77, scale: 9.36 },
-      { asset: 'deadTree',         x: -193.5, z: -550.8, rotY: 0.85, scale: 8.71 },
+      // C4b-CLIFF { asset: 'deadTree',         x: -193.5, z: -550.8, rotY: 0.85, scale: 8.71 },
       { asset: 'deadTree',         x: 136.9, z: -199.8, rotY: 6.04, scale: 8.29 },
-      { asset: 'deadTree',         x: -160.3, z: -158.0, rotY: 1.38, scale: 9.25 },
+      // C4b-CLIFF { asset: 'deadTree',         x: -160.3, z: -158.0, rotY: 1.38, scale: 9.25 },
       { asset: 'deadTree',         x: -40.5, z: -534.1, rotY: 3.41, scale: 9.36 },
       { asset: 'deadTree',         x: 99.2, z: -173.9, rotY: 5.66, scale: 8.05 },
       { asset: 'deadTree',         x: -209.5, z: -346.3, rotY: 3.28, scale: 8.29 },
@@ -804,7 +879,25 @@ window.WH_CONFIG = {
       // CC-C4a FORK MARKER (UNLIT): a standing moss slab beside the spine at the
       // ring's south junction - stands in for b3-waymarker (its only manifest key,
       // lanternWaymarker, carries a lightSockets row: a prop row would light the fork)
-      { asset: 'mossBoulder',      x: -6.5, z: -326.0, rotY: 1.57, scale: 2.40 }
+      { asset: 'mossBoulder',      x: -6.5, z: -326.0, rotY: 1.57, scale: 2.40 },
+      // CC-C4b SCREE FOOT (R-62.8): 12 rockfall boulders at the ring's foot (local
+      // r 225-240, seat slope <= 22 deg over the footprint, no ridge under them):
+      // one flanking each side of the N/E/W notch mouths (lat 14-23 m) + 6 spread
+      // along the foot (best-candidate). Road centerline >= max(6, r + 2.2 + 3),
+      // >= 9 m + r from trunks, 4 m edge gap to other props, the glade valley
+      // left open. Generated once offline (mulberry32 seed 20261008 ^ 0xC4B).
+      { asset: 'mossBoulder',      x: 17.7, z: -592.8, rotY: 0.17, scale: 2.41 },
+      { asset: 'mossBoulder',      x: -19.5, z: -592.3, rotY: 2.12, scale: 3.48 },
+      { asset: 'mossBoulder',      x: 232.7, z: -349.0, rotY: 5.95, scale: 2.25 },
+      { asset: 'mossBoulder',      x: 230.8, z: -382.3, rotY: 0.66, scale: 3.69 },
+      { asset: 'mossBoulder',      x: -233.2, z: -382.0, rotY: 4.00, scale: 2.94 },
+      { asset: 'mossBoulder',      x: -239.4, z: -350.8, rotY: 4.71, scale: 3.36 },
+      { asset: 'mossBoulder',      x: -57.3, z: -143.4, rotY: 2.74, scale: 3.88 },
+      { asset: 'mossBoulder',      x: 139.5, z: -173.0, rotY: 5.92, scale: 3.05 },
+      { asset: 'mossBoulder',      x: -167.5, z: -528.4, rotY: 1.24, scale: 3.91 },
+      { asset: 'mossBoulder',      x: 163.2, z: -533.8, rotY: 2.27, scale: 2.79 },
+      { asset: 'mossBoulder',      x: -179.6, z: -214.3, rotY: 6.08, scale: 3.75 },
+      { asset: 'mossBoulder',      x: 195.7, z: -255.0, rotY: 5.23, scale: 3.35 }
     ]
   },
 
@@ -920,7 +1013,25 @@ window.WH_CONFIG = {
     { id: 'westRoad', regionId: 'forest_of_the_old_king',      // C4b notch mouth (-240, -366)
       points: [[-34, -366], [-66, -362], [-100, -370], [-150, -357], [-200, -370], [-240, -366]],
       halfWidth: 2.2, swayAmp: 6, swayPeriod: 90, swayRampM: 24,
-      lift: 0.13, tileLengthMeters: 3.0, repeatAcrossWidth: 1, textureSeed: 20261008 }
+      lift: 0.13, tileLengthMeters: 3.0, repeatAcrossWidth: 1, textureSeed: 20261008 },
+    // CC-C4b NOTCH BEDS: each branch road continues 30 m past its mouth down
+    // the notch axis (straight, no sway), past the soft blocker's rim line
+    // into fog: the ground there is C4's faded bed (wh-ground rim fade
+    // 240..280), so the bed descends toward the skirt. Separate rows so the
+    // branch rows above stay byte-identical; lift 0.14 (between branch 0.13
+    // and ring 0.16) so the shared mouth edge never z-fights.
+    { id: 'northNotch', regionId: 'forest_of_the_old_king',
+      points: [[0, -596], [0, -626]],
+      halfWidth: 2.2, swayAmp: 0,
+      lift: 0.14, tileLengthMeters: 3.0, repeatAcrossWidth: 1, textureSeed: 20261008 },
+    { id: 'eastNotch', regionId: 'forest_of_the_old_king',
+      points: [[240, -366], [270, -366]],
+      halfWidth: 2.2, swayAmp: 0,
+      lift: 0.14, tileLengthMeters: 3.0, repeatAcrossWidth: 1, textureSeed: 20261008 },
+    { id: 'westNotch', regionId: 'forest_of_the_old_king',
+      points: [[-240, -366], [-270, -366]],
+      halfWidth: 2.2, swayAmp: 0,
+      lift: 0.14, tileLengthMeters: 3.0, repeatAcrossWidth: 1, textureSeed: 20261008 }
   ],
 
   // Boundary between A and B: the plane z = CONFIG.boundary.z.

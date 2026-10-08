@@ -937,6 +937,8 @@
     function inRegion(x, z, pad) {
       if (ctr) {
         var cx = x - ctr.x, cz = z - ctr.z;
+        // CC-C4b: no flora on the rim ring (clear.floraMaxH, C only)
+        if (heightAt && C.floraMaxH !== undefined && heightAt(x, z) > C.floraMaxH) return false;
         return Math.sqrt(cx * cx + cz * cz) <= rPlay - pad;
       }
       if (Math.sqrt(x * x + z * z) > rPlay - pad) return false;
@@ -1654,10 +1656,12 @@
     // seeded terrain mesh; its flat disc stays only as the SKIRT under and
     // outside the 560 m mesh square, plain-colored at the mesh's rim color
     // (the rim fades to h 0, so mesh edge and skirt meet flush). A/B: the
-    // textured flat disc exactly as before.
+    // textured flat disc exactly as before. CC-C4b: skirt = terrain.skirtColor
+    // (stone) when set - the rim mountains' edge fade lands on it.
     var hasTerrain = window.WH_GROUND && window.WH_GROUND.has(regionId);
     var groundMat = hasTerrain ? new THREE.MeshStandardMaterial({
-      color: region.cfg.terrain.meshColorMoss,
+      color: region.cfg.terrain.skirtColor !== undefined ? region.cfg.terrain.skirtColor :
+        region.cfg.terrain.meshColorMoss,
       roughness: 0.95, metalness: 0.0, side: THREE.DoubleSide
     }) : new THREE.MeshStandardMaterial({
       color: 0xffffff,
