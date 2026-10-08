@@ -1,0 +1,59 @@
+[PASS] mesh.counts: 13085 verts / 20060 tris (raw 13085 / 20060)
+[PASS] mesh.drift: max |drift| POSITION 0 NORMAL 0 TEXCOORD_0 0; indices equal True; bitwise-identical True
+[PASS] texture.bytes: 868300 B image/jpeg == raw atlas: True
+[PASS] material: PBR {'baseColorFactor': [1.0, 1.0, 1.0, 1.0], 'metallicFactor': 0.0, 'roughnessFactor': 0.8, 'baseColorTexture': {'index': 0, 'texCoord': 0}}
+[PASS] skin.topology: 1 skin, 21 joints: ['BL_Foot', 'BL_Leg', 'BL_UpperLeg', 'BR_Foot', 'BR_Leg', 'BR_UpperLeg', 'Chest', 'FL_Foot', 'FL_Leg', 'FL_UpperLeg', 'FR_Foot', 'FR_Leg', 'FR_UpperLeg', 'Head', 'Jaw', 'Neck', 'Root', 'Spine', 'Tail1', 'Tail2', 'Tail3']
+[PASS] skin.weights: influences hist [0, 5932, 5947, 1197, 9], |sum-1| max 8.9e-08
+[PASS] skin.jaw_tail_law: Jaw-weighted verts outside snout: 0; Tail-weighted verts on rump/chest: 0; Jaw verts 157, Tail verts 889
+[PASS] clips.names: ['WH_Wolf_Attack1', 'WH_Wolf_Death', 'WH_Wolf_Hit', 'WH_Wolf_Idle', 'WH_Wolf_Run', 'WH_Wolf_Walk']
+[PASS] clip.WH_Wolf_Idle: 3.0000s (spec 3.0s, +0.00%), 63 channels = 21 bones x T/R/S, 97 keys
+[PASS] clip.WH_Wolf_Walk: 1.0000s (spec 1.0s, +0.00%), 63 channels = 21 bones x T/R/S, 45 keys
+[PASS] clip.WH_Wolf_Run: 0.5500s (spec 0.55s, +0.00%), 63 channels = 21 bones x T/R/S, 17 keys
+[PASS] clip.WH_Wolf_Attack1: 0.7000s (spec 0.7s, -0.00%), 63 channels = 21 bones x T/R/S, 26 keys
+[PASS] clip.WH_Wolf_Hit: 0.4000s (spec 0.4s, +0.00%), 63 channels = 21 bones x T/R/S, 16 keys
+[PASS] clip.WH_Wolf_Death: 1.1000s (spec 1.1s, +0.00%), 63 channels = 21 bones x T/R/S, 39 keys
+[PASS] root.static: Root max deviation from rest over all keys of all clips 0
+[PASS] seamless.WH_Wolf_Idle: max |first - last| over 63 channels 0
+[PASS] seamless.WH_Wolf_Walk: max |first - last| over 63 channels 0
+[PASS] seamless.WH_Wolf_Run: max |first - last| over 63 channels 0
+[PASS] seamless.WH_Wolf_Attack1: max |first - last| over 63 channels 0
+[PASS] seamless.WH_Wolf_Hit: max |first - last| over 63 channels 0
+[PASS] stance.in_out: max TRS component deviation from bind stance start/end: Idle 0.0722/0.0722, Walk 0.1565/0.1565, Run 0.3700/0.3700, Attack1 0.0000/0.0000, Hit 0.0000/0.0000, Death 0.0000/0.5216 (Attack1/Hit/Death start + Attack1/Hit end must be < 1e-4; Idle start = its sway phase 0; Walk/Run frame 0 = mid-stride, seam-checked above; Death end = prone, checked below)
+[PASS] ground.WH_Wolf_Walk: lowest skinned vertex -0.5953 (ground -0.593273, sink +0.0021 m, limit 0.02) over 45 keys
+[PASS] cadence.WH_Wolf_Walk: hip-joint height p2p FL 0.028 FR 0.028 BL 0.023 BR 0.023 | paw height p2p FL 0.080 FR 0.080 BL 0.055 BR 0.055
+[PASS] ground.WH_Wolf_Run: lowest skinned vertex -0.5961 (ground -0.593273, sink +0.0028 m, limit 0.02) over 17 keys
+[PASS] cadence.WH_Wolf_Run: hip-joint height p2p FL 0.046 FR 0.046 BL 0.037 BR 0.037 | paw height p2p FL 0.149 FR 0.149 BL 0.114 BR 0.114
+[PASS] death.prone: last frame: pelvis 0.222 m = 29.8% of rest 0.743; chest 0.222 m = 28.7% of rest 0.773; body roll 90.0 deg; mesh top 0.424 m (rest 1.189); lowest vertex -0.5903 (ground -0.593273); last-key vertex motion 0.000 mm (settled)
+[INFO] Attack1 jaw open max 38.3 deg at 0.300s; at contact key ~0.392s: 0.0 deg
+[INFO] lowest skinned vertex per clip: Idle -0.5938, Walk -0.5953, Run -0.5961, Attack1 -0.5933, Hit -0.5933, Death -0.5934
+--- pixelated variant art-direction/3d/assets/races_regen/rigged/wolf.rigged.pixelated.glb
+[PASS] mesh.counts: 13085 verts / 20060 tris (raw 13085 / 20060)
+[PASS] mesh.drift: max |drift| POSITION 0 NORMAL 0 TEXCOORD_0 0; indices equal True; bitwise-identical True
+[PASS] material: PBR {'baseColorFactor': [1.0, 1.0, 1.0, 1.0], 'metallicFactor': 0.0, 'roughnessFactor': 0.8, 'baseColorTexture': {'index': 0, 'texCoord': 0}}
+[PASS] skin.topology: 1 skin, 21 joints: ['BL_Foot', 'BL_Leg', 'BL_UpperLeg', 'BR_Foot', 'BR_Leg', 'BR_UpperLeg', 'Chest', 'FL_Foot', 'FL_Leg', 'FL_UpperLeg', 'FR_Foot', 'FR_Leg', 'FR_UpperLeg', 'Head', 'Jaw', 'Neck', 'Root', 'Spine', 'Tail1', 'Tail2', 'Tail3']
+[PASS] skin.weights: influences hist [0, 5932, 5947, 1197, 9], |sum-1| max 8.9e-08
+[PASS] skin.jaw_tail_law: Jaw-weighted verts outside snout: 0; Tail-weighted verts on rump/chest: 0; Jaw verts 157, Tail verts 889
+[PASS] clips.names: ['WH_Wolf_Attack1', 'WH_Wolf_Death', 'WH_Wolf_Hit', 'WH_Wolf_Idle', 'WH_Wolf_Run', 'WH_Wolf_Walk']
+[PASS] clip.WH_Wolf_Idle: 3.0000s (spec 3.0s, +0.00%), 63 channels = 21 bones x T/R/S, 97 keys
+[PASS] clip.WH_Wolf_Walk: 1.0000s (spec 1.0s, +0.00%), 63 channels = 21 bones x T/R/S, 45 keys
+[PASS] clip.WH_Wolf_Run: 0.5500s (spec 0.55s, +0.00%), 63 channels = 21 bones x T/R/S, 17 keys
+[PASS] clip.WH_Wolf_Attack1: 0.7000s (spec 0.7s, -0.00%), 63 channels = 21 bones x T/R/S, 26 keys
+[PASS] clip.WH_Wolf_Hit: 0.4000s (spec 0.4s, +0.00%), 63 channels = 21 bones x T/R/S, 16 keys
+[PASS] clip.WH_Wolf_Death: 1.1000s (spec 1.1s, +0.00%), 63 channels = 21 bones x T/R/S, 39 keys
+[PASS] root.static: Root max deviation from rest over all keys of all clips 0
+[PASS] seamless.WH_Wolf_Idle: max |first - last| over 63 channels 0
+[PASS] seamless.WH_Wolf_Walk: max |first - last| over 63 channels 0
+[PASS] seamless.WH_Wolf_Run: max |first - last| over 63 channels 0
+[PASS] seamless.WH_Wolf_Attack1: max |first - last| over 63 channels 0
+[PASS] seamless.WH_Wolf_Hit: max |first - last| over 63 channels 0
+[PASS] stance.in_out: max TRS component deviation from bind stance start/end: Idle 0.0722/0.0722, Walk 0.1565/0.1565, Run 0.3700/0.3700, Attack1 0.0000/0.0000, Hit 0.0000/0.0000, Death 0.0000/0.5216 (Attack1/Hit/Death start + Attack1/Hit end must be < 1e-4; Idle start = its sway phase 0; Walk/Run frame 0 = mid-stride, seam-checked above; Death end = prone, checked below)
+[PASS] ground.WH_Wolf_Walk: lowest skinned vertex -0.5953 (ground -0.593273, sink +0.0021 m, limit 0.02) over 45 keys
+[PASS] cadence.WH_Wolf_Walk: hip-joint height p2p FL 0.028 FR 0.028 BL 0.023 BR 0.023 | paw height p2p FL 0.080 FR 0.080 BL 0.055 BR 0.055
+[PASS] ground.WH_Wolf_Run: lowest skinned vertex -0.5961 (ground -0.593273, sink +0.0028 m, limit 0.02) over 17 keys
+[PASS] cadence.WH_Wolf_Run: hip-joint height p2p FL 0.046 FR 0.046 BL 0.037 BR 0.037 | paw height p2p FL 0.149 FR 0.149 BL 0.114 BR 0.114
+[PASS] death.prone: last frame: pelvis 0.222 m = 29.8% of rest 0.743; chest 0.222 m = 28.7% of rest 0.773; body roll 90.0 deg; mesh top 0.424 m (rest 1.189); lowest vertex -0.5903 (ground -0.593273); last-key vertex motion 0.000 mm (settled)
+[INFO] Attack1 jaw open max 38.3 deg at 0.300s; at contact key ~0.392s: 0.0 deg
+[INFO] lowest skinned vertex per clip: Idle -0.5938, Walk -0.5953, Run -0.5961, Attack1 -0.5933, Hit -0.5933, Death -0.5934
+[PASS] pixelated.bytes: POSITION/NORMAL/TEXCOORD_0/JOINTS_0/WEIGHTS_0/indices/IBM bytes identical True; 6 animations + sampler accessors identical True; JSON (minus bufferViews/buffers/images) identical True
+[PASS] pixelated.texture: image/png 512x512, pixel-exact v3 pixelation (512 NEAREST + 5-bit) of the raw atlas: True; 178277 B (raw atlas 868300 B)
+VERIFY GATE: 53/53 PASS
