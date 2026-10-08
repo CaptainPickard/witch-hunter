@@ -28,6 +28,14 @@ ruling in docs 00-61; conflicts with locked rulings are open questions.
 - R-62.5 CAMP CHEST: spawns at the player's camp beside the campkit pegs,
   24-slot grid (6x4), panel styled like the tent menu, opens only while at
   camp, save schema gains an additive `chest` block.
+- R-62.6 ANCIENT FOREST (Nicko playtest feedback on CC-C2, 2026-10-07):
+  trees are scaled MUCH larger and spaced MUCH farther apart - we have lots
+  of room and we use it. The Old King's forest must feel ancient. Tree
+  scale band ~16-26 (rare specimens larger), stumps 2.4-3.4, minimum
+  tree-to-tree spacing ~55m; the forest reads as sparse + massive, not
+  dense + small. The tri-budget ledger (doc 61, 2M) still governs: scale is
+  free (scale does not change tri count), so the ancient look buys
+  atmosphere without buying tris.
 
 ## BINDING SOURCE ORDER (Nicko, 2026-10-07, condensed - full text in session log)
 

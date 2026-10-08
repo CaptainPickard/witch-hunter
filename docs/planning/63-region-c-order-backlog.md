@@ -63,6 +63,9 @@ baked in before dispatch. Process law = doc 62 §13.
   no z-fighting against B's disc. A3 A/B traversal unchanged.
 
 ### CC-C3 · Tree scatter full pass + budget ledger + forest fog discipline
+- Rider (R-62.6 session, 2026-10-07): camp.js edge check becomes
+  region-aware (reads the active region's center + groundRadius) so camps
+  deploy inside C; A/B placement unchanged. Small, declared in the brief.
 - Scope: full tree scatter for r=280 with distance-culling, density per
   CC-C0 ledger + CC-C1 spike numbers; fog depth tuned so the disc edge
   never shows (doc 61 world-edge finding); tri-budget ledger row per 100
@@ -195,6 +198,7 @@ baked in before dispatch. Process law = doc 62 §13.
 | R-62.3 scene-swap dungeons | clarify 2026-10-07 | CC-C8 |
 | R-62.4 repeatable nest boss (3 in-game day re-arm) | clarify 2026-10-07 | CC-C7 |
 | R-62.5 24-slot camp chest at pegs | clarify 2026-10-07 | CC-C11 |
+| R-62.6 ANCIENT FOREST (big trees scale ~16-26, spacing ~55m) | Nicko playtest 2026-10-07 | CC-C2 first pass superseded, CC-C3 full pass |
 | TUTORIAL LAW gate | game state, verified | CC-C2 |
 | Save additive blocks (C4 law) | game state, verified | CC-C2, CC-C10, CC-C11 |
 | Wolves/AI on landed AI1 shapes | e325005 / 6aaf339 | CC-C5, CC-C6 |
