@@ -477,7 +477,10 @@
     }
     for (var i = 0; i < pts.length; i++) {
       var p = pts[i], j;
-      if (Math.sqrt(p.x * p.x + p.z * p.z) > GEO.playRadius() - SC.edgeM) return 'edge';
+      // CC-C3: rim vs the region's OWN disc (C: center + groundRadius); A/B:
+      // center null = the origin, playRadius(rid) = the global radius (today)
+      var ex = p.x - (reg.center ? reg.center.x : 0), ez = p.z - (reg.center ? reg.center.z : 0);
+      if (Math.sqrt(ex * ex + ez * ez) > GEO.playRadius(rid) - SC.edgeM) return 'edge';
       if (reg.side === 1 ? p.z < plane + SC.edgeM : p.z > plane - SC.edgeM) return 'edge';
       if (near(p, CFG.chokepoint.centerX, plane, SC.gateM) || GEO.meetsCorridor(p.x, p.z, 0)) return 'gate';
       if (DP && DP.regionId === rid && GEO.distToPath(DP, p.x, p.z) < DP.halfWidth + D.pathBand) return 'path';

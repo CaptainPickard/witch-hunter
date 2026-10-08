@@ -471,8 +471,8 @@ window.WH_CONFIG = {
     center: { x: 0, z: -366 },        // PROPOSED, Nicko tunes (doc 62 sec 1 arithmetic)
     groundRadius: 280,                // PROPOSED, Nicko tunes (R-62.2 band 250-300; A/B read world.groundRadius 90)
     groundY: -0.05,                   // PROPOSED, Nicko tunes (stub disc under B's y = 0: no z-fight)
-    groundColor: 0x1e2319,            // PROPOSED, Nicko tunes (deep-forest loam, dominant)
-    groundColor2: 0x2c2a1d,           // PROPOSED, Nicko tunes (leaf-litter umber, secondary)
+    groundColor: 0x1a2116,            // PROPOSED, Nicko tunes (CC-C3 old-king floor: deeper mossy loam, dominant; CC-C2 0x1e2319)
+    groundColor2: 0x28261a,           // PROPOSED, Nicko tunes (CC-C3 deeper leaf-litter umber, secondary; CC-C2 0x2c2a1d)
     groundSeed: 1662061217,           // PROPOSED, Nicko tunes (ground canvas PRNG seed)
     scatter: false,                   // PROPOSED, Nicko tunes (no Round E scatter in C; CC-C3 full pass)
     spawn: { x: 0, z: -96 },          // PROPOSED, Nicko tunes (10 m inside C's south rim, the L0 glade)
@@ -504,157 +504,155 @@ window.WH_CONFIG = {
       }
     },
     enemies: [],                      // nothing spawns in CC-C2
-    // First tree scatter (CC-C2 5.6): hand-placed rows, no runtime random.
-    // 120 trees (yewTree 60% / witchwoodTree 40%, min spacing 8.5 m) + 20
-    // treeStump, generated once offline (seed 20261007, best-candidate) and
-    // pasted. Distance cull: every row lies within propCullM of C's SPAWN (the
-    // arrival glade; C's center is 270 m from it, past fog-opaque) and 4 m
-    // inside C's playable rim; clear of the glade (10 m), the door->glade lane
-    // (|x| < 6, z > -110) and the lantern (6 m). CC-C3 does the full pass + ledger.
-    propCullM: 150,                   // PROPOSED, Nicko tunes
+    // CC-C3 ANCIENT FOREST (R-62.6, io/missions/2026-10-07-cc-c3-ancient-forest.md):
+    // hand-placed rows, no runtime random. CC-C2's 120-tree 8-10 band is
+    // REPLACED (not tuned). 68 trees = 6 king-specimen giants (scale 28-30,
+    // hand anchors on the door->Stone lane + flanking the Stone) + 62 ancient
+    // band (scale 16-26; yewTree 60% / witchwoodTree 40%), min tree-to-tree
+    // spacing 55.00 m (self-checked on the pasted rows), + 20 treeStump (scale
+    // 2.4-3.4, >= 14 m from trunks, >= 30 m apart). Generated once offline
+    // (mulberry32 seed 20261008, tight-fill dart throw: best of 60 valid
+    // darts per placement, rounded to 0.1 m BEFORE the spacing test) and
+    // pasted. Rows cover the FULL playable disc (<= 274.5 m from C's center =
+    // 4 m inside the playable rim); clear of the arrival glade (18 m from
+    // spawn), the lantern (6 m), the door->glade->Stone silhouette lane
+    // (|x| < 12, z > -330) and the Old King's Stone (50 m from center = the
+    // ~30 m assembly + 20 m breathing room).
+    propCullM: 274.5,                 // PROPOSED, Nicko tunes (CC-C3: GENERATION contract only = rows reach the full disc, rim - 4 m; the frame budget is cullDistanceM)
+    // CC-C3 per-frame visibility cull (region-manager cullProps): EVERY row in
+    // props (scatter, stumps, lantern, Stone) hides past cullDistanceM from
+    // the PLAYER and re-shows inside cullDistanceM * cullShowFrac (hysteresis).
+    // FOG-CULL COHERENCE: FogExp2 transmittance exp(-(d * density)^2) <= 1/255
+    // (one 8-bit level) at d >= sqrt(ln 255) / density = 2.354 / density:
+    // 94.2 m at the THINNEST C fog (day 0.025), 71.3 m at night 0.033. Show
+    // band 156.4 m and hide band 170 m are both past it: no visible pop.
+    // LEDGER (doc 61:44, 2M drawn tris): tris per GLB (measured) yewTree
+    // 28243, witchwoodTree 28084, treeStump 8109, mourningStatue 21384,
+    // cemeteryGate 20585, mossBoulder 21599, lanternPost 2500; worst-case
+    // full 170 m circle anywhere on the playable disc (2 m grid) = 49 props /
+    // 1,119,299 tris = 56% of 2M at (105.5, -394.5); arrival glade 16 props /
+    // 344,814; Stone ring 43 props / 949,682 (all placed: 101 / 2,337,856).
+    // Frustum culling only lowers these.
+    cullDistanceM: 170,               // PROPOSED, Nicko tunes (hide band, m from the player)
+    cullShowFrac: 0.92,               // PROPOSED, Nicko tunes (show band = cullDistanceM * this)
+    // CC-C3 world-edge fix: the visual disc (fog formula = 336 m) left the
+    // edge only ~43 m from a rim camera (camMaxDistance 14 outward) - visible
+    // through day fog 0.025. Floor the visual radius so the edge sits past
+    // the 1/255 fog depth (94.2 m) from ANY reachable camera:
+    // 400 - (278.5 + 14) = 107.5 m. A/B leave it unset (formula unchanged).
+    visualGroundMinRadius: 400,       // PROPOSED, Nicko tunes
     props: [
       // L0 glade furniture: lantern post at the spawn glade (light socket)
       { asset: 'lanternPost', x: 3.0, z: -99.0, rotY: 0.0, scale: 2.535 },
-      { asset: 'yewTree',       x: 33.1, z: -159.6, rotY: 0.39, scale: 9.92 },
-      { asset: 'witchwoodTree', x: -123.7, z: -157.6, rotY: 2.66, scale: 9.22 },
-      { asset: 'yewTree',       x: -57.0, z: -230.4, rotY: 1.79, scale: 8.06 },
-      { asset: 'yewTree',       x: -49.1, z: -135.8, rotY: 0.53, scale: 9.08 },
-      { asset: 'yewTree',       x: 114.8, z: -136.7, rotY: 2.84, scale: 9.70 },
-      { asset: 'witchwoodTree', x: 83.4, z: -215.3, rotY: 5.70, scale: 8.56 },
-      { asset: 'yewTree',       x: -18.8, z: -194.6, rotY: 0.37, scale: 9.60 },
-      { asset: 'yewTree',       x: -72.2, z: -172.2, rotY: 3.40, scale: 9.95 },
-      { asset: 'yewTree',       x: -2.3, z: -126.4, rotY: 0.11, scale: 9.18 },
-      { asset: 'witchwoodTree', x: 36.2, z: -216.4, rotY: 3.34, scale: 8.64 },
-      { asset: 'witchwoodTree', x: -17.2, z: -238.2, rotY: 5.10, scale: 10.25 },
-      { asset: 'witchwoodTree', x: -88.1, z: -107.6, rotY: 3.29, scale: 9.69 },
-      { asset: 'yewTree',       x: 48.3, z: -112.0, rotY: 3.96, scale: 8.91 },
-      { asset: 'yewTree',       x: -91.6, z: -209.1, rotY: 1.81, scale: 9.98 },
-      { asset: 'yewTree',       x: 80.9, z: -165.8, rotY: 0.16, scale: 9.35 },
-      { asset: 'yewTree',       x: 115.6, z: -181.7, rotY: 3.41, scale: 9.73 },
-      { asset: 'yewTree',       x: 26.5, z: -130.2, rotY: 2.55, scale: 9.91 },
-      { asset: 'yewTree',       x: -26.8, z: -159.7, rotY: 1.78, scale: 8.59 },
-      { asset: 'yewTree',       x: 87.1, z: -106.7, rotY: 4.02, scale: 8.69 },
-      { asset: 'witchwoodTree', x: -45.2, z: -199.8, rotY: 4.45, scale: 8.89 },
-      { asset: 'yewTree',       x: 13.7, z: -195.4, rotY: 4.37, scale: 10.22 },
-      { asset: 'witchwoodTree', x: -50.8, z: -96.4, rotY: 0.59, scale: 8.91 },
-      { asset: 'witchwoodTree', x: 3.4, z: -159.4, rotY: 3.71, scale: 9.47 },
-      { asset: 'yewTree',       x: 132.0, z: -154.1, rotY: 3.55, scale: 8.26 },
-      { asset: 'yewTree',       x: 93.7, z: -184.9, rotY: 2.36, scale: 8.80 },
-      { asset: 'witchwoodTree', x: 108.7, z: -159.1, rotY: 3.61, scale: 8.97 },
-      { asset: 'witchwoodTree', x: -80.4, z: -145.9, rotY: 0.79, scale: 8.15 },
-      { asset: 'yewTree',       x: -26.3, z: -95.6, rotY: 3.07, scale: 10.22 },
-      { asset: 'witchwoodTree', x: 82.9, z: -131.8, rotY: 5.31, scale: 9.49 },
-      { asset: 'witchwoodTree', x: 64.0, z: -146.3, rotY: 0.83, scale: 8.35 },
-      { asset: 'witchwoodTree', x: 60.4, z: -182.3, rotY: 4.86, scale: 8.18 },
-      { asset: 'yewTree',       x: -108.3, z: -130.0, rotY: 5.04, scale: 8.77 },
-      { asset: 'witchwoodTree', x: -50.4, z: -162.0, rotY: 3.82, scale: 9.94 },
-      { asset: 'yewTree',       x: -35.3, z: -222.5, rotY: 4.27, scale: 8.82 },
-      { asset: 'yewTree',       x: 59.9, z: -214.6, rotY: 4.64, scale: 9.31 },
-      { asset: 'witchwoodTree', x: 11.4, z: -98.0, rotY: 1.66, scale: 10.49 },
-      { asset: 'witchwoodTree', x: -25.9, z: -123.0, rotY: 1.97, scale: 9.37 },
-      { asset: 'yewTree',       x: -3.9, z: -212.5, rotY: 5.80, scale: 10.50 },
-      { asset: 'yewTree',       x: -96.2, z: -154.7, rotY: 6.12, scale: 8.67 },
-      { asset: 'yewTree',       x: 49.8, z: -202.5, rotY: 1.76, scale: 9.11 },
-      { asset: 'yewTree',       x: -128.8, z: -131.6, rotY: 4.59, scale: 8.05 },
-      { asset: 'witchwoodTree', x: -8.5, z: -106.5, rotY: 4.23, scale: 8.94 },
-      { asset: 'witchwoodTree', x: 20.3, z: -236.2, rotY: 5.03, scale: 10.04 },
-      { asset: 'witchwoodTree', x: 45.8, z: -232.9, rotY: 1.20, scale: 8.60 },
-      { asset: 'yewTree',       x: -97.6, z: -181.8, rotY: 2.69, scale: 10.06 },
-      { asset: 'witchwoodTree', x: -68.5, z: -124.7, rotY: 2.80, scale: 9.22 },
-      { asset: 'yewTree',       x: 64.2, z: -127.8, rotY: 0.44, scale: 8.67 },
-      { asset: 'yewTree',       x: -65.6, z: -196.2, rotY: 0.95, scale: 8.49 },
-      { asset: 'yewTree',       x: 53.7, z: -162.6, rotY: 5.10, scale: 9.35 },
-      { asset: 'witchwoodTree', x: -51.6, z: -214.6, rotY: 4.76, scale: 9.45 },
-      { asset: 'witchwoodTree', x: 79.9, z: -197.7, rotY: 4.46, scale: 10.13 },
-      { asset: 'witchwoodTree', x: 32.9, z: -189.3, rotY: 1.33, scale: 8.34 },
-      { asset: 'yewTree',       x: -69.0, z: -214.0, rotY: 2.20, scale: 8.64 },
-      { asset: 'witchwoodTree', x: 5.8, z: -227.8, rotY: 2.02, scale: 8.77 },
-      { asset: 'witchwoodTree', x: 33.4, z: -110.9, rotY: 6.08, scale: 9.72 },
-      { asset: 'yewTree',       x: -7.6, z: -142.7, rotY: 5.68, scale: 8.99 },
-      { asset: 'yewTree',       x: -56.5, z: -182.2, rotY: 0.41, scale: 10.16 },
-      { asset: 'yewTree',       x: -107.7, z: -197.2, rotY: 6.04, scale: 9.41 },
-      { asset: 'yewTree',       x: 108.9, z: -117.9, rotY: 0.11, scale: 9.59 },
-      { asset: 'witchwoodTree', x: 9.3, z: -177.7, rotY: 2.12, scale: 9.81 },
-      { asset: 'witchwoodTree', x: -9.0, z: -173.9, rotY: 1.32, scale: 9.82 },
-      { asset: 'witchwoodTree', x: -50.8, z: -118.7, rotY: 5.82, scale: 8.49 },
-      { asset: 'witchwoodTree', x: 133.9, z: -133.1, rotY: 0.26, scale: 9.95 },
-      { asset: 'yewTree',       x: -67.2, z: -104.8, rotY: 1.70, scale: 10.47 },
-      { asset: 'yewTree',       x: -31.9, z: -141.1, rotY: 3.02, scale: 9.61 },
-      { asset: 'witchwoodTree', x: 98.3, z: -208.1, rotY: 5.29, scale: 10.08 },
-      { asset: 'yewTree',       x: 90.7, z: -146.5, rotY: 0.74, scale: 10.42 },
-      { asset: 'yewTree',       x: 28.7, z: -98.0, rotY: 6.15, scale: 9.07 },
-      { asset: 'yewTree',       x: -30.7, z: -208.6, rotY: 0.28, scale: 9.92 },
-      { asset: 'yewTree',       x: 18.1, z: -212.2, rotY: 2.32, scale: 8.20 },
-      { asset: 'yewTree',       x: -36.5, z: -239.9, rotY: 0.38, scale: 10.17 },
-      { asset: 'yewTree',       x: -0.8, z: -245.9, rotY: 0.69, scale: 9.31 },
-      { asset: 'yewTree',       x: -119.8, z: -181.4, rotY: 5.27, scale: 9.06 },
-      { asset: 'yewTree',       x: 71.4, z: -102.3, rotY: 3.15, scale: 8.61 },
-      { asset: 'witchwoodTree', x: 44.4, z: -126.8, rotY: 0.61, scale: 9.90 },
-      { asset: 'witchwoodTree', x: -25.4, z: -179.7, rotY: 4.63, scale: 9.68 },
-      { asset: 'witchwoodTree', x: 14.4, z: -147.4, rotY: 4.97, scale: 9.65 },
-      { asset: 'witchwoodTree', x: 42.1, z: -175.0, rotY: 1.39, scale: 8.82 },
-      { asset: 'witchwoodTree', x: -43.8, z: -183.6, rotY: 4.70, scale: 8.28 },
-      { asset: 'yewTree',       x: -110.8, z: -147.6, rotY: 1.38, scale: 8.79 },
-      { asset: 'yewTree',       x: 44.2, z: -95.9, rotY: 1.78, scale: 8.68 },
-      { asset: 'witchwoodTree', x: -142.2, z: -137.8, rotY: 4.18, scale: 9.50 },
-      { asset: 'yewTree',       x: 44.9, z: -146.9, rotY: 6.13, scale: 8.23 },
-      { asset: 'yewTree',       x: -14.8, z: -155.2, rotY: 4.05, scale: 9.09 },
-      { asset: 'witchwoodTree', x: 22.7, z: -175.3, rotY: 2.93, scale: 8.33 },
-      { asset: 'yewTree',       x: -38.6, z: -105.1, rotY: 0.34, scale: 8.93 },
-      { asset: 'yewTree',       x: -79.4, z: -183.2, rotY: 2.85, scale: 8.49 },
-      { asset: 'yewTree',       x: 27.2, z: -223.0, rotY: 1.45, scale: 8.19 },
-      { asset: 'yewTree',       x: -119.8, z: -120.4, rotY: 4.92, scale: 9.25 },
-      { asset: 'witchwoodTree', x: 128.1, z: -168.4, rotY: 2.71, scale: 10.33 },
-      { asset: 'witchwoodTree', x: -105.8, z: -117.1, rotY: 4.14, scale: 8.20 },
-      { asset: 'yewTree',       x: -84.0, z: -127.4, rotY: 4.56, scale: 10.07 },
-      { asset: 'yewTree',       x: -67.0, z: -155.5, rotY: 4.25, scale: 8.44 },
-      { asset: 'yewTree',       x: -131.4, z: -145.3, rotY: 3.73, scale: 10.07 },
-      { asset: 'yewTree',       x: -87.7, z: -168.2, rotY: 0.08, scale: 9.45 },
-      { asset: 'yewTree',       x: 96.8, z: -131.9, rotY: 1.38, scale: 8.49 },
-      { asset: 'yewTree',       x: -58.8, z: -144.8, rotY: 1.51, scale: 9.52 },
-      { asset: 'witchwoodTree', x: 53.5, z: -137.8, rotY: 4.77, scale: 9.33 },
-      { asset: 'witchwoodTree', x: -6.6, z: -232.1, rotY: 2.77, scale: 9.72 },
-      { asset: 'yewTree',       x: -78.1, z: -206.3, rotY: 3.78, scale: 10.18 },
-      { asset: 'yewTree',       x: -107.9, z: -161.9, rotY: 0.13, scale: 8.15 },
-      { asset: 'witchwoodTree', x: -74.0, z: -162.1, rotY: 4.15, scale: 9.41 },
-      { asset: 'yewTree',       x: 14.2, z: -129.1, rotY: 1.82, scale: 9.97 },
-      { asset: 'yewTree',       x: -16.8, z: -217.7, rotY: 2.87, scale: 9.62 },
-      { asset: 'witchwoodTree', x: 77.8, z: -115.5, rotY: 4.89, scale: 10.33 },
-      { asset: 'witchwoodTree', x: -30.6, z: -190.1, rotY: 3.66, scale: 10.31 },
-      { asset: 'witchwoodTree', x: -44.0, z: -227.8, rotY: 6.08, scale: 9.78 },
-      { asset: 'yewTree',       x: 96.5, z: -118.4, rotY: 1.99, scale: 8.10 },
-      { asset: 'yewTree',       x: 6.5, z: -208.5, rotY: 4.19, scale: 9.29 },
-      { asset: 'witchwoodTree', x: -85.1, z: -157.2, rotY: 3.99, scale: 9.39 },
-      { asset: 'yewTree',       x: 68.5, z: -165.4, rotY: 1.52, scale: 9.16 },
-      { asset: 'witchwoodTree', x: 57.7, z: -103.1, rotY: 0.51, scale: 10.04 },
-      { asset: 'witchwoodTree', x: 15.1, z: -111.9, rotY: 1.86, scale: 10.23 },
-      { asset: 'yewTree',       x: 104.2, z: -190.3, rotY: 5.76, scale: 8.33 },
-      { asset: 'witchwoodTree', x: -3.2, z: -201.3, rotY: 3.20, scale: 9.68 },
-      { asset: 'yewTree',       x: 30.6, z: -204.0, rotY: 4.51, scale: 8.04 },
-      { asset: 'witchwoodTree', x: 21.4, z: -157.1, rotY: 2.65, scale: 9.94 },
-      { asset: 'yewTree',       x: 52.0, z: -191.1, rotY: 5.98, scale: 9.37 },
-      { asset: 'yewTree',       x: -103.9, z: -173.0, rotY: 5.10, scale: 8.46 },
-      { asset: 'witchwoodTree', x: 107.9, z: -128.4, rotY: 4.85, scale: 10.30 },
-      { asset: 'treeStump',     x: 39.0, z: -143.7, rotY: 0.99, scale: 1.14 },
-      { asset: 'treeStump',     x: 59.7, z: -208.3, rotY: 4.09, scale: 1.14 },
-      { asset: 'treeStump',     x: 13.7, z: -106.7, rotY: 6.12, scale: 1.14 },
-      { asset: 'treeStump',     x: -55.4, z: -157.1, rotY: 5.10, scale: 1.07 },
-      { asset: 'treeStump',     x: 102.1, z: -149.1, rotY: 2.47, scale: 1.08 },
-      { asset: 'treeStump',     x: 23.2, z: -190.9, rotY: 3.10, scale: 1.22 },
-      { asset: 'treeStump',     x: -96.4, z: -171.3, rotY: 0.30, scale: 1.26 },
-      { asset: 'treeStump',     x: 58.0, z: -194.5, rotY: 5.33, scale: 1.38 },
-      { asset: 'treeStump',     x: -62.9, z: -102.1, rotY: 2.15, scale: 1.29 },
-      { asset: 'treeStump',     x: 47.3, z: -105.6, rotY: 4.58, scale: 1.15 },
-      { asset: 'treeStump',     x: -2.4, z: -141.2, rotY: 5.18, scale: 1.40 },
-      { asset: 'treeStump',     x: -82.4, z: -136.0, rotY: 1.52, scale: 1.19 },
-      { asset: 'treeStump',     x: 47.8, z: -195.9, rotY: 1.75, scale: 1.41 },
-      { asset: 'treeStump',     x: 21.1, z: -104.6, rotY: 2.73, scale: 1.32 },
-      { asset: 'treeStump',     x: -18.2, z: -99.8, rotY: 2.90, scale: 1.39 },
-      { asset: 'treeStump',     x: 10.4, z: -118.6, rotY: 1.82, scale: 1.23 },
-      { asset: 'treeStump',     x: 79.4, z: -192.5, rotY: 1.52, scale: 1.27 },
-      { asset: 'treeStump',     x: -81.0, z: -216.3, rotY: 5.85, scale: 1.42 },
-      { asset: 'treeStump',     x: -61.4, z: -109.6, rotY: 5.09, scale: 1.02 },
-      { asset: 'treeStump',     x: 26.5, z: -140.2, rotY: 1.85, scale: 1.04 }
+      // OLD KING'S STONE (CC-C3 5.4): kit assembly at C's center (0, -366) on
+      // the flat stub ground (y 0). CC-C4 READER: these rows are the y-anchor
+      // - the heightfield lifts the whole assembly to h(0, -366). Props stay
+      // ordinary rows (existing collider path, no new collision code).
+      // m3 statue facing the approach (+z), m1 gate pair flanking the lane
+      // 24 m south (rotY mirrored), m9 boulder ring r 16 open to the south.
+      { asset: 'mourningStatue', x: 0.0, z: -366.0, rotY: 0.00, scale: 11.0 },
+      { asset: 'cemeteryGate',  x: -8.0, z: -342.0, rotY: 0.30, scale: 5.5 },
+      { asset: 'cemeteryGate',  x: 8.0, z: -342.0, rotY: -0.30, scale: 5.5 },
+      { asset: 'mossBoulder',   x: 10.3, z: -353.7, rotY: 0.60, scale: 2.10 },
+      { asset: 'mossBoulder',   x: 15.5, z: -361.9, rotY: 2.10, scale: 1.60 },
+      { asset: 'mossBoulder',   x: 15.0, z: -371.5, rotY: 4.40, scale: 2.40 },
+      { asset: 'mossBoulder',   x: 9.2, z: -379.1, rotY: 1.20, scale: 1.80 },
+      { asset: 'mossBoulder',   x: 0.0, z: -382.0, rotY: 3.30, scale: 2.50 },
+      { asset: 'mossBoulder',   x: -9.2, z: -379.1, rotY: 5.50, scale: 1.70 },
+      { asset: 'mossBoulder',   x: -15.0, z: -371.5, rotY: 0.20, scale: 2.20 },
+      { asset: 'mossBoulder',   x: -15.5, z: -361.9, rotY: 2.80, scale: 1.50 },
+      { asset: 'mossBoulder',   x: -10.3, z: -353.7, rotY: 4.90, scale: 2.00 },
+      // king specimen giants (R-62.6 rare band 28-30): lane + Stone approach anchors
+      { asset: 'yewTree',       x: -28.0, z: -296.0, rotY: 5.91, scale: 29.00 },
+      { asset: 'witchwoodTree', x: 30.0, z: -238.0, rotY: 0.19, scale: 28.41 },
+      { asset: 'yewTree',       x: -26.0, z: -178.0, rotY: 4.65, scale: 28.21 },
+      { asset: 'yewTree',       x: 24.0, z: -128.0, rotY: 1.94, scale: 28.73 },
+      { asset: 'witchwoodTree', x: -56.0, z: -404.0, rotY: 5.65, scale: 29.93 },
+      { asset: 'yewTree',       x: 56.0, z: -404.0, rotY: 1.91, scale: 28.67 },
+      // ancient band (R-62.6 scale 16-26, min spacing 55 m)
+      { asset: 'yewTree',       x: 86.4, z: -461.4, rotY: 4.40, scale: 20.19 },
+      { asset: 'witchwoodTree', x: 35.9, z: -498.1, rotY: 3.28, scale: 20.74 },
+      { asset: 'witchwoodTree', x: -55.0, z: -348.3, rotY: 1.52, scale: 24.40 },
+      { asset: 'yewTree',       x: -109.2, z: -337.1, rotY: 5.97, scale: 16.98 },
+      { asset: 'yewTree',       x: 79.8, z: -120.5, rotY: 1.76, scale: 17.44 },
+      { asset: 'yewTree',       x: -50.1, z: -245.3, rotY: 3.37, scale: 21.49 },
+      { asset: 'yewTree',       x: 103.5, z: -513.8, rotY: 4.77, scale: 22.99 },
+      { asset: 'witchwoodTree', x: -126.7, z: -281.9, rotY: 4.90, scale: 23.08 },
+      { asset: 'witchwoodTree', x: -141.2, z: -382.4, rotY: 2.69, scale: 21.34 },
+      { asset: 'yewTree',       x: 83.4, z: -220.7, rotY: 0.58, scale: 19.02 },
+      { asset: 'yewTree',       x: 73.1, z: -559.7, rotY: 4.38, scale: 23.50 },
+      { asset: 'witchwoodTree', x: -81.1, z: -164.7, rotY: 1.76, scale: 22.24 },
+      { asset: 'yewTree',       x: 135.9, z: -560.5, rotY: 0.46, scale: 22.61 },
+      { asset: 'yewTree',       x: -117.3, z: -227.3, rotY: 2.84, scale: 25.03 },
+      { asset: 'yewTree',       x: 84.7, z: -614.0, rotY: 0.30, scale: 18.29 },
+      { asset: 'witchwoodTree', x: 111.3, z: -406.2, rotY: 3.47, scale: 19.09 },
+      { asset: 'yewTree',       x: 56.0, z: -349.0, rotY: 5.87, scale: 24.35 },
+      { asset: 'witchwoodTree', x: 15.1, z: -446.0, rotY: 2.01, scale: 19.14 },
+      { asset: 'witchwoodTree', x: -51.9, z: -115.1, rotY: 0.97, scale: 24.73 },
+      { asset: 'yewTree',       x: 27.9, z: -626.2, rotY: 3.88, scale: 20.17 },
+      { asset: 'witchwoodTree', x: 166.7, z: -514.8, rotY: 2.29, scale: 17.33 },
+      { asset: 'witchwoodTree', x: -19.3, z: -499.0, rotY: 2.08, scale: 17.17 },
+      { asset: 'yewTree',       x: 82.6, z: -276.2, rotY: 3.71, scale: 20.35 },
+      { asset: 'witchwoodTree', x: 10.4, z: -551.8, rotY: 2.47, scale: 24.72 },
+      { asset: 'yewTree',       x: 213.5, z: -485.0, rotY: 0.29, scale: 24.29 },
+      { asset: 'witchwoodTree', x: 133.6, z: -133.8, rotY: 0.83, scale: 23.07 },
+      { asset: 'witchwoodTree', x: 257.7, z: -451.6, rotY: 0.40, scale: 21.53 },
+      { asset: 'yewTree',       x: -176.1, z: -254.5, rotY: 5.39, scale: 20.42 },
+      { asset: 'yewTree',       x: -172.3, z: -199.5, rotY: 1.21, scale: 20.27 },
+      { asset: 'witchwoodTree', x: 170.5, z: -175.1, rotY: 4.18, scale: 25.92 },
+      { asset: 'witchwoodTree', x: -174.5, z: -312.4, rotY: 6.28, scale: 19.49 },
+      { asset: 'witchwoodTree', x: 215.3, z: -208.5, rotY: 4.54, scale: 21.10 },
+      { asset: 'yewTree',       x: -128.5, z: -135.7, rotY: 3.79, scale: 23.96 },
+      { asset: 'yewTree',       x: -70.6, z: -476.1, rotY: 0.66, scale: 17.22 },
+      { asset: 'yewTree',       x: 153.1, z: -460.7, rotY: 4.43, scale: 24.56 },
+      { asset: 'yewTree',       x: 166.7, z: -405.7, rotY: 3.46, scale: 21.21 },
+      { asset: 'witchwoodTree', x: -178.2, z: -424.2, rotY: 3.80, scale: 18.06 },
+      { asset: 'witchwoodTree', x: 234.8, z: -262.1, rotY: 0.64, scale: 22.96 },
+      { asset: 'yewTree',       x: -225.0, z: -453.3, rotY: 3.29, scale: 18.43 },
+      { asset: 'witchwoodTree', x: -124.3, z: -436.8, rotY: 2.66, scale: 21.83 },
+      { asset: 'yewTree',       x: 229.5, z: -404.2, rotY: 1.94, scale: 21.67 },
+      { asset: 'yewTree',       x: 191.0, z: -297.9, rotY: 2.52, scale: 23.34 },
+      { asset: 'yewTree',       x: 172.1, z: -242.9, rotY: 1.81, scale: 22.22 },
+      { asset: 'witchwoodTree', x: 213.9, z: -351.0, rotY: 5.37, scale: 19.05 },
+      { asset: 'witchwoodTree', x: -225.1, z: -281.7, rotY: 5.06, scale: 24.34 },
+      { asset: 'yewTree',       x: 134.1, z: -353.5, rotY: 3.67, scale: 25.62 },
+      { asset: 'witchwoodTree', x: -27.4, z: -626.8, rotY: 1.85, scale: 16.17 },
+      { asset: 'yewTree',       x: -223.2, z: -508.4, rotY: 2.75, scale: 16.17 },
+      { asset: 'witchwoodTree', x: -82.5, z: -615.5, rotY: 2.89, scale: 19.50 },
+      { asset: 'yewTree',       x: -44.9, z: -574.4, rotY: 4.00, scale: 25.82 },
+      { asset: 'yewTree',       x: -233.6, z: -398.8, rotY: 1.10, scale: 18.37 },
+      { asset: 'witchwoodTree', x: -257.6, z: -326.4, rotY: 3.82, scale: 22.80 },
+      { asset: 'yewTree',       x: -133.9, z: -595.6, rotY: 1.92, scale: 18.84 },
+      { asset: 'yewTree',       x: -172.1, z: -487.9, rotY: 3.54, scale: 25.24 },
+      { asset: 'yewTree',       x: -87.1, z: -528.6, rotY: 1.31, scale: 19.80 },
+      { asset: 'yewTree',       x: -153.6, z: -544.1, rotY: 0.28, scale: 24.45 },
+      { asset: 'yewTree',       x: 254.5, z: -313.8, rotY: 4.53, scale: 17.00 },
+      { asset: 'yewTree',       x: 136.1, z: -293.7, rotY: 4.93, scale: 22.37 },
+      { asset: 'witchwoodTree', x: 47.4, z: -179.1, rotY: 3.90, scale: 24.15 },
+      { asset: 'yewTree',       x: 27.0, z: -298.1, rotY: 3.88, scale: 17.84 },
+      { asset: 'yewTree',       x: -224.8, z: -216.6, rotY: 5.98, scale: 22.85 },
+      { asset: 'yewTree',       x: 272.4, z: -369.0, rotY: 3.76, scale: 25.93 },
+      // ancient stumps (R-62.6 scale 2.4-3.4)
+      { asset: 'treeStump',     x: -194.5, z: -194.7, rotY: 4.64, scale: 3.00 },
+      { asset: 'treeStump',     x: -37.3, z: -478.7, rotY: 3.45, scale: 2.61 },
+      { asset: 'treeStump',     x: -141.2, z: -470.1, rotY: 1.37, scale: 2.55 },
+      { asset: 'treeStump',     x: 119.6, z: -318.7, rotY: 0.05, scale: 2.43 },
+      { asset: 'treeStump',     x: 92.5, z: -112.4, rotY: 3.46, scale: 2.81 },
+      { asset: 'treeStump',     x: 104.0, z: -389.0, rotY: 2.57, scale: 3.04 },
+      { asset: 'treeStump',     x: -34.9, z: -448.5, rotY: 4.96, scale: 3.24 },
+      { asset: 'treeStump',     x: -91.3, z: -260.5, rotY: 2.28, scale: 2.85 },
+      { asset: 'treeStump',     x: 57.2, z: -511.2, rotY: 4.62, scale: 2.64 },
+      { asset: 'treeStump',     x: -146.0, z: -306.7, rotY: 1.93, scale: 3.22 },
+      { asset: 'treeStump',     x: 45.6, z: -112.6, rotY: 0.08, scale: 2.64 },
+      { asset: 'treeStump',     x: 158.4, z: -313.6, rotY: 2.58, scale: 3.06 },
+      { asset: 'treeStump',     x: 74.5, z: -338.4, rotY: 1.59, scale: 2.61 },
+      { asset: 'treeStump',     x: 91.7, z: -558.7, rotY: 5.30, scale: 3.02 },
+      { asset: 'treeStump',     x: 31.1, z: -144.7, rotY: 1.03, scale: 3.01 },
+      { asset: 'treeStump',     x: -49.0, z: -183.3, rotY: 0.64, scale: 2.54 },
+      { asset: 'treeStump',     x: 183.7, z: -278.0, rotY: 4.57, scale: 2.49 },
+      { asset: 'treeStump',     x: -101.6, z: -580.6, rotY: 2.41, scale: 2.93 },
+      { asset: 'treeStump',     x: -156.7, z: -245.8, rotY: 5.95, scale: 3.31 },
+      { asset: 'treeStump',     x: 162.8, z: -232.1, rotY: 3.84, scale: 2.96 }
     ]
   },
 

@@ -260,8 +260,13 @@
     var W = CFG.world;
     var d95 = Math.sqrt(-Math.log(1 - W.fogOpaqueFrac)) /
       DEFS.regions[regionId].fogDensity;
-    return Math.max(whGroundRadius(regionId),
+    var r = Math.max(whGroundRadius(regionId),
       whPlayRadius(regionId) + W.visualGroundFogMult * d95);
+    // CC-C3: a region may floor it (C: the edge past the 1/255 fog depth of
+    // its thinnest phase fog from any reachable camera); A/B leave the row
+    // unset = the formula alone
+    var floor = DEFS.regions[regionId].cfg.visualGroundMinRadius;
+    return floor ? Math.max(r, floor) : r;
   }
 
   // Radial rim clamp that respects a home-side plane limit (limitZ null = no
@@ -1439,6 +1444,9 @@
 
     // props from manifest
     var regionCfg = region.cfg;
+    // CC-C3: a region whose CONFIG sets cullDistanceM (C only) records every
+    // prop for the per-frame visibility cull (cullProps); A/B: no list
+    var cullList = regionCfg.cullDistanceM ? [] : null;
     for (var i = 0; i < regionCfg.props.length; i++) {
       var p = regionCfg.props[i];
       var obj = window.WH_ASSETS.instance(p.asset);
@@ -1446,6 +1454,7 @@
       obj.rotation.y = p.rotY;
       obj.scale.setScalar(p.scale);
       group.add(obj);
+      if (cullList) cullList.push({ obj: obj, x: p.x, z: p.z });
     }
 
     // Round E scatter: extra trees as normal props (colliders via
@@ -1458,7 +1467,10 @@
       tObj.rotation.y = sTree.rotY;
       tObj.scale.setScalar(sTree.scale);
       group.add(tObj);
+      if (cullList) cullList.push({ obj: tObj, x: sTree.x, z: sTree.z });
     }
+    this.cullLists = this.cullLists || {};
+    if (cullList) this.cullLists[regionId] = cullList;
     Object.keys(plan.instances).forEach(function (name) {
       whBuildInstanced(name, plan.instances[name]).forEach(function (im) {
         group.add(im);
@@ -1520,6 +1532,29 @@
     });
     delete this.groups[regionId];
     delete this.enemies[regionId];
+    if (this.cullLists) delete this.cullLists[regionId];   // CC-C3
+  };
+
+  // CC-C3 per-frame visibility cull (C only: regions without a cull list,
+  // A/B, return at once). Distance from the PLAYER (x, z) to each recorded
+  // prop: visible props hide past cullDistanceM, hidden props re-show inside
+  // cullDistanceM * cullShowFrac (hysteresis, no flicker at the band). Both
+  // bands sit past C's fog-invisible depth (CONFIG.regionC ledger), so the
+  // toggle is never seen. No allocation; no geometry rebuild.
+  RegionManager.prototype.cullProps = function (regionId, x, z) {
+    var list = this.cullLists && this.cullLists[regionId];
+    if (!list) return;
+    var cfg = DEFS.regions[regionId].cfg;
+    var hide2 = cfg.cullDistanceM * cfg.cullDistanceM;
+    var show = cfg.cullDistanceM * cfg.cullShowFrac, show2 = show * show;
+    for (var i = 0; i < list.length; i++) {
+      var c = list[i], dx = c.x - x, dz = c.z - z, d2 = dx * dx + dz * dz;
+      if (c.obj.visible) {
+        if (d2 > hide2) c.obj.visible = false;
+      } else if (d2 < show2) {
+        c.obj.visible = true;
+      }
+    }
   };
 
   // Main per-frame entry. Applies transition logic to live scene. Returns the
@@ -1558,6 +1593,10 @@
       this.disposeHiddenExcept(null);   // CC-C2: no stale pre-warm of a third region
       this.enemies[result.newActiveId] = this.enemies[result.newActiveId] || [];
     }
+    // CC-C3: the active region's prop cull (on a cross: at the mapped spot)
+    this.cullProps(this.logic.activeId,
+      result.mappedPos ? result.mappedPos.x : x,
+      result.mappedPos ? result.mappedPos.z : z);
     return result;
   };
 
