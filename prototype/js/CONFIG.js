@@ -2351,6 +2351,47 @@ window.WH_CONFIG.equip = {
   }
 };
 
+// R-64.4 (Nicko 10-09) starting classes, picked on the NEW GAME path only
+// (CONTINUE never re-kits). Every row is BUILT FROM the single-kit rows
+// above - inventory.startingItems, equip.defaultHands, belt.defaultSpells,
+// actionbar.defaults stay the data source AND the no-class fallback (that
+// fallback = today's exact kit). kit = grid rows (hands are pulled OUT of
+// it at boot), hands = { right, left }, spells = the learned-spell belt
+// (null = not known), belt = the action-bar defaults (null = empty slot).
+// lines = the two picker text lines (hands | kit + spell knowledge).
+// Wanderer casts nothing v1 (right hand = attack chain); magic is the
+// Magician's lane. Bandage x1 both; actionbar.pickerExclude unchanged.
+window.WH_CONFIG.startingClasses = (function (C) {
+  var KIT = C.inventory.startingItems, HANDS = C.equip.defaultHands;
+  var SPELLS = C.belt.defaultSpells, BAR = C.actionbar.defaults;
+  function kitRow(id, nth) {        // the nth (0-based) startingItems row of id
+    return KIT.filter(function (r) { return r.id === id; })[nth || 0];
+  }
+  function barSlot(id) {            // the actionbar.defaults entry for id
+    return BAR.filter(function (e) { return e.id === id; })[0] || null;
+  }
+  var none = SPELLS.map(function () { return null; });
+  return {
+    order: ['wanderer', 'magician'],
+    wanderer: {
+      label: 'Wanderer',
+      lines: ['Longsword right, shield left', 'Torch, bandage - no spells'],
+      kit: [kitRow('longsword'), kitRow('roundShield'), { id: 'torch', count: 1 }, kitRow('bandage')],
+      hands: { right: HANDS.right, left: barSlot('roundShield').id },
+      spells: none,
+      belt: [null, null, barSlot('roundShield'), barSlot('torch'), null]
+    },
+    magician: {
+      label: 'Magician',
+      lines: ['Magic gloves in both hands', 'Bandage - knows Firebolt + Radiance'],
+      kit: [kitRow('magicGlove', 0), kitRow('magicGlove', 1), kitRow('bandage')],
+      hands: { right: HANDS.left, left: HANDS.left },
+      spells: SPELLS.slice(),
+      belt: [barSlot(SPELLS[0]), barSlot(SPELLS[1]), null, null, null]
+    }
+  };
+})(window.WH_CONFIG);
+
 // Inventory screen (DOM modal). While open, player movement/combat input is
 // suspended (the world keeps running).
 window.WH_CONFIG.inventoryUI = {

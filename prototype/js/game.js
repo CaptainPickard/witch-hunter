@@ -547,8 +547,10 @@
   // CONFIG.actionbar.lsKey) and its editing; the player reads it through
   // player.actionMapSource / actionSlot(i) and owns validation
   // (WH_Player.validActionEntry).
+  // R-64.4: game.actionDefaults = the picked class's bar (startingClasses
+  // [id].belt), null = CONFIG.actionbar.defaults (no class / old saves).
   function defaultActionEntry(i) {
-    var d = CFG.actionbar.defaults[i];
+    var d = (game.actionDefaults || CFG.actionbar.defaults)[i];
     return d ? { kind: d.kind, id: d.id } : null;
   }
 
@@ -1634,11 +1636,40 @@
     fx.attach(game.player);
   }
 
+  // ---- R-64.4 starting classes ------------------------------------------------
+  // The kit path, parameterized: no classId = today's single kit (CONFIG
+  // .inventory.startingItems + equip.defaultHands, belt + bar untouched),
+  // else CONFIG.startingClasses[classId] rows: kit into the grid, hands
+  // pulled out of it, spell knowledge (the belt), bar defaults.
+  function classDef(classId) {
+    var C = CFG.startingClasses;
+    return classId && C.order.indexOf(classId) >= 0 ? C[classId] : null;
+  }
+
+  function giveStartingKit(classId) {
+    var cls = classDef(classId);
+    game.inventory.fillStartingItems(cls ? cls.kit : null);
+    game.player.equipDefaultHands(cls ? cls.hands : null);
+    if (!cls) return;
+    game.player.belt = cls.spells.slice();
+    game.player.bindings = { main: 0, off: 0 };
+    setClassId(classId);
+  }
+
+  // The chosen class (display-only v1 beyond the kit; the save carries it)
+  // and its bar defaults for the player + the HUD map. Unknown id = null.
+  function setClassId(classId) {
+    var cls = classDef(classId);
+    game.classId = cls ? classId : null;
+    game.actionDefaults = cls ? cls.belt : null;
+    game.player.actionDefaults = game.actionDefaults;
+  }
+
   // ---- 10-05 inventory (Order A) ------------------------------------------------
   // The player's Inventory + the I-key screen. Opening the screen suspends
   // player movement/combat/camera input (player.setInputSuspended); the
   // world keeps running.
-  function setupInventory() {
+  function setupInventory(classId) {
     var INV = window.WH_INVENTORY;
     game.inventory = new INV.Inventory();
     INV.active = game.inventory;
@@ -1646,8 +1677,8 @@
     // fresh-spawn kit (CONFIG.inventory.startingItems), then Order B pulls
     // CONFIG.equip.defaultHands out of it into the hands (glove left,
     // longsword right). Boot only - death keeps inventory + hands.
-    game.inventory.fillStartingItems();
-    game.player.equipDefaultHands();
+    // R-64.4: classId = that class's kit / hands / spells / bar instead.
+    giveStartingKit(classId);
     var p = game.player;
     game.inventoryUI = new INV.InventoryUI({
       inventory: game.inventory,

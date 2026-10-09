@@ -139,9 +139,10 @@
     for (var i = 0; i < this.slots.length; i++) fn(this.slotAt(i), i);
   };
 
-  // Fresh-spawn kit from CONFIG.inventory.startingItems.
-  Inventory.prototype.fillStartingItems = function () {
-    var kit = CFG.inventory.startingItems || [];
+  // Fresh-spawn kit from CONFIG.inventory.startingItems (R-64.4: or the
+  // picked class's kit rows, CONFIG.startingClasses[id].kit).
+  Inventory.prototype.fillStartingItems = function (rows) {
+    var kit = rows || CFG.inventory.startingItems || [];
     for (var i = 0; i < kit.length; i++) this.addItem(kit[i].id, kit[i].count);
   };
 

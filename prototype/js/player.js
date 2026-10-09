@@ -111,6 +111,9 @@
     // AB1: getter for the HUD-owned action bar map (game.js sets it; null =
     // CONFIG.actionbar.defaults). Read through actionSlot(i) only.
     this.actionMapSource = null;
+    // R-64.4: the picked class's bar defaults (CONFIG.startingClasses[id]
+    // .belt); null = CONFIG.actionbar.defaults (no class / old saves).
+    this.actionDefaults = null;
     // Order C (2026-10-05) dual-wield casting: fully independent per-hand
     // cast state ('main' = right hand, 'off' = left hand). Both hands may be
     // mid-windup at once; each completes and cools down on its own.
@@ -776,7 +779,7 @@
     var m = this.actionMapSource ? this.actionMapSource() : null;
     var e = m && m[i];
     if (validActionEntry(e)) return e;
-    var d = V7.actionbar.defaults[i];
+    var d = (this.actionDefaults || V7.actionbar.defaults)[i];
     return validActionEntry(d) ? d : null;
   };
 
@@ -1087,11 +1090,13 @@
     return true;
   };
 
-  // Boot: move CONFIG.equip.defaultHands items out of the starting kit.
-  Player.prototype.equipDefaultHands = function () {
-    var dh = window.WH_CONFIG.equip.defaultHands;
-    if (dh.right) this.equipItem(dh.right, 'right');
-    if (dh.left) this.equipItem(dh.left, 'left');
+  // Boot: move CONFIG.equip.defaultHands items out of the starting kit
+  // (R-64.4: or the picked class's hands). inventoryOnly: the same id in
+  // both hands (Magician dual gloves) draws two pieces, never a move.
+  Player.prototype.equipDefaultHands = function (hands) {
+    var dh = hands || window.WH_CONFIG.equip.defaultHands;
+    if (dh.right) this.equipItem(dh.right, 'right', true);
+    if (dh.left) this.equipItem(dh.left, 'left', true);
   };
 
   // Combat side effects of any hand change, then visuals + listeners.
