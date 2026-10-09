@@ -2602,6 +2602,22 @@
     }
   }
 
+  // DAGBLEED: start (or refresh) a bleed on an enemy. dps = damage per
+  // second (callers pass tickFraction x the proccing hit's dealt damage).
+  // CONFIG.combat.bleed.refresh 'reset': one instance per enemy - a re-proc
+  // restarts the full duration and the newer force replaces the older (never
+  // stacks). Enemy.update applies the ticks.
+  function applyBleedToEnemy(enemy, dps, durationSec) {
+    if (!enemy || enemy.fsm === 'dead' || !(dps > 0)) return;
+    var BL = CFG.combat.bleed;
+    enemy.bleed = {
+      dps: dps,
+      ticks: Math.max(1, Math.round(durationSec / BL.tickSec)),
+      next: BL.tickSec
+    };
+  }
+  game.applyBleedToEnemy = applyBleedToEnemy;
+
   // ---- main loop ----------------------------------------------------------------
 
   function loop(now) {

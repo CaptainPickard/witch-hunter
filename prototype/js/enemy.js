@@ -68,6 +68,9 @@
     // v6: parry stagger / riposte state
     this.riposteStaggerTimer = 0;      // > 0 = staggered and vulnerable
     this.riposteArmed = false;         // next player hit does riposte damage
+    // DAGBLEED: null | { dps, ticks, next } - damage per second, ticks left,
+    // seconds to the next tick (set by game.applyBleedToEnemy; transient)
+    this.bleed = null;
     // Order D: shield deflect recoil (presentation overlay, see deflect())
     this.deflectTimer = 0;
     this.deflectDir = { x: 0, z: 0 };
@@ -209,6 +212,20 @@
       return;
     }
     this.fsmTime += dt;
+    // DAGBLEED: bleed ticks (CONFIG.combat.bleed.tickSec) go through
+    // takeDamage so the hit feedback + death/corpse flow fire as for any hit
+    // (no fromDir: no knockback, no guard arc). A lethal tick ends the update.
+    if (this.bleed) {
+      var BL = window.WH_CONFIG.combat.bleed;
+      this.bleed.next -= dt;
+      if (this.bleed.next <= 0) {
+        var tickDmg = this.bleed.dps * BL.tickSec;
+        this.bleed.ticks -= 1;
+        this.bleed.next += BL.tickSec;
+        if (this.bleed.ticks <= 0) this.bleed = null;
+        if (this.takeDamage(tickDmg, null)) return;
+      }
+    }
     // Order D: deflect pushback runs before the parry-stagger freeze so a
     // parried enemy still recoils
     if (this.deflectTimer > 0) {
@@ -647,6 +664,7 @@
     this.attackPhaseT = 0;
     if (this.hp <= 0) {
       this.hp = 0;
+      this.bleed = null;                 // DAGBLEED: death clears the bleed
       this.setFsm('dead');
       if (this.anim) this.anim.death();
       // stage 2: the one kill entry point (melee sweep + firebolt both land

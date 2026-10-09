@@ -1776,6 +1776,31 @@ window.WH_CONFIG.combat = {
       iframes: 0.20,                // s
       staminaCost: 20
     }
+  },
+  // DAGBLEED (io/missions/2026-10-09-dagger-bleed.md, Nicko 10-09): dagger
+  // bleed = damage over time on an enemy. DESIGN CONTEXT: the parry proc is
+  // the signature skill reward (a dagger opens the parry window with no
+  // shield; shield parries never bleed). The 15% main-hand proc is ~+7%
+  // sustained over a full chain, but ~2x payoff on a lone stab + dart out.
+  // Tick basis = tickFraction x the PROCCING hit's dealt damage (parry: the
+  // parried swing's raw, pre-mitigation amount - cut with the enemy's own
+  // force), every tickSec for durationSec, routed through
+  // Enemy.prototype.takeDamage (bleed can kill). One instance per enemy; a
+  // re-proc resets the clock and the newer force replaces the older.
+  bleed: {
+    parryChance: 0.50,        // Nicko 10-09: successful parry w/ dagger equipped
+    hitChance: 0.15,          // dagger main-hand landed hits
+    tickFraction: 0.5,        // per-second tick = half the proccing hit's dealt damage
+    durationSec: 5,           // Nicko: every second for 5 seconds
+    tickSec: 1,
+    refresh: 'reset',         // re-proc RESETS the 5 s timer; never stacks (Nicko-picked)
+    // OFF-HAND RIDER. INERT v1: nothing reads it and enabled stays false -
+    // the literal "dagger in the off hand gives 50% bleed on hits" version
+    // measured +70% sustained longsword DPS (IO math, rejected). The future
+    // hook is the melee sweep proc site (game.js) once an off-hand dagger
+    // exists (the dagger is right-hand only today; that branch will read
+    // riderOffHand when it lands - not built here).
+    riderOffHand: { enabled: false, chance: 0.50 }
   }
 };
 
