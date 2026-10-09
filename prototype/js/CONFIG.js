@@ -1800,7 +1800,17 @@ window.WH_CONFIG.combat = {
     // hook is the melee sweep proc site (game.js) once an off-hand dagger
     // exists (the dagger is right-hand only today; that branch will read
     // riderOffHand when it lands - not built here).
-    riderOffHand: { enabled: false, chance: 0.50 }
+    riderOffHand: { enabled: false, chance: 0.50 },
+    // Bleed ring under a bleeding enemy (game.js updateBleedMarkers, the
+    // riposteMarker lazy-mesh pattern): shown exactly while enemy.bleed is up.
+    ring: {
+      color: 0xb3241e,              // blood red (riposte ring stays amber)
+      radius: 0.70,                 // inside the riposte ring (0.85) so both read
+      width: 0.12,
+      segments: 12,                 // low-poly = chunky/pixel read
+      opacity: 0.85,
+      yOffset: 0.035                // above ground, under the riposte ring (z-fight)
+    }
   }
 };
 

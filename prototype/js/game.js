@@ -436,6 +436,37 @@
     });
   }
 
+  // DAGBLEED: red ring under each bleeding enemy, exactly while e.bleed is
+  // up - same lazy per-enemy mesh as the riposte marker (CONFIG.combat.bleed.ring).
+  function updateBleedMarkers() {
+    var M = CFG.combat.bleed.ring;
+    var rm = game.regionManager;
+    Object.keys(rm.enemies).forEach(function (regionId) {
+      var list = rm.enemies[regionId];
+      for (var i = 0; i < list.length; i++) {
+        var e = list[i];
+        var on = regionId === rm.logic.activeId && e.fsm !== 'dead' && !!e.bleed;
+        if (!on) {
+          if (e.bleedMarker) e.bleedMarker.visible = false;
+          continue;
+        }
+        if (!e.bleedMarker) {
+          var ring = new THREE.Mesh(
+            new THREE.RingGeometry(M.radius - M.width, M.radius, M.segments, 1),
+            new THREE.MeshBasicMaterial({ color: M.color, transparent: true,
+              opacity: M.opacity, depthWrite: false, side: THREE.DoubleSide, fog: false }));
+          ring.rotation.x = -Math.PI / 2;
+          ring.renderOrder = 2;
+          e.root.add(ring);
+          e.bleedMarker = ring;
+        }
+        e.bleedMarker.visible = true;
+        // root carries hop/bob y; cancel it so the ring stays on the ground
+        e.bleedMarker.position.set(0, M.yOffset - e.root.position.y, 0);
+      }
+    });
+  }
+
   // v6: HUD screen-edge flash pulse (DOM opacity, no WebGL work).
   function flashScreen(durationSec, kind) {
     var el = game.hud.blockFlash;
@@ -2732,7 +2763,15 @@
         }
         // v3: pass hit direction (player -> enemy) for stagger knockback
         var hitDir = dist > 0.001 ? { x: dx / dist, z: dz / dist } : null;
+        var hpBefore = e.hp;
         e.takeDamage(dmg, hitDir);
+        // DAGBLEED: dagger main-hand hits roll the bleed (longsword / handAxe
+        // never do); basis = this hit's dealt damage (post line mult, crit,
+        // and the enemy's own guard mult - read off the hp it removed)
+        if (sweep.weaponId === 'dagger' && Math.random() < CFG.combat.bleed.hitChance) {
+          applyBleedToEnemy(e, CFG.combat.bleed.tickFraction * (hpBefore - e.hp),
+            CFG.combat.bleed.durationSec);
+        }
         window.WH_LEVEL.useSkill(meleeLine, 'hit');   // L1: a landed hit trains Long Blade (DAG: dagger -> Short Blade)
         // v7: 3rd chain strike landing (consumeAttackSweep consumed) arms
         // the armed finisher window. Use chainHits counter (robust to
@@ -2762,6 +2801,7 @@
     }
 
     updateRiposteMarkers();   // Order D
+    updateBleedMarkers();     // DAGBLEED
 
     // lock-on break conditions + reticle (D3)
     updateLockOn();

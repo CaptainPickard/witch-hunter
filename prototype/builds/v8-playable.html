@@ -88947,6 +88947,41 @@ window.WH_CONFIG.combat = {
       iframes: 0.20,                // s
       staminaCost: 20
     }
+  },
+  // DAGBLEED (io/missions/2026-10-09-dagger-bleed.md, Nicko 10-09): dagger
+  // bleed = damage over time on an enemy. DESIGN CONTEXT: the parry proc is
+  // the signature skill reward (a dagger opens the parry window with no
+  // shield; shield parries never bleed). The 15% main-hand proc is ~+7%
+  // sustained over a full chain, but ~2x payoff on a lone stab + dart out.
+  // Tick basis = tickFraction x the PROCCING hit's dealt damage (parry: the
+  // parried swing's raw, pre-mitigation amount - cut with the enemy's own
+  // force), every tickSec for durationSec, routed through
+  // Enemy.prototype.takeDamage (bleed can kill). One instance per enemy; a
+  // re-proc resets the clock and the newer force replaces the older.
+  bleed: {
+    parryChance: 0.50,        // Nicko 10-09: successful parry w/ dagger equipped
+    hitChance: 0.15,          // dagger main-hand landed hits
+    tickFraction: 0.5,        // per-second tick = half the proccing hit's dealt damage
+    durationSec: 5,           // Nicko: every second for 5 seconds
+    tickSec: 1,
+    refresh: 'reset',         // re-proc RESETS the 5 s timer; never stacks (Nicko-picked)
+    // OFF-HAND RIDER. INERT v1: nothing reads it and enabled stays false -
+    // the literal "dagger in the off hand gives 50% bleed on hits" version
+    // measured +70% sustained longsword DPS (IO math, rejected). The future
+    // hook is the melee sweep proc site (game.js) once an off-hand dagger
+    // exists (the dagger is right-hand only today; that branch will read
+    // riderOffHand when it lands - not built here).
+    riderOffHand: { enabled: false, chance: 0.50 },
+    // Bleed ring under a bleeding enemy (game.js updateBleedMarkers, the
+    // riposteMarker lazy-mesh pattern): shown exactly while enemy.bleed is up.
+    ring: {
+      color: 0xb3241e,              // blood red (riposte ring stays amber)
+      radius: 0.70,                 // inside the riposte ring (0.85) so both read
+      width: 0.12,
+      segments: 12,                 // low-poly = chunky/pixel read
+      opacity: 0.85,
+      yOffset: 0.035                // above ground, under the riposte ring (z-fight)
+    }
   }
 };
 
@@ -95013,7 +95048,7 @@ window.WH_ICONS = {
   Player.prototype.tryBlock = function () {
     if (this.state !== 'alive' || this.rolling || this.attacking) return;
     if (this.toggling) return;              // Order B: the shield is mid-swap until Q lands
-    if (!this.hasShieldLeft()) return;      // Order C: a shield in the LEFT hand
+    if (!this.canGuard()) return;           // Order C: a shield in the LEFT hand (DAGBLEED: or a dagger guard)
     if (this.guardBroken) return;
     if (this.stamina < window.WH_CONFIG.block.guardBreakMinStamina) return;
     if (this.attacking && !this.cancelOpen('guard')) {
@@ -95377,6 +95412,18 @@ window.WH_ICONS = {
     return kindOf(this.hands.left) === 'shield';
   };
 
+  // DAGBLEED: a dagger in either hand opens the guard / parry window with no
+  // shield. The dagger guard parries only - block mitigation stays the
+  // shield's (resolveIncomingHit step 3) - and only its parries can bleed.
+  Player.prototype.isDaggerGuard = function () {
+    return !this.hasShieldLeft() && this.handOf('dagger') !== null;
+  };
+
+  // DAGBLEED: the guard needs a left-hand shield (Order C) or a dagger guard
+  Player.prototype.canGuard = function () {
+    return this.hasShieldLeft() || this.isDaggerGuard();
+  };
+
   // Order C two-button combat. What a hand's button does, from what the
   // hand holds: right melee -> the attack chain, caster -> cast that hand's
   // binding, left shield -> hold-to-block, anything else -> null (inert).
@@ -95385,6 +95432,8 @@ window.WH_ICONS = {
     if (k === 'melee' && hand === 'right') return 'attack';
     if (k === 'caster') return 'cast';
     if (k === 'shield' && hand === 'left') return 'block';
+    // DAGBLEED: an otherwise inert left button guards with a dagger held
+    if (hand === 'left' && this.isDaggerGuard()) return 'block';
     return null;
   };
 
@@ -95481,7 +95530,7 @@ window.WH_ICONS = {
       }
     }
     this.lastRightItem = this.hands.right;
-    if (!this.hasShieldLeft()) this.endBlock();     // Order C: guard = left-hand shield
+    if (!this.canGuard()) this.endBlock();          // Order C: guard = left-hand shield (DAGBLEED: or dagger)
     // Order C, per hand: an implement leaving drops that hand's windup; an
     // implement entering (new item in the hand) starts that hand's regrip
     if (!this.lastHandItems) this.lastHandItems = { right: null, left: null };
@@ -95911,14 +95960,22 @@ window.WH_ICONS = {
       this.spendStamina(BLK.parryStaminaCost);
       attacker.enterStagger(BLK.riposteStaggerDur);
       attacker.riposteArmed = true;          // next player hit does bonus damage
+      // DAGBLEED: a dagger parry (never a shield parry) rolls the bleed; the
+      // tick basis is the parried swing's raw (pre-mitigation) damage
+      var BL = window.WH_CONFIG.combat.bleed;
+      if (this.isDaggerGuard() && window.WH_GAME && Math.random() < BL.parryChance) {
+        window.WH_GAME.applyBleedToEnemy(attacker, BL.tickFraction * damage, BL.durationSec);
+      }
       if (this.anim) this.anim.shieldParry();  // Order D: deflect swipe (presentation)
       this.endBlock();
       if (this.onParry) this.onParry(attacker);
       return false;                          // zero damage
     }
 
-    // 3. block: only if attacker is within the block arc of player facing
-    if (this.blockActive && attacker && attacker.pos && attackerInArc) {
+    // 3. block: only if attacker is within the block arc of player facing.
+    // DAGBLEED: mitigation is the shield's - a dagger guard past its parry
+    // window takes the full hit (step 4).
+    if (this.blockActive && this.hasShieldLeft() && attacker && attacker.pos && attackerInArc) {
       // L1 Shield / Defense rank: block stamina drain reduction (x1 at rank 1)
       var drainMult = window.WH_LEVEL ? window.WH_LEVEL.skillMult('shieldDefense', 'blockDrain') : 1;
       var staminaCost = Math.max(1, Math.round(damage * BLK.staminaCostMult * drainMult));
@@ -96269,8 +96326,8 @@ window.WH_ICONS = {
       this.armedTimer = Math.max(0, this.armedTimer - dt);
       if (this.armedTimer <= 0) this.crossArmed = false;
     }
-    // Order C: a guard needs a shield in the LEFT hand
-    if (this.blocking && !this.hasShieldLeft()) this.endBlock();
+    // Order C: a guard needs a shield in the LEFT hand (DAGBLEED: or a dagger guard)
+    if (this.blocking && !this.canGuard()) this.endBlock();
 
     // EPR1: keyboard Space grammar (dodge on release / sprint while held)
     this.sampleDodgeInput(dt);
@@ -96680,6 +96737,9 @@ window.WH_ICONS = {
     // v6: parry stagger / riposte state
     this.riposteStaggerTimer = 0;      // > 0 = staggered and vulnerable
     this.riposteArmed = false;         // next player hit does riposte damage
+    // DAGBLEED: null | { dps, ticks, next } - damage per second, ticks left,
+    // seconds to the next tick (set by game.applyBleedToEnemy; transient)
+    this.bleed = null;
     // Order D: shield deflect recoil (presentation overlay, see deflect())
     this.deflectTimer = 0;
     this.deflectDir = { x: 0, z: 0 };
@@ -96821,6 +96881,20 @@ window.WH_ICONS = {
       return;
     }
     this.fsmTime += dt;
+    // DAGBLEED: bleed ticks (CONFIG.combat.bleed.tickSec) go through
+    // takeDamage so the hit feedback + death/corpse flow fire as for any hit
+    // (no fromDir: no knockback, no guard arc). A lethal tick ends the update.
+    if (this.bleed) {
+      var BL = window.WH_CONFIG.combat.bleed;
+      this.bleed.next -= dt;
+      if (this.bleed.next <= 0) {
+        var tickDmg = this.bleed.dps * BL.tickSec;
+        this.bleed.ticks -= 1;
+        this.bleed.next += BL.tickSec;
+        if (this.bleed.ticks <= 0) this.bleed = null;
+        if (this.takeDamage(tickDmg, null)) return;
+      }
+    }
     // Order D: deflect pushback runs before the parry-stagger freeze so a
     // parried enemy still recoils
     if (this.deflectTimer > 0) {
@@ -97259,6 +97333,7 @@ window.WH_ICONS = {
     this.attackPhaseT = 0;
     if (this.hp <= 0) {
       this.hp = 0;
+      this.bleed = null;                 // DAGBLEED: death clears the bleed
       this.setFsm('dead');
       if (this.anim) this.anim.death();
       // stage 2: the one kill entry point (melee sweep + firebolt both land
@@ -101417,6 +101492,37 @@ window.WH_ICONS = {
     });
   }
 
+  // DAGBLEED: red ring under each bleeding enemy, exactly while e.bleed is
+  // up - same lazy per-enemy mesh as the riposte marker (CONFIG.combat.bleed.ring).
+  function updateBleedMarkers() {
+    var M = CFG.combat.bleed.ring;
+    var rm = game.regionManager;
+    Object.keys(rm.enemies).forEach(function (regionId) {
+      var list = rm.enemies[regionId];
+      for (var i = 0; i < list.length; i++) {
+        var e = list[i];
+        var on = regionId === rm.logic.activeId && e.fsm !== 'dead' && !!e.bleed;
+        if (!on) {
+          if (e.bleedMarker) e.bleedMarker.visible = false;
+          continue;
+        }
+        if (!e.bleedMarker) {
+          var ring = new THREE.Mesh(
+            new THREE.RingGeometry(M.radius - M.width, M.radius, M.segments, 1),
+            new THREE.MeshBasicMaterial({ color: M.color, transparent: true,
+              opacity: M.opacity, depthWrite: false, side: THREE.DoubleSide, fog: false }));
+          ring.rotation.x = -Math.PI / 2;
+          ring.renderOrder = 2;
+          e.root.add(ring);
+          e.bleedMarker = ring;
+        }
+        e.bleedMarker.visible = true;
+        // root carries hop/bob y; cancel it so the ring stays on the ground
+        e.bleedMarker.position.set(0, M.yOffset - e.root.position.y, 0);
+      }
+    });
+  }
+
   // v6: HUD screen-edge flash pulse (DOM opacity, no WebGL work).
   function flashScreen(durationSec, kind) {
     var el = game.hud.blockFlash;
@@ -103583,6 +103689,22 @@ window.WH_ICONS = {
     }
   }
 
+  // DAGBLEED: start (or refresh) a bleed on an enemy. dps = damage per
+  // second (callers pass tickFraction x the proccing hit's dealt damage).
+  // CONFIG.combat.bleed.refresh 'reset': one instance per enemy - a re-proc
+  // restarts the full duration and the newer force replaces the older (never
+  // stacks). Enemy.update applies the ticks.
+  function applyBleedToEnemy(enemy, dps, durationSec) {
+    if (!enemy || enemy.fsm === 'dead' || !(dps > 0)) return;
+    var BL = CFG.combat.bleed;
+    enemy.bleed = {
+      dps: dps,
+      ticks: Math.max(1, Math.round(durationSec / BL.tickSec)),
+      next: BL.tickSec
+    };
+  }
+  game.applyBleedToEnemy = applyBleedToEnemy;
+
   // ---- main loop ----------------------------------------------------------------
 
   function loop(now) {
@@ -103697,7 +103819,15 @@ window.WH_ICONS = {
         }
         // v3: pass hit direction (player -> enemy) for stagger knockback
         var hitDir = dist > 0.001 ? { x: dx / dist, z: dz / dist } : null;
+        var hpBefore = e.hp;
         e.takeDamage(dmg, hitDir);
+        // DAGBLEED: dagger main-hand hits roll the bleed (longsword / handAxe
+        // never do); basis = this hit's dealt damage (post line mult, crit,
+        // and the enemy's own guard mult - read off the hp it removed)
+        if (sweep.weaponId === 'dagger' && Math.random() < CFG.combat.bleed.hitChance) {
+          applyBleedToEnemy(e, CFG.combat.bleed.tickFraction * (hpBefore - e.hp),
+            CFG.combat.bleed.durationSec);
+        }
         window.WH_LEVEL.useSkill(meleeLine, 'hit');   // L1: a landed hit trains Long Blade (DAG: dagger -> Short Blade)
         // v7: 3rd chain strike landing (consumeAttackSweep consumed) arms
         // the armed finisher window. Use chainHits counter (robust to
@@ -103727,6 +103857,7 @@ window.WH_ICONS = {
     }
 
     updateRiposteMarkers();   // Order D
+    updateBleedMarkers();     // DAGBLEED
 
     // lock-on break conditions + reticle (D3)
     updateLockOn();

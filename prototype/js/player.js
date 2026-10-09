@@ -656,7 +656,7 @@
   Player.prototype.tryBlock = function () {
     if (this.state !== 'alive' || this.rolling || this.attacking) return;
     if (this.toggling) return;              // Order B: the shield is mid-swap until Q lands
-    if (!this.hasShieldLeft()) return;      // Order C: a shield in the LEFT hand
+    if (!this.canGuard()) return;           // Order C: a shield in the LEFT hand (DAGBLEED: or a dagger guard)
     if (this.guardBroken) return;
     if (this.stamina < window.WH_CONFIG.block.guardBreakMinStamina) return;
     if (this.attacking && !this.cancelOpen('guard')) {
@@ -1020,6 +1020,18 @@
     return kindOf(this.hands.left) === 'shield';
   };
 
+  // DAGBLEED: a dagger in either hand opens the guard / parry window with no
+  // shield. The dagger guard parries only - block mitigation stays the
+  // shield's (resolveIncomingHit step 3) - and only its parries can bleed.
+  Player.prototype.isDaggerGuard = function () {
+    return !this.hasShieldLeft() && this.handOf('dagger') !== null;
+  };
+
+  // DAGBLEED: the guard needs a left-hand shield (Order C) or a dagger guard
+  Player.prototype.canGuard = function () {
+    return this.hasShieldLeft() || this.isDaggerGuard();
+  };
+
   // Order C two-button combat. What a hand's button does, from what the
   // hand holds: right melee -> the attack chain, caster -> cast that hand's
   // binding, left shield -> hold-to-block, anything else -> null (inert).
@@ -1028,6 +1040,8 @@
     if (k === 'melee' && hand === 'right') return 'attack';
     if (k === 'caster') return 'cast';
     if (k === 'shield' && hand === 'left') return 'block';
+    // DAGBLEED: an otherwise inert left button guards with a dagger held
+    if (hand === 'left' && this.isDaggerGuard()) return 'block';
     return null;
   };
 
@@ -1124,7 +1138,7 @@
       }
     }
     this.lastRightItem = this.hands.right;
-    if (!this.hasShieldLeft()) this.endBlock();     // Order C: guard = left-hand shield
+    if (!this.canGuard()) this.endBlock();          // Order C: guard = left-hand shield (DAGBLEED: or dagger)
     // Order C, per hand: an implement leaving drops that hand's windup; an
     // implement entering (new item in the hand) starts that hand's regrip
     if (!this.lastHandItems) this.lastHandItems = { right: null, left: null };
@@ -1554,14 +1568,22 @@
       this.spendStamina(BLK.parryStaminaCost);
       attacker.enterStagger(BLK.riposteStaggerDur);
       attacker.riposteArmed = true;          // next player hit does bonus damage
+      // DAGBLEED: a dagger parry (never a shield parry) rolls the bleed; the
+      // tick basis is the parried swing's raw (pre-mitigation) damage
+      var BL = window.WH_CONFIG.combat.bleed;
+      if (this.isDaggerGuard() && window.WH_GAME && Math.random() < BL.parryChance) {
+        window.WH_GAME.applyBleedToEnemy(attacker, BL.tickFraction * damage, BL.durationSec);
+      }
       if (this.anim) this.anim.shieldParry();  // Order D: deflect swipe (presentation)
       this.endBlock();
       if (this.onParry) this.onParry(attacker);
       return false;                          // zero damage
     }
 
-    // 3. block: only if attacker is within the block arc of player facing
-    if (this.blockActive && attacker && attacker.pos && attackerInArc) {
+    // 3. block: only if attacker is within the block arc of player facing.
+    // DAGBLEED: mitigation is the shield's - a dagger guard past its parry
+    // window takes the full hit (step 4).
+    if (this.blockActive && this.hasShieldLeft() && attacker && attacker.pos && attackerInArc) {
       // L1 Shield / Defense rank: block stamina drain reduction (x1 at rank 1)
       var drainMult = window.WH_LEVEL ? window.WH_LEVEL.skillMult('shieldDefense', 'blockDrain') : 1;
       var staminaCost = Math.max(1, Math.round(damage * BLK.staminaCostMult * drainMult));
@@ -1912,8 +1934,8 @@
       this.armedTimer = Math.max(0, this.armedTimer - dt);
       if (this.armedTimer <= 0) this.crossArmed = false;
     }
-    // Order C: a guard needs a shield in the LEFT hand
-    if (this.blocking && !this.hasShieldLeft()) this.endBlock();
+    // Order C: a guard needs a shield in the LEFT hand (DAGBLEED: or a dagger guard)
+    if (this.blocking && !this.canGuard()) this.endBlock();
 
     // EPR1: keyboard Space grammar (dodge on release / sprint while held)
     this.sampleDodgeInput(dt);
