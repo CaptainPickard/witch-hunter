@@ -1255,6 +1255,8 @@ window.WH_CONFIG = {
   // L1 (2026-10-07): + optional leveling block (WH_LEVEL.capture) - an
   // ADDITIVE field, so version stays 1 on purpose: pre-L1 profiles still
   // load (no block = fresh level 1) and nothing old is invalidated.
+  // R-64.5 (2026-10-09): + optional class block { id } (the NEW GAME
+  // class pick) - additive too, version stays 1; no block = no class.
   save: {
     lsKey: 'wh-save-v1',
     version: 1,

@@ -708,6 +708,25 @@ html, body {
   padding-right: 4px;
 }
 
+/* R-64.5: CHARACTER tab class row (display-only, only with a picked class) */
+.lvl-class {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+.lvl-class-key {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #8a7f70;
+}
+
+.lvl-class-name {
+  color: #d8b24a;
+}
+
 .lvl-head {
   display: flex;
   align-items: center;

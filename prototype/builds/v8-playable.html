@@ -716,6 +716,25 @@ html, body {
   padding-right: 4px;
 }
 
+/* R-64.5: CHARACTER tab class row (display-only, only with a picked class) */
+.lvl-class {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+.lvl-class-key {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #8a7f70;
+}
+
+.lvl-class-name {
+  color: #d8b24a;
+}
+
 .lvl-head {
   display: flex;
   align-items: center;
@@ -1382,6 +1401,33 @@ html, body {
 .boot-row-btn.boot-continue {
   border-color: #d8b24a;
   color: #d8d2c0;
+}
+
+/* R-64.6: NEW GAME class picker rows (same boot-row family; each row
+   carries its class name + two kit lines, final on click / key 1-N) */
+#wh-boot-rows.boot-class-rows {
+  width: 280px;
+}
+
+.boot-row-btn.boot-class-btn {
+  height: auto;
+  min-height: 56px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  text-align: left;
+}
+
+.boot-class-name {
+  color: #d8d2c0;
+}
+
+.boot-class-line {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #9a9078;
 }
 
 #wh-camp-place {
@@ -88271,7 +88317,10 @@ window.WH_CONFIG = {
     respawnDelay: 2.2,                 // seconds on death screen before respawn
     // v7: focus pool (spells spend Focus, weapons spend Stamina)
     focusMax: 100,                    // max focus
-    focusRegenPerSec: 8,              // focus regen per second after delay
+    // R-64.2 (Nicko 10-09): 8 -> 2.0. Regen is Wisdom's domain:
+    // 2.0 base * (1 + 0.05 * wisdomPoints) * other mults (blocking 0.5)
+    // 0 wis = 2.0/s; 10 wis = 3.0/s; 10 wis blocking = 1.5/s
+    focusRegenPerSec: 2.0,            // focus regen per second after delay
     focusRegenDelay: 0.5,             // seconds after spend before regen resumes
     castFocusTaxMult: 1.25            // spell focus tax while weapon in main hand
   },
@@ -88377,6 +88426,8 @@ window.WH_CONFIG = {
   // L1 (2026-10-07): + optional leveling block (WH_LEVEL.capture) - an
   // ADDITIVE field, so version stays 1 on purpose: pre-L1 profiles still
   // load (no block = fresh level 1) and nothing old is invalidated.
+  // R-64.5 (2026-10-09): + optional class block { id } (the NEW GAME
+  // class pick) - additive too, version stays 1; no block = no class.
   save: {
     lsKey: 'wh-save-v1',
     version: 1,
@@ -89461,8 +89512,58 @@ window.WH_CONFIG.equip = {
   // first); casts spawn from the casting hand's orb. windupScale = orb size
   // at the end of a windup (grows from 1, per-hand cast cue).
   casterGlow: { anchor: 'hand', handOffset: [0.018, 0.078, 0.021],
-                perHand: true, windupScale: 1.8 }
+                perHand: true, windupScale: 1.8 },
+  // R-64.3 (Nicko 10-09) ITEM-STAT registry: gear pieces may carry
+  // stats: { magicDefense: <fraction> } (pct: true = shown as a percent).
+  // WH_LEVEL.magicDefense() totals it over the equipped hands. INERT v1:
+  // no gear ships with it and nothing consumes it - the future hook is the
+  // enemy-caster damage branch (enemy casters do not exist yet; that branch
+  // will read WH_LEVEL.magicDefense() when they land - not built here).
+  itemStats: {
+    magicDefense: { label: 'Magic Defense', pct: true }
+  }
 };
+
+// R-64.4 (Nicko 10-09) starting classes, picked on the NEW GAME path only
+// (CONTINUE never re-kits). Every row is BUILT FROM the single-kit rows
+// above - inventory.startingItems, equip.defaultHands, belt.defaultSpells,
+// actionbar.defaults stay the data source AND the no-class fallback (that
+// fallback = today's exact kit). kit = grid rows (hands are pulled OUT of
+// it at boot), hands = { right, left }, spells = the learned-spell belt
+// (null = not known), belt = the action-bar defaults (null = empty slot).
+// lines = the two picker text lines (hands | kit + spell knowledge).
+// Wanderer casts nothing v1 (right hand = attack chain); magic is the
+// Magician's lane. Bandage x1 both; actionbar.pickerExclude unchanged.
+window.WH_CONFIG.startingClasses = (function (C) {
+  var KIT = C.inventory.startingItems, HANDS = C.equip.defaultHands;
+  var SPELLS = C.belt.defaultSpells, BAR = C.actionbar.defaults;
+  function kitRow(id, nth) {        // the nth (0-based) startingItems row of id
+    return KIT.filter(function (r) { return r.id === id; })[nth || 0];
+  }
+  function barSlot(id) {            // the actionbar.defaults entry for id
+    return BAR.filter(function (e) { return e.id === id; })[0] || null;
+  }
+  var none = SPELLS.map(function () { return null; });
+  return {
+    order: ['wanderer', 'magician'],
+    wanderer: {
+      label: 'Wanderer',
+      lines: ['Longsword right, shield left', 'Torch, bandage - no spells'],
+      kit: [kitRow('longsword'), kitRow('roundShield'), { id: 'torch', count: 1 }, kitRow('bandage')],
+      hands: { right: HANDS.right, left: barSlot('roundShield').id },
+      spells: none,
+      belt: [null, null, barSlot('roundShield'), barSlot('torch'), null]
+    },
+    magician: {
+      label: 'Magician',
+      lines: ['Magic gloves in both hands', 'Bandage - knows Firebolt + Radiance'],
+      kit: [kitRow('magicGlove', 0), kitRow('magicGlove', 1), kitRow('bandage')],
+      hands: { right: HANDS.left, left: HANDS.left },
+      spells: SPELLS.slice(),
+      belt: [barSlot(SPELLS[0]), barSlot(SPELLS[1]), null, null, null]
+    }
+  };
+})(window.WH_CONFIG);
 
 // Inventory screen (DOM modal). While open, player movement/combat input is
 // suspended (the world keeps running).
@@ -89515,9 +89616,12 @@ window.WH_CONFIG.leveling = {
   //   speed     +1% walk / sprint per point    (cap +25%; roll / backstep untouched)
   //   dexterity +1% melee crit per point       (cap 50%; crit = x critMult damage)
   //   defense   +1% damage reduction per point (cap 60%, mission row)
-  //   wisdom    +1% magic damage AND +1% magic defense per point (doc 15 canon:
-  //             the magic stat; the defense half hooks enemy casters when they
-  //             exist - today inert, no enemy casts spells)
+  //   wisdom    +1% magic damage AND +5% magic regen per point. History: L1.1
+  //             (doc 15 canon) paired damage with +1% magic defense; R-64.1
+  //             (Nicko 10-09) swapped the second half to regen - magic defense
+  //             is now an ITEM stat (CONFIG.equip.itemStats, gear total via
+  //             WH_LEVEL.magicDefense()). Regen = focusRegenPerSec * (1 + 0.05
+  //             * wisdomPoints) * other mults; the Focus stat stays pool-only.
   //   carry     +5% stack size per point       (stacks without their own stackCap: 60 -> 63 -> 66..)
   //   luck      +1% extra drop / gather roll per point (cap 50%)
   stats: ['health', 'stamina', 'focus', 'speed', 'precision', 'ward', 'wisdom', 'carry', 'luck'],
@@ -89528,8 +89632,8 @@ window.WH_CONFIG.leveling = {
     speed:     { label: 'Speed',        perPoint: 0.01, cap: 0.25, caption: '+{pct}% move speed' },
     precision: { label: 'Dexterity',    perPoint: 0.01, cap: 0.50, caption: '{pct}% crit chance' },
     ward:      { label: 'Defense',      perPoint: 0.01, cap: 0.60, caption: '-{pct}% damage taken' },
-    wisdom:    { label: 'Wisdom',       perPoint: 0.01, cap: null, caption: '+{pct}% magic damage, +{pct}% magic defense',
-                 magicDefensePerPoint: 0.01 },
+    wisdom:    { label: 'Wisdom',       perPoint: 0.01, cap: null, caption: '+{pct}% magic damage, +{pct}% magic regen',
+                 magicRegenPerPoint: 0.05 },
     carry:     { label: 'Carry Weight', perPoint: 0.05, cap: null, caption: '+{pct}% stack size' },
     luck:      { label: 'Luck',         perPoint: 0.01, cap: 0.50, caption: '{pct}% bonus drop roll' }
   },
@@ -91442,9 +91546,10 @@ window.WH_ICONS = {
     for (var i = 0; i < this.slots.length; i++) fn(this.slotAt(i), i);
   };
 
-  // Fresh-spawn kit from CONFIG.inventory.startingItems.
-  Inventory.prototype.fillStartingItems = function () {
-    var kit = CFG.inventory.startingItems || [];
+  // Fresh-spawn kit from CONFIG.inventory.startingItems (R-64.4: or the
+  // picked class's kit rows, CONFIG.startingClasses[id].kit).
+  Inventory.prototype.fillStartingItems = function (rows) {
+    var kit = rows || CFG.inventory.startingItems || [];
     for (var i = 0; i < kit.length; i++) this.addItem(kit[i].id, kit[i].count);
   };
 
@@ -91501,6 +91606,7 @@ window.WH_ICONS = {
     this.canUse = opts.canUse || null;  // C1: (itemId) -> usable from the grid?
     this.equip = opts.equip || null;
     this.leveling = opts.leveling || null;   // L1: WH_LEVEL (CHARACTER tab column)
+    this.classId = opts.classId || null;     // R-64.5: () -> class id | null (display row)
     this.open = false;
     this.tab = 'inventory';
     this.selected = -1;
@@ -91860,10 +91966,12 @@ window.WH_ICONS = {
   function statCaption(LV, key) {
     var c = CFG.leveling.statCurves[key];
     var b = LV.statBonus(key);
-    return c.caption.replace('{v}', String(Math.round(b * 10) / 10)).replace('{pct}', pct(b))
-      .replace('{focus}', String(LV.statPoints(key) * (c.focusPerPoint || 0)));
-    // L1.1: the {focus} placeholder is dead (no curve uses it) - harmless
-    // replace; captions are pure CONFIG rows.
+    var txt = c.caption.replace('{v}', String(Math.round(b * 10) / 10)).replace('{pct}', pct(b));
+    // R-64.1: a curve's second {pct} is its magicRegenPerPoint half (Wisdom:
+    // +1% damage, +5% regen per point); any other {pct} repeats the bonus.
+    // The dead L1.1 {focus} placeholder is gone; captions are pure CONFIG rows.
+    if (c.magicRegenPerPoint) txt = txt.replace('{pct}', pct(LV.statPoints(key) * c.magicRegenPerPoint));
+    return txt.split('{pct}').join(pct(b));
   }
 
   function skillCaption(LV, line) {
@@ -91880,6 +91988,15 @@ window.WH_ICONS = {
   InventoryUI.prototype.renderLeveling = function () {
     var LV = this.leveling, LC = CFG.leveling, T = LC.text;
     var col = el('div', 'inv-char-col inv-lvl-col');
+    // R-64.5: the NEW GAME class, display-only v1 (old saves: no row)
+    var cid = this.classId ? this.classId() : null;
+    var cdef = cid && CFG.startingClasses ? CFG.startingClasses[cid] : null;
+    if (cdef && cdef.label) {
+      var crow = el('div', 'lvl-class');
+      crow.appendChild(el('span', 'lvl-class-key', 'CLASS'));
+      crow.appendChild(el('span', 'lvl-class-name', cdef.label));
+      col.appendChild(crow);
+    }
     col.appendChild(el('div', 'inv-sec', 'LEVEL'));
     var head = el('div', 'lvl-head');
     head.appendChild(el('span', 'lvl-num', 'Level ' + LV.level()));
@@ -93957,17 +94074,32 @@ window.WH_ICONS = {
   };
 
   // L1.1 (Nicko 10-07): Wisdom no longer adds focus (focus = Focus stat's
-  // job; Wisdom bought magic damage + magic defense instead). Kept for the
-  // C4 restore path; returns just the Focus stat's share (0 extra).
+  // job; Wisdom bought magic damage + magic defense instead; R-64.1 10-09
+  // swapped that defense half for magic regen). Kept for the C4 restore
+  // path; returns just the Focus stat's share (0 extra).
   M.focusBonus = function () {
     return M.statBonus('focus');
   };
 
-  // L1.1: magic defense = Wisdom points * magicDefensePerPoint (hooks enemy
-  // casters when they exist; today nothing enemy-side casts spells).
+  // R-64.1 (Nicko 10-09): focus regen multiplier = 1 + magicRegenPerPoint
+  // (0.05) * Wisdom points, uncapped. player.js regen = focusRegenPerSec *
+  // this * other mults (blocking 0.5): 0 wis 2.0/s, 10 wis 3.0/s.
+  M.magicRegenMult = function () {
+    return 1 + M.statPoints('wisdom') * (L.statCurves.wisdom.magicRegenPerPoint || 0);
+  };
+
+  // L1.1 magic defense was Wisdom points * magicDefensePerPoint. R-64.3
+  // (Nicko 10-09): rehomed to an ITEM stat (CONFIG.equip.itemStats) - the
+  // equipped-gear total, item-stat totalizing mirrors statTotal semantics
+  // (sum of every source, 0 when none). Empty gear / hand = 0. INERT v1:
+  // the future enemy-caster damage branch reads this (not built; no enemy
+  // casts spells). Reads the player via WH_GAME (no player import here).
   M.magicDefense = function () {
-    var c = L.statCurves.wisdom;
-    return M.statPoints('wisdom') * (c.magicDefensePerPoint || 0);
+    var g = window.WH_GAME, p = g && g.player;
+    if (!p || !p.equippedItems) return 0;
+    return p.equippedItems().reduce(function (sum, item) {
+      return sum + (item.stats && item.stats.magicDefense || 0);
+    }, 0);
   };
 
   M.spend = function (key) {
@@ -94212,6 +94344,9 @@ window.WH_ICONS = {
     // AB1: getter for the HUD-owned action bar map (game.js sets it; null =
     // CONFIG.actionbar.defaults). Read through actionSlot(i) only.
     this.actionMapSource = null;
+    // R-64.4: the picked class's bar defaults (CONFIG.startingClasses[id]
+    // .belt); null = CONFIG.actionbar.defaults (no class / old saves).
+    this.actionDefaults = null;
     // Order C (2026-10-05) dual-wield casting: fully independent per-hand
     // cast state ('main' = right hand, 'off' = left hand). Both hands may be
     // mid-windup at once; each completes and cools down on its own.
@@ -94877,7 +95012,7 @@ window.WH_ICONS = {
     var m = this.actionMapSource ? this.actionMapSource() : null;
     var e = m && m[i];
     if (validActionEntry(e)) return e;
-    var d = V7.actionbar.defaults[i];
+    var d = (this.actionDefaults || V7.actionbar.defaults)[i];
     return validActionEntry(d) ? d : null;
   };
 
@@ -95073,6 +95208,18 @@ window.WH_ICONS = {
     return kindOf(this.hands.right) === 'melee';
   };
 
+  // R-64.3: the item defs in the hands (right, left; empty hands skipped).
+  // Both hands count, so dual gloves are two pieces. WH_LEVEL.magicDefense
+  // totals item stats over this.
+  Player.prototype.equippedItems = function () {
+    var out = [];
+    ['right', 'left'].forEach(function (h) {
+      var d = itemDef(this.hands[h]);
+      if (d) out.push(d);
+    }, this);
+    return out;
+  };
+
   Player.prototype.handOf = function (id) {
     if (this.hands.right === id) return 'right';
     if (this.hands.left === id) return 'left';
@@ -95176,11 +95323,13 @@ window.WH_ICONS = {
     return true;
   };
 
-  // Boot: move CONFIG.equip.defaultHands items out of the starting kit.
-  Player.prototype.equipDefaultHands = function () {
-    var dh = window.WH_CONFIG.equip.defaultHands;
-    if (dh.right) this.equipItem(dh.right, 'right');
-    if (dh.left) this.equipItem(dh.left, 'left');
+  // Boot: move CONFIG.equip.defaultHands items out of the starting kit
+  // (R-64.4: or the picked class's hands). inventoryOnly: the same id in
+  // both hands (Magician dual gloves) draws two pieces, never a move.
+  Player.prototype.equipDefaultHands = function (hands) {
+    var dh = hands || window.WH_CONFIG.equip.defaultHands;
+    if (dh.right) this.equipItem(dh.right, 'right', true);
+    if (dh.left) this.equipItem(dh.left, 'left', true);
   };
 
   // Combat side effects of any hand change, then visuals + listeners.
@@ -95945,8 +96094,13 @@ window.WH_ICONS = {
     if (this.focusRegenBlock > 0) {
       this.focusRegenBlock -= dt;
     } else if (this.focus < this.focusMax) {
+      // R-64.1/64.2: 2.0 base * (1 + 0.05 * wisdomPoints) * other mults
+      // (blocking 0.5): 0 wis = 2.0/s, 10 wis = 3.0/s, 10 wis blocking = 1.5/s
+      var focusMult = window.WH_LEVEL && window.WH_LEVEL.magicRegenMult ?
+        window.WH_LEVEL.magicRegenMult() : 1;
+      var focusBlockMult = this.blocking ? window.WH_CONFIG.block.blockingRegenMult : 1;
       this.focus = Math.min(this.focusMax,
-        this.focus + CFG.focusRegenPerSec * dt);
+        this.focus + CFG.focusRegenPerSec * focusMult * focusBlockMult * dt);
     }
 
     // ---- v7: weave timers ----
@@ -99766,7 +99920,10 @@ window.WH_ICONS = {
         respawn: copyRespawn(respawn)
       },
       world: { day: dn.day, phase: dn.phase, timeOfDay: dn.timeOfDay },
-      leveling: window.WH_LEVEL.capture()   // L1 (optional block, schema v1 additive)
+      leveling: window.WH_LEVEL.capture(),  // L1 (optional block, schema v1 additive)
+      // R-64.5: the NEW GAME class pick (optional block, schema v1 additive;
+      // no pick = { } - id undefined drops out of the JSON)
+      class: { id: game.classId || undefined }
     };
   }
 
@@ -99845,6 +100002,13 @@ window.WH_ICONS = {
     // across death -> LOAD); missing (pre-L1 profile) = fresh level 1. The
     // pools re-derive from it in applyBuffStats (step 8).
     window.WH_LEVEL.restore(data.leveling);
+
+    // 0b) R-64.5 class block (optional): the saved id, missing / unknown
+    // (pre-class profile) = null - no class row, CONFIG bar defaults. A
+    // class re-derives its bar defaults before the map reloads (step 3).
+    var classId = data.class && typeof data.class.id === 'string' ? data.class.id : null;
+    if (hooks.setClassId) hooks.setClassId(classId);
+    if (classId && hooks.reloadActionMap) hooks.reloadActionMap();
 
     // 1) inventory first (slot layout as saved)
     var items = Array.isArray(I.items) ? I.items : [];
@@ -101222,8 +101386,10 @@ window.WH_ICONS = {
   // CONFIG.actionbar.lsKey) and its editing; the player reads it through
   // player.actionMapSource / actionSlot(i) and owns validation
   // (WH_Player.validActionEntry).
+  // R-64.4: game.actionDefaults = the picked class's bar (startingClasses
+  // [id].belt), null = CONFIG.actionbar.defaults (no class / old saves).
   function defaultActionEntry(i) {
-    var d = CFG.actionbar.defaults[i];
+    var d = (game.actionDefaults || CFG.actionbar.defaults)[i];
     return d ? { kind: d.kind, id: d.id } : null;
   }
 
@@ -102309,11 +102475,58 @@ window.WH_ICONS = {
     fx.attach(game.player);
   }
 
+  // ---- R-64.4 starting classes ------------------------------------------------
+  // The kit path, parameterized: no classId = today's single kit (CONFIG
+  // .inventory.startingItems + equip.defaultHands, belt + bar untouched),
+  // else CONFIG.startingClasses[classId] rows: kit into the grid, hands
+  // pulled out of it, spell knowledge (the belt), bar defaults.
+  function classDef(classId) {
+    var C = CFG.startingClasses;
+    return classId && C.order.indexOf(classId) >= 0 ? C[classId] : null;
+  }
+
+  function giveStartingKit(classId) {
+    var cls = classDef(classId);
+    game.inventory.fillStartingItems(cls ? cls.kit : null);
+    game.player.equipDefaultHands(cls ? cls.hands : null);
+    if (!cls) return;
+    game.player.belt = cls.spells.slice();
+    game.player.bindings = { main: 0, off: 0 };
+    setClassId(classId);
+  }
+
+  // The chosen class (display-only v1 beyond the kit; the save carries it)
+  // and its bar defaults for the player + the HUD map. Unknown id = null.
+  function setClassId(classId) {
+    var cls = classDef(classId);
+    game.classId = cls ? classId : null;
+    game.actionDefaults = cls ? cls.belt : null;
+    game.player.actionDefaults = game.actionDefaults;
+  }
+
+  // NEW GAME pick: the load-time fallback kit leaves (grid emptied, hands
+  // cleared like WH_SAVE.restore does), the class kit goes in, and the
+  // action bar resets to the class bar (persisted like a rebind).
+  function pickStartingClass(classId) {
+    var p = game.player, inv = game.inventory;
+    if (!classDef(classId)) return;
+    for (var i = 0; i < inv.slots.length; i++) inv.slots[i] = null;
+    p.hands = { right: null, left: null };
+    p.lastHandItems = { right: null, left: null };
+    p.handsChanged();
+    giveStartingKit(classId);
+    game.actionMap = [];
+    for (var s = 0; s < CFG.actionbar.slots; s++) game.actionMap.push(defaultActionEntry(s));
+    saveActionMap();
+    inv.changed();
+    if (game.inventoryUI) game.inventoryUI.render();
+  }
+
   // ---- 10-05 inventory (Order A) ------------------------------------------------
   // The player's Inventory + the I-key screen. Opening the screen suspends
   // player movement/combat/camera input (player.setInputSuspended); the
   // world keeps running.
-  function setupInventory() {
+  function setupInventory(classId) {
     var INV = window.WH_INVENTORY;
     game.inventory = new INV.Inventory();
     INV.active = game.inventory;
@@ -102321,8 +102534,8 @@ window.WH_ICONS = {
     // fresh-spawn kit (CONFIG.inventory.startingItems), then Order B pulls
     // CONFIG.equip.defaultHands out of it into the hands (glove left,
     // longsword right). Boot only - death keeps inventory + hands.
-    game.inventory.fillStartingItems();
-    game.player.equipDefaultHands();
+    // R-64.4: classId = that class's kit / hands / spells / bar instead.
+    giveStartingKit(classId);
     var p = game.player;
     game.inventoryUI = new INV.InventoryUI({
       inventory: game.inventory,
@@ -102331,6 +102544,7 @@ window.WH_ICONS = {
         if (!open) window.WH_LEVEL.commit();   // L1: closing locks this visit's stat points
       },
       leveling: window.WH_LEVEL,      // L1: CHARACTER tab level / stats / skills column
+      classId: function () { return game.classId || null; },   // R-64.5: CHARACTER tab class row
       onDrop: dropFromSlot,
       // C1: food eaten from the grid (EAT / E) - cooking owns buffs
       onUse: function (i) { return game.cooking.eat(i); },
@@ -102993,8 +103207,10 @@ window.WH_ICONS = {
       // (CONTINUE = restore the profile, NEW GAME = the fresh flow; the
       // profile is never wiped - the first camp save replaces it). The
       // profile is only read here, after every asset settled.
-      if (window.WH_SAVE.has()) showBootRows(enterWorld);
-      else enterWorld(false);
+      // R-64.6: every fresh flow (NEW GAME row, or no save at all) picks a
+      // class first (bootChoice); CONTINUE boots exactly as before.
+      if (window.WH_SAVE.has()) showBootRows(bootChoice);
+      else bootChoice(false);
     });
   }
 
@@ -103005,7 +103221,8 @@ window.WH_ICONS = {
       applyBuffStats: applyBuffStats,
       switchRegion: switchRegion,
       breakLockOn: breakLockOn,
-      reloadActionMap: function () { game.actionMap = loadActionMap(); }
+      reloadActionMap: function () { game.actionMap = loadActionMap(); },
+      setClassId: setClassId        // R-64.5: restore hands the saved class through
     };
     // S5 quit persist: tab close / reload writes the same capture() profile,
     // once, best-effort and quiet - only once a cycle has begun (day > 0 or
@@ -103042,6 +103259,71 @@ window.WH_ICONS = {
       });
       rows.appendChild(btn);
     });
+    game.hud.loadNote.appendChild(rows);
+  }
+
+  // R-64.6: CONTINUE -> enterWorld(true), no picker. NEW GAME -> the class
+  // picker, then the picked kit replaces the load-time fallback kit and
+  // the world boots fresh.
+  function bootChoice(cont) {
+    if (cont) { enterWorld(true); return; }
+    showClassPicker(function (classId) {
+      pickStartingClass(classId);
+      enterWorld(false);
+    });
+  }
+
+  // R-64.6 class picker rows (boot-row family, built like showBootRows):
+  // one row per CONFIG.startingClasses.order entry, the class label + its
+  // two kit lines on the face. FINAL ON CLICK (no confirm, no back); keys
+  // 1-N pick the Nth row. The key listener sits in the window capture
+  // phase so digits never reach the action bar while the picker is up.
+  function showClassPicker(done) {
+    var C = CFG.startingClasses;
+    game.hud.bootSub.textContent = '';
+    var rows = document.createElement('div');
+    rows.id = 'wh-boot-rows';
+    rows.className = 'boot-class-rows';
+    var picked = false;
+    function pick(classId) {
+      if (picked) return;
+      picked = true;
+      window.removeEventListener('keydown', onKey, true);
+      if (rows.parentNode) rows.parentNode.removeChild(rows);
+      done(classId);
+    }
+    function onKey(e) {
+      var m = /^(?:Digit|Numpad)(\d)$/.exec(e.code || '');
+      var i = m ? Number(m[1]) - 1 : -1;
+      if (i < 0 || i >= C.order.length) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      pick(C.order[i]);
+    }
+    C.order.forEach(function (id, i) {
+      var cls = C[id];
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.tabIndex = -1;
+      btn.className = 'cook-btn boot-row-btn boot-class-btn';
+      var head = document.createElement('span');
+      head.className = 'boot-class-name';
+      head.textContent = (i + 1) + '  ' + cls.label.toUpperCase();
+      btn.appendChild(head);
+      cls.lines.forEach(function (line) {
+        var l = document.createElement('span');
+        l.className = 'boot-class-line';
+        l.textContent = line;
+        btn.appendChild(l);
+      });
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        pick(id);
+      });
+      rows.appendChild(btn);
+    });
+    window.addEventListener('keydown', onKey, true);
     game.hud.loadNote.appendChild(rows);
   }
 

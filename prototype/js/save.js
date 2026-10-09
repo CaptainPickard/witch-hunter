@@ -95,7 +95,10 @@
         respawn: copyRespawn(respawn)
       },
       world: { day: dn.day, phase: dn.phase, timeOfDay: dn.timeOfDay },
-      leveling: window.WH_LEVEL.capture()   // L1 (optional block, schema v1 additive)
+      leveling: window.WH_LEVEL.capture(),  // L1 (optional block, schema v1 additive)
+      // R-64.5: the NEW GAME class pick (optional block, schema v1 additive;
+      // no pick = { } - id undefined drops out of the JSON)
+      class: { id: game.classId || undefined }
     };
   }
 
@@ -174,6 +177,13 @@
     // across death -> LOAD); missing (pre-L1 profile) = fresh level 1. The
     // pools re-derive from it in applyBuffStats (step 8).
     window.WH_LEVEL.restore(data.leveling);
+
+    // 0b) R-64.5 class block (optional): the saved id, missing / unknown
+    // (pre-class profile) = null - no class row, CONFIG bar defaults. A
+    // class re-derives its bar defaults before the map reloads (step 3).
+    var classId = data.class && typeof data.class.id === 'string' ? data.class.id : null;
+    if (hooks.setClassId) hooks.setClassId(classId);
+    if (classId && hooks.reloadActionMap) hooks.reloadActionMap();
 
     // 1) inventory first (slot layout as saved)
     var items = Array.isArray(I.items) ? I.items : [];

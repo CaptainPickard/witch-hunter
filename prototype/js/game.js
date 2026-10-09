@@ -1705,6 +1705,7 @@
         if (!open) window.WH_LEVEL.commit();   // L1: closing locks this visit's stat points
       },
       leveling: window.WH_LEVEL,      // L1: CHARACTER tab level / stats / skills column
+      classId: function () { return game.classId || null; },   // R-64.5: CHARACTER tab class row
       onDrop: dropFromSlot,
       // C1: food eaten from the grid (EAT / E) - cooking owns buffs
       onUse: function (i) { return game.cooking.eat(i); },
@@ -2381,7 +2382,8 @@
       applyBuffStats: applyBuffStats,
       switchRegion: switchRegion,
       breakLockOn: breakLockOn,
-      reloadActionMap: function () { game.actionMap = loadActionMap(); }
+      reloadActionMap: function () { game.actionMap = loadActionMap(); },
+      setClassId: setClassId        // R-64.5: restore hands the saved class through
     };
     // S5 quit persist: tab close / reload writes the same capture() profile,
     // once, best-effort and quiet - only once a cycle has begun (day > 0 or

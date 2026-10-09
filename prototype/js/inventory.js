@@ -199,6 +199,7 @@
     this.canUse = opts.canUse || null;  // C1: (itemId) -> usable from the grid?
     this.equip = opts.equip || null;
     this.leveling = opts.leveling || null;   // L1: WH_LEVEL (CHARACTER tab column)
+    this.classId = opts.classId || null;     // R-64.5: () -> class id | null (display row)
     this.open = false;
     this.tab = 'inventory';
     this.selected = -1;
@@ -580,6 +581,15 @@
   InventoryUI.prototype.renderLeveling = function () {
     var LV = this.leveling, LC = CFG.leveling, T = LC.text;
     var col = el('div', 'inv-char-col inv-lvl-col');
+    // R-64.5: the NEW GAME class, display-only v1 (old saves: no row)
+    var cid = this.classId ? this.classId() : null;
+    var cdef = cid && CFG.startingClasses ? CFG.startingClasses[cid] : null;
+    if (cdef && cdef.label) {
+      var crow = el('div', 'lvl-class');
+      crow.appendChild(el('span', 'lvl-class-key', 'CLASS'));
+      crow.appendChild(el('span', 'lvl-class-name', cdef.label));
+      col.appendChild(crow);
+    }
     col.appendChild(el('div', 'inv-sec', 'LEVEL'));
     var head = el('div', 'lvl-head');
     head.appendChild(el('span', 'lvl-num', 'Level ' + LV.level()));
