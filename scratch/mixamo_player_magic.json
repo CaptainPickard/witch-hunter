@@ -1,0 +1,16 @@
+{
+  "WH_Mag_Cast1H": "/workspace/witch-hunter/scratch/mixamo-fbx/magic-pack/Standing 1H Magic Attack 01.fbx",
+  "WH_Mag_Cast2H": "/workspace/witch-hunter/scratch/mixamo-fbx/magic-pack/Standing 2H Magic Area Attack 02.fbx",
+  "WH_Mag_Idle": "/workspace/witch-hunter/scratch/mixamo-fbx/magic-pack/standing idle.fbx",
+  "WH_Mag_Idle02": "/workspace/witch-hunter/scratch/mixamo-fbx/magic-pack/standing idle 02.fbx",
+  "WH_Mag_WalkF": "/workspace/witch-hunter/scratch/mixamo-fbx/magic-pack/Standing Walk Forward.fbx",
+  "WH_Mag_WalkB": "/workspace/witch-hunter/scratch/mixamo-fbx/magic-pack/Standing Walk Back.fbx",
+  "WH_Mag_RunF": "/workspace/witch-hunter/scratch/mixamo-fbx/magic-pack/Standing Run Forward.fbx",
+  "WH_Mag_RunB": "/workspace/witch-hunter/scratch/mixamo-fbx/magic-pack/Standing Run Back.fbx",
+  "WH_Mag_TurnL": "/workspace/witch-hunter/scratch/mixamo-fbx/magic-pack/Standing Turn Left 90.fbx",
+  "WH_Mag_TurnR": "/workspace/witch-hunter/scratch/mixamo-fbx/magic-pack/Standing Turn Right 90.fbx",
+  "WH_Mag_Jump": "/workspace/witch-hunter/scratch/mixamo-fbx/magic-pack/Standing Jump.fbx",
+  "WH_Mag_ReactSmall": "/workspace/witch-hunter/scratch/mixamo-fbx/magic-pack/Standing React Small From Front.fbx",
+  "WH_Mag_ReactLarge": "/workspace/witch-hunter/scratch/mixamo-fbx/magic-pack/Standing React Large From Front.fbx",
+  "WH_Mag_DeathBack": "/workspace/witch-hunter/scratch/mixamo-fbx/magic-pack/Standing React Death Backward.fbx"
+}
