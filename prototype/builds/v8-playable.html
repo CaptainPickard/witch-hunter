@@ -88733,7 +88733,11 @@ window.WH_CONFIG = {
     // (raw ext 0.334 x 1.899 x 0.334, scratch/torch_glb_check.py) = scale
     // 0.3265 - a one-hand torch about a third of the 1.8m player. Read only
     // once the code order gives items.torch a mesh + hand mount.
-    weaponTargetHeight: { longsword: 1.05, handAxe: 0.6, roundShield: 1.0, torch: 0.62 },
+    // dagger (DAG B2): 0.35m target / 1.8867 measured height (raw ext 0.3643 x
+    // 1.8867 x 0.3479; scratch/dagger_measure.json, scratch/measure_dagger.py)
+    // = scale 0.1855 - the smallest weapon in the game.
+    weaponTargetHeight: { longsword: 1.05, handAxe: 0.6, roundShield: 1.0, torch: 0.62,
+                          dagger: 0.35 },
     // Grip-mount tuning (2026-10-03): rollDeg rolls a hand-held weapon about
     // the hand's local +Z (grip forward; positive = CCW, right-hand rule)
     // with no code change. enabled:false reverts to the raw GLB axes for
@@ -88745,9 +88749,10 @@ window.WH_CONFIG = {
     // grip sits at holder y=1.637 while the mount had the TIP at the fist -
     // hand gripped mid-blade, hilt floating behind. The code subtracts this
     // value so the fist lands ON the grip. handAxe grip is its butt at
-    // holder 0, already correct.
+    // holder 0, already correct. dagger (DAG B2): grip butt normalized to the
+    // origin in Phase A -> 0 (scratch/dagger_measure.json gripHolderY 0.0).
     weaponMount: { rollDeg: 0, enabled: true,
-                   gripHolderY: { longsword: 1.637, handAxe: 0 } },
+                   gripHolderY: { longsword: 1.637, handAxe: 0, dagger: 0 } },
     // 10-04 left-hand shield mount (scratch/measure_shield.py, L_Hand at
     // WH_Idle frame 0). Vectors are L_Hand-local. faceAxis: where the boss
     // side (raw +Z) points = body-left turned 20 deg toward forward, level.
@@ -88869,6 +88874,59 @@ window.WH_CONFIG.moveset = {
                 damage: 27, range: 2.7, halfAngleDeg: 35, lunge: 0.7,
                 staminaCost: 12, damageGhoulMult: 1.15,
                 cancel: { dodge: 0.90, guard: 0.95, move: 0.65 } }
+      }
+    },
+    // DAG (io/missions/2026-10-09-dagger.md B1; DESIGN values, playtest-tunable):
+    // FAST IN, FAST OUT. Three quick flat side-to-side slashes, then the pause
+    // (slash 3's 0.48 recover) and the reset to chain[0]. handAxe dialect: no
+    // bufferFrom (windup LMB ignored), no rootMotion table (legacy lunge metres).
+    // Poses (stand-in pivot only): m2 = slash-r2l, m1 = slash-l2r (the longsword
+    // slash shapes). The rigged body plays WH_DagSlashR2L / WH_DagSlashL2R /
+    // WH_DagSlashR2Lb (combat-dagger.glb, authored on these exact phase clocks)
+    // through anim.js MOVE_NAMES, ONLY while this moveset is the wielded weapon
+    // (clip source: assets.js MANIFEST.playerDagClips, merged in player.setBody).
+    // PHASE CLOCK (full clock, every recover played out):
+    //   dagger    (0.10+0.12+0.16)*2 + (0.10+0.12+0.48) = 0.76 + 0.70 = 1.46 s for
+    //             15+15+20 = 50 dmg (34.2 dmg/s), stamina 7+7+9 = 23
+    //   handAxe   (0.10+0.14+0.22) + (0.12+0.14+0.30) = 0.46 + 0.56 = 1.02 s for
+    //             22+27 = 49 dmg (48.0 dmg/s), stamina 10+12 = 22
+    //   longsword (0.57+0.20+0.73) + (0.80+0.26+0.61) + (0.40+0.43+0.17) = 4.17 s
+    //             for 34+34+40 = 108 dmg (25.9 dmg/s), stamina 15+15+20 = 50
+    // The trades: range 1.9 is the SHORTEST reach (handAxe 2.6-2.7, longsword
+    // 3.2-3.8) and stamina 7 / slash the CHEAPEST (handAxe 10-12, longsword
+    // 15-20); the dagger pays in reach, not in clock.
+    // cancel.move 0.65 = fast-in-fast-out. Worked example (fraction of
+    // windup+strike+recover): slash 1 = 0.38 s, move-cancel at 0.65 x 0.38 =
+    // 0.247 s (0.027 s into the 0.16 recover, i.e. right after the 0.22 s strike
+    // ends). Two-hit dart: slash 1 chained in full (0.38) + slash 2 cut at 0.247
+    // = 0.627 s for 30 dmg / 14 stamina, then walk out at moveCancelWalkMult.
+    // Slash 3: 0.65 x 0.70 = 0.455 s, so walking out skips 0.70 - 0.455 =
+    // 0.245 s of the 0.48 pause. (longsword slashR2L move-cancel: 0.65 x 1.50
+    // = 0.975 s.) Dodge 0.90 x 0.38 = 0.342 s, guard 0.95 x 0.38 = 0.361 s.
+    // dagSlashR2Lb's range / halfAngleDeg / lunge / damageGhoulMult (the brief
+    // leaves them unset) repeat slash 1's.
+    dagger: {
+      chainCap: 3,
+      chain: ['dagSlashR2L', 'dagSlashL2R', 'dagSlashR2Lb'],
+      moveMultWhileAttacking: { windup: 0.4, strike: 0, recover: 0 },   // handAxe row
+      bladeAxisY: 1,                // scratch/dagger_measure.json bladeAxisY (+Y tip, grip butt at origin)
+      moves: {
+        dagSlashR2L:  { pose: 'm2', windup: 0.10, strike: 0.12, recover: 0.16,
+                        chainOpenSec: 0.16,
+                        damage: 15, range: 1.9, halfAngleDeg: 55, lunge: 0.4,
+                        staminaCost: 7, damageGhoulMult: 1.15,
+                        cancel: { dodge: 0.90, guard: 0.95, move: 0.65 } },
+        dagSlashL2R:  { pose: 'm1', windup: 0.10, strike: 0.12, recover: 0.16,
+                        chainOpenSec: 0.16,
+                        damage: 15, range: 1.9, halfAngleDeg: 55, lunge: 0.4,
+                        staminaCost: 7, damageGhoulMult: 1.15,
+                        cancel: { dodge: 0.90, guard: 0.95, move: 0.65 } },
+        // the third cut ends in THE PAUSE (0.48 recover), then the chain resets
+        dagSlashR2Lb: { pose: 'm2', windup: 0.10, strike: 0.12, recover: 0.48,
+                        chainOpenSec: 0.48,   // last move: full recover anyway
+                        damage: 20, range: 1.9, halfAngleDeg: 55, lunge: 0.4,
+                        staminaCost: 9, damageGhoulMult: 1.15,
+                        cancel: { dodge: 0.90, guard: 0.95, move: 0.65 } }
       }
     }
   }
@@ -89047,6 +89105,14 @@ window.WH_CONFIG.items = {
   longsword:      { id: 'longsword', name: 'Longsword', glyph: 'LS',
                     category: 'gear', stackCap: 1, kind: 'melee', moveset: 'longsword', mesh: 'longsword',
                     hands: ['right', 'left'], equipHint: 'rightHand' },
+  // DAG (2026-10-09): the Magician's starting blade (class-extra kit row,
+  // CONFIG.startingClasses). Melee like the longsword: the right hand swings
+  // the CONFIG.moveset.weapons.dagger chain and trains the Short Blade line.
+  // Right hand only v1: a left-hand melee never swings, and with no melee
+  // wielded right the left mount would read the longsword's blade axis.
+  dagger:         { id: 'dagger', name: 'Dagger', glyph: 'DG',
+                    category: 'gear', stackCap: 1, kind: 'melee', moveset: 'dagger', mesh: 'dagger',
+                    hands: ['right'], equipHint: 'rightHand' },
   roundShield:    { id: 'roundShield', name: 'Round Shield', glyph: 'SH',
                     category: 'gear', stackCap: 1, kind: 'shield', mesh: 'roundShield',
                     hands: ['right', 'left'], equipHint: 'leftHand',
@@ -89501,7 +89567,8 @@ window.WH_CONFIG.equip = {
   // hand. The other hand gets the mount mirrored by this hand-local factor:
   // L_Hand <-> R_Hand local frames map by diag(-1, 1, 1) within 0.01
   // (scratch/measure_hand_mirror.py, bind pose). Roll angles flip sign.
-  nativeHand: { longsword: 'right', roundShield: 'left', magicGlove: 'left', torch: 'left' },
+  nativeHand: { longsword: 'right', roundShield: 'left', magicGlove: 'left', torch: 'left',
+                dagger: 'right' },
   mirrorScale: [-1, 1, 1],
   // Magic glove placeholder (no glove mesh this order): the spell glow orb
   // on the caster hand. anchor 'hand' = child of the hand bone at
@@ -90072,6 +90139,7 @@ window.WH_ICONS = {
   bandage: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAMvklEQVR4nO2ZIXBcR9LHf04d6MdmDr05pAl7DloFaYO8YVtBSpB9yDoUmTlBiZFj5JhFQZGRbeQIuZZZRloh70PSYx6hzEM3w16z/cA8KXFZdpK73H2pr75WlUqrlfZ1T//73//ugf+3f8+e/nB3fXL0bP2v/v+VP9KZ32Mvnz9dW2NJOaIpIyI43/C3Dz76XT79VwN4efRsLUBOZxi7gaYzjl8smWxNMW6DCoixR6zhw48/+02+/ccDeP700bp2hpx6pBIEQAzdcoG1Ft9MGFSxtUcqQQcl5UhOmY8++cev+veX/4TTzx59twbwfoPicUVzdYIOyurFAW6jwTeb5D4gxgJCyhFXeVQTGgOo/qZn/aEBvDo5WqMKAkMeAKjEMuREDAlbO/zkGpVAimekFJHKkGIgtC2VCABZM7Wb8M9XR+u/vv/umnjv33X65fOn65fPn65/OjlaAww6QB6oTIU1FlSxxmK9LwGZCmMd7uoEKktOEVVlc74NwJAzKICSU+TR/dvvZKh/KYCjZ4/Wr06er1+9fL6OsUcEUo4l7aqIK7CQShBrUE0IoKqMVQBA02wh1pJjAECkwvkGEaEPHcY6prP5O335XUX88vnTtQ4ZFMQKIgZVxZrRKalIIeCuNggGHTJUckGT50VagsrEEHC1R6yQY/mb8fiJXYeScH6CWMff3v/wUl9/UwAnR0/Xe3sP8c6QB0Wz0jQ18xu7LBdPEFOzOZmimhhyxtYeRcez/tlxVcXYnwMTZHRXSTFRSQUMxK7Fec+AoRIYFD746JN/LYDSJRWQAgERKqkYNNG1x9jaU7uN8eGU000RsZYUA9Y1MCixD1jjEIHQLhHj8FcnY+aEHAPL45bptRmoMuhAJRUxRqQCaxzvf/jxG/6+tQaeP/pufXJUuqV1bnyO4JwbUw3NZAvvN3i4/z2DDqQcWR0ugBKMdQ0pdGhOOO8REWIIGN9gXSnqPGQECt4nE1IIDDqQU18IQZU8lIAus9do9KdXR2tNyqCJEPrykKGktzhkRwwLtvKcZ+bmzk1eLA4QlO3d26CMDSlga0/KEUEQKzgaRh4FDKYyhBCoBDAVmnpiOMP7DXLqQYTUB8xbDvoiA0fPflh//cU9bvx9h5wUdGB1eMjXd75GNYNmHn9zj+54gaaMpgjjoVjjuDafowiL/f0LvFdSWKgyFgFi6EowIiAVIXQoYE1VsqZgrKESoY9ndO0KAO89Cpy8fFP0XYHCLoeHC5qm4Xh5DAhd13H9xnb55xSJocf7GnEOUibnhJ/OCKcdzjekvjDKYnHA9o2bJehCnj9/HxQqSDFSiUWsGX+uEDEkjfThjBAitTNjggscNUds7fj4s1uv1cGYAeXFYctZ6GnbwOLFkus3tiFl9vf3aTZnbE4nHBwsqIA+x4JphGY6Yxg/HGA2m/PFrVsYMcXxlOhWywv861AyY1yNDhnVTAgrYh+opMLYmqbxWOOojAWgDwExjsXBj29A6ArA/ds3177x5JTRnDgNPWcx8sN33xFC4PGTJ+xcn5P7RBc6tnduoykz6IB1jhg6rDGcF+/jJ/t0q47dnW2M81QCxnkUIaxaXNOAFtFmjSHFvjCcNWhSkibOQk/takQqzrpTYuhwznLrwcGbGbDG0seM955lG9jZucn9b+8S+4i/2rDZbBAz1E3DhvM83nsAApp60thFB4Vh/JpuzZjOtlgsDtEhI8YTQgcjAYyoQIwh5QyVGTMUS82IZWu6RY49fQzUzhb2MzVbk+a1Onjv6Q931yGWwjJi+Oqr2zAo1lpy7GFQJtMZztX0scc1DY33fHvnG0K3og8drvY458gxF9yq0jRXEeeKNKgEa2pSH7HGkWIq/WR0IsZAVsXWtlSLlMYXQkfqIzkpUjtEKo7b7rUM/KULkdAFYh+JIWCtQURZLJTJdAIozjtAOD5ccH33NpqU+QzOTrtS5JoAO/4dNJMJSRMTHdjb22M+m5NU8X6D067A7bwpgtDHjNDjvL8ofFVlvr1N13YkTVQKXQhv1MB7d+59f2UybdicNMzmM5ZtR1Jou4CqEvtEOO0A2N7Z5cHXd/CbDVXtwBrEecRaqEYJrZByQrNSSYWOSfG+dOsKkErIqR87baDZbAqT5QFVRbWo2rbtiDnhnCOmTO2bNwMA6GOmtg5ja1xt6drA7d0dNidTcuyRyhBDx2p5yM7uTRhAxHBtvk3owsg07VgLAzn26KDEPiJGWCwWVMaSYsQ3G0Dh+9N2RSUWjRlgbFwwqHLWdRgRYuxZLltMVfPlve8vlxKTzQZbW3LKbE232Lm9w/6TA7659w1IkRAigh9PYNW2F3A5Cx0i9kIPFSosatPVjq3ZFFC+/vILlNenrEK9CkZIfcR7z+rFkr5bISJkTagOVCJFAF5i7wH4jYbHT35EKil6HkEYsMayt/eYHHva5XGhzNiTY5mkQtcxmc2gKgLvtOsYNNGnjIgpcjunixlAVYEKa8qBpJwJXSD1iXbVkvpE0zQgkGIPgFCRcuLO908uFZ7vAYSzwHSyCSiHh4ccLw+xtcNYoXaWxwePaTa36FbHOO+ZzmaE0xZXW+KqLVQqgvcbtO0xq+NDUs6kvqxMms0JOWUOD5eINaW7igADoy7EubpIEJQYc6FW4PuDxZWHBy/eqpov3rg531r7pihEZxxdCIgIjfeEPjJpGpx3aFIWiwUA29vbZFWWiwXNZoNvPDpA265AoWmuEmMk9JGmaei6jhACN65/Su02AGiXL/DNBM2ZrjstkC0aEbEWEeGzf9x5awAXanR6bcakaWi7jvl8DgePmUyngCBBsLUjJ6V2Bj9KY+sdsV1hreCbhuPDBbXzGLGYxjHkoTSuvsBHh4xIRbN5je70GJTivCpihMnWdGS+gIgZIfRuu1Cj3jmUUtD7e3vM5p/yZP8JIQTaVcvyeImxhVGMLVPWkAec82AMOigbzYR21RWsa9kuaFL6lMkp42yNM4Yvbv2DZjyEn610aGMNk8mEzUlD0zSchXCxpnknhAAe3b+99s0EqUAHcM7wzb0HRY+EwP3v7nPniztcv3GdHDtm8xus2iWqBVazrQm1a1CKABvGebn2V+ljIIRIaVKFKr/99j4hBHLKY1kYKlNdDDKVWIw15FF3gfLBR59dpkaLNdMtUs48efyE2EdC7JnPZsymDbU15JjZ/nROTj0hllYPQjgN7N7cQcQWqKTCILZ2dKEn50TsE1IJ8SwRQkQ1cevWLY4XBxeQVM1lJaOKpnzhl3E1lbFUIpwcPX0tG28Ux93Pr6+hEIX3Da52GFeTU+bxw312b++yt/cQZwxuHDUBJtMt2tUx2sdRpCl9zHQhsL09p+tKNxcRYh8BOGeXf/50si6jYyZ2Hb5pyirG+jI0VcA4JA05UdWW9z8o8/Gl1f359Wvr2WyOpozzjhAixpZC/vHJAfPtOYuDBbs7N3mxPOS07ZjNZuQUCV0HxpbuHftxNMyUpUDmwcODS5/506uXZWWTBzAjhqW6EIADAxWQspJTz/J4xZ0HD69culrc2dktuDNlwFgdLJhOJjzYf8CgsBkCFfBieUyMmT4p7apFUMQ4VJWsmavNBiEUOD14eHkjOjcRQROYkUz0F0N8CF2ZXsdNhbGmKOW3ZQDKmJljz/6Tx3xz9ysGhZwy4axjuWy52mwAZe3hrAFKts+xm1UZgO/fcuKX2Vc3t9c7u7vEGNEcyxA0ZDSXz1IdEFOR+4Qxwid///LKOz/85OWzdeg62rY0oD72bLia2XyOUORt13VsTjY5B2uMEdVfP/HL7KeTo3XXdWVFKTJObI6U07ieLwdlpPSPDz765N0BADy6+/k6atmEXJvPQSGEMx7s7eGsYXt7RrsK3HuLVvk99vSH+2s5H+I1oamMmX3sQRPGOYyYcVZWPv7s1q8HcG4nR8/Wx4cLQswYa3DOwgB///LeH3JJcvTsh7UqxBCKqJTzxSS/WL2UF2KE1Cd80/z2+4Hz3eT9u7fXm03Dx5/9+u3J77Gu7Ug5jWMlGLFoToXRdCjvGYeYIvwA+nj2v3fJ90s7OXq2frFYMGguE5sRaufpVi2bs9m4BR8vAp0HEYw1HOzv/fsXHH+Ete0xSZWmmWBqRww9Z10Lmhi0CMLab0AlpBiI7SF//dsHV2bz+X/mjuz3Wo4RNy7GcghMpltl+WUcUgkhBM7alg3vqKS8Bnj/w08ub2T/bau9p2km9PEMc9VTGRCxhD7gfcPVyWbpwjHwya0Hr8H+T1EDr14+X8cQMK4GlK49ZnOyBVIKOoTujZ3ouf0pMhBGoRdCRx975p9uo0P5/a+x3Z8iAwA/nTxfl/ukMr1ddhvzp7dXl+z//8/b/wCdxDVZVlFDRgAAAABJRU5ErkJggg==",
   blandMush: "data:image/png;base64,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",
   boneShard: "data:image/png;base64,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",
+  dagger: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAD2UlEQVR4nNWZvW7jRhSFP9nW4jJIACmV2ARmSQEpxCYAS7VO53LLLdPuI/gV3DnpFqlUBfYjKN1UAVkSqbhNQFbRjW1pUlCUaa1l64eUtAcgQJHi8Jy5Z+7cGbastXwNMMaMgZ9AToKg3yqvnx2Q05uIoqjs3amq2izLHi4uLqT6n6MUMB6PbafTAUBVUdVWGIYvcm0dk4XG43FLRO5F5AwW5AnDsLXqmaMRULELjuOQZRmqOgvD8PS1545CgDHGihTWVtUHhbaqTocrbFPFSePs3kAURRZ5Gpeq2haYrUMeDhyBKIqmCicCKIAqwCwIgldtU8XBspAxxgKICFoQL/HvJu0cRIAx5ueK5y3QgkJMv9//bpO2DjIGBPmj8mORIvv9/sp0uQp7j4Ax5h4AXTi/xDfbtLfXCBhj/gba8AV5giCYbNPmvi30g4hUsyaqShAEG1unxN4sZKLIIs/SJVAM3F2wtwgIIEiFvOzc+7AnAcYYq0ueh917H/ZgoaU6Z361GMS79j40HAFjzJ8v97Ki6O91vKPRWqhaIlfLBUUJg9U1/iZozELGmIfla6qA1EceGhLwUs+XVhLksc531T4GRqORzfN8ucJEVRGBIAjadb6vVgGj0ciKCJplU3ha0xbnzOrIOsvYScDV1dXCKh8//mJFBMeBTPV0vqZd1PsibFXrvIWdBKRpShiGdjgc/tPrecRxTJY99fpkMpmfC2EYflsH4WXsJOD6+rqluRIEwfe/XV+jmhPH8eL+fDOK4bC+rLOMWuaBYRjaz3mO7/v4vg/AYDAA4PLysjHyUNMgjuN4OvD9aRzH3N3dIQJJkjROHmqIgOd2bZkx33/4ML27uzvtiNB1XW5vbxsXsFME3G7X5qp0O8Ui5dOnX0+LCUvoSKcehm/BWrvVcd7r2V6vZ33ft+e9jj0/P7fV+4PBwN7c3Nht21/32MpCfc+1ABMtVlgiQpIkjdvlJWxsob7n3UOFPByMPGxYzHme+1+ea7uzKMzAEX5sgti6WDsC/b53muf6rrPYClQcgShJ/2qQ35tYW0CW6WNJvtuRBxCiJD2YdUqsZSHP8yyAI+CIMFHaSXp48rCGAM91LQKgZCql72eNM1sT61lIAQSRYjUVJena+/dN49UIuK47nyS02JRCW8dinRIrI+C6rl3siMwTfpKkR/dZ9sWZuCSvCgKPwNmx9XyJLyLgdh0rKA4gxWbs0ZKHJQFBEMxL48I7DpAeMXmoCAjDMAfwfA+ALFcmut1Xk33i2RgIw9CqFhknSeNZmmZHky5X4VlW6XblHuRdknzmayAP8D+ZUzduBuUI3gAAAABJRU5ErkJggg==",
   deadwood: "data:image/png;base64,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",
   firebolt: "data:image/png;base64,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",
   forestHerb: "data:image/png;base64,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",
@@ -90381,6 +90449,13 @@ window.WH_ICONS = {
     // (scratch/mixamo_player.json; chain clips byte-identical). Rollback:
     // human-hunter-male.combat-chain.glb
     playerBody: 'art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-sword.glb',
+    // DAG (2026-10-09) CLIP SOURCE ONLY (never instanced): a rigged.glb copy
+    // + WH_DagSlashR2L / WH_DagSlashL2R / WH_DagSlashR2Lb (Phase A2,
+    // scratch/blender_dagger_clips.py; same 22 nodes / 20 joints). player.js
+    // setBody merges its WH_Dag* clips into the playerBody CharacterAnim, so
+    // combat-sword.glb stays byte-identical. A failed load = no dagger clips
+    // (dagger moves fall back to the shared 'attack' clip like handAxe).
+    playerDagClips: 'art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-dagger.glb',
     banditBody: 'art-direction/3d/assets/races_regen/rigged/orc-male-warrior.mixamo.glb',
     // 10-05: rigged copy + 7 Mixamo WH_*_Zombie clips (13 total).
     // Rollback: undead-ghoul-male.rigged.glb
@@ -90389,6 +90464,8 @@ window.WH_ICONS = {
     // weapons (pixelated)
     longsword: 'art-direction/3d/assets/weapons/longsword-pixelated.glb',
     handAxe: 'art-direction/3d/assets/weapons/hand-axe-pixelated.glb',
+    // DAG (2026-10-09) curved Meshy dagger (scratch/dagger_bake.py; NORMAL baked in)
+    dagger: 'art-direction/3d/assets/weapons/dagger-curved-pixelated.glb',
     // 10-04 left-hand shield (no NORMAL attribute: prepTemplate rebuilds it)
     roundShield: 'art-direction/3d/assets/weapons/round-shield-pixelated.glb',
     // 10-05 hand torch (scratch/torch_bake.py; NORMAL baked in)
@@ -90439,7 +90516,8 @@ window.WH_ICONS = {
   // Order D: 13 = those 9 + the 4 shield/block clips.
   // Round C: 25 = those 13 + 12 Mixamo sword/shield clips (combat-sword.glb).
   // Round D: 27 = 13 + 12 + 3 Mixamo WH_SS_* chain attacks.
-  var CHARACTERS = { playerBody: 27, banditBody: 6, ghoulBody: 6 };
+  // DAG: playerDagClips 9 = 6 whanim1 + 3 WH_Dag* (clip source only).
+  var CHARACTERS = { playerBody: 27, banditBody: 6, ghoulBody: 6, playerDagClips: 9 };
   var failed = {};     // logical name -> true (stand-in substituted)
   var loadedCount = 0;
   var GROUND_META = {}; // holder uuid -> measured height, width, raw groundMinY
@@ -90872,10 +90950,17 @@ window.WH_ICONS = {
   // slot plays an overhead chop (pack has no stab). A missing WH_SS_* clip
   // falls back to the authored 10-04 clip (MOVE_FALLBACK_NAMES). Rollback:
   // revert MOVE_NAMES values to MOVE_FALLBACK_NAMES (+ CONFIG move timings).
+  // DAG (2026-10-09): the dagger chain's clips (combat-dagger.glb, merged
+  // into the player clip list by player.setBody). Only the dagger moveset
+  // emits these move ids, so they play iff the dagger is the wielded weapon;
+  // bodies without the clips create no action (no fallback, unchanged).
   var MOVE_NAMES = {
     slashR2L: 'WH_SS_SlashR2L',
     slashL2R: 'WH_SS_SlashL2R',
-    thrust: 'WH_SS_Overhead'
+    thrust: 'WH_SS_Overhead',
+    dagSlashR2L: 'WH_DagSlashR2L',
+    dagSlashL2R: 'WH_DagSlashL2R',
+    dagSlashR2Lb: 'WH_DagSlashR2Lb'
   };
   var MOVE_FALLBACK_NAMES = {
     slashR2L: 'WH_SlashR2L', slashL2R: 'WH_SlashL2R', thrust: 'WH_Thrust'
@@ -94415,8 +94500,13 @@ window.WH_ICONS = {
     this.bodyBaseX = meshRoot.position.x || 0;
     this.yawFrame.add(this.body);
     if (window.WH_ASSETS.getClips('playerBody').length) {
-      this.anim = new window.WH_CharacterAnim(meshRoot, window.WH_ASSETS.getClips('playerBody'),
-        { variant: 'sword' });
+      // DAG: + the WH_Dag* chain clips from the clip-source GLB (same rig);
+      // only dagger move ids reach them (anim.js MOVE_NAMES).
+      var dagClips = window.WH_ASSETS.getClips('playerDagClips').filter(function (c) {
+        return /^WH_Dag/.test(c.name);
+      });
+      this.anim = new window.WH_CharacterAnim(meshRoot,
+        window.WH_ASSETS.getClips('playerBody').concat(dagClips), { variant: 'sword' });
     }
   };
 
@@ -94461,6 +94551,14 @@ window.WH_ICONS = {
     }
     if (mesh.parent) mesh.parent.remove(mesh);
     var wm = window.WH_CONFIG.assets.weaponMount;
+    // DAG: the mesh's own weapon def. Right hand = the wielded moveset
+    // (this.weaponId, as before - also the WH_DEBUG.equipWeapon mesh swap);
+    // a melee item carried LEFT while another melee is wielded right (e.g.
+    // longsword left + dagger right) keeps its own moveset's grip + blade
+    // axis (longsword -Y vs dagger +Y) instead of the right hand's.
+    var leftMv = hand === 'left' && this.hasMeleeRight() &&
+      itemDef(itemId) && itemDef(itemId).moveset;
+    var wid = leftMv && MV.weapons[leftMv] ? leftMv : this.weaponId;
     // Grip anchor (Nicko 10-03): the instance is a groundAlign HOLDER whose
     // inner mesh was lifted so the GLB's raw min-Y rests at holder y=0 -
     // which put the sword TIP at/behind the fist (hand on mid-blade, hilt
@@ -94473,7 +94571,7 @@ window.WH_ICONS = {
     // Order B: applied once per mesh - remounts must not stack it.
     if (!mesh.userData.whGripApplied) {
       mesh.userData.whGripApplied = true;
-      var gripY = (wm && wm.gripHolderY) ? (wm.gripHolderY[this.weaponId] || 0) : 0;
+      var gripY = (wm && wm.gripHolderY) ? (wm.gripHolderY[wid] || 0) : 0;
       if (gripY && mesh.children[0]) mesh.children[0].position.y -= gripY;
     }
     if (bone) {
@@ -94490,7 +94588,7 @@ window.WH_ICONS = {
       if (wm && wm.enabled) {
         // 10-04: blade axis per weapon (longsword -Y = unchanged mount;
         // handAxe +Y = the bandit axe's measured mapping in enemy.js).
-        var bladeY = this.getWeaponDef().bladeAxisY || -1;
+        var bladeY = (MV.weapons[wid] || this.getWeaponDef()).bladeAxisY || -1;
         mountRotation.setFromUnitVectors(
           new THREE.Vector3(0, bladeY, 0), new THREE.Vector3(0, 0, 1));
         // Blade-edge tuning roll about the grip axis. Sign verified: rolling

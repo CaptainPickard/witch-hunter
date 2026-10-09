@@ -182,8 +182,13 @@
     this.bodyBaseX = meshRoot.position.x || 0;
     this.yawFrame.add(this.body);
     if (window.WH_ASSETS.getClips('playerBody').length) {
-      this.anim = new window.WH_CharacterAnim(meshRoot, window.WH_ASSETS.getClips('playerBody'),
-        { variant: 'sword' });
+      // DAG: + the WH_Dag* chain clips from the clip-source GLB (same rig);
+      // only dagger move ids reach them (anim.js MOVE_NAMES).
+      var dagClips = window.WH_ASSETS.getClips('playerDagClips').filter(function (c) {
+        return /^WH_Dag/.test(c.name);
+      });
+      this.anim = new window.WH_CharacterAnim(meshRoot,
+        window.WH_ASSETS.getClips('playerBody').concat(dagClips), { variant: 'sword' });
     }
   };
 
@@ -228,6 +233,14 @@
     }
     if (mesh.parent) mesh.parent.remove(mesh);
     var wm = window.WH_CONFIG.assets.weaponMount;
+    // DAG: the mesh's own weapon def. Right hand = the wielded moveset
+    // (this.weaponId, as before - also the WH_DEBUG.equipWeapon mesh swap);
+    // a melee item carried LEFT while another melee is wielded right (e.g.
+    // longsword left + dagger right) keeps its own moveset's grip + blade
+    // axis (longsword -Y vs dagger +Y) instead of the right hand's.
+    var leftMv = hand === 'left' && this.hasMeleeRight() &&
+      itemDef(itemId) && itemDef(itemId).moveset;
+    var wid = leftMv && MV.weapons[leftMv] ? leftMv : this.weaponId;
     // Grip anchor (Nicko 10-03): the instance is a groundAlign HOLDER whose
     // inner mesh was lifted so the GLB's raw min-Y rests at holder y=0 -
     // which put the sword TIP at/behind the fist (hand on mid-blade, hilt
@@ -240,7 +253,7 @@
     // Order B: applied once per mesh - remounts must not stack it.
     if (!mesh.userData.whGripApplied) {
       mesh.userData.whGripApplied = true;
-      var gripY = (wm && wm.gripHolderY) ? (wm.gripHolderY[this.weaponId] || 0) : 0;
+      var gripY = (wm && wm.gripHolderY) ? (wm.gripHolderY[wid] || 0) : 0;
       if (gripY && mesh.children[0]) mesh.children[0].position.y -= gripY;
     }
     if (bone) {
@@ -257,7 +270,7 @@
       if (wm && wm.enabled) {
         // 10-04: blade axis per weapon (longsword -Y = unchanged mount;
         // handAxe +Y = the bandit axe's measured mapping in enemy.js).
-        var bladeY = this.getWeaponDef().bladeAxisY || -1;
+        var bladeY = (MV.weapons[wid] || this.getWeaponDef()).bladeAxisY || -1;
         mountRotation.setFromUnitVectors(
           new THREE.Vector3(0, bladeY, 0), new THREE.Vector3(0, 0, 1));
         // Blade-edge tuning roll about the grip axis. Sign verified: rolling

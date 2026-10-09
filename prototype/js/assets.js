@@ -103,6 +103,13 @@
     // (scratch/mixamo_player.json; chain clips byte-identical). Rollback:
     // human-hunter-male.combat-chain.glb
     playerBody: 'art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-sword.glb',
+    // DAG (2026-10-09) CLIP SOURCE ONLY (never instanced): a rigged.glb copy
+    // + WH_DagSlashR2L / WH_DagSlashL2R / WH_DagSlashR2Lb (Phase A2,
+    // scratch/blender_dagger_clips.py; same 22 nodes / 20 joints). player.js
+    // setBody merges its WH_Dag* clips into the playerBody CharacterAnim, so
+    // combat-sword.glb stays byte-identical. A failed load = no dagger clips
+    // (dagger moves fall back to the shared 'attack' clip like handAxe).
+    playerDagClips: 'art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-dagger.glb',
     banditBody: 'art-direction/3d/assets/races_regen/rigged/orc-male-warrior.mixamo.glb',
     // 10-05: rigged copy + 7 Mixamo WH_*_Zombie clips (13 total).
     // Rollback: undead-ghoul-male.rigged.glb
@@ -111,6 +118,8 @@
     // weapons (pixelated)
     longsword: 'art-direction/3d/assets/weapons/longsword-pixelated.glb',
     handAxe: 'art-direction/3d/assets/weapons/hand-axe-pixelated.glb',
+    // DAG (2026-10-09) curved Meshy dagger (scratch/dagger_bake.py; NORMAL baked in)
+    dagger: 'art-direction/3d/assets/weapons/dagger-curved-pixelated.glb',
     // 10-04 left-hand shield (no NORMAL attribute: prepTemplate rebuilds it)
     roundShield: 'art-direction/3d/assets/weapons/round-shield-pixelated.glb',
     // 10-05 hand torch (scratch/torch_bake.py; NORMAL baked in)
@@ -161,7 +170,8 @@
   // Order D: 13 = those 9 + the 4 shield/block clips.
   // Round C: 25 = those 13 + 12 Mixamo sword/shield clips (combat-sword.glb).
   // Round D: 27 = 13 + 12 + 3 Mixamo WH_SS_* chain attacks.
-  var CHARACTERS = { playerBody: 27, banditBody: 6, ghoulBody: 6 };
+  // DAG: playerDagClips 9 = 6 whanim1 + 3 WH_Dag* (clip source only).
+  var CHARACTERS = { playerBody: 27, banditBody: 6, ghoulBody: 6, playerDagClips: 9 };
   var failed = {};     // logical name -> true (stand-in substituted)
   var loadedCount = 0;
   var GROUND_META = {}; // holder uuid -> measured height, width, raw groundMinY

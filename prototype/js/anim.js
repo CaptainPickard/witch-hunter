@@ -14,10 +14,17 @@
   // slot plays an overhead chop (pack has no stab). A missing WH_SS_* clip
   // falls back to the authored 10-04 clip (MOVE_FALLBACK_NAMES). Rollback:
   // revert MOVE_NAMES values to MOVE_FALLBACK_NAMES (+ CONFIG move timings).
+  // DAG (2026-10-09): the dagger chain's clips (combat-dagger.glb, merged
+  // into the player clip list by player.setBody). Only the dagger moveset
+  // emits these move ids, so they play iff the dagger is the wielded weapon;
+  // bodies without the clips create no action (no fallback, unchanged).
   var MOVE_NAMES = {
     slashR2L: 'WH_SS_SlashR2L',
     slashL2R: 'WH_SS_SlashL2R',
-    thrust: 'WH_SS_Overhead'
+    thrust: 'WH_SS_Overhead',
+    dagSlashR2L: 'WH_DagSlashR2L',
+    dagSlashL2R: 'WH_DagSlashL2R',
+    dagSlashR2Lb: 'WH_DagSlashR2Lb'
   };
   var MOVE_FALLBACK_NAMES = {
     slashR2L: 'WH_SlashR2L', slashL2R: 'WH_SlashL2R', thrust: 'WH_Thrust'

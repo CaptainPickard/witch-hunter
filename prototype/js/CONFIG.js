@@ -1562,7 +1562,11 @@ window.WH_CONFIG = {
     // (raw ext 0.334 x 1.899 x 0.334, scratch/torch_glb_check.py) = scale
     // 0.3265 - a one-hand torch about a third of the 1.8m player. Read only
     // once the code order gives items.torch a mesh + hand mount.
-    weaponTargetHeight: { longsword: 1.05, handAxe: 0.6, roundShield: 1.0, torch: 0.62 },
+    // dagger (DAG B2): 0.35m target / 1.8867 measured height (raw ext 0.3643 x
+    // 1.8867 x 0.3479; scratch/dagger_measure.json, scratch/measure_dagger.py)
+    // = scale 0.1855 - the smallest weapon in the game.
+    weaponTargetHeight: { longsword: 1.05, handAxe: 0.6, roundShield: 1.0, torch: 0.62,
+                          dagger: 0.35 },
     // Grip-mount tuning (2026-10-03): rollDeg rolls a hand-held weapon about
     // the hand's local +Z (grip forward; positive = CCW, right-hand rule)
     // with no code change. enabled:false reverts to the raw GLB axes for
@@ -1574,9 +1578,10 @@ window.WH_CONFIG = {
     // grip sits at holder y=1.637 while the mount had the TIP at the fist -
     // hand gripped mid-blade, hilt floating behind. The code subtracts this
     // value so the fist lands ON the grip. handAxe grip is its butt at
-    // holder 0, already correct.
+    // holder 0, already correct. dagger (DAG B2): grip butt normalized to the
+    // origin in Phase A -> 0 (scratch/dagger_measure.json gripHolderY 0.0).
     weaponMount: { rollDeg: 0, enabled: true,
-                   gripHolderY: { longsword: 1.637, handAxe: 0 } },
+                   gripHolderY: { longsword: 1.637, handAxe: 0, dagger: 0 } },
     // 10-04 left-hand shield mount (scratch/measure_shield.py, L_Hand at
     // WH_Idle frame 0). Vectors are L_Hand-local. faceAxis: where the boss
     // side (raw +Z) points = body-left turned 20 deg toward forward, level.
@@ -1698,6 +1703,59 @@ window.WH_CONFIG.moveset = {
                 damage: 27, range: 2.7, halfAngleDeg: 35, lunge: 0.7,
                 staminaCost: 12, damageGhoulMult: 1.15,
                 cancel: { dodge: 0.90, guard: 0.95, move: 0.65 } }
+      }
+    },
+    // DAG (io/missions/2026-10-09-dagger.md B1; DESIGN values, playtest-tunable):
+    // FAST IN, FAST OUT. Three quick flat side-to-side slashes, then the pause
+    // (slash 3's 0.48 recover) and the reset to chain[0]. handAxe dialect: no
+    // bufferFrom (windup LMB ignored), no rootMotion table (legacy lunge metres).
+    // Poses (stand-in pivot only): m2 = slash-r2l, m1 = slash-l2r (the longsword
+    // slash shapes). The rigged body plays WH_DagSlashR2L / WH_DagSlashL2R /
+    // WH_DagSlashR2Lb (combat-dagger.glb, authored on these exact phase clocks)
+    // through anim.js MOVE_NAMES, ONLY while this moveset is the wielded weapon
+    // (clip source: assets.js MANIFEST.playerDagClips, merged in player.setBody).
+    // PHASE CLOCK (full clock, every recover played out):
+    //   dagger    (0.10+0.12+0.16)*2 + (0.10+0.12+0.48) = 0.76 + 0.70 = 1.46 s for
+    //             15+15+20 = 50 dmg (34.2 dmg/s), stamina 7+7+9 = 23
+    //   handAxe   (0.10+0.14+0.22) + (0.12+0.14+0.30) = 0.46 + 0.56 = 1.02 s for
+    //             22+27 = 49 dmg (48.0 dmg/s), stamina 10+12 = 22
+    //   longsword (0.57+0.20+0.73) + (0.80+0.26+0.61) + (0.40+0.43+0.17) = 4.17 s
+    //             for 34+34+40 = 108 dmg (25.9 dmg/s), stamina 15+15+20 = 50
+    // The trades: range 1.9 is the SHORTEST reach (handAxe 2.6-2.7, longsword
+    // 3.2-3.8) and stamina 7 / slash the CHEAPEST (handAxe 10-12, longsword
+    // 15-20); the dagger pays in reach, not in clock.
+    // cancel.move 0.65 = fast-in-fast-out. Worked example (fraction of
+    // windup+strike+recover): slash 1 = 0.38 s, move-cancel at 0.65 x 0.38 =
+    // 0.247 s (0.027 s into the 0.16 recover, i.e. right after the 0.22 s strike
+    // ends). Two-hit dart: slash 1 chained in full (0.38) + slash 2 cut at 0.247
+    // = 0.627 s for 30 dmg / 14 stamina, then walk out at moveCancelWalkMult.
+    // Slash 3: 0.65 x 0.70 = 0.455 s, so walking out skips 0.70 - 0.455 =
+    // 0.245 s of the 0.48 pause. (longsword slashR2L move-cancel: 0.65 x 1.50
+    // = 0.975 s.) Dodge 0.90 x 0.38 = 0.342 s, guard 0.95 x 0.38 = 0.361 s.
+    // dagSlashR2Lb's range / halfAngleDeg / lunge / damageGhoulMult (the brief
+    // leaves them unset) repeat slash 1's.
+    dagger: {
+      chainCap: 3,
+      chain: ['dagSlashR2L', 'dagSlashL2R', 'dagSlashR2Lb'],
+      moveMultWhileAttacking: { windup: 0.4, strike: 0, recover: 0 },   // handAxe row
+      bladeAxisY: 1,                // scratch/dagger_measure.json bladeAxisY (+Y tip, grip butt at origin)
+      moves: {
+        dagSlashR2L:  { pose: 'm2', windup: 0.10, strike: 0.12, recover: 0.16,
+                        chainOpenSec: 0.16,
+                        damage: 15, range: 1.9, halfAngleDeg: 55, lunge: 0.4,
+                        staminaCost: 7, damageGhoulMult: 1.15,
+                        cancel: { dodge: 0.90, guard: 0.95, move: 0.65 } },
+        dagSlashL2R:  { pose: 'm1', windup: 0.10, strike: 0.12, recover: 0.16,
+                        chainOpenSec: 0.16,
+                        damage: 15, range: 1.9, halfAngleDeg: 55, lunge: 0.4,
+                        staminaCost: 7, damageGhoulMult: 1.15,
+                        cancel: { dodge: 0.90, guard: 0.95, move: 0.65 } },
+        // the third cut ends in THE PAUSE (0.48 recover), then the chain resets
+        dagSlashR2Lb: { pose: 'm2', windup: 0.10, strike: 0.12, recover: 0.48,
+                        chainOpenSec: 0.48,   // last move: full recover anyway
+                        damage: 20, range: 1.9, halfAngleDeg: 55, lunge: 0.4,
+                        staminaCost: 9, damageGhoulMult: 1.15,
+                        cancel: { dodge: 0.90, guard: 0.95, move: 0.65 } }
       }
     }
   }
@@ -1876,6 +1934,14 @@ window.WH_CONFIG.items = {
   longsword:      { id: 'longsword', name: 'Longsword', glyph: 'LS',
                     category: 'gear', stackCap: 1, kind: 'melee', moveset: 'longsword', mesh: 'longsword',
                     hands: ['right', 'left'], equipHint: 'rightHand' },
+  // DAG (2026-10-09): the Magician's starting blade (class-extra kit row,
+  // CONFIG.startingClasses). Melee like the longsword: the right hand swings
+  // the CONFIG.moveset.weapons.dagger chain and trains the Short Blade line.
+  // Right hand only v1: a left-hand melee never swings, and with no melee
+  // wielded right the left mount would read the longsword's blade axis.
+  dagger:         { id: 'dagger', name: 'Dagger', glyph: 'DG',
+                    category: 'gear', stackCap: 1, kind: 'melee', moveset: 'dagger', mesh: 'dagger',
+                    hands: ['right'], equipHint: 'rightHand' },
   roundShield:    { id: 'roundShield', name: 'Round Shield', glyph: 'SH',
                     category: 'gear', stackCap: 1, kind: 'shield', mesh: 'roundShield',
                     hands: ['right', 'left'], equipHint: 'leftHand',
@@ -2330,7 +2396,8 @@ window.WH_CONFIG.equip = {
   // hand. The other hand gets the mount mirrored by this hand-local factor:
   // L_Hand <-> R_Hand local frames map by diag(-1, 1, 1) within 0.01
   // (scratch/measure_hand_mirror.py, bind pose). Roll angles flip sign.
-  nativeHand: { longsword: 'right', roundShield: 'left', magicGlove: 'left', torch: 'left' },
+  nativeHand: { longsword: 'right', roundShield: 'left', magicGlove: 'left', torch: 'left',
+                dagger: 'right' },
   mirrorScale: [-1, 1, 1],
   // Magic glove placeholder (no glove mesh this order): the spell glow orb
   // on the caster hand. anchor 'hand' = child of the hand bone at
