@@ -1,0 +1,300 @@
+{
+ "mode": "bake",
+ "input": "/tmp/wh-worldfeat/art-direction/3d/assets/races_regen/rigged/human-hunter-male.rigged.glb",
+ "output": "/tmp/wh-worldfeat/art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-dagger.glb",
+ "ground_z": -1.0000003576278687,
+ "clips": {
+  "WH_DagSlashR2L": {
+   "fbx": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield slash (5).fbx",
+   "src_frames": 42,
+   "src_sec": 1.3666666666666667,
+   "leg_scale_ratio": 0.976228022162049,
+   "max_ground_correction_m": 0.08561193943023682,
+   "retime": {
+    "src_frames": [
+     5.28,
+     17.5,
+     41
+    ],
+    "impact_out": 0.13,
+    "out": 0.38
+   },
+   "out_frames": 9.12,
+   "out_sec": 0.37999999999999995,
+   "keys": 11,
+   "samples_t_srcframe": [
+    [
+     0.0,
+     5.28
+    ],
+    [
+     0.0417,
+     9.1967
+    ],
+    [
+     0.0833,
+     13.1133
+    ],
+    [
+     0.125,
+     17.03
+    ],
+    [
+     0.1667,
+     20.9467
+    ],
+    [
+     0.2083,
+     24.8633
+    ],
+    [
+     0.25,
+     28.78
+    ],
+    [
+     0.2917,
+     32.6967
+    ],
+    [
+     0.3333,
+     36.6133
+    ],
+    [
+     0.375,
+     40.53
+    ],
+    [
+     0.38,
+     41.0
+    ]
+   ]
+  },
+  "WH_DagSlashL2R": {
+   "fbx": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield attack (3).fbx",
+   "src_frames": 53,
+   "src_sec": 1.7333333333333334,
+   "leg_scale_ratio": 0.976228022162049,
+   "despin": {
+    "knots_src_frames": [
+     7.16,
+     31,
+     52
+    ],
+    "knot_yaw_deg": [
+     -66.0,
+     -370.5,
+     -406.8
+    ],
+    "yaw_before_deg_every4": [
+     0.0,
+     -19.2,
+     -68.1,
+     -127.3,
+     -186.0,
+     -265.8,
+     -311.9,
+     -342.3,
+     -366.0,
+     -383.0,
+     -391.5,
+     -394.3,
+     -395.4,
+     -397.0
+    ],
+    "yaw_after_deg_every4": [
+     56.2,
+     37.0,
+     -1.1,
+     -9.2,
+     -16.9,
+     -45.6,
+     -40.5,
+     -19.9,
+     -3.5,
+     -13.6,
+     -15.2,
+     -11.0,
+     -5.3,
+     -0.0
+    ],
+    "max_abs_yaw_after_deg": 56.2
+   },
+   "max_ground_correction_m": 0.11770439147949219,
+   "retime": {
+    "src_frames": [
+     7.16,
+     22.5,
+     52
+    ],
+    "impact_out": 0.13,
+    "out": 0.38,
+    "despin_knots": [
+     7.16,
+     31,
+     52
+    ]
+   },
+   "out_frames": 9.12,
+   "out_sec": 0.37999999999999995,
+   "keys": 11,
+   "samples_t_srcframe": [
+    [
+     0.0,
+     7.16
+    ],
+    [
+     0.0417,
+     12.0767
+    ],
+    [
+     0.0833,
+     16.9933
+    ],
+    [
+     0.125,
+     21.91
+    ],
+    [
+     0.1667,
+     26.8267
+    ],
+    [
+     0.2083,
+     31.7433
+    ],
+    [
+     0.25,
+     36.66
+    ],
+    [
+     0.2917,
+     41.5767
+    ],
+    [
+     0.3333,
+     46.4933
+    ],
+    [
+     0.375,
+     51.41
+    ],
+    [
+     0.38,
+     52.0
+    ]
+   ]
+  },
+  "WH_DagSlashR2Lb": {
+   "fbx": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield slash (5).fbx",
+   "src_frames": 42,
+   "src_sec": 1.3666666666666667,
+   "leg_scale_ratio": 0.976228022162049,
+   "max_ground_correction_m": 0.08744311332702637,
+   "retime": {
+    "src_frames": [
+     2.8333,
+     17.5,
+     41
+    ],
+    "impact_out": 0.16,
+    "strike_end_out": 0.22,
+    "out": 0.7
+   },
+   "out_frames": 16.8,
+   "out_sec": 0.7000000000000001,
+   "keys": 18,
+   "samples_t_srcframe": [
+    [
+     0.0,
+     2.8333
+    ],
+    [
+     0.0417,
+     6.6528
+    ],
+    [
+     0.0833,
+     10.4722
+    ],
+    [
+     0.125,
+     14.2917
+    ],
+    [
+     0.1667,
+     18.1111
+    ],
+    [
+     0.2083,
+     21.9306
+    ],
+    [
+     0.25,
+     23.2022
+    ],
+    [
+     0.2917,
+     24.084
+    ],
+    [
+     0.3333,
+     25.5366
+    ],
+    [
+     0.375,
+     27.4187
+    ],
+    [
+     0.4167,
+     29.589
+    ],
+    [
+     0.4583,
+     31.9063
+    ],
+    [
+     0.5,
+     34.2292
+    ],
+    [
+     0.5417,
+     36.4165
+    ],
+    [
+     0.5833,
+     38.3268
+    ],
+    [
+     0.625,
+     39.819
+    ],
+    [
+     0.6667,
+     40.7516
+    ],
+    [
+     0.7,
+     41.0
+    ]
+   ]
+  }
+ },
+ "channels": {
+  "WH_DagSlashR2L": 60,
+  "WH_DagSlashL2R": 60,
+  "WH_DagSlashR2Lb": 60
+ },
+ "output_bytes": 4527720,
+ "nla_tracks": [
+  "WH_Walk",
+  "WH_Run",
+  "WH_Idle",
+  "WH_Hit",
+  "WH_Death",
+  "WH_Attack1",
+  "WH_DagSlashR2L",
+  "WH_DagSlashL2R",
+  "WH_DagSlashR2Lb"
+ ],
+ "status": "pass"
+}

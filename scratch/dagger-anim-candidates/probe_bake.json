@@ -1,0 +1,65 @@
+{
+ "mode": "probe",
+ "input": "/tmp/wh-worldfeat/art-direction/3d/assets/races_regen/rigged/human-hunter-male.rigged.glb",
+ "output": "/tmp/wh-worldfeat/scratch/daggergen/anim/dag_candidates.glb",
+ "ground_z": -1.0000003576278687,
+ "clips": {
+  "CAND_slash2": {
+   "fbx": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield slash (2).fbx",
+   "src_frames": 107,
+   "src_sec": 3.533333333333333,
+   "leg_scale_ratio": 0.976228022162049,
+   "max_ground_correction_m": 0.10497033596038818
+  },
+  "CAND_slash4": {
+   "fbx": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield slash (4).fbx",
+   "src_frames": 74,
+   "src_sec": 2.433333333333333,
+   "leg_scale_ratio": 0.976228022162049,
+   "max_ground_correction_m": 0.09865367412567139
+  },
+  "CAND_slash5": {
+   "fbx": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield slash (5).fbx",
+   "src_frames": 42,
+   "src_sec": 1.3666666666666667,
+   "leg_scale_ratio": 0.976228022162049,
+   "max_ground_correction_m": 0.08516263961791992
+  },
+  "CAND_attack2": {
+   "fbx": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield attack (2).fbx",
+   "src_frames": 40,
+   "src_sec": 1.3,
+   "leg_scale_ratio": 0.976228022162049,
+   "max_ground_correction_m": 0.08184397220611572
+  },
+  "CAND_attack3": {
+   "fbx": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield attack (3).fbx",
+   "src_frames": 53,
+   "src_sec": 1.7333333333333334,
+   "leg_scale_ratio": 0.976228022162049,
+   "max_ground_correction_m": 0.09663617610931396
+  }
+ },
+ "channels": {
+  "CAND_slash2": 60,
+  "CAND_slash4": 60,
+  "CAND_slash5": 60,
+  "CAND_attack2": 60,
+  "CAND_attack3": 60
+ },
+ "output_bytes": 4776908,
+ "nla_tracks": [
+  "WH_Walk",
+  "WH_Run",
+  "WH_Idle",
+  "WH_Hit",
+  "WH_Death",
+  "WH_Attack1",
+  "CAND_slash2",
+  "CAND_slash4",
+  "CAND_slash5",
+  "CAND_attack2",
+  "CAND_attack3"
+ ],
+ "status": "pass"
+}
