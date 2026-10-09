@@ -972,6 +972,18 @@
     return kindOf(this.hands.right) === 'melee';
   };
 
+  // R-64.3: the item defs in the hands (right, left; empty hands skipped).
+  // Both hands count, so dual gloves are two pieces. WH_LEVEL.magicDefense
+  // totals item stats over this.
+  Player.prototype.equippedItems = function () {
+    var out = [];
+    ['right', 'left'].forEach(function (h) {
+      var d = itemDef(this.hands[h]);
+      if (d) out.push(d);
+    }, this);
+    return out;
+  };
+
   Player.prototype.handOf = function (id) {
     if (this.hands.right === id) return 'right';
     if (this.hands.left === id) return 'left';

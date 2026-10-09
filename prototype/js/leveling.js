@@ -140,11 +140,18 @@
     return 1 + M.statPoints('wisdom') * (L.statCurves.wisdom.magicRegenPerPoint || 0);
   };
 
-  // L1.1: magic defense = Wisdom points * magicDefensePerPoint (hooks enemy
-  // casters when they exist; today nothing enemy-side casts spells).
+  // L1.1 magic defense was Wisdom points * magicDefensePerPoint. R-64.3
+  // (Nicko 10-09): rehomed to an ITEM stat (CONFIG.equip.itemStats) - the
+  // equipped-gear total, item-stat totalizing mirrors statTotal semantics
+  // (sum of every source, 0 when none). Empty gear / hand = 0. INERT v1:
+  // the future enemy-caster damage branch reads this (not built; no enemy
+  // casts spells). Reads the player via WH_GAME (no player import here).
   M.magicDefense = function () {
-    var c = L.statCurves.wisdom;
-    return M.statPoints('wisdom') * (c.magicDefensePerPoint || 0);
+    var g = window.WH_GAME, p = g && g.player;
+    if (!p || !p.equippedItems) return 0;
+    return p.equippedItems().reduce(function (sum, item) {
+      return sum + (item.stats && item.stats.magicDefense || 0);
+    }, 0);
   };
 
   M.spend = function (key) {

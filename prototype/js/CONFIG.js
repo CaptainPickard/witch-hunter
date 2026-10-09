@@ -2339,7 +2339,16 @@ window.WH_CONFIG.equip = {
   // first); casts spawn from the casting hand's orb. windupScale = orb size
   // at the end of a windup (grows from 1, per-hand cast cue).
   casterGlow: { anchor: 'hand', handOffset: [0.018, 0.078, 0.021],
-                perHand: true, windupScale: 1.8 }
+                perHand: true, windupScale: 1.8 },
+  // R-64.3 (Nicko 10-09) ITEM-STAT registry: gear pieces may carry
+  // stats: { magicDefense: <fraction> } (pct: true = shown as a percent).
+  // WH_LEVEL.magicDefense() totals it over the equipped hands. INERT v1:
+  // no gear ships with it and nothing consumes it - the future hook is the
+  // enemy-caster damage branch (enemy casters do not exist yet; that branch
+  // will read WH_LEVEL.magicDefense() when they land - not built here).
+  itemStats: {
+    magicDefense: { label: 'Magic Defense', pct: true }
+  }
 };
 
 // Inventory screen (DOM modal). While open, player movement/combat input is
