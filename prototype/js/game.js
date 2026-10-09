@@ -1665,6 +1665,24 @@
     game.player.actionDefaults = game.actionDefaults;
   }
 
+  // NEW GAME pick: the load-time fallback kit leaves (grid emptied, hands
+  // cleared like WH_SAVE.restore does), the class kit goes in, and the
+  // action bar resets to the class bar (persisted like a rebind).
+  function pickStartingClass(classId) {
+    var p = game.player, inv = game.inventory;
+    if (!classDef(classId)) return;
+    for (var i = 0; i < inv.slots.length; i++) inv.slots[i] = null;
+    p.hands = { right: null, left: null };
+    p.lastHandItems = { right: null, left: null };
+    p.handsChanged();
+    giveStartingKit(classId);
+    game.actionMap = [];
+    for (var s = 0; s < CFG.actionbar.slots; s++) game.actionMap.push(defaultActionEntry(s));
+    saveActionMap();
+    inv.changed();
+    if (game.inventoryUI) game.inventoryUI.render();
+  }
+
   // ---- 10-05 inventory (Order A) ------------------------------------------------
   // The player's Inventory + the I-key screen. Opening the screen suspends
   // player movement/combat/camera input (player.setInputSuspended); the
@@ -2349,8 +2367,10 @@
       // (CONTINUE = restore the profile, NEW GAME = the fresh flow; the
       // profile is never wiped - the first camp save replaces it). The
       // profile is only read here, after every asset settled.
-      if (window.WH_SAVE.has()) showBootRows(enterWorld);
-      else enterWorld(false);
+      // R-64.6: every fresh flow (NEW GAME row, or no save at all) picks a
+      // class first (bootChoice); CONTINUE boots exactly as before.
+      if (window.WH_SAVE.has()) showBootRows(bootChoice);
+      else bootChoice(false);
     });
   }
 
@@ -2398,6 +2418,71 @@
       });
       rows.appendChild(btn);
     });
+    game.hud.loadNote.appendChild(rows);
+  }
+
+  // R-64.6: CONTINUE -> enterWorld(true), no picker. NEW GAME -> the class
+  // picker, then the picked kit replaces the load-time fallback kit and
+  // the world boots fresh.
+  function bootChoice(cont) {
+    if (cont) { enterWorld(true); return; }
+    showClassPicker(function (classId) {
+      pickStartingClass(classId);
+      enterWorld(false);
+    });
+  }
+
+  // R-64.6 class picker rows (boot-row family, built like showBootRows):
+  // one row per CONFIG.startingClasses.order entry, the class label + its
+  // two kit lines on the face. FINAL ON CLICK (no confirm, no back); keys
+  // 1-N pick the Nth row. The key listener sits in the window capture
+  // phase so digits never reach the action bar while the picker is up.
+  function showClassPicker(done) {
+    var C = CFG.startingClasses;
+    game.hud.bootSub.textContent = '';
+    var rows = document.createElement('div');
+    rows.id = 'wh-boot-rows';
+    rows.className = 'boot-class-rows';
+    var picked = false;
+    function pick(classId) {
+      if (picked) return;
+      picked = true;
+      window.removeEventListener('keydown', onKey, true);
+      if (rows.parentNode) rows.parentNode.removeChild(rows);
+      done(classId);
+    }
+    function onKey(e) {
+      var m = /^(?:Digit|Numpad)(\d)$/.exec(e.code || '');
+      var i = m ? Number(m[1]) - 1 : -1;
+      if (i < 0 || i >= C.order.length) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      pick(C.order[i]);
+    }
+    C.order.forEach(function (id, i) {
+      var cls = C[id];
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.tabIndex = -1;
+      btn.className = 'cook-btn boot-row-btn boot-class-btn';
+      var head = document.createElement('span');
+      head.className = 'boot-class-name';
+      head.textContent = (i + 1) + '  ' + cls.label.toUpperCase();
+      btn.appendChild(head);
+      cls.lines.forEach(function (line) {
+        var l = document.createElement('span');
+        l.className = 'boot-class-line';
+        l.textContent = line;
+        btn.appendChild(l);
+      });
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        pick(id);
+      });
+      rows.appendChild(btn);
+    });
+    window.addEventListener('keydown', onKey, true);
     game.hud.loadNote.appendChild(rows);
   }
 

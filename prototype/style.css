@@ -1376,6 +1376,33 @@ html, body {
   color: #d8d2c0;
 }
 
+/* R-64.6: NEW GAME class picker rows (same boot-row family; each row
+   carries its class name + two kit lines, final on click / key 1-N) */
+#wh-boot-rows.boot-class-rows {
+  width: 280px;
+}
+
+.boot-row-btn.boot-class-btn {
+  height: auto;
+  min-height: 56px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  text-align: left;
+}
+
+.boot-class-name {
+  color: #d8d2c0;
+}
+
+.boot-class-line {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #9a9078;
+}
+
 #wh-camp-place {
   position: absolute;
   left: 50%;
