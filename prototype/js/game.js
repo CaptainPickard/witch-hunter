@@ -2699,12 +2699,17 @@
           dmg *= CFG.block.riposteMult;
           e.riposteArmed = false;
         }
-        // L1 Long Blade rank: damage passive (x1 at rank 1; the longsword
-        // is the only melee weapon, so every sweep is a Long Blade swing)
-        dmg *= window.WH_LEVEL.skillMult('longBlade', 'damage');
+        // L1 Long Blade rank: damage passive (x1 at rank 1). DAG: the
+        // sweep's weapon line (WH_LEVEL.weaponLine): longsword / handAxe =
+        // longBlade as before, dagger = shortBlade (+2% / rank)
+        var meleeLine = window.WH_LEVEL.weaponLine(sweep.weaponId);
+        dmg *= window.WH_LEVEL.skillMult(meleeLine, 'damage');
         // L1 Precision: melee crit roll (chance 0 with no points = no roll
-        // effect; Math.random is the explicit, only randomness here)
-        var crit = Math.random() < window.WH_LEVEL.statTotal('precision');
+        // effect; Math.random is the explicit, only randomness here). DAG:
+        // + the line's critChance passive (Short Blade +1% / rank; lines
+        // without one add 0, so the longsword roll is unchanged)
+        var crit = Math.random() < window.WH_LEVEL.statTotal('precision') +
+          window.WH_LEVEL.skillPassive(meleeLine, 'critChance');
         if (crit) {
           dmg *= CFG.leveling.critMult;
           flashScreen(CFG.leveling.critFlashSeconds, 'crit');
@@ -2712,7 +2717,7 @@
         // v3: pass hit direction (player -> enemy) for stagger knockback
         var hitDir = dist > 0.001 ? { x: dx / dist, z: dz / dist } : null;
         e.takeDamage(dmg, hitDir);
-        window.WH_LEVEL.useSkill('longBlade', 'hit');   // L1: a landed hit trains Long Blade
+        window.WH_LEVEL.useSkill(meleeLine, 'hit');   // L1: a landed hit trains Long Blade (DAG: dagger -> Short Blade)
         // v7: 3rd chain strike landing (consumeAttackSweep consumed) arms
         // the armed finisher window. Use chainHits counter (robust to
         // comboIndex resets from recoverFullyElapsed). 10-04: threshold is

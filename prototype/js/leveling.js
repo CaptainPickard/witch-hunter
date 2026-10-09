@@ -18,7 +18,7 @@
 //   spend(key) / recoup(key) / canRecoup(key) / commit()   CHARACTER tab +/-
 //   useSkill(line, kind)      rank XP per use (CONFIG skillLines perUse)
 //   skillRank(line) / skillProgress(line) / skillPassive(line, effect) /
-//   skillMult(line, effect)
+//   skillMult(line, effect) / skillTier(line) / weaponLine(weaponId)
 //   capture() / restore(data) / reset()   C4 save block (save.js)
 //   onLevelUp(level, pts) / onRankUp(line, rank) / onChange()  hooks (game.js)
 
@@ -233,6 +233,19 @@
   // CONFIG.leveling.spellLines: the line a spell trains (null = none)
   M.spellLine = function (spellId) {
     return (L.spellLines && L.spellLines[spellId]) || null;
+  };
+
+  // DAG: CONFIG.leveling.weaponLines: the line a melee weapon's landed hits
+  // train + its damage / crit / stamina passives (unlisted = longBlade)
+  M.weaponLine = function (weaponId) {
+    return (L.weaponLines && L.weaponLines[weaponId]) || 'longBlade';
+  };
+
+  // DAG: doc 18 tier name of a line's rank (CONFIG.leveling.tiers)
+  M.skillTier = function (line) {
+    var rank = M.skillRank(line), name = '';
+    (L.tiers || []).forEach(function (t) { if (rank >= t.from) name = t.name; });
+    return name;
   };
 
   // ---- C4 save block ----------------------------------------------------------------

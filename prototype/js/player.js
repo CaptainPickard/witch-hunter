@@ -1620,8 +1620,12 @@
     var idx = (typeof nextIndex === 'number') ? nextIndex : 0;
     if (idx >= this.getChainCap()) idx = 0;
     var M = this.getChainMove(idx);
-    // L1 Long Blade rank: attack stamina cost reduction (x1 at rank 1)
-    var cost = M.staminaCost * (window.WH_LEVEL ? window.WH_LEVEL.skillMult('longBlade', 'staminaCost') : 1);
+    // L1 Long Blade rank: attack stamina cost reduction (x1 at rank 1).
+    // DAG: the wielded weapon's line (WH_LEVEL.weaponLine) - longsword /
+    // handAxe = longBlade as before; dagger = shortBlade (no staminaCost
+    // passive v1 -> x1, the Long Blade discount does not carry over).
+    var cost = M.staminaCost * (window.WH_LEVEL ?
+      window.WH_LEVEL.skillMult(window.WH_LEVEL.weaponLine(this.weaponId), 'staminaCost') : 1);
     if (this.stamina < cost) return false;
     this.spendStamina(cost);
     this.attacking = true;
@@ -1767,7 +1771,8 @@
       halfAngle: deg2rad(M.halfAngleDeg),
       damage: M.damage * (this.pendingDamageMult || 1),
       ghoulMult: M.damageGhoulMult || 1,
-      moveId: this.attackMoveId
+      moveId: this.attackMoveId,
+      weaponId: this.weaponId       // DAG: the skill line a landed hit trains
     };
   };
 

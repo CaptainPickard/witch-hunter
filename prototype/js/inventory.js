@@ -629,7 +629,9 @@
       top.appendChild(el('span', 'lvl-stat-pts', 'Rank ' + LV.skillRank(line)));
       row.appendChild(top);
       row.appendChild(lvlBar(LV.skillProgress(line)));
-      row.appendChild(el('div', 'lvl-cap', skillCaption(LV, line)));
+      // DAG: doc 18 tier (Novice..Grandmaster) leads the passive caption
+      var tier = LV.skillTier ? LV.skillTier(line) : '';
+      row.appendChild(el('div', 'lvl-cap', (tier ? tier + ' - ' : '') + skillCaption(LV, line)));
       col.appendChild(row);
     });
     return col;

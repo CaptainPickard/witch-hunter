@@ -89623,8 +89623,11 @@ window.WH_CONFIG.startingClasses = (function (C) {
     },
     magician: {
       label: 'Magician',
-      lines: ['Magic gloves in both hands', 'Bandage - knows Firebolt + Radiance'],
-      kit: [kitRow('magicGlove', 0), kitRow('magicGlove', 1), kitRow('bandage')],
+      lines: ['Magic gloves in both hands', 'Dagger, bandage - knows Firebolt + Radiance'],
+      // DAG (2026-10-09): + the dagger as a CLASS-EXTRA row (grid only; not
+      // in inventory.startingItems, so the no-class fallback kit is unchanged)
+      kit: [kitRow('magicGlove', 0), kitRow('magicGlove', 1), kitRow('bandage'),
+            { id: 'dagger', count: 1 }],
       hands: { right: HANDS.left, left: HANDS.left },
       spells: SPELLS.slice(),
       belt: [barSlot(SPELLS[0]), barSlot(SPELLS[1]), null, null, null]
@@ -89714,6 +89717,13 @@ window.WH_CONFIG.leveling = {
   //   shieldDefense  block stamina drain -0.5%/rank (max -40%),
   //                  parry window +0.0005 s/rank (max +0.05 s = rank 100, mission cap)
   //   pyromancy      spell damage +1%/rank (max +60%), focus cost -0.4%/rank (max -35%)
+  //   shortBlade     (DAG 2026-10-09, doc 15 canon #1 "fast, crit-flavored")
+  //                  dagger damage +2%/rank (max +60%, reached at rank 31),
+  //                  crit chance +1%/rank (max +35%) added to the precision
+  //                  melee crit roll (game.js) on dagger hits. No stamina
+  //                  passive v1: the attack-stamina hook reads the wielded
+  //                  weapon's line, so a dagger swing gets x1 (no Long Blade
+  //                  discount). Ranks by landed dagger hits.
   skillLines: {
     longBlade: { name: 'Long Blade', perUse: { hit: 1 },
       passives: { damage: { perRank: 0.01, max: 0.60 }, staminaCost: { perRank: -0.004, max: 0.35 } },
@@ -89723,8 +89733,22 @@ window.WH_CONFIG.leveling = {
       caption: '-{blockDrain}% block drain, +{parryWindowMs}ms parry' },
     pyromancy: { name: 'Pyromancy', perUse: { cast: 1 },
       passives: { damage: { perRank: 0.01, max: 0.60 }, focusCost: { perRank: -0.004, max: 0.35 } },
-      caption: '+{damage}% spell damage, -{focusCost}% focus cost' }
+      caption: '+{damage}% spell damage, -{focusCost}% focus cost' },
+    shortBlade: { name: 'Short Blade', perUse: { hit: 1 },
+      passives: { damage: { perRank: 0.02, max: 0.60 }, critChance: { perRank: 0.01, max: 0.35 } },
+      caption: '+{damage}% damage, +{critChance}% crit chance' }
   },
+  // DAG: which line a landed melee hit trains + takes passives from, by the
+  // wielded CONFIG.moveset weapon id (WH_LEVEL.weaponLine). Unlisted =
+  // longBlade (today: every sweep is a Long Blade swing, handAxe included).
+  weaponLines: { dagger: 'shortBlade' },
+  // DAG: doc 18 tier table (docs/planning/18-skill-progression-mechanics.md
+  // LAYER 2: NOVICE 1-24, APPRENTICE 25-49, ADEPT 50-74, EXPERT 75-99,
+  // GRANDMASTER 100). Display only v1 (skill row caption prefix); the
+  // tier-up technique menus are later doc work. from = first rank of the tier.
+  tiers: [ { name: 'Novice', from: 1 }, { name: 'Apprentice', from: 25 },
+           { name: 'Adept', from: 50 }, { name: 'Expert', from: 75 },
+           { name: 'Grandmaster', from: 100 } ],
   // Which line a completed cast trains + takes passives from. Radiance is
   // light magic (doc 15 Holy Wards, not a prototype line this round): null =
   // no line. PROPOSED - set radiance: 'pyromancy' to have it train too.
@@ -92121,7 +92145,9 @@ window.WH_ICONS = {
       top.appendChild(el('span', 'lvl-stat-pts', 'Rank ' + LV.skillRank(line)));
       row.appendChild(top);
       row.appendChild(lvlBar(LV.skillProgress(line)));
-      row.appendChild(el('div', 'lvl-cap', skillCaption(LV, line)));
+      // DAG: doc 18 tier (Novice..Grandmaster) leads the passive caption
+      var tier = LV.skillTier ? LV.skillTier(line) : '';
+      row.appendChild(el('div', 'lvl-cap', (tier ? tier + ' - ' : '') + skillCaption(LV, line)));
       col.appendChild(row);
     });
     return col;
@@ -94051,7 +94077,7 @@ window.WH_ICONS = {
 //   spend(key) / recoup(key) / canRecoup(key) / commit()   CHARACTER tab +/-
 //   useSkill(line, kind)      rank XP per use (CONFIG skillLines perUse)
 //   skillRank(line) / skillProgress(line) / skillPassive(line, effect) /
-//   skillMult(line, effect)
+//   skillMult(line, effect) / skillTier(line) / weaponLine(weaponId)
 //   capture() / restore(data) / reset()   C4 save block (save.js)
 //   onLevelUp(level, pts) / onRankUp(line, rank) / onChange()  hooks (game.js)
 
@@ -94266,6 +94292,19 @@ window.WH_ICONS = {
   // CONFIG.leveling.spellLines: the line a spell trains (null = none)
   M.spellLine = function (spellId) {
     return (L.spellLines && L.spellLines[spellId]) || null;
+  };
+
+  // DAG: CONFIG.leveling.weaponLines: the line a melee weapon's landed hits
+  // train + its damage / crit / stamina passives (unlisted = longBlade)
+  M.weaponLine = function (weaponId) {
+    return (L.weaponLines && L.weaponLines[weaponId]) || 'longBlade';
+  };
+
+  // DAG: doc 18 tier name of a line's rank (CONFIG.leveling.tiers)
+  M.skillTier = function (line) {
+    var rank = M.skillRank(line), name = '';
+    (L.tiers || []).forEach(function (t) { if (rank >= t.from) name = t.name; });
+    return name;
   };
 
   // ---- C4 save block ----------------------------------------------------------------
@@ -95938,8 +95977,12 @@ window.WH_ICONS = {
     var idx = (typeof nextIndex === 'number') ? nextIndex : 0;
     if (idx >= this.getChainCap()) idx = 0;
     var M = this.getChainMove(idx);
-    // L1 Long Blade rank: attack stamina cost reduction (x1 at rank 1)
-    var cost = M.staminaCost * (window.WH_LEVEL ? window.WH_LEVEL.skillMult('longBlade', 'staminaCost') : 1);
+    // L1 Long Blade rank: attack stamina cost reduction (x1 at rank 1).
+    // DAG: the wielded weapon's line (WH_LEVEL.weaponLine) - longsword /
+    // handAxe = longBlade as before; dagger = shortBlade (no staminaCost
+    // passive v1 -> x1, the Long Blade discount does not carry over).
+    var cost = M.staminaCost * (window.WH_LEVEL ?
+      window.WH_LEVEL.skillMult(window.WH_LEVEL.weaponLine(this.weaponId), 'staminaCost') : 1);
     if (this.stamina < cost) return false;
     this.spendStamina(cost);
     this.attacking = true;
@@ -96085,7 +96128,8 @@ window.WH_ICONS = {
       halfAngle: deg2rad(M.halfAngleDeg),
       damage: M.damage * (this.pendingDamageMult || 1),
       ghoulMult: M.damageGhoulMult || 1,
-      moveId: this.attackMoveId
+      moveId: this.attackMoveId,
+      weaponId: this.weaponId       // DAG: the skill line a landed hit trains
     };
   };
 
@@ -103636,12 +103680,17 @@ window.WH_ICONS = {
           dmg *= CFG.block.riposteMult;
           e.riposteArmed = false;
         }
-        // L1 Long Blade rank: damage passive (x1 at rank 1; the longsword
-        // is the only melee weapon, so every sweep is a Long Blade swing)
-        dmg *= window.WH_LEVEL.skillMult('longBlade', 'damage');
+        // L1 Long Blade rank: damage passive (x1 at rank 1). DAG: the
+        // sweep's weapon line (WH_LEVEL.weaponLine): longsword / handAxe =
+        // longBlade as before, dagger = shortBlade (+2% / rank)
+        var meleeLine = window.WH_LEVEL.weaponLine(sweep.weaponId);
+        dmg *= window.WH_LEVEL.skillMult(meleeLine, 'damage');
         // L1 Precision: melee crit roll (chance 0 with no points = no roll
-        // effect; Math.random is the explicit, only randomness here)
-        var crit = Math.random() < window.WH_LEVEL.statTotal('precision');
+        // effect; Math.random is the explicit, only randomness here). DAG:
+        // + the line's critChance passive (Short Blade +1% / rank; lines
+        // without one add 0, so the longsword roll is unchanged)
+        var crit = Math.random() < window.WH_LEVEL.statTotal('precision') +
+          window.WH_LEVEL.skillPassive(meleeLine, 'critChance');
         if (crit) {
           dmg *= CFG.leveling.critMult;
           flashScreen(CFG.leveling.critFlashSeconds, 'crit');
@@ -103649,7 +103698,7 @@ window.WH_ICONS = {
         // v3: pass hit direction (player -> enemy) for stagger knockback
         var hitDir = dist > 0.001 ? { x: dx / dist, z: dz / dist } : null;
         e.takeDamage(dmg, hitDir);
-        window.WH_LEVEL.useSkill('longBlade', 'hit');   // L1: a landed hit trains Long Blade
+        window.WH_LEVEL.useSkill(meleeLine, 'hit');   // L1: a landed hit trains Long Blade (DAG: dagger -> Short Blade)
         // v7: 3rd chain strike landing (consumeAttackSweep consumed) arms
         // the armed finisher window. Use chainHits counter (robust to
         // comboIndex resets from recoverFullyElapsed). 10-04: threshold is

@@ -2452,8 +2452,11 @@ window.WH_CONFIG.startingClasses = (function (C) {
     },
     magician: {
       label: 'Magician',
-      lines: ['Magic gloves in both hands', 'Bandage - knows Firebolt + Radiance'],
-      kit: [kitRow('magicGlove', 0), kitRow('magicGlove', 1), kitRow('bandage')],
+      lines: ['Magic gloves in both hands', 'Dagger, bandage - knows Firebolt + Radiance'],
+      // DAG (2026-10-09): + the dagger as a CLASS-EXTRA row (grid only; not
+      // in inventory.startingItems, so the no-class fallback kit is unchanged)
+      kit: [kitRow('magicGlove', 0), kitRow('magicGlove', 1), kitRow('bandage'),
+            { id: 'dagger', count: 1 }],
       hands: { right: HANDS.left, left: HANDS.left },
       spells: SPELLS.slice(),
       belt: [barSlot(SPELLS[0]), barSlot(SPELLS[1]), null, null, null]
@@ -2543,6 +2546,13 @@ window.WH_CONFIG.leveling = {
   //   shieldDefense  block stamina drain -0.5%/rank (max -40%),
   //                  parry window +0.0005 s/rank (max +0.05 s = rank 100, mission cap)
   //   pyromancy      spell damage +1%/rank (max +60%), focus cost -0.4%/rank (max -35%)
+  //   shortBlade     (DAG 2026-10-09, doc 15 canon #1 "fast, crit-flavored")
+  //                  dagger damage +2%/rank (max +60%, reached at rank 31),
+  //                  crit chance +1%/rank (max +35%) added to the precision
+  //                  melee crit roll (game.js) on dagger hits. No stamina
+  //                  passive v1: the attack-stamina hook reads the wielded
+  //                  weapon's line, so a dagger swing gets x1 (no Long Blade
+  //                  discount). Ranks by landed dagger hits.
   skillLines: {
     longBlade: { name: 'Long Blade', perUse: { hit: 1 },
       passives: { damage: { perRank: 0.01, max: 0.60 }, staminaCost: { perRank: -0.004, max: 0.35 } },
@@ -2552,8 +2562,22 @@ window.WH_CONFIG.leveling = {
       caption: '-{blockDrain}% block drain, +{parryWindowMs}ms parry' },
     pyromancy: { name: 'Pyromancy', perUse: { cast: 1 },
       passives: { damage: { perRank: 0.01, max: 0.60 }, focusCost: { perRank: -0.004, max: 0.35 } },
-      caption: '+{damage}% spell damage, -{focusCost}% focus cost' }
+      caption: '+{damage}% spell damage, -{focusCost}% focus cost' },
+    shortBlade: { name: 'Short Blade', perUse: { hit: 1 },
+      passives: { damage: { perRank: 0.02, max: 0.60 }, critChance: { perRank: 0.01, max: 0.35 } },
+      caption: '+{damage}% damage, +{critChance}% crit chance' }
   },
+  // DAG: which line a landed melee hit trains + takes passives from, by the
+  // wielded CONFIG.moveset weapon id (WH_LEVEL.weaponLine). Unlisted =
+  // longBlade (today: every sweep is a Long Blade swing, handAxe included).
+  weaponLines: { dagger: 'shortBlade' },
+  // DAG: doc 18 tier table (docs/planning/18-skill-progression-mechanics.md
+  // LAYER 2: NOVICE 1-24, APPRENTICE 25-49, ADEPT 50-74, EXPERT 75-99,
+  // GRANDMASTER 100). Display only v1 (skill row caption prefix); the
+  // tier-up technique menus are later doc work. from = first rank of the tier.
+  tiers: [ { name: 'Novice', from: 1 }, { name: 'Apprentice', from: 25 },
+           { name: 'Adept', from: 50 }, { name: 'Expert', from: 75 },
+           { name: 'Grandmaster', from: 100 } ],
   // Which line a completed cast trains + takes passives from. Radiance is
   // light magic (doc 15 Holy Wards, not a prototype line this round): null =
   // no line. PROPOSED - set radiance: 'pyromancy' to have it train too.
