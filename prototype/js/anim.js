@@ -70,6 +70,32 @@
       moves: MOVE_NAMES
     }
   };
+  // MAGANIM (doc 65 R-65.3..R-65.5): player body MODE (setVariant), apart
+  // from the per-body variant above. 'warrior' = no swaps. 'caster' swaps
+  // idle / locomotion (+ backward split) / reactions / death to the WH_Mag_*
+  // set; attack chain, roll, turns, Jump, Idle01 are never swapped. A mode
+  // key whose clip is missing resolves through MODE_FALLBACK down to the
+  // universal state, so a variant clip failure never bricks presentation.
+  var MODE_NAMES = {
+    magIdle: 'WH_Mag_Idle02', magWalk: 'WH_Mag_WalkF', magWalkBack: 'WH_Mag_WalkB',
+    magRun: 'WH_Mag_RunF', magRunBack: 'WH_Mag_RunB', magHitSmall: 'WH_Mag_ReactSmall',
+    magHitLarge: 'WH_Mag_ReactLarge', magDeath: 'WH_Mag_DeathBack',
+    Cast1H: 'WH_Mag_Cast1H', Cast2H: 'WH_Mag_Cast2H'
+  };
+  var MODES = {
+    warrior: {},
+    caster: {
+      idle: 'magIdle', walk: 'magWalk', walkBack: 'magWalkBack', run: 'magRun',
+      runBack: 'magRunBack', hitSmall: 'magHitSmall', hitLarge: 'magHitLarge',
+      death: 'magDeath'
+    }
+  };
+  var MODE_FALLBACK = { walkBack: 'walk', runBack: 'run', hitSmall: 'hit', hitLarge: 'hit' };
+  var LOOPED = { magIdle: true, magWalk: true, magWalkBack: true, magRun: true, magRunBack: true };
+  var HIT_KEYS = { hit: true, magHitSmall: true, magHitLarge: true };
+  var DEATH_KEYS = { death: true, magDeath: true };
+  var CAST_SHOTS = { Cast1H: true, Cast2H: true };
+  function CASTER() { return window.WH_CONFIG.assets.caster; }
 
   function CharacterAnim(body, clips, options) {
     var variant = options && options.variant ? VARIANTS[options.variant] : null;
@@ -88,6 +114,8 @@
     this.dead = false;
     this.attackPhase = null;
     this.attackSerial = 0;
+    this.mode = 'warrior';
+    this.modeNames = {};
     var self = this;
     Object.keys(NAMES).forEach(function (state) {
       var name = variant && variant.names[state] || NAMES[state];
@@ -132,8 +160,21 @@
       action.clampWhenFinished = true;
       self.actions[key] = action;
     });
+    // MAGANIM: mode + cast-shot clips (bodies without them build nothing)
+    Object.keys(MODE_NAMES).forEach(function (key) {
+      var clip = THREE.AnimationClip.findByName(clips, MODE_NAMES[key]);
+      if (!clip) return;
+      var action = self.mixer.clipAction(clip);
+      if (!LOOPED[key]) {
+        action.setLoop(THREE.LoopOnce, 1);
+        action.clampWhenFinished = true;
+      }
+      self.actions[key] = action;
+      self.modeNames[key] = MODE_NAMES[key];
+    });
     this.mixer.addEventListener('finished', function (event) {
-      if (event.action === self.actions.hit && !self.dead) {
+      if ((event.action === self.actions.hit || event.action === self.actions.magHitSmall ||
+           event.action === self.actions.magHitLarge) && !self.dead) {
         self.hitActive = false;
         self.transition(self.locomotion, CFG.oneShotFadeSeconds);
       }
@@ -142,12 +183,12 @@
   }
 
   CharacterAnim.prototype.transition = function (state, seconds, restart) {
-    if (!this.actions[state] || this.dead && state !== 'death') return;
+    if (!this.actions[state] || this.dead && !DEATH_KEYS[state]) return;
     if (this.clip === state && !restart) return;
     // Leaving 'hit' for any other clip ends the hit reaction. An interrupted
     // (faded / stopped) hit action never fires the mixer 'finished' event, so
     // hitActive would latch and setLocomotion would never transition again.
-    if (state !== 'hit') this.hitActive = false;
+    if (!HIT_KEYS[state]) this.hitActive = false;
     var prev = this.actions[this.clip];
     var next = this.actions[state];
     // Interrupting a fade must not leave an older third action contributing
@@ -166,42 +207,100 @@
     this.clip = state;
     // A superseded hit clip fades out disabled and never emits 'finished';
     // release the latch here or setLocomotion stays blocked indefinitely.
-    if (state !== 'hit') this.hitActive = false;
+    if (!HIT_KEYS[state]) this.hitActive = false;
   };
 
-  CharacterAnim.prototype.setLocomotion = function (speed, running) {
+  // MAGANIM: 'warrior' | 'caster' (player.js evaluates it on hand changes).
+  // Only stores the mode: the next sync frame resolves every clip through it
+  // and crossfades via transition(), so nothing is latched here.
+  CharacterAnim.prototype.setVariant = function (mode) {
+    this.mode = MODES[mode] ? mode : 'warrior';
+  };
+
+  // Universal state ('idle', 'walkBack', 'hitLarge', 'death', ...) -> the
+  // action key this mode plays. Missing variant clip -> MODE_FALLBACK chain
+  // -> the universal state (warrior: walkBack -> walk, hitSmall -> hit).
+  CharacterAnim.prototype.resolve = function (state) {
+    var key = MODES[this.mode][state];
+    if (key && this.actions[key]) return key;
+    return MODE_FALLBACK[state] ? this.resolve(MODE_FALLBACK[state]) : state;
+  };
+
+  CharacterAnim.prototype.locomotionKey = function (speed, running, backward) {
+    var base = speed <= 0.01 ? 'idle' : (running ? 'run' : 'walk');
+    return this.resolve(backward && base !== 'idle' ? base + 'Back' : base);
+  };
+
+  CharacterAnim.prototype.setLocomotion = function (speed, running, backward) {
     if (this.dead) return;
-    var state = speed <= 0.01 ? 'idle' : (running ? 'run' : 'walk');
+    var state = this.locomotionKey(speed, running, backward);
+    var base = speed <= 0.01 ? 'idle' : (running ? 'run' : 'walk');
     this.locomotion = state;
     // syncPlayer/syncEnemy only call this after their FSM attack branch ends.
     // A finished attack action remains named 'attack'; transition out of it
     // rather than leaving all clip weights at zero during locomotion.
     if (!this.hitActive) this.transition(state, CFG.crossfadeSeconds);
-    if (state === 'walk' || state === 'run') {
+    if (base === 'walk' || base === 'run') {
       var action = this.actions[state];
       if (action) {
-        var cycleMeters = state === 'walk' ? CFG.walkMetersPerCycle : CFG.runMetersPerCycle;
+        var cycleMeters = base === 'walk' ? CFG.walkMetersPerCycle : CFG.runMetersPerCycle;
         action.timeScale = speed * action.getClip().duration / cycleMeters;
       }
     }
   };
 
-  CharacterAnim.prototype.hit = function () {
-    if (this.dead || !this.actions.hit) return;
+  // MAGANIM: large = the player's big-hit cut (caster ReactLarge); warrior
+  // and enemies resolve both sizes to 'hit'.
+  CharacterAnim.prototype.hit = function (large) {
+    var key = this.resolve(large ? 'hitLarge' : 'hitSmall');
+    if (this.dead || !this.actions[key]) return;
     this.hitActive = true;
-    this.transition('hit', CFG.oneShotFadeSeconds, true);
+    this.transition(key, CFG.oneShotFadeSeconds, true);
   };
 
   CharacterAnim.prototype.death = function (alreadyDead) {
-    if (this.dead || !this.actions.death) return;
+    var key = this.resolve('death');
+    if (this.dead || !this.actions[key]) return;
     this.dead = true;
     this.hitActive = false;
-    this.transition('death', alreadyDead ? 0 : CFG.oneShotFadeSeconds);
+    this.transition(key, alreadyDead ? 0 : CFG.oneShotFadeSeconds);
     if (alreadyDead) {
-      this.actions.death.time = this.actions.death.getClip().duration;
-      this.actions.death.paused = true;
+      this.actions[key].time = this.actions[key].getClip().duration;
+      this.actions[key].paused = true;
     }
   };
+
+  // MAGANIM (R-65.5): presentation-only cast one-shot ('Cast1H' | 'Cast2H')
+  // from player.tryCast. Repeat guard: the same shot still running is not
+  // re-triggered. The attack chain owns the body while a swing runs (a
+  // windup weave cast shows no shot). Completion clamps; the next sync frame
+  // crossfades back to locomotion.
+  CharacterAnim.prototype.castShot = function (shot) {
+    var action = CAST_SHOTS[shot] ? this.actions[shot] : null;
+    if (this.dead || this.attackPhase || !action) return;
+    if (this.clip === shot && action.isRunning()) return;
+    this.transition(shot, CFG.oneShotFadeSeconds, true);
+  };
+
+  // MAGANIM: the cast's lifecycle owner (fizzle / hand change) ends a running
+  // shot back to the state anim. No-op when no shot is on.
+  CharacterAnim.prototype.endCastShot = function () {
+    if (CAST_SHOTS[this.clip]) this.transition(this.locomotion, CFG.crossfadeSeconds);
+  };
+
+  CharacterAnim.prototype.castShotRunning = function () {
+    return !!(CAST_SHOTS[this.clip] && this.actions[this.clip].isRunning());
+  };
+
+  // MAGANIM backward split: the existing roll-basis signal (player.moveDirWorld,
+  // written by the walk block) against the body facing (player.yaw). Only a
+  // lock-on holds the facing off the move dir; unlocked, the body turns into
+  // the move dir (720 deg/s), so a reversal would only flash the Back clip.
+  function movingBackward(player) {
+    var d = player.moveDirWorld;
+    return !!(d && player.lockTarget && !player.rolling &&
+      d.x * Math.sin(player.yaw) + d.z * Math.cos(player.yaw) < CASTER().backwardDot);
+  }
 
   // Order D: blocked hit / landed parry one-shots. Each call is one NEW
   // resolved enemy hit, so it restarts the clip (from guard back to guard).
@@ -299,12 +398,14 @@
       this.playerAttack(ph.stage, ph.t, ph.durations, player.attackMoveId);
     } else {
       this.attackPhase = null;
-      if (this.syncBlock(player)) {
+      // MAGANIM: a running cast shot holds the pose like the parry swipe
+      if (this.syncBlock(player) || this.castShotRunning()) {
         // keep the locomotion state current so the exit crossfade targets it
-        this.locomotion = (player.animMoveSpeed || 0) <= 0.01 ? 'idle' :
-          (player.sprinting ? 'run' : 'walk');
+        this.locomotion = this.locomotionKey(player.animMoveSpeed || 0,
+          !!player.sprinting, movingBackward(player));
       } else {
-        this.setLocomotion(player.animMoveSpeed || 0, !!player.sprinting || player.rolling);
+        this.setLocomotion(player.animMoveSpeed || 0, !!player.sprinting || player.rolling,
+          movingBackward(player));
       }
     }
     this.update(dt);
@@ -330,14 +431,17 @@
     this.hitActive = false;
     this.attackPhase = null;
     this.clip = null;
-    this.transition('idle', 0);
+    this.transition(this.resolve('idle'), 0);
     this.mixer.update(0);
   };
 
   CharacterAnim.prototype.update = function (dt) {
     this.mixer.update(dt);
-    if (this.dead && this.actions.death && this.actions.death.paused) {
-      this.actions.death.time = this.actions.death.getClip().duration;
+    // dead = the clip is the death key death() played (transition refuses
+    // every other clip once dead)
+    var death = this.dead && DEATH_KEYS[this.clip] ? this.actions[this.clip] : null;
+    if (death && death.paused) {
+      death.time = death.getClip().duration;
     }
   };
 
@@ -363,12 +467,22 @@
       if (act) weights[CLIP_NAMES[key]] = act.enabled && self.clip === key ?
         act.getEffectiveWeight() : (act.isRunning() ? act.getEffectiveWeight() : 0);
     });
+    // MAGANIM: mode / cast-shot weights in caster mode, or while one is the clip
+    Object.keys(this.modeNames).forEach(function (key) {
+      if (self.mode !== 'caster' && self.clip !== key) return;
+      var act = self.actions[key];
+      // a clamped death / cast shot still holds the pose while it is the clip
+      weights[self.modeNames[key]] = act.isRunning() ||
+        self.clip === key && (self.dead || CAST_SHOTS[key]) ? act.getEffectiveWeight() : 0;
+    });
     return { clip: this.names[this.clip] || this.moveNames[this.clip] ||
-      (this.moveNames === MOVE_NAMES ? CLIP_NAMES[this.clip] : null) || null,
+      (this.moveNames === MOVE_NAMES ? CLIP_NAMES[this.clip] : null) ||
+      this.modeNames[this.clip] || null,
       time: time,
       phase: duration ? time / duration : 0, weights: weights,
       timeScale: action ? action.timeScale : 0,
-      locomotion: this.names[this.locomotion], attackSerial: this.attackSerial };
+      locomotion: this.names[this.locomotion] || this.modeNames[this.locomotion],
+      mode: this.mode, attackSerial: this.attackSerial };
   };
 
   CharacterAnim.VARIANTS = VARIANTS;

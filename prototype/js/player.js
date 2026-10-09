@@ -130,6 +130,7 @@
     // handAction - LMB acts with the right hand, RMB with the left). Belt
     // keys bind spells to hands and never touch the hands.
     this.hands = { right: null, left: null };
+    this.casterMode = false;          // MAGANIM: both hands caster implements (evalCasterMode)
     this.inventory = null;            // game.js setupInventory wires the Inventory
     this.itemMeshes = {};             // item id -> its hand mesh (game.js instances)
     this.handMeshes = {};             // stage 2: per-hand item meshes { right, left } (torch: both hands at once)
@@ -189,6 +190,7 @@
       });
       this.anim = new window.WH_CharacterAnim(meshRoot,
         window.WH_ASSETS.getClips('playerBody').concat(dagClips), { variant: 'sword' });
+      this.anim.setVariant(this.casterMode ? 'caster' : 'warrior');   // MAGANIM B3
     }
   };
 
@@ -1167,10 +1169,24 @@
       else if (this.hands[h] !== this.lastHandItems[h]) this.cast[ROLES[r]].regrip = V7.belt.regripSeconds;
       this.lastHandItems[h] = this.hands[h];
     }
+    // MAGANIM B3/B4: the body variant follows the hands; a hand change ends
+    // a running cast shot
+    this.evalCasterMode();
+    if (this.anim) this.anim.endCastShot();
     var pair = window.WH_CONFIG.equip.qSwap;
     this.activeLoadout = this.hands.left === pair[0] ? 1 : this.hands.left === pair[1] ? 2 : 0;
     this.applyHandVisuals();
     if (this.onHandsChanged) this.onHandsChanged(this.hands);
+  };
+
+  // MAGANIM (R-65.3 / R-65.4): full-caster mode = BOTH hands hold a
+  // CONFIG.assets.caster.items implement; one glove = warrior body. Runs on
+  // hand changes only (handsChanged: equip / unequip, boot default hands,
+  // class pick, save restore), never per frame.
+  Player.prototype.evalCasterMode = function () {
+    var items = window.WH_CONFIG.assets.caster.items;
+    this.casterMode = items.indexOf(this.hands.right) >= 0 && items.indexOf(this.hands.left) >= 0;
+    if (this.anim) this.anim.setVariant(this.casterMode ? 'caster' : 'warrior');
   };
 
   // Register an item's hand mesh (game.js instances the GLB). One-time prep
@@ -1451,6 +1467,9 @@
     var c = this.cast[role];
     c.windup = V7.spell[spellId].castWindup;   // fizzle check runs during windup
     c.spellId = spellId;
+    // MAGANIM B4 (R-65.5): presentation one-shot at the windup start - the
+    // caster body casts two-handed, a single caster hand one-handed
+    if (this.anim) this.anim.castShot(this.casterMode ? 'Cast2H' : 'Cast1H');
     return true;
   };
 
@@ -1514,6 +1533,7 @@
     }
     if (!any) return false;
     this.dropPendingCast();
+    if (this.anim) this.anim.endCastShot();   // MAGANIM B4: fizzle ends the shot
     if (this.onFizzle) this.onFizzle();
     return true;
   };
@@ -1782,7 +1802,9 @@
     // points; CONFIG.leveling.statCurves.ward cap 60%)
     if (window.WH_LEVEL) amount *= 1 - window.WH_LEVEL.statTotal('ward');
     this.hp = Math.max(0, this.hp - amount);
-    if (this.anim) this.anim.hit();
+    // MAGANIM: big hits (>= largeHitFraction of max hp) pick the large
+    // reaction (caster ReactLarge; warrior plays WH_Hit either way)
+    if (this.anim) this.anim.hit(amount >= this.hpMax * window.WH_CONFIG.assets.caster.largeHitFraction);
     // v7: hp loss during a cast windup fizzles the cast (no focus spent)
     this.cancelCastFizzle();
     if (this.hp <= 0) {

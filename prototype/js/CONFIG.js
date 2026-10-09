@@ -1538,6 +1538,17 @@ window.WH_CONFIG = {
     // banner names asset + cause in console and HUD (see js/assets.js).
     bodyRetryCount: 2,                // extra attempts per rigged body (default on)
     bodyRetryDelayMs: 750,            // backoff base; delay = base * attempt#
+    // MAGANIM (doc 65 R-65.3): caster-implement registry (v1; future caster
+    // weapons append here). BOTH hands holding one of these = the caster body
+    // variant (anim.js setVariant: WH_Mag_* idle / locomotion / reactions /
+    // death); one = warrior body. Presentation tunables ride along:
+    // backwardDot = move dir . facing below this (lock-on) plays the Back
+    // clips; largeHitFraction = a hit >= this x hpMax plays ReactLarge.
+    caster: {
+      items: ['magicGlove'],
+      backwardDot: -0.5,              // PROPOSED: ~120 deg+ off facing
+      largeHitFraction: 0.2           // PROPOSED: 20 hp of 100
+    },
     // R4 kill switch: true swaps the 3 rigged body atlases for the committed
     // 512px pixelated PNGs at postload; false = original 2048 atlas path.
     pixelatedBodies: true,

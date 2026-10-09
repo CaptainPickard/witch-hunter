@@ -169,9 +169,11 @@
   // WH_SlashL2R / WH_Thrust) - the old flat "6" warned on every boot.
   // Order D: 13 = those 9 + the 4 shield/block clips.
   // Round C: 25 = those 13 + 12 Mixamo sword/shield clips (combat-sword.glb).
-  // Round D: 27 = 13 + 12 + 3 Mixamo WH_SS_* chain attacks.
+  // Round D: 28 = 13 + 12 + 3 Mixamo WH_SS_* chain attacks (the old "27"
+  // here was off by one - the GLB census is 28).
+  // MAGANIM Phase A: 42 = 28 + 14 WH_Mag_* (Lite Magic Pack, 5477e98).
   // DAG: playerDagClips 9 = 6 whanim1 + 3 WH_Dag* (clip source only).
-  var CHARACTERS = { playerBody: 27, banditBody: 6, ghoulBody: 6, playerDagClips: 9 };
+  var CHARACTERS = { playerBody: 42, banditBody: 6, ghoulBody: 6, playerDagClips: 9 };
   var failed = {};     // logical name -> true (stand-in substituted)
   var loadedCount = 0;
   var GROUND_META = {}; // holder uuid -> measured height, width, raw groundMinY
