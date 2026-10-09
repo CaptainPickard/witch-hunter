@@ -517,6 +517,25 @@
     }
   };
 
+  // EPR1: camera-relative move input -> normalized world xz direction
+  // (null when there is none). The roll basis for requestDodge /
+  // consumeQueuedDodge - same basis the walk block applies in update().
+  Player.prototype.inputDirWorld = function () {
+    var mx = this.moveInput.x, mz = this.moveInput.z;
+    if (!mx && !mz) return null;
+    var len = Math.sqrt(mx * mx + mz * mz);
+    mx /= len; mz /= len;
+    // camera forward (W) = (sin(camYaw + PI), cos(camYaw + PI));
+    // screen-right = cross(up, cameraBack) = (-fz, fx)
+    var fx = Math.sin(this.camYaw + Math.PI), fz = Math.cos(this.camYaw + Math.PI);
+    var rx = -fz, rz = fx;
+    var wx = fx * (-mz) + rx * mx;
+    var wz = fz * (-mz) + rz * mx;
+    var wl = Math.sqrt(wx * wx + wz * wz);
+    if (wl < 1e-4) return null;
+    return { x: wx / wl, z: wz / wl };
+  };
+
   Player.prototype.collectMoveInput = function () {
     var k = this.inputSuspended ? {} : this.keys;
     var ix = 0, iz = 0;
