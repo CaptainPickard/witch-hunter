@@ -1844,8 +1844,13 @@
     if (this.focusRegenBlock > 0) {
       this.focusRegenBlock -= dt;
     } else if (this.focus < this.focusMax) {
+      // R-64.1/64.2: 2.0 base * (1 + 0.05 * wisdomPoints) * other mults
+      // (blocking 0.5): 0 wis = 2.0/s, 10 wis = 3.0/s, 10 wis blocking = 1.5/s
+      var focusMult = window.WH_LEVEL && window.WH_LEVEL.magicRegenMult ?
+        window.WH_LEVEL.magicRegenMult() : 1;
+      var focusBlockMult = this.blocking ? window.WH_CONFIG.block.blockingRegenMult : 1;
       this.focus = Math.min(this.focusMax,
-        this.focus + CFG.focusRegenPerSec * dt);
+        this.focus + CFG.focusRegenPerSec * focusMult * focusBlockMult * dt);
     }
 
     // ---- v7: weave timers ----

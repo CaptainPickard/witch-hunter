@@ -126,10 +126,18 @@
   };
 
   // L1.1 (Nicko 10-07): Wisdom no longer adds focus (focus = Focus stat's
-  // job; Wisdom bought magic damage + magic defense instead). Kept for the
-  // C4 restore path; returns just the Focus stat's share (0 extra).
+  // job; Wisdom bought magic damage + magic defense instead; R-64.1 10-09
+  // swapped that defense half for magic regen). Kept for the C4 restore
+  // path; returns just the Focus stat's share (0 extra).
   M.focusBonus = function () {
     return M.statBonus('focus');
+  };
+
+  // R-64.1 (Nicko 10-09): focus regen multiplier = 1 + magicRegenPerPoint
+  // (0.05) * Wisdom points, uncapped. player.js regen = focusRegenPerSec *
+  // this * other mults (blocking 0.5): 0 wis 2.0/s, 10 wis 3.0/s.
+  M.magicRegenMult = function () {
+    return 1 + M.statPoints('wisdom') * (L.statCurves.wisdom.magicRegenPerPoint || 0);
   };
 
   // L1.1: magic defense = Wisdom points * magicDefensePerPoint (hooks enemy

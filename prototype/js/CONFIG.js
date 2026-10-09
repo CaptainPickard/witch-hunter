@@ -1146,7 +1146,10 @@ window.WH_CONFIG = {
     respawnDelay: 2.2,                 // seconds on death screen before respawn
     // v7: focus pool (spells spend Focus, weapons spend Stamina)
     focusMax: 100,                    // max focus
-    focusRegenPerSec: 8,              // focus regen per second after delay
+    // R-64.2 (Nicko 10-09): 8 -> 2.0. Regen is Wisdom's domain:
+    // 2.0 base * (1 + 0.05 * wisdomPoints) * other mults (blocking 0.5)
+    // 0 wis = 2.0/s; 10 wis = 3.0/s; 10 wis blocking = 1.5/s
+    focusRegenPerSec: 2.0,            // focus regen per second after delay
     focusRegenDelay: 0.5,             // seconds after spend before regen resumes
     castFocusTaxMult: 1.25            // spell focus tax while weapon in main hand
   },
@@ -2390,9 +2393,12 @@ window.WH_CONFIG.leveling = {
   //   speed     +1% walk / sprint per point    (cap +25%; roll / backstep untouched)
   //   dexterity +1% melee crit per point       (cap 50%; crit = x critMult damage)
   //   defense   +1% damage reduction per point (cap 60%, mission row)
-  //   wisdom    +1% magic damage AND +1% magic defense per point (doc 15 canon:
-  //             the magic stat; the defense half hooks enemy casters when they
-  //             exist - today inert, no enemy casts spells)
+  //   wisdom    +1% magic damage AND +5% magic regen per point. History: L1.1
+  //             (doc 15 canon) paired damage with +1% magic defense; R-64.1
+  //             (Nicko 10-09) swapped the second half to regen - magic defense
+  //             is now an ITEM stat (CONFIG.equip.itemStats, gear total via
+  //             WH_LEVEL.magicDefense()). Regen = focusRegenPerSec * (1 + 0.05
+  //             * wisdomPoints) * other mults; the Focus stat stays pool-only.
   //   carry     +5% stack size per point       (stacks without their own stackCap: 60 -> 63 -> 66..)
   //   luck      +1% extra drop / gather roll per point (cap 50%)
   stats: ['health', 'stamina', 'focus', 'speed', 'precision', 'ward', 'wisdom', 'carry', 'luck'],
@@ -2403,8 +2409,8 @@ window.WH_CONFIG.leveling = {
     speed:     { label: 'Speed',        perPoint: 0.01, cap: 0.25, caption: '+{pct}% move speed' },
     precision: { label: 'Dexterity',    perPoint: 0.01, cap: 0.50, caption: '{pct}% crit chance' },
     ward:      { label: 'Defense',      perPoint: 0.01, cap: 0.60, caption: '-{pct}% damage taken' },
-    wisdom:    { label: 'Wisdom',       perPoint: 0.01, cap: null, caption: '+{pct}% magic damage, +{pct}% magic defense',
-                 magicDefensePerPoint: 0.01 },
+    wisdom:    { label: 'Wisdom',       perPoint: 0.01, cap: null, caption: '+{pct}% magic damage, +{pct}% magic regen',
+                 magicRegenPerPoint: 0.05 },
     carry:     { label: 'Carry Weight', perPoint: 0.05, cap: null, caption: '+{pct}% stack size' },
     luck:      { label: 'Luck',         perPoint: 0.01, cap: 0.50, caption: '{pct}% bonus drop roll' }
   },

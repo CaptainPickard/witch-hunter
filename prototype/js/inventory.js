@@ -557,10 +557,12 @@
   function statCaption(LV, key) {
     var c = CFG.leveling.statCurves[key];
     var b = LV.statBonus(key);
-    return c.caption.replace('{v}', String(Math.round(b * 10) / 10)).replace('{pct}', pct(b))
-      .replace('{focus}', String(LV.statPoints(key) * (c.focusPerPoint || 0)));
-    // L1.1: the {focus} placeholder is dead (no curve uses it) - harmless
-    // replace; captions are pure CONFIG rows.
+    var txt = c.caption.replace('{v}', String(Math.round(b * 10) / 10)).replace('{pct}', pct(b));
+    // R-64.1: a curve's second {pct} is its magicRegenPerPoint half (Wisdom:
+    // +1% damage, +5% regen per point); any other {pct} repeats the bonus.
+    // The dead L1.1 {focus} placeholder is gone; captions are pure CONFIG rows.
+    if (c.magicRegenPerPoint) txt = txt.replace('{pct}', pct(LV.statPoints(key) * c.magicRegenPerPoint));
+    return txt.split('{pct}').join(pct(b));
   }
 
   function skillCaption(LV, line) {
