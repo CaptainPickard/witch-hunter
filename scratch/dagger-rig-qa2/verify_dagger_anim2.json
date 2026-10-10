@@ -1,0 +1,71 @@
+{
+ "gate": {
+  "rest_trs": 0.0,
+  "r_hand": 0.0,
+  "WH_Attack1": 6.079379766266158e-08,
+  "WH_Death": 7.657731981858262e-08,
+  "WH_Hit": 5.961376048357891e-08,
+  "WH_Idle": 6.860490742166547e-08,
+  "WH_Run": 6.606479874271542e-08,
+  "WH_Walk": 7.323109230128466e-08
+ },
+ "clips": {
+  "WH_DagSlashR2L": {
+   "duration_s": 0.25,
+   "spec_s": 0.25,
+   "keys": 7,
+   "hips_min_m": 0.8361,
+   "src_hips_max_m": 0.8826,
+   "hips_ratio": 0.947,
+   "impact_s": 0.09380000084638596,
+   "peak_wrist_mps": 52.86,
+   "dx": 0.974,
+   "min_skinned_y": -1.00001,
+   "wrist_max_deg": 57.7,
+   "bone_step_max_deg": 92.7,
+   "bone_step_max": "R_Forearm",
+   "step_vs_source_ratio": 0.68,
+   "wrist_reversals": 2
+  },
+  "WH_DagSlashL2R": {
+   "duration_s": 0.25,
+   "spec_s": 0.25,
+   "keys": 7,
+   "hips_min_m": 0.9346,
+   "src_hips_max_m": 1.0059,
+   "hips_ratio": 0.929,
+   "impact_s": 0.10620000213384628,
+   "peak_wrist_mps": 38.73,
+   "dx": -1.055,
+   "min_skinned_y": -1.0,
+   "wrist_max_deg": 41.6,
+   "bone_step_max_deg": 89.7,
+   "bone_step_max": "R_Forearm",
+   "step_vs_source_ratio": 0.654,
+   "wrist_reversals": 3
+  },
+  "WH_DagSlashR2Lb": {
+   "duration_s": 0.5199999809265137,
+   "spec_s": 0.52,
+   "keys": 14,
+   "hips_min_m": 0.825,
+   "src_hips_max_m": 0.8826,
+   "hips_ratio": 0.935,
+   "impact_s": 0.09359999746084213,
+   "peak_wrist_mps": 52.97,
+   "dx": 1.095,
+   "min_skinned_y": -1.00001,
+   "wrist_max_deg": 57.7,
+   "bone_step_max_deg": 92.7,
+   "bone_step_max": "R_Forearm",
+   "step_vs_source_ratio": 0.68,
+   "wrist_reversals": 4,
+   "wrist_last_0.06s_mps": 1.982,
+   "hold_max_mps": 3.837,
+   "hand_to_guard_strike_end": 1.182,
+   "hand_to_guard_end": 0.14,
+   "end_wrist_mps": 0.488
+  }
+ },
+ "fails": []
+}

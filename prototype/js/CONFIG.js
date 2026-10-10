@@ -1740,21 +1740,27 @@ window.WH_CONFIG.moveset = {
     // DAGTUNE2 (io/missions/2026-10-09-dagger-tune2.md, Nicko 10-09 tuning: x2
     // clocks, half damage -> chain 1.46 -> 2.92 s, damage 50 -> 25, DPS 34.2 ->
     // ~8.6). The deliberate identity inversion: the dagger is no longer
-    // fast-DPS, it is the low-damage bleed-delivery weapon. Three flat
-    // side-to-side slashes, then the pause (slash 3's 0.96 recover) and the
-    // reset to chain[0]. handAxe dialect: no
+    // fast-DPS, it is the low-damage bleed-delivery weapon. DAGANIM2
+    // (io/missions/2026-10-10-dag-swipes.md, Nicko 10-10 "three quick swipes,
+    // right left then right", no crouch): clips rebuilt from the standing
+    // swordpack slash / slash (3) at 0.25 / 0.25 / 0.52 s and every clock row
+    // below scaled by new/old clip length (x0.25/0.38, slash 3 x0.52/0.70) ->
+    // chain 2.92 -> 2.04 s; damage, stamina, bleed and cancel fractions
+    // untouched. Three side-to-side swipes, then the pause (slash 3's 0.71
+    // recover) and the reset to chain[0]. handAxe dialect: no
     // bufferFrom (windup LMB ignored), no rootMotion table (legacy lunge metres).
     // Poses (stand-in pivot only): m2 = slash-r2l, m1 = slash-l2r (the longsword
     // slash shapes). The rigged body plays WH_DagSlashR2L / WH_DagSlashL2R /
-    // WH_DagSlashR2Lb (combat-dagger.glb; clips 0.38 / 0.38 / 0.70 s, played at
-    // their own durations - the attack code runs on the CONFIG clocks below, so
-    // the x2 slow-down lives here only, no re-bake)
+    // WH_DagSlashR2Lb (combat-dagger.glb; clips 0.25 / 0.25 / 0.52 s, stretched
+    // onto the CONFIG clocks below by anim.js seekAttack - the x2 slow-down
+    // lives here only, no re-bake)
     // through anim.js MOVE_NAMES, ONLY while this moveset is the wielded weapon
     // (clip source: assets.js MANIFEST.playerDagClips, merged in player.setBody).
     // PHASE CLOCK (full clock, every recover played out):
-    //   dagger    (0.20+0.24+0.32)*2 + (0.20+0.24+0.96) = 0.76 + 0.76 + 1.40 = 2.92 s
-    //             for 7.5+7.5+10 = 25 dmg (8.6 dmg/s), stamina 7+7+9 = 23
-    //             (was (0.10+0.12+0.16)*2 + (0.10+0.12+0.48) = 1.46 s / 50 dmg)
+    //   dagger    (0.13+0.16+0.21)*2 + (0.15+0.18+0.71) = 0.50 + 0.50 + 1.04 = 2.04 s
+    //             for 7.5+7.5+10 = 25 dmg (12.3 dmg/s), stamina 7+7+9 = 23
+    //             (was (0.20+0.24+0.32)*2 + (0.20+0.24+0.96) = 2.92 s / 25 dmg;
+    //             before DAGTUNE2 1.46 s / 50 dmg)
     //   handAxe   (0.10+0.14+0.22) + (0.12+0.14+0.30) = 0.46 + 0.56 = 1.02 s for
     //             22+27 = 49 dmg (48.0 dmg/s), stamina 10+12 = 22
     //   longsword (0.57+0.20+0.73) + (0.80+0.26+0.61) + (0.40+0.43+0.17) = 4.17 s
@@ -1763,15 +1769,15 @@ window.WH_CONFIG.moveset = {
     // 3.2-3.8) and stamina 7 / slash the CHEAPEST (handAxe 10-12, longsword
     // 15-20); the dagger pays in reach AND raw damage - its payoff is bleed
     // (CONFIG.combat.bleed; main-hand ticks scale with the halved dealt damage).
-    // cancel fractions unchanged (they ride the slower clocks). Worked example
-    // (fraction of windup+strike+recover): slash 1 = 0.76 s, move-cancel at
-    // 0.65 x 0.76 = 0.494 s (0.054 s into the 0.32 recover, i.e. right after the
-    // 0.44 s strike ends). Two-hit dart: slash 1 chained in full (0.76) + slash 2
-    // cut at 0.494 = 1.254 s for 15 dmg / 14 stamina, then walk out at
-    // moveCancelWalkMult. Slash 3: 0.65 x 1.40 = 0.91 s, so walking out skips
-    // 1.40 - 0.91 = 0.49 s of the 0.96 pause. (longsword slashR2L move-cancel:
-    // 0.65 x 1.50 = 0.975 s.) Dodge 0.90 x 0.76 = 0.684 s, guard 0.95 x 0.76 =
-    // 0.722 s.
+    // cancel fractions unchanged (they ride the scaled clocks). Worked example
+    // (fraction of windup+strike+recover): slash 1 = 0.50 s, move-cancel at
+    // 0.65 x 0.50 = 0.325 s (0.035 s into the 0.21 recover, i.e. right after the
+    // 0.29 s strike ends). Two-hit dart: slash 1 chained in full (0.50) + slash 2
+    // cut at 0.325 = 0.825 s for 15 dmg / 14 stamina, then walk out at
+    // moveCancelWalkMult. Slash 3: 0.65 x 1.04 = 0.676 s, so walking out skips
+    // 1.04 - 0.676 = 0.364 s of the 0.71 pause. (longsword slashR2L move-cancel:
+    // 0.65 x 1.50 = 0.975 s.) Dodge 0.90 x 0.50 = 0.45 s, guard 0.95 x 0.50 =
+    // 0.475 s.
     // dagSlashR2Lb's range / halfAngleDeg / lunge / damageGhoulMult (the brief
     // leaves them unset) repeat slash 1's.
     dagger: {
@@ -1780,19 +1786,19 @@ window.WH_CONFIG.moveset = {
       moveMultWhileAttacking: { windup: 0.4, strike: 0, recover: 0 },   // handAxe row
       bladeAxisY: 1,                // scratch/dagger_measure.json bladeAxisY (+Y tip, grip butt at origin)
       moves: {
-        dagSlashR2L:  { pose: 'm2', windup: 0.20, strike: 0.24, recover: 0.32,
-                        chainOpenSec: 0.32,
+        dagSlashR2L:  { pose: 'm2', windup: 0.13, strike: 0.16, recover: 0.21,
+                        chainOpenSec: 0.21,
                         damage: 7.5, range: 1.9, halfAngleDeg: 55, lunge: 0.4,
                         staminaCost: 7, damageGhoulMult: 1.15,
                         cancel: { dodge: 0.90, guard: 0.95, move: 0.65 } },
-        dagSlashL2R:  { pose: 'm1', windup: 0.20, strike: 0.24, recover: 0.32,
-                        chainOpenSec: 0.32,
+        dagSlashL2R:  { pose: 'm1', windup: 0.13, strike: 0.16, recover: 0.21,
+                        chainOpenSec: 0.21,
                         damage: 7.5, range: 1.9, halfAngleDeg: 55, lunge: 0.4,
                         staminaCost: 7, damageGhoulMult: 1.15,
                         cancel: { dodge: 0.90, guard: 0.95, move: 0.65 } },
-        // the third cut ends in THE PAUSE (0.96 recover), then the chain resets
-        dagSlashR2Lb: { pose: 'm2', windup: 0.20, strike: 0.24, recover: 0.96,
-                        chainOpenSec: 0.96,   // last move: full recover anyway
+        // the third cut ends in THE PAUSE (0.71 recover), then the chain resets
+        dagSlashR2Lb: { pose: 'm2', windup: 0.15, strike: 0.18, recover: 0.71,
+                        chainOpenSec: 0.71,   // last move: full recover anyway
                         damage: 10, range: 1.9, halfAngleDeg: 55, lunge: 0.4,
                         staminaCost: 9, damageGhoulMult: 1.15,
                         cancel: { dodge: 0.90, guard: 0.95, move: 0.65 } }

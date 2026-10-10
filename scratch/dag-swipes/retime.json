@@ -1,0 +1,33 @@
+{
+ "WH_DagSlashR2L": {
+  "fbx": "/tmp/wh-worldfeat/scratch/dag-swipes/src/sword and shield slash.fbx",
+  "src_frames": [
+   2.0312,
+   17.5,
+   45
+  ],
+  "impact_out": 0.09,
+  "out": 0.25
+ },
+ "WH_DagSlashL2R": {
+  "fbx": "/tmp/wh-worldfeat/scratch/dag-swipes/src/sword and shield slash (3).fbx",
+  "src_frames": [
+   10.1562,
+   24.5,
+   50
+  ],
+  "impact_out": 0.09,
+  "out": 0.25
+ },
+ "WH_DagSlashR2Lb": {
+  "fbx": "/tmp/wh-worldfeat/scratch/dag-swipes/src/sword and shield slash.fbx",
+  "src_frames": [
+   2.0312,
+   17.5,
+   45
+  ],
+  "impact_out": 0.09,
+  "strike_end_out": 0.1278,
+  "out": 0.52
+ }
+}

@@ -1,0 +1,124 @@
+{
+ "shoulder_y": 0.555,
+ "ground_y": -1.0,
+ "clips": {
+  "CAND_swslash": {
+   "frames": 46,
+   "sec": 1.5,
+   "finite": true,
+   "max_quat_norm_err": 1.0728836059570312e-06,
+   "impact_frame": 17,
+   "impact_sec": 0.567,
+   "peak_speed_mps": 16.25,
+   "strike_frames": [
+    13,
+    21
+   ],
+   "strike_sec": 0.267,
+   "hand_x_strike": [
+    -0.417,
+    0.448
+   ],
+   "dx_world": 0.865,
+   "dx_hipsframe": 0.003,
+   "direction": "none",
+   "hand_y_strike_start_imp_end": [
+    0.789,
+    0.527,
+    -0.149
+   ],
+   "hand_y_max": 0.81,
+   "swing_peaks": [
+    17
+   ],
+   "n_swings": 1,
+   "yaw_total_deg": 0.0,
+   "yaw_span_deg": 87.3,
+   "yaw_during_strike_deg": 64.2,
+   "min_skinned_y": -1.0,
+   "hand_start_end_gap": 0.001,
+   "bone_max_step_deg_per_frame": {
+    "Root": 0.0,
+    "Hips": 12.42,
+    "Spine": 5.43,
+    "Chest": 1.43,
+    "Neck": 4.64,
+    "Head": 9.19,
+    "L_Shoulder": 11.65,
+    "L_UpperArm": 12.94,
+    "L_Forearm": 19.75,
+    "L_Hand": 10.21,
+    "R_Shoulder": 11.83,
+    "R_UpperArm": 34.21,
+    "R_Forearm": 40.78,
+    "R_Hand": 27.55,
+    "L_Thigh": 9.64,
+    "L_Shin": 14.68,
+    "L_Foot": 14.11,
+    "R_Thigh": 11.48,
+    "R_Shin": 10.38,
+    "R_Foot": 14.31
+   },
+   "arc": "overhead"
+  },
+  "CAND_swslash3": {
+   "frames": 51,
+   "sec": 1.6670000553131104,
+   "finite": true,
+   "max_quat_norm_err": 6.556510925292969e-07,
+   "impact_frame": 24,
+   "impact_sec": 0.8,
+   "peak_speed_mps": 11.92,
+   "strike_frames": [
+    3,
+    31
+   ],
+   "strike_sec": 0.933,
+   "hand_x_strike": [
+    -0.422,
+    -0.531
+   ],
+   "dx_world": -0.109,
+   "dx_hipsframe": 0.168,
+   "direction": "R->L",
+   "hand_y_strike_start_imp_end": [
+    0.13,
+    0.448,
+    1.017
+   ],
+   "hand_y_max": 1.017,
+   "swing_peaks": [
+    24
+   ],
+   "n_swings": 1,
+   "yaw_total_deg": 0.0,
+   "yaw_span_deg": 109.4,
+   "yaw_during_strike_deg": 39.6,
+   "min_skinned_y": -1.0,
+   "hand_start_end_gap": 0.0,
+   "bone_max_step_deg_per_frame": {
+    "Root": 0.0,
+    "Hips": 12.54,
+    "Spine": 7.94,
+    "Chest": 1.64,
+    "Neck": 8.31,
+    "Head": 17.27,
+    "L_Shoulder": 14.86,
+    "L_UpperArm": 22.78,
+    "L_Forearm": 23.2,
+    "L_Hand": 7.17,
+    "R_Shoulder": 9.78,
+    "R_UpperArm": 31.21,
+    "R_Forearm": 27.45,
+    "R_Hand": 26.67,
+    "L_Thigh": 16.2,
+    "L_Shin": 12.17,
+    "L_Foot": 5.29,
+    "R_Thigh": 20.01,
+    "R_Shin": 27.35,
+    "R_Foot": 27.29
+   },
+   "arc": "flat/diagonal"
+  }
+ }
+}
