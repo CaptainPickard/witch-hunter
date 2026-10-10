@@ -275,16 +275,25 @@
   // re-triggered. The attack chain owns the body while a swing runs (a
   // windup weave cast shows no shot). Completion clamps; the next sync frame
   // crossfades back to locomotion.
+  // CAST1H: castShotKey = the shot this call actually started (or that is
+  // still running), null when none plays - player.tryCast gates the 1H
+  // fire-at-peak windup on it. Cast1H plays at castShotSpeed, set once per
+  // start and never reset (transition() stops it on the next state change);
+  // Cast2H keeps timeScale 1.
   CharacterAnim.prototype.castShot = function (shot) {
     var action = CAST_SHOTS[shot] ? this.actions[shot] : null;
-    if (this.dead || this.attackPhase || !action) return;
-    if (this.clip === shot && action.isRunning()) return;
+    if (this.dead || this.attackPhase || !action) { this.castShotKey = null; return; }
+    if (this.clip === shot && action.isRunning()) { this.castShotKey = shot; return; }
     this.transition(shot, CFG.oneShotFadeSeconds, true);
+    if (this.clip !== shot) { this.castShotKey = null; return; }
+    if (shot === 'Cast1H') action.timeScale = CASTER().castShotSpeed;
+    this.castShotKey = shot;
   };
 
   // MAGANIM: the cast's lifecycle owner (fizzle / hand change) ends a running
   // shot back to the state anim. No-op when no shot is on.
   CharacterAnim.prototype.endCastShot = function () {
+    this.castShotKey = null;
     if (CAST_SHOTS[this.clip]) this.transition(this.locomotion, CFG.crossfadeSeconds);
   };
 

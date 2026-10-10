@@ -1470,6 +1470,14 @@
     // MAGANIM B4 (R-65.5): presentation one-shot at the windup start - the
     // caster body casts two-handed, a single caster hand one-handed
     if (this.anim) this.anim.castShot(this.casterMode ? 'Cast2H' : 'Cast1H');
+    // CAST1H (R2): a single-glove main-hand bolt fires at the shot's hand-
+    // extension peak - the same windup clock, stretched (0.46 * 2.3 / 1.5 =
+    // 0.71 s). Only when the Cast1H shot really plays; Cast2H keeps castWindup.
+    if (!this.casterMode && role === 'main' && V7.spell[spellId].kind === 'projectile' &&
+        this.anim && this.anim.castShotKey === 'Cast1H') {
+      var K = window.WH_CONFIG.assets.caster;
+      c.windup = Math.max(0, c.windup, K.fire1HFraction * K.cast1HClipSeconds / K.castShotSpeed);
+    }
     return true;
   };
 
@@ -1520,7 +1528,8 @@
     var c = this.cast[roleOf(role)];
     if (c.windup <= 0 || !c.spellId) return 0;
     var w = V7.spell[c.spellId].castWindup;
-    return w > 0 ? 1 - c.windup / w : 1;
+    // CAST1H (R5): clamped - a fire-at-peak windup runs longer than castWindup
+    return w > 0 ? Math.max(0, Math.min(1, 1 - c.windup / w)) : 1;
   };
 
   // v7: damage during a windup fizzles the cast: NO focus spent, no

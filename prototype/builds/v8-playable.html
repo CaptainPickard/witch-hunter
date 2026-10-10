@@ -88715,10 +88715,18 @@ window.WH_CONFIG = {
     // death); one = warrior body. Presentation tunables ride along:
     // backwardDot = move dir . facing below this (lock-on) plays the Back
     // clips; largeHitFraction = a hit >= this x hpMax plays ReactLarge.
+    // CAST1H: castShotSpeed = the 1H cast shot's timeScale (Cast2H stays 1);
+    // a single-glove main-hand projectile cast fires at fire1HFraction of the
+    // clip: windup = max(castWindup, fire1HFraction * cast1HClipSeconds /
+    // castShotSpeed) = 0.46 * 2.3 / 1.5 = 0.71 s after accept.
     caster: {
       items: ['magicGlove'],
       backwardDot: -0.5,              // PROPOSED: ~120 deg+ off facing
-      largeHitFraction: 0.2           // PROPOSED: 20 hp of 100
+      largeHitFraction: 0.2,          // PROPOSED: 20 hp of 100
+      castShotSpeed: 1.5,             // PROPOSED: Nicko 10-10 >=1.5x on the 1H cast shot
+      fire1HFraction: 0.46,           // PROPOSED: R_Hand peak f32/70 of WH_Mag_Cast1H
+                                      // (scratch/mag_cast_peak.json, FK measured)
+      cast1HClipSeconds: 2.3          // native clip duration (70 frames @ 30fps)
     },
     // R4 kill switch: true swaps the 3 rigged body atlases for the committed
     // 512px pixelated PNGs at postload; false = original 2048 atlas path.
@@ -91292,16 +91300,25 @@ window.WH_ICONS = {
   // re-triggered. The attack chain owns the body while a swing runs (a
   // windup weave cast shows no shot). Completion clamps; the next sync frame
   // crossfades back to locomotion.
+  // CAST1H: castShotKey = the shot this call actually started (or that is
+  // still running), null when none plays - player.tryCast gates the 1H
+  // fire-at-peak windup on it. Cast1H plays at castShotSpeed, set once per
+  // start and never reset (transition() stops it on the next state change);
+  // Cast2H keeps timeScale 1.
   CharacterAnim.prototype.castShot = function (shot) {
     var action = CAST_SHOTS[shot] ? this.actions[shot] : null;
-    if (this.dead || this.attackPhase || !action) return;
-    if (this.clip === shot && action.isRunning()) return;
+    if (this.dead || this.attackPhase || !action) { this.castShotKey = null; return; }
+    if (this.clip === shot && action.isRunning()) { this.castShotKey = shot; return; }
     this.transition(shot, CFG.oneShotFadeSeconds, true);
+    if (this.clip !== shot) { this.castShotKey = null; return; }
+    if (shot === 'Cast1H') action.timeScale = CASTER().castShotSpeed;
+    this.castShotKey = shot;
   };
 
   // MAGANIM: the cast's lifecycle owner (fizzle / hand change) ends a running
   // shot back to the state anim. No-op when no shot is on.
   CharacterAnim.prototype.endCastShot = function () {
+    this.castShotKey = null;
     if (CAST_SHOTS[this.clip]) this.transition(this.locomotion, CFG.crossfadeSeconds);
   };
 
@@ -95998,6 +96015,14 @@ window.WH_ICONS = {
     // MAGANIM B4 (R-65.5): presentation one-shot at the windup start - the
     // caster body casts two-handed, a single caster hand one-handed
     if (this.anim) this.anim.castShot(this.casterMode ? 'Cast2H' : 'Cast1H');
+    // CAST1H (R2): a single-glove main-hand bolt fires at the shot's hand-
+    // extension peak - the same windup clock, stretched (0.46 * 2.3 / 1.5 =
+    // 0.71 s). Only when the Cast1H shot really plays; Cast2H keeps castWindup.
+    if (!this.casterMode && role === 'main' && V7.spell[spellId].kind === 'projectile' &&
+        this.anim && this.anim.castShotKey === 'Cast1H') {
+      var K = window.WH_CONFIG.assets.caster;
+      c.windup = Math.max(0, c.windup, K.fire1HFraction * K.cast1HClipSeconds / K.castShotSpeed);
+    }
     return true;
   };
 
@@ -96048,7 +96073,8 @@ window.WH_ICONS = {
     var c = this.cast[roleOf(role)];
     if (c.windup <= 0 || !c.spellId) return 0;
     var w = V7.spell[c.spellId].castWindup;
-    return w > 0 ? 1 - c.windup / w : 1;
+    // CAST1H (R5): clamped - a fire-at-peak windup runs longer than castWindup
+    return w > 0 ? Math.max(0, Math.min(1, 1 - c.windup / w)) : 1;
   };
 
   // v7: damage during a windup fizzles the cast: NO focus spent, no

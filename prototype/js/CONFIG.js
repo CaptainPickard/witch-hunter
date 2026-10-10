@@ -1544,10 +1544,18 @@ window.WH_CONFIG = {
     // death); one = warrior body. Presentation tunables ride along:
     // backwardDot = move dir . facing below this (lock-on) plays the Back
     // clips; largeHitFraction = a hit >= this x hpMax plays ReactLarge.
+    // CAST1H: castShotSpeed = the 1H cast shot's timeScale (Cast2H stays 1);
+    // a single-glove main-hand projectile cast fires at fire1HFraction of the
+    // clip: windup = max(castWindup, fire1HFraction * cast1HClipSeconds /
+    // castShotSpeed) = 0.46 * 2.3 / 1.5 = 0.71 s after accept.
     caster: {
       items: ['magicGlove'],
       backwardDot: -0.5,              // PROPOSED: ~120 deg+ off facing
-      largeHitFraction: 0.2           // PROPOSED: 20 hp of 100
+      largeHitFraction: 0.2,          // PROPOSED: 20 hp of 100
+      castShotSpeed: 1.5,             // PROPOSED: Nicko 10-10 >=1.5x on the 1H cast shot
+      fire1HFraction: 0.46,           // PROPOSED: R_Hand peak f32/70 of WH_Mag_Cast1H
+                                      // (scratch/mag_cast_peak.json, FK measured)
+      cast1HClipSeconds: 2.3          // native clip duration (70 frames @ 30fps)
     },
     // R4 kill switch: true swaps the 3 rigged body atlases for the committed
     // 512px pixelated PNGs at postload; false = original 2048 atlas path.
