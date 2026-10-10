@@ -96,6 +96,21 @@
   var DEATH_KEYS = { death: true, magDeath: true };
   var CAST_SHOTS = { Cast1H: true, Cast2H: true };
   function CASTER() { return window.WH_CONFIG.assets.caster; }
+  // CAST1H2: a clip's tracks whose node (track name up to the first '.') is in
+  // `nodes` - GLTFLoader track names are '<NodeName>.<property>', node names
+  // unique, so this splits a dense bake exactly at the waist.
+  function nodeTracks(clip, nodes) {
+    return clip.tracks.filter(function (track) {
+      return nodes.indexOf(track.name.split('.')[0]) !== -1;
+    });
+  }
+  // CAST1H2: the legs' cycle rate under the upper-body shot - the same law
+  // setLocomotion applies to the full walk / run action (idle stays 1).
+  function legScale(action, speed, running) {
+    if (speed <= 0.01) return 1;
+    return speed * action.getClip().duration /
+      (running ? CFG.runMetersPerCycle : CFG.walkMetersPerCycle);
+  }
 
   function CharacterAnim(body, clips, options) {
     var variant = options && options.variant ? VARIANTS[options.variant] : null;
@@ -116,6 +131,12 @@
     this.attackSerial = 0;
     this.mode = 'warrior';
     this.modeNames = {};
+    // CAST1H2 (R10/R11): Cast1H plays torso-only over lower-body variants of
+    // the locomotion (lazy, keyed by '<clip>__lower'); lowerActive = the one
+    // carrying the legs under the running shot, null otherwise.
+    this.castUpper = false;
+    this.lowerActions = {};
+    this.lowerActive = null;
     var self = this;
     Object.keys(NAMES).forEach(function (state) {
       var name = variant && variant.names[state] || NAMES[state];
@@ -164,6 +185,13 @@
     Object.keys(MODE_NAMES).forEach(function (key) {
       var clip = THREE.AnimationClip.findByName(clips, MODE_NAMES[key]);
       if (!clip) return;
+      // CAST1H2 (R10): the 1H shot's action runs the upper-node tracks only
+      // (same duration); this.clips keeps the full clip untouched.
+      if (key === 'Cast1H' && CASTER().castUpperBody) {
+        clip = new THREE.AnimationClip(clip.name + '__upper', clip.duration,
+          nodeTracks(clip, CASTER().castUpperNodes));
+        self.castUpper = true;
+      }
       var action = self.mixer.clipAction(clip);
       if (!LOOPED[key]) {
         action.setLoop(THREE.LoopOnce, 1);
@@ -197,6 +225,15 @@
     Object.keys(actions).forEach(function (key) {
       if (actions[key] !== prev && actions[key] !== next) actions[key].stop();
     });
+    // CAST1H2 (R14): any state change ends the upper-body shot's legs. The
+    // lower variants live outside this.actions, so the loop above never sees
+    // them: stale ones stop, the live one fades out with prev (a hard stop
+    // would drop the legs toward the bind pose under the fade-in).
+    var lowers = this.lowerActions;
+    var legs = this.lowerActive ? lowers[this.lowerActive] : null;
+    Object.keys(lowers).forEach(function (name) {
+      if (lowers[name] !== legs) lowers[name].stop();
+    });
     if (prev && prev !== next) prev.fadeOut(seconds);
     next.stopFading();
     next.reset();
@@ -204,6 +241,12 @@
     next.setEffectiveWeight(1);
     if (seconds) next.fadeIn(seconds);
     next.play();
+    if (legs) {
+      // back to the locomotion the legs were running: keep their phase
+      if (legs.getClip().name === next.getClip().name + '__lower') next.time = legs.time;
+      if (seconds) legs.fadeOut(seconds); else legs.stop();
+      this.lowerActive = null;
+    }
     this.clip = state;
     // A superseded hit clip fades out disabled and never emits 'finished';
     // release the latch here or setLocomotion stays blocked indefinitely.
@@ -280,10 +323,13 @@
   // fire-at-peak windup on it. Cast1H plays at castShotSpeed, set once per
   // start and never reset (transition() stops it on the next state change);
   // Cast2H keeps timeScale 1.
+  // CAST1H2: with castUpperBody the Cast1H shot is torso-only (castOverlay);
+  // the refusal paths above stay round 1 and never touch the locomotion.
   CharacterAnim.prototype.castShot = function (shot) {
     var action = CAST_SHOTS[shot] ? this.actions[shot] : null;
     if (this.dead || this.attackPhase || !action) { this.castShotKey = null; return; }
     if (this.clip === shot && action.isRunning()) { this.castShotKey = shot; return; }
+    if (shot === 'Cast1H' && this.castUpper) { this.castOverlay(action); return; }
     this.transition(shot, CFG.oneShotFadeSeconds, true);
     if (this.clip !== shot) { this.castShotKey = null; return; }
     if (shot === 'Cast1H') action.timeScale = CASTER().castShotSpeed;
@@ -299,6 +345,92 @@
 
   CharacterAnim.prototype.castShotRunning = function () {
     return !!(CAST_SHOTS[this.clip] && this.actions[this.clip].isRunning());
+  };
+
+  // CAST1H2 (R11): locomotion action key -> its lower-body variant (tracks of
+  // castLowerNodes only, loops like the full clip), built on first use.
+  CharacterAnim.prototype.lowerAction = function (key) {
+    var full = this.actions[key];
+    if (!full) return null;
+    var clip = full.getClip();
+    var name = clip.name + '__lower';
+    if (!this.lowerActions[name]) {
+      this.lowerActions[name] = this.mixer.clipAction(new THREE.AnimationClip(name,
+        clip.duration, nodeTracks(clip, CASTER().castLowerNodes)));
+    }
+    return this.lowerActions[name];
+  };
+
+  // CAST1H2: start `legs` phase-continuous with `src` (the full locomotion or
+  // the lower variant it takes over from); fade 0 = instant full weight.
+  function startLegs(legs, src, fade) {
+    legs.stopFading();
+    legs.reset();
+    legs.enabled = true;
+    legs.setEffectiveWeight(1);
+    if (src) legs.time = src.time % legs.getClip().duration;
+    if (fade) legs.fadeIn(fade);
+    legs.play();
+  }
+
+  // CAST1H2 (R12): the Cast1H shot as an upper-body overlay, without
+  // transition(): the legs keep the current locomotion on its lower variant
+  // while the torso-only shot fades in. Same lifecycle as round 1 (clip =
+  // 'Cast1H', castShotKey, clamp hold, exit through transition()).
+  CharacterAnim.prototype.castOverlay = function (action) {
+    var fade = CFG.oneShotFadeSeconds;
+    var key = this.resolve(this.locomotion);
+    var full = this.actions[key];
+    var legs = this.lowerAction(key);
+    if (!legs) { this.castShotKey = null; return; }
+    var prev = this.actions[this.clip];
+    var held = this.lowerActive ? this.lowerActions[this.lowerActive] : null;
+    // every other action stops (hit / shield singles, stale lower variants);
+    // the pose being left fades out under the shot like a transition() prev
+    var actions = this.actions;
+    var lowers = this.lowerActions;
+    Object.keys(actions).forEach(function (k) {
+      if (actions[k] !== prev && actions[k] !== action) actions[k].stop();
+    });
+    Object.keys(lowers).forEach(function (n) {
+      if (lowers[n] !== held) lowers[n].stop();
+    });
+    if (prev && prev !== action) prev.fadeOut(fade);
+    if (legs !== held) {
+      // off the full locomotion: identical leg tracks at the same phase, so
+      // the lower variant takes the legs at full weight (no pop) while the
+      // full action's arms fade out under the shot's
+      var src = held || (prev === full ? full : null);
+      startLegs(legs, src, src === full ? 0 : fade);
+      if (held) held.fadeOut(fade);
+    }
+    legs.timeScale = full.timeScale;
+    action.stopFading();
+    action.reset();
+    action.enabled = true;
+    action.setEffectiveWeight(1);
+    action.fadeIn(fade);
+    action.play();
+    action.timeScale = CASTER().castShotSpeed;
+    this.hitActive = false;
+    this.clip = 'Cast1H';
+    this.castShotKey = 'Cast1H';
+    this.lowerActive = legs.getClip().name;
+  };
+
+  // CAST1H2 (R13): under the overlay shot the legs follow the movement - a
+  // start / stop / direction change crossfades onto that locomotion's lower
+  // variant; the cycle rate tracks the speed like setLocomotion's.
+  CharacterAnim.prototype.syncCastLegs = function (player) {
+    var legs = this.lowerAction(this.resolve(this.locomotion));
+    var held = this.lowerActions[this.lowerActive];
+    if (!legs) return;
+    if (legs !== held) {
+      startLegs(legs, held, CFG.crossfadeSeconds);
+      held.fadeOut(CFG.crossfadeSeconds);
+      this.lowerActive = legs.getClip().name;
+    }
+    legs.timeScale = legScale(legs, player.animMoveSpeed || 0, !!player.sprinting);
   };
 
   // MAGANIM backward split: the existing roll-basis signal (player.moveDirWorld,
@@ -412,6 +544,8 @@
         // keep the locomotion state current so the exit crossfade targets it
         this.locomotion = this.locomotionKey(player.animMoveSpeed || 0,
           !!player.sprinting, movingBackward(player));
+        // CAST1H2: an overlay shot's legs keep walking (no state re-transition)
+        if (this.lowerActive) this.syncCastLegs(player);
       } else {
         this.setLocomotion(player.animMoveSpeed || 0, !!player.sprinting || player.rolling,
           movingBackward(player));

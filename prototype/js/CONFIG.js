@@ -1552,10 +1552,22 @@ window.WH_CONFIG = {
       items: ['magicGlove'],
       backwardDot: -0.5,              // PROPOSED: ~120 deg+ off facing
       largeHitFraction: 0.2,          // PROPOSED: 20 hp of 100
-      castShotSpeed: 1.5,             // PROPOSED: Nicko 10-10 >=1.5x on the 1H cast shot
+      castShotSpeed: 2.25,            // PROPOSED: Nicko 10-10 second order, +50% on top
+                                      // of the first 1.5 (fire = 0.46 * 2.3 / 2.25 = 0.47 s)
       fire1HFraction: 0.46,           // PROPOSED: R_Hand peak f32/70 of WH_Mag_Cast1H
                                       // (scratch/mag_cast_peak.json, FK measured)
-      cast1HClipSeconds: 2.3          // native clip duration (70 frames @ 30fps)
+      cast1HClipSeconds: 2.3,         // native clip duration (70 frames @ 30fps)
+      castUpperBody: true,            // PROPOSED: Nicko 10-10 - cast 1H torso-only,
+                                      // legs keep the locomotion while the shot runs
+      // Waist split of the player rig's 20 animated nodes (every clip is a dense
+      // bake of all 20; scratch/glb_bone_census2.py -> mag_cast_track_partition.json:
+      // 42/42 clips 12 upper + 8 lower, overlap none). Arms parent Chest, Chest
+      // parents Spine; legs parent Hips, Hips parents Root.
+      castUpperNodes: ['Spine', 'Chest', 'Neck', 'Head', 'L_Shoulder', 'L_UpperArm',
+                       'L_Forearm', 'L_Hand', 'R_Shoulder', 'R_UpperArm',
+                       'R_Forearm', 'R_Hand'],
+      castLowerNodes: ['Hips', 'Root', 'L_Thigh', 'L_Shin', 'L_Foot', 'R_Thigh',
+                       'R_Shin', 'R_Foot']
     },
     // R4 kill switch: true swaps the 3 rigged body atlases for the committed
     // 512px pixelated PNGs at postload; false = original 2048 atlas path.

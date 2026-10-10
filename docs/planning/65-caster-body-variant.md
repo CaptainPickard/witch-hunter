@@ -84,3 +84,32 @@ WH_Mag_Cast1H R_Hand peak f32/70 = 0.4638 (Cast2H 0.6808, not tuned).
   0.71 s. No new scheduler; fizzle / hand change / belt rebind / respawn
   clear it as before. Origin = castOrigin's live hand-glow sample (no change).
 - C3 castProgress clamped to [0, 1] (glow pulse) under the longer windup.
+
+## CAST1H ROUND 2 - UPPER-BODY OVERLAY (2026-10-10, io/missions/2026-10-10-cast1h2-overlay.md)
+Nicko 10-10: the 1H cast another +50% faster, and only the torso casts - the
+legs keep walking / running / idling under it (before: legs froze in the cast
+stance while the player slid).
+- R8 assets.caster.castShotSpeed 1.5 -> 2.25. The round-1 tryCast windup
+  reads the live row: fire = 0.46 * 2.3 / 2.25 = 0.47 s after accept (still
+  the hand peak). No player.js / game.js change.
+- R9 castUpperBody (kill switch) + castUpperNodes (12: Spine..R_Hand) +
+  castLowerNodes (8: Hips, Root, legs). Census: every one of the 42 player
+  clips is a dense bake of all 20 nodes, 12 upper + 8 lower, no overlap, no
+  orphan (scratch/glb_bone_census2.py -> scratch/mag_cast_track_partition.json).
+- R10 actions.Cast1H = 'WH_Mag_Cast1H__upper' (upper-node tracks, same
+  duration); this.clips keeps the full clip; Cast2H stays full-body.
+- R11 anim.lowerAction(key): lazy '<clip>__lower' loop of the resolved
+  locomotion clip (caster Mag_* or warrior Sword* sets), lower tracks only.
+- R12 anim.castOverlay (castShot's Cast1H path, no transition()): other
+  actions stop, the pose being left fades out under the shot, the legs move
+  to the locomotion's lower variant at the same phase and full weight
+  (identical leg tracks -> no pop), the torso shot fades in at 2.25x.
+  clip / castShotKey / clamp hold / refusals exactly as round 1.
+- R13 anim.syncCastLegs (syncPlayer hold branch): movement changes mid-cast
+  crossfade the legs to the new lower variant; leg rate follows the speed
+  with setLocomotion's law.
+- R14 exit: transition() frees the legs - stale lower variants stop, the live
+  one fades out with prev and hands its phase to the locomotion it returns
+  to. Every cancel site (fizzle, hand change, hit, death, respawn, attack,
+  block) already ends through transition(), so none changed.
+- castUpperBody false = round-1 behavior (full Cast1H clip, transition path).
