@@ -36,6 +36,44 @@ def current_release_sha():
     return None
 
 
+def stamp_git_mtimes(d):
+    """Mtime law (2026-10-08, grey-stand-in fix): git checkout stamps every
+    file with NOW, which defeats the phone's If-Modified-Since cache across
+    every release flip (GLBs re-download wholesale -> per-asset 20s timeouts
+    on mobile -> stand-in grey blocks). Stamps each file with the commit
+    time that LAST TOUCHED it (per-file, not the tip): an unchanged file
+    keeps mtime-identical across releases (-> 304), a changed file gets its
+    new commit time (-> honest refetch). One git log walk, newest->oldest,
+    first writer wins."""
+    import time as _time
+    ts = {}
+    r = sh(f"git -C {d} log --format='@%ct' --name-only -- "
+           f"prototype art-direction")
+    cur = None
+    for line in (r.stdout or '').splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if line.startswith('@'):
+            try:
+                cur = int(line[1:])
+            except ValueError:
+                cur = None
+            continue
+        if cur is not None and line not in ts:
+            ts[line] = cur
+    n = 0
+    for rel, t in ts.items():
+        p = os.path.join(d, rel)
+        if os.path.isfile(p):
+            try:
+                os.utime(p, (t, t))
+                n += 1
+            except OSError:
+                pass
+    return n
+
+
 def release_for(sha):
     sha = (sha or '').strip()
     if not sha or '/' in sha or sha in ('.', '..') or sha.startswith('-'):
@@ -51,6 +89,8 @@ def release_for(sha):
     if r.returncode != 0:
         print('CLONE_ERR', r.stderr[-400:])
         return None, False
+    stamped = stamp_git_mtimes(d)
+    print('STAMPED', stamped, 'files with git commit mtimes')
     return d, False
 
 

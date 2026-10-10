@@ -1,0 +1,153 @@
+We are continuing the Witch Hunter project in a NEW session. Load skills
+witch-hunter-playtest-serving, no-harness-playtest-gate, witch-hunter-planning,
+and witch-hunter-change-orders FIRST, in that order. Repo
+/workspace/witch-hunter, playtest branch feat/world-visuals, worktree
+/tmp/wh-worldfeat. Verified tip 98393f2 (HP2 day/night clock landed; HP1
+enemy health bars 5cd28a9; both PLAYTEST-APPROVED by me, serving verified:
+8793 -> releases/98393f2, curl 200 md5 d91341ae). Run the standard census
+first (git log/status, host-side fetch + rev-parse origin/feat/world-visuals
+via /tmp/dhost.py host_exec; container fetch is broken by design). If the
+tip has moved, adopt the new tip as baseline. If another session has churn
+in flight, honor the multi-session sequencing law (no parallel building in
+one worktree).
+
+VERIFIED GAME STATE (all playtest-approved; re-verify line anchors by
+census - they drift):
+- C1 cooking, C2 day/night (100min cycle: dawn 300s / day 2700 / dusk 300 /
+  night 2700, blendSec 90, wake-snap held dawn), C2b painted sky pools,
+  C3 sleep/tent/camp, C3.1b bounds, C3.1c Nicko Meshy tent, CK1 campkit
+  wiring landed f6a05bc (player camp = kit firepit/bedroll/pegs).
+- TUTORIAL LAW (binding): js/daynight.js DayNight boots DORMANT (frozen,
+  day 0). The FIRST Save-and-Heal at a camp is the ONLY caller of
+  beginCycle() (day 1 dawn); later rests call nextDawn(). game.js owns the
+  instance (game.dayNight); js/camp.js owns the menu (Save / Save-and-Heal / LOAD).
+- HP2 clock reads exclusively (!dn.dormant) - the same predicate is the
+  natural gate for ANY first-sleep-gated content. Use it; do not add state.
+- C4 save profile: js/save.js WH_SAVE, CONFIG.save lsKey wh-save-v1 schema
+  v1, additive blocks only (actionbar, leveling). Boot CONTINUE / NEW GAME;
+  quit persist; camp LOAD row. Save already stores world {day, phase,
+  timeOfDay}.
+- AB1 action bar (player-mappable, glyph gating, 16 pixel icons via
+  js/icons-data.js window.WH_ICONS). L1 leveling: js/leveling.js WH_LEVEL,
+  XP pip above HP bar, XP on kill wired in game.js. HP1 enemy health bars:
+  game.js updateEnemyBars (Map-keyed pool), visibility (hp<hpMax)||locked.
+- Enemies: js/enemy.js bandit + ghoul ONLY, combat-ds1 phase FSM, AI1
+  landed for bandit (lock-on awareness, strafe band, decision loop, guard
+  0.5x front-arc: 6aaf339/e325005). Ghoul stays a zombie by ruling. No
+  wolf, no Rot Mother, no minion-spawn code exists anywhere (GREENFIELD).
+- Interact surface today: box pickup > unlooted corpse > gather nodes >
+  cook station (game.js interact chain ~1739-1830). NO NPC, NO dialog UI,
+  NO quest system, NO containers/chests (GREENFIELD - the only "quest"
+  mention is the L1-era comment "No quest XP" ~CONFIG.js:1855).
+- Región geometry TODAY: regionA hold_outskirts (id ~CONFIG.js:156),
+  regionB darkwood_edge (~:367; spawn z=-45, boundary/entry chokepoint at
+  SOUTH z=+25, gateM ~:473, arch params ~:566), one chokepoint crossing,
+  flat world - there is NO heightfield / ground deformation anywhere
+  (terrain = flat plane + procedural texture, region-manager.js ~:305).
+  Elevation is genuinely NEW tech - treat as R&D, not a known pattern.
+- Tree assets in use: yewTree, witchwoodTree, treeStump as
+  CONFIG.region*.props rows (~:198, :238-243). Campkit GLBs wired (CK1).
+- Planning docs live in docs/planning/ (00..61; next free number 62).
+  Audit authority: doc 61 (world) + doc 60 (combat) - their numbers are
+  the contract, do not re-derive.
+- Queued items Rot Wolf/Rot-Mother and doc-34 full perception are
+  SUPERSEDED by this order - fold them into Region C planning. Moon
+  azimuth stays parked.
+
+THE ORDER - REGION C: "FOREST OF THE OLD KING" (my words, binding):
+A new area accessed from Region B through a doorway directly OPPOSITE the
+Region B entry door/archway (i.e. Region B's far north edge; Region B
+spans z=-45..+25 today - the area extends beyond z < -60 and any boundary
+clamp must move accordingly). This doorway is ONLY accessible AFTER the
+player acquires the camp and sleeps for the first time (gate on
+!dayNight.dormant, the tutorial law). Name: Forest of the Old King.
+Content:
+1. A massive open-world area, much larger than regions A/B, meant to let
+   the player practice camping, cooking, fighting, and leveling.
+2. Large trees - SAME tree assets as the previous two areas (yewTree /
+   witchwoodTree / treeStump) - and rolling hills. I do not yet know how
+   hills work with elevations in this engine; we will figure it out (the
+   spec session should propose fake-hills vs heightfield and run a spike
+   if needed - do not silently pick one).
+3. Bandit camps (multiple), reusing existing bandit + campkit prop styles.
+4. New enemy: WOLVES that hunt in PACKS and PATROL IN LOOPS (loop patrol
+   routes, pack cohesion, pack aggro - pack pulls pack). Needs a wolf
+   model + animations ( Astrabot lane ).
+5. New enemy: the ROT MOTHER and her minion spawns (mother spawns minions;
+   spec the spawn cadence and minion type; model + anims = Astrabot lane).
+6. First DUNGEONS: sub-levels or corridors the player navigates and
+   explores to find crafting materials. Decide the technical pattern
+   (same-scene sub-level with fade teleport vs separate scene swap) and
+   how saves/death interact with it.
+7. First QUEST and first NPC: a farm-like area somewhere in the region
+   with a FARMER who gives the quest; the quest is to rescue his daughter
+   from the dungeon above. On rescue the player is awarded the first CAMP
+   CHEST - a new item that spawns at the player's camp and stores items
+   (inventory persistence, save schema additive per C4 law).
+
+PROCESS LAWS (binding, unchanged):
+- NO automated harness or headless browser runs of any kind. My playtest
+  (WebUI Playtest button / 8793 http://localhost:8793/current/
+  prototype/builds/v8-playable.html) is the only acceptance test. Syntax
+  checks on edited JS only (playwright-driver node --check:
+  /usr/local/lib/python3.12/site-packages/playwright/driver/node).
+- ONE change order at a time. Order briefs live in io/missions/
+  YYYY-MM-DD-cc-<slug>.md with: locked rulings, state block, crg impact
+  numbers baked into the file, scope contract with real file anchors
+  (TOUCH / NOT TOUCH), acceptance criteria A1.. (playtestable), commit
+  units, push-after-every-commit. Run code-review-graph impact (binary
+  /app/venv/bin/code-review-graph, subcommand impact, repo alias
+  wh-worldfeat; if missing: crg register /tmp/wh-worldfeat + crg build)
+  BEFORE every dispatch and inject the result into the brief file itself.
+- Builder = Claude Code print mode: claude -p --model opus
+  --permission-mode acceptEdits --allowedTools "Read Write Edit Bash"
+  --max-turns 80 (60 truncated the last two builders), env HOME=
+  /home/hermeswebui/.hermes/profiles/io/home + PATH=$HOME/.local/bin,
+  cwd /tmp/wh-worldfeat, identity CaptainPickard <pickard.nicko@gmail.com>.
+  Dispatch via a script file, never inline $() or heredocs in my terminal.
+- Commit each order to feat/world-visuals and push; rebuild the bundle
+  (python3 tools/build_v8.py from repo root) BEFORE each commit so the
+  bundle ships in the same commit; after land: 8793 atomic flip via
+  tools/wh_release_flip.py with a RELATIVE releases/<sha> target run
+  host-side via /tmp/dhost.py host_exec with timeout >= 800s (60s default
+  silently kills flips mid-release-build leaving a husk; delete husk and
+  re-run if releases/<sha> lacks prototype/builds/); verify host curl 200
+  + marker greps; webui /playtest-feat/ serves the worktree live.
+- Merge to dev/main ONLY on my explicit call. Mesh/asset work (wolf, Rot
+  Mother, farmer, daughter, dungeon kits) is the Astrabot lane - flag it
+  in planning, do not dispatch without my word. Small fixes go inline.
+- Always write to me in English. Never dispatch without my explicit go.
+
+YOUR TASK THIS SESSION - WRITE THE SPEC, DO NOT BUILD:
+1. Census first (see above). Re-verify anchors you cite.
+2. Read docs/planning/61-world-audit.md and 60-combat-audit.md plus any
+   planning docs relevant to regions, enemies, save, camp (docs 00-42
+   range as needed) so the spec does not contradict landed rulings.
+3. Ask me ONE clarify form (max 5 questions, free-text answers, options
+   with your recommendation first) covering the pivotal unknowns, e.g.:
+   elevation approach (fake hills vs heightfield spike), area scale,
+   dungeon technical pattern (sub-level vs scene swap), Rot Mother power
+   fantasy (unique boss vs repeatable nest boss), camp chest UX (grid
+   size, panel, where it appears). Answers free text.
+4. Then write the planning/spec set: docs/planning/62-forest-of-the-old-
+   king.md (design doc: map layout + landmarks, gating, pacing, enemy
+   roster and placement philosophy, bandit camps, wolf packs, Rot Mother,
+   dungeon concept + crafting material rewards, farm/NPC/quest chain,
+   camp chest reward) and docs/planning/63-region-c-order-backlog.md
+   (the breakdown: ~8-12 candidate change orders in build order with
+   rough scope, dependencies and which need Astrabot assets vs pure code;
+   each order small enough to land and playtest in one builder run).
+   Commit + push the docs.
+5. Present me: the phased order list (numbered, one line each), which
+   order is FIRST for the backlog, and WAIT for my explicit go before any
+   dispatch.
+
+Phasing instinct (yours to refine, mine to approve): first order should
+be the REGION SHELL (doorway + gate + extended boundary + flat forest
+floor + tree scatter reuse), so I can walk into an empty forest and
+playtest traversal; then hills/elevation; then wolves; then bandit
+camps; then Rot Mother; then dungeon shell; then crafting materials;
+then farm + farmer NPC; then quest chain; then camp chest reward. Every
+step playable. Nothing destructive; existing regions must keep working.
+
+Commit identity: CaptainPickard <pickard.nicko@gmail.com>.
