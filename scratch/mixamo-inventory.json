@@ -1,0 +1,24 @@
+{
+ "crouch idle.fbx": {
+  "actions": 1,
+  "action_names": [
+   "Armature|mixamo.com|Layer0"
+  ],
+  "bones": 65,
+  "range": [
+   1.0,
+   51.0
+  ]
+ },
+ "crouch to standing idle.fbx": {
+  "actions": 1,
+  "action_names": [
+   "Armature|mixamo.com|Layer0"
+  ],
+  "bones": 65,
+  "range": [
+   1.0,
+   20.0
+  ]
+ }
+}

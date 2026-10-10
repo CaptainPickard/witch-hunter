@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><style>body{margin:0}#c{width:600px;height:400px;background:#245}</style></head>
+<body>
+<div id="log"></div>
+<canvas id="c"></canvas>
+<script>
+window.__EV = {reqCalls: 0, plChange: 0, plError: null, moves: []};
+(function(){
+  var c = document.getElementById('c');
+  var log = function(t){ var d=document.getElementById('log'); d.textContent += t + ' | '; };
+  var origRPL = c.requestPointerLock || (HTMLCanvasElement.prototype.requestPointerLock);
+  if (origRPL) {
+    c.requestPointerLock = function(){
+      window.__EV.reqCalls++;
+      return origRPL.apply(this, arguments);
+    };
+  }
+  document.addEventListener('pointerlockchange', function(){ window.__EV.plChange++; log('CHANGE elem=' + !!document.pointerLockElement); });
+  document.addEventListener('pointerlockerror', function(e){ window.__EV.plError = 'pointerlockerror fired'; log('PLERROR'); });
+  document.addEventListener('mousemove', function(e){
+    if (window.__EV.moves.length < 12) window.__EV.moves.push({mx: e.movementX, my: e.movementY, cx: e.clientX, cy: e.clientY});
+    if (document.pointerLockElement) window.__EV.lockedMoves = (window.__EV.lockedMoves||0) + 1;
+  });
+  window.__doLock = function(){ try { var r = c.requestPointerLock(); return {kind: typeof r, isPromise: !!(r && r.then)}; } catch(err){ return {threw: String(err)}; } };
+  window.__unlock = function(){ try { document.exitPointerLock(); return 'ok'; } catch(err){ return 'threw:'+err; } };
+})();
+</script>
+</body></html>

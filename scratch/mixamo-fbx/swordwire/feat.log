@@ -1,0 +1,37 @@
+18:26:40 | INFO: Data are loaded, start creating Blender stuff
+18:26:40 | INFO: Blender create Mesh node Mesh_0
+18:26:40 | INFO: glTF import finished in 0.37s
+FBX version: 7700
+[rt] WH_SwordIdle 1 111 fcurves 200
+FBX version: 7700
+[rt] WH_SwordWalk 1 34 fcurves 200
+FBX version: 7700
+[rt] WH_SwordRun 1 22 fcurves 200
+FBX version: 7700
+[rt] WH_SwordWalkBack 1 39 fcurves 200
+FBX version: 7700
+[rt] WH_SwordIdleAlt 1 227 fcurves 200
+FBX version: 7700
+[rt] WH_ShieldBlockIdle 1 43 fcurves 200
+FBX version: 7700
+[rt] WH_ShieldCrouchIdle 1 16 fcurves 200
+FBX version: 7700
+[rt] WH_SwordStrafeL 1 40 fcurves 200
+FBX version: 7700
+[rt] WH_SwordStrafeR 1 35 fcurves 200
+FBX version: 7700
+[rt] WH_SwordTurnL 1 29 fcurves 200
+FBX version: 7700
+[rt] WH_SwordTurnR 1 29 fcurves 200
+FBX version: 7700
+[rt] WH_SwordCrouchIdle 1 74 fcurves 200
+INFO Draco mesh compression is available, use library at /opt/blender-4.5.4-linux-x64/4.5/scripts/addons_core/io_scene_gltf2/libextern_draco.so
+18:27:03 | INFO: Starting glTF 2.0 export
+18:27:03 | INFO: Extracting primitive: Mesh_0
+18:27:03 | INFO: Primitives created: 1
+18:27:06 | INFO: Finished glTF 2.0 export in 3.2190606594085693 s
+
+[rt] PASS /workspace/witch-hunter/scratch/mixamo-fbx/swordwire/feat-human-hunter-male.mixamo.glb
+Blender 4.5.4 LTS (hash b3efe983cc58 built 2025-10-28 01:32:34)
+
+Blender quit

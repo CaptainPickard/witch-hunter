@@ -1,0 +1,9 @@
+{
+ "WH_Idle_Melee": "/workspace/witch-hunter/scratch/mixamo-fbx/axepack/standing idle.fbx",
+ "WH_Walk_Melee": "/workspace/witch-hunter/scratch/mixamo-fbx/axepack/standing walk forward.fbx",
+ "WH_Run_Melee": "/workspace/witch-hunter/scratch/mixamo-fbx/axepack/standing run forward.fbx",
+ "WH_Attack_High": "/workspace/witch-hunter/scratch/mixamo-fbx/axepack/standing melee attack 360 high.fbx",
+ "WH_Attack_Horiz": "/workspace/witch-hunter/scratch/mixamo-fbx/axepack/standing melee attack horizontal.fbx",
+ "WH_Hit_Large_L": "/workspace/witch-hunter/scratch/mixamo-fbx/axepack/standing react large from left.fbx",
+ "WH_Taunt": "/workspace/witch-hunter/scratch/mixamo-fbx/axepack/standing taunt battlecry.fbx"
+}

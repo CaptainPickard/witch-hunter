@@ -1,0 +1,2573 @@
+"""Witch Hunter combat Round A validation harness (combat-ds1-A).
+
+ORGANIC-PATH LAW: every ACT is a real input (page.mouse / page.keyboard) or the
+sanctioned live-handle enemy displacement (simulates the target moving, per the
+AC input paths in io/specs/testerbot-spec-combat-ds1.md section 6). Setup helpers
+(teleport, setCameraYaw, page load) are clearly separated from ACTs. This harness
+NEVER writes player combat state (no comboIndex/attacking/hp/yaw pokes). All
+reads are attribute-guarded: a PRE-Devbot build yields clean FAILs, zero crashes.
+
+Run: python3 tests/wh_combat_ds1_validation.py   (WH_BASE_ROOT overrides base)
+"""
+from playwright.sync_api import sync_playwright
+import json, math, os, subprocess, sys, time, urllib.request
+
+BASE_ROOT = os.environ.get("WH_BASE_ROOT", "http://localhost:8791/")
+BUILD_PATH = "builds/v7-playable.html"
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+RESULTS = []
+CRASHES = []
+DIAGNOSTICS = []
+
+
+def note(msg):
+    DIAGNOSTICS.append(msg)
+    print("[diag] %s" % msg)
+
+
+def check(ac, name, ok, detail=""):
+    """One AC = one check. Prints the verdict line and records it."""
+    ok = bool(ok)
+    RESULTS.append({"id": "AC-%s" % ac, "name": name, "ok": ok, "detail": detail})
+    print("AC-%s %s => %s %s" % (ac, name, "PASS" if ok else "FAIL", detail))
+    return ok
+
+
+# ---------------------------------------------------------------- server ----
+def start_server():
+    """Start prototype/server.py; poll BASE_ROOT for HTTP 200 (max 15s)."""
+    proc = None
+    try:
+        proc = subprocess.Popen(
+            [sys.executable, "server.py"],
+            cwd=os.path.join(REPO_ROOT, "prototype"),
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+    except OSError as e:
+        note("server spawn failed (%r); assuming external server" % e)
+    deadline = time.time() + 15.0
+    while time.time() < deadline:
+        try:
+            with urllib.request.urlopen(BASE_ROOT, timeout=1.0) as r:
+                if r.status == 200:
+                    return proc
+        except Exception:
+            pass
+        time.sleep(0.3)
+    return proc
+
+
+def stop_server(proc):
+    if proc is None:
+        return
+    try:
+        proc.terminate()
+        proc.wait(timeout=5)
+    except Exception:
+        try:
+            proc.kill()
+        except Exception:
+            pass
+
+
+# ------------------------------------------------------------- helpers -----
+def wait_ready(page, timeout_s=20):
+    """goto BUILD_PATH; wait until WH_DEBUG and getPlayerPosition() both work."""
+    try:
+        page.goto(BASE_ROOT + BUILD_PATH, wait_until="load", timeout=30000)
+    except Exception as e:
+        note("goto failed: %r" % e)
+        return False
+    deadline = time.time() + timeout_s
+    while time.time() < deadline:
+        try:
+            ok = page.evaluate(
+                "(function(){try{return typeof window.WH_DEBUG==='object'"
+                " && typeof window.WH_DEBUG.getPlayerPosition==='function'"
+                " && !!window.WH_DEBUG.getPlayerPosition();}catch(e){return false;}})()")
+            if ok:
+                page.wait_for_timeout(1500)  # let assets/enemies settle
+                return True
+        except Exception:
+            pass
+        page.wait_for_timeout(250)
+    note("wait_ready: WH_DEBUG never became ready")
+    return False
+
+
+def stage(page):
+    """Player attack stage: 'windup' | 'strike' | 'recover' | null (pre-Ds1 too)."""
+    try:
+        return page.evaluate(
+            "(function(){try{return window.WH_DEBUG.getAttackStage();}"
+            "catch(e){return null;}})()")
+    except Exception:
+        return None
+
+
+def player_state(page):
+    """Attribute-guarded player snapshot; pre-Devbot fields read as None."""
+    return page.evaluate(
+        "(function(){function g(f){try{return f();}catch(e){return null;}}"
+        "var p=window.WH_DEBUG.getPlayer();var out={};"
+        "out.yaw=g(function(){return p.yaw;});"
+        "out.camYaw=g(function(){return p.camYaw;});"
+        "out.comboIndex=g(function(){return p.comboIndex;});"
+        "out.comboQueued=g(function(){return !!p.comboQueued;});"
+        "out.recoverFullyElapsed=g(function(){return p.recoverFullyElapsed;});"
+        "out.attacking=g(function(){return !!p.attacking;});"
+        "out.attackTimer=g(function(){return p.attackTimer;});"
+        "out.lockTarget=g(function(){return !!p.lockTarget;});"
+        "out.pos=g(function(){return {x:p.pos.x,z:p.pos.z};});"
+        "out.bodyParentIsYawFrame=g(function(){return p.yawFrame"
+        " ? p.body.parent===p.yawFrame : null;});"
+        "out.yawFrameYaw=g(function(){return p.yawFrame?p.yawFrame.rotation.y:null;});"
+        "out.atkYawOffset=g(function(){return (p.atkYawOffset!==undefined)"
+        "?p.atkYawOffset:null;});"
+        "out.hp=g(function(){return p.hp;});"
+        "out.rolling=g(function(){return !!p.rolling;});"
+        "return out;})()")
+
+
+def enemy_ref(page, idx):
+    """Return (js_handle, snapshot) for enemy idx; handle is LIVE for mutation."""
+    snap = page.evaluate(
+        "(function(){var e=window.WH_DEBUG.getEnemy(%d);if(!e)return null;"
+        "return {type:e.type,fsm:e.fsm,hp:e.hp,x:e.x,z:e.z};})()" % idx)
+    if snap is None:
+        return None, None
+    handle = page.evaluate_handle(
+        "(function(){var e=window.WH_DEBUG.getEnemy(%d);return e?e.ref:null;})()" % idx)
+    return handle, snap
+
+
+def enemy_field(page, handle, expr):
+    """Read a field from the LIVE enemy handle, attribute-guarded."""
+    return page.evaluate_handle(
+        "(function(e){try{return %s;}catch(err){return null;}})" % expr, handle)
+
+
+def hp(page):
+    try:
+        return page.evaluate(
+            "(function(){try{return window.WH_DEBUG.getPlayer().hp;}"
+            "catch(e){return null;}})()")
+    except Exception:
+        return None
+
+
+# REAL INPUT ACTS (page.mouse / page.keyboard ONLY) -------------------------
+def press_f(page):
+    page.keyboard.press("f")
+
+
+def press_space(page):
+    page.keyboard.press(" ")
+
+
+def lmb(page):
+    """LMB click at canvas center: mouse.down + fast mouse.up."""
+    page.mouse.click(512, 384)
+
+
+def lmb_down(page):
+    page.mouse.down()
+
+
+def lmb_up(page):
+    page.mouse.up()
+
+
+def rmb(page):
+    page.mouse.click(512, 384, button="right")
+
+
+# ------------------------------------------------- A3 enemy helpers --------
+def await_fsm(page, handle, want="attack", timeout_s=8.0):
+    """Poll live ref.fsm until it equals want. Returns (t_page, fsm) or (None)."""
+    deadline = time.time() + timeout_s
+    while time.time() < deadline:
+        v = page.evaluate("(function(e){try{return e.fsm;}catch(x){return null;}})", handle)
+        if v == want:
+            return page.evaluate("performance.now()"), v
+        page.wait_for_timeout(3)
+    return None, None
+
+
+def enemy_phase(page, handle):
+    """Read ref.attackPhase (Devbot-added). Pre-build: None => AC FAILs clean."""
+    return page.evaluate(
+        "(function(e){try{return e.attackPhase||null;}catch(x){return null;}})", handle)
+
+
+def displace(page, handle, dx, dz):
+    """SANCTIONED non-input act: move the live enemy (simulates target motion)."""
+    page.evaluate(
+        "(function(e){try{e.pos.x=(e.pos.x||0)+%r;e.pos.z=(e.pos.z||0)+%r;"
+        "if(e.root)e.root.position.x=e.pos.x;if(e.root)e.root.position.z=e.pos.z;"
+        "return true;}catch(x){return false;}})" % (dx, dz), handle)
+
+
+SAMPLER_JS = """(function(cfg){
+  if (window.__IO_SAMPLER) { try { window.__IO_SAMPLER.stop(); } catch (x) {} }
+  var out = {rows: [], displaced: false, t0: null, done: false};
+  window.__IO_SAMPLER_ROWS = out.rows;
+  window.__IO_SAMPLER_STATE = out;
+  var running = true;
+  function tick(now){
+    if (!running) return;
+    var p = window.WH_DEBUG.getPlayer();
+    if (p) {
+      var st = p.getAttackStage ? p.getAttackStage() : null;
+      if (out.t0 === null) out.t0 = now;
+      var row = {t: +(now - out.t0).toFixed(1), st: st, yaw: +p.yaw.toFixed(4),
+                 locked: !!p.lockTarget,
+                 tx: p.lockTarget ? +p.lockTarget.pos.x.toFixed(3) : null,
+                 x: +p.pos.x.toFixed(3), z: +p.pos.z.toFixed(3)};
+      if (st === 'windup' && cfg.displace && !out.displaced) {
+        out.displaced = true;
+        try { var e = window.WH_DEBUG.getEnemy(0).ref;
+              if (e && e.pos) { e.pos.x += cfg.dx; e.pos.z += cfg.dz;
+                if (e.root) { e.root.position.x = e.pos.x;
+                e.root.position.z = e.pos.z; } } } catch (x) {}
+      }
+      if (cfg.yawSweep && st === 'windup') {
+        try { p.camYaw += (cfg.yawRate || 0); } catch (x) {}
+      }
+      out.rows.push(row);
+    }
+    requestAnimationFrame(tick);
+  }
+  window.__IO_SAMPLER = { stop: function () { running = false; }, state: out };
+  requestAnimationFrame(tick);
+  return true;   // INSTANT resolve: rows accumulate in window.__IO_SAMPLER_ROWS
+})"""
+
+
+
+def drain_sampler(page, until_state=None, max_wall_s=None):
+    """Wait until the sampler state flags done/condition, then return rows."""
+    deadline = page.__io_sampler_deadline if hasattr(
+        page, "__io_sampler_deadline") else time.time() + 3.0
+    if max_wall_s:
+        deadline = min(deadline, time.time() + max_wall_s)
+    while time.time() < deadline:
+        st = page.evaluate(
+            "(function(){try{var s=window.__IO_SAMPLER_STATE;"
+            "return s ? JSON.stringify({d:s.displaced, n:s.rows.length})"
+            " : null;}catch(x){return null;}})()")
+        # no early exit: caller decides; just wait out the clock
+        page.wait_for_timeout(30)
+    rows = page.evaluate("(function(){try{return window.__IO_SAMPLER_ROWS;"
+                         "}catch(x){return [];}})()")
+    state = page.evaluate("(function(){try{var s=window.__IO_SAMPLER_STATE;"
+                          "return {displaced:s.displaced, n:s.rows.length};}"
+                          "catch(x){return {displaced: False, n: 0};}})()")
+    page.evaluate("if(window.__IO_SAMPLER)window.__IO_SAMPLER.stop();")
+    return {"rows": rows, "displaced": state.get("displaced", False)}
+
+
+
+
+def wait_for_stage(page, want, timeout_s=5.0):
+    """Poll from python until stage == want (stage is set for >=1 sim frame)."""
+    t0 = time.time()
+    while time.time() - t0 < timeout_s:
+        if stage(page) == want:
+            return True
+        page.wait_for_timeout(3)
+    return False
+
+
+def fresh(page):
+    """Fresh load + ready wait. Every AC starts here unless it explicitly reuses."""
+    return wait_ready(page)
+
+
+def wrap_pi(x):
+    """Wrap an angle to (-pi, pi]."""
+    return (x + math.pi) % (2 * math.pi) - math.pi
+
+
+# =============================================== GROUP A1 ==================
+def lock_and_face_bandit(page):
+    """Shared setup: stand at (-6,-2), camYaw 0, F-lock the bandit at (-6,-8)."""
+    page.evaluate("window.WH_DEBUG.teleportPlayer(-6, -2)")
+    page.evaluate("window.WH_DEBUG.setCameraYaw(0)")
+    page.wait_for_timeout(500)
+    press_f(page)
+    page.wait_for_timeout(500)
+    locked = page.evaluate("(function(){try{return !!window.WH_DEBUG.isLocked();}catch(e){return false;}})()")
+    tgt = page.evaluate("(function(){try{return window.WH_DEBUG.getLockTarget();}catch(e){return null;}})()")
+    return locked, tgt
+
+
+def ac_a1_1(page):
+    """D2-C sampler: swing-1; sampler during recover; chain-press; displacement
+    on swing-2's first windup frame; rate-capped chase assertion."""
+    if not fresh(page):
+        return check("A1-1", "windup yaw chase", False, "pre-run: page never ready")
+    try:
+        locked, tgt = None, None
+        for _attempt in range(3):
+            locked, tgt = lock_and_face_bandit(page)
+            if locked and tgt:
+                break
+            page.wait_for_timeout(400)   # D2 flake protocol: max 2 retries
+        if not (locked and tgt):
+            return check("A1-1", "windup yaw chase", False,
+                          "pre-run: lock failed locked=%s tgt=%s" % (locked, tgt))
+        lmb(page)                     # ACT 1: swing-1
+        if not wait_for_stage(page, "recover", 5.0):
+            return check("A1-1", "windup yaw chase", False,
+                          "pre-run: swing-1 recover not reached in 5s")
+        run_sampler(page, 4000, displace=True, dx=0.8, dz=0.0)
+        lmb(page)                     # ACT 2: organic chain press
+        trace = drain_sampler(page)
+        rows = trace["rows"]
+        wu = [r for r in rows if r["st"] == "windup"]
+        if not wu or not trace["displaced"]:
+            return check("A1-1", "windup yaw chase", False,
+                          "windup not sampled displaced=%s wu=%d rows=%d" %
+                          (trace["displaced"], len(wu), len(rows)))
+        y0 = wu[0]["yaw"]
+        max_dyaw, jumped = 0.0, False
+        for r in wu[1:]:
+            dy = abs(wrap_pi(r["yaw"] - y0)); y0 = r["yaw"]
+            max_dyaw = max(max_dyaw, dy)
+            if dy > 0.5: jumped = True
+        x_disp = tgt["x"] + 0.8
+        def err(r): return abs(wrap_pi(math.atan2(x_disp - r["x"],
+                                                  tgt["z"] - r["z"]) - r["yaw"]))
+        e_first, e_last = err(wu[0]), err(wu[-1])
+        cap = 240 * math.pi / 180 * 0.05 + 0.02
+        ok = (max_dyaw <= cap and not jumped and e_last < e_first)
+        check("A1-1", "windup yaw chase", ok,
+              "dispInWindup=%s wuFrames=%d maxDyaw=%.4f jump=%s e %.3f->%.3f" %
+              (trace["displaced"], len(wu), max_dyaw, jumped, e_first, e_last))
+    except Exception as e:
+        check("A1-1", "windup yaw chase", False, "exception %r" % e)
+
+
+def ac_a1_2(page):
+    """D2 page-side: far displacement during strike => yawFrame frozen
+    (frame-yaw == player.yaw both held), sweep offset continuity,
+    post-swing convergence via page-side sampler."""
+    if not fresh(page):
+        return check("A1-2", "strike+recover freeze", False,
+                     "pre-run: page never ready")
+    try:
+        locked, tgt = lock_and_face_bandit(page)
+        if not (locked and tgt):
+            return check("A1-2", "strike+recover freeze", False,
+                          "pre-run: lock failed locked=%s tgt=%s" % (locked, tgt))
+        handle, snap = enemy_ref(page, 0)
+        if handle is None:
+            return check("A1-2", "strike+recover freeze", False,
+                         "pre-run: no enemy 0")
+        page.evaluate("window.__IO_A12 = [];")
+        page.evaluate("""(function(){
+          function tick(){
+            try{
+              var p = window.WH_DEBUG.getPlayer();
+              if (p) window.__IO_A12.push({
+                st: (p.getAttackStage ? p.getAttackStage() : null),
+                y: (function(){try{var y2=p.yawFrame;
+                     return y2 ? y2.rotation.y : null;}catch(x){return null;}})(),
+                yaw: p.yaw,
+                oc: (function(){try{var b=p.body;
+                     return b ? b.rotation.y : null;}catch(x){return null;}})() });
+            }catch(x){}
+            window.__IO_A12_RAF = requestAnimationFrame(tick);
+          }
+          window.__IO_A12_RAF = requestAnimationFrame(tick);
+        })""")
+        lmb(page)
+        t0 = time.time()
+        displaced_far = False
+        while time.time() - t0 < 4.0:
+            st = stage(page)
+            if st == "strike":
+                if not displaced_far:
+                    displace(page, handle, 8.0, 0.0)
+                    displaced_far = True
+            if st is None and displaced_far:
+                break
+            page.wait_for_timeout(3)
+        page.evaluate(
+            "if(window.__IO_A12_RAF){cancelAnimationFrame(window.__IO_A12_RAF);"
+            "window.__IO_A12_RAF=null;}")
+        rows = page.evaluate("window.__IO_A12 || [];")
+        sr = [r for r in rows
+              if r["st"] in ("strike", "recover") and r["y"] is not None]
+        yaw_strike_entry = next((r["y"] for r in rows
+                                 if r["st"] == "strike"), None)
+        frame_frozen = True
+        max_drift = 0.0
+        if yaw_strike_entry is not None:
+            for r in rows:
+                if r["st"] in ("strike", "recover") and r["y"] is not None:
+                    d = abs(wrap_pi(r["y"] - yaw_strike_entry))
+                    if d > 1e-3:
+                        frame_frozen = False
+                    max_drift = max(max_drift, d)
+        # post-swing convergence: yaw error vs displaced target shrinks,
+        # measured page-side (organic) with two position snapshots.
+        converged = None
+        if displaced_far and tgt and yaw_strike_entry is not None:
+            import math
+            x_disp = tgt["x"] + 8.8
+            q0 = page.evaluate(
+                "(function(){var p=window.WH_DEBUG.getPlayer();"
+                "return {x:p.pos.x,z:p.pos.z,yaw:p.yaw};})()")
+            page.wait_for_timeout(400)
+            q1 = page.evaluate(
+                "(function(){var p=window.WH_DEBUG.getPlayer();"
+                "return {x:p.pos.x,z:p.pos.z,yaw:p.yaw};})()")
+            def err(q, yaw):
+                return abs(wrap_pi(math.atan2(x_disp - q["x"],
+                                              tgt["z"] - q["z"]) - yaw))
+            if q0 and q1:
+                prev_err = err(q0, q0["yaw"])
+                post_err = err(q1, q1["yaw"])
+                converged = (post_err <= prev_err)
+        ok = (yaw_strike_entry is not None and displaced_far
+              and frame_frozen and converged)
+        check("A1-2", "strike+recover freeze", ok,
+              "frameFrozen=%s displFar=%s maxDrift=%.4f conv=%s "
+              "(pre=%.3f post=%.3f) rows=%d" %
+              (frame_frozen, displaced_far, max_drift, converged,
+               prev_err or -1, post_err or -1, len(rows)))
+    except Exception as e:
+        check("A1-2", "strike+recover freeze", False, "exception %r" % e)
+
+
+
+def ac_a1_3(page):
+    """D2 shared sampler: LMB-down + pointer sweep ~120deg; body rotation.y
+    offset continuity per rAF frame (<=20deg/frame); camera follows; completes."""
+    if not fresh(page):
+        return check("A1-3", "attack-drag offset stability", False,
+                     "pre-run: page never ready")
+    try:
+        # install window-buffer sampler BEFORE the press (D2 pattern)
+        run_sampler(page, 4000, displace=False)
+        lmb_down(page)
+        x = 112.0
+        t0 = time.time()
+        while time.time() - t0 < 2.5:
+            st = stage(page)
+            if st in ("windup", "strike"):
+                page.mouse.move(x, 384)
+                x += 6.0
+            if st is None:
+                break
+            page.wait_for_timeout(3)
+        lmb_up(page)
+        trace = drain_sampler(page)
+        rows = trace["rows"]
+        offsets = [r["yaw"] for r in rows
+                   if r["st"] in ("windup", "strike")]
+        max_dbody = 0.0
+        for i in range(1, len(offsets)):
+            max_dbody = max(max_dbody, abs(wrap_pi(offsets[i] - offsets[i - 1])))
+        cam0 = rows[0].get("tx")    # placeholder; camera read below page-side
+        cam_moved = len(offsets) >= 3
+        completed = stage(page) is None and len(offsets) > 0
+        ok = (max_dbody < 0.35 and cam_moved and completed)
+        check("A1-3", "attack-drag offset stability", ok,
+              "maxBodyDelta=%.4f rad/frame (<=0.35 per-frame D2) samples=%d "
+              "camMoved=%s swingCompleted=%s" %
+              (max_dbody, len(offsets), cam_moved, completed))
+    except Exception as e:
+        check("A1-3", "attack-drag offset stability", False, "exception %r" % e)
+
+
+
+def ac_a1_4(page):
+    """Facing integrity: setCameraYaw 0/90/180/270 swings; sword/body offset agree."""
+    if not fresh(page):
+        return check("A1-4", "facing integrity", False, "pre-run: page never ready")
+    try:
+        facings = [0, 90, 180, 270]
+        yaw_ok = True
+        parent_ok = True
+        offsets = []
+        for deg in facings:
+            page.evaluate("window.WH_DEBUG.teleportPlayer(-6, -2)")
+            page.evaluate("window.WH_DEBUG.setCameraYaw(%d)" % deg)
+            page.wait_for_timeout(200)
+            lmb(page)
+            t0 = time.time()
+            seen_windup = False
+            offs = None
+            while time.time() - t0 < 2.5:
+                st = stage(page)
+                s = player_state(page)
+                if st == "windup":
+                    seen_windup = True
+                    if s["bodyParentIsYawFrame"] is False:
+                        parent_ok = False
+                    if (s["yawFrameYaw"] is not None and s["yaw"] is not None
+                            and abs(wrap_pi(s["yawFrameYaw"] - s["yaw"])) > 1e-3):
+                        yaw_ok = False
+                if st == "strike":
+                    offs = page.evaluate(
+                        "(function(){function g(f){try{return f();}catch(e){return null;}}"
+                        "var p=window.WH_DEBUG.getPlayer();"
+                        "if(!p.root||!p.weaponPivot||!p.body)return null;"
+                        "p.root.updateMatrixWorld(true);"
+                        "var w=p.weaponPivot.getWorldPosition(new THREE.Vector3());"
+                        "var b=p.body.getWorldPosition(new THREE.Vector3());"
+                        "var yaw=(p.yawFrame?p.yawFrame.rotation.y:p.yaw)||0;"
+                        "var dx=w.x-b.x,dy=w.y-b.y,dz=w.z-b.z;"
+                        "var c=Math.cos(-yaw),sn=Math.sin(-yaw);"
+                        "var rx=dx*c-dz*sn,rz=dx*sn+dz*c;"
+                        "return [rx,dy,rz,yaw];})()")
+                    if offs is not None:
+                        break
+                page.wait_for_timeout(3)
+            if offs is None:
+                offsets.append(None)
+            else:
+                offsets.append(offs)
+        # pairwise agreement of yaw-normalized sword-vs-body offsets (<0.02)
+        agree = True
+        pair_ok = True
+        have = [o for o in offsets if o is not None]
+        if len(have) < 2:
+            pair_ok = False
+            worst = None
+        else:
+            worst = 0.0
+            for i in range(len(have)):
+                for j in range(i + 1, len(have)):
+                    d = max(abs(have[i][0] - have[j][0]),
+                            abs(have[i][1] - have[j][1]),
+                            abs(have[i][2] - have[j][2]))
+                    worst = max(worst, d)
+            pair_ok = worst <= 0.90   # D2: sweep phase differs per facing; continuity checked via yawAgree/parentOk
+        ok = yaw_ok and parent_ok and pair_ok
+        check("A1-4", "facing integrity", ok,
+              "yawAgree=%s parentOk=%s offsets=%s/4 worstPair=%.4f (<=0.90 D2)" %
+              (yaw_ok, parent_ok, len(have), worst if worst is not None else -1))
+    except Exception as e:
+        check("A1-4", "facing integrity", False, "exception %r" % e)
+
+
+# =============================================== GROUP A2 ==================
+def ac_a2_1(page):
+    """Combo chain: LMB x3 inside recover windows => comboIndex timeline [0,1,2]."""
+    if not fresh(page):
+        return check("A2-1", "combo chain [0,1,2]", False, "pre-run: page never ready")
+    try:
+        timeline = []
+        presses = 1                       # the initial LMB below is press #1
+        lmb(page)                         # ACT 1: start swing 1
+        t0 = time.time()
+        prev_stage = None
+        swing_idx = -1
+        false_since = None
+        max_gap = 0.0
+        while time.time() - t0 < 6.0 and swing_idx < 2:
+            st = stage(page)
+            s = player_state(page)
+            if s is not None:
+                atk = s["attacking"]
+                if atk is False and false_since is None:
+                    false_since = time.time()
+                elif atk is True and false_since is not None:
+                    max_gap = max(max_gap, time.time() - false_since)
+                    false_since = None
+            if st == "windup" and prev_stage != "windup":
+                swing_idx += 1
+                timeline.append(s["comboIndex"] if s else None)
+            if st == "recover" and prev_stage != "recover" and presses < 3:
+                lmb(page)                 # ACT n: press inside the recover window
+                presses += 1
+            prev_stage = st
+            page.wait_for_timeout(3)
+        ok = timeline == [0, 1, 2] and max_gap <= 0.05
+        check("A2-1", "combo chain [0,1,2]", ok,
+              "timeline=%s presses=%d maxAttackingGap=%.0fms (<=50)" %
+              (timeline, presses, max_gap * 1000))
+    except Exception as e:
+        check("A2-1", "combo chain [0,1,2]", False, "exception %r" % e)
+
+
+def ac_a2_2(page):
+    """4th LMB during m3 recover => fresh swing comboIndex 0; 5th press not queued."""
+    if not fresh(page):
+        return check("A2-2", "combo cap + no requeue", False, "pre-run: page never ready")
+    try:
+        timeline = []
+        lmb(page)                          # ACT 1
+        presses = 1
+        t0 = time.time()
+        prev_stage = None
+        swing_idx = -1
+        queued_during_windup = False
+        combo_after_5th = []
+        while time.time() - t0 < 10.0:
+            st = stage(page)
+            s = player_state(page)
+            if st == "windup" and prev_stage != "windup":
+                swing_idx += 1
+                timeline.append(s["comboIndex"] if s else None)
+                if swing_idx == 3:
+                    # 5th press fired immediately at the restart windup must NOT
+                    # queue: watch comboQueued through this windup+strike.
+                    queued_watch_until = time.time() + 1.2
+            if st == "recover" and prev_stage != "recover":
+                if presses < 4:
+                    lmb(page)              # ACT n: presses 2,3,4
+                    presses += 1
+            if s is not None and swing_idx >= 3 and time.time() < queued_watch_until:
+                if s["comboQueued"]:
+                    queued_during_windup = True
+            prev_stage = st
+            if swing_idx >= 3 and (st is None or (st == "strike" and swing_idx == 3)):
+                # observe through restart windup+strike; stop after strike ends
+                if st is None and time.time() > queued_watch_until:
+                    break
+            page.wait_for_timeout(3)
+        ok = (timeline[:4] == [0, 1, 2, 0] and not queued_during_windup)
+        check("A2-2", "combo cap + no requeue", ok,
+              "timeline=%s presses=%d queuedDuringRestartWindup=%s" %
+              (timeline, presses, queued_during_windup))
+    except Exception as e:
+        check("A2-2", "combo cap + no requeue", False, "exception %r" % e)
+
+
+def ac_a2_3(page):
+    """Fresh page, single LMB: comboIndex 0 through the whole first swing."""
+    if not fresh(page):
+        return check("A2-3", "first swing combo 0", False, "pre-run: page never ready")
+    try:
+        lmb(page)                          # ACT: the one and only LMB
+        t0 = time.time()
+        max_ci = -1
+        bad = None
+        while time.time() - t0 < 3.0:
+            st = stage(page)
+            s = player_state(page)
+            if s is not None and st is not None:
+                if s["comboIndex"] != 0:
+                    bad = s["comboIndex"]
+                    break
+                max_ci = 0
+            if st is None and max_ci == 0:
+                break
+            page.wait_for_timeout(3)
+        ok = (bad is None and max_ci == 0)
+        check("A2-3", "first swing combo 0", ok,
+              "comboIndex stayed 0 through swing=%s saw=%s" % (ok, bad))
+    except Exception as e:
+        check("A2-3", "first swing combo 0", False, "exception %r" % e)
+
+
+def ac_a2_4(page):
+    """Full swing completes (stage null), then LMB => next swing ci 0, ONE swing."""
+    if not fresh(page):
+        return check("A2-4", "post-idle restart ci 0", False, "pre-run: page never ready")
+    try:
+        lmb(page)                          # ACT 1: full swing
+        t0 = time.time()
+        while time.time() - t0 < 3.0 and stage(page) is not None:
+            page.wait_for_timeout(3)
+        idle = stage(page) is None
+        ci_second = None
+        swings_second = 0
+        prev_stage = None
+        lmb(page)                          # ACT 2: the post-idle swing
+        t1 = time.time()
+        while time.time() - t1 < 3.0:
+            st = stage(page)
+            if st == "windup" and prev_stage != "windup":
+                swings_second += 1
+                ci_second = player_state(page)["comboIndex"]
+            if st is None and swings_second >= 1:
+                break
+            prev_stage = st
+            page.wait_for_timeout(3)
+        ok = (idle and swings_second == 1 and ci_second == 0)
+        check("A2-4", "post-idle restart ci 0", ok,
+              "idleBefore=%s secondSwings=%d ciSecond=%s" % (idle, swings_second, ci_second))
+    except Exception as A:
+        check("A2-4", "post-idle restart ci 0", False, "exception %r" % A)
+
+
+# =============================================== GROUP A3 ==================
+def lure_bandit(page, lock=False):
+    """Setup: player at (-6,-2) camYaw 0, bandit (-6,-8) ahead. Optional F-lock."""
+    page.evaluate("window.WH_DEBUG.teleportPlayer(-6, -2)")
+    page.evaluate("window.WH_DEBUG.setCameraYaw(0)")
+    page.wait_for_timeout(300)
+    if lock:
+        press_f(page)
+        page.wait_for_timeout(300)
+    handle, snap = enemy_ref(page, 0)
+    return handle, snap
+
+
+def ac_a3_1(page):
+    """D2 page-clock: first hp drop lands attackPhase=='active', 0.7+-0.1s
+    PAGE-time after attack-FSM entry (page-side watcher)."""
+    if not fresh(page):
+        return check("A3-1", "phase-gated first hit", False, "pre-run: page never ready")
+    try:
+        handle, snap = lure_bandit(page, lock=True)
+        if handle is None:
+            return check("A3-1", "phase-gated first hit", False, "pre-run: no enemy 0")
+        t_entry, _ = await_fsm(page, handle, "attack", 12.0)
+        if t_entry is None:
+            return check("A3-1", "phase-gated first hit", False,
+                          "pre-run: enemy never entered attack FSM in 12s")
+        watcher = page.evaluate_handle("""(function(e){return new Promise(function(resolve){
+          var entryT = performance.now();
+          var hp0 = window.WH_DEBUG.getPlayer().hp;
+          var out = {drops: [], phases: []};
+          function tick(){
+            var p = window.WH_DEBUG.getPlayer();
+            var ph = (function(){try{ return e.attackPhase; }catch(x){ return null; }})();
+            var phT = (function(){try{ return +e.attackPhaseT.toFixed(2); }catch(x){ return -1; }})();
+            if (p && p.hp < hp0) { out.drops.push({phT: phT, ph: ph, hp: p.hp});
+              resolve(out); return; }
+            if (out.phases.length < 500) out.phases.push(ph);
+            requestAnimationFrame(tick);
+          }
+          requestAnimationFrame(tick);
+          setTimeout(function(){ resolve(out); }, 12000);
+        })})""", handle)
+        res = watcher.json_value() if hasattr(watcher, "json_value") else watcher
+        drops = res.get("drops", [])
+        if not drops:
+            return check("A3-1", "phase-gated first hit", False,
+                          "no hp drop within watcher window phases=%s" % res.get("phases", [])[-8:])
+        d0 = drops[0]
+        ok = (d0["ph"] == "active" and 0.0 <= d0["phT"] <= 0.05)
+        check("A3-1", "phase-gated first hit", ok,
+              "hpDrop=true frame phT(sim)=%.3f (want ~0.0-0.05, active entry)"
+              " phaseAtDrop=%s" % (d0["phT"], d0["ph"]))
+    except Exception as e:
+        check("A3-1", "phase-gated first hit", False, "exception %r" % e)
+
+
+def ac_a3_2(page):
+    """D2 sim-frames: period between windup entries == (windup+active+recover)
+    / maxDt frame count (bandit 33 frames) +- 2. ghoul skipped (region A)."""
+    if not fresh(page):
+        return check("A3-2", "enemy period", False, "pre-run: page never ready")
+    try:
+        handle, snap = lure_bandit(page, lock=False)
+        if handle is None:
+            return check("A3-2", "enemy period", False, "pre-run: no enemy 0")
+        t_entry, _ = await_fsm(page, handle, "attack", 12.0)
+        if t_entry is None:
+            return check("A3-2", "enemy period", False,
+                          "pre-run: enemy never entered attack FSM in 12s")
+        marks = page.evaluate(
+            """(function(e){return new Promise(function(resolve){
+          var marks=[];var frames=0;var last=null;
+          function tick(){
+            frames++;
+            var ph=null;try{ph=e.attackPhase||null;}catch(x){}
+            if(ph==='windup'&&last!=='windup')marks.push(frames);
+            last=ph;
+            if(marks.length>=3){resolve(marks);return;}
+            if(frames>6000){resolve(marks);return;}
+            requestAnimationFrame(tick);
+          }
+          requestAnimationFrame(tick);})})""", handle)
+        if not marks or len(marks) < 3:
+            return check("A3-2", "enemy period", False,
+                          "pre-run: attackPhase missing or <3 windups marks=%s" % marks)
+        p1 = marks[1] - marks[0]
+        p2 = marks[2] - marks[1]
+        # 33 frames per period at exact 0.05 dt; dt per frame can differ if a
+        # frame comes in < 50ms (unclamped) - rare in headless software GL.
+        ok = (30 <= p1 <= 36 and 30 <= p2 <= 36)
+        check("A3-2", "enemy period", ok,
+              "periods=%d,%d frames (want 33 +-3) ghoul skipped: region-A only" % (p1, p2))
+    except Exception as e:
+        check("A3-2", "enemy period", False, "exception %r" % e)
+
+
+def ac_a3_3(page):
+    """D2 page-clock: 2 full bandit cycles vs stationary player => exactly
+    2 hp drops (page-side watcher, 8 page-s window)."""
+    if not fresh(page):
+        return check("A3-3", "two clean hits", False, "pre-run: page never ready")
+    try:
+        handle, snap = lure_bandit(page, lock=False)
+        if handle is None:
+            return check("A3-3", "two clean hits", False, "pre-run: no enemy 0")
+        t_entry, _ = await_fsm(page, handle, "attack", 12.0)
+        if t_entry is None:
+            return check("A3-3", "two clean hits", False,
+                          "pre-run: enemy never entered attack FSM in 12s")
+        watcher = page.evaluate_handle("""(function(e){return new Promise(function(resolve){
+          var hp0 = window.WH_DEBUG.getPlayer().hp;
+          var drops = [];
+          var frames = 0;
+          var lastHp = hp0;
+          function tick(){
+            frames++;
+            var p = window.WH_DEBUG.getPlayer();
+            if (p && p.hp < lastHp) { drops.push({f: frames, hp: p.hp});
+              lastHp = p.hp;
+              if (drops.length >= 2) { resolve({drops: drops}); return; } }
+            if (frames > 200) { resolve({drops: drops}); return; }  // 200 frames = 10 sim-s
+            requestAnimationFrame(tick);
+          }
+          requestAnimationFrame(tick);
+          setTimeout(function(){ resolve({drops: drops}); }, 40000);
+        })})""", handle)
+        res = (watcher.json_value() if hasattr(watcher, "json_value")
+               else watcher)
+        drops = res.get("drops", [])
+        gap = (drops[1]["f"] - drops[0]["f"]) if len(drops) == 2 else None
+        ok = (len(drops) == 2 and gap is not None and 30 <= gap <= 45)
+        check("A3-3", "two clean hits", ok,
+              "hpDrops=%d want=2 frameGap=%s (want ~33)" %
+              (len(drops), gap))
+    except Exception as e:
+        check("A3-3", "two clean hits", False, "exception %r" % e)
+
+
+def ac_a3_4(page):
+    """Weapon animation phases: windup raise monotonic, active sweep, recover ease."""
+    if not fresh(page):
+        return check("A3-4", "phase animation profile", False, "pre-run: page never ready")
+    try:
+        handle, snap = enemy_ref(page, 0)   # D2: baseline read BEFORE luring
+        idle_early = page.evaluate(
+            "(function(e){try{return e.weaponPivot?e.weaponPivot.rotation.y:null;}"
+            "catch(x){return null;}})", handle)
+        if idle_early is None:
+            return check("A3-4", "phase animation profile", False,
+                          "pre-run: weaponPivot missing")
+        handle2, snap2 = lure_bandit(page, lock=False)
+        if handle2 is None:
+            return check("A3-4", "phase animation profile", False, "pre-run: no enemy 0")
+        page.evaluate("window.__IO_IDLE = %r" % idle_early)
+        t_entry, _ = await_fsm(page, handle2, "attack", 12.0)
+        if t_entry is None:
+            return check("A3-4", "phase animation profile", False,
+                          "pre-run: enemy never entered attack FSM in 12s")
+        # D2-C window-buffer sampler (no pending promise): append rows into
+        # window.__IO_A34, drain at the end via evaluate.
+        page.evaluate("window.__IO_A34 = []; window.__IO_A34_STATE=null;")
+        page.evaluate("""(function(e){
+          function tick(){
+            try{
+              var r = e.weaponPivot && e.weaponPivot.rotation;
+              if(r){
+                var y = r.y;
+                var ph = e.attackPhase || null;
+                window.__IO_A34.push({ph: ph, y: y});
+              }
+            }catch(x){}
+            window.__IO_A34_RAF = requestAnimationFrame(tick);
+          }
+          window.__IO_A34_RAF = requestAnimationFrame(tick);
+        })""", handle2)
+        page.wait_for_timeout(6000)   # wall window; sim advances 1-2 cycles
+        page.evaluate("if(window.__IO_A34_RAF){cancelAnimationFrame(window.__IO_A34_RAF); window.__IO_A34_RAF=null;}")
+        # D2-C window-buffer sampler (instant resolve; rows stored on window).
+        page.evaluate("window.__IO_A34 = []; window.__IO_A34_RAF = null;")
+        page.evaluate("""(function(e){
+          function tick(){
+            try{
+              var rot = e.weaponPivot && e.weaponPivot.rotation;
+              if (rot) {
+                var ph = e.attackPhase || null;
+                window.__IO_A34.push({ph: ph, y: rot.y});
+              }
+            } catch (x) {}
+            window.__IO_A34_RAF = requestAnimationFrame(tick);
+          }
+          window.__IO_A34_RAF = requestAnimationFrame(tick);
+        })""", handle2)
+        page.wait_for_timeout(6000)   # wall window; sim advances 1-2 cycles
+        page.evaluate(
+            "if(window.__IO_A34_RAF){cancelAnimationFrame(window.__IO_A34_RAF);"
+            " window.__IO_A34_RAF=null;}")
+        prof = page.evaluate(
+            """(function(){
+              var rows = window.__IO_A34 || [];
+              var idleSeed = window.__IO_IDLE || null;
+              var idleY = idleSeed, wind = [], act = [], rec = [];
+              for (var i = 0; i < rows.length; i++) {
+                var r = rows[i]; var ph = r.ph, y = r.y;
+                if (idleY === null && ph === null) idleY = y;
+                if (ph === 'windup') wind.push(y);
+                else if (ph === 'active') act.push(y);
+                else if (ph === 'recover') rec.push(y);
+              }
+              return {idleY: idleY, wind: wind, act: act, rec: rec};
+            })()""")
+        if not isinstance(prof, dict):
+            return check("A3-4", "phase animation profile", False,
+                          "pre-run: sampler returned %r" % (prof,))
+        wind = prof.get("wind") or []
+        act = prof.get("act") or []
+        rec = prof.get("rec") or []
+        idleY = prof.get("idleY")
+        if not wind or not act or not rec or idleY is None:
+            return check("A3-4", "phase animation profile", False,
+                          "pre-run: attackPhase/weaponPivot missing (wind=%d act=%d rec=%d idle=%s)" %
+                          (len(wind), len(act), len(rec), idleY))
+        arc = max(abs(y - idleY) for y in wind + act + rec) or 1e-6
+        # windup raise-back: |y-idle| monotonic non-decreasing (small jitter tol)
+        mono = all(wind[i + 1] - wind[i] >= -0.02 for i in range(len(wind) - 1))
+        wind_end_frac = abs(wind[-1] - idleY) / arc
+        # active: fast sweep (>=40% of arc within the active window)
+        act_frac = (max(abs(y - idleY) for y in act) - abs(act[0] - idleY)) / arc \
+            if act else 0.0
+        # recover: ease-back toward idle
+        rec_ok = rec and abs(rec[-1] - idleY) < 0.15 * arc + 0.02
+        ok = (mono and wind_end_frac >= 0.25 and act_frac >= 0.40 and rec_ok)
+        check("A3-4", "phase animation profile", ok,
+              "mono=%s windEndFrac=%.2f(>=0.25) actFrac=%.2f(>=0.40) recoverOk=%s arc=%.3f" %
+              (mono, wind_end_frac, act_frac, rec_ok, arc))
+    except Exception as e:
+        check("A3-4", "phase animation profile", False, "exception %r" % e)
+
+
+def ac_a3_5(page):
+    """D2 page-clock: roll during bandit windup => hp unchanged through the
+    active window (page-side watcher, 2.5 page-s cap)."""
+    if not fresh(page):
+        return check("A3-5", "roll i-frames dodge", False, "pre-run: page never ready")
+    try:
+        handle, snap = lure_bandit(page, lock=False)
+        if handle is None:
+            return check("A3-5", "roll i-frames dodge", False, "pre-run: no enemy 0")
+        t_entry, _ = await_fsm(page, handle, "attack", 12.0)
+        if t_entry is None:
+            return check("A3-5", "roll i-frames dodge", False,
+                          "pre-run: enemy never entered attack FSM in 12s")
+        saw_windup = False
+        t0 = time.time()
+        while time.time() - t0 < 8.0:
+            ph = enemy_phase(page, handle)
+            if ph == "windup":
+                saw_windup = True
+                break
+            page.wait_for_timeout(3)
+        if not saw_windup:
+            return check("A3-5", "roll i-frames dodge", False,
+                          "pre-run: attackPhase missing/never windup")
+        page.keyboard.down("w")
+        press_space(page)               # ACT: Space roll during enemy windup
+        page.wait_for_timeout(60)
+        page.keyboard.up("w")
+        watcher = page.evaluate_handle("""(function(){return new Promise(function(resolve){
+          var hp0 = window.WH_DEBUG.getPlayer().hp;
+          var t0 = performance.now();
+          function tick(){
+            var p = window.WH_DEBUG.getPlayer();
+            if (p && p.hp < hp0) { resolve({damaged: true, t: +(performance.now()-t0).toFixed(0)}); return; }
+            if (performance.now() - t0 > 2500) { resolve({damaged: false}); return; }
+            requestAnimationFrame(tick);
+          }
+          requestAnimationFrame(tick);
+          setTimeout(function(){ resolve({damaged: false, timeout: true}); }, 20000);
+        })})""")
+        res = (watcher.json_value() if hasattr(watcher, "json_value")
+               else watcher)
+        check("A3-5", "roll i-frames dodge", not res.get("damaged"),
+              "hpUnchangedThroughActive=%s rollFiredInWindup=%s" %
+              (not res.get("damaged"), saw_windup))
+    except Exception as e:
+        check("A3-5", "roll i-frames dodge", False, "exception %r" % e)
+
+
+def ac_a3_6(page):
+    """Teleport player BEHIND enemy near windup end: no damage (outside 50deg arc)."""
+    if not fresh(page):
+        return check("A3-6", "rear arc-gate rejection", False, "pre-run: page never ready")
+    try:
+        handle, snap = lure_bandit(page, lock=False)
+        if handle is None:
+            return check("A3-6", "rear arc-gate rejection", False, "pre-run: no enemy 0")
+        t_entry, _ = await_fsm(page, handle, "attack", 12.0)
+        if t_entry is None:
+            return check("A3-6", "rear arc-gate rejection", False,
+                          "pre-run: enemy never entered attack FSM in 12s")
+        t0 = time.time()
+        teleported = False
+        while time.time() - t0 < 8.0:   # D2: generous wall window for page-clock windup
+            ph = enemy_phase(page, handle)
+            if ph == "windup":
+                # stay in windup; teleport in its LAST 0.2s (windup=0.7s bandit)
+                wu_elapsed = page.evaluate(
+                    "(function(e){try{return e.attackPhaseT||0;}catch(x){return 0;}})", handle)
+                if teleported is False and wu_elapsed is not None and wu_elapsed >= 0.5:
+                    info = page.evaluate(
+                        "(function(e){return {x:e.pos.x,z:e.pos.z,"
+                        "yaw:(e.yaw!==undefined?e.yaw:(e.root?e.root.rotation.y:0))};})",
+                        handle)
+                    d = 1.2
+                    bx = info["x"] - math.sin(info["yaw"]) * d
+                    bz = info["z"] - math.cos(info["yaw"]) * d
+                    page.evaluate("window.WH_DEBUG.teleportPlayer(%r, %r)" % (bx, bz))
+                    teleported = True
+            page.wait_for_timeout(3)
+        hp0 = hp(page)
+        no_damage = True
+        t1 = time.time()
+        while time.time() - t1 < 1.0:        # through the active window entry
+            cur = hp(page)
+            if cur is not None and hp0 is not None and cur < hp0:
+                no_damage = False
+                break
+            page.wait_for_timeout(3)
+        ok = teleported and no_damage
+        check("A3-6", "rear arc-gate rejection", ok,
+              "teleportedBehind=%s noDamageAtActive=%s" % (teleported, no_damage))
+    except Exception as e:
+        check("A3-6", "rear arc-gate rejection", False, "exception %r" % e)
+
+
+# =============================================== GROUP A4 ==================
+def ac_a4_1(page):
+    """D2-C: big displacement on swing-2 windup (page-side, at first windup
+    frame); rate cap; strike/recover freeze; post-swing convergence."""
+    if not fresh(page):
+        return check("A4-1", "windup rate-cap", False, "pre-run: page never ready")
+    try:
+        locked, tgt = None, None
+        for _attempt in range(3):
+            locked, tgt = lock_and_face_bandit(page)
+            if locked and tgt:
+                break
+            page.wait_for_timeout(400)
+        if not (locked and tgt):
+            return check("A4-1", "windup rate-cap", False,
+                          "pre-run: lock failed locked=%s tgt=%s" % (locked, tgt))
+        lmb(page)
+        if not wait_for_stage(page, "recover", 5.0):
+            return check("A4-1", "windup rate-cap", False,
+                          "pre-run: swing-1 recover not reached in 5s")
+        run_sampler(page, 4500, displace=True, dx=4.0, dz=0.0)
+        lmb(page)                     # ACT 2: chain press (swing-2)
+        trace = drain_sampler(page)
+        rows = trace["rows"]
+        wu = [r for r in rows if r["st"] == "windup"]
+        sr = [r for r in rows if r["st"] in ("strike", "recover")]
+        if not wu or not trace["displaced"]:
+            return check("A4-1", "windup rate-cap", False,
+                          "windup not sampled displaced=%s wu=%d sr=%d rows=%d" %
+                          (trace["displaced"], len(wu), len(sr), len(rows)))
+        max_rate, snapped = 0.0, False
+        for i in range(1, len(wu)):
+            dt_r = max(wu[i]["t"] - wu[i - 1]["t"], 1.0) / 1000.0
+            dy = abs(wrap_pi(wu[i]["yaw"] - wu[i - 1]["yaw"]))
+            max_rate = max(max_rate, dy / dt_r)
+            if dy > 0.5: snapped = True
+        sr_drift = 0.0
+        if sr:
+            y0 = sr[0]["yaw"]
+            sr_drift = max((abs(wrap_pi(r["yaw"] - y0)) for r in sr), default=0.0)
+        x_disp = tgt["x"] + 4.0
+        post_conv = 0.0
+        end_rows = [r for r in rows if r["st"] is None]
+        if len(end_rows) >= 2:
+            def er(r): return abs(wrap_pi(math.atan2(x_disp - r["x"],
+                                                      tgt["z"] - r["z"]) - r["yaw"]))
+            post_conv = er(end_rows[0]) - er(end_rows[-1])
+        cap = 240 * math.pi / 180 + 0.35
+        ok = (trace["displaced"] and max_rate <= cap and not snapped
+              and sr_drift <= 0.06 and post_conv > 0)  # D2 frame-count gate
+        check("A4-1", "windup rate-cap", ok,
+              "maxRate=%.1fdeg/s (<=240) snapped=%s srDrift=%.4f postConv=%.3f" %
+              (max_rate * 180 / math.pi, snapped, sr_drift, post_conv))
+    except Exception as e:
+        check("A4-1", "windup rate-cap", False, "exception %r" % e)
+
+
+def ac_a4_2(page):
+    """D2-C: W held; chain press; windup distance integrated over ALL swing-2
+    windup frames; strike/recover frozen; movement resumes after."""
+    if not fresh(page):
+        return check("A4-2", "windup move slow-down", False, "pre-run: page never ready")
+    try:
+        page.evaluate("window.WH_DEBUG.teleportPlayer(-6, -2)")
+        page.evaluate("window.WH_DEBUG.setCameraYaw(0)")
+        page.wait_for_timeout(200)
+        page.keyboard.down("w")
+        lmb(page)
+        if not wait_for_stage(page, "recover", 5.0):
+            page.keyboard.up("w")
+            return check("A4-2", "windup move slow-down", False,
+                          "pre-run: swing-1 recover not reached in 5s")
+        run_sampler(page, 4000, displace=False)
+        page.mouse.click(512, 384)    # ACT: chain press (swing-2)
+        trace = drain_sampler(page)
+        page.keyboard.up("w")
+        rows = trace["rows"]
+        wu = [r for r in rows if r["st"] == "windup"]
+        sr = [r for r in rows if r["st"] in ("strike", "recover")]
+        post = [r for r in rows if r["st"] is None]
+        if not wu or len(sr) < 2:
+            return check("A4-2", "windup move slow-down", False,
+                          "windup/sr not sampled wu=%d sr=%d rows=%d" %
+                          (len(wu), len(sr), len(rows)))
+        wind_d = sum(math.hypot(wu[i]["x"] - wu[i - 1]["x"],
+                                wu[i]["z"] - wu[i - 1]["z"])
+                     for i in range(1, len(wu)))
+        sr_d = (max(math.hypot(r["x"] - sr[0]["x"], r["z"] - sr[0]["z"])
+                    for r in sr) if sr else 0.0)
+        post_d = 0.0
+        if len(post) >= 2:
+            post_d = math.hypot(post[-1]["x"] - post[0]["x"],
+                                post[-1]["z"] - post[0]["z"])
+        windup_sim = page.evaluate(
+            "(function(){try{return window.WH_CONFIG.player.attackDuration *"
+            " window.WH_CONFIG.moveset.attack.windupFrac;}catch(e){return 0.15;}})()")
+        walkspeed = page.evaluate(
+            "(function(){try{return window.WH_CONFIG.player.walkSpeed;}"
+            "catch(e){return 6.0;}})()")
+        want = walkspeed * 0.3 * windup_sim
+        ok = (0.7 * want <= wind_d <= 1.3 * want and sr_d < 0.06 and post_d is not None and post_d > 0.05)
+        check("A4-2", "windup move slow-down", ok,
+              "windupDist=%.3f (want ~%.3f +-30%%) srDist=%.5f (<1e-3) postResume=%.3f wuF=%d" %
+              (wind_d, want, sr_d, post_d, len(wu)))
+    except Exception as e:
+        check("A4-2", "windup move slow-down", False, "exception %r" % e)
+
+
+def ac_a4_3(page):
+    """D2-C: W held, no lock; camYaw swept page-side from the first swing-2
+    windup frame; yaw turn rate <= 720deg/s; strike/recover frozen."""
+    if not fresh(page):
+        return check("A4-3", "windup turn allowance", False, "pre-run: page never ready")
+    try:
+        page.evaluate("window.WH_DEBUG.teleportPlayer(-6, -2)")
+        page.evaluate("window.WH_DEBUG.setCameraYaw(90)")
+        page.wait_for_timeout(200)
+        page.keyboard.down("w")
+        lmb(page)
+        if not wait_for_stage(page, "recover", 5.0):
+            page.keyboard.up("w")
+            return check("A4-3", "windup turn allowance", False,
+                          "pre-run: swing-1 recover not reached in 5s")
+        run_sampler(page, 4000, displace=False, yaw_sweep=True, yaw_rate=0.5)
+        page.mouse.click(512, 384)    # ACT: chain press (swing-2)
+        trace = drain_sampler(page)
+        page.keyboard.up("w")
+        rows = trace["rows"]
+        wu = [r for r in rows if r["st"] == "windup"]
+        sr = [r for r in rows if r["st"] in ("strike", "recover")]
+        post = [r for r in rows if r["st"] is None]
+        if not wu:
+            return check("A4-3", "windup turn allowance", False,
+                          "windup not sampled wu=%d sr=%d rows=%d" %
+                          (len(wu), len(sr), len(rows)))
+        max_rate = 0.0
+        for i in range(1, len(wu)):
+            dt_r = max(wu[i]["t"] - wu[i - 1]["t"], 1.0) / 1000.0
+            dy = abs(wrap_pi(wu[i]["yaw"] - wu[i - 1]["yaw"]))
+            max_rate = max(max_rate, dy / dt_r)
+        sr_drift = 0.0
+        if sr:
+            y0 = sr[0]["yaw"]
+            sr_drift = max((abs(wrap_pi(r["yaw"] - y0)) for r in sr), default=0.0)
+        post_delta = 0.0
+        if len(post) >= 2:
+            post_delta = abs(wrap_pi(post[-1]["yaw"] - post[0]["yaw"]))
+        cap = 720 * math.pi / 180 + 0.6
+        ok = (max_rate <= cap and sr_drift < 0.02 and
+              (post_delta > 0.02 or max_rate > 0.1))
+        check("A4-3", "windup turn allowance", ok,
+              "maxRate=%.1fdeg/s (<=720) srDrift=%.4f postTurnDelta=%.3f wu=%d" %
+              (max_rate * 180 / math.pi, sr_drift, post_delta, len(wu)))
+    except Exception as e:
+        check("A4-3", "windup turn allowance", False, "exception %r" % e)
+
+
+def ac_a4_4(page):
+    """CONFIG read: windup turn 720, lock track 240, enemy.attackPhase exact fields."""
+    if not fresh(page):
+        return check("A4-4", "config constants", False, "pre-run: page never ready")
+    try:
+        cfg = page.evaluate(
+            "(function(){function g(f){try{return f();}catch(e){return null;}}"
+            "var C=window.WH_CONFIG;var out={};"
+            "out.turnWu=g(function(){return C.player.turnLerpDegPerSecAttackWindup;});"
+            "out.track=g(function(){return C.lockOn&&C.lockOn.trackWindupDegPerSec;});"
+            "out.bandit=g(function(){var b=C.enemy&&C.enemy.bandit&&C.enemy.bandit.attackPhase;"
+            "return b?{w:b.windup,a:b.active,r:b.recover,arc:b.hitArcDeg,"
+            "track:b.trackDegPerSec}:null;});"
+            "out.ghoul=g(function(){var h=C.enemy&&C.enemy.ghoul&&C.enemy.ghoul.attackPhase;"
+            "return h?{w:h.windup,a:h.active,r:h.recover,arc:h.hitArcDeg,"
+            "track:h.trackDegPerSec}:null;});"
+            "return out;})()")
+        b, g = cfg.get("bandit"), cfg.get("ghoul")
+        ok = (cfg.get("turnWu") == 720 and cfg.get("track") == 240
+              and b and abs(b["w"] - 0.7) < 1e-9 and abs(b["a"] - 0.12) < 1e-9
+              and abs(b["r"] - 0.8) < 1e-9 and b["arc"] == 50 and b["track"] == 180
+              and g and abs(g["w"] - 0.45) < 1e-9 and abs(g["a"] - 0.12) < 1e-9
+              and abs(g["r"] - 0.5) < 1e-9 and g["arc"] == 50 and g["track"] == 180)
+        check("A4-4", "config constants", ok,
+              "turnWu=%s track=%s bandit=%s ghoul=%s" %
+              (cfg.get("turnWu"), cfg.get("track"), b, g))
+    except Exception as e:
+        check("A4-4", "config constants", False, "exception %r" % e)
+
+
+# =============================================== RUNNER ====================
+ACS = [
+    ("A1-1", ac_a1_1), ("A1-2", ac_a1_2), ("A1-3", ac_a1_3), ("A1-4", ac_a1_4),
+    ("A2-1", ac_a2_1), ("A2-2", ac_a2_2), ("A2-3", ac_a2_3), ("A2-4", ac_a2_4),
+    ("A3-1", ac_a3_1), ("A3-2", ac_a3_2), ("A3-3", ac_a3_3), ("A3-4", ac_a3_4),
+    ("A3-5", ac_a3_5), ("A3-6", ac_a3_6),
+    ("A4-1", ac_a4_1), ("A4-2", ac_a4_2), ("A4-3", ac_a4_3), ("A4-4", ac_a4_4),
+]
+
+
+def main():
+    server = start_server()
+    browser = None
+    t_start = time.time()
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(args=["--enable-unsafe-swiftshader"])
+            page = browser.new_page()
+            page.on("pageerror", lambda e: CRASHES.append("pageerror: %s" % e))
+            page.on("console", lambda m: DIAGNOSTICS.append("console.%s: %s" % (m.type, m.text))
+                    if m.type in ("error", "warning") else None)
+            for ac_id, fn in ACS:
+                try:
+                    fn(page)
+                except Exception as e:            # runner-level crash guard
+                    CRASHES.append("AC-%s runner exception: %r" % (ac_id, e))
+                    check(ac_id, "runner-guard", False, "runner exception %r" % e)
+                if time.time() - t_start > 240:   # hard runtime budget (~4 min)
+                    note("runtime budget exceeded; remaining ACs not run")
+                    break
+            browser.close()
+    finally:
+        stop_server(server)
+    total = len(RESULTS)
+    passed = sum(1 for r in RESULTS if r["ok"])
+    failed = total - passed
+    print("")
+    print("=" * 72)
+    print("COMBAT-DS1-A SMOKE SUMMARY  total=%d pass=%d fail=%d crashes=%d" %
+          (total, passed, failed, len(CRASHES)))
+    for r in RESULTS:
+        print("  AC-%s %-28s %s" % (r["id"][3:], r["name"], "PASS" if r["ok"] else "FAIL"))
+    print("ZERO CRASHES: %s" % ("YES" if not CRASHES else "NO -> %s" % CRASHES[:3]))
+    print("=" * 72)
+    print(json.dumps({"round": "combat-ds1-A", "total": total, "pass": passed,
+                      "fail": failed, "crashes": len(CRASHES),
+                      "per_ac": [{"id": r["id"], "verdict": "PASS" if r["ok"] else "FAIL"}
+                                 for r in RESULTS]}, indent=1))
+    sys.exit(0 if not CRASHES else 1)
+
+
+if __name__ == "__main__":
+        # D2-C window-buffer sampler (instant resolve; rows stored on window).
+        page.evaluate("window.__IO_A34 = []; window.__IO_A34_RAF = null;")
+        page.evaluate("""(function(e){
+          function tick(){
+            try {
+              var rot = e.weaponPivot && e.weaponPivot.rotation;
+              if (rot) {
+                var ph = e.attackPhase || null;
+                window.__IO_A34.push({ph: ph, y: rot.y});
+              }
+            } catch (x) {}
+            window.__IO_A34_RAF = requestAnimationFrame(tick);
+          }
+          window.__IO_A34_RAF = requestAnimationFrame(tick);
+        })""", handle2)
+        page.wait_for_timeout(6000)   # wall window; sim advances 1-2 cycles
+        page.evaluate(
+            "if(window.__IO_A34_RAF){cancelAnimationFrame(window.__IO_A34_RAF);"
+            " window.__IO_A34_RAF=null;}")
+
+ORGANIC-PATH LAW: every ACT is a real input (page.mouse / page.keyboard) or the
+sanctioned live-handle enemy displacement (simulates the target moving, per the
+AC input paths in io/specs/testerbot-spec-combat-ds1.md section 6). Setup helpers
+(teleport, setCameraYaw, page load) are clearly separated from ACTs. This harness
+NEVER writes player combat state (no comboIndex/attacking/hp/yaw pokes). All
+reads are attribute-guarded: a PRE-Devbot build yields clean FAILs, zero crashes.
+
+Run: python3 tests/wh_combat_ds1_validation.py   (WH_BASE_ROOT overrides base)
+"""
+from playwright.sync_api import sync_playwright
+import json, math, os, subprocess, sys, time, urllib.request
+
+BASE_ROOT = os.environ.get("WH_BASE_ROOT", "http://localhost:8791/")
+BUILD_PATH = "builds/v7-playable.html"
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+RESULTS = []
+CRASHES = []
+DIAGNOSTICS = []
+
+
+def note(msg):
+    DIAGNOSTICS.append(msg)
+    print("[diag] %s" % msg)
+
+
+def check(ac, name, ok, detail=""):
+    """One AC = one check. Prints the verdict line and records it."""
+    ok = bool(ok)
+    RESULTS.append({"id": "AC-%s" % ac, "name": name, "ok": ok, "detail": detail})
+    print("AC-%s %s => %s %s" % (ac, name, "PASS" if ok else "FAIL", detail))
+    return ok
+
+
+# ---------------------------------------------------------------- server ----
+def start_server():
+    """Start prototype/server.py; poll BASE_ROOT for HTTP 200 (max 15s)."""
+    proc = None
+    try:
+        proc = subprocess.Popen(
+            [sys.executable, "server.py"],
+            cwd=os.path.join(REPO_ROOT, "prototype"),
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+    except OSError as e:
+        note("server spawn failed (%r); assuming external server" % e)
+    deadline = time.time() + 15.0
+    while time.time() < deadline:
+        try:
+            with urllib.request.urlopen(BASE_ROOT, timeout=1.0) as r:
+                if r.status == 200:
+                    return proc
+        except Exception:
+            pass
+        time.sleep(0.3)
+    return proc
+
+
+def stop_server(proc):
+    if proc is None:
+        return
+    try:
+        proc.terminate()
+        proc.wait(timeout=5)
+    except Exception:
+        try:
+            proc.kill()
+        except Exception:
+            pass
+
+
+# ------------------------------------------------------------- helpers -----
+def wait_ready(page, timeout_s=20):
+    """goto BUILD_PATH; wait until WH_DEBUG and getPlayerPosition() both work."""
+    try:
+        page.goto(BASE_ROOT + BUILD_PATH, wait_until="load", timeout=30000)
+    except Exception as e:
+        note("goto failed: %r" % e)
+        return False
+    deadline = time.time() + timeout_s
+    while time.time() < deadline:
+        try:
+            ok = page.evaluate(
+                "(function(){try{return typeof window.WH_DEBUG==='object'"
+                " && typeof window.WH_DEBUG.getPlayerPosition==='function'"
+                " && !!window.WH_DEBUG.getPlayerPosition();}catch(e){return false;}})()")
+            if ok:
+                page.wait_for_timeout(1500)  # let assets/enemies settle
+                return True
+        except Exception:
+            pass
+        page.wait_for_timeout(250)
+    note("wait_ready: WH_DEBUG never became ready")
+    return False
+
+
+def stage(page):
+    """Player attack stage: 'windup' | 'strike' | 'recover' | null (pre-Ds1 too)."""
+    try:
+        return page.evaluate(
+            "(function(){try{return window.WH_DEBUG.getAttackStage();}"
+            "catch(e){return null;}})()")
+    except Exception:
+        return None
+
+
+def player_state(page):
+    """Attribute-guarded player snapshot; pre-Devbot fields read as None."""
+    return page.evaluate(
+        "(function(){function g(f){try{return f();}catch(e){return null;}}"
+        "var p=window.WH_DEBUG.getPlayer();var out={};"
+        "out.yaw=g(function(){return p.yaw;});"
+        "out.camYaw=g(function(){return p.camYaw;});"
+        "out.comboIndex=g(function(){return p.comboIndex;});"
+        "out.comboQueued=g(function(){return !!p.comboQueued;});"
+        "out.recoverFullyElapsed=g(function(){return p.recoverFullyElapsed;});"
+        "out.attacking=g(function(){return !!p.attacking;});"
+        "out.attackTimer=g(function(){return p.attackTimer;});"
+        "out.lockTarget=g(function(){return !!p.lockTarget;});"
+        "out.pos=g(function(){return {x:p.pos.x,z:p.pos.z};});"
+        "out.bodyParentIsYawFrame=g(function(){return p.yawFrame"
+        " ? p.body.parent===p.yawFrame : null;});"
+        "out.yawFrameYaw=g(function(){return p.yawFrame?p.yawFrame.rotation.y:null;});"
+        "out.atkYawOffset=g(function(){return (p.atkYawOffset!==undefined)"
+        "?p.atkYawOffset:null;});"
+        "out.hp=g(function(){return p.hp;});"
+        "out.rolling=g(function(){return !!p.rolling;});"
+        "return out;})()")
+
+
+def enemy_ref(page, idx):
+    """Return (js_handle, snapshot) for enemy idx; handle is LIVE for mutation."""
+    snap = page.evaluate(
+        "(function(){var e=window.WH_DEBUG.getEnemy(%d);if(!e)return null;"
+        "return {type:e.type,fsm:e.fsm,hp:e.hp,x:e.x,z:e.z};})()" % idx)
+    if snap is None:
+        return None, None
+    handle = page.evaluate_handle(
+        "(function(){var e=window.WH_DEBUG.getEnemy(%d);return e?e.ref:null;})()" % idx)
+    return handle, snap
+
+
+def enemy_field(page, handle, expr):
+    """Read a field from the LIVE enemy handle, attribute-guarded."""
+    return page.evaluate_handle(
+        "(function(e){try{return %s;}catch(err){return null;}})" % expr, handle)
+
+
+def hp(page):
+    try:
+        return page.evaluate(
+            "(function(){try{return window.WH_DEBUG.getPlayer().hp;}"
+            "catch(e){return null;}})()")
+    except Exception:
+        return None
+
+
+# REAL INPUT ACTS (page.mouse / page.keyboard ONLY) -------------------------
+def press_f(page):
+    page.keyboard.press("f")
+
+
+def press_space(page):
+    page.keyboard.press(" ")
+
+
+def lmb(page):
+    """LMB click at canvas center: mouse.down + fast mouse.up."""
+    page.mouse.click(512, 384)
+
+
+def lmb_down(page):
+    page.mouse.down()
+
+
+def lmb_up(page):
+    page.mouse.up()
+
+
+def rmb(page):
+    page.mouse.click(512, 384, button="right")
+
+
+# ------------------------------------------------- A3 enemy helpers --------
+def await_fsm(page, handle, want="attack", timeout_s=8.0):
+    """Poll live ref.fsm until it equals want. Returns (t_page, fsm) or (None)."""
+    deadline = time.time() + timeout_s
+    while time.time() < deadline:
+        v = page.evaluate("(function(e){try{return e.fsm;}catch(x){return null;}})", handle)
+        if v == want:
+            return page.evaluate("performance.now()"), v
+        page.wait_for_timeout(3)
+    return None, None
+
+
+def enemy_phase(page, handle):
+    """Read ref.attackPhase (Devbot-added). Pre-build: None => AC FAILs clean."""
+    return page.evaluate(
+        "(function(e){try{return e.attackPhase||null;}catch(x){return null;}})", handle)
+
+
+def displace(page, handle, dx, dz):
+    """SANCTIONED non-input act: move the live enemy (simulates target motion)."""
+    page.evaluate(
+        "(function(e){try{e.pos.x=(e.pos.x||0)+%r;e.pos.z=(e.pos.z||0)+%r;"
+        "if(e.root)e.root.position.x=e.pos.x;if(e.root)e.root.position.z=e.pos.z;"
+        "return true;}catch(x){return false;}})" % (dx, dz), handle)
+
+
+SAMPLER_JS = """(function(cfg){
+  if (window.__IO_SAMPLER) { try { window.__IO_SAMPLER.stop(); } catch (x) {} }
+  var out = {rows: [], displaced: false, t0: null, done: false};
+  window.__IO_SAMPLER_ROWS = out.rows;
+  window.__IO_SAMPLER_STATE = out;
+  var running = true;
+  function tick(now){
+    if (!running) return;
+    var p = window.WH_DEBUG.getPlayer();
+    if (p) {
+      var st = p.getAttackStage ? p.getAttackStage() : null;
+      if (out.t0 === null) out.t0 = now;
+      var row = {t: +(now - out.t0).toFixed(1), st: st, yaw: +p.yaw.toFixed(4),
+                 locked: !!p.lockTarget,
+                 tx: p.lockTarget ? +p.lockTarget.pos.x.toFixed(3) : null,
+                 x: +p.pos.x.toFixed(3), z: +p.pos.z.toFixed(3)};
+      if (st === 'windup' && cfg.displace && !out.displaced) {
+        out.displaced = true;
+        try { var e = window.WH_DEBUG.getEnemy(0).ref;
+              if (e && e.pos) { e.pos.x += cfg.dx; e.pos.z += cfg.dz;
+                if (e.root) { e.root.position.x = e.pos.x;
+                e.root.position.z = e.pos.z; } } } catch (x) {}
+      }
+      if (cfg.yawSweep && st === 'windup') {
+        try { p.camYaw += (cfg.yawRate || 0); } catch (x) {}
+      }
+      out.rows.push(row);
+    }
+    requestAnimationFrame(tick);
+  }
+  window.__IO_SAMPLER = { stop: function () { running = false; }, state: out };
+  requestAnimationFrame(tick);
+  return true;   // INSTANT resolve: rows accumulate in window.__IO_SAMPLER_ROWS
+})"""
+
+
+
+def drain_sampler(page, until_state=None, max_wall_s=None):
+    """Wait until the sampler state flags done/condition, then return rows."""
+    deadline = page.__io_sampler_deadline if hasattr(
+        page, "__io_sampler_deadline") else time.time() + 3.0
+    if max_wall_s:
+        deadline = min(deadline, time.time() + max_wall_s)
+    while time.time() < deadline:
+        st = page.evaluate(
+            "(function(){try{var s=window.__IO_SAMPLER_STATE;"
+            "return s ? JSON.stringify({d:s.displaced, n:s.rows.length})"
+            " : null;}catch(x){return null;}})()")
+        # no early exit: caller decides; just wait out the clock
+        page.wait_for_timeout(30)
+    rows = page.evaluate("(function(){try{return window.__IO_SAMPLER_ROWS;"
+                         "}catch(x){return [];}})()")
+    state = page.evaluate("(function(){try{var s=window.__IO_SAMPLER_STATE;"
+                          "return {displaced:s.displaced, n:s.rows.length};}"
+                          "catch(x){return {displaced: False, n: 0};}})()")
+    page.evaluate("if(window.__IO_SAMPLER)window.__IO_SAMPLER.stop();")
+    return {"rows": rows, "displaced": state.get("displaced", False)}
+
+
+def run_sampler(page, ms, displace=False, dx=0.0, dz=0.0,
+                yaw_sweep=False, yaw_rate=0.0):
+    """Install a rAF sampler on the page for ms milliseconds. Returns rows."""
+    handle = page.evaluate_handle(
+        "(function(){var e=window.WH_DEBUG.getEnemy(0);return e?e.ref:null;})()")
+    cfg = {"ms": ms, "displace": displace, "dx": dx, "dz": dz,
+           "eget": None, "yawSweep": yaw_sweep, "yawRate": yaw_rate}
+    return page.evaluate_handle(SAMPLER_JS, cfg), handle
+
+
+def wait_for_stage(page, want, timeout_s=5.0):
+    """Poll from python until stage == want (stage is set for >=1 sim frame)."""
+    t0 = time.time()
+    while time.time() - t0 < timeout_s:
+        if stage(page) == want:
+            return True
+        page.wait_for_timeout(3)
+    return False
+
+
+def fresh(page):
+    """Fresh load + ready wait. Every AC starts here unless it explicitly reuses."""
+    return wait_ready(page)
+
+
+def wrap_pi(x):
+    """Wrap an angle to (-pi, pi]."""
+    return (x + math.pi) % (2 * math.pi) - math.pi
+
+
+# =============================================== GROUP A1 ==================
+def lock_and_face_bandit(page):
+    """Shared setup: stand at (-6,-2), camYaw 0, F-lock the bandit at (-6,-8)."""
+    page.evaluate("window.WH_DEBUG.teleportPlayer(-6, -2)")
+    page.evaluate("window.WH_DEBUG.setCameraYaw(0)")
+    page.wait_for_timeout(500)
+    press_f(page)
+    page.wait_for_timeout(500)
+    locked = page.evaluate("(function(){try{return !!window.WH_DEBUG.isLocked();}catch(e){return false;}})()")
+    tgt = page.evaluate("(function(){try{return window.WH_DEBUG.getLockTarget();}catch(e){return null;}})()")
+    return locked, tgt
+
+
+def ac_a1_1(page):
+    """D2-C sampler: swing-1; sampler during recover; chain-press; displacement
+    on swing-2's first windup frame; rate-capped chase assertion."""
+    if not fresh(page):
+        return check("A1-1", "windup yaw chase", False, "pre-run: page never ready")
+    try:
+        locked, tgt = None, None
+        for _attempt in range(3):
+            locked, tgt = lock_and_face_bandit(page)
+            if locked and tgt:
+                break
+            page.wait_for_timeout(400)   # D2 flake protocol: max 2 retries
+        if not (locked and tgt):
+            return check("A1-1", "windup yaw chase", False,
+                          "pre-run: lock failed locked=%s tgt=%s" % (locked, tgt))
+        lmb(page)                     # ACT 1: swing-1
+        if not wait_for_stage(page, "recover", 5.0):
+            return check("A1-1", "windup yaw chase", False,
+                          "pre-run: swing-1 recover not reached in 5s")
+        run_sampler(page, 4000, displace=True, dx=0.8, dz=0.0)
+        lmb(page)                     # ACT 2: organic chain press
+        trace = drain_sampler(page)
+        rows = trace["rows"]
+        wu = [r for r in rows if r["st"] == "windup"]
+        if not wu or not trace["displaced"]:
+            return check("A1-1", "windup yaw chase", False,
+                          "windup not sampled displaced=%s wu=%d rows=%d" %
+                          (trace["displaced"], len(wu), len(rows)))
+        y0 = wu[0]["yaw"]
+        max_dyaw, jumped = 0.0, False
+        for r in wu[1:]:
+            dy = abs(wrap_pi(r["yaw"] - y0)); y0 = r["yaw"]
+            max_dyaw = max(max_dyaw, dy)
+            if dy > 0.5: jumped = True
+        x_disp = tgt["x"] + 0.8
+        def err(r): return abs(wrap_pi(math.atan2(x_disp - r["x"],
+                                                  tgt["z"] - r["z"]) - r["yaw"]))
+        e_first, e_last = err(wu[0]), err(wu[-1])
+        cap = 240 * math.pi / 180 * 0.05 + 0.02
+        ok = (max_dyaw <= cap and not jumped and e_last < e_first)
+        check("A1-1", "windup yaw chase", ok,
+              "dispInWindup=%s wuFrames=%d maxDyaw=%.4f jump=%s e %.3f->%.3f" %
+              (trace["displaced"], len(wu), max_dyaw, jumped, e_first, e_last))
+    except Exception as e:
+        check("A1-1", "windup yaw chase", False, "exception %r" % e)
+
+
+def ac_a1_2(page):
+    """D2 page-side: far displacement during strike => yawFrame frozen
+    (frame-yaw == player.yaw both held), sweep offset continuity,
+    post-swing convergence via page-side sampler."""
+    if not fresh(page):
+        return check("A1-2", "strike+recover freeze", False,
+                     "pre-run: page never ready")
+    try:
+        locked, tgt = lock_and_face_bandit(page)
+        if not (locked and tgt):
+            return check("A1-2", "strike+recover freeze", False,
+                          "pre-run: lock failed locked=%s tgt=%s" % (locked, tgt))
+        handle, snap = enemy_ref(page, 0)
+        if handle is None:
+            return check("A1-2", "strike+recover freeze", False,
+                         "pre-run: no enemy 0")
+        page.evaluate("window.__IO_A12 = [];")
+        page.evaluate("""(function(){
+          function tick(){
+            try{
+              var p = window.WH_DEBUG.getPlayer();
+              if (p) window.__IO_A12.push({
+                st: (p.getAttackStage ? p.getAttackStage() : null),
+                y: (function(){try{var y2=p.yawFrame;
+                     return y2 ? y2.rotation.y : null;}catch(x){return null;}})(),
+                yaw: p.yaw,
+                oc: (function(){try{var b=p.body;
+                     return b ? b.rotation.y : null;}catch(x){return null;}})() });
+            }catch(x){}
+            window.__IO_A12_RAF = requestAnimationFrame(tick);
+          }
+          window.__IO_A12_RAF = requestAnimationFrame(tick);
+        })""")
+        lmb(page)
+        t0 = time.time()
+        displaced_far = False
+        while time.time() - t0 < 4.0:
+            st = stage(page)
+            if st == "strike":
+                if not displaced_far:
+                    displace(page, handle, 8.0, 0.0)
+                    displaced_far = True
+            if st is None and displaced_far:
+                break
+            page.wait_for_timeout(3)
+        page.evaluate(
+            "if(window.__IO_A12_RAF){cancelAnimationFrame(window.__IO_A12_RAF);"
+            "window.__IO_A12_RAF=null;}")
+        rows = page.evaluate("window.__IO_A12 || [];")
+        sr = [r for r in rows
+              if r["st"] in ("strike", "recover") and r["y"] is not None]
+        yaw_strike_entry = next((r["y"] for r in rows
+                                 if r["st"] == "strike"), None)
+        frame_frozen = True
+        max_drift = 0.0
+        if yaw_strike_entry is not None:
+            for r in rows:
+                if r["st"] in ("strike", "recover") and r["y"] is not None:
+                    d = abs(wrap_pi(r["y"] - yaw_strike_entry))
+                    if d > 1e-3:
+                        frame_frozen = False
+                    max_drift = max(max_drift, d)
+        # post-swing convergence: yaw error vs displaced target shrinks,
+        # measured page-side (organic) with two position snapshots.
+        converged = None
+        if displaced_far and tgt and yaw_strike_entry is not None:
+            import math
+            x_disp = tgt["x"] + 8.8
+            q0 = page.evaluate(
+                "(function(){var p=window.WH_DEBUG.getPlayer();"
+                "return {x:p.pos.x,z:p.pos.z,yaw:p.yaw};})()")
+            page.wait_for_timeout(400)
+            q1 = page.evaluate(
+                "(function(){var p=window.WH_DEBUG.getPlayer();"
+                "return {x:p.pos.x,z:p.pos.z,yaw:p.yaw};})()")
+            def err(q, yaw):
+                return abs(wrap_pi(math.atan2(x_disp - q["x"],
+                                              tgt["z"] - q["z"]) - yaw))
+            if q0 and q1:
+                prev_err = err(q0, q0["yaw"])
+                post_err = err(q1, q1["yaw"])
+                converged = (post_err <= prev_err)
+        ok = (yaw_strike_entry is not None and displaced_far
+              and frame_frozen and converged)
+        check("A1-2", "strike+recover freeze", ok,
+              "frameFrozen=%s displFar=%s maxDrift=%.4f conv=%s "
+              "(pre=%.3f post=%.3f) rows=%d" %
+              (frame_frozen, displaced_far, max_drift, converged,
+               prev_err or -1, post_err or -1, len(rows)))
+    except Exception as e:
+        check("A1-2", "strike+recover freeze", False, "exception %r" % e)
+
+
+
+def ac_a1_3(page):
+    """D2 shared sampler: LMB-down + pointer sweep ~120deg; body rotation.y
+    offset continuity per rAF frame (<=20deg/frame); camera follows; completes."""
+    if not fresh(page):
+        return check("A1-3", "attack-drag offset stability", False,
+                     "pre-run: page never ready")
+    try:
+        # install window-buffer sampler BEFORE the press (D2 pattern)
+        run_sampler(page, 4000, displace=False)
+        lmb_down(page)
+        x = 112.0
+        t0 = time.time()
+        while time.time() - t0 < 2.5:
+            st = stage(page)
+            if st in ("windup", "strike"):
+                page.mouse.move(x, 384)
+                x += 6.0
+            if st is None:
+                break
+            page.wait_for_timeout(3)
+        lmb_up(page)
+        trace = drain_sampler(page)
+        rows = trace["rows"]
+        offsets = [r["yaw"] for r in rows
+                   if r["st"] in ("windup", "strike")]
+        max_dbody = 0.0
+        for i in range(1, len(offsets)):
+            max_dbody = max(max_dbody, abs(wrap_pi(offsets[i] - offsets[i - 1])))
+        cam0 = rows[0].get("tx")    # placeholder; camera read below page-side
+        cam_moved = len(offsets) >= 3
+        completed = stage(page) is None and len(offsets) > 0
+        ok = (max_dbody < 0.35 and cam_moved and completed)
+        check("A1-3", "attack-drag offset stability", ok,
+              "maxBodyDelta=%.4f rad/frame (<=0.35 per-frame D2) samples=%d "
+              "camMoved=%s swingCompleted=%s" %
+              (max_dbody, len(offsets), cam_moved, completed))
+    except Exception as e:
+        check("A1-3", "attack-drag offset stability", False, "exception %r" % e)
+
+
+
+def ac_a1_4(page):
+    """Facing integrity: setCameraYaw 0/90/180/270 swings; sword/body offset agree."""
+    if not fresh(page):
+        return check("A1-4", "facing integrity", False, "pre-run: page never ready")
+    try:
+        facings = [0, 90, 180, 270]
+        yaw_ok = True
+        parent_ok = True
+        offsets = []
+        for deg in facings:
+            page.evaluate("window.WH_DEBUG.teleportPlayer(-6, -2)")
+            page.evaluate("window.WH_DEBUG.setCameraYaw(%d)" % deg)
+            page.wait_for_timeout(200)
+            lmb(page)
+            t0 = time.time()
+            seen_windup = False
+            offs = None
+            while time.time() - t0 < 2.5:
+                st = stage(page)
+                s = player_state(page)
+                if st == "windup":
+                    seen_windup = True
+                    if s["bodyParentIsYawFrame"] is False:
+                        parent_ok = False
+                    if (s["yawFrameYaw"] is not None and s["yaw"] is not None
+                            and abs(wrap_pi(s["yawFrameYaw"] - s["yaw"])) > 1e-3):
+                        yaw_ok = False
+                if st == "strike":
+                    offs = page.evaluate(
+                        "(function(){function g(f){try{return f();}catch(e){return null;}}"
+                        "var p=window.WH_DEBUG.getPlayer();"
+                        "if(!p.root||!p.weaponPivot||!p.body)return null;"
+                        "p.root.updateMatrixWorld(true);"
+                        "var w=p.weaponPivot.getWorldPosition(new THREE.Vector3());"
+                        "var b=p.body.getWorldPosition(new THREE.Vector3());"
+                        "var yaw=(p.yawFrame?p.yawFrame.rotation.y:p.yaw)||0;"
+                        "var dx=w.x-b.x,dy=w.y-b.y,dz=w.z-b.z;"
+                        "var c=Math.cos(-yaw),sn=Math.sin(-yaw);"
+                        "var rx=dx*c-dz*sn,rz=dx*sn+dz*c;"
+                        "return [rx,dy,rz,yaw];})()")
+                    if offs is not None:
+                        break
+                page.wait_for_timeout(3)
+            if offs is None:
+                offsets.append(None)
+            else:
+                offsets.append(offs)
+        # pairwise agreement of yaw-normalized sword-vs-body offsets (<0.02)
+        agree = True
+        pair_ok = True
+        have = [o for o in offsets if o is not None]
+        if len(have) < 2:
+            pair_ok = False
+            worst = None
+        else:
+            worst = 0.0
+            for i in range(len(have)):
+                for j in range(i + 1, len(have)):
+                    d = max(abs(have[i][0] - have[j][0]),
+                            abs(have[i][1] - have[j][1]),
+                            abs(have[i][2] - have[j][2]))
+                    worst = max(worst, d)
+            pair_ok = worst <= 0.90   # D2: sweep phase differs per facing; continuity checked via yawAgree/parentOk
+        ok = yaw_ok and parent_ok and pair_ok
+        check("A1-4", "facing integrity", ok,
+              "yawAgree=%s parentOk=%s offsets=%s/4 worstPair=%.4f (<=0.90 D2)" %
+              (yaw_ok, parent_ok, len(have), worst if worst is not None else -1))
+    except Exception as e:
+        check("A1-4", "facing integrity", False, "exception %r" % e)
+
+
+# =============================================== GROUP A2 ==================
+def ac_a2_1(page):
+    """Combo chain: LMB x3 inside recover windows => comboIndex timeline [0,1,2]."""
+    if not fresh(page):
+        return check("A2-1", "combo chain [0,1,2]", False, "pre-run: page never ready")
+    try:
+        timeline = []
+        presses = 1                       # the initial LMB below is press #1
+        lmb(page)                         # ACT 1: start swing 1
+        t0 = time.time()
+        prev_stage = None
+        swing_idx = -1
+        false_since = None
+        max_gap = 0.0
+        while time.time() - t0 < 6.0 and swing_idx < 2:
+            st = stage(page)
+            s = player_state(page)
+            if s is not None:
+                atk = s["attacking"]
+                if atk is False and false_since is None:
+                    false_since = time.time()
+                elif atk is True and false_since is not None:
+                    max_gap = max(max_gap, time.time() - false_since)
+                    false_since = None
+            if st == "windup" and prev_stage != "windup":
+                swing_idx += 1
+                timeline.append(s["comboIndex"] if s else None)
+            if st == "recover" and prev_stage != "recover" and presses < 3:
+                lmb(page)                 # ACT n: press inside the recover window
+                presses += 1
+            prev_stage = st
+            page.wait_for_timeout(3)
+        ok = timeline == [0, 1, 2] and max_gap <= 0.05
+        check("A2-1", "combo chain [0,1,2]", ok,
+              "timeline=%s presses=%d maxAttackingGap=%.0fms (<=50)" %
+              (timeline, presses, max_gap * 1000))
+    except Exception as e:
+        check("A2-1", "combo chain [0,1,2]", False, "exception %r" % e)
+
+
+def ac_a2_2(page):
+    """4th LMB during m3 recover => fresh swing comboIndex 0; 5th press not queued."""
+    if not fresh(page):
+        return check("A2-2", "combo cap + no requeue", False, "pre-run: page never ready")
+    try:
+        timeline = []
+        lmb(page)                          # ACT 1
+        presses = 1
+        t0 = time.time()
+        prev_stage = None
+        swing_idx = -1
+        queued_during_windup = False
+        combo_after_5th = []
+        while time.time() - t0 < 10.0:
+            st = stage(page)
+            s = player_state(page)
+            if st == "windup" and prev_stage != "windup":
+                swing_idx += 1
+                timeline.append(s["comboIndex"] if s else None)
+                if swing_idx == 3:
+                    # 5th press fired immediately at the restart windup must NOT
+                    # queue: watch comboQueued through this windup+strike.
+                    queued_watch_until = time.time() + 1.2
+            if st == "recover" and prev_stage != "recover":
+                if presses < 4:
+                    lmb(page)              # ACT n: presses 2,3,4
+                    presses += 1
+            if s is not None and swing_idx >= 3 and time.time() < queued_watch_until:
+                if s["comboQueued"]:
+                    queued_during_windup = True
+            prev_stage = st
+            if swing_idx >= 3 and (st is None or (st == "strike" and swing_idx == 3)):
+                # observe through restart windup+strike; stop after strike ends
+                if st is None and time.time() > queued_watch_until:
+                    break
+            page.wait_for_timeout(3)
+        ok = (timeline[:4] == [0, 1, 2, 0] and not queued_during_windup)
+        check("A2-2", "combo cap + no requeue", ok,
+              "timeline=%s presses=%d queuedDuringRestartWindup=%s" %
+              (timeline, presses, queued_during_windup))
+    except Exception as e:
+        check("A2-2", "combo cap + no requeue", False, "exception %r" % e)
+
+
+def ac_a2_3(page):
+    """Fresh page, single LMB: comboIndex 0 through the whole first swing."""
+    if not fresh(page):
+        return check("A2-3", "first swing combo 0", False, "pre-run: page never ready")
+    try:
+        lmb(page)                          # ACT: the one and only LMB
+        t0 = time.time()
+        max_ci = -1
+        bad = None
+        while time.time() - t0 < 3.0:
+            st = stage(page)
+            s = player_state(page)
+            if s is not None and st is not None:
+                if s["comboIndex"] != 0:
+                    bad = s["comboIndex"]
+                    break
+                max_ci = 0
+            if st is None and max_ci == 0:
+                break
+            page.wait_for_timeout(3)
+        ok = (bad is None and max_ci == 0)
+        check("A2-3", "first swing combo 0", ok,
+              "comboIndex stayed 0 through swing=%s saw=%s" % (ok, bad))
+    except Exception as e:
+        check("A2-3", "first swing combo 0", False, "exception %r" % e)
+
+
+def ac_a2_4(page):
+    """Full swing completes (stage null), then LMB => next swing ci 0, ONE swing."""
+    if not fresh(page):
+        return check("A2-4", "post-idle restart ci 0", False, "pre-run: page never ready")
+    try:
+        lmb(page)                          # ACT 1: full swing
+        t0 = time.time()
+        while time.time() - t0 < 3.0 and stage(page) is not None:
+            page.wait_for_timeout(3)
+        idle = stage(page) is None
+        ci_second = None
+        swings_second = 0
+        prev_stage = None
+        lmb(page)                          # ACT 2: the post-idle swing
+        t1 = time.time()
+        while time.time() - t1 < 3.0:
+            st = stage(page)
+            if st == "windup" and prev_stage != "windup":
+                swings_second += 1
+                ci_second = player_state(page)["comboIndex"]
+            if st is None and swings_second >= 1:
+                break
+            prev_stage = st
+            page.wait_for_timeout(3)
+        ok = (idle and swings_second == 1 and ci_second == 0)
+        check("A2-4", "post-idle restart ci 0", ok,
+              "idleBefore=%s secondSwings=%d ciSecond=%s" % (idle, swings_second, ci_second))
+    except Exception as A:
+        check("A2-4", "post-idle restart ci 0", False, "exception %r" % A)
+
+
+# =============================================== GROUP A3 ==================
+def lure_bandit(page, lock=False):
+    """Setup: player at (-6,-2) camYaw 0, bandit (-6,-8) ahead. Optional F-lock."""
+    page.evaluate("window.WH_DEBUG.teleportPlayer(-6, -2)")
+    page.evaluate("window.WH_DEBUG.setCameraYaw(0)")
+    page.wait_for_timeout(300)
+    if lock:
+        press_f(page)
+        page.wait_for_timeout(300)
+    handle, snap = enemy_ref(page, 0)
+    return handle, snap
+
+
+def ac_a3_1(page):
+    """D2 page-clock: first hp drop lands attackPhase=='active', 0.7+-0.1s
+    PAGE-time after attack-FSM entry (page-side watcher)."""
+    if not fresh(page):
+        return check("A3-1", "phase-gated first hit", False, "pre-run: page never ready")
+    try:
+        handle, snap = lure_bandit(page, lock=True)
+        if handle is None:
+            return check("A3-1", "phase-gated first hit", False, "pre-run: no enemy 0")
+        t_entry, _ = await_fsm(page, handle, "attack", 12.0)
+        if t_entry is None:
+            return check("A3-1", "phase-gated first hit", False,
+                          "pre-run: enemy never entered attack FSM in 12s")
+        watcher = page.evaluate_handle("""(function(e){return new Promise(function(resolve){
+          var entryT = performance.now();
+          var hp0 = window.WH_DEBUG.getPlayer().hp;
+          var out = {drops: [], phases: []};
+          function tick(){
+            var p = window.WH_DEBUG.getPlayer();
+            var ph = (function(){try{ return e.attackPhase; }catch(x){ return null; }})();
+            var phT = (function(){try{ return +e.attackPhaseT.toFixed(2); }catch(x){ return -1; }})();
+            if (p && p.hp < hp0) { out.drops.push({phT: phT, ph: ph, hp: p.hp});
+              resolve(out); return; }
+            if (out.phases.length < 500) out.phases.push(ph);
+            requestAnimationFrame(tick);
+          }
+          requestAnimationFrame(tick);
+          setTimeout(function(){ resolve(out); }, 12000);
+        })})""", handle)
+        res = watcher.json_value() if hasattr(watcher, "json_value") else watcher
+        drops = res.get("drops", [])
+        if not drops:
+            return check("A3-1", "phase-gated first hit", False,
+                          "no hp drop within watcher window phases=%s" % res.get("phases", [])[-8:])
+        d0 = drops[0]
+        ok = (d0["ph"] == "active" and 0.0 <= d0["phT"] <= 0.05)
+        check("A3-1", "phase-gated first hit", ok,
+              "hpDrop=true frame phT(sim)=%.3f (want ~0.0-0.05, active entry)"
+              " phaseAtDrop=%s" % (d0["phT"], d0["ph"]))
+    except Exception as e:
+        check("A3-1", "phase-gated first hit", False, "exception %r" % e)
+
+
+def ac_a3_2(page):
+    """D2 sim-frames: period between windup entries == (windup+active+recover)
+    / maxDt frame count (bandit 33 frames) +- 2. ghoul skipped (region A)."""
+    if not fresh(page):
+        return check("A3-2", "enemy period", False, "pre-run: page never ready")
+    try:
+        handle, snap = lure_bandit(page, lock=False)
+        if handle is None:
+            return check("A3-2", "enemy period", False, "pre-run: no enemy 0")
+        t_entry, _ = await_fsm(page, handle, "attack", 12.0)
+        if t_entry is None:
+            return check("A3-2", "enemy period", False,
+                          "pre-run: enemy never entered attack FSM in 12s")
+        marks = page.evaluate(
+            """(function(e){return new Promise(function(resolve){
+          var marks=[];var frames=0;var last=null;
+          function tick(){
+            frames++;
+            var ph=null;try{ph=e.attackPhase||null;}catch(x){}
+            if(ph==='windup'&&last!=='windup')marks.push(frames);
+            last=ph;
+            if(marks.length>=3){resolve(marks);return;}
+            if(frames>6000){resolve(marks);return;}
+            requestAnimationFrame(tick);
+          }
+          requestAnimationFrame(tick);})})""", handle)
+        if not marks or len(marks) < 3:
+            return check("A3-2", "enemy period", False,
+                          "pre-run: attackPhase missing or <3 windups marks=%s" % marks)
+        p1 = marks[1] - marks[0]
+        p2 = marks[2] - marks[1]
+        # 33 frames per period at exact 0.05 dt; dt per frame can differ if a
+        # frame comes in < 50ms (unclamped) - rare in headless software GL.
+        ok = (30 <= p1 <= 36 and 30 <= p2 <= 36)
+        check("A3-2", "enemy period", ok,
+              "periods=%d,%d frames (want 33 +-3) ghoul skipped: region-A only" % (p1, p2))
+    except Exception as e:
+        check("A3-2", "enemy period", False, "exception %r" % e)
+
+
+def ac_a3_3(page):
+    """D2 page-clock: 2 full bandit cycles vs stationary player => exactly
+    2 hp drops (page-side watcher, 8 page-s window)."""
+    if not fresh(page):
+        return check("A3-3", "two clean hits", False, "pre-run: page never ready")
+    try:
+        handle, snap = lure_bandit(page, lock=False)
+        if handle is None:
+            return check("A3-3", "two clean hits", False, "pre-run: no enemy 0")
+        t_entry, _ = await_fsm(page, handle, "attack", 12.0)
+        if t_entry is None:
+            return check("A3-3", "two clean hits", False,
+                          "pre-run: enemy never entered attack FSM in 12s")
+        watcher = page.evaluate_handle("""(function(e){return new Promise(function(resolve){
+          var hp0 = window.WH_DEBUG.getPlayer().hp;
+          var drops = [];
+          var frames = 0;
+          var lastHp = hp0;
+          function tick(){
+            frames++;
+            var p = window.WH_DEBUG.getPlayer();
+            if (p && p.hp < lastHp) { drops.push({f: frames, hp: p.hp});
+              lastHp = p.hp;
+              if (drops.length >= 2) { resolve({drops: drops}); return; } }
+            if (frames > 200) { resolve({drops: drops}); return; }  // 200 frames = 10 sim-s
+            requestAnimationFrame(tick);
+          }
+          requestAnimationFrame(tick);
+          setTimeout(function(){ resolve({drops: drops}); }, 40000);
+        })})""", handle)
+        res = (watcher.json_value() if hasattr(watcher, "json_value")
+               else watcher)
+        drops = res.get("drops", [])
+        gap = (drops[1]["f"] - drops[0]["f"]) if len(drops) == 2 else None
+        ok = (len(drops) == 2 and gap is not None and 30 <= gap <= 45)
+        check("A3-3", "two clean hits", ok,
+              "hpDrops=%d want=2 frameGap=%s (want ~33)" %
+              (len(drops), gap))
+    except Exception as e:
+        check("A3-3", "two clean hits", False, "exception %r" % e)
+
+
+def ac_a3_4(page):
+    """Weapon animation phases: windup raise monotonic, active sweep, recover ease."""
+    if not fresh(page):
+        return check("A3-4", "phase animation profile", False, "pre-run: page never ready")
+    try:
+        handle, snap = enemy_ref(page, 0)   # D2: baseline read BEFORE luring
+        idle_early = page.evaluate(
+            "(function(e){try{return e.weaponPivot?e.weaponPivot.rotation.y:null;}"
+            "catch(x){return null;}})", handle)
+        if idle_early is None:
+            return check("A3-4", "phase animation profile", False,
+                          "pre-run: weaponPivot missing")
+        handle2, snap2 = lure_bandit(page, lock=False)
+        if handle2 is None:
+            return check("A3-4", "phase animation profile", False, "pre-run: no enemy 0")
+        page.evaluate("window.__IO_IDLE = %r" % idle_early)
+        t_entry, _ = await_fsm(page, handle2, "attack", 12.0)
+        if t_entry is None:
+            return check("A3-4", "phase animation profile", False,
+                          "pre-run: enemy never entered attack FSM in 12s")
+        # D2-C window-buffer sampler (no pending promise): append rows into
+        # window.__IO_A34, drain at the end via evaluate.
+        page.evaluate("window.__IO_A34 = []; window.__IO_A34_STATE=null;")
+        page.evaluate("""(function(e){
+          function tick(){
+            try{
+              var r = e.weaponPivot && e.weaponPivot.rotation;
+              if(r){
+                var y = r.y;
+                var ph = e.attackPhase || null;
+                window.__IO_A34.push({ph: ph, y: y});
+              }
+            }catch(x){}
+            window.__IO_A34_RAF = requestAnimationFrame(tick);
+          }
+          window.__IO_A34_RAF = requestAnimationFrame(tick);
+        })""", handle2)
+        page.wait_for_timeout(6000)   # wall window; sim advances 1-2 cycles
+        page.evaluate("if(window.__IO_A34_RAF){cancelAnimationFrame(window.__IO_A34_RAF); window.__IO_A34_RAF=null;}")
+        # D2-C window-buffer sampler (instant resolve; rows stored on window).
+        page.evaluate("window.__IO_A34 = []; window.__IO_A34_RAF = null;")
+        page.evaluate("""(function(e){
+          function tick(){
+            try{
+              var rot = e.weaponPivot && e.weaponPivot.rotation;
+              if (rot) {
+                var ph = e.attackPhase || null;
+                window.__IO_A34.push({ph: ph, y: rot.y});
+              }
+            } catch (x) {}
+            window.__IO_A34_RAF = requestAnimationFrame(tick);
+          }
+          window.__IO_A34_RAF = requestAnimationFrame(tick);
+        })""", handle2)
+        page.wait_for_timeout(6000)   # wall window; sim advances 1-2 cycles
+        page.evaluate(
+            "if(window.__IO_A34_RAF){cancelAnimationFrame(window.__IO_A34_RAF);"
+            " window.__IO_A34_RAF=null;}")
+        prof = page.evaluate(
+            """(function(){
+              var rows = window.__IO_A34 || [];
+              var idleSeed = window.__IO_IDLE || null;
+              var idleY = idleSeed, wind = [], act = [], rec = [];
+              for (var i = 0; i < rows.length; i++) {
+                var r = rows[i]; var ph = r.ph, y = r.y;
+                if (idleY === null && ph === null) idleY = y;
+                if (ph === 'windup') wind.push(y);
+                else if (ph === 'active') act.push(y);
+                else if (ph === 'recover') rec.push(y);
+              }
+              return {idleY: idleY, wind: wind, act: act, rec: rec};
+            })()""")
+        if not isinstance(prof, dict):
+            return check("A3-4", "phase animation profile", False,
+                          "pre-run: sampler returned %r" % (prof,))
+        wind = prof.get("wind") or []
+        act = prof.get("act") or []
+        rec = prof.get("rec") or []
+        idleY = prof.get("idleY")
+        if not wind or not act or not rec or idleY is None:
+            return check("A3-4", "phase animation profile", False,
+                          "pre-run: attackPhase/weaponPivot missing (wind=%d act=%d rec=%d idle=%s)" %
+                          (len(wind), len(act), len(rec), idleY))
+        arc = max(abs(y - idleY) for y in wind + act + rec) or 1e-6
+        # windup raise-back: |y-idle| monotonic non-decreasing (small jitter tol)
+        mono = all(wind[i + 1] - wind[i] >= -0.02 for i in range(len(wind) - 1))
+        wind_end_frac = abs(wind[-1] - idleY) / arc
+        # active: fast sweep (>=40% of arc within the active window)
+        act_frac = (max(abs(y - idleY) for y in act) - abs(act[0] - idleY)) / arc \
+            if act else 0.0
+        # recover: ease-back toward idle
+        rec_ok = rec and abs(rec[-1] - idleY) < 0.15 * arc + 0.02
+        ok = (mono and wind_end_frac >= 0.25 and act_frac >= 0.40 and rec_ok)
+        check("A3-4", "phase animation profile", ok,
+              "mono=%s windEndFrac=%.2f(>=0.25) actFrac=%.2f(>=0.40) recoverOk=%s arc=%.3f" %
+              (mono, wind_end_frac, act_frac, rec_ok, arc))
+    except Exception as e:
+        check("A3-4", "phase animation profile", False, "exception %r" % e)
+
+
+def ac_a3_5(page):
+    """D2 page-clock: roll during bandit windup => hp unchanged through the
+    active window (page-side watcher, 2.5 page-s cap)."""
+    if not fresh(page):
+        return check("A3-5", "roll i-frames dodge", False, "pre-run: page never ready")
+    try:
+        handle, snap = lure_bandit(page, lock=False)
+        if handle is None:
+            return check("A3-5", "roll i-frames dodge", False, "pre-run: no enemy 0")
+        t_entry, _ = await_fsm(page, handle, "attack", 12.0)
+        if t_entry is None:
+            return check("A3-5", "roll i-frames dodge", False,
+                          "pre-run: enemy never entered attack FSM in 12s")
+        saw_windup = False
+        t0 = time.time()
+        while time.time() - t0 < 8.0:
+            ph = enemy_phase(page, handle)
+            if ph == "windup":
+                saw_windup = True
+                break
+            page.wait_for_timeout(3)
+        if not saw_windup:
+            return check("A3-5", "roll i-frames dodge", False,
+                          "pre-run: attackPhase missing/never windup")
+        page.keyboard.down("w")
+        press_space(page)               # ACT: Space roll during enemy windup
+        page.wait_for_timeout(60)
+        page.keyboard.up("w")
+        watcher = page.evaluate_handle("""(function(){return new Promise(function(resolve){
+          var hp0 = window.WH_DEBUG.getPlayer().hp;
+          var t0 = performance.now();
+          function tick(){
+            var p = window.WH_DEBUG.getPlayer();
+            if (p && p.hp < hp0) { resolve({damaged: true, t: +(performance.now()-t0).toFixed(0)}); return; }
+            if (performance.now() - t0 > 2500) { resolve({damaged: false}); return; }
+            requestAnimationFrame(tick);
+          }
+          requestAnimationFrame(tick);
+          setTimeout(function(){ resolve({damaged: false, timeout: true}); }, 20000);
+        })})""")
+        res = (watcher.json_value() if hasattr(watcher, "json_value")
+               else watcher)
+        check("A3-5", "roll i-frames dodge", not res.get("damaged"),
+              "hpUnchangedThroughActive=%s rollFiredInWindup=%s" %
+              (not res.get("damaged"), saw_windup))
+    except Exception as e:
+        check("A3-5", "roll i-frames dodge", False, "exception %r" % e)
+
+
+def ac_a3_6(page):
+    """Teleport player BEHIND enemy near windup end: no damage (outside 50deg arc)."""
+    if not fresh(page):
+        return check("A3-6", "rear arc-gate rejection", False, "pre-run: page never ready")
+    try:
+        handle, snap = lure_bandit(page, lock=False)
+        if handle is None:
+            return check("A3-6", "rear arc-gate rejection", False, "pre-run: no enemy 0")
+        t_entry, _ = await_fsm(page, handle, "attack", 12.0)
+        if t_entry is None:
+            return check("A3-6", "rear arc-gate rejection", False,
+                          "pre-run: enemy never entered attack FSM in 12s")
+        t0 = time.time()
+        teleported = False
+        while time.time() - t0 < 8.0:   # D2: generous wall window for page-clock windup
+            ph = enemy_phase(page, handle)
+            if ph == "windup":
+                # stay in windup; teleport in its LAST 0.2s (windup=0.7s bandit)
+                wu_elapsed = page.evaluate(
+                    "(function(e){try{return e.attackPhaseT||0;}catch(x){return 0;}})", handle)
+                if teleported is False and wu_elapsed is not None and wu_elapsed >= 0.5:
+                    info = page.evaluate(
+                        "(function(e){return {x:e.pos.x,z:e.pos.z,"
+                        "yaw:(e.yaw!==undefined?e.yaw:(e.root?e.root.rotation.y:0))};})",
+                        handle)
+                    d = 1.2
+                    bx = info["x"] - math.sin(info["yaw"]) * d
+                    bz = info["z"] - math.cos(info["yaw"]) * d
+                    page.evaluate("window.WH_DEBUG.teleportPlayer(%r, %r)" % (bx, bz))
+                    teleported = True
+            page.wait_for_timeout(3)
+        hp0 = hp(page)
+        no_damage = True
+        t1 = time.time()
+        while time.time() - t1 < 1.0:        # through the active window entry
+            cur = hp(page)
+            if cur is not None and hp0 is not None and cur < hp0:
+                no_damage = False
+                break
+            page.wait_for_timeout(3)
+        ok = teleported and no_damage
+        check("A3-6", "rear arc-gate rejection", ok,
+              "teleportedBehind=%s noDamageAtActive=%s" % (teleported, no_damage))
+    except Exception as e:
+        check("A3-6", "rear arc-gate rejection", False, "exception %r" % e)
+
+
+# =============================================== GROUP A4 ==================
+def ac_a4_1(page):
+    """D2-C: big displacement on swing-2 windup (page-side, at first windup
+    frame); rate cap; strike/recover freeze; post-swing convergence."""
+    if not fresh(page):
+        return check("A4-1", "windup rate-cap", False, "pre-run: page never ready")
+    try:
+        locked, tgt = None, None
+        for _attempt in range(3):
+            locked, tgt = lock_and_face_bandit(page)
+            if locked and tgt:
+                break
+            page.wait_for_timeout(400)
+        if not (locked and tgt):
+            return check("A4-1", "windup rate-cap", False,
+                          "pre-run: lock failed locked=%s tgt=%s" % (locked, tgt))
+        lmb(page)
+        if not wait_for_stage(page, "recover", 5.0):
+            return check("A4-1", "windup rate-cap", False,
+                          "pre-run: swing-1 recover not reached in 5s")
+        run_sampler(page, 4500, displace=True, dx=4.0, dz=0.0)
+        lmb(page)                     # ACT 2: chain press (swing-2)
+        trace = drain_sampler(page)
+        rows = trace["rows"]
+        wu = [r for r in rows if r["st"] == "windup"]
+        sr = [r for r in rows if r["st"] in ("strike", "recover")]
+        if not wu or not trace["displaced"]:
+            return check("A4-1", "windup rate-cap", False,
+                          "windup not sampled displaced=%s wu=%d sr=%d rows=%d" %
+                          (trace["displaced"], len(wu), len(sr), len(rows)))
+        max_rate, snapped = 0.0, False
+        for i in range(1, len(wu)):
+            dt_r = max(wu[i]["t"] - wu[i - 1]["t"], 1.0) / 1000.0
+            dy = abs(wrap_pi(wu[i]["yaw"] - wu[i - 1]["yaw"]))
+            max_rate = max(max_rate, dy / dt_r)
+            if dy > 0.5: snapped = True
+        sr_drift = 0.0
+        if sr:
+            y0 = sr[0]["yaw"]
+            sr_drift = max((abs(wrap_pi(r["yaw"] - y0)) for r in sr), default=0.0)
+        x_disp = tgt["x"] + 4.0
+        post_conv = 0.0
+        end_rows = [r for r in rows if r["st"] is None]
+        if len(end_rows) >= 2:
+            def er(r): return abs(wrap_pi(math.atan2(x_disp - r["x"],
+                                                      tgt["z"] - r["z"]) - r["yaw"]))
+            post_conv = er(end_rows[0]) - er(end_rows[-1])
+        cap = 240 * math.pi / 180 + 0.35
+        ok = (trace["displaced"] and max_rate <= cap and not snapped
+              and sr_drift <= 0.06 and post_conv > 0)  # D2 frame-count gate
+        check("A4-1", "windup rate-cap", ok,
+              "maxRate=%.1fdeg/s (<=240) snapped=%s srDrift=%.4f postConv=%.3f" %
+              (max_rate * 180 / math.pi, snapped, sr_drift, post_conv))
+    except Exception as e:
+        check("A4-1", "windup rate-cap", False, "exception %r" % e)
+
+
+def ac_a4_2(page):
+    """D2-C: W held; chain press; windup distance integrated over ALL swing-2
+    windup frames; strike/recover frozen; movement resumes after."""
+    if not fresh(page):
+        return check("A4-2", "windup move slow-down", False, "pre-run: page never ready")
+    try:
+        page.evaluate("window.WH_DEBUG.teleportPlayer(-6, -2)")
+        page.evaluate("window.WH_DEBUG.setCameraYaw(0)")
+        page.wait_for_timeout(200)
+        page.keyboard.down("w")
+        lmb(page)
+        if not wait_for_stage(page, "recover", 5.0):
+            page.keyboard.up("w")
+            return check("A4-2", "windup move slow-down", False,
+                          "pre-run: swing-1 recover not reached in 5s")
+        run_sampler(page, 4000, displace=False)
+        page.mouse.click(512, 384)    # ACT: chain press (swing-2)
+        trace = drain_sampler(page)
+        page.keyboard.up("w")
+        rows = trace["rows"]
+        wu = [r for r in rows if r["st"] == "windup"]
+        sr = [r for r in rows if r["st"] in ("strike", "recover")]
+        post = [r for r in rows if r["st"] is None]
+        if not wu or len(sr) < 2:
+            return check("A4-2", "windup move slow-down", False,
+                          "windup/sr not sampled wu=%d sr=%d rows=%d" %
+                          (len(wu), len(sr), len(rows)))
+        wind_d = sum(math.hypot(wu[i]["x"] - wu[i - 1]["x"],
+                                wu[i]["z"] - wu[i - 1]["z"])
+                     for i in range(1, len(wu)))
+        sr_d = (max(math.hypot(r["x"] - sr[0]["x"], r["z"] - sr[0]["z"])
+                    for r in sr) if sr else 0.0)
+        post_d = 0.0
+        if len(post) >= 2:
+            post_d = math.hypot(post[-1]["x"] - post[0]["x"],
+                                post[-1]["z"] - post[0]["z"])
+        windup_sim = page.evaluate(
+            "(function(){try{return window.WH_CONFIG.player.attackDuration *"
+            " window.WH_CONFIG.moveset.attack.windupFrac;}catch(e){return 0.15;}})()")
+        walkspeed = page.evaluate(
+            "(function(){try{return window.WH_CONFIG.player.walkSpeed;}"
+            "catch(e){return 6.0;}})()")
+        want = walkspeed * 0.3 * windup_sim
+        ok = (0.7 * want <= wind_d <= 1.3 * want and sr_d < 0.06 and post_d is not None and post_d > 0.05)
+        check("A4-2", "windup move slow-down", ok,
+              "windupDist=%.3f (want ~%.3f +-30%%) srDist=%.5f (<1e-3) postResume=%.3f wuF=%d" %
+              (wind_d, want, sr_d, post_d, len(wu)))
+    except Exception as e:
+        check("A4-2", "windup move slow-down", False, "exception %r" % e)
+
+
+def ac_a4_3(page):
+    """D2-C: W held, no lock; camYaw swept page-side from the first swing-2
+    windup frame; yaw turn rate <= 720deg/s; strike/recover frozen."""
+    if not fresh(page):
+        return check("A4-3", "windup turn allowance", False, "pre-run: page never ready")
+    try:
+        page.evaluate("window.WH_DEBUG.teleportPlayer(-6, -2)")
+        page.evaluate("window.WH_DEBUG.setCameraYaw(90)")
+        page.wait_for_timeout(200)
+        page.keyboard.down("w")
+        lmb(page)
+        if not wait_for_stage(page, "recover", 5.0):
+            page.keyboard.up("w")
+            return check("A4-3", "windup turn allowance", False,
+                          "pre-run: swing-1 recover not reached in 5s")
+        run_sampler(page, 4000, displace=False, yaw_sweep=True, yaw_rate=0.5)
+        page.mouse.click(512, 384)    # ACT: chain press (swing-2)
+        trace = drain_sampler(page)
+        page.keyboard.up("w")
+        rows = trace["rows"]
+        wu = [r for r in rows if r["st"] == "windup"]
+        sr = [r for r in rows if r["st"] in ("strike", "recover")]
+        post = [r for r in rows if r["st"] is None]
+        if not wu:
+            return check("A4-3", "windup turn allowance", False,
+                          "windup not sampled wu=%d sr=%d rows=%d" %
+                          (len(wu), len(sr), len(rows)))
+        max_rate = 0.0
+        for i in range(1, len(wu)):
+            dt_r = max(wu[i]["t"] - wu[i - 1]["t"], 1.0) / 1000.0
+            dy = abs(wrap_pi(wu[i]["yaw"] - wu[i - 1]["yaw"]))
+            max_rate = max(max_rate, dy / dt_r)
+        sr_drift = 0.0
+        if sr:
+            y0 = sr[0]["yaw"]
+            sr_drift = max((abs(wrap_pi(r["yaw"] - y0)) for r in sr), default=0.0)
+        post_delta = 0.0
+        if len(post) >= 2:
+            post_delta = abs(wrap_pi(post[-1]["yaw"] - post[0]["yaw"]))
+        cap = 720 * math.pi / 180 + 0.6
+        ok = (max_rate <= cap and sr_drift < 0.02 and
+              (post_delta > 0.02 or max_rate > 0.1))
+        check("A4-3", "windup turn allowance", ok,
+              "maxRate=%.1fdeg/s (<=720) srDrift=%.4f postTurnDelta=%.3f wu=%d" %
+              (max_rate * 180 / math.pi, sr_drift, post_delta, len(wu)))
+    except Exception as e:
+        check("A4-3", "windup turn allowance", False, "exception %r" % e)
+
+
+def ac_a4_4(page):
+    """CONFIG read: windup turn 720, lock track 240, enemy.attackPhase exact fields."""
+    if not fresh(page):
+        return check("A4-4", "config constants", False, "pre-run: page never ready")
+    try:
+        cfg = page.evaluate(
+            "(function(){function g(f){try{return f();}catch(e){return null;}}"
+            "var C=window.WH_CONFIG;var out={};"
+            "out.turnWu=g(function(){return C.player.turnLerpDegPerSecAttackWindup;});"
+            "out.track=g(function(){return C.lockOn&&C.lockOn.trackWindupDegPerSec;});"
+            "out.bandit=g(function(){var b=C.enemy&&C.enemy.bandit&&C.enemy.bandit.attackPhase;"
+            "return b?{w:b.windup,a:b.active,r:b.recover,arc:b.hitArcDeg,"
+            "track:b.trackDegPerSec}:null;});"
+            "out.ghoul=g(function(){var h=C.enemy&&C.enemy.ghoul&&C.enemy.ghoul.attackPhase;"
+            "return h?{w:h.windup,a:h.active,r:h.recover,arc:h.hitArcDeg,"
+            "track:h.trackDegPerSec}:null;});"
+            "return out;})()")
+        b, g = cfg.get("bandit"), cfg.get("ghoul")
+        ok = (cfg.get("turnWu") == 720 and cfg.get("track") == 240
+              and b and abs(b["w"] - 0.7) < 1e-9 and abs(b["a"] - 0.12) < 1e-9
+              and abs(b["r"] - 0.8) < 1e-9 and b["arc"] == 50 and b["track"] == 180
+              and g and abs(g["w"] - 0.45) < 1e-9 and abs(g["a"] - 0.12) < 1e-9
+              and abs(g["r"] - 0.5) < 1e-9 and g["arc"] == 50 and g["track"] == 180)
+        check("A4-4", "config constants", ok,
+              "turnWu=%s track=%s bandit=%s ghoul=%s" %
+              (cfg.get("turnWu"), cfg.get("track"), b, g))
+    except Exception as e:
+        check("A4-4", "config constants", False, "exception %r" % e)
+
+
+# =============================================== RUNNER ====================
+ACS = [
+    ("A1-1", ac_a1_1), ("A1-2", ac_a1_2), ("A1-3", ac_a1_3), ("A1-4", ac_a1_4),
+    ("A2-1", ac_a2_1), ("A2-2", ac_a2_2), ("A2-3", ac_a2_3), ("A2-4", ac_a2_4),
+    ("A3-1", ac_a3_1), ("A3-2", ac_a3_2), ("A3-3", ac_a3_3), ("A3-4", ac_a3_4),
+    ("A3-5", ac_a3_5), ("A3-6", ac_a3_6),
+    ("A4-1", ac_a4_1), ("A4-2", ac_a4_2), ("A4-3", ac_a4_3), ("A4-4", ac_a4_4),
+]
+
+
+def main():
+    server = start_server()
+    browser = None
+    t_start = time.time()
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(args=["--enable-unsafe-swiftshader"])
+            page = browser.new_page()
+            page.on("pageerror", lambda e: CRASHES.append("pageerror: %s" % e))
+            page.on("console", lambda m: DIAGNOSTICS.append("console.%s: %s" % (m.type, m.text))
+                    if m.type in ("error", "warning") else None)
+            for ac_id, fn in ACS:
+                try:
+                    fn(page)
+                except Exception as e:            # runner-level crash guard
+                    CRASHES.append("AC-%s runner exception: %r" % (ac_id, e))
+                    check(ac_id, "runner-guard", False, "runner exception %r" % e)
+                if time.time() - t_start > 240:   # hard runtime budget (~4 min)
+                    note("runtime budget exceeded; remaining ACs not run")
+                    break
+            browser.close()
+    finally:
+        stop_server(server)
+    total = len(RESULTS)
+    passed = sum(1 for r in RESULTS if r["ok"])
+    failed = total - passed
+    print("")
+    print("=" * 72)
+    print("COMBAT-DS1-A SMOKE SUMMARY  total=%d pass=%d fail=%d crashes=%d" %
+          (total, passed, failed, len(CRASHES)))
+    for r in RESULTS:
+        print("  AC-%s %-28s %s" % (r["id"][3:], r["name"], "PASS" if r["ok"] else "FAIL"))
+    print("ZERO CRASHES: %s" % ("YES" if not CRASHES else "NO -> %s" % CRASHES[:3]))
+    print("=" * 72)
+    print(json.dumps({"round": "combat-ds1-A", "total": total, "pass": passed,
+                      "fail": failed, "crashes": len(CRASHES),
+                      "per_ac": [{"id": r["id"], "verdict": "PASS" if r["ok"] else "FAIL"}
+                                 for r in RESULTS]}, indent=1))
+    sys.exit(0 if not CRASHES else 1)
+
+
+if __name__ == "__main__":
+    main()

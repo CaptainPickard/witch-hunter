@@ -1,0 +1,9 @@
+"""PART1-REWRITE: header + helpers, instruction-faithful to the frozen pyc
+dumps (note@13 ... lock_and_face@302 in frozen numbering).
+
+Deviations fixed vs previous sketch: hp/stage/enemy_field carry inline
+try/except per frozen disasm; await_fsm is time-based (no performance_now);
+lmb = mouse.click(512,384); rmb = click right, no viewport lookups; fresh =
+bare wait_ready passthrough; wrap_pi single expression; lock_and_face_bandit
+has no retry loop; displace is an f-string; enemy_ref snapshot uses e.x/e.z.
+"""
