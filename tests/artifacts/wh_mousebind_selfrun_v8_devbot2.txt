@@ -1,0 +1,44 @@
+MB-VALIDATION target=prototype/builds/v8-playable.html mode=repo
+MB  P9-boot boot telemetry record                          => PASS   url=http://localhost:8793/index.html loadToPlayer=1.2s bound=False locked=False
+MB  N4   free mousemove (no button) inert               => PASS   dyaw=0.0 dpitch=0.0
+MB  P4   drag-cam math identical to HEAD                => FAIL   dy=2.617993877991494 exp=-0.872665 dp=-0.6457718232379019 exp=0.174533
+MB  P5   touch cam pad still steers (pad drag)          => FAIL   dyaw=9.520771069629067 dpitch=0.0
+MB  P2-wheel wheel zoom semantics                           => PASS   d0=7 d1=7.8 d2=7
+MB  P2-block RMB press engages block/cast; release clears   => PASS   offhand='spell' down(block=False cast={'windup': 0, 'cooldown': 0, 'regrip': 0, 'toggling': False}) up(block=False)
+MB  P2-ctx contextmenu reaches document (captured)        => FAIL   contextFlag=0
+MB  P2-strike LMB strike fires, no cam orbit                 => FAIL   stage='windup' dyaw=5.585053606381855
+MB  N2   bind via Backquote (organic)                   => FAIL   locked=False bound=False chip='MOUSE: FREE [`]' plChange=2
+MB  N2a  locked live motion                             => FAIL   skipped: bind failed
+MB  N2b  dispatched movementX/Y                         => FAIL   skipped: bind failed
+MB  N8   lastManualCamT stamp rules                     => FAIL   boundStamp=False freeStamp=True
+MB  N3   unbind via Backquote (organic)                 => PASS   locked=False bound=False chip='MOUSE: FREE [`]'
+MB  N3-esc native exit (Esc-equivalent) chip resync       => PASS   rebind=True locked=False bound=False chip='MOUSE: FREE [`]'
+MB  N5   canvas LMB = attack+rebind; chip LMB no-rebind => FAIL   rebind=True attack=True chipNoRebind=False
+MB  N5-off autoBind=false disables canvas rebind          => PASS   rpl 5 -> 5 with autoBind=false
+MB  N6   chip toggle free x2 + bound-dir                => FAIL   bindOnClick=True exit=False free=False boundDir(relock=False unbind=False)
+MB  N7   rpl throw: no uncaught, stays FREE             => PASS   rplCalls=6 armedPress seen=True state=False chip='MOUSE: FREE [`]' consoleErrs=0
+MB  N10  zero console errors, full organic run          => PASS   consoleErrors=0 pageErrors=0
+MB  N1   lock JS + chip + CFG.mouse present             => PASS   rpl/epl=True anchor=['target:88329', 'player.js:363'] chip=True cfg.mouse=True
+MB  N9   build artifact checks                          => PASS   chip=True cfg=True noSrc=True title='Witch Hunter v8 - Mouse Bind Cam'
+MB  X-echo five-file sha baseline echo                    => FAIL   head=09712f6cbf2a(ok) drift=['prototype/js/player.js', 'prototype/js/CONFIG.js', 'prototype/index.html', 'prototype/style.css']
+MB  P3   touch-controls.js byte-identical               => PASS   sha=051cc722152a2de6
+MB  P1-anchor drag handler core preserved in player.js       => PASS   earlyReturn x1 dragBranch=True
+MB  P4   lock-on framing untouched (early-return + game.js) => PASS   earlyReturn=x1 game.js unchanged=True
+MB  P5   CONFIG additive-only (no key removed)          => PASS   removed=none added=['autoBindOnCanvasClick', 'mouse', 'pointerLockSensMult']
+MB  P6   build_v7 + v1/v2/v7 builds untouched           => PASS   build_v7.py ok; v1-playable.html ok; v2-playable.html ok; v7-playable.html ok
+MB  P7-static keyboard handler set intact                    => PASS   missing=none
+MB  P8   dirty-tree scope hygiene                       => FAIL   entries=125 baselineKept=110 extra=['?? tests/artifacts/wh_mousebind_selfrun_v8_devbot.txt', '?? tests/artifacts/wh_mousebind_selfrun_v8_devbot2.txt', '?? tests/artifacts
+---
+P4     drag-cam math identical to HEAD              FAIL :: dy=2.617993877991494 exp=-0.872665 dp=-0.6457718232379019 exp=0.174533
+P5     touch cam pad still steers (pad drag)        FAIL :: dyaw=9.520771069629067 dpitch=0.0
+P2-ctx contextmenu reaches document (captured)      FAIL :: contextFlag=0
+P2-strike LMB strike fires, no cam orbit               FAIL :: stage='windup' dyaw=5.585053606381855
+N2     bind via Backquote (organic)                 FAIL :: locked=False bound=False chip='MOUSE: FREE [`]' plChange=2
+N2a    locked live motion                           FAIL :: skipped: bind failed
+N2b    dispatched movementX/Y                       FAIL :: skipped: bind failed
+N8     lastManualCamT stamp rules                   FAIL :: boundStamp=False freeStamp=True
+N5     canvas LMB = attack+rebind; chip LMB no-rebind FAIL :: rebind=True attack=True chipNoRebind=False
+N6     chip toggle free x2 + bound-dir              FAIL :: bindOnClick=True exit=False free=False boundDir(relock=False unbind=False)
+X-echo five-file sha baseline echo                  FAIL :: head=09712f6cbf2a(ok) drift=['prototype/js/player.js', 'prototype/js/CONFIG.js', 'prototype/index.html', 'prototype/style.css']
+P8     dirty-tree scope hygiene                     FAIL :: entries=125 baselineKept=110 extra=['?? tests/artifacts/wh_mousebind_selfrun_v8_devbot.txt', '?? tests/artifacts/wh_mousebind_selfrun_v8_devbot2.txt', '?? tests
+MB-VALIDATION verdict=FAIL pass=17 record=0 fail=12 artifact=/workspace/witch-hunter/tests/artifacts/wh_mousebind_verdict.json

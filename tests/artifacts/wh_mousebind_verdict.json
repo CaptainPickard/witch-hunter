@@ -1,0 +1,213 @@
+{
+ "round": "mouse-bind-cam",
+ "target": "prototype/builds/v8-playable.html",
+ "mode": "repo",
+ "finalized": false,
+ "verdict": "FAIL",
+ "harness": "tests/wh_mousebind_validation.py",
+ "specOfRecord": "io/specs/mouse-bind-cam-spec.md",
+ "specSha256Run": "3be2f2b439eb38fe052faf8b3e22400092fa13b9994810c730e1e441ebad2f31",
+ "harnessSha256Run": "b231489320370f75581e5eb02475b87fa21b8966e8ab29c0ec9735002760587e",
+ "counts": {
+  "pass": 26,
+  "record": 0,
+  "fail": 3,
+  "total": 29
+ },
+ "console": {
+  "errors": 0,
+  "pageErrors": 0,
+  "assert": "zero on full organic run",
+  "samples": []
+ },
+ "perAc": [
+  {
+   "id": "P9-boot",
+   "status": "PASS",
+   "evidence": "url=http://localhost:8793/index.html loadToPlayer=0.8s bound=False locked=False"
+  },
+  {
+   "id": "N4",
+   "status": "PASS",
+   "evidence": "dyaw=0.0 dpitch=0.0"
+  },
+  {
+   "id": "P4",
+   "status": "PASS",
+   "evidence": "dy=-0.8726646259971648 exp=-0.872665 dp=0.17453292519943298 exp=0.174533"
+  },
+  {
+   "id": "P5",
+   "status": "FAIL",
+   "evidence": "dyaw=0.0 dpitch=0.0"
+  },
+  {
+   "id": "P2-wheel",
+   "status": "PASS",
+   "evidence": "d0=7 d1=7.8 d2=7"
+  },
+  {
+   "id": "P2-block",
+   "status": "PASS",
+   "evidence": "offhand='spell' down(block=False cast={'windup': 0.2, 'cooldown': 0, 'regrip': 0, 'toggling': False}) up(block=False)"
+  },
+  {
+   "id": "P2-ctx",
+   "status": "PASS",
+   "evidence": "contextFlag=1"
+  },
+  {
+   "id": "P2-strike",
+   "status": "PASS",
+   "evidence": "stage='windup' dyaw=0.0"
+  },
+  {
+   "id": "N2",
+   "status": "PASS",
+   "evidence": "locked=True bound=True chip='MOUSE: BOUND [`]' plChange=1"
+  },
+  {
+   "id": "N2a",
+   "status": "PASS",
+   "evidence": "dy=-3.3306690738754696e-16 refPxYaw=0.524"
+  },
+  {
+   "id": "N2b",
+   "status": "PASS",
+   "evidence": "yaw=True pitch=True back=True nostamp=True clamp=True"
+  },
+  {
+   "id": "N8",
+   "status": "PASS",
+   "evidence": "boundStamp=True freeStamp=True"
+  },
+  {
+   "id": "N3",
+   "status": "PASS",
+   "evidence": "locked=False bound=False chip='MOUSE: FREE [`]'"
+  },
+  {
+   "id": "N3-esc",
+   "status": "PASS",
+   "evidence": "rebind=True locked=False bound=False chip='MOUSE: FREE [`]'"
+  },
+  {
+   "id": "N5",
+   "status": "PASS",
+   "evidence": "rebind=True attack=True chipNoRebind=True"
+  },
+  {
+   "id": "N5-off",
+   "status": "PASS",
+   "evidence": "rpl 4 -> 4 with autoBind=false"
+  },
+  {
+   "id": "N6",
+   "status": "PASS",
+   "evidence": "bindOnClick=True exit=True free=True relock=True unbind=True"
+  },
+  {
+   "id": "N7",
+   "status": "PASS",
+   "evidence": "rplCalls=7 armedPress seen=True state=False chip='MOUSE: FREE [`]' consoleErrs=0"
+  },
+  {
+   "id": "N10",
+   "status": "PASS",
+   "evidence": "consoleErrors=0 pageErrors=0"
+  },
+  {
+   "id": "N1",
+   "status": "PASS",
+   "evidence": "rpl/epl=True anchor=['target:88333', 'player.js:367'] chip=True cfg.mouse=True"
+  },
+  {
+   "id": "N9",
+   "status": "PASS",
+   "evidence": "chip=True cfg=True noSrc=True title='Witch Hunter v8 - Mouse Bind Cam'"
+  },
+  {
+   "id": "X-echo",
+   "status": "FAIL",
+   "evidence": "head=09712f6cbf2a(ok) drift=['prototype/js/player.js', 'prototype/js/CONFIG.js', 'prototype/index.html', 'prototype/style.css']"
+  },
+  {
+   "id": "P3",
+   "status": "PASS",
+   "evidence": "sha=051cc722152a2de6"
+  },
+  {
+   "id": "P1-anchor",
+   "status": "PASS",
+   "evidence": "earlyReturn x1 dragBranch=True"
+  },
+  {
+   "id": "P4",
+   "status": "PASS",
+   "evidence": "earlyReturn=x1 game.js unchanged=True"
+  },
+  {
+   "id": "P5",
+   "status": "PASS",
+   "evidence": "removed=none added=['autoBindOnCanvasClick', 'mouse', 'pointerLockSensMult']"
+  },
+  {
+   "id": "P6",
+   "status": "PASS",
+   "evidence": "build_v7.py ok; v1-playable.html ok; v2-playable.html ok; v7-playable.html ok"
+  },
+  {
+   "id": "P7-static",
+   "status": "PASS",
+   "evidence": "missing=none"
+  },
+  {
+   "id": "P8",
+   "status": "FAIL",
+   "evidence": "entries=133 baselineKept=110 extra=['?? tests/artifacts/wh_mousebind_selfrun_v8_devbot.txt', '?? tests/artifacts/wh_mousebind_selfrun_v8_devbot2.txt', '?? tests/artifacts/wh_mousebind_selfrun_v8_iofix.txt', '?? tests/artifacts/wh_mousebind_selfrun_v8_iofix2.txt']"
+  }
+ ],
+ "vehicles": {
+  "N2b": [
+   "dispatched-mouseevent"
+  ],
+  "N3": [
+   "exitPointerLock-hook"
+  ],
+  "N7": [
+   "init-script-fault"
+  ]
+ },
+ "baselineEcho": {
+  "head": "09712f6cbf2aa6ca64322e2ca4cc8ac12968d13a",
+  "files": {
+   "prototype/js/player.js": {
+    "baseSha": "97f0b9659a5c2d8a",
+    "shaNow": "6e1d21f3606bfb34",
+    "status": "drift"
+   },
+   "prototype/js/CONFIG.js": {
+    "baseSha": "7c7eba2ff8c2140d",
+    "shaNow": "e78c199f3a2534e4",
+    "status": "drift"
+   },
+   "prototype/index.html": {
+    "baseSha": "3784a007c5898606",
+    "shaNow": "758246861697bed0",
+    "status": "drift"
+   },
+   "prototype/style.css": {
+    "baseSha": "3ad2a8deefe8a6f9",
+    "shaNow": "31f08c78d74e31a9",
+    "status": "drift"
+   },
+   "prototype/js/touch-controls.js": {
+    "baseSha": "051cc722152a2de6",
+    "shaNow": "051cc722152a2de6",
+    "status": "match"
+   }
+  }
+ },
+ "headVerified": true,
+ "notes": []
+}

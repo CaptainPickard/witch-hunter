@@ -1,0 +1,50 @@
+MB-VALIDATION target=prototype/builds/v8-playable.html mode=repo
+MB  P9-boot boot telemetry record                          => PASS   url=http://localhost:8793/index.html loadToPlayer=0.9s bound=False locked=False
+MB  HARNESS runner                                         => FAIL   unhandled exception TimeoutError('Page.wait_for_function: Timeout 8000ms exceeded.')
+MB  N1   lock JS + chip + CFG.mouse present             => PASS   rpl/epl=True anchor=['target:88333', 'player.js:367'] chip=True cfg.mouse=True
+MB  N9   build artifact checks                          => PASS   chip=True cfg=True noSrc=True title='Witch Hunter v8 - Mouse Bind Cam'
+MB  X-echo five-file sha baseline echo                    => FAIL   head=09712f6cbf2a(ok) drift=['prototype/js/player.js', 'prototype/js/CONFIG.js', 'prototype/index.html', 'prototype/style.css']
+MB  P3   touch-controls.js byte-identical               => PASS   sha=051cc722152a2de6
+MB  P1-anchor drag handler core preserved in player.js       => PASS   earlyReturn x1 dragBranch=True
+MB  P4   lock-on framing untouched (early-return + game.js) => PASS   earlyReturn=x1 game.js unchanged=True
+MB  P5   CONFIG additive-only (no key removed)          => PASS   removed=none added=['autoBindOnCanvasClick', 'mouse', 'pointerLockSensMult']
+MB  P6   build_v7 + v1/v2/v7 builds untouched           => PASS   build_v7.py ok; v1-playable.html ok; v2-playable.html ok; v7-playable.html ok
+MB  P7-static keyboard handler set intact                    => PASS   missing=none
+MB  P8   dirty-tree scope hygiene                       => FAIL   entries=127 baselineKept=110 extra=['?? tests/artifacts/wh_mousebind_selfrun_v8_devbot.txt', '?? tests/artifacts/wh_mousebind_selfrun_v8_devbot2.txt', '?? tests/artifacts
+MB  N2   coverage                                       => FAIL   row never executed
+MB  N2a  coverage                                       => FAIL   row never executed
+MB  N2b  coverage                                       => FAIL   row never executed
+MB  N3   coverage                                       => FAIL   row never executed
+MB  N3-esc coverage                                       => FAIL   row never executed
+MB  N4   coverage                                       => FAIL   row never executed
+MB  N5   coverage                                       => FAIL   row never executed
+MB  N5-off coverage                                       => FAIL   row never executed
+MB  N6   coverage                                       => FAIL   row never executed
+MB  N7   coverage                                       => FAIL   row never executed
+MB  N8   coverage                                       => FAIL   row never executed
+MB  N10  coverage                                       => FAIL   row never executed
+MB  P2-wheel coverage                                       => FAIL   row never executed
+MB  P2-block coverage                                       => FAIL   row never executed
+MB  P2-ctx coverage                                       => FAIL   row never executed
+MB  P2-strike coverage                                       => FAIL   row never executed
+---
+HARNESS runner                                       FAIL :: unhandled exception TimeoutError('Page.wait_for_function: Timeout 8000ms exceeded.')
+X-echo five-file sha baseline echo                  FAIL :: head=09712f6cbf2a(ok) drift=['prototype/js/player.js', 'prototype/js/CONFIG.js', 'prototype/index.html', 'prototype/style.css']
+P8     dirty-tree scope hygiene                     FAIL :: entries=127 baselineKept=110 extra=['?? tests/artifacts/wh_mousebind_selfrun_v8_devbot.txt', '?? tests/artifacts/wh_mousebind_selfrun_v8_devbot2.txt', '?? tests
+N2     coverage                                     FAIL :: row never executed
+N2a    coverage                                     FAIL :: row never executed
+N2b    coverage                                     FAIL :: row never executed
+N3     coverage                                     FAIL :: row never executed
+N3-esc coverage                                     FAIL :: row never executed
+N4     coverage                                     FAIL :: row never executed
+N5     coverage                                     FAIL :: row never executed
+N5-off coverage                                     FAIL :: row never executed
+N6     coverage                                     FAIL :: row never executed
+N7     coverage                                     FAIL :: row never executed
+N8     coverage                                     FAIL :: row never executed
+N10    coverage                                     FAIL :: row never executed
+P2-wheel coverage                                     FAIL :: row never executed
+P2-block coverage                                     FAIL :: row never executed
+P2-ctx coverage                                     FAIL :: row never executed
+P2-strike coverage                                     FAIL :: row never executed
+MB-VALIDATION verdict=FAIL pass=9 record=0 fail=3 artifact=/workspace/witch-hunter/tests/artifacts/wh_mousebind_verdict.json

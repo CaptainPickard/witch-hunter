@@ -588,6 +588,12 @@ window.WH_CONFIG = {
     castFocusTaxMult: 1.25            // spell focus tax while weapon in main hand
   },
 
+  // v8: pointer-lock mouse bind camera (io/specs/mouse-bind-cam-spec.md 4)
+  mouse: {
+    pointerLockSensMult: 0.85,      // bound-mouse multiply on mouseSensDegPerPx
+    autoBindOnCanvasClick: true     // LMB on canvas while free: attack + rebind
+  },
+
   // v7: bound spells (spell-in-hand battle-mage weave, ONE spell in slice)
   spell: {
     firebolt: {

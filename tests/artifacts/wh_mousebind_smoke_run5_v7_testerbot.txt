@@ -1,0 +1,46 @@
+MB-VALIDATION target=prototype/builds/v7-playable.html mode=repo
+MB  P9-boot boot telemetry record                          => PASS   url=http://localhost:8793/index.html loadToPlayer=1.0s bound='MISSING' locked=False
+MB  P5   touch cam pad still steers (pad drag)          => FAIL   dyaw=-3.107821713984879 dpitch=0.0
+MB  N4   free mousemove (no button) inert               => PASS   dyaw=0.0 dpitch=0.0
+MB  P4   drag-cam math identical to HEAD                => PASS   dy=-0.8726646259971648 exp=-0.872665 dp=0.17453292519943298 exp=0.174533
+MB  P2-wheel wheel zoom semantics                           => PASS   d0=7 d1=7.8 d2=7
+MB  P2-block RMB press engages block/cast; release clears   => PASS   offhand='spell' down(block=False cast={'windup': 0, 'cooldown': 0, 'regrip': 0, 'toggling': False}) up(block=False)
+MB  P2-ctx contextmenu reaches document (captured)        => PASS   contextFlag=1
+MB  P2-strike LMB strike fires, no cam orbit                 => PASS   stage='windup' dyaw=0.0
+MB  N2   bind via Backquote (organic)                   => FAIL   locked=False bound='MISSING' chip=None plChange=0
+MB  N2a  locked live motion                             => FAIL   skipped: bind failed
+MB  N2b  dispatched movementX/Y                         => FAIL   skipped: bind failed
+MB  N8   lastManualCamT stamp rules                     => FAIL   boundStamp=False freeStamp=True
+MB  N3   unbind via Backquote (organic)                 => FAIL   locked=False bound='MISSING' chip=None
+MB  N3-esc native exit (Esc-equivalent) chip resync       => FAIL   rebind=False locked=False bound='MISSING' chip=None
+MB  N5   canvas LMB = attack+rebind; chip LMB no-rebind => FAIL   rebind=False attack=True chipNoRebind=None
+MB  N5-off autoBind=false disables canvas rebind          => PASS   rpl 0 -> 0 with autoBind=false
+MB  N6   chip click toggles both directions             => FAIL   chip not found
+MB  N7   rpl throw: no uncaught, stays FREE             => FAIL   rplCalls=0 armedPress seen=False state='MISSING' chip=None consoleErrs=0
+MB  N10  zero console errors, full organic run          => PASS   consoleErrors=0 pageErrors=0
+MB  N1   lock JS + chip + CFG.mouse present             => FAIL   rpl/epl=False anchor=[] chip=False cfg.mouse=False
+MB  N9   build artifact checks                          => FAIL   chip=False cfg=False noSrc=True title='Witch Hunter v7 - Weave Slice'
+MB  X-echo five-file sha baseline echo                    => PASS   head=09712f6cbf2a(ok) drift=none
+MB  P3   touch-controls.js byte-identical               => PASS   sha=051cc722152a2de6
+MB  P1-anchor drag handler core preserved in player.js       => PASS   earlyReturn x1 dragBranch=True
+MB  P4   lock-on framing untouched (early-return + game.js) => PASS   earlyReturn=x1 game.js unchanged=True
+MB  P5   CONFIG additive-only (no key removed)          => PASS   removed=none added=none
+MB  P6   build_v7 + v1/v2/v7 builds untouched           => PASS   build_v7.py ok; v1-playable.html ok; v2-playable.html ok; v7-playable.html ok
+MB  P7-static keyboard handler set intact                    => PASS   missing=none
+MB  P8   dirty-tree scope hygiene                       => FAIL   entries=116 baselineKept=110 extra=['?? tests/artifacts/wh_mousebind_smoke_run2_v7.txt', '?? tests/artifacts/wh_mousebind_smoke_run3_v7_testerbot.txt', '?? tests/artifact
+---
+P5     touch cam pad still steers (pad drag)        FAIL :: dyaw=-3.107821713984879 dpitch=0.0
+N2     bind via Backquote (organic)                 FAIL :: locked=False bound='MISSING' chip=None plChange=0
+N2a    locked live motion                           FAIL :: skipped: bind failed
+N2b    dispatched movementX/Y                       FAIL :: skipped: bind failed
+N8     lastManualCamT stamp rules                   FAIL :: boundStamp=False freeStamp=True
+N3     unbind via Backquote (organic)               FAIL :: locked=False bound='MISSING' chip=None
+N3-esc native exit (Esc-equivalent) chip resync     FAIL :: rebind=False locked=False bound='MISSING' chip=None
+N5     canvas LMB = attack+rebind; chip LMB no-rebind FAIL :: rebind=False attack=True chipNoRebind=None
+N6     chip click toggles both directions           FAIL :: chip not found
+N7     rpl throw: no uncaught, stays FREE           FAIL :: rplCalls=0 armedPress seen=False state='MISSING' chip=None consoleErrs=0
+N1     lock JS + chip + CFG.mouse present           FAIL :: rpl/epl=False anchor=[] chip=False cfg.mouse=False
+N9     build artifact checks                        FAIL :: chip=False cfg=False noSrc=True title='Witch Hunter v7 - Weave Slice'
+P8     dirty-tree scope hygiene                     FAIL :: entries=116 baselineKept=110 extra=['?? tests/artifacts/wh_mousebind_smoke_run2_v7.txt', '?? tests/artifacts/wh_mousebind_smoke_run3_v7_testerbot.txt', '?? test
+MB-VALIDATION verdict=FAIL pass=16 record=0 fail=13 artifact=/workspace/witch-hunter/tests/artifacts/wh_mousebind_verdict.json
+EXIT=0

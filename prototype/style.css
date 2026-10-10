@@ -110,6 +110,23 @@ html, body {
   letter-spacing: 0.5px;
 }
 
+/* --- mouse bind chip (10-05 Nicko: pointer-lock camera bind toggle) --- */
+#wh-mouse-chip {
+  position: absolute;
+  bottom: 14px;
+  right: 16px;
+  font-family: monospace;
+  font-size: 12px;
+  color: #d8d2c0;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid #6a6350;
+  padding: 4px 8px;
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+
 /* --- region name --- */
 #wh-region-name {
   position: absolute;
