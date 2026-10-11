@@ -69,9 +69,12 @@
     return this.fuel >= C.channelSeconds;
   };
 
-  // passive burn: burnTickSec of fuel every burnTickSec seconds
-  Station.prototype.update = function (dt) {
+  // passive burn: burnTickSec of fuel every burnTickSec seconds. CC-C6B: a
+  // fire outside the ACTIVE region pauses (fuel + burnAcc frozen) - it
+  // waits for the player and resumes on return.
+  Station.prototype.update = function (dt, activeRegionId) {
     if (this.cooking || this.fuel <= 0) { this.burnAcc = 0; return; }
+    if (activeRegionId !== undefined && this.regionId !== activeRegionId) return;
     var tick = C.fire.burnTickSec;
     this.burnAcc += dt;
     while (this.burnAcc >= tick && this.fuel > 0) {
@@ -157,7 +160,7 @@
 
   // ---- Cooking (registry + panel + channel) -----------------------------------------
   // opts: { inventory, player, toast(text), onOpenChange(open),
-  //         dropAtFeet(id, count), dayNight }.
+  //         dropAtFeet(id, count), dayNight, activeRegionId() }.
   // onKitButton: set by the camp manager (C3, js/camp.js) - the CAMP press.
   function Cooking(opts) {
     var self = this;
@@ -179,6 +182,7 @@
     this.lastHp = this.player.hp;
     this.toastTimers = [];
     this.dayNight = opts.dayNight || null;   // C2: js/daynight.js clock
+    this.activeRegionId = opts.activeRegionId || null;   // CC-C6B: fn() -> active region id
     this.buffs = new BuffSet(this.dayNight);
     this.mealDay = -1;                // C2: dayNight.day the day's dayMeal was eaten
     this.kitAcquired = false;         // C1 campsite-kit moment (C3: the camp deploy gate)
@@ -481,7 +485,9 @@
   // Per frame: station burn, channel progress + interrupts (hit / death /
   // fire out), panel auto-close on death.
   Cooking.prototype.update = function (dt) {
-    for (var i = 0; i < this.stations.length; i++) this.stations[i].update(dt);
+    // CC-C6B: only the active region's fires burn (no getter = all burn)
+    var active = this.activeRegionId ? this.activeRegionId() : undefined;
+    for (var i = 0; i < this.stations.length; i++) this.stations[i].update(dt, active);
     var heal = this.buffs.update(dt, this.dayNight ? this.dayNight.dayDelta : 0);
     var p = this.player;
     if (this.channel) {

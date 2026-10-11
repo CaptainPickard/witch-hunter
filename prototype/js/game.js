@@ -1791,6 +1791,8 @@
       },
       dropAtFeet: dropAtFeet,
       dayNight: game.dayNight,        // C2: day buffs + meal cap ride the day clock
+      // CC-C6B: fires burn only in the active region (manager built later - getter)
+      activeRegionId: function () { return game.regionManager ? game.regionManager.logic.activeId : null; },
       // L1: every finished cook + the first cook of a recipe earn XP
       onCooked: function (resultId, learned) {
         window.WH_LEVEL.awardXP('cook_meal');
