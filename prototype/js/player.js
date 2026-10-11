@@ -1469,12 +1469,16 @@
     c.spellId = spellId;
     // MAGANIM B4 (R-65.5): presentation one-shot at the windup start - the
     // caster body casts two-handed, a single caster hand one-handed
-    if (this.anim) this.anim.castShot(this.casterMode ? 'Cast2H' : 'Cast1H');
-    // CAST1H (R2): a single-glove main-hand bolt fires at the shot's hand-
-    // extension peak - the same windup clock, stretched (0.46 * 2.3 / 1.5 =
-    // 0.71 s). Only when the Cast1H shot really plays; Cast2H keeps castWindup.
-    if (!this.casterMode && role === 'main' && V7.spell[spellId].kind === 'projectile' &&
-        this.anim && this.anim.castShotKey === 'Cast1H') {
+    // MAGICLASS: the off (left) hand plays the mirrored Cast1H_L
+    var shot1H = role === 'off' ? 'Cast1H_L' : 'Cast1H';
+    if (this.anim) this.anim.castShot(this.casterMode ? 'Cast2H' : shot1H);
+    // CAST1H (R2): a single-glove bolt fires at the shot's hand-extension
+    // peak - the same windup clock, stretched (0.46 * 2.3 / 2.25). Only when
+    // THIS hand's 1H shot really plays (main Cast1H / off Cast1H_L); Cast2H
+    // keeps castWindup.
+    var key = this.anim && this.anim.castShotKey;
+    if (!this.casterMode && V7.spell[spellId].kind === 'projectile' &&
+        ((key === 'Cast1H' && role === 'main') || (key === 'Cast1H_L' && role === 'off'))) {
       var K = window.WH_CONFIG.assets.caster;
       c.windup = Math.max(0, c.windup, K.fire1HFraction * K.cast1HClipSeconds / K.castShotSpeed);
     }

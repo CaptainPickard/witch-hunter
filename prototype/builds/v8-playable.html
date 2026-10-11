@@ -89704,12 +89704,15 @@ window.WH_CONFIG.startingClasses = (function (C) {
     },
     magician: {
       label: 'Magician',
-      lines: ['Magic gloves in both hands', 'Dagger, bandage - knows Firebolt + Radiance'],
-      // DAG (2026-10-09): + the dagger as a CLASS-EXTRA row (grid only; not
-      // in inventory.startingItems, so the no-class fallback kit is unchanged)
-      kit: [kitRow('magicGlove', 0), kitRow('magicGlove', 1), kitRow('bandage'),
-            { id: 'dagger', count: 1 }],
-      hands: { right: HANDS.left, left: HANDS.left },
+      lines: ['Dagger right, magic glove left', 'Bandage - knows Firebolt + Radiance'],
+      // DAG (2026-10-09): the dagger is a CLASS-EXTRA row (not in
+      // inventory.startingItems, so the no-class fallback kit is unchanged).
+      // MAGICLASS (2026-10-11): dagger in the right hand, one glove left (the
+      // second glove stays in the grid); the left glove casts the off binding
+      // (slot 0 = Firebolt) with the mirrored Cast1H_L shot.
+      kit: [{ id: 'dagger', count: 1 }, kitRow('magicGlove', 0), kitRow('magicGlove', 1),
+            kitRow('bandage')],
+      hands: { right: 'dagger', left: HANDS.left },
       spells: SPELLS.slice(),
       belt: [barSlot(SPELLS[0]), barSlot(SPELLS[1]), null, null, null]
     }
@@ -90624,7 +90627,7 @@ window.WH_ICONS = {
   // here was off by one - the GLB census is 28).
   // MAGANIM Phase A: 42 = 28 + 14 WH_Mag_* (Lite Magic Pack, 5477e98).
   // DAG: playerDagClips 9 = 6 whanim1 + 3 WH_Dag* (clip source only).
-  var CHARACTERS = { playerBody: 42, banditBody: 6, ghoulBody: 6, playerDagClips: 9 };
+  var CHARACTERS = { playerBody: 43, banditBody: 6, ghoulBody: 6, playerDagClips: 9 };
   var failed = {};     // logical name -> true (stand-in substituted)
   var loadedCount = 0;
   var GROUND_META = {}; // holder uuid -> measured height, width, raw groundMinY
@@ -91123,7 +91126,8 @@ window.WH_ICONS = {
     magIdle: 'WH_Mag_Idle02', magWalk: 'WH_Mag_WalkF', magWalkBack: 'WH_Mag_WalkB',
     magRun: 'WH_Mag_RunF', magRunBack: 'WH_Mag_RunB', magHitSmall: 'WH_Mag_ReactSmall',
     magHitLarge: 'WH_Mag_ReactLarge', magDeath: 'WH_Mag_DeathBack',
-    Cast1H: 'WH_Mag_Cast1H', Cast2H: 'WH_Mag_Cast2H'
+    Cast1H: 'WH_Mag_Cast1H', Cast2H: 'WH_Mag_Cast2H',
+    Cast1H_L: 'WH_Mag_Cast1H_L'       // MAGICLASS: mirrored Cast1H, off (left) hand casts
   };
   var MODES = {
     warrior: {},
@@ -91137,7 +91141,8 @@ window.WH_ICONS = {
   var LOOPED = { magIdle: true, magWalk: true, magWalkBack: true, magRun: true, magRunBack: true };
   var HIT_KEYS = { hit: true, magHitSmall: true, magHitLarge: true };
   var DEATH_KEYS = { death: true, magDeath: true };
-  var CAST_SHOTS = { Cast1H: true, Cast2H: true };
+  var CAST_SHOTS = { Cast1H: true, Cast2H: true, Cast1H_L: true };
+  var CAST_1H = { Cast1H: true, Cast1H_L: true };   // MAGICLASS: the 1H shots (either hand)
   function CASTER() { return window.WH_CONFIG.assets.caster; }
   // CAST1H2: a clip's tracks whose node (track name up to the first '.') is in
   // `nodes` - GLTFLoader track names are '<NodeName>.<property>', node names
@@ -91230,7 +91235,7 @@ window.WH_ICONS = {
       if (!clip) return;
       // CAST1H2 (R10): the 1H shot's action runs the upper-node tracks only
       // (same duration); this.clips keeps the full clip untouched.
-      if (key === 'Cast1H' && CASTER().castUpperBody) {
+      if (CAST_1H[key] && CASTER().castUpperBody) {
         clip = new THREE.AnimationClip(clip.name + '__upper', clip.duration,
           nodeTracks(clip, CASTER().castUpperNodes));
         self.castUpper = true;
@@ -91356,7 +91361,7 @@ window.WH_ICONS = {
     }
   };
 
-  // MAGANIM (R-65.5): presentation-only cast one-shot ('Cast1H' | 'Cast2H')
+  // MAGANIM (R-65.5): presentation-only cast one-shot ('Cast1H' | 'Cast1H_L' | 'Cast2H')
   // from player.tryCast. Repeat guard: the same shot still running is not
   // re-triggered. The attack chain owns the body while a swing runs (a
   // windup weave cast shows no shot). Completion clamps; the next sync frame
@@ -91372,10 +91377,10 @@ window.WH_ICONS = {
     var action = CAST_SHOTS[shot] ? this.actions[shot] : null;
     if (this.dead || this.attackPhase || !action) { this.castShotKey = null; return; }
     if (this.clip === shot && action.isRunning()) { this.castShotKey = shot; return; }
-    if (shot === 'Cast1H' && this.castUpper) { this.castOverlay(action); return; }
+    if (CAST_1H[shot] && this.castUpper) { this.castOverlay(action, shot); return; }
     this.transition(shot, CFG.oneShotFadeSeconds, true);
     if (this.clip !== shot) { this.castShotKey = null; return; }
-    if (shot === 'Cast1H') action.timeScale = CASTER().castShotSpeed;
+    if (CAST_1H[shot]) action.timeScale = CASTER().castShotSpeed;
     this.castShotKey = shot;
   };
 
@@ -91420,7 +91425,9 @@ window.WH_ICONS = {
   // transition(): the legs keep the current locomotion on its lower variant
   // while the torso-only shot fades in. Same lifecycle as round 1 (clip =
   // 'Cast1H', castShotKey, clamp hold, exit through transition()).
-  CharacterAnim.prototype.castOverlay = function (action) {
+  // MAGICLASS: shot = 'Cast1H' | 'Cast1H_L' (the mirrored off-hand shot).
+  CharacterAnim.prototype.castOverlay = function (action, shot) {
+    shot = shot || 'Cast1H';
     var fade = CFG.oneShotFadeSeconds;
     var key = this.resolve(this.locomotion);
     var full = this.actions[key];
@@ -91456,8 +91463,8 @@ window.WH_ICONS = {
     action.play();
     action.timeScale = CASTER().castShotSpeed;
     this.hitActive = false;
-    this.clip = 'Cast1H';
-    this.castShotKey = 'Cast1H';
+    this.clip = shot;
+    this.castShotKey = shot;
     this.lowerActive = legs.getClip().name;
   };
 
@@ -96166,12 +96173,16 @@ window.WH_ICONS = {
     c.spellId = spellId;
     // MAGANIM B4 (R-65.5): presentation one-shot at the windup start - the
     // caster body casts two-handed, a single caster hand one-handed
-    if (this.anim) this.anim.castShot(this.casterMode ? 'Cast2H' : 'Cast1H');
-    // CAST1H (R2): a single-glove main-hand bolt fires at the shot's hand-
-    // extension peak - the same windup clock, stretched (0.46 * 2.3 / 1.5 =
-    // 0.71 s). Only when the Cast1H shot really plays; Cast2H keeps castWindup.
-    if (!this.casterMode && role === 'main' && V7.spell[spellId].kind === 'projectile' &&
-        this.anim && this.anim.castShotKey === 'Cast1H') {
+    // MAGICLASS: the off (left) hand plays the mirrored Cast1H_L
+    var shot1H = role === 'off' ? 'Cast1H_L' : 'Cast1H';
+    if (this.anim) this.anim.castShot(this.casterMode ? 'Cast2H' : shot1H);
+    // CAST1H (R2): a single-glove bolt fires at the shot's hand-extension
+    // peak - the same windup clock, stretched (0.46 * 2.3 / 2.25). Only when
+    // THIS hand's 1H shot really plays (main Cast1H / off Cast1H_L); Cast2H
+    // keeps castWindup.
+    var key = this.anim && this.anim.castShotKey;
+    if (!this.casterMode && V7.spell[spellId].kind === 'projectile' &&
+        ((key === 'Cast1H' && role === 'main') || (key === 'Cast1H_L' && role === 'off'))) {
       var K = window.WH_CONFIG.assets.caster;
       c.windup = Math.max(0, c.windup, K.fire1HFraction * K.cast1HClipSeconds / K.castShotSpeed);
     }

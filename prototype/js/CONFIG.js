@@ -2533,12 +2533,15 @@ window.WH_CONFIG.startingClasses = (function (C) {
     },
     magician: {
       label: 'Magician',
-      lines: ['Magic gloves in both hands', 'Dagger, bandage - knows Firebolt + Radiance'],
-      // DAG (2026-10-09): + the dagger as a CLASS-EXTRA row (grid only; not
-      // in inventory.startingItems, so the no-class fallback kit is unchanged)
-      kit: [kitRow('magicGlove', 0), kitRow('magicGlove', 1), kitRow('bandage'),
-            { id: 'dagger', count: 1 }],
-      hands: { right: HANDS.left, left: HANDS.left },
+      lines: ['Dagger right, magic glove left', 'Bandage - knows Firebolt + Radiance'],
+      // DAG (2026-10-09): the dagger is a CLASS-EXTRA row (not in
+      // inventory.startingItems, so the no-class fallback kit is unchanged).
+      // MAGICLASS (2026-10-11): dagger in the right hand, one glove left (the
+      // second glove stays in the grid); the left glove casts the off binding
+      // (slot 0 = Firebolt) with the mirrored Cast1H_L shot.
+      kit: [{ id: 'dagger', count: 1 }, kitRow('magicGlove', 0), kitRow('magicGlove', 1),
+            kitRow('bandage')],
+      hands: { right: 'dagger', left: HANDS.left },
       spells: SPELLS.slice(),
       belt: [barSlot(SPELLS[0]), barSlot(SPELLS[1]), null, null, null]
     }

@@ -80,7 +80,8 @@
     magIdle: 'WH_Mag_Idle02', magWalk: 'WH_Mag_WalkF', magWalkBack: 'WH_Mag_WalkB',
     magRun: 'WH_Mag_RunF', magRunBack: 'WH_Mag_RunB', magHitSmall: 'WH_Mag_ReactSmall',
     magHitLarge: 'WH_Mag_ReactLarge', magDeath: 'WH_Mag_DeathBack',
-    Cast1H: 'WH_Mag_Cast1H', Cast2H: 'WH_Mag_Cast2H'
+    Cast1H: 'WH_Mag_Cast1H', Cast2H: 'WH_Mag_Cast2H',
+    Cast1H_L: 'WH_Mag_Cast1H_L'       // MAGICLASS: mirrored Cast1H, off (left) hand casts
   };
   var MODES = {
     warrior: {},
@@ -94,7 +95,8 @@
   var LOOPED = { magIdle: true, magWalk: true, magWalkBack: true, magRun: true, magRunBack: true };
   var HIT_KEYS = { hit: true, magHitSmall: true, magHitLarge: true };
   var DEATH_KEYS = { death: true, magDeath: true };
-  var CAST_SHOTS = { Cast1H: true, Cast2H: true };
+  var CAST_SHOTS = { Cast1H: true, Cast2H: true, Cast1H_L: true };
+  var CAST_1H = { Cast1H: true, Cast1H_L: true };   // MAGICLASS: the 1H shots (either hand)
   function CASTER() { return window.WH_CONFIG.assets.caster; }
   // CAST1H2: a clip's tracks whose node (track name up to the first '.') is in
   // `nodes` - GLTFLoader track names are '<NodeName>.<property>', node names
@@ -187,7 +189,7 @@
       if (!clip) return;
       // CAST1H2 (R10): the 1H shot's action runs the upper-node tracks only
       // (same duration); this.clips keeps the full clip untouched.
-      if (key === 'Cast1H' && CASTER().castUpperBody) {
+      if (CAST_1H[key] && CASTER().castUpperBody) {
         clip = new THREE.AnimationClip(clip.name + '__upper', clip.duration,
           nodeTracks(clip, CASTER().castUpperNodes));
         self.castUpper = true;
@@ -313,7 +315,7 @@
     }
   };
 
-  // MAGANIM (R-65.5): presentation-only cast one-shot ('Cast1H' | 'Cast2H')
+  // MAGANIM (R-65.5): presentation-only cast one-shot ('Cast1H' | 'Cast1H_L' | 'Cast2H')
   // from player.tryCast. Repeat guard: the same shot still running is not
   // re-triggered. The attack chain owns the body while a swing runs (a
   // windup weave cast shows no shot). Completion clamps; the next sync frame
@@ -329,10 +331,10 @@
     var action = CAST_SHOTS[shot] ? this.actions[shot] : null;
     if (this.dead || this.attackPhase || !action) { this.castShotKey = null; return; }
     if (this.clip === shot && action.isRunning()) { this.castShotKey = shot; return; }
-    if (shot === 'Cast1H' && this.castUpper) { this.castOverlay(action); return; }
+    if (CAST_1H[shot] && this.castUpper) { this.castOverlay(action, shot); return; }
     this.transition(shot, CFG.oneShotFadeSeconds, true);
     if (this.clip !== shot) { this.castShotKey = null; return; }
-    if (shot === 'Cast1H') action.timeScale = CASTER().castShotSpeed;
+    if (CAST_1H[shot]) action.timeScale = CASTER().castShotSpeed;
     this.castShotKey = shot;
   };
 
@@ -377,7 +379,9 @@
   // transition(): the legs keep the current locomotion on its lower variant
   // while the torso-only shot fades in. Same lifecycle as round 1 (clip =
   // 'Cast1H', castShotKey, clamp hold, exit through transition()).
-  CharacterAnim.prototype.castOverlay = function (action) {
+  // MAGICLASS: shot = 'Cast1H' | 'Cast1H_L' (the mirrored off-hand shot).
+  CharacterAnim.prototype.castOverlay = function (action, shot) {
+    shot = shot || 'Cast1H';
     var fade = CFG.oneShotFadeSeconds;
     var key = this.resolve(this.locomotion);
     var full = this.actions[key];
@@ -413,8 +417,8 @@
     action.play();
     action.timeScale = CASTER().castShotSpeed;
     this.hitActive = false;
-    this.clip = 'Cast1H';
-    this.castShotKey = 'Cast1H';
+    this.clip = shot;
+    this.castShotKey = shot;
     this.lowerActive = legs.getClip().name;
   };
 
