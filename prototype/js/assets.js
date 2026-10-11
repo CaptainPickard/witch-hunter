@@ -114,6 +114,10 @@
     // 10-05: rigged copy + 7 Mixamo WH_*_Zombie clips (13 total).
     // Rollback: undead-ghoul-male.rigged.glb
     ghoulBody: 'art-direction/3d/assets/races_regen/rigged/undead-ghoul-male.mixamo.glb',
+    // CC-C5 (2026-10-11): the rigged wolf (21 joints, 6 WH_Wolf_* clips; the
+    // 512px 5-bit atlas is embedded - mesh/skin/clips byte-identical to
+    // wolf.rigged.glb, so no BODY_PNG row). Region C packs only.
+    wolfBody: 'art-direction/3d/assets/races_regen/rigged/wolf.rigged.pixelated.glb',
 
     // weapons (pixelated)
     longsword: 'art-direction/3d/assets/weapons/longsword-pixelated.glb',
@@ -173,7 +177,8 @@
   // here was off by one - the GLB census is 28).
   // MAGANIM Phase A: 42 = 28 + 14 WH_Mag_* (Lite Magic Pack, 5477e98).
   // DAG: playerDagClips 9 = 6 whanim1 + 3 WH_Dag* (clip source only).
-  var CHARACTERS = { playerBody: 43, banditBody: 6, ghoulBody: 6, playerDagClips: 9 };
+  // CC-C5: wolfBody 6 = WH_Wolf_Idle/Walk/Run/Attack1/Hit/Death.
+  var CHARACTERS = { playerBody: 43, banditBody: 6, ghoulBody: 6, playerDagClips: 9, wolfBody: 6 };
   var failed = {};     // logical name -> true (stand-in substituted)
   var loadedCount = 0;
   var GROUND_META = {}; // holder uuid -> measured height, width, raw groundMinY

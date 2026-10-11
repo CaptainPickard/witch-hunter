@@ -68,6 +68,19 @@
         attack: 'WH_Attack1', hit: 'WH_Hit', death: 'WH_Death'
       },
       moves: MOVE_NAMES
+    },
+    // CC-C5: the rigged wolf (wolf.rigged.pixelated.glb, WH_Wolf_* family).
+    // Patrol walks, chase / regroup runs, the lunge bite is the attack clip.
+    // attackSegs = the bite's own segment edges (clip fractions, measured
+    // from the GLB keys): rear shift (jaw opens, spine back) 0..0.24 s, the
+    // snap (jaw shut, neck forward) 0.24..0.39 s, recover to 0.70 s.
+    wolf: {
+      names: {
+        idle: 'WH_Wolf_Idle', walk: 'WH_Wolf_Walk', run: 'WH_Wolf_Run',
+        attack: 'WH_Wolf_Attack1', hit: 'WH_Wolf_Hit', death: 'WH_Wolf_Death'
+      },
+      moves: {},
+      attackSegs: [0.24 / 0.7, 0.39 / 0.7]
     }
   };
   // MAGANIM (doc 65 R-65.3..R-65.5): player body MODE (setVariant), apart
@@ -123,6 +136,7 @@
     this.clips = clips;
     this.names = {};
     this.moveNames = variant ? variant.moves : MOVE_NAMES;
+    this.attackSegs = variant && variant.attackSegs || null;   // CC-C5 (wolf only)
     this.mixer = new THREE.AnimationMixer(body);
     this.actions = {};
     this.clip = null;
@@ -512,6 +526,9 @@
       var total = Math.max(1e-4, durations[0] + durations[1] + durations[2]);
       a = clip.duration * durations[0] / total;
       b = clip.duration * (durations[0] + durations[1]) / total;
+    } else if (this.attackSegs) {
+      a = clip.duration * this.attackSegs[0];
+      b = clip.duration * this.attackSegs[1];
     } else {
       a = clip.duration * CFG.attackClipStrikeFraction;
       b = a * 2;

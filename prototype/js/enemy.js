@@ -39,6 +39,25 @@
       (P.cast.off && P.cast.off.windup > 0));
   }
 
+  // CC-C5 NIGHT BOLDNESS: the landed clock's phase only (no new state)
+  function isNight() {
+    var dn = window.WH_GAME ? window.WH_GAME.dayNight : null;
+    return !!dn && dn.phase === 'night';
+  }
+
+  // Sight radius this frame: x nightBoldnessMult at night for a type that
+  // carries one (wolf); every other type reads cfg.sightRadius unchanged.
+  function sightFor(enemy) {
+    var m = enemy.cfg.nightBoldnessMult;
+    return m && isNight() ? enemy.cfg.sightRadius * m : enemy.cfg.sightRadius;
+  }
+
+  // CC-C5: type -> manifest body (CONFIG.enemy.bodyByType; unknown -> the
+  // old ternary's ghoulBody). region-manager buildRegion reads it too.
+  function bodyNameFor(type) {
+    return (CFG.bodyByType && CFG.bodyByType[type]) || 'ghoulBody';
+  }
+
   function Enemy(type, scene, homeRegionId, spawnX, spawnZ) {
     this.type = type;
     this.cfg = cfgFor(type);
@@ -82,7 +101,20 @@
     this.ai1Strafing = false;          // inside strafeBandOuter this frame
     this.ai1GuardActive = false;       // guard posture raised (takeDamage mitigation)
     this.ai1GuardT = 0;                // seconds the guard has been held
+    // CC-C5: live-enemy ground feed (guard per home region: A/B have no
+    // heightfield, so their pos.y / root y stay exactly as before)
+    this.terrainHome = !!(window.WH_GROUND && window.WH_GROUND.has(homeRegionId));
+    // CC-C5 pack state (DERIVED by WH_Enemy.buildPacks at region build,
+    // never persisted; null / false for every non-pack enemy)
+    this.pack = null;                  // the pack record this member belongs to
+    this.packGoal = null;              // { x, z, speed, gain } patrol slot / regroup / anchor
+    this.packRegroup = false;          // beyond leashFromCentroid: running back, refuses pulls
   }
+
+  // CC-C5: the home region's ground under the enemy (0 off-terrain)
+  Enemy.prototype.groundY = function () {
+    return this.terrainHome ? window.WH_GROUND.heightAt(this.homeRegionId, this.pos.x, this.pos.z) : 0;
+  };
 
   Enemy.prototype.setBody = function (meshRoot) {
     if (this.body) this.yawFrame.remove(this.body);
@@ -91,11 +123,13 @@
     this.bodyBaseRotX = meshRoot.rotation.x || 0;   // Order D deflect overlay base
     this.bodyBaseRotY = meshRoot.rotation.y || 0;
     this.yawFrame.add(this.body);
-    var bodyName = this.type === 'bandit' ? 'banditBody' : 'ghoulBody';
+    var bodyName = bodyNameFor(this.type);
     if (window.WH_ASSETS.getClips(bodyName).length) {
       // 10-05: ghouls play the Mixamo zombie set, bandits the Mixamo axe set.
+      // CC-C5: wolves the WH_Wolf_* set (CONFIG.enemy.animVariantByType;
+      // unknown types keep the old 'bandit' fallback).
       this.anim = new window.WH_CharacterAnim(meshRoot, window.WH_ASSETS.getClips(bodyName),
-        { variant: this.type === 'ghoul' ? 'zombie' : 'bandit' });
+        { variant: (CFG.animVariantByType && CFG.animVariantByType[this.type]) || 'bandit' });
     }
     // Rigged bandits carry the axe on the animated hand, not a world pivot.
     var hand = meshRoot.getObjectByName('R_Hand');
@@ -153,6 +187,9 @@
   // The FSM stops on death, but the visual fall must continue to settle.
   Enemy.prototype.updateDeathVisual = function (dt) {
     if (!this.body) return;
+    // CC-C5: a corpse restored by a region rebuild never ran a live update -
+    // stand it on its ground before it is posed / measured (A/B: never)
+    if (this.terrainHome && this.corpseFinalY === null) this.pos.y = this.groundY();
     // A rig without WH_Death (CharacterAnim warns) takes the rigid fall below.
     if (this.anim && this.anim.actions.death) {
       // deadFall 1 before the clip ever ran = corpse restored by a region
@@ -179,19 +216,22 @@
     }
     if (this.corpseFinalY === null) {
       this.root.position.copy(this.pos);
+      this.root.position.y = 0;          // CC-C5: measure over y = 0 (pos.y = ground in C)
       this.yawFrame.rotation.y = this.yaw;
       this.body.position.y = this.bodyBaseY || 0;
       this.body.rotation.set(-Math.PI / 2, 0, 0);
       // Include the equipped axe: the validation box spans the whole corpse.
       var minY = new THREE.Box3().setFromObject(this.root).min.y;
       // A root translation has the opposite sign to the measured minimum.
-      this.corpseFinalY = isFinite(minY) ? -minY + 0.01 : 0;
+      // CC-C5: + the ground term (A/B: pos.y 0), as the rigged path above.
+      this.corpseFinalY = (isFinite(minY) ? -minY + 0.01 : 0) + this.pos.y;
     }
     if (this.settleTime < 0 && this.deadFall >= 1) this.settleTime = 0;
     if (this.settleTime < 0) {
       this.deadFall = Math.min(1, this.deadFall + dt * 2.5);
       this.body.rotation.x = -this.deadFall * Math.PI / 2;
-      this.root.position.y = this.deadFall * this.corpseFinalY;
+      // CC-C5: falls from its ground (A/B: pos.y 0 = deadFall x corpseFinalY)
+      this.root.position.y = this.pos.y + this.deadFall * (this.corpseFinalY - this.pos.y);
     } else {
       this.settleTime += dt;
       var sp = Math.min(1, this.settleTime / ANIM.death.settleDuration);
@@ -246,6 +286,7 @@
       (this.pos.z - this.spawn.z) * (this.pos.z - this.spawn.z)
     );
     var ai1 = ai1For(this);
+    var sight = sightFor(this);          // CC-C5: x nightBoldnessMult at night (wolf)
 
     // ---- transitions ----
     // v6: parry stagger. Full lockdown while riposteStaggerTimer runs: no FSM
@@ -254,7 +295,7 @@
     if (this.riposteStaggerTimer > 0) {
       this.riposteStaggerTimer = Math.max(0, this.riposteStaggerTimer - dt);
       if (this.riposteStaggerTimer <= 0) {
-        this.setFsm(distToPlayer <= this.cfg.sightRadius ? 'chase' : 'idle');
+        this.setFsm(distToPlayer <= sight ? 'chase' : 'idle');
       } else {
         // decay bob so the layered cycle does not freeze mid-pose
         this.bobPhase += dt * 3;
@@ -263,6 +304,8 @@
         if (this.body) {
           this.root.position.x = this.pos.x;
           this.root.position.z = this.pos.z;
+          // CC-C5: the recoil slides over the hills (terrain homes only)
+          if (this.terrainHome) this.root.position.y = this.pos.y = this.groundY();
           this.applyDeflectPose(this.anim ? this.bodyBaseRotX : 0,
             this.anim ? this.bodyBaseRotY : 0);
         }
@@ -270,7 +313,9 @@
       }
     }
     if (this.fsm === 'stagger') {
-      if (this.fsmTime >= this.cfg.staggerTime) this.setFsm('chase');
+      // CC-C5: a regrouping pack member shrugs the hit off and keeps running
+      // to its pack (solo-pull refusal); everyone else chases as before
+      if (this.fsmTime >= this.cfg.staggerTime) this.setFsm(this.packRegroup ? 'idle' : 'chase');
     } else if (this.fsm === 'attack') {
       if (!playerAlive) {
         this.setFsm('idle');
@@ -318,17 +363,19 @@
         }
       }
     } else if (this.fsm === 'idle' || this.fsm === 'aggro') {
-      if (playerAlive && distToPlayer <= this.cfg.sightRadius) {
+      // CC-C5: nobody solo-pulls - a regrouping pack member refuses every pull
+      var canPull = !this.packRegroup;
+      if (canPull && playerAlive && distToPlayer <= sight) {
         this.setFsm('aggro');            // idle/aggro both walk home below
       }
-      if (playerAlive && distToPlayer <= this.cfg.sightRadius * 0.8) {
+      if (canPull && playerAlive && distToPlayer <= sight * 0.8) {
         this.setFsm('chase');
       }
       if (ai1) {
         this.ai1Press = false;
         this.ai1GuardActive = false;   // disengaged: no posture left raised
         // AI1 R2: inside alwaysKnowsRadius the bandit engages even in darkness
-        if (playerAlive && distToPlayer < ai1.alwaysKnowsRadius) this.setFsm('chase');
+        if (canPull && playerAlive && distToPlayer < ai1.alwaysKnowsRadius) this.setFsm('chase');
       }
     } else if (this.fsm === 'chase') {
       if (!playerAlive || distToPlayer > this.cfg.leashRadius || distToSpawn > this.cfg.leashRadius) {
@@ -381,7 +428,19 @@
         ai1Face = true;
       }
     } else if (this.fsm === 'idle' || this.fsm === 'aggro') {
-      if (distToSpawn > 0.5) {
+      if (this.packGoal) {
+        // CC-C5: a pack member walks its patrol slot (eased: no stop-go),
+        // runs to the centroid while regrouping, or walks to the hunt anchor
+        // (goals written by WH_Enemy.updatePacks before this update)
+        var g = this.packGoal;
+        var gdx = g.x - this.pos.x, gdz = g.z - this.pos.z;
+        var gd = Math.sqrt(gdx * gdx + gdz * gdz);
+        if (gd > 0.3) {
+          moveSpeed = g.gain ? Math.min(g.speed, gd * g.gain) : g.speed;
+          dirX = gdx / gd;
+          dirZ = gdz / gd;
+        }
+      } else if (distToSpawn > 0.5) {
         moveSpeed = this.cfg.moveSpeed;
         dirX = (this.spawn.x - this.pos.x) / distToSpawn;
         dirZ = (this.spawn.z - this.pos.z) / distToSpawn;
@@ -419,6 +478,10 @@
     if (boundary && regionManager) {
       regionManager.clampEnemyToHomeSide(this, boundary);
     }
+    // CC-C5 LIVE-ENEMY GROUND FEED (deferred from CC-C4): a terrain home
+    // stands the enemy on its ground (pos.y, like the player's y-feed, so the
+    // HP bar / lock reticle ride it too); A/B never write it (stays 0).
+    if (this.terrainHome) this.pos.y = this.groundY();
 
     // ---- visual ----
     this.animMoveSpeed = moveSpeed;
@@ -433,7 +496,10 @@
           var hopFraction = this.hopTimer / ANIM.ghoulHop.duration;
           hopYAnim = 4 * hopFraction * (1 - hopFraction) * ANIM.ghoulHop.height;
         }
-        this.root.position.y = hopYAnim;
+        // CC-C5: + the ground term (A/B: pos.y 0). The body pin (holder y =
+        // -groundMinY x scale) seats the paws / feet ON the root, and this
+        // path returns before the idle re-level below: no double apply.
+        this.root.position.y = hopYAnim + this.pos.y;
         this.applyDeflectPose(this.bodyBaseRotX, this.bodyBaseRotY);
         return;
       }
@@ -462,7 +528,7 @@
         var stagT = this.staggerTimer > 0
           ? this.staggerTimer / ANIM.stagger.visualDuration : 0;
         var stagLean = stagT > 0 ? ANIM.stagger.leanBack * stagT : 0;
-        this.root.position.y = hopY + eBob * 0.4;
+        this.root.position.y = hopY + eBob * 0.4 + this.pos.y;   // CC-C5 ground term (A/B 0)
         this.body.rotation.x = eLean + stagLean;
         this.body.rotation.z = eRoll;
         this.body.position.x = eSway;
@@ -498,9 +564,11 @@
         this.applyDeflectPose(this.body.rotation.x, this.body.rotation.y, true);
       }
       // Idle patrol poses can tilt the low mesh below or above the floor.
+      // CC-C5: re-level onto the SAME ground term (pos.y; A/B 0 = as before),
+      // not onto y = 0 - else a stand-in on a hill would be pulled under it.
       if (this.fsm === 'idle' && this.hopTimer < 0) {
         var idleMinY = new THREE.Box3().setFromObject(this.root).min.y;
-        if (isFinite(idleMinY)) this.root.position.y -= idleMinY;
+        if (isFinite(idleMinY)) this.root.position.y -= idleMinY - this.pos.y;
       }
     }
   };
@@ -534,7 +602,8 @@
     }
     // a press swings the moment it reaches attackRadius
     if (this.ai1Press && dist <= ai.attackRadius) {
-      this.ai1StartAttack();
+      if (this.lungeSlotFree()) this.ai1StartAttack();
+      else this.ai1Press = false;      // CC-C5 relay: no slot - back to the orbit
       return;
     }
     if (!this.ai1Strafing) {
@@ -562,6 +631,7 @@
     var opening = !!P && (P.guardBroken ||
       (dist <= ai.attackRadius && P.attacking && P.getAttackStage() === 'recover'));
     if (opening || Math.random() < ai.attackBias) {
+      if (!this.lungeSlotFree()) return;   // CC-C5 relay: keep circling until a slot frees
       if (dist <= ai.attackRadius) this.ai1StartAttack();
       else this.ai1Press = true;
     }
@@ -706,8 +776,219 @@
     }
   };
 
+  // ---- CC-C5 WOLF PACKS (doc 62 sec 5.1) ------------------------------------
+  // Contained here (no new script file: index.html stays untouched). A pack =
+  // the alive enemies whose CONFIG row carries its packId, on a closed
+  // waypoint loop (CONFIG.enemy.wolfPacks). Pack FSM: patrol / regroup / hunt.
+  // Everything below is DERIVED at buildRegion from the alive / dead list and
+  // otherwise ephemeral: region persistence only stores the dead, so a
+  // partial kill + region swap (or save / load) rebuilds packs of survivors.
+
+  // Closed loop: points, cumulative arc length per vertex, total length.
+  function makeLoop(points) {
+    var cum = [0], total = 0;
+    for (var i = 0; i < points.length; i++) {
+      var a = points[i], b = points[(i + 1) % points.length];
+      total += Math.sqrt((b[0] - a[0]) * (b[0] - a[0]) + (b[1] - a[1]) * (b[1] - a[1]));
+      cum.push(total);
+    }
+    return { pts: points, cum: cum, total: total };
+  }
+
+  // Point + unit travel direction at arc length s (wraps both ways).
+  function loopAt(loop, s) {
+    var n = loop.pts.length;
+    s = ((s % loop.total) + loop.total) % loop.total;
+    var i = 0;
+    while (i < n - 1 && loop.cum[i + 1] <= s) i++;
+    var a = loop.pts[i], b = loop.pts[(i + 1) % n];
+    var len = loop.cum[i + 1] - loop.cum[i];
+    var t = len > 0 ? (s - loop.cum[i]) / len : 0;
+    var tx = len > 0 ? (b[0] - a[0]) / len : 0, tz = len > 0 ? (b[1] - a[1]) / len : 1;
+    return { x: a[0] + (b[0] - a[0]) * t, z: a[1] + (b[1] - a[1]) * t, tx: tx, tz: tz };
+  }
+
+  // Arc length of the loop point nearest (x, z).
+  function loopProject(loop, x, z) {
+    var n = loop.pts.length, best = Infinity, bestS = 0;
+    for (var i = 0; i < n; i++) {
+      var a = loop.pts[i], b = loop.pts[(i + 1) % n];
+      var len = loop.cum[i + 1] - loop.cum[i];
+      if (!(len > 0)) continue;
+      var tx = (b[0] - a[0]) / len, tz = (b[1] - a[1]) / len;
+      var t = Math.max(0, Math.min(len, (x - a[0]) * tx + (z - a[1]) * tz));
+      var px = a[0] + tx * t - x, pz = a[1] + tz * t - z;
+      var d2 = px * px + pz * pz;
+      if (d2 < best) { best = d2; bestS = loop.cum[i] + t; }
+    }
+    return bestS;
+  }
+
+  // Patrol slot of rank r behind the lead at arc length s: rank x
+  // slotSpacingM back along the loop, odd ranks slotLateralM to the right
+  // of travel, even ranks (> 0) to the left (rank 0 rides the line).
+  function packSlot(loop, s, rank, P) {
+    var q = loopAt(loop, s - rank * P.slotSpacingM);
+    var side = rank === 0 ? 0 : (rank % 2 ? 1 : -1) * P.slotLateralM;
+    return { x: q.x - q.tz * side, z: q.z + q.tx * side };
+  }
+
+  function packEngaged(e) {
+    return e.fsm === 'chase' || e.fsm === 'attack' || e.fsm === 'stagger';
+  }
+
+  // buildRegion: enemies[i] was spawned from rows[i]. Returns the region's
+  // packs (alive members only, ranked by row waypointPhase), [] for A/B.
+  Enemy.buildPacks = function (enemies, rows, regionId) {
+    var packs = [];
+    (CFG.wolfPacks || []).forEach(function (def) {
+      if (def.regionId !== regionId) return;
+      var ranked = [];
+      for (var i = 0; i < enemies.length; i++) {
+        if (rows[i] && rows[i].packId === def.id && enemies[i].fsm !== 'dead') {
+          ranked.push({ e: enemies[i], phase: rows[i].waypointPhase || 0 });
+        }
+      }
+      if (!ranked.length) return;
+      ranked.sort(function (a, b) { return a.phase - b.phase; });
+      var members = ranked.map(function (r) { return r.e; });
+      var pack = { id: def.id, def: def, P: members[0].cfg.pack || CFG.wolf.pack, loop: makeLoop(def.waypoints),
+        members: members, mode: 'patrol', s: 0, anchor: null, cx: 0, cz: 0, alive: members.length };
+      members.forEach(function (e) {
+        e.pack = pack;
+        e.packGoal = { x: e.pos.x, z: e.pos.z, speed: 0, gain: 0 };
+        e.packRegroup = false;
+      });
+      // the lead slot starts so the survivors' slots straddle their centroid
+      var cx = 0, cz = 0;
+      members.forEach(function (e) { cx += e.pos.x; cz += e.pos.z; });
+      pack.s = loopProject(pack.loop, cx / members.length, cz / members.length) +
+        (members.length - 1) / 2 * pack.P.slotSpacingM;
+      packs.push(pack);
+    });
+    return packs;
+  };
+
+  function updatePack(pack, dt) {
+    var P = pack.P, alive = [], i, e;
+    for (i = 0; i < pack.members.length; i++) {
+      if (pack.members[i].fsm !== 'dead') alive.push(pack.members[i]);
+    }
+    pack.alive = alive.length;
+    if (!alive.length) { pack.mode = 'gone'; return; }
+    var cx = 0, cz = 0;
+    for (i = 0; i < alive.length; i++) { cx += alive[i].pos.x; cz += alive[i].pos.z; }
+    cx /= alive.length;
+    cz /= alive.length;
+    pack.cx = cx;
+    pack.cz = cz;
+
+    // PACK-PULLS-PACK (binding): the first member in combat (a regrouping
+    // straggler never counts) pulls every alive member within packAggroSpread
+    // onto the same target. The hunt anchor (leash origin) = the lead slot's
+    // loop point, so a hunt never drags the pack beyond leashRadius of its loop.
+    var trigger = null;
+    for (i = 0; i < alive.length; i++) {
+      if (packEngaged(alive[i]) && !alive[i].packRegroup) { trigger = alive[i]; break; }
+    }
+    if (trigger && pack.mode !== 'hunt') {
+      var home = loopAt(pack.loop, pack.s);
+      pack.mode = 'hunt';
+      pack.anchor = { x: home.x, z: home.z };
+      for (i = 0; i < alive.length; i++) {
+        e = alive[i];
+        e.spawn.x = home.x;
+        e.spawn.z = home.z;
+        e.packRegroup = false;
+        var tdx = e.pos.x - trigger.pos.x, tdz = e.pos.z - trigger.pos.z;
+        if (!packEngaged(e) && tdx * tdx + tdz * tdz <= P.packAggroSpread * P.packAggroSpread) {
+          e.setFsm('chase');
+        }
+      }
+    } else if (!trigger && pack.mode === 'hunt') {
+      // the hunt is over (leashed / player dead / gone): resume the loop
+      // where the pack stands (slots straddle the centroid again)
+      pack.mode = 'patrol';
+      pack.anchor = null;
+      pack.s = loopProject(pack.loop, cx, cz) + (alive.length - 1) / 2 * P.slotSpacingM;
+    }
+
+    if (pack.mode === 'hunt') {
+      // members out of the fight walk back to the hunt anchor
+      for (i = 0; i < alive.length; i++) {
+        e = alive[i];
+        e.packGoal.x = pack.anchor.x;
+        e.packGoal.z = pack.anchor.z;
+        e.packGoal.speed = e.cfg.moveSpeed;
+        e.packGoal.gain = 0;
+      }
+      return;
+    }
+
+    // PATROL / REGROUP: cohesion around the alive centroid, then the slots
+    var regroup = false, hold = false;
+    for (i = 0; i < alive.length; i++) {
+      e = alive[i];
+      var dcx = e.pos.x - cx, dcz = e.pos.z - cz;
+      var dc = Math.sqrt(dcx * dcx + dcz * dcz);
+      if (dc > P.leashFromCentroid) e.packRegroup = true;
+      else if (dc <= P.regroupRadius) e.packRegroup = false;
+      if (e.packRegroup) {
+        regroup = true;
+        e.packGoal.x = cx;
+        e.packGoal.z = cz;
+        e.packGoal.speed = e.cfg.chaseSpeed;    // Run back to the pack
+        e.packGoal.gain = 0;
+        continue;
+      }
+      var slot = packSlot(pack.loop, pack.s, i, P);
+      var sdx = slot.x - e.pos.x, sdz = slot.z - e.pos.z;
+      if (sdx * sdx + sdz * sdz > P.slotHoldM * P.slotHoldM) hold = true;
+      e.packGoal.x = slot.x;
+      e.packGoal.z = slot.z;
+      e.packGoal.speed = e.cfg.moveSpeed;       // Walk the loop
+      e.packGoal.gain = P.slotGain;
+    }
+    pack.mode = regroup ? 'regroup' : 'patrol';
+    // the lead slot waits for stragglers / regroupers, else walks the loop
+    if (!regroup && !hold) pack.s += alive[0].cfg.moveSpeed * P.patrolPace * dt;
+    // leash origin rides the lead slot while the pack is not hunting
+    var lead = loopAt(pack.loop, pack.s);
+    for (i = 0; i < alive.length; i++) {
+      alive[i].spawn.x = lead.x;
+      alive[i].spawn.z = lead.z;
+    }
+  }
+
+  // Once per frame from region-manager updateEnemies, BEFORE the members'
+  // own updates (they read packGoal / packRegroup / spawn this frame).
+  Enemy.updatePacks = function (packs, dt) {
+    if (!packs) return;
+    for (var i = 0; i < packs.length; i++) updatePack(packs[i], dt);
+  };
+
+  // RELAY LUNGE: a pack member may start a lunge only while fewer than
+  // pack.membersInFlight packmates are in windup / snap (the rest orbit in
+  // the strafe band until a slot frees). Members update in order and read
+  // live fsm, so a lunge started this frame already counts. Non-pack: free.
+  Enemy.prototype.lungeSlotFree = function () {
+    var pack = this.pack;
+    if (!pack) return true;
+    var n = 0;
+    for (var i = 0; i < pack.members.length; i++) {
+      var m = pack.members[i];
+      if (m !== this && m.fsm === 'attack' &&
+          (m.attackPhase === 'windup' || m.attackPhase === 'active')) n++;
+    }
+    return n < pack.P.membersInFlight;
+  };
+
+  Enemy.bodyNameFor = bodyNameFor;
+  // pure loop helpers (offline spawn-row derivation, scratch/cc-c5)
+  Enemy.packGeometry = { makeLoop: makeLoop, loopAt: loopAt, loopProject: loopProject, packSlot: packSlot };
+
   Enemy.onKilled = null;              // stage 2: fn(enemy), set by game.js (corpse loot)
 
   window.WH_Enemy = Enemy;
-  window.WH_ENEMY_TYPES = ['bandit', 'ghoul'];
+  window.WH_ENEMY_TYPES = ['bandit', 'ghoul', 'wolf'];
 })();

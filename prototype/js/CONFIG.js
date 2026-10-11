@@ -562,7 +562,26 @@ window.WH_CONFIG = {
       locked: 'The road beyond is lost. For now.',             // PROPOSED, Nicko tunes
       prompt: 'E - Examine the road'                           // PROPOSED, Nicko tunes
     },
-    enemies: [],                      // nothing spawns in CC-C2
+    // CC-C5 WOLF PACKS: 3 packs x 4 (CONFIG.enemy.wolfPacks loops). packId =
+    // the pack row; waypointPhase = the patrol rank (slot = rank x 6 m behind
+    // the lead along the loop, alternating 2 m lateral). Rows = enemy.js
+    // packSlot at lead arc 0, derived offline (scratch/cc-c5/spawn_rows.js):
+    // spread max 8.46 / 9.08 / 9.13 m from the pack centroid (< regroupRadius
+    // 12), so no member spawns regrouping. Region C only (A/B rows untouched).
+    enemies: [
+      { type: 'wolf', x: 190.0, z: -318.0, packId: 'east', waypointPhase: 0 },
+      { type: 'wolf', x: 188.8, z: -324.2, packId: 'east', waypointPhase: 1 },
+      { type: 'wolf', x: 193.5, z: -329.7, packId: 'east', waypointPhase: 2 },
+      { type: 'wolf', x: 189.3, z: -333.9, packId: 'east', waypointPhase: 3 },
+      { type: 'wolf', x: -190.0, z: -420.0, packId: 'west', waypointPhase: 0 },
+      { type: 'wolf', x: -184.3, z: -417.2, packId: 'west', waypointPhase: 1 },
+      { type: 'wolf', x: -182.9, z: -410.1, packId: 'west', waypointPhase: 2 },
+      { type: 'wolf', x: -175.9, z: -408.7, packId: 'west', waypointPhase: 3 },
+      { type: 'wolf', x: -25.0, z: -520.0, packId: 'north', waypointPhase: 0 },
+      { type: 'wolf', x: -18.8, z: -521.2, packId: 'north', waypointPhase: 1 },
+      { type: 'wolf', x: -13.4, z: -516.4, packId: 'north', waypointPhase: 2 },
+      { type: 'wolf', x: -6.9, z: -519.6, packId: 'north', waypointPhase: 3 }
+    ],
     // CC-C3 ANCIENT FOREST (R-62.6, io/missions/2026-10-07-cc-c3-ancient-forest.md):
     // hand-placed rows, no runtime random. CC-C2's 120-tree 8-10 band is
     // REPLACED (not tuned). 68 trees = 6 king-specimen giants (scale 28-30,
@@ -1402,6 +1421,91 @@ window.WH_CONFIG = {
       },
       ai1: { guardMode: 0 }            // PROPOSED, Nicko tunes - 0 = zombie stays a zombie (every AI1 branch skips)
     },
+    // CC-C5 WOLVES OF THE OLD KING (doc 62 sec 5.1, io/missions/2026-10-08-cc-c5-wolf-packs.md).
+    // Pursuit predator: fastest chaser, light stagger, AI1 hunt shapes reused
+    // (strafe band = the pack orbit, decision loop = the relay lunge). The
+    // attack is the WH_Wolf_Attack1 lunge bite (0.7 s): windup = the rear
+    // shift, active = the snap (anim.js wolf attackSegs). All PROPOSED, Nicko tunes.
+    wolf: {
+      hpMax: 38.0,
+      moveSpeed: 4.6,
+      chaseSpeed: 7.5,                // fastest enemy (pursuit predator)
+      attackDamage: 9.0,
+      attackRange: 2.1,
+      attackCooldown: 1.2,
+      sightRadius: 15.0,
+      leashRadius: 40.0,              // pack members: from the hunt anchor on the loop
+      staggerTime: 0.25,              // light
+      radius: 0.6,
+      aggroPingInterval: 0.2,
+      attackPhase: {
+        windup: 0.35,                  // rear shift (clip 0..0.24 s)
+        active: 0.10,                  // the snap (clip 0.24..0.39 s)
+        recover: 0.45,
+        hitArcDeg: 45,
+        trackDegPerSec: 220
+      },
+      ai1: {
+        decisionSeconds: 0.35,
+        alwaysKnowsRadius: 4.0,
+        strafeBandInner: 2.6,
+        strafeBandOuter: 6.0,
+        strafeSpeedMult: 0.8,
+        strafeDirFlipSeconds: 1.4,
+        attackRadius: 2.1,             // == attackRange
+        attackBias: 0.7,
+        guardChance: 0.2,
+        guardRespondRadius: 5.0,
+        guardSecondsMax: 0.8,
+        guardArcDeg: 45,
+        guardDamageMult: 0.5
+      },
+      // NIGHT BOLDNESS: sightRadius x this while game.dayNight.phase reads
+      // 'night' (dawn / day / dusk = x 1). The landed clock only, no state.
+      nightBoldnessMult: 1.5,
+      // body (region-manager buildRegion): standing height in m (the measured
+      // GLB 1.19 raw -> ~0.80 scale: ~1.6 m nose-to-tail) and the model yaw
+      // (the rig's nose points model -Z; enemies face local +Z)
+      bodyHeight: 0.95,
+      bodyYawDeg: 180,
+      // PACK MACHINERY (enemy.js WH_Enemy.buildPacks / updatePacks). Pack
+      // state is DERIVED at buildRegion from the alive members (never saved).
+      pack: {
+        leashFromCentroid: 26,         // a patrol member farther than this from the alive centroid regroups (Run)...
+        regroupRadius: 12,             // ...until back within this; no aggro while regrouping (solo-pull refusal)
+        packAggroSpread: 40,           // BINDING pack-pulls-pack: one member engages -> every alive member within this joins
+        membersInFlight: 2,            // relay lunge: at most this many in windup / snap at once; the rest orbit
+        slotSpacingM: 6,               // patrol slots trail the lead by rank x this along the loop (= wolfPacks spawnSpread)
+        slotLateralM: 2,               // odd ranks step this far right, even ranks left (rank 0 on the line)
+        patrolPace: 0.85,              // the lead slot advances at moveSpeed x this (members catch up at moveSpeed)
+        slotHoldM: 6,                  // the lead slot waits while any alive member trails its slot by more
+        slotGain: 1.5                  // follow speed = min(moveSpeed, slot distance x this) (no stop-go)
+      }
+    },
+    // CC-C5: enemy type -> manifest body + anim.js VARIANTS key (was the
+    // bandit/ghoul ternaries in region-manager buildRegion / enemy setBody;
+    // an unknown type keeps the old fallbacks: ghoulBody / 'bandit').
+    bodyByType: { bandit: 'banditBody', ghoul: 'ghoulBody', wolf: 'wolfBody' },
+    animVariantByType: { bandit: 'bandit', ghoul: 'zombie', wolf: 'wolf' },
+    // CC-C5 WOLF PACKS (doc 62 L7/L8/L9 dens): closed patrol loops (world x,
+    // z; walked in row order, last -> first). Each loop crosses its King's
+    // Road branch (east / west / north) twice; designed offline against the
+    // landed heightfield + prop rows (scratch/cc-c5/loops_probe.js): max r
+    // from C's center 223.5 / 225.1 / 224.6 (rim foot 240 - jitter 6),
+    // ground 0.16..3.08 / 2.05..5.00 / 1.87..4.63 m, max grade 9.5 / 10.5 /
+    // 9.8 deg, >= 7.4 m from every prop row. Spawn rows live in
+    // regionC.enemies (packId + waypointPhase = the patrol rank).
+    wolfPacks: [
+      { id: 'east', regionId: 'forest_of_the_old_king', members: 4, spawnSpread: 6,   // L7 Wolf den East
+        waypoints: [[190, -318], [214, -322], [222, -340], [220, -372], [205, -398],
+          [178, -388], [166, -360], [192, -334]] },
+      { id: 'west', regionId: 'forest_of_the_old_king', members: 4, spawnSpread: 6,   // L8 Wolf den West
+        waypoints: [[-190, -420], [-215, -418], [-224, -388], [-224, -362], [-200, -358],
+          [-178, -340], [-166, -372], [-172, -402]] },
+      { id: 'north', regionId: 'forest_of_the_old_king', members: 4, spawnSpread: 6,  // L9 Wolf den North
+        waypoints: [[-25, -520], [-30, -548], [-62, -562], [-50, -585], [-25, -586],
+          [10, -578], [25, -545], [12, -515]] }
+    ],
     separationPush: 6.0,              // circle push-out strength
     holdAtBoundaryMargin: 1.5         // enemies stop this far before the boundary
   },
@@ -1568,8 +1672,11 @@ window.WH_CONFIG = {
     // nodes - a stand-in cannot late-swap a node). Largest first (pool
     // order). Deferred: bushA, bushB (region C scatter), banditBedroll,
     // ironFenceCorner (unreferenced at boot).
+    // CC-C5: wolfBody (2.08 MB) is boot-critical too - CONTINUE restores a
+    // region C save straight into buildRegion(C), and a late-swapped rigged
+    // body gets the mesh but never its clips (or its measured scale).
     bootCritical: [
-      'playerBody', 'banditBody', 'ghoulBody', 'playerDagClips', 'bramble',
+      'playerBody', 'banditBody', 'ghoulBody', 'wolfBody', 'playerDagClips', 'bramble',
       'whCampkit', 'whTent', 'yewTree', 'livingOak', 'youngAsh', 'cemeteryGate',
       'torch', 'mossBoulder', 'witchwoodTree', 'mourningStatue', 'deadTree',
       'fallenLog', 'reachTreeA', 'lanternWaymarker', 'picketFence', 'treeStump',
@@ -2627,6 +2734,7 @@ window.WH_CONFIG.leveling = {
   xpSources: {
     kill_bandit: 35,                // bandit hpMax 70
     kill_ghoul: 25,                 // ghoul hpMax 45
+    kill_wolf: 20,                  // CC-C5: wolf hpMax 38 (same ~0.53 x hpMax law)
     gather: 5,                      // per harvested node
     cook_meal: 15,                  // per finished cook (recipe or Bland Mush)
     recipe_learn: 40,               // the first cook of a recipe (stacks with cook_meal)

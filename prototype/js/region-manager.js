@@ -1426,6 +1426,7 @@
     this.scene = scene;
     this.groups = {};                 // regionId -> THREE.Group (visible or pre-warm)
     this.enemies = {};                // regionId -> [WH_Enemy]
+    this.packs = {};                  // CC-C5: regionId -> derived wolf packs (WH_Enemy.buildPacks)
     this.restoreEnemyState = enemyStateRestoreCb || function () {};
     this.buildCounter = 0;            // mock-observable build counter
   }
@@ -1784,14 +1785,19 @@
     for (var j = 0; j < regionCfg.enemies.length; j++) {
       var e = regionCfg.enemies[j];
       var enemy = new window.WH_Enemy(e.type, this.scene, regionId, e.x, e.z);
-      var bodyName = e.type === 'bandit' ? 'banditBody' : 'ghoulBody';
+      // CC-C5: type -> body via CONFIG.enemy.bodyByType (was the bandit /
+      // ghoul ternary); a type's bodyHeight / bodyYawDeg (wolf) override the
+      // humanoid characterHeight / facing - bandit / ghoul carry neither.
+      var bodyName = window.WH_Enemy.bodyNameFor(e.type);
+      var eCfg = CFG.enemy[e.type] || {};
       var eBody = window.WH_ASSETS.instance(bodyName);
-      var eScale = CFG.world.characterHeight /
+      var eScale = (eCfg.bodyHeight || CFG.world.characterHeight) /
         (window.WH_ASSETS.groundHeight(bodyName) || CFG.world.characterHeight);
       eBody.scale.setScalar(eScale);
       eBody.position.y = -(window.WH_ASSETS.groundMinY(bodyName) * eScale);
       // Enemy bob writes the holder position; keep the lift on one level.
       eBody.children[0].position.y += window.WH_ASSETS.groundMinY(bodyName);
+      if (eCfg.bodyYawDeg) eBody.rotation.y = eCfg.bodyYawDeg * Math.PI / 180;
       enemy.setBody(eBody);
       this.enemies[regionId].push(enemy);
       group.add(enemy.root);
@@ -1806,6 +1812,10 @@
         this.enemies[regionId][k].deadFall = 1;
       }
     }
+    // CC-C5: wolf packs DERIVED from the alive list just restored (dead rows
+    // stay out), never persisted: a partial kill rebuilds around survivors
+    this.packs[regionId] = window.WH_Enemy.buildPacks(this.enemies[regionId],
+      regionCfg.enemies, regionId);
 
     group.visible = !hidden;
     this.scene.add(group);
@@ -1834,6 +1844,7 @@
     });
     delete this.groups[regionId];
     delete this.enemies[regionId];
+    delete this.packs[regionId];        // CC-C5
     if (this.cullLists) delete this.cullLists[regionId];   // CC-C3
   };
 
@@ -1925,6 +1936,9 @@
     var list = this.enemies[activeId] || [];
     var boundary = { z: CFG.boundary.z };
     var self = this;
+    // CC-C5: pack FSM first (patrol slots / regroup / pack aggro), then the
+    // members' own updates read it this frame. A/B: no packs, a no-op.
+    window.WH_Enemy.updatePacks(this.packs[activeId], dt);
     for (var i = 0; i < list.length; i++) {
       var e = list[i];
       e.update(dt, playerPos, playerAlive, canDamagePlayer, boundary, this);
