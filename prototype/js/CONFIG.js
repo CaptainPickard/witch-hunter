@@ -1532,12 +1532,54 @@ window.WH_CONFIG = {
   },
 
   assets: {
-    timeoutMs: 20000,                 // per-asset load timeout before stand-in substitution
+    // Flat load timeout: the sky textures (daynight.js) only since 2026-10-11;
+    // manifest GLBs use the size-scaled assetTimeout* rows below.
+    timeoutMs: 20000,
     // Grey-stand-in resilience: rigged body loads retry on fetch/parse errors
     // with linear backoff before the stand-in swap; 0 disables retry. Failure
     // banner names asset + cause in console and HUD (see js/assets.js).
     bodyRetryCount: 2,                // extra attempts per rigged body (default on)
     bodyRetryDelayMs: 750,            // backoff base; delay = base * attempt#
+    // 2026-10-11 asset pipeline (io/missions/2026-10-11-asset-pipeline.md):
+    // the phone pipe is ~1 MB/s shared (Tailscale), so 50 parallel fetches
+    // under a flat 20 s abort timed every big GLB out. Per-attempt timeout =
+    // clamp(assetTimeoutMsPerMb x sizeMB, min, max), sizeMB = Content-Length
+    // / 1e6 (bytes received so far while unknown; min before headers);
+    // retries inherit the size learned by the first attempt.
+    assetTimeoutMsPerMb: 6000,
+    assetTimeoutMinMs: 20000,
+    assetTimeoutMaxMs: 120000,
+    criticalPoolSize: 4,              // concurrent fetches while bootCritical loads
+    streamPoolSize: 6,                // concurrent fetches for the rest, after boot
+    stallLineAfterMs: 8000,           // boot overlay 'slow link' line past this per asset
+    // Boot barrier: the game enters once THESE settle (loaded or stand-in);
+    // every other manifest name streams in after and late-swaps any stand-in
+    // handed out meanwhile. Derived from region A's boot build (the
+    // scratch/asset_pipeline_report.md derivation): game.js boot (playerBody;
+    // setupHandMeshes instances EVERY gear mesh: longsword, dagger,
+    // roundShield, torch), player.js setBody (playerDagClips clips),
+    // enemy.js bandit setBody (handAxe), region-manager buildRegion(A)
+    // (props, scatter trees, bramble/whBushSnare/grassTuft instanced,
+    // banditBody/ghoulBody enemies) + buildWorld (whWallA/B, b3Gate,
+    // whLanternHang) - and whWallPlan/whScatterPlan read the footprint of
+    // EVERY region A AND B prop (plan.complete gates the wall and the
+    // scatter), so all of those are boot-critical too. whTent/whCampkit:
+    // CONTINUE restores deployed kit sites (camp.js makePiece extracts kit
+    // nodes - a stand-in cannot late-swap a node). Largest first (pool
+    // order). Deferred: bushA, bushB (region C scatter), banditBedroll,
+    // ironFenceCorner (unreferenced at boot).
+    bootCritical: [
+      'playerBody', 'banditBody', 'ghoulBody', 'playerDagClips', 'bramble',
+      'whCampkit', 'whTent', 'yewTree', 'livingOak', 'youngAsh', 'cemeteryGate',
+      'torch', 'mossBoulder', 'witchwoodTree', 'mourningStatue', 'deadTree',
+      'fallenLog', 'reachTreeA', 'lanternWaymarker', 'picketFence', 'treeStump',
+      'b3Gate', 'lanternPost', 'youngBirch', 'whWallB', 'banditCampfire',
+      'whWallA', 'reachTreeB', 'reachTreeC', 'youngDeadTree', 'whLanternHang',
+      'graveMound', 'dagger', 'grassTuft', 'rubblePile', 'stoneCrossTilted',
+      'roundShield', 'ironFenceSection', 'churchCornerButtress',
+      'gravestoneObelisk', 'churchPewBroken', 'buriedCoffin', 'handAxe',
+      'churchArchway', 'whBushSnare', 'longsword'
+    ],
     // MAGANIM (doc 65 R-65.3): caster-implement registry (v1; future caster
     // weapons append here). BOTH hands holding one of these = the caster body
     // variant (anim.js setVariant: WH_Mag_* idle / locomotion / reactions /

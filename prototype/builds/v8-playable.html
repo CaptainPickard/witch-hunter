@@ -88703,12 +88703,54 @@ window.WH_CONFIG = {
   },
 
   assets: {
-    timeoutMs: 20000,                 // per-asset load timeout before stand-in substitution
+    // Flat load timeout: the sky textures (daynight.js) only since 2026-10-11;
+    // manifest GLBs use the size-scaled assetTimeout* rows below.
+    timeoutMs: 20000,
     // Grey-stand-in resilience: rigged body loads retry on fetch/parse errors
     // with linear backoff before the stand-in swap; 0 disables retry. Failure
     // banner names asset + cause in console and HUD (see js/assets.js).
     bodyRetryCount: 2,                // extra attempts per rigged body (default on)
     bodyRetryDelayMs: 750,            // backoff base; delay = base * attempt#
+    // 2026-10-11 asset pipeline (io/missions/2026-10-11-asset-pipeline.md):
+    // the phone pipe is ~1 MB/s shared (Tailscale), so 50 parallel fetches
+    // under a flat 20 s abort timed every big GLB out. Per-attempt timeout =
+    // clamp(assetTimeoutMsPerMb x sizeMB, min, max), sizeMB = Content-Length
+    // / 1e6 (bytes received so far while unknown; min before headers);
+    // retries inherit the size learned by the first attempt.
+    assetTimeoutMsPerMb: 6000,
+    assetTimeoutMinMs: 20000,
+    assetTimeoutMaxMs: 120000,
+    criticalPoolSize: 4,              // concurrent fetches while bootCritical loads
+    streamPoolSize: 6,                // concurrent fetches for the rest, after boot
+    stallLineAfterMs: 8000,           // boot overlay 'slow link' line past this per asset
+    // Boot barrier: the game enters once THESE settle (loaded or stand-in);
+    // every other manifest name streams in after and late-swaps any stand-in
+    // handed out meanwhile. Derived from region A's boot build (the
+    // scratch/asset_pipeline_report.md derivation): game.js boot (playerBody;
+    // setupHandMeshes instances EVERY gear mesh: longsword, dagger,
+    // roundShield, torch), player.js setBody (playerDagClips clips),
+    // enemy.js bandit setBody (handAxe), region-manager buildRegion(A)
+    // (props, scatter trees, bramble/whBushSnare/grassTuft instanced,
+    // banditBody/ghoulBody enemies) + buildWorld (whWallA/B, b3Gate,
+    // whLanternHang) - and whWallPlan/whScatterPlan read the footprint of
+    // EVERY region A AND B prop (plan.complete gates the wall and the
+    // scatter), so all of those are boot-critical too. whTent/whCampkit:
+    // CONTINUE restores deployed kit sites (camp.js makePiece extracts kit
+    // nodes - a stand-in cannot late-swap a node). Largest first (pool
+    // order). Deferred: bushA, bushB (region C scatter), banditBedroll,
+    // ironFenceCorner (unreferenced at boot).
+    bootCritical: [
+      'playerBody', 'banditBody', 'ghoulBody', 'playerDagClips', 'bramble',
+      'whCampkit', 'whTent', 'yewTree', 'livingOak', 'youngAsh', 'cemeteryGate',
+      'torch', 'mossBoulder', 'witchwoodTree', 'mourningStatue', 'deadTree',
+      'fallenLog', 'reachTreeA', 'lanternWaymarker', 'picketFence', 'treeStump',
+      'b3Gate', 'lanternPost', 'youngBirch', 'whWallB', 'banditCampfire',
+      'whWallA', 'reachTreeB', 'reachTreeC', 'youngDeadTree', 'whLanternHang',
+      'graveMound', 'dagger', 'grassTuft', 'rubblePile', 'stoneCrossTilted',
+      'roundShield', 'ironFenceSection', 'churchCornerButtress',
+      'gravestoneObelisk', 'churchPewBroken', 'buriedCoffin', 'handAxe',
+      'churchArchway', 'whBushSnare', 'longsword'
+    ],
     // MAGANIM (doc 65 R-65.3): caster-implement registry (v1; future caster
     // weapons append here). BOTH hands holding one of these = the caster body
     // variant (anim.js setVariant: WH_Mag_* idle / locomotion / reactions /
@@ -90646,16 +90688,94 @@ window.WH_ICONS = {
   var BODY_RETRY_DELAY_MS =
     (CFG.assets && typeof CFG.assets.bodyRetryDelayMs === 'number') ?
       CFG.assets.bodyRetryDelayMs : 750;
-  var bootFailures = [];
+  var bootFailures = [];   // failed boot-critical assets (the loud red line)
+  var lateFailures = [];   // failed deferred assets (dim line under it)
+
+  // 2026-10-11 asset pipeline (io/missions/2026-10-11-asset-pipeline.md):
+  // ~90 MB / 50 parallel fetches on a ~1 MB/s phone pipe under a flat 20 s
+  // abort timed every multi-MB GLB out. Now: CONFIG.assets.bootCritical
+  // loads first through a small pool (criticalPoolSize), the boot barrier
+  // opens on those alone, the rest stream after (streamPoolSize) and
+  // late-swap any stand-in instance handed out meanwhile. Each attempt's
+  // timeout scales with the asset size and a timed-out fetch is ABORTED
+  // (a zombie download would keep eating the pipe while its retry runs).
+  var AC = CFG.assets || {};
+  function cfgNum(key, dflt) { return typeof AC[key] === 'number' ? AC[key] : dflt; }
+  var BYTES_PER_MB = 1e6;
+  var TIMEOUT_PER_MB = cfgNum('assetTimeoutMsPerMb', 6000);
+  var TIMEOUT_MIN_MS = cfgNum('assetTimeoutMinMs', 20000);
+  var TIMEOUT_MAX_MS = cfgNum('assetTimeoutMaxMs', 120000);
+  var CRITICAL_POOL = Math.max(1, cfgNum('criticalPoolSize', 4));
+  var STREAM_POOL = Math.max(1, cfgNum('streamPoolSize', 6));
+  var STALL_LINE_MS = cfgNum('stallLineAfterMs', 8000);
+
+  // clamp(perMb x sizeMB, min, max); size unknown (0) = the min.
+  function timeoutForBytes(bytes) {
+    var ms = TIMEOUT_PER_MB * (bytes > 0 ? bytes : 0) / BYTES_PER_MB;
+    return Math.round(Math.min(TIMEOUT_MAX_MS, Math.max(TIMEOUT_MIN_MS, ms)));
+  }
+  function mbText(bytes) { return (bytes / BYTES_PER_MB).toFixed(1); }
+
+  // Boot-critical names in CONFIG order (unknown names dropped loudly);
+  // DEFERRED = every other manifest name in manifest order.
+  var IS_CRITICAL = {};
+  var CRITICAL = (AC.bootCritical || []).filter(function (name) {
+    if (!MANIFEST[name]) {
+      console.warn('[WH assets] bootCritical names no manifest asset: ' + name);
+      return false;
+    }
+    if (IS_CRITICAL[name]) return false;
+    IS_CRITICAL[name] = true;
+    return true;
+  });
+  var DEFERRED = Object.keys(MANIFEST).filter(function (name) { return !IS_CRITICAL[name]; });
+
+  var status = {};         // name -> 'queued' | 'loading' | 'loaded' | 'failed'
+  var knownBytes = {};     // name -> size learned from Content-Length (retries inherit)
+  var active = {};         // name -> { loaded, total, start } of the attempt in flight
+  var firstStart = {};     // name -> first attempt start (the stall line's clock)
+  var pendingHolders = {}; // name -> stand-in holders handed out before it settled
+  var bootDone = false;
 
   // 2026-10-03 loading screen (Nicko change order): REAL per-asset progress.
-  // game.js registers a callback fired on each manifest asset settling
-  // (loaded OR stand-in), so the bar fraction is settled/total; retry
-  // backoff just delays that asset's tick.
+  // game.js registers a callback; 2026-10-11 it receives bootState() (the
+  // boot-critical settled/total + received bytes + the slowest stalled
+  // asset) on every critical settle, on byte progress (throttled) and on a
+  // 1 s heartbeat until the boot barrier opens.
   var bootProgressCb = null;
+  var lastProgressEmit = 0;
   function setBootProgressCb(fn) { bootProgressCb = fn; }
-  function bootProgressTick() {
-    if (bootProgressCb) bootProgressCb();
+  function bootState() {
+    var st = { done: 0, total: CRITICAL.length, loadedBytes: 0, knownBytes: 0, stall: null };
+    var t = Date.now();
+    CRITICAL.forEach(function (name) {
+      var s = status[name], a = active[name];
+      if (s === 'loaded' || s === 'failed') st.done++;
+      if (a) {
+        st.loadedBytes += a.loaded;
+        st.knownBytes += a.total;
+        var elapsed = t - firstStart[name];
+        if (elapsed >= STALL_LINE_MS && (!st.stall || elapsed > st.stall.elapsedMs)) {
+          st.stall = { name: name, loaded: a.loaded, total: a.total, elapsedMs: elapsed };
+        }
+      } else if (s === 'loaded') {
+        st.loadedBytes += knownBytes[name] || 0;
+        st.knownBytes += knownBytes[name] || 0;
+      }
+    });
+    return st;
+  }
+  function bootProgressTick(force) {
+    if (!bootProgressCb || bootDone) return;
+    var t = Date.now();
+    if (!force && t - lastProgressEmit < 250) return;
+    lastProgressEmit = t;
+    bootProgressCb(bootState());
+  }
+  function bootHeartbeat() {
+    if (bootDone) return;
+    bootProgressTick(true);
+    setTimeout(bootHeartbeat, 1000);
   }
 
   function classifyError(err) {
@@ -90670,8 +90790,10 @@ window.WH_ICONS = {
 
   // HUD stamp: persistent one-liner in #wh-hud naming each stand-in asset +
   // cause, visible for the whole session regardless of the load-note lifecycle.
+  // 2026-10-11: the loud line lists FAILED boot-critical assets only; failed
+  // deferred (streamed) assets sit on a small dim line below it.
   function flushAssetFailureNote() {
-    if (!bootFailures.length) return;
+    if (!bootFailures.length && !lateFailures.length) return;
     var parent = document.getElementById('wh-hud');
     if (!parent) return;
     var el = document.getElementById('wh-asset-fail-note');
@@ -90682,13 +90804,28 @@ window.WH_ICONS = {
         'color:#ff9d9d;z-index:40;letter-spacing:0.5px;text-transform:none;';
       parent.appendChild(el);
     }
-    el.textContent = 'Asset stand-in: ' + bootFailures.join(', ');
+    el.textContent = bootFailures.length ? 'Asset stand-in: ' + bootFailures.join(', ') : '';
+    if (!lateFailures.length) return;
+    var late = document.getElementById('wh-asset-fail-late');
+    if (!late) {
+      late = document.createElement('div');
+      late.id = 'wh-asset-fail-late';
+      late.style.cssText = 'font-size:10px;color:#a88;opacity:0.7;margin-top:2px;';
+      el.appendChild(late);
+    }
+    late.textContent = 'streamed stand-in: ' + lateFailures.join(', ');
   }
 
   function makeStandIn(name) {
     // Procedural box/cone stand-in per spec hard constraint 5. Logged.
     console.warn('[WH assets] substitution: procedural stand-in for ' + name);
     failed[name] = true;
+    return buildStandIn(name);
+  }
+
+  // The stand-in geometry alone: makeStandIn (final, marks failed) and the
+  // placeholder instance() hands out while an asset is still in flight.
+  function buildStandIn(name) {
     var group = new THREE.Group();
     var mat = new THREE.MeshStandardMaterial({
       color: CFG.assets.standInColor,
@@ -90828,6 +90965,9 @@ window.WH_ICONS = {
       registerEmbeddedImagePlugin.blobPolicy =
         fetch(document.baseURI, { credentials: 'same-origin' })
           .then(function (response) {
+            // 2026-10-11: only the headers matter - drop the page body (the
+            // inlined build is MBs that would share the boot pipe)
+            if (response.body && response.body.cancel) response.body.cancel().catch(function () {});
             var csp = response.headers.get('content-security-policy');
             if (!csp) return true;
             var match = csp.match(/(?:^|;)\s*connect-src\s+([^;]+)/i);
@@ -90896,30 +91036,95 @@ window.WH_ICONS = {
     });
   }
 
+  // Stream the GLB bytes through fetch so the loader sees Content-Length +
+  // per-chunk progress and can ABORT on timeout (GLTFLoader.load keeps its
+  // FileLoader private). onBytes(received, contentLength or 0).
+  function fetchBytes(url, ctrl, onBytes) {
+    return fetch(url, { credentials: 'same-origin', signal: ctrl ? ctrl.signal : undefined })
+      .then(function (res) {
+        if (!res.ok) throw new Error('fetch status ' + res.status + ' ' + (res.statusText || ''));
+        var len = parseInt(res.headers.get('Content-Length') || '', 10) || 0;
+        onBytes(0, len);
+        if (!res.body || !res.body.getReader) {
+          return res.arrayBuffer().then(function (buf) {
+            onBytes(buf.byteLength, len);
+            return buf;
+          });
+        }
+        var reader = res.body.getReader(), chunks = [], got = 0;
+        function pump() {
+          return reader.read().then(function (r) {
+            if (r.done) {
+              var out = new Uint8Array(got), off = 0;
+              chunks.forEach(function (c) { out.set(c, off); off += c.byteLength; });
+              return out.buffer;
+            }
+            chunks.push(r.value);
+            got += r.value.byteLength;
+            onBytes(got, len);
+            return pump();
+          });
+        }
+        return pump();
+      });
+  }
+
   // One load attempt, racing the per-attempt timeout. Resolves {ok:true,gltf}
-  // or {ok:false,info:{reason,msg}}; never rejects.
+  // or {ok:false,info:{reason,msg}}; never rejects. 2026-10-11: the deadline
+  // (from attempt start) = timeoutForBytes(size): the size inherited from an
+  // earlier attempt, else Content-Length once headers land, else the bytes
+  // received so far - re-armed as the size becomes known. Covers fetch +
+  // parse like the old flat timeout; on expiry the fetch is aborted.
   function loadAttempt(name, url) {
     return new Promise(function (resolve) {
-      var settled = false;
-      var mgr = new THREE.LoadingManager();
-      var loader = new window.WHGLTFLoader(mgr);
-      registerEmbeddedImagePlugin(loader, mgr);
-      var timer = setTimeout(function () {
-        if (settled) return;
-        settled = true;
-        resolve({ ok: false, info: { reason: 'timeout/abort',
-          msg: 'no response within ' + CFG.assets.timeoutMs + 'ms' } });
-      }, CFG.assets.timeoutMs);
-      loader.load(url, function (gltf) {
+      var settled = false, timer = null, limit = 0;
+      var start = Date.now();
+      var ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+      var job = active[name] = { loaded: 0, total: knownBytes[name] || 0, start: start };
+      if (firstStart[name] === undefined) firstStart[name] = start;
+      function finish(v) {
         if (settled) return;
         settled = true;
         clearTimeout(timer);
-        resolve({ ok: true, gltf: gltf });
-      }, undefined, function (err) {
-        if (settled) return;
-        settled = true;
+        if (active[name] === job) delete active[name];
+        resolve(v);
+      }
+      function arm() {
+        var ms = timeoutForBytes(Math.max(knownBytes[name] || 0, job.loaded));
+        if (ms === limit) return;
+        limit = ms;
         clearTimeout(timer);
-        resolve({ ok: false, info: classifyError(err) });
+        timer = setTimeout(function () {
+          if (settled) return;
+          if (ctrl) ctrl.abort();
+          finish({ ok: false, info: { reason: 'timeout/abort',
+            msg: 'no complete response within ' + limit + 'ms (' + mbText(job.loaded) +
+              ' of ' + (job.total ? mbText(job.total) : '?') + ' MB)' } });
+        }, Math.max(0, start + ms - Date.now()));
+      }
+      arm();
+      fetchBytes(url, ctrl, function (loaded, total) {
+        if (settled) return;
+        job.loaded = loaded;
+        if (total > 0) {
+          job.total = total;
+          knownBytes[name] = total;
+        }
+        arm();
+        if (IS_CRITICAL[name]) bootProgressTick(false);
+      }).then(function (buf) {
+        if (settled) return;
+        if (!knownBytes[name]) knownBytes[name] = buf.byteLength;
+        var mgr = new THREE.LoadingManager();
+        var loader = new window.WHGLTFLoader(mgr);
+        registerEmbeddedImagePlugin(loader, mgr);
+        loader.parse(buf, url.slice(0, url.lastIndexOf('/') + 1), function (gltf) {
+          finish({ ok: true, gltf: gltf });
+        }, function (err) {
+          finish({ ok: false, info: classifyError(err) });
+        });
+      }, function (err) {
+        finish({ ok: false, info: classifyError(err) });
       });
     });
   }
@@ -90931,6 +91136,7 @@ window.WH_ICONS = {
     // failures do NOT retry (a corrupt file stays corrupt) - only network
     // and timeout/abort classes do. Stand-in fallback always remains.
     var maxAttempts = 1 + BODY_RETRY_COUNT;
+    status[name] = 'loading';
     function attempt(n) {
       return loadAttempt(name, url).then(function (v) {
         if (v.ok) return v;
@@ -90961,6 +91167,8 @@ window.WH_ICONS = {
         return new Promise(function (resolve) {
           swapBodyMap(name, root, function () {
             loadedCount++;
+            status[name] = 'loaded';
+            lateSwap(name);
             resolve(cache[name]);
           });
         });
@@ -90973,41 +91181,119 @@ window.WH_ICONS = {
         ' CAUSE: ' + info.msg + ' - model + animations dead for this session.',
         'background:#4d0000;color:#ffdddd;padding:2px 6px;font-weight:bold');
       cache[name] = makeStandIn(name);
-      bootFailures.push(name + ' (' + info.reason + ' - ' + info.msg + ')');
+      status[name] = 'failed';
+      delete pendingHolders[name];   // the handed-out stand-ins simply stay
+      (IS_CRITICAL[name] ? bootFailures : lateFailures)
+        .push(name + ' (' + info.reason + ' - ' + info.msg + ')');
       flushAssetFailureNote();
       return cache[name];
     });
     // 2026-10-03 loading screen: tick exactly once per asset, after it
     // settles as loaded OR stand-in (swapBodyMap atlas wait included).
     return settled.then(function (res) {
-      bootProgressTick();
+      if (IS_CRITICAL[name]) bootProgressTick(true);
       return res;
     });
   }
 
-  // Preload every manifest entry. Resolves when all settle (failures become
-  // stand-ins, never block boot).
-  function preloadAll() {
-    var jobs = [];
-    Object.keys(MANIFEST).forEach(function (name) {
-      var url = RESOLVED[name];
-      jobs.push(loadOne(name, url, url.indexOf('-pixelated') !== -1));
+  function loadByName(name) {
+    var url = RESOLVED[name];
+    return loadOne(name, url, url.indexOf('-pixelated') !== -1);
+  }
+
+  // At most `size` loads in flight, started in list order; resolves once
+  // every name settled (loadOne never rejects).
+  function runPool(names, size, run) {
+    return new Promise(function (resolve) {
+      var next = 0, inFlight = 0, done = 0;
+      if (!names.length) { resolve(); return; }
+      function pump() {
+        while (inFlight < size && next < names.length) {
+          inFlight++;
+          run(names[next++]).then(function () {
+            inFlight--;
+            done++;
+            if (done === names.length) resolve();
+            else pump();
+          });
+        }
+      }
+      pump();
     });
-    return Promise.all(jobs).then(function () {
+  }
+
+  // 2026-10-11 two-phase preload. Resolves (the BOOT BARRIER) once every
+  // bootCritical asset settled; failures become stand-ins, never block boot.
+  // The deferred names then stream through the larger pool - whenAllSettled()
+  // resolves when they are in too.
+  var bootPromise = null, allPromise = null;
+  function preloadAll() {
+    if (bootPromise) return bootPromise;
+    Object.keys(MANIFEST).forEach(function (name) { status[name] = 'queued'; });
+    bootHeartbeat();
+    bootPromise = runPool(CRITICAL, CRITICAL_POOL, loadByName).then(function () {
+      bootDone = true;
+      console.log('[WH assets] boot barrier: ' + CRITICAL.length + ' critical assets settled (' +
+        bootFailures.length + ' stand-ins); streaming ' + DEFERRED.length + ' more');
+      return cache;
+    });
+    allPromise = bootPromise.then(function () {
+      return runPool(DEFERRED, STREAM_POOL, loadByName);
+    }).then(function () {
       console.log('[WH assets] loaded ' + loadedCount + ' assets, ' +
         Object.keys(failed).length + ' stand-ins');
       return cache;
     });
+    return bootPromise;
+  }
+
+  function whenAllSettled() {
+    preloadAll();
+    return allPromise;
   }
 
   // Rigged characters need independently rebound bones; props remain rigid.
-  function instance(name) {
-    var tmpl = cache[name];
-    if (!tmpl) return makeStandIn(name);
+  function cloneTemplate(name, tmpl) {
     if (CHARACTERS[name] && clips[name] && clips[name].length) {
       return window.WHSkeletonUtils.clone(tmpl);
     }
     return tmpl.clone(true);
+  }
+
+  // 2026-10-11: an asset still in flight hands out a placeholder stand-in
+  // (NOT marked failed); lateSwap puts the real mesh into that same holder
+  // when the asset lands, so the caller's placement transform stays. A
+  // late-swapped rigged body gets the mesh, not the clips (the boot bodies
+  // are all bootCritical, so no live caller hits that).
+  function instance(name) {
+    var tmpl = cache[name];
+    if (!tmpl) {
+      if (status[name] === 'queued' || status[name] === 'loading') {
+        var holder = buildStandIn(name);
+        (pendingHolders[name] = pendingHolders[name] || []).push(holder);
+        return holder;
+      }
+      return makeStandIn(name);
+    }
+    return cloneTemplate(name, tmpl);
+  }
+
+  function lateSwap(name) {
+    var list = pendingHolders[name];
+    if (!list) return;
+    delete pendingHolders[name];
+    list.forEach(function (holder) {
+      var old = holder.children[0];
+      holder.remove(old);
+      old.traverse(function (o) {
+        if (!o.isMesh) return;
+        o.geometry.dispose();
+        o.material.dispose();
+      });
+      holder.add(cloneTemplate(name, cache[name]).children[0]);
+      holder.updateMatrixWorld(true);
+    });
+    console.log('[WH assets] late swap: ' + name + ' replaced ' + list.length + ' stand-in(s)');
   }
 
   window.WH_ASSETS = {
@@ -91016,6 +91302,11 @@ window.WH_ICONS = {
     resolveUrl: resolveUrl,
     setBootProgressCb: setBootProgressCb,
     preloadAll: preloadAll,
+    whenAllSettled: whenAllSettled,
+    CRITICAL: CRITICAL,
+    DEFERRED: DEFERRED,
+    bootState: bootState,
+    timeoutForBytes: timeoutForBytes,
     instance: instance,
     getClips: function (name) { return clips[name] || []; },
     getTemplate: function (name) { return cache[name] || null; },
@@ -91039,6 +91330,7 @@ window.WH_ICONS = {
     weaponScale: weaponScale,
     isLoaded: function (name) { return !!cache[name]; },
     isFailed: function (name) { return !!failed[name]; },
+    isPending: function (name) { return status[name] === 'queued' || status[name] === 'loading'; },
     loadedCount: function () { return loadedCount; }
   };
 })();
@@ -101633,14 +101925,29 @@ window.WH_ICONS = {
     game.hud.bootBar = document.getElementById('wh-boot-bar');
     game.hud.bootBarFill = document.getElementById('wh-boot-bar-fill');
     game.hud.bootSub = document.getElementById('wh-boot-sub');
+    // 2026-10-11 asset pipeline: the bar counts the boot-critical assets
+    // only (the barrier; the rest stream in after) and a bytes row under it
+    // shows the MB received, or the plain-language stall line for the
+    // slowest asset on a slow link.
     game.hud.bootAssetsDone = 0;
-    game.hud.bootAssetsTotal = Object.keys(window.WH_ASSETS.MANIFEST).length;
-    window.WH_ASSETS.setBootProgressCb(function () {
-      game.hud.bootAssetsDone++;
+    game.hud.bootAssetsTotal = window.WH_ASSETS.CRITICAL.length;
+    var bootBytes = document.createElement('div');
+    bootBytes.id = 'wh-boot-bytes';
+    bootBytes.style.cssText = 'margin-top:6px;font-size:11px;letter-spacing:1px;' +
+      'color:#6f665a;text-transform:none;min-height:14px;';
+    game.hud.bootSub.parentNode.insertBefore(bootBytes, game.hud.bootSub.nextSibling);
+    game.hud.bootBytes = bootBytes;
+    window.WH_ASSETS.setBootProgressCb(function (st) {
+      game.hud.bootAssetsDone = st.done;
       game.hud.bootBarFill.style.width =
-        Math.round(100 * game.hud.bootAssetsDone / game.hud.bootAssetsTotal) + '%';
-      game.hud.bootSub.textContent = 'Loading assets... ' +
-        game.hud.bootAssetsDone + ' / ' + game.hud.bootAssetsTotal;
+        Math.round(100 * st.done / Math.max(1, st.total)) + '%';
+      game.hud.bootSub.textContent = 'Loading assets... ' + st.done + ' / ' + st.total;
+      var mb = function (b) { return (b / 1e6).toFixed(1); };
+      bootBytes.textContent = st.stall ?
+        'slow link: still working, ' + mb(st.stall.loaded) + ' MB of ' +
+          (st.stall.total ? mb(st.stall.total) : '?') + ' MB, ' +
+          Math.round(st.stall.elapsedMs / 1000) + ' s elapsed' :
+        mb(st.loadedBytes) + ' MB received';
     });
     // v6: block/parry feedback cues, DOM only. The stamina bar already exists
     // in index.html and reflects the drain via updateHud.
@@ -103766,7 +104073,10 @@ window.WH_ICONS = {
     setupDebugHooks();
     setupSaveHooks();     // C4: game.c4 restore helpers + quit persist
 
+    // 2026-10-11: resolves on the bootCritical assets (the boot barrier);
+    // the deferred rest streams in behind the running game.
     window.WH_ASSETS.preloadAll().then(function () {
+      game.hud.bootBytes.textContent = '';
       // player body + weapon. Normalize to CFG.world.characterHeight
       // (raw Meshy characters are 2.0 tall; the pixelated variants of some
       // props differ, so normalize by measured height).
@@ -103880,7 +104190,14 @@ window.WH_ICONS = {
   // picker, then the picked kit replaces the load-time fallback kit and
   // the world boots fresh.
   function bootChoice(cont) {
-    if (cont) { enterWorld(true); return; }
+    if (cont) {
+      // 2026-10-11 two-phase loader: a restore may switch to a region whose
+      // build reads deferred assets (C's bushA/bushB scatter templates) -
+      // CONTINUE waits for the stream phase so no plan builds footprint-less.
+      game.hud.bootSub.textContent = 'Loading assets...';
+      window.WH_ASSETS.whenAllSettled().then(function () { enterWorld(true); });
+      return;
+    }
     showClassPicker(function (classId) {
       pickStartingClass(classId);
       enterWorld(false);

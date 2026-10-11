@@ -211,14 +211,29 @@
     game.hud.bootBar = document.getElementById('wh-boot-bar');
     game.hud.bootBarFill = document.getElementById('wh-boot-bar-fill');
     game.hud.bootSub = document.getElementById('wh-boot-sub');
+    // 2026-10-11 asset pipeline: the bar counts the boot-critical assets
+    // only (the barrier; the rest stream in after) and a bytes row under it
+    // shows the MB received, or the plain-language stall line for the
+    // slowest asset on a slow link.
     game.hud.bootAssetsDone = 0;
-    game.hud.bootAssetsTotal = Object.keys(window.WH_ASSETS.MANIFEST).length;
-    window.WH_ASSETS.setBootProgressCb(function () {
-      game.hud.bootAssetsDone++;
+    game.hud.bootAssetsTotal = window.WH_ASSETS.CRITICAL.length;
+    var bootBytes = document.createElement('div');
+    bootBytes.id = 'wh-boot-bytes';
+    bootBytes.style.cssText = 'margin-top:6px;font-size:11px;letter-spacing:1px;' +
+      'color:#6f665a;text-transform:none;min-height:14px;';
+    game.hud.bootSub.parentNode.insertBefore(bootBytes, game.hud.bootSub.nextSibling);
+    game.hud.bootBytes = bootBytes;
+    window.WH_ASSETS.setBootProgressCb(function (st) {
+      game.hud.bootAssetsDone = st.done;
       game.hud.bootBarFill.style.width =
-        Math.round(100 * game.hud.bootAssetsDone / game.hud.bootAssetsTotal) + '%';
-      game.hud.bootSub.textContent = 'Loading assets... ' +
-        game.hud.bootAssetsDone + ' / ' + game.hud.bootAssetsTotal;
+        Math.round(100 * st.done / Math.max(1, st.total)) + '%';
+      game.hud.bootSub.textContent = 'Loading assets... ' + st.done + ' / ' + st.total;
+      var mb = function (b) { return (b / 1e6).toFixed(1); };
+      bootBytes.textContent = st.stall ?
+        'slow link: still working, ' + mb(st.stall.loaded) + ' MB of ' +
+          (st.stall.total ? mb(st.stall.total) : '?') + ' MB, ' +
+          Math.round(st.stall.elapsedMs / 1000) + ' s elapsed' :
+        mb(st.loadedBytes) + ' MB received';
     });
     // v6: block/parry feedback cues, DOM only. The stamina bar already exists
     // in index.html and reflects the drain via updateHud.
@@ -2344,7 +2359,10 @@
     setupDebugHooks();
     setupSaveHooks();     // C4: game.c4 restore helpers + quit persist
 
+    // 2026-10-11: resolves on the bootCritical assets (the boot barrier);
+    // the deferred rest streams in behind the running game.
     window.WH_ASSETS.preloadAll().then(function () {
+      game.hud.bootBytes.textContent = '';
       // player body + weapon. Normalize to CFG.world.characterHeight
       // (raw Meshy characters are 2.0 tall; the pixelated variants of some
       // props differ, so normalize by measured height).
@@ -2458,7 +2476,14 @@
   // picker, then the picked kit replaces the load-time fallback kit and
   // the world boots fresh.
   function bootChoice(cont) {
-    if (cont) { enterWorld(true); return; }
+    if (cont) {
+      // 2026-10-11 two-phase loader: a restore may switch to a region whose
+      // build reads deferred assets (C's bushA/bushB scatter templates) -
+      // CONTINUE waits for the stream phase so no plan builds footprint-less.
+      game.hud.bootSub.textContent = 'Loading assets...';
+      window.WH_ASSETS.whenAllSettled().then(function () { enterWorld(true); });
+      return;
+    }
     showClassPicker(function (classId) {
       pickStartingClass(classId);
       enterWorld(false);
