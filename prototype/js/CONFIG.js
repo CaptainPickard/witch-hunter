@@ -580,7 +580,23 @@ window.WH_CONFIG = {
       { type: 'wolf', x: -25.0, z: -520.0, packId: 'north', waypointPhase: 0 },
       { type: 'wolf', x: -18.8, z: -521.2, packId: 'north', waypointPhase: 1 },
       { type: 'wolf', x: -13.4, z: -516.4, packId: 'north', waypointPhase: 2 },
-      { type: 'wolf', x: -6.9, z: -519.6, packId: 'north', waypointPhase: 3 }
+      { type: 'wolf', x: -6.9, z: -519.6, packId: 'north', waypointPhase: 3 },
+      // CC-C6 BANDIT CAMP GUARDS (doc 62 L4/L5/L6; io/missions/2026-10-09-cc-c6-
+      // bandit-camps.md): ordinary bandit rows (AI1 by type), APPENDED after the
+      // wolves so saved per-index dead state keeps its wolf rows. Guard spread
+      // 10-12 m around each camp fire, >= 5 m from camp props, >= 6 m from every
+      // other prop row, >= 88 m from every wolf loop (scratch/cc-c6/camp_probe.js).
+      // Loot: the standard CONFIG.drops table (Charlie = same table, no tier).
+      { type: 'bandit', x: -53.6, z: -178.3 },     // Alpha (fire -60, -186)
+      { type: 'bandit', x: -67.7, z: -179.6 },
+      { type: 'bandit', x: -66.0, z: -196.4 },
+      { type: 'bandit', x: 85.0, z: -240.6 },      // Bravo (fire 95, -236)
+      { type: 'bandit', x: 102.7, z: -242.4 },
+      { type: 'bandit', x: 100.1, z: -225.1 },
+      { type: 'bandit', x: -130.5, z: -500.5 },    // Charlie (fire -140, -506)
+      { type: 'bandit', x: -144.2, z: -496.9 },
+      { type: 'bandit', x: -151.3, z: -510.1 },
+      { type: 'bandit', x: -138.1, z: -516.8 }
     ],
     // CC-C3 ANCIENT FOREST (R-62.6, io/missions/2026-10-07-cc-c3-ancient-forest.md):
     // hand-placed rows, no runtime random. CC-C2's 120-tree 8-10 band is
@@ -916,7 +932,35 @@ window.WH_CONFIG = {
       { asset: 'mossBoulder',      x: -167.5, z: -528.4, rotY: 1.24, scale: 3.91 },
       { asset: 'mossBoulder',      x: 163.2, z: -533.8, rotY: 2.27, scale: 2.79 },
       { asset: 'mossBoulder',      x: -179.6, z: -214.3, rotY: 6.08, scale: 3.75 },
-      { asset: 'mossBoulder',      x: 195.7, z: -255.0, rotY: 5.23, scale: 3.35 }
+      { asset: 'mossBoulder',      x: 195.7, z: -255.0, rotY: 5.23, scale: 3.35 },
+      // CC-C6 BANDIT CAMPS (doc 62 L4/L5/L6, C-local -> world = z - 366): m15
+      // fire (B's scale; cook station row at the SAME x/z in CONFIG.cooking
+      // .stations) + 2 m16 bedrolls head-to-fire (GLB long axis = local x) at
+      // 3.9 m on the camp's back side + a stump seat + a rubble pile; the open
+      // side faces the King's Road (Alpha/Charlie +x, Bravo -x). Light dressing
+      // on purpose: stump 8.1k / rubble 2k tris (fallenLog 20.8k + mossBoulder
+      // 21.6k per camp would break the C4b 2M worst-case ledger near Charlie).
+      // Every row: road edge >= 47 m, local r <= 198 (rim foot 240), seat slope
+      // <= 8.8 deg, >= 6 m edge gap to every other prop row, wolf loops >= 96 m
+      // from each fire (scratch/cc-c6/camp_probe.js). All PROPOSED, Nicko tunes.
+      // L4 Alpha (-60, +180 local)
+      { asset: 'banditCampfire',   x: -60.0, z: -186.0, rotY: 0.00, scale: 1.8 },
+      { asset: 'banditBedroll',    x: -63.4, z: -184.1, rotY: 3.65, scale: 1.1 },
+      { asset: 'banditBedroll',    x: -63.4, z: -187.9, rotY: 2.63, scale: 1.1 },
+      { asset: 'treeStump',        x: -58.2, z: -182.9, rotY: 0.53, scale: 1.3 },
+      { asset: 'rubblePile',       x: -58.8, z: -190.4, rotY: 1.10, scale: 1.0 },
+      // L5 Bravo (+95, +130 local)
+      { asset: 'banditCampfire',   x: 95.0, z: -236.0, rotY: 3.14, scale: 1.8 },
+      { asset: 'banditBedroll',    x: 98.4, z: -237.9, rotY: 0.51, scale: 1.1 },
+      { asset: 'banditBedroll',    x: 98.4, z: -234.1, rotY: 5.77, scale: 1.1 },
+      { asset: 'treeStump',        x: 93.2, z: -239.1, rotY: 3.67, scale: 1.3 },
+      { asset: 'rubblePile',       x: 93.8, z: -231.6, rotY: 4.24, scale: 1.0 },
+      // L6 Charlie (-140, -140 local)
+      { asset: 'banditCampfire',   x: -140.0, z: -506.0, rotY: 0.00, scale: 1.8 },
+      { asset: 'banditBedroll',    x: -143.4, z: -504.1, rotY: 3.65, scale: 1.1 },
+      { asset: 'banditBedroll',    x: -143.4, z: -507.9, rotY: 2.63, scale: 1.1 },
+      { asset: 'treeStump',        x: -138.2, z: -502.9, rotY: 0.53, scale: 1.3 },
+      { asset: 'rubblePile',       x: -138.8, z: -510.4, rotY: 1.10, scale: 1.0 }
     ]
   },
 
@@ -2246,7 +2290,15 @@ window.WH_CONFIG.cooking = {
   stations: [
     // Region B bandit campfire (prop banditCampfire x 2.5, z -52)
     { id: 'banditFire', kind: 'cookFire', regionId: 'darkwood_edge',
-      asset: 'banditCampfire', x: 2.5, z: -52, startLit: true }
+      asset: 'banditCampfire', x: 2.5, z: -52, startLit: true },
+    // CC-C6 Region C bandit camp fires (props banditCampfire at these exact
+    // x/z: socketIntensity matches station <-> prop within 0.01 m)
+    { id: 'banditFireA', kind: 'cookFire', regionId: 'forest_of_the_old_king',
+      asset: 'banditCampfire', x: -60.0, z: -186.0, startLit: true },    // L4 Alpha
+    { id: 'banditFireB', kind: 'cookFire', regionId: 'forest_of_the_old_king',
+      asset: 'banditCampfire', x: 95.0, z: -236.0, startLit: true },     // L5 Bravo
+    { id: 'banditFireC', kind: 'cookFire', regionId: 'forest_of_the_old_king',
+      asset: 'banditCampfire', x: -140.0, z: -506.0, startLit: true }    // L6 Charlie
   ],
   // Recipes: exactly 3 ingredients, order-free, no preview ever. Any other
   // trio at a fire = fallbackResult (the gamble's waste). known flips true on
