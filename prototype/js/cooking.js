@@ -44,10 +44,20 @@
     return t;
   }
 
+  // CC-C6C: the landed clock's phase only (enemy.js CC-C5 isNight shape);
+  // a dormant / missing clock is never night
+  function isNight(dn) {
+    return !!dn && dn.phase === 'night';
+  }
+
   // ---- stations ---------------------------------------------------------------------
   // fuel = seconds of burn left. Lit while fuel > 0, or while a cook channel
   // holds the station (that cook's fuel was deducted at start and is what
   // burns during the channel, so the passive burn pauses).
+  // CC-C6C kinds: 'cookFire' = the cook/fuel rules above (the player's camp
+  // fire). 'campfire' = atmospheric (bandit fires): lit exactly while the
+  // clock reads night, never burns, never refuels, never cooks - its fuel
+  // fields stay inert. dayNight is set by Cooking.addStation.
   function Station(row) {
     this.id = row.id;
     this.kind = row.kind || 'cookFire';
@@ -58,21 +68,25 @@
     this.fuel = row.startLit ? C.fire.startFuelSec : 0;
     this.burnAcc = 0;
     this.cooking = false;
+    this.dayNight = null;
   }
 
   Station.prototype.isLit = function () {
+    if (this.kind !== 'cookFire') return isNight(this.dayNight);
     return this.fuel > 0 || this.cooking;
   };
 
-  // enough fuel to start a cook (>= one channel)
+  // enough fuel to start a cook (>= one channel); only a cookFire cooks
   Station.prototype.canCook = function () {
+    if (this.kind !== 'cookFire') return false;
     return this.fuel >= C.channelSeconds;
   };
 
   // passive burn: burnTickSec of fuel every burnTickSec seconds. CC-C6B: a
   // fire outside the ACTIVE region pauses (fuel + burnAcc frozen) - it
-  // waits for the player and resumes on return.
+  // waits for the player and resumes on return. CC-C6C: a campfire never burns.
   Station.prototype.update = function (dt, activeRegionId) {
+    if (this.kind !== 'cookFire') return;
     if (this.cooking || this.fuel <= 0) { this.burnAcc = 0; return; }
     if (activeRegionId !== undefined && this.regionId !== activeRegionId) return;
     var tick = C.fire.burnTickSec;
@@ -171,6 +185,7 @@
     this.dropAtFeet = opts.dropAtFeet || null;
     this.onCooked = opts.onCooked || null;   // L1: fn(resultId, learnedRecipe)
     this.onKitButton = null;
+    this.dayNight = opts.dayNight || null;   // C2: js/daynight.js clock (CC-C6C: before the stations)
     this.stations = [];
     for (var i = 0; i < C.stations.length; i++) this.addStation(C.stations[i]);
     this.open = false;
@@ -181,7 +196,6 @@
     this.showHint = false;
     this.lastHp = this.player.hp;
     this.toastTimers = [];
-    this.dayNight = opts.dayNight || null;   // C2: js/daynight.js clock
     this.activeRegionId = opts.activeRegionId || null;   // CC-C6B: fn() -> active region id
     this.buffs = new BuffSet(this.dayNight);
     this.mealDay = -1;                // C2: dayNight.day the day's dayMeal was eaten
@@ -194,6 +208,7 @@
   // CAMP GROWTH LAW: any module (C3 deployed campfire) registers here.
   Cooking.prototype.addStation = function (row) {
     var st = new Station(row);
+    st.dayNight = this.dayNight;      // CC-C6C: a campfire's isLit reads the clock
     this.stations.push(st);
     return st;
   };
@@ -227,6 +242,7 @@
 
   // Light-pool socket intensity for a fire prop (game.js computeFireSockets):
   // a burnt-out station goes dark, anything else keeps its CONFIG value.
+  // CC-C6C: a campfire's isLit = the night clock, so it glows at night only.
   Cooking.prototype.socketIntensity = function (regionId, prop, base) {
     for (var i = 0; i < this.stations.length; i++) {
       var s = this.stations[i];
@@ -240,13 +256,17 @@
 
   Cooking.prototype.promptFor = function (st) {
     var T = C.text;
+    if (st.kind !== 'cookFire') return T.promptCampfire;   // CC-C6C: flavor only
     if (!st.isLit()) return T.promptBurnt;
     return st.canCook() ? T.promptCook : T.promptLow;
   };
 
   // E on a station: lit with enough fuel = open the panel, else feed it.
+  // CC-C6C: a campfire = the flavor toast (no panel, no refuel).
   Cooking.prototype.interactStation = function (st) {
-    if (st.canCook()) {
+    if (st.kind !== 'cookFire') {
+      this.toast(C.text.campfireToast);
+    } else if (st.canCook()) {
       this.setOpen(true, st);
     } else {
       this.refuel(st);
@@ -254,8 +274,13 @@
   };
 
   // 1 fuel item -> burnPerCookSec * refuelCooks seconds on top of what is left.
+  // CC-C6C: a campfire takes no fuel - flavor toast, no item spent.
   Cooking.prototype.refuel = function (st) {
     var F = C.fire;
+    if (st.kind !== 'cookFire') {
+      this.toast(C.text.campfireToast);
+      return false;
+    }
     if (this.inv.countOf(F.fuelItem) < 1) {
       this.toast(C.text.noFuelToast);
       return false;

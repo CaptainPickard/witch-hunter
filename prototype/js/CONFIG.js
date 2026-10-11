@@ -2287,17 +2287,24 @@ window.WH_CONFIG.cooking = {
     fuelItem: 'deadwood',           // the fuel ingredient (never a cook slot)
     burntLightIntensity: 0          // light-pool socket intensity while burnt out (0 = dark)
   },
+  // CC-C6C kinds (Nicko ruling 2026-10-11): 'cookFire' = cookable, fuel /
+  // refuel / deadwood rules (the player's C3 kit fire rides it from
+  // CONFIG.camp.modules.fire). 'campfire' = an atmospheric bandit fire: lit
+  // exactly while the clock phase is 'night' (dormant clock = out), never
+  // cookable, never refuels, no fuel burn (startLit / fuel stay inert); E
+  // = text.promptCampfire + text.campfireToast only. Future designated cook
+  // stations ride 'cookFire'.
   stations: [
     // Region B bandit campfire (prop banditCampfire x 2.5, z -52)
-    { id: 'banditFire', kind: 'cookFire', regionId: 'darkwood_edge',
+    { id: 'banditFire', kind: 'campfire', regionId: 'darkwood_edge',
       asset: 'banditCampfire', x: 2.5, z: -52, startLit: true },
     // CC-C6 Region C bandit camp fires (props banditCampfire at these exact
     // x/z: socketIntensity matches station <-> prop within 0.01 m)
-    { id: 'banditFireA', kind: 'cookFire', regionId: 'forest_of_the_old_king',
+    { id: 'banditFireA', kind: 'campfire', regionId: 'forest_of_the_old_king',
       asset: 'banditCampfire', x: -60.0, z: -186.0, startLit: true },    // L4 Alpha
-    { id: 'banditFireB', kind: 'cookFire', regionId: 'forest_of_the_old_king',
+    { id: 'banditFireB', kind: 'campfire', regionId: 'forest_of_the_old_king',
       asset: 'banditCampfire', x: 95.0, z: -236.0, startLit: true },     // L5 Bravo
-    { id: 'banditFireC', kind: 'cookFire', regionId: 'forest_of_the_old_king',
+    { id: 'banditFireC', kind: 'campfire', regionId: 'forest_of_the_old_king',
       asset: 'banditCampfire', x: -140.0, z: -506.0, startLit: true }    // L6 Charlie
   ],
   // Recipes: exactly 3 ingredients, order-free, no preview ever. Any other
@@ -2331,6 +2338,8 @@ window.WH_CONFIG.cooking = {
     promptCook: 'E - Cook',
     promptBurnt: 'Fire burnt out - E to add Deadwood (fuel)',
     promptLow: 'Fire too low - E to add Deadwood (fuel)',
+    promptCampfire: 'E - Warm your hands',                                // CC-C6C: bandit campfire (flavor only)
+    campfireToast: "The bandits' fire - it offers nothing to a stranger.",   // CC-C6C: E at a bandit campfire
     refuelToast: 'The fire takes.',
     noFuelToast: 'You need Deadwood to feed the fire',
     addWoodBtn: 'ADD WOOD',
