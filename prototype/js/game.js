@@ -970,6 +970,28 @@
     setDeathOverlay(false);
   }
 
+  // CC-C2 -> CC-C8: the post-cross steps shared by the walked crossing
+  // (tickTransition) and the den door's E crossing (forceCross): place the
+  // player, the region's lighting + sky variant + banner, first-entry XP.
+  // A land row (CC-C8 door) also turns the player to its face point, carries
+  // the camera across the jump (no 60 m swoop) and drops any lock.
+  function applyCross(tr) {
+    var p = game.player, M = tr.mappedPos;
+    var dx = M.x - p.pos.x, dz = M.z - p.pos.z;
+    p.pos.set(M.x, 0, M.z);
+    if (M.faceX !== undefined) {
+      game.camera.position.x += dx;
+      game.camera.position.z += dz;
+      breakLockOn();
+      p.faceTowards(M.faceX, M.faceZ);
+    }
+    applyRegionLighting(tr.newActiveId);
+    game.dayNight.setSkyArea(tr.newActiveId);   // C2b: area's sky variant (1s fade)
+    showRegionName(window.WH_REGION_DEFS.regions[tr.newActiveId].name);
+    setGateHint(false);
+    window.WH_LEVEL.discover('region', tr.newActiveId);   // L1: first entry XP
+  }
+
   // The tickTransition 'cross' steps minus the gate walk: region swap,
   // lighting, the area's sky variant, the name banner.
   function switchRegion(regionId) {
@@ -1838,7 +1860,72 @@
     if (game.player.inputSuspended || game.player.state !== 'alive') return false;
     var p = game.player.pos;
     return tryPickup() || lootCorpseNearest(p.x, p.z, CFG.corpseLoot.lootRadius) ||
-      tryCookStation() || tryCampSleep() || tryDoorway() || tryNotch() || tryGather();
+      tryCookStation() || tryCampSleep() || tryDenDoor() || tryDoorway() || tryNotch() || tryGather();
+  }
+
+  // ---- CC-C8 the Rot Mother's den door (CONFIG.regionD.door) ----------------------
+  // E-to-enter (the notch-examine interact family): within interactM of the
+  // outcrop opening, E dips to black (the death overlay element, non-lethal:
+  // black, no text) and crosses C -> D at the bottom of the dip. The exit is
+  // the den mouth's walk-back plane (tickTransition) with the same dip lifting.
+  // No pause, no menu: the world keeps running under the overlay.
+  function denDoorNear() {
+    return game.regionManager.logic.portalNear(game.player.pos);
+  }
+
+  function tryDenDoor() {
+    var conn = denDoorNear();
+    if (!conn) return false;
+    if (game.denFade) return true;          // already on the way in
+    var D = CFG.regionD.door;
+    startDenFade(D.fadeIn, D.fadeOut, function () {
+      applyCross(game.regionManager.forceCross(conn));
+    });
+    return true;
+  }
+
+  // the dip: opacity 0 -> 1 over inSec, onPeak, 1 -> 0 over outSec. Inline
+  // styles on #wh-death-overlay (black, text hidden) override its class
+  // while it runs and are all cleared after; a death mid-dip cancels it (the
+  // death overlay owns the element again; a pending cross never fires).
+  function startDenFade(inSec, outSec, onPeak) {
+    var el = game.hud.death;
+    el.style.transition = 'none';
+    el.style.background = '#000';
+    for (var i = 0; i < el.children.length; i++) el.children[i].style.visibility = 'hidden';
+    game.denFade = { t: 0, inSec: inSec, outSec: outSec, onPeak: onPeak || null };
+    el.style.opacity = inSec > 0 ? '0' : '1';
+    if (!(inSec > 0)) denFadePeak();
+  }
+
+  function denFadePeak() {
+    var F = game.denFade, cb = F.onPeak;
+    F.onPeak = null;
+    if (cb) cb();
+  }
+
+  function endDenFade() {
+    var el = game.hud.death;
+    el.style.transition = '';
+    el.style.background = '';
+    el.style.opacity = '';
+    for (var i = 0; i < el.children.length; i++) el.children[i].style.visibility = '';
+    game.denFade = null;
+  }
+
+  function denFadeTick(dt) {
+    var F = game.denFade;
+    if (!F) return;
+    if (game.player.state !== 'alive') { endDenFade(); return; }
+    F.t += dt;
+    var a;
+    if (F.t < F.inSec) a = F.t / F.inSec;
+    else {
+      if (F.onPeak) denFadePeak();
+      a = F.outSec > 0 ? 1 - (F.t - F.inSec) / F.outSec : 0;
+    }
+    if (a <= 0 && F.t >= F.inSec) { endDenFade(); return; }
+    game.hud.death.style.opacity = String(Math.max(0, Math.min(1, a)));
   }
 
   // ---- CC-C2 B/C doorway (CONFIG.regionC.door) -----------------------------------
@@ -2081,6 +2168,8 @@
         text = game.cooking.promptFor(st);   // C1: cook / burnt / too low
       } else if (nearestCampSleep()) {
         text = CFG.camp.text.prompt;         // C3: tent menu
+      } else if (denDoorNear()) {
+        text = CFG.regionD.door.text.prompt; // CC-C8: the den doorway (E - Enter the den)
       } else if (lockedDoorNear()) {
         text = CFG.regionC.door.text.prompt; // CC-C2: locked B/C door
       } else if (notchNear()) {
@@ -2861,15 +2950,15 @@
       }
       game.firebolts = keep;
     }
+    denFadeTick(dt);                       // CC-C8: the den door's black dip
     var tr = rm.tickTransition(game.player.pos.x, game.player.pos.z);
     if (tr.action === 'cross') {
       // position already mapped by logic; apply to player
-      game.player.pos.set(tr.mappedPos.x, 0, tr.mappedPos.z);
-      applyRegionLighting(tr.newActiveId);
-      game.dayNight.setSkyArea(tr.newActiveId);   // C2b: area's sky variant (1s fade)
-      showRegionName(window.WH_REGION_DEFS.regions[tr.newActiveId].name);
-      setGateHint(false);
-      window.WH_LEVEL.discover('region', tr.newActiveId);   // L1: first entry XP
+      applyCross(tr);
+      // CC-C8: walking out of the den mouth = the same dip, lifting from black
+      if (tr.conn && tr.conn.door && tr.conn.door.land && !game.denFade) {
+        startDenFade(0, CFG.regionD.door.exitFadeOut, null);
+      }
     }
 
     // enemies (active region only)

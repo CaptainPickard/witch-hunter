@@ -43,7 +43,10 @@
   // C) runs exactly the single-connection logic of before.
   RegionManagerLogic.prototype.tickTransition = function (x, z) {
     var result = { action: null, newActiveId: null, mappedPos: null };
-    var conns = DEFS.connectionsOf(this.activeId);
+    // CC-C8: only planes that exist in the active region (the C<->D line is
+    // the den mouth: a plane while D is active, nothing while C is)
+    var self = this;
+    var conns = DEFS.connectionsOf(this.activeId).filter(function (c) { return DEFS.planeIn(c, self.activeId); });
     if (!conns.length) return result;
 
     // crossing: player crossed the plane inside the chokepoint corridor (or
@@ -66,9 +69,12 @@
         // opposite of their current side, which can re-trigger a cross back).
         var mapped = DEFS.mapPositionAcross(conn, x, z, 2,
           DEFS.sideIn(conn, neighborId));
+        // CC-C8: a door with land rows puts the player on the destination's row
+        if (conn.door && conn.door.land && conn.door.land[neighborId]) mapped = landRow(conn, neighborId);
         result.action = 'cross';
         result.newActiveId = neighborId;
         result.mappedPos = mapped;
+        result.conn = conn;
         this.stateFor(this.activeId).crossed++;
         this.stateFor(neighborId).crossed++;
         this.activeId = neighborId;
@@ -110,6 +116,42 @@
     return result;
   };
 
+  // CC-C8: a door's landing row for a crossing INTO regionId (+ facing)
+  function landRow(conn, regionId) {
+    var L = conn.door.land[regionId];
+    return { x: L.x, z: L.z, faceX: L.faceX, faceZ: L.faceZ };
+  }
+
+  // CC-C8 E-to-enter: the interact door (conn.door.interact) whose C-side
+  // hook is within its radius of pos, or null. Never while the far side is
+  // the active region (the den exits by walking the mouth plane).
+  RegionManagerLogic.prototype.portalNear = function (pos) {
+    var conns = DEFS.connectionsOf(this.activeId);
+    for (var i = 0; i < conns.length; i++) {
+      var I = conns[i].door ? conns[i].door.interact : null;
+      if (!I || I.from !== this.activeId) continue;
+      var dx = pos.x - I.x, dz = pos.z - I.z;
+      if (dx * dx + dz * dz <= I.radius * I.radius) return conns[i];
+    }
+    return null;
+  };
+
+  // CC-C8: the 'cross' of tickTransition fired by an interact (no plane
+  // walk): logic re-pointed to the other end, the player mapped onto its
+  // land row. The region LEFT is kept as the pre-warm (game.js / the live
+  // manager hide it instead of disposing): walking back out is an instant
+  // swap, and its hysteresis never fires inside the 34 m den.
+  RegionManagerLogic.prototype.forceCross = function (conn) {
+    var oldId = this.activeId;
+    var neighborId = DEFS.otherEnd(conn, oldId);
+    this.stateFor(oldId).crossed++;
+    this.stateFor(neighborId).crossed++;
+    this.activeId = neighborId;
+    this.prewarmedId = oldId;
+    this.buildCounts[neighborId] = (this.buildCounts[neighborId] || 0) + 1;
+    return { action: 'cross', newActiveId: neighborId, mappedPos: landRow(conn, neighborId), conn: conn };
+  };
+
   // CC-C2 tutorial-law gate: crossings INTO conn.door.gatedTo are locked
   // while the predicate game.js installs (doorGate = !dayNight.dormant
   // inverted: true = locked) says so. No predicate = open.
@@ -129,6 +171,7 @@
     for (var i = 0; i < conns.length; i++) {
       var conn = conns[i];
       if (!conn.door || !DEFS.insideDoorWindow(conn, pos.x)) continue;
+      if (!DEFS.planeIn(conn, this.activeId)) continue;   // CC-C8: no plane here
       var d = DEFS.sideIn(conn, this.activeId) * (pos.z - conn.planeCoord);
       if (d > conn.door.suspendDepthM || -d > conn.door.suspendDepthM) continue;
       if (d >= 0 || !this.doorLocked(conn, DEFS.otherEnd(conn, this.activeId))) return true;
@@ -210,6 +253,9 @@
       var held = false;
       var homeConns = DEFS.connectionsOf(enemy.homeRegionId);
       for (var c = 0; c < homeConns.length; c++) {
+        // CC-C8: a plane that does not exist in the home (C's view of the
+        // den mouth) holds nobody; the den's own enemies stay behind it
+        if (!DEFS.planeIn(homeConns[c], enemy.homeRegionId)) continue;
         var hs = DEFS.sideIn(homeConns[c], enemy.homeRegionId);
         var lim = homeConns[c].planeCoord + hs * margin;
         if (hs * (enemy.pos.z - lim) < 0) { enemy.pos.z = lim; held = true; }
@@ -338,6 +384,20 @@
       var p = props[i];
       var m = meta(p.asset);
       if (!m) out.complete = false;
+      // CC-C8: a raised row (the outcrop lintel) takes no ground collider; a
+      // wall row (per-axis segment) takes p.wall circles r collider.r along
+      // its local X (the boundaryWall segCircles tech) instead of one circle
+      if (p.noCollide) continue;
+      if (p.wall) {
+        if (!m) continue;
+        var WR = CFG.boundaryWall.collider.r, len = m.width * p.scale;
+        var ax = Math.cos(p.rotY), az = -Math.sin(p.rotY);
+        for (var k = 0; k < p.wall; k++) {
+          var t = ((k + 0.5) / p.wall - 0.5) * len;
+          out.circles.push({ index: i + '.' + k, name: p.asset, x: p.x + ax * t, z: p.z + az * t, r: WR });
+        }
+        continue;
+      }
       var row = { index: i, name: p.asset, x: p.x, z: p.z,
                   r: m ? colliderRadius(p.asset, m.width, p.scale) : 0 };
       if (whMeetsCorridor(p.x, p.z, row.r)) out.exempt.push(row);
@@ -956,7 +1016,9 @@
     }
     // CC-C2: door mouths of this region's door connections stay clear like
     // the A/B gate point (gateM); A has none
-    var doors = DEFS.connectionsOf(regionId).filter(function (c) { return !!c.door; });
+    var doors = DEFS.connectionsOf(regionId).filter(function (c) {
+      return !!c.door && DEFS.planeIn(c, regionId);   // CC-C8: physical doors only
+    });
     // spawn + gate (point and collider corridor) + door mouths + path band
     function clearOfWorld(x, z, pathM) {
       var dx = x - reg.spawn.x, dz = z - reg.spawn.z;
@@ -1637,6 +1699,49 @@
     return G.footY(regionId, x, z, DEFS.regions[regionId].cfg.terrain.propFootR);
   }
 
+  // CC-C8: per-row tint - clone this instance's materials (the shared
+  // template material stays untouched) and multiply their colour
+  function whTintObject(obj, hex) {
+    var tint = new THREE.Color(hex);
+    obj.traverse(function (o) {
+      if (!o.isMesh || !o.material) return;
+      var list = Array.isArray(o.material) ? o.material : [o.material];
+      var out = list.map(function (m) {
+        var c = m.clone();
+        if (c.color) c.color.multiply(tint);
+        return c;
+      });
+      o.material = Array.isArray(o.material) ? out : out[0];
+    });
+  }
+
+  // CC-C8 outcrop dressing (region C): the rot stains (enemy.js rotPoolMesh,
+  // the CC-C7 nest pool builder: terrain-conforming, one per stains row at
+  // its own radius) + the doorway void (a black card in the recess, fogged
+  // like the rock around it). null when the region has no stains row.
+  function whBuildRotStains(regionId, RL) {
+    if (!RL || !RL.stains || !window.WH_Enemy || !window.WH_Enemy.rotPoolMesh) return null;
+    var g = new THREE.Group();
+    g.name = 'rot-stains';
+    RL.stains.forEach(function (st, k) {
+      var P = {};
+      Object.keys(RL.pool).forEach(function (key) { P[key] = RL.pool[key]; });
+      P.radius = st.radius;
+      P.textureSeed = RL.pool.textureSeed + k;
+      g.add(window.WH_Enemy.rotPoolMesh(regionId, st.x, st.z, P));
+    });
+    if (RL.void) {
+      var V = RL.void;
+      var card = new THREE.Mesh(new THREE.PlaneGeometry(V.width, V.height),
+        new THREE.MeshBasicMaterial({ color: V.color, side: THREE.DoubleSide }));
+      card.name = 'den-door-void';
+      card.position.set(V.x, whGroundFeed(regionId, V.x, V.z) + V.height / 2 - 0.3, V.z);
+      card.rotation.y = V.rotY;
+      g.add(card);
+    }
+    return g;
+  }
+
   // Build a region group from CONFIG data (props + ground + enemies). Pre-warm
   // builds set visible=false.
   RegionManager.prototype.buildRegion = function (regionId, hidden) {
@@ -1727,9 +1832,25 @@
       var obj = window.WH_ASSETS.instance(p.asset);
       obj.position.set(p.x, whGroundFeed(regionId, p.x, p.z) + (p.y || 0), p.z);
       obj.rotation.y = p.rotY;
-      obj.scale.setScalar(p.scale);
+      // CC-C8: a wall row is per-axis (scale = length, sy / sz = height /
+      // thickness, the boundaryWall segment look); tint = this row's own
+      // material copy multiplied (rot egg sacs; the template stays clean)
+      if (p.sy !== undefined) obj.scale.set(p.scale, p.sy, p.sz !== undefined ? p.sz : p.scale);
+      else obj.scale.setScalar(p.scale);
+      if (p.tint !== undefined) whTintObject(obj, p.tint);
       group.add(obj);
-      if (cullList) cullList.push({ obj: obj, x: p.x, z: p.z });
+      // CC-C8: a row's own cullM = its own hide band (show = cullM x cullShowFrac)
+      if (cullList) cullList.push(p.cullM ? { obj: obj, x: p.x, z: p.z, hide2: p.cullM * p.cullM,
+        show2: Math.pow(p.cullM * regionCfg.cullShowFrac, 2) } : { obj: obj, x: p.x, z: p.z });
+    }
+    // CC-C8: the outcrop's rot stains (mouth pool + trail) + the doorway
+    // void card (CONFIG regionC.rotLair; the C7 nest pool builder)
+    var stains = whBuildRotStains(regionId, regionCfg.rotLair);
+    if (stains) {
+      group.add(stains);
+      var RL = regionCfg.rotLair;
+      if (cullList) cullList.push({ obj: stains, x: RL.stains[0].x, z: RL.stains[0].z,
+        hide2: RL.cullM * RL.cullM, show2: Math.pow(RL.cullM * regionCfg.cullShowFrac, 2) });
     }
 
     // Round E scatter: extra trees as normal props (colliders via
@@ -1781,9 +1902,13 @@
     });
 
     // enemies (fresh instances; dead state restored below)
+    // CC-C8: + the region's lair rows (regionD.lairs: the rot mother),
+    // instanced AFTER the enemy rows on the same body path, same per-index
+    // dead state (the den's roster: index 0 = her)
     this.enemies[regionId] = [];
-    for (var j = 0; j < regionCfg.enemies.length; j++) {
-      var e = regionCfg.enemies[j];
+    var enemyRows = regionCfg.enemies.concat(regionCfg.lairs || []);
+    for (var j = 0; j < enemyRows.length; j++) {
+      var e = enemyRows[j];
       var enemy = new window.WH_Enemy(e.type, this.scene, regionId, e.x, e.z);
       // CC-C5: type -> body via CONFIG.enemy.bodyByType (was the bandit /
       // ghoul ternary); a type's bodyHeight / bodyYawDeg (wolf) override the
@@ -1911,6 +2036,24 @@
     this.cullProps(this.logic.activeId,
       result.mappedPos ? result.mappedPos.x : x,
       result.mappedPos ? result.mappedPos.z : z);
+    return result;
+  };
+
+  // CC-C8 E-to-enter: the interact door's cross (logic.forceCross). The
+  // target is built (or revealed); the region LEFT is hidden, not disposed -
+  // it stays as the pre-warm the den's mouth plane walks back into. Any
+  // other hidden group goes. Returns the logic result (game.js applies it
+  // like a tickTransition cross).
+  RegionManager.prototype.forceCross = function (conn) {
+    var oldId = this.logic.activeId;
+    var result = this.logic.forceCross(conn);
+    var newId = result.newActiveId;
+    if (this.groups[newId]) this.groups[newId].visible = true;
+    else this.buildRegion(newId, false);
+    if (this.groups[oldId]) this.groups[oldId].visible = false;
+    this.disposeHiddenExcept(oldId);
+    this.enemies[newId] = this.enemies[newId] || [];
+    this.cullProps(newId, result.mappedPos.x, result.mappedPos.z);
     return result;
   };
 

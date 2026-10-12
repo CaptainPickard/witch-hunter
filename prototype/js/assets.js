@@ -65,6 +65,11 @@
     // CC-C7 nest props: the EXISTING biome-library bone/rib pile (B6 batch,
     // on disk since the biome pass; 10,889 tris) - first manifest row.
     b6Bones: 'art-direction/3d/assets/biome_library/b6-bones-pixelated.glb',
+    // CC-C8 den furniture: the EXISTING m14 blightcap (5,786 tris) + the crypt
+    // kit's stone steps (4,843) and skull pile (4,733) - first manifest rows.
+    blightcap: 'art-direction/3d/assets/biome_library/m14-blightcap-pixelated.glb',
+    stoneSteps: 'art-direction/3d/assets/crypt/stone-steps-pixelated.glb',
+    skullPile: 'art-direction/3d/assets/crypt/skull-pile-pixelated.glb',
     // R2: darkwood light-socket props (doc 61 batches B2/B3)
     banditCampfire: 'art-direction/3d/assets/biome_library/m15-bandit-campfire-pixelated.glb',
     lanternWaymarker: 'art-direction/3d/assets/biome_library/b3-waymarker-pixelated.glb',

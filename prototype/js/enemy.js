@@ -1081,7 +1081,8 @@
   // ---- CC-C7 ROT MOTHER NEST (doc 62 sec 5.2, R-62.4) -----------------------
   // io/missions/2026-10-12-cc-c7-rotmother-behavior.md. Contained here like
   // the packs (no new script file). The mother is an ordinary CONFIG row
-  // (regionC.enemies); her lair record is per build, the CLEARED flag is
+  // (CC-C8: regionD.lairs, built after the den's enemy rows); her lair
+  // record is per build, the CLEARED flag is
   // module state persisted through the additive save block 'lairs'
   // ({ rotmother_cleared_<region>: dayOfDeath }, game.js save hooks). Her rot
   // spawn are runtime enemies appended to the region list after every row
@@ -1096,11 +1097,13 @@
     return dn ? dn.day : 0;
   }
 
-  // brief lair { x, y, region } = C-local (x, z) in CONFIG['region' + letter]
+  // brief lair { x, y, region } = region-local (x, z) in CONFIG['region' +
+  // region]. CC-C8: re-homed to 'D' (the den); letter = the SAVE-key letter
+  // (lair.flag, 'C': rotmother_cleared_C stays byte-equal across the move)
   function lairNest(cfg) {
     var R = window.WH_CONFIG['region' + cfg.lair.region];
     return { x: R.center.x + cfg.lair.x, z: R.center.z + cfg.lair.y,
-      letter: cfg.lair.region, regionId: R.id, dress: R.rotLair || null };
+      letter: cfg.lair.flag || cfg.lair.region, regionId: R.id, dress: R.rotLair || null };
   }
 
   function newLair(cfg) {
@@ -1271,7 +1274,8 @@
     if (removed) {
       // the per-index dead marks past the CONFIG rows belonged to spawn
       // (a rebuild never restores them); keep the session state tidy
-      var rows = window.WH_REGION_DEFS.regions[this.homeRegionId].cfg.enemies.length;
+      var hc = window.WH_REGION_DEFS.regions[this.homeRegionId].cfg;
+      var rows = hc.enemies.length + (hc.lairs ? hc.lairs.length : 0);   // CC-C8: + the lair rows (her)
       var se = rm.logic.stateFor(this.homeRegionId).enemies;
       Object.keys(se).forEach(function (k) { if (Number(k) >= rows) delete se[k]; });
     }
@@ -1324,25 +1328,23 @@
     return cv;
   }
 
-  Enemy.prototype.buildLair = function () {
-    var L = this.lair, N = L.nest, D = N.dress;
-    L.built = true;
-    if (!D || typeof document === 'undefined') return;
-    var G = window.WH_GROUND, rid = this.homeRegionId;
+  // The rot-ground pool mesh at (cx, cz), params P (radius / segments /
+  // rings / lift / colours / textureSeed / edgeFeather): center + rings x
+  // segments, every vertex on the region's ground + lift. CC-C8: shared by
+  // the nest (buildLair) and the outcrop stains (region-manager).
+  function rotPoolMesh(rid, cx, cz, P) {
+    var G = window.WH_GROUND;
     var hAt = function (x, z) { return G && G.has(rid) ? G.heightAt(rid, x, z) : 0; };
-    var group = new THREE.Group();
-    group.name = 'rot-lair';
-    // pool: center + rings x segments, every vertex on the ground + lift
-    var P = D.pool, pos = [], uvs = [], idx = [];
-    pos.push(N.x, hAt(N.x, N.z) + P.lift, N.z);
+    var pos = [], uvs = [], idx = [];
+    pos.push(cx, hAt(cx, cz) + P.lift, cz);
     uvs.push(0.5, 0.5);
     for (var r = 1; r <= P.rings; r++) {
       var rr = P.radius * r / P.rings;
       for (var s = 0; s < P.segments; s++) {
         var a = s / P.segments * Math.PI * 2;
-        var x = N.x + Math.cos(a) * rr, z = N.z + Math.sin(a) * rr;
+        var x = cx + Math.cos(a) * rr, z = cz + Math.sin(a) * rr;
         pos.push(x, hAt(x, z) + P.lift, z);
-        uvs.push(0.5 + (x - N.x) / (2 * P.radius), 0.5 - (z - N.z) / (2 * P.radius));
+        uvs.push(0.5 + (x - cx) / (2 * P.radius), 0.5 - (z - cz) / (2 * P.radius));
       }
     }
     for (s = 0; s < P.segments; s++) idx.push(0, 1 + (s + 1) % P.segments, 1 + s);
@@ -1369,7 +1371,19 @@
       polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1
     }));
     pool.name = 'rot-pool';
-    group.add(pool);
+    return pool;
+  }
+
+  Enemy.prototype.buildLair = function () {
+    var L = this.lair, N = L.nest, D = N.dress;
+    L.built = true;
+    if (!D || typeof document === 'undefined') return;
+    var G = window.WH_GROUND, rid = this.homeRegionId;
+    var hAt = function (x, z) { return G && G.has(rid) ? G.heightAt(rid, x, z) : 0; };
+    var group = new THREE.Group();
+    group.name = 'rot-lair';
+    var P = D.pool;
+    group.add(rotPoolMesh(rid, N.x, N.z, P));
     // fog cards: slow orbits around the nest, yaw-billboarded each frame
     var F = D.fog, fogTex = new THREE.CanvasTexture(fogCanvas());
     var fogGeo = new THREE.PlaneGeometry(F.width, F.height);
@@ -1399,7 +1413,11 @@
     var L = this.lair, D = L.nest.dress;
     if (!L.group || !D) return;
     L.group.visible = dNest <= D.cullM;
-    if (dNest > D.fog.showWithinM) return;
+    // CC-C8: the green fog is hers like the light - gone while the nest is
+    // cleared (the den is a black empty vault), back on the re-arm
+    var st = LAIR_STATE[L.nest.letter], lit = !(st && st.cleared);
+    for (var f = 0; f < L.fog.length; f++) L.fog[f].visible = lit;
+    if (!lit || dNest > D.fog.showWithinM) return;
     var cam = window.WH_GAME ? window.WH_GAME.camera : null;
     var N = L.nest;
     for (var i = 0; i < L.fog.length; i++) {
@@ -1535,9 +1553,10 @@
     });
   };
 
-  // Always-on rot-light sockets of the region's nests (game.js
-  // computeFireSockets: the bandit-campfire socket pipeline, tinted, no
-  // flame card). Static: lit whether she lives or not.
+  // Rot-light sockets of the region's nests (game.js computeFireSockets:
+  // the bandit-campfire socket pipeline, tinted, no flame card). CC-C8: the
+  // light is HERS - none while the nest is cleared (her death sets the
+  // flag), lit again the moment the re-arm clears it.
   Enemy.lairSockets = function (regionId) {
     var out = [];
     Object.keys(CFG).forEach(function (type) {
@@ -1545,6 +1564,8 @@
       if (!row || row.pattern !== 'boss-slam' || !row.lair) return;
       var N = lairNest(row);
       if (N.regionId !== regionId || !N.dress || !N.dress.light) return;
+      var st = LAIR_STATE[N.letter];
+      if (st && st.cleared) return;
       var G = window.WH_GROUND;
       var gy = G && G.has(regionId) ? G.heightAt(regionId, N.x, N.z) : 0;
       out.push({ id: 'rotLair@' + N.x + ',' + N.z, x: N.x, y: gy + N.dress.light.height, z: N.z,
@@ -1561,6 +1582,7 @@
   };
 
   Enemy.bodyNameFor = bodyNameFor;
+  Enemy.rotPoolMesh = rotPoolMesh;      // CC-C8: region-manager outcrop stains
   // pure loop helpers (offline spawn-row derivation, scratch/cc-c5)
   Enemy.packGeometry = { makeLoop: makeLoop, loopAt: loopAt, loopProject: loopProject, packSlot: packSlot };
 

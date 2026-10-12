@@ -41,6 +41,9 @@
   // of it but is NOT a member of connections[0]. Door sides live
   // per-connection (conn.sides) - B is -1 on plane 0 and +1 on the B/C plane.
   regions[CFG.regionC.id] = makeRegion(CFG.regionC, -1);
+  // CC-C8: the den (own disc, flat; side -1 = the plane-0 convention only,
+  // D is on no plane-0 side - its one door's sides live in conn.sides)
+  regions[CFG.regionD.id] = makeRegion(CFG.regionD, -1);
 
   // Region adjacency: each region lists the regions reachable from it and the
   // single chokepoint crossing that connects them. Entrances/exits exist ONLY
@@ -78,6 +81,35 @@
   ];
   connections[1].sides[CFG.regionB.id] = 1;
   connections[1].sides[CFG.regionC.id] = -1;
+  // CC-C8: C<->D DOOR, the B/C door pattern with three additions (CONFIG.
+  // regionD.door): walkFrom = the plane crossing exists ONLY while the den
+  // is active (its ring mouth; in C the line would run through the forest,
+  // so there it is no crossing, no prewarm, no clamp, no scatter clear);
+  // interact = the C-side E hook that crosses (region-manager forceCross);
+  // land = per-destination landing rows (x is NOT preserved: the outcrop
+  // and the den mouth are ~60 m apart). No gatedTo: the dormant-clock law
+  // does not apply. D occupies z >= planeZ (+1), C the far side (-1).
+  var DD = CFG.regionD.door;
+  connections.push({
+    from: CFG.regionC.id,
+    to: CFG.regionD.id,
+    axis: 'z',
+    planeCoord: DD.planeZ,
+    sides: {},
+    door: {
+      doorX: DD.doorX,
+      doorHalfWidth: DD.doorHalfWidth,
+      suspendDepthM: DD.suspendDepthM,
+      wallGapPadM: DD.wallGapPadM,
+      arch: null,
+      gatedTo: null,
+      walkFrom: CFG.regionD.id,
+      interact: { from: CFG.regionC.id, x: DD.interactAt.x, z: DD.interactAt.z, radius: DD.interactM },
+      land: DD.land
+    }
+  });
+  connections[2].sides[CFG.regionC.id] = -1;
+  connections[2].sides[CFG.regionD.id] = 1;
 
   // ---- THREE-free transition helpers (used by region-manager and tests) ------
 
@@ -125,6 +157,13 @@
       if (isMember(connections[i], regionId)) out.push(connections[i]);
     }
     return out;
+  }
+
+  // CC-C8: does this connection's plane exist while regionId is active? A
+  // door with walkFrom is a plane only in that region (the den mouth); every
+  // other connection (A/B, B/C) is physical on both sides, as before.
+  function planeIn(conn, regionId) {
+    return !conn.door || !conn.door.walkFrom || conn.door.walkFrom === regionId;
   }
 
   // Which side of the boundary plane is z on, relative to the connection?
@@ -180,6 +219,7 @@
     isMember: isMember,
     otherEnd: otherEnd,
     sideIn: sideIn,
-    connectionsOf: connectionsOf
+    connectionsOf: connectionsOf,
+    planeIn: planeIn
   };
 })();

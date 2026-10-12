@@ -496,7 +496,9 @@ window.WH_CONFIG = {
       keepOut: [{ regionId: 'forest_of_the_old_king', x: 0, z: -366, rx: 30, rz: 30 },
         { regionId: 'forest_of_the_old_king', x: 0, z: -596, rx: 18, rz: 18 },
         { regionId: 'forest_of_the_old_king', x: 240, z: -366, rx: 18, rz: 18 },
-        { regionId: 'forest_of_the_old_king', x: -240, z: -366, rx: 18, rz: 18 }],
+        { regionId: 'forest_of_the_old_king', x: -240, z: -366, rx: 18, rz: 18 },
+        // CC-C8: the rot mother's outcrop face (no random trunks / bushes in it)
+        { regionId: 'forest_of_the_old_king', x: -136, z: -219, rx: 22, rz: 18 }],
       // NO auto trees: giants are hand rows (CC-C3), the 55 m law holds
       treesExtra: { targetCount: { forest_of_the_old_king: 0 } },
       bushes: {
@@ -596,13 +598,9 @@ window.WH_CONFIG = {
       { type: 'bandit', x: -130.5, z: -500.5 },    // Charlie (fire -140, -506)
       { type: 'bandit', x: -144.2, z: -496.9 },
       { type: 'bandit', x: -151.3, z: -510.1 },
-      { type: 'bandit', x: -138.1, z: -516.8 },
-      // CC-C7 ROT MOTHER (doc 62 L3; io/missions/2026-10-12-cc-c7-rotmother-behavior.md):
-      // the nest boss, APPENDED after the guards (index 22) so saved per-index
-      // dead state keeps every earlier row. Row = CONFIG.enemy.rotmother.lair
-      // (C-local (-175, +95)) in world coords. Her rot spawn are NOT rows: the
-      // lair spawner (enemy.js) appends them at runtime, ephemeral, after her.
-      { type: 'rotmother', x: -175.0, z: -271.0 }
+      { type: 'bandit', x: -138.1, z: -516.8 }
+      // CC-C8: the CC-C7 rotmother row (index 22) is GONE - she is instanced by
+      // her lair record inside the den (CONFIG.regionD.lairs), not a C row.
     ],
     // CC-C3 ANCIENT FOREST (R-62.6, io/missions/2026-10-07-cc-c3-ancient-forest.md):
     // hand-placed rows, no runtime random. CC-C2's 120-tree 8-10 band is
@@ -967,37 +965,205 @@ window.WH_CONFIG = {
       { asset: 'banditBedroll',    x: -143.4, z: -507.9, rotY: 2.63, scale: 1.1 },
       { asset: 'treeStump',        x: -138.2, z: -502.9, rotY: 0.53, scale: 1.3 },
       { asset: 'rubblePile',       x: -138.8, z: -510.4, rotY: 1.10, scale: 1.0 },
-      // CC-C7 ROT MOTHER NEST (doc 62 L3, C-local (-175, +95) = world (-175, -271)):
-      // 6 b6Bones piles on the arena rim (r 8.9-10.6 m from the nest; the inner
-      // fight ground + the 6 m minion ring stay open). Generated offline
-      // (scratch/cc-c7/gen_lair.py -> lair.json, seed 20261012). Site probe
-      // (scratch/cc-c7/site_probe.js): ground 0.19..1.89 m within 14 m, max
-      // slope 8.5 deg, nearest prop the yew 16.5 m out, roads >= 78 m, wolf
-      // loops >= 69 m. Ledger (scratch/cc-c7/ledger_probe.js): worst 170 m
-      // circle near the lair 1,799,747 -> <= 1,889k tris with these 6 rows
-      // (10,889 each) + the boss and 3 spawn (< 2M). All PROPOSED, Nicko tunes.
-      { asset: 'b6Bones',          x: -164.4, z: -271.7, rotY: 0.01, scale: 1.02 },
-      { asset: 'b6Bones',          x: -172.0, z: -261.5, rotY: 0.43, scale: 1.09 },
-      { asset: 'b6Bones',          x: -176.9, z: -262.1, rotY: 5.58, scale: 1.22 },
-      { asset: 'b6Bones',          x: -184.5, z: -268.1, rotY: 4.12, scale: 1.17 },
-      { asset: 'b6Bones',          x: -178.1, z: -279.3, rotY: 5.51, scale: 1.34 },
-      { asset: 'b6Bones',          x: -169.2, z: -279.7, rotY: 2.83, scale: 1.03 }
+      // CC-C8 THE ROT MOTHER'S OUTCROP (io/missions/2026-10-12-cc-c8-rotmother-den.md
+      // sec 1): the CC-C7 open-nest b6Bones rim (6 rows) is REPLACED by a rock
+      // outcrop centred C-local (-136, +147) = world (-136, -219), ~65 m NE of
+      // the old glade, its black doorway facing SW (toward the glade). Rows
+      // generated offline (scratch/cc-c8/gen_den.py; front axis U = (-0.6, -0.8)).
+      // Seated by the standard prop seat (whGroundFeed footY, propFootR 1.2).
+      // Wall rows: scale = length scale, sy / sz = height / thickness scales,
+      // y = sink, wall = collider circles r 0.45 along the segment (the
+      // boundaryWall per-segment tech; region-manager whPropColliders): x3 on
+      // the 5.6 m recess sides, x4 on the 6.4 m back, x6 on the 10 m facades
+      // (gap <= 1.0 m < the 1.4 m player body - the C2 x3 is per 4 m segment).
+      // noCollide = a raised row (the lintel) that takes no ground collider.
+      // tint = a per-row material multiply (rot egg sacs; region-manager clones
+      // the material). cullM = per-row hide band (the scatter-cell fog rule:
+      // 120 + the 0.92 show band = 110.4 m > the 108.2 m fog-visible reach):
+      // the outcrop's 21.6k-tri boulders + 20.6k gates leave C's 2M ledger
+      // beyond 120 m instead of 170 m. Site: nearest trunk row (yew -117.3,
+      // -227.3) 20.5 m from the centre. All PROPOSED, Nicko tunes.
+      // -- outcrop wall core: 5 vinestone segments (2 facade, recess sides + back)
+      { asset: 'whWallA', x: -145.2, z: -219.0, rotY: 3.79, scale: 5.27, sy: 19.48, sz: 2.00, y: -0.4, wall: 6, cullM: 120 },
+      { asset: 'whWallB', x: -133.4, z: -227.8, rotY: 3.79, scale: 5.27, sy: 19.26, sz: 2.00, y: -0.4, wall: 6, cullM: 120 },
+      { asset: 'whWallA', x: -140.0, z: -219.7, rotY: 5.36, scale: 2.95, sy: 16.88, sz: 2.00, y: -0.4, wall: 3, cullM: 120 },
+      { asset: 'whWallB', x: -135.6, z: -223.1, rotY: 5.36, scale: 2.95, sy: 16.69, sz: 2.00, y: -0.4, wall: 3, cullM: 120 },
+      { asset: 'whWallA', x: -136.2, z: -219.3, rotY: 3.79, scale: 3.37, sy: 16.88, sz: 2.00, y: -0.4, wall: 4, cullM: 120 },
+      // -- doorway: m1 gate pair flanking the 4.6 m opening (scale 5.2), splayed
+      { asset: 'cemeteryGate',     x: -146.0, z: -220.3, rotY: 3.91, scale: 5.20, cullM: 120 },
+      { asset: 'cemeteryGate',     x: -134.4, z: -228.9, rotY: 3.67, scale: 5.20, cullM: 120 },
+      // -- lintel mass over the opening (raised 7 m; noCollide keeps the lane open)
+      { asset: 'mossBoulder',      x: -139.8, z: -224.1, rotY: 4.19, scale: 1.60, y: 7.0, noCollide: true, cullM: 120 },
+      // -- horseshoe: 7 mossBoulder against the core sides + back
+      { asset: 'mossBoulder',      x: -148.2, z: -213.6, rotY: 3.79, scale: 2.20, cullM: 120 },
+      { asset: 'mossBoulder',      x: -144.1, z: -209.8, rotY: 4.69, scale: 1.80, cullM: 120 },
+      { asset: 'mossBoulder',      x: -138.5, z: -211.5, rotY: 5.59, scale: 2.00, cullM: 120 },
+      { asset: 'mossBoulder',      x: -133.0, z: -215.0, rotY: 0.20, scale: 1.40, cullM: 120 },
+      { asset: 'mossBoulder',      x: -128.1, z: -219.3, rotY: 1.10, scale: 2.10, cullM: 120 },
+      { asset: 'mossBoulder',      x: -124.9, z: -224.2, rotY: 2.00, scale: 1.60, cullM: 120 },
+      { asset: 'mossBoulder',      x: -127.4, z: -229.2, rotY: 2.90, scale: 2.00, cullM: 120 },
+      // -- the blackened face: 6 bramble + 4 rot egg sacs (graveMound 1.1, rot tint) at the mouth
+      { asset: 'bramble',          x: -143.8, z: -223.7, rotY: 3.79, scale: 1.80, cullM: 120 },
+      { asset: 'bramble',          x: -138.2, z: -227.6, rotY: 5.09, scale: 2.10, cullM: 120 },
+      { asset: 'bramble',          x: -146.0, z: -224.2, rotY: 0.10, scale: 1.40, cullM: 120 },
+      { asset: 'bramble',          x: -138.4, z: -230.2, rotY: 1.40, scale: 2.40, cullM: 120 },
+      { asset: 'bramble',          x: -144.6, z: -227.3, rotY: 2.70, scale: 1.60, cullM: 120 },
+      { asset: 'bramble',          x: -141.8, z: -230.4, rotY: 4.00, scale: 1.50, cullM: 120 },
+      { asset: 'graveMound',       x: -146.4, z: -226.9, rotY: 3.79, scale: 1.10, tint: 0x6f7a4a, cullM: 120 },
+      { asset: 'graveMound',       x: -139.9, z: -230.8, rotY: 5.89, scale: 1.10, tint: 0x6f7a4a, cullM: 120 },
+      { asset: 'graveMound',       x: -146.2, z: -222.6, rotY: 1.70, scale: 1.10, tint: 0x6f7a4a, cullM: 120 },
+      { asset: 'graveMound',       x: -139.1, z: -233.4, rotY: 3.80, scale: 1.10, tint: 0x6f7a4a, cullM: 120 }
     ],
-    // CC-C7 ROT MOTHER NEST dressing (enemy.js lair build, scratch/cc-c7/lair.json):
-    // a terrain-conforming rot-ground pool (the road-ribbon decal family:
-    // polygon-offset MeshStandard + NEAREST pixel canvas, dark swamp tones),
-    // slow green fog cards, and an always-on dim green rot-light riding the
-    // fixed light pool (game.js computeFireSockets -> poolTick: the bandit
-    // campfire socket pipeline, tinted, no flame card). All PROPOSED, Nicko tunes.
-    // The nest centre is NOT repeated here: enemy.rotmother.lair (C-local
-    // (-175, +95)) + this region's center = world (-175, -271), one source.
+    // CC-C8 ROT MOTHER'S DOORWAY dressing (sec 1-2; region-manager buildRegion
+    // -> WH_Enemy.buildRotStains). The CC-C7 pool / light / fog rows MOVED into
+    // the den (CONFIG.regionD.rotLair). What stays outside: a SECOND rot pool
+    // (the C7 pool params, radius 5, darker) at the mouth + a 3-blob stain
+    // trail stepping from the mouth toward the old glade edge (r 1.8 / 1.4 /
+    // 1.0, bent around the treeStump row at (-156.7, -245.8)); NO light. The
+    // doorway void = a black card in the recess (reads as the den's dark).
+    // enter = the E-to-enter interact (game.js tryDenDoor; region-defs C<->D
+    // door.interact): prompt within interactM of the opening centre.
+    // All PROPOSED, Nicko tunes.
     rotLair: {
-      pool: { radius: 12, segments: 40, rings: 6, lift: 0.08,
-        color: 0x1f2a17, color2: 0x2d3a1c, speck: 0x4d5f2a, textureSeed: 20261012, edgeFeather: 0.22 },
-      light: { height: 1.6, intensity: 2.4, color: 0x7fbf4f },
-      fog: { cards: 10, radiusMin: 2.5, radiusMax: 10.5, heightMin: 0.5, heightMax: 1.6,
+      stains: [
+        { x: -141.7, z: -226.6, radius: 5.0 },     // mouth pool
+        { x: -152.2, z: -235.6, radius: 1.8 },     // trail (mouth -> glade edge (-167.8, -261.4))
+        { x: -161.1, z: -242.4, radius: 1.4 },
+        { x: -165.1, z: -252.8, radius: 1.0 }
+      ],
+      pool: { segments: 28, rings: 4, lift: 0.08,
+        color: 0x141c10, color2: 0x222d15, speck: 0x3d4c22, textureSeed: 20261013, edgeFeather: 0.3 },
+      void: { x: -136.7, z: -219.9, rotY: 3.79, width: 4.6, height: 9.0, color: 0x000000 },
+      cullM: 120                      // stains + void hide past this from the player (the outcrop rows' band)
+    }
+  },
+
+  // CC-C8 (io/missions/2026-10-12-cc-c8-rotmother-den.md sec 3-6): Region D,
+  // THE ROT MOTHER'S DEN. The smallest region: its OWN flat disc (radius 34,
+  // the A/B flat-disc path - NO terrain row, heightAt 0) centred world
+  // (-175, -271). A separate 2D pocket: it overlaps C's ground in world
+  // coords but is never built beside it (one active region; C waits hidden).
+  // Reached ONLY through the C<->D door (region-defs connections[2]): E at
+  // the outcrop doorway (door.interact) crosses in; the walk-back plane at
+  // the ring's mouth (door.planeZ inside the door window) crosses out. Both
+  // land on door.land rows (the outcrop and the den mouth are ~60 m apart in
+  // world coords: x is NOT preserved like B/C). No dormant-clock gate.
+  // Every row below is PROPOSED, Nicko tunes.
+  regionD: {
+    id: 'rot_den',
+    name: "The Rot Mother's Den",
+    center: { x: -175, z: -271 },     // = the CC-C7 nest (C-local (-175, +95))
+    groundRadius: 34,
+    groundY: 0,                       // flat disc (C is hidden while D is active: no z-fight)
+    groundColor: 0x12160e,            // wet black loam
+    groundColor2: 0x1d2414,           // rot-moss secondary
+    groundSeed: 1662061218,
+    scatter: false,                   // hand rows only (no Round E scatter in the den)
+    spawn: { x: -175, z: -291 },      // inside the mouth (a death here without a camp)
+    gravityY: -22,
+    // sec 4 DARKNESS: d95 = sqrt(-ln 0.05) / 0.12 = 14.4 m (the far wall is a
+    // black thought); the hemi fill = hemiBaseIntensity x 0.06. The always-
+    // dark sky / moon / exposure row is CONFIG.dayNight.constantPhases.rot_den.
+    fogColor: 0x05070a,
+    fogDensity: 0.12,
+    ambientLightLevel: 0.06,
+    // C<->D door (region-defs connections[2]). planeZ = the ring mouth's outer
+    // face (den-local z -24.6); the window = the 4.6 m ring gap. walkFrom: the
+    // plane crossing exists ONLY from the den side (in C the line runs through
+    // the forest: no crossing, no clamp, no scatter clear there). interact =
+    // the outcrop doorway's E hook (C side). land = where a crossing INTO each
+    // region puts the player + what they face. fadeSec = the black dip
+    // (the death overlay element, non-lethal): fadeIn before the E cross,
+    // fadeOut after either cross (E: 0.3 + 0.5 = 0.8; walk-out: 0 + 0.8).
+    door: {
+      planeZ: -295.6,
+      doorX: -175,
+      doorHalfWidth: 3.0,             // the 4.6 m gap's walkable lane between the ring's end colliders is +-2.65: every way out crosses
+      suspendDepthM: 0,
+      wallGapPadM: 0,
+      interactM: 3.5,
+      interactAt: { x: -139.6, z: -223.8 },     // the outcrop opening centre (C)
+      land: {
+        forest_of_the_old_king: { x: -142.6, z: -227.8, faceX: -148.0, faceZ: -235.0 },
+        rot_den: { x: -175.0, z: -292.6, faceX: -175.0, faceZ: -265.0 }
+      },
+      fadeIn: 0.3,
+      fadeOut: 0.5,
+      exitFadeOut: 0.8,
+      text: { prompt: 'E - Enter the den' }
+    },
+    enemies: [],
+    // the CC-C7 lair row, re-homed (homeRegionId 'rot_den'): the boss is
+    // instanced from here AFTER the enemy rows (index 0 = her); the rot spawn
+    // append after her at runtime. Position = CONFIG.enemy.rotmother.lair
+    // (den-local (0, +6)) in world coords.
+    lairs: [
+      { type: 'rotmother', x: -175.0, z: -265.0 }
+    ],
+    // DEN BUILD (sec 3; scratch/cc-c8/gen_den.py). Flat ground: every row sits
+    // at y 0 (+ its sink). Cavern = 10 vinestone ring segments r 24 (per-axis:
+    // scale = the 15 m chord, sy = heightM 9, sz = thickness scale 2.4; wall =
+    // r 0.45 colliders every <= 2 m - the den is CLOSED except the mouth), the
+    // exit gap at den-local (0, -24) = the open-arch pattern (no segment
+    // there). 9 mossBoulder shoulders, the brood furniture, the nest's 5 egg
+    // sacs (moved INSIDE from the open lair).
+    props: [
+      // -- cavern ring: 10 segments, exit gap between the first and the last
+      { asset: 'whWallA', x: -165.1, z: -292.9, rotY: 5.86, scale: 7.84, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: -154.5, z: -283.4, rotY: 5.26, scale: 7.84, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: -151.0, z: -269.5, rotY: 4.65, scale: 7.84, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: -156.1, z: -256.2, rotY: 4.05, scale: 7.84, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: -167.9, z: -248.1, rotY: 3.44, scale: 7.84, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: -182.1, z: -248.1, rotY: 2.84, scale: 7.84, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: -193.9, z: -256.2, rotY: 2.24, scale: 7.84, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: -199.0, z: -269.5, rotY: 1.63, scale: 7.84, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: -195.5, z: -283.4, rotY: 1.03, scale: 7.84, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: -184.9, z: -292.9, rotY: 0.42, scale: 7.84, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      // -- 9 mossBoulder shoulders at the wall foot (r 20.5-21.5), clear of the mouth
+      { asset: 'mossBoulder',      x: -163.1, z: -287.7, rotY: 0.00, scale: 1.60 },
+      { asset: 'mossBoulder',      x: -154.6, z: -277.8, rotY: 0.70, scale: 1.70 },
+      { asset: 'mossBoulder',      x: -155.5, z: -264.7, rotY: 1.40, scale: 1.80 },
+      { asset: 'mossBoulder',      x: -162.3, z: -253.6, rotY: 2.10, scale: 1.90 },
+      { asset: 'mossBoulder',      x: -175.0, z: -250.5, rotY: 2.80, scale: 2.00 },
+      { asset: 'mossBoulder',      x: -187.7, z: -253.6, rotY: 3.50, scale: 2.10 },
+      { asset: 'mossBoulder',      x: -194.5, z: -264.7, rotY: 4.20, scale: 2.20 },
+      { asset: 'mossBoulder',      x: -195.4, z: -277.8, rotY: 4.90, scale: 2.30 },
+      { asset: 'mossBoulder',      x: -186.9, z: -287.7, rotY: 5.60, scale: 2.40 },
+      // -- brood furniture: 4 stone-steps (crypt kit), 2 skull-piles, 3 egg sacs, 6 blightcap
+      { asset: 'stoneSteps',       x: -187.0, z: -285.0, rotY: 0.00, scale: 1.20 },
+      { asset: 'stoneSteps',       x: -161.5, z: -283.0, rotY: 1.10, scale: 1.10 },
+      { asset: 'stoneSteps',       x: -192.0, z: -267.0, rotY: 2.20, scale: 1.30 },
+      { asset: 'stoneSteps',       x: -159.0, z: -263.0, rotY: 3.30, scale: 1.20 },
+      { asset: 'skullPile',        x: -184.0, z: -288.0, rotY: 4.40, scale: 1.00 },
+      { asset: 'skullPile',        x: -164.5, z: -253.0, rotY: 5.50, scale: 1.10 },
+      { asset: 'graveMound',       x: -190.0, z: -277.0, rotY: 0.32, scale: 1.10, tint: 0x6f7a4a },
+      { asset: 'graveMound',       x: -160.0, z: -274.0, rotY: 1.42, scale: 1.00, tint: 0x6f7a4a },
+      { asset: 'graveMound',       x: -181.0, z: -251.5, rotY: 2.52, scale: 1.20, tint: 0x6f7a4a },
+      { asset: 'blightcap',        x: -182.5, z: -282.0, rotY: 3.62, scale: 0.90 },
+      { asset: 'blightcap',        x: -167.0, z: -286.5, rotY: 4.72, scale: 1.10 },
+      { asset: 'blightcap',        x: -191.5, z: -259.0, rotY: 5.82, scale: 1.20 },
+      { asset: 'blightcap',        x: -158.0, z: -256.0, rotY: 0.63, scale: 0.80 },
+      { asset: 'blightcap',        x: -171.0, z: -252.0, rotY: 1.73, scale: 1.00 },
+      { asset: 'blightcap',        x: -187.5, z: -272.0, rotY: 2.83, scale: 0.90 },
+      // -- the nest (den-local (0, +6) = world (-175, -265)): 5 egg sacs ring r 7.5
+      { asset: 'graveMound',       x: -177.2, z: -257.8, rotY: 0.00, scale: 1.10, tint: 0x6f7a4a },
+      { asset: 'graveMound',       x: -182.5, z: -264.9, rotY: 1.70, scale: 1.10, tint: 0x6f7a4a },
+      { asset: 'graveMound',       x: -177.4, z: -272.1, rotY: 3.40, scale: 1.10, tint: 0x6f7a4a },
+      { asset: 'graveMound',       x: -169.0, z: -269.5, rotY: 5.10, scale: 1.10, tint: 0x6f7a4a },
+      { asset: 'graveMound',       x: -168.9, z: -260.7, rotY: 0.52, scale: 1.10, tint: 0x6f7a4a }
+    ],
+    // THE NEST dressing (enemy.js lair build; the CC-C7 regionC.rotLair rows
+    // MOVED here): the rot pool (C7 params, radius 12 -> 10, color2 shifted
+    // sicker), the green fog cards, and the nest light (intensity 2.4 -> 1.6,
+    // height 1.6 -> 1.2). The light is HERS: Enemy.lairSockets drops it while
+    // the nest is cleared, the re-arm relights it (and the fog cards with it).
+    rotLair: {
+      pool: { radius: 10, segments: 40, rings: 6, lift: 0.08,
+        color: 0x1f2a17, color2: 0x3b4a1a, speck: 0x5f7a2a, textureSeed: 20261012, edgeFeather: 0.22 },
+      light: { height: 1.2, intensity: 1.6, color: 0x7fbf4f },
+      fog: { cards: 10, radiusMin: 2.5, radiusMax: 9.0, heightMin: 0.5, heightMax: 1.6,
         width: 3.6, height: 1.5, opacity: 0.16, color: 0x7f9f55, driftSpeed: 0.12, showWithinM: 70 },
-      cullM: 170                      // pool + fog hide past this from the player (= cullDistanceM)
+      cullM: 170                      // pool + fog hide past this from the player (never, in a 34 m disc)
     }
   },
 
@@ -1570,7 +1736,8 @@ window.WH_CONFIG = {
     // attackDamage / moveSpeed + chaseSpeed / sightRadius) once per type. The
     // second block = engine tunables the brief row leaves to the builder
     // (brief sec 3 AoE 3.2 m / 180-deg arc, leash, body radius, phase edges).
-    // lair = C-local (x, y=z) in region 'C' (regionC.rotLair.nest = world).
+    // lair = region-local (x, y=z) in region lair.region (CC-C8: 'D', the den;
+    // regionD.rotLair = the nest dressing; lair.flag = the save-key letter).
     // scale = the literal body scale on the raw GLB (rotmother 1.90 m tall
     // raw -> ~4.2 m; rotspawn 1.36 m raw -> ~1.1 m). Bodies are UNRIGGED: the
     // anim.js RIGID_CLIPS placeholder set plays (bandit 6-clip pattern).
@@ -1578,7 +1745,10 @@ window.WH_CONFIG = {
     // duration; a re-apply REFRESHES, never stacks). slow 0.45 = -45% move.
     rotmother: {
       name: 'Rot Mother', hp: 460, dmg: 26, speed: 1.6, aggro: 9,
-      lair: { x: -175, y: 95, region: 'C' }, scale: 2.2,
+      // CC-C8: re-homed into the den - den-local (0, +6) in region 'D' (=
+      // world (-175, -265)); flag 'C' keeps the save key rotmother_cleared_C
+      // byte-equal (a pre-C8 cleared profile still loads cleared)
+      lair: { x: 0, y: 6, region: 'D', flag: 'C' }, scale: 2.2,
       pattern: 'boss-slam', slamCooldown: 3.4, slamWindup: 1.15,
       poison: { dps: 3.5, duration: 4.0, slow: 0.45 },   // poison-lite v1
       rearm: { days: 3, trigger: 'proximity', radius: 14 },
@@ -1818,6 +1988,10 @@ window.WH_CONFIG = {
     // plans need every prop footprint) + rotmotherBody (0.74 MB, a C row:
     // CONTINUE into C builds her at boot). rotspawnBody stays deferred - the
     // spawner instances it at runtime and a rigid body late-swaps cleanly.
+    // CC-C8: b6Bones OUT (no row uses it now); the den kit IN (crypt
+    // stoneSteps 0.36 MB + skullPile 0.50 MB, blightcap: a CONTINUE saved inside
+    // the den builds regionD at boot and its collider table needs every
+    // footprint). rotmotherBody stays: CONTINUE into D builds her at boot.
     bootCritical: [
       'playerBody', 'banditBody', 'ghoulBody', 'wolfBody', 'playerDagClips', 'bramble',
       'whCampkit', 'whTent', 'yewTree', 'livingOak', 'youngAsh', 'cemeteryGate',
@@ -1828,7 +2002,8 @@ window.WH_CONFIG = {
       'graveMound', 'dagger', 'grassTuft', 'rubblePile', 'stoneCrossTilted',
       'roundShield', 'ironFenceSection', 'churchCornerButtress',
       'gravestoneObelisk', 'churchPewBroken', 'buriedCoffin', 'handAxe',
-      'churchArchway', 'whBushSnare', 'longsword', 'b6Bones', 'rotmotherBody'
+      'churchArchway', 'whBushSnare', 'longsword', 'rotmotherBody', 'stoneSteps',
+      'skullPile', 'blightcap'
     ],
     // MAGANIM (doc 65 R-65.3): caster-implement registry (v1; future caster
     // weapons append here). BOTH hands holding one of these = the caster body
@@ -2660,6 +2835,25 @@ window.WH_CONFIG.dayNight = {
       zenithColor: 0x1c2238, horizonBand: 0x664e58, horizonGlow: 0x9c8478,
       stars: 0.25,
       discColor: 0xe8b894, discGlowColor: 0xa07060, discOpacity: 0.9
+    }
+  },
+  // CC-C8 ALWAYS-DARK (io/missions/2026-10-12-cc-c8-rotmother-den.md sec 4):
+  // an area with a constant row shows it EVERY frame it is the sky area -
+  // no clock math (the clock itself runs on untouched: dormant law intact).
+  // daynight.js reads it in one branch (areaId === a constantPhases key).
+  // Same keys as a phase row. rot_den: moon 0, hemi fill = the region's
+  // ambientLightLevel 0.06 (mult 1: the 0.06 is not applied twice), exposure
+  // 0.75, a near-black dome underlay (no pano paints it), stars 0.15, disc
+  // 0.2; fog = regionD's own row. All PROPOSED, Nicko tunes.
+  constantPhases: {
+    rot_den: {
+      hemiSkyColor: 0x1a2030, hemiGroundColor: 0x08090b, hemiFillMult: 1.0,
+      lightColor: 0xa8bce6, lightIntensity: 0.0, azimuthDeg: 0, elevationDeg: 30,
+      exposureMult: 0.75,
+      fog: { rot_den: { color: 0x05070a, density: 0.12 } },
+      zenithColor: 0x020305, horizonBand: 0x05070a, horizonGlow: 0x0a0d12,
+      stars: 0.15,
+      discColor: 0xdfe7f2, discGlowColor: 0xa8bce6, discOpacity: 0.2
     }
   },
   // C2b (io/missions/2026-10-06-cc-c2b-skydome-pools.md) WH_SKYPOOL: painted

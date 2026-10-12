@@ -220,6 +220,12 @@
   // Lighting is untouched: this only paints the dome.
   var P = D.skyPool;
 
+  // CC-C8 ALWAYS-DARK: the constant row of an area (CONFIG.dayNight.
+  // constantPhases, rot_den) or null. No clock math anywhere on this path.
+  function constantRow(areaId) {
+    return D.constantPhases ? D.constantPhases[areaId] || null : null;
+  }
+
   function panoGeometry(radius) {
     var g = new THREE.SphereGeometry(radius, 64, 32);
     var uv = g.attributes.uv;
@@ -382,6 +388,7 @@
   SkyPool.prototype.setArea = function (areaId) {
     if (areaId === this.area) return;
     this.area = areaId;
+    if (constantRow(areaId)) return;      // CC-C8: no pano in an always-dark area (tick hides them)
     this.retarget('time');
   };
 
@@ -432,6 +439,18 @@
 
   SkyPool.prototype.tick = function (dt) {
     var dn = this.dn;
+    // CC-C8 ALWAYS-DARK: the gradient underlay only (the constant row's
+    // near-black dome + stars + dim disc); leaving re-targets via setArea
+    if (constantRow(this.area)) {
+      this.phase = dn.phase;
+      if (this.fade) this.dropFade();
+      this.a.visible = false;
+      this.aUrl = null;
+      if (this.dome) this.dome.visible = true;
+      this.sky.core.visible = true;
+      this.sky.glow.visible = true;
+      return;
+    }
     if (dn.phase !== this.phase) {
       this.phase = dn.phase;
       this.retarget('phase');
@@ -473,6 +492,17 @@
   var coreTick = DayNight.prototype.tick;
   DayNight.prototype.tick = function (dt) {
     coreTick.call(this, dt);
+    // CC-C8 ALWAYS-DARK: in an area with a constant row the look IS that row,
+    // every frame (the clock above ran on untouched). Leaving while dormant
+    // puts the frozen startPhase row back (a running clock rewrote it above).
+    var K = this.sky ? constantRow(this.sky.area) : null;
+    if (K) {
+      copyRow(this.state, K);
+      this.constantHeld = true;
+    } else if (this.constantHeld) {
+      this.constantHeld = false;
+      if (this.dormant) copyRow(this.state, D.phases[D.startPhase]);
+    }
     if (this.sky) this.sky.tick(dt);
   };
 
