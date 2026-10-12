@@ -989,26 +989,23 @@ window.WH_CONFIG = {
       { asset: 'whWallA', x: -140.0, z: -219.7, rotY: 5.36, scale: 2.95, sy: 16.88, sz: 2.00, y: -0.4, wall: 3, cullM: 120 },
       { asset: 'whWallB', x: -135.6, z: -223.1, rotY: 5.36, scale: 2.95, sy: 16.69, sz: 2.00, y: -0.4, wall: 3, cullM: 120 },
       { asset: 'whWallA', x: -136.2, z: -219.3, rotY: 3.79, scale: 3.37, sy: 16.88, sz: 2.00, y: -0.4, wall: 4, cullM: 120 },
-      // -- doorway: m1 gate pair flanking the 4.6 m opening (scale 5.2), splayed
+      // -- doorway: ONE m1 gate leaf (the west, scale 5.2) on the 4.6 m opening;
+      //    CC-C8 TRIM cut the east leaf (20.6k tris) - 2 bramble re-dress it below
       { asset: 'cemeteryGate',     x: -146.0, z: -220.3, rotY: 3.91, scale: 5.20, cullM: 120 },
-      { asset: 'cemeteryGate',     x: -134.4, z: -228.9, rotY: 3.67, scale: 5.20, cullM: 120 },
       // -- lintel mass over the opening (raised 7 m; noCollide keeps the lane open)
       { asset: 'mossBoulder',      x: -139.8, z: -224.1, rotY: 4.19, scale: 1.60, y: 7.0, noCollide: true, cullM: 120 },
-      // -- horseshoe: 7 mossBoulder against the core sides + back
-      { asset: 'mossBoulder',      x: -148.2, z: -213.6, rotY: 3.79, scale: 2.20, cullM: 120 },
-      { asset: 'mossBoulder',      x: -144.1, z: -209.8, rotY: 4.69, scale: 1.80, cullM: 120 },
-      { asset: 'mossBoulder',      x: -138.5, z: -211.5, rotY: 5.59, scale: 2.00, cullM: 120 },
+      // -- horseshoe: 1 mossBoulder (the mouth feature rock); CC-C8 TRIM 2 cut the
+      //    other 6 (m9 21.6k tris each) - 2 mossBoulder (lintel + mouth), 1 gate leaf
       { asset: 'mossBoulder',      x: -133.0, z: -215.0, rotY: 0.20, scale: 1.40, cullM: 120 },
-      { asset: 'mossBoulder',      x: -128.1, z: -219.3, rotY: 1.10, scale: 2.10, cullM: 120 },
-      { asset: 'mossBoulder',      x: -124.9, z: -224.2, rotY: 2.00, scale: 1.60, cullM: 120 },
-      { asset: 'mossBoulder',      x: -127.4, z: -229.2, rotY: 2.90, scale: 2.00, cullM: 120 },
-      // -- the blackened face: 6 bramble + 4 rot egg sacs (graveMound 1.1, rot tint) at the mouth
+      // -- the blackened face: 8 bramble (2 on the cut east leaf's side) + 4 rot egg sacs (graveMound 1.1, rot tint) at the mouth
       { asset: 'bramble',          x: -143.8, z: -223.7, rotY: 3.79, scale: 1.80, cullM: 120 },
       { asset: 'bramble',          x: -138.2, z: -227.6, rotY: 5.09, scale: 2.10, cullM: 120 },
       { asset: 'bramble',          x: -146.0, z: -224.2, rotY: 0.10, scale: 1.40, cullM: 120 },
       { asset: 'bramble',          x: -138.4, z: -230.2, rotY: 1.40, scale: 2.40, cullM: 120 },
       { asset: 'bramble',          x: -144.6, z: -227.3, rotY: 2.70, scale: 1.60, cullM: 120 },
       { asset: 'bramble',          x: -141.8, z: -230.4, rotY: 4.00, scale: 1.50, cullM: 120 },
+      { asset: 'bramble',          x: -135.2, z: -227.0, rotY: 3.67, scale: 2.00, cullM: 120 },
+      { asset: 'bramble',          x: -133.6, z: -226.2, rotY: 5.30, scale: 1.60, cullM: 120 },
       { asset: 'graveMound',       x: -146.4, z: -226.9, rotY: 3.79, scale: 1.10, tint: 0x6f7a4a, cullM: 120 },
       { asset: 'graveMound',       x: -139.9, z: -230.8, rotY: 5.89, scale: 1.10, tint: 0x6f7a4a, cullM: 120 },
       { asset: 'graveMound',       x: -146.2, z: -222.6, rotY: 1.70, scale: 1.10, tint: 0x6f7a4a, cullM: 120 },
@@ -1105,7 +1102,7 @@ window.WH_CONFIG = {
     // scale = the 15 m chord, sy = heightM 9, sz = thickness scale 2.4; wall =
     // r 0.45 colliders every <= 2 m - the den is CLOSED except the mouth), the
     // exit gap at den-local (0, -24) = the open-arch pattern (no segment
-    // there). 9 mossBoulder shoulders, the brood furniture, the nest's 5 egg
+    // there). 4 mossBoulder shoulders, the brood furniture, the nest's 5 egg
     // sacs (moved INSIDE from the open lair).
     props: [
       // -- cavern ring: 10 segments, exit gap between the first and the last
@@ -1119,14 +1116,10 @@ window.WH_CONFIG = {
       { asset: 'whWallB', x: -199.0, z: -269.5, rotY: 1.63, scale: 7.84, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
       { asset: 'whWallA', x: -195.5, z: -283.4, rotY: 1.03, scale: 7.84, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
       { asset: 'whWallB', x: -184.9, z: -292.9, rotY: 0.42, scale: 7.84, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
-      // -- 9 mossBoulder shoulders at the wall foot (r 20.5-21.5), clear of the mouth
+      // -- 4 mossBoulder shoulders at the wall foot (r 20.5-21.5), clear of the mouth
+      //    (CC-C8 TRIM 2: kept the 2 gap flankers, the 2.30 row + the nest-adjacent 1.80; 5 cut)
       { asset: 'mossBoulder',      x: -163.1, z: -287.7, rotY: 0.00, scale: 1.60 },
-      { asset: 'mossBoulder',      x: -154.6, z: -277.8, rotY: 0.70, scale: 1.70 },
       { asset: 'mossBoulder',      x: -155.5, z: -264.7, rotY: 1.40, scale: 1.80 },
-      { asset: 'mossBoulder',      x: -162.3, z: -253.6, rotY: 2.10, scale: 1.90 },
-      { asset: 'mossBoulder',      x: -175.0, z: -250.5, rotY: 2.80, scale: 2.00 },
-      { asset: 'mossBoulder',      x: -187.7, z: -253.6, rotY: 3.50, scale: 2.10 },
-      { asset: 'mossBoulder',      x: -194.5, z: -264.7, rotY: 4.20, scale: 2.20 },
       { asset: 'mossBoulder',      x: -195.4, z: -277.8, rotY: 4.90, scale: 2.30 },
       { asset: 'mossBoulder',      x: -186.9, z: -287.7, rotY: 5.60, scale: 2.40 },
       // -- brood furniture: 4 stone-steps (crypt kit), 2 skull-piles, 3 egg sacs, 6 blightcap
