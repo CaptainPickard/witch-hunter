@@ -1140,8 +1140,11 @@
         b = { el: el, fill: fill, deathT: 0, done: restoredCorpse };
         bars.set(e, b);
       }
-      if (b.done) { b.el.style.display = 'none'; continue; }
       var dead = e.fsm === 'dead' || e.hp <= 0;
+      // CC-C7: a re-armed Rot Mother is the same enemy object risen again -
+      // her finished bar comes back with her
+      if (b.done && !dead) { b.done = false; b.deathT = 0; }
+      if (b.done) { b.el.style.display = 'none'; continue; }
       var deathAlpha = 1;
       if (dead) {
         b.deathT += dt;
@@ -1158,7 +1161,7 @@
       var dx = e.pos.x - p.pos.x, dz = e.pos.z - p.pos.z;
       var dist = Math.sqrt(dx * dx + dz * dz);
       if (dist > H.hideBeyondM) { b.el.style.display = 'none'; continue; }
-      _ehbV.set(e.pos.x, e.pos.y + H.heightAboveHeadM, e.pos.z);
+      _ehbV.set(e.pos.x, e.pos.y + H.heightAboveHeadM + (e.cfg.barLiftM || 0), e.pos.z);   // CC-C7 barLiftM (4.2 m boss)
       _ehbV.project(game.camera);
       if (_ehbV.z > 1 || _ehbV.z < -1) { b.el.style.display = 'none'; continue; }
       var sx = (_ehbV.x * 0.5 + 0.5) * window.innerWidth;
@@ -1959,8 +1962,22 @@
   // never spawned as boxes - the body glows until it is looted empty.
   // L1: the same one kill entry point awards the kill XP (enemy.js never
   // imports WH_LEVEL) + the first-of-kind foe discovery.
+  // CC-C7: a type with its own CONFIG.enemy[type].loot rows ([{ mat, n:
+  // [min, max] }], rot mother / rot spawn) rolls ONLY those (uniform integer
+  // per row, 0 = nothing); every other type keeps the shared CONFIG.drops.
+  function rollTypeLoot(rows) {
+    var items = [];
+    for (var i = 0; i < rows.length; i++) {
+      var lo = rows[i].n[0], hi = rows[i].n[1];
+      var count = lo + Math.floor(Math.random() * (hi - lo + 1));
+      if (count > 0 && CFG.items[rows[i].mat]) items.push({ id: rows[i].mat, count: count });
+    }
+    return items;
+  }
+
   function storeCorpseLoot(enemy) {
-    game.corpseLoot.attach(enemy, rollDrops());
+    var typeCfg = CFG.enemy[enemy.type];
+    game.corpseLoot.attach(enemy, typeCfg && typeCfg.loot ? rollTypeLoot(typeCfg.loot) : rollDrops());
     window.WH_LEVEL.awardXP('kill_' + enemy.type);
     window.WH_LEVEL.discover('foe', enemy.type);
   }
@@ -1980,8 +1997,21 @@
     var parts = r.taken.map(function (t) {
       return window.WH_INVENTORY.itemDef(t.id).name + ' x' + t.count;
     });
+    // CC-C7 drop-log: the first loot of an item carrying a dropLog line
+    // (rot-silk / rot-gland) appends its journal line once per session (one
+    // toast: a second toast would replace the loot line), held 2x as long
+    game.dropLogSeen = game.dropLogSeen || {};
+    var journal = [];
+    r.taken.forEach(function (t) {
+      var d = CFG.items[t.id];
+      if (d && d.dropLog && !game.dropLogSeen[t.id]) {
+        game.dropLogSeen[t.id] = true;
+        journal.push(d.dropLog);
+      }
+    });
     game.inventoryUI.toast(L.lootToast.replace('{list}', parts.join(', ')) +
-      (r.remaining ? L.partialSuffix : ''));
+      (r.remaining ? L.partialSuffix : '') + (journal.length ? ' - ' + journal.join(' ') : ''),
+      journal.length ? CFG.inventoryUI.toastSeconds * 2 : undefined);
     return true;
   }
 
@@ -2436,6 +2466,32 @@
       reloadActionMap: function () { game.actionMap = loadActionMap(); },
       setClassId: setClassId        // R-64.5: restore hands the saved class through
     };
+    // CC-C7: the nest flags ride an additive optional profile block 'lairs'
+    // ({ rotmother_cleared_C: dayOfDeath } while cleared; schema v1, an older
+    // profile = every nest armed), registered here so save.js stays as is:
+    // capture() gains the block, save() writes it next to save.js's own
+    // write (same key, same v / ts), restore() hands it to WH_Enemy first.
+    var S = window.WH_SAVE;
+    var baseCapture = S.capture, baseSave = S.save, baseRestore = S.restore;
+    S.capture = function (g, opts) {
+      var data = baseCapture(g, opts);
+      data.lairs = window.WH_Enemy.captureLairs();
+      return data;
+    };
+    S.save = function (g, opts) {
+      if (!baseSave(g, opts)) return false;
+      try {
+        var stored = JSON.parse(window.localStorage.getItem(CFG.save.lsKey) || 'null');
+        if (!stored) return true;
+        stored.lairs = window.WH_Enemy.captureLairs();
+        window.localStorage.setItem(CFG.save.lsKey, JSON.stringify(stored));
+      } catch (e) { /* the base profile stands; the nest re-arms on load */ }
+      return true;
+    };
+    S.restore = function (g, data) {
+      if (data) window.WH_Enemy.restoreLairs(data.lairs);
+      baseRestore(g, data);
+    };
     // S5 quit persist: tab close / reload writes the same capture() profile,
     // once, best-effort and quiet - only once a cycle has begun (day > 0 or
     // a deployed camp), never on a fresh untouched boot, never while dead.
@@ -2619,6 +2675,10 @@
     // Round F: world-level sockets (gate-arch lantern), live in both regions.
     var ws = rm.worldSockets ? rm.worldSockets() : [];
     for (var w = 0; w < ws.length; w++) out.push(ws[w]);
+    // CC-C7: the active region's rot-nest lights (always on, green tint,
+    // no flame card - poolTick reads socket.color / socket.noCard)
+    var ls = window.WH_Enemy.lairSockets(rm.logic.activeId);
+    for (var q = 0; q < ls.length; q++) out.push(ls[q]);
     return out;
   }
 
@@ -2649,10 +2709,13 @@
       if (tgt) {
         l.position.set(tgt.x, tgt.y, tgt.z);
         l.whSocketId = tgt.id;
+        // CC-C7: a tinted socket (rot-nest light) sets its own colour; every
+        // other socket keeps the pool's fire colour
+        l.color.setHex(tgt.color !== undefined ? tgt.color : CFG.lightPool.color);
       }
       var card = game.flameCards[i];
       if (card) {
-        var on = !!tgt && l.intensity > 0.06;
+        var on = !!tgt && !tgt.noCard && l.intensity > 0.06;   // CC-C7: no flame over the rot-light
         card.visible = on;
         if (on) card.position.set(tgt.x,
           tgt.y + 0.06 * Math.sin(2.1 * game.lightPoolT + i * 1.7), tgt.z);
@@ -2676,6 +2739,65 @@
   }
   game.applyBleedToEnemy = applyBleedToEnemy;
 
+  // ---- CC-C7 POISON-LITE v1 + slam knockback (player side) --------------------
+  // doc 62 sec 5.2: damage + slow debuff, NOT a status system. One instance:
+  // a re-apply REFRESHES dps / slow / duration (never stacks). The DOT ticks
+  // once per POISON_TICK_SEC; a non-lethal tick is quiet (no flinch, no cast
+  // fizzle), a lethal one takes the full player.takeDamage death path. The
+  // slow scales the move this update made (walk / sprint / roll / root motion
+  // alike) before the ordinary bounds / props / door / ground clamp. Death
+  // or respawn clears both. enemy.js slamImpact is the only caller.
+  var POISON_TICK_SEC = 1.0;
+  game.poison = null;               // { dps, slow, ticks, next }
+  game.knock = null;                // { x, z, speed, t }
+  function applyPlayerPoison(def, text) {
+    if (!def || !game.player || game.player.state !== 'alive') return;
+    var fresh = !game.poison;
+    game.poison = { dps: def.dps, slow: def.slow,
+      ticks: Math.max(1, Math.round(def.duration / POISON_TICK_SEC)), next: POISON_TICK_SEC };
+    if (fresh && text) game.inventoryUI.toast(text);
+  }
+  function knockbackPlayer(dirX, dirZ, meters, seconds) {
+    var t = Math.max(0.05, seconds || 0.25);
+    game.knock = { x: dirX, z: dirZ, speed: meters / t, t: t };
+  }
+  game.applyPlayerPoison = applyPlayerPoison;
+  game.knockbackPlayer = knockbackPlayer;
+
+  // player.update's clamp callback: slow + knockback first, then the clamp
+  // (game.groundPrevX / doorPrevZ = this frame's pre-move spot)
+  function clampPlayerWithStatus(player) {
+    if (game.poison && player.state === 'alive') {
+      var k = 1 - game.poison.slow;
+      player.pos.x = game.groundPrevX + (player.pos.x - game.groundPrevX) * k;
+      player.pos.z = game.doorPrevZ + (player.pos.z - game.doorPrevZ) * k;
+    }
+    if (game.knock) {
+      var step = Math.min(game.groundDt || 0, game.knock.t);
+      player.pos.x += game.knock.x * game.knock.speed * step;
+      player.pos.z += game.knock.z * game.knock.speed * step;
+      game.knock.t -= game.groundDt || 0;
+      if (game.knock.t <= 0) game.knock = null;
+    }
+    clampPlayerToBounds(player);
+  }
+
+  function poisonTick(dt) {
+    var P = game.poison, p = game.player;
+    if (p.state !== 'alive') { game.poison = null; game.knock = null; return; }
+    if (!P) return;
+    P.next -= dt;
+    while (P && P.next <= 0) {
+      var dmg = P.dps * POISON_TICK_SEC;
+      var ward = window.WH_LEVEL ? window.WH_LEVEL.statTotal('ward') : 0;
+      if (p.hp - dmg * (1 - ward) <= 0) p.takeDamage(dmg);   // lethal: the real death path
+      else p.hp -= dmg * (1 - ward);
+      P.ticks -= 1;
+      P.next += POISON_TICK_SEC;
+      if (P.ticks <= 0 || p.state !== 'alive') { game.poison = P = null; }
+    }
+  }
+
   // ---- main loop ----------------------------------------------------------------
 
   function loop(now) {
@@ -2692,7 +2814,8 @@
     game.doorPrevZ = game.player.pos.z;   // CC-C2: door gate crossing-frame test
     game.groundPrevX = game.player.pos.x; // CC-C4: slope guard pre-move spot (+ doorPrevZ)
     game.groundDt = dt;
-    game.player.update(dt, clampPlayerToBounds);
+    game.player.update(dt, clampPlayerWithStatus);   // CC-C7: poison slow + slam knockback, then the clamp
+    poisonTick(dt);                                  // CC-C7: poison-lite DOT
 
     // ---- v7: cast windup tick (fires the bolt at windup end). Order C: both
     // hands tick independently; 0-2 casts complete per frame. ----

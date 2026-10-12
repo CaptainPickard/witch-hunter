@@ -651,4 +651,138 @@
 
   CharacterAnim.VARIANTS = VARIANTS;
   window.WH_CharacterAnim = CharacterAnim;
+
+  // ---- CC-C7 RIGID_CLIPS: placeholder clip set for UNRIGGED bodies -----------
+  // The rot mother / rot spawn GLBs ship without a skeleton, so no
+  // AnimationClip can drive them. V1 placeholder = the bandit 6-clip pattern
+  // (idle / walk / attack / hit / death + 1 spare) authored as procedural
+  // rigid poses on the body holder; a real rig round replaces this table.
+  // Presentation-only like CharacterAnim: the enemy FSM owns every timing
+  // edge (attack = the windup / active / recover phase fractions). clipScale
+  // = playback rate of the free-running clips (idle / walk / spare); 'death'
+  // is the existing rigid fall in enemy.js updateDeathVisual (pose() null).
+  // A null name = the body has no such clip (rot spawn: no hit flinch).
+  // Pose: rotX (+ = pitch forward, facing +Z), rotZ roll, rotY yaw wobble,
+  // swayX lateral shift, lift root y (m), grow holder scale factor (spare).
+  var RIGID_CLIPS = {
+    rotmother: {
+      clipScale: 1.0,                 // brief sec 6: the slow feel comes from pattern timing
+      names: { idle: 'RM_Idle', walk: 'RM_Lumber', attack: 'RM_Slam', hit: 'RM_Hit',
+               death: 'RM_Death', spare: 'RM_Rise' },
+      idle: { period: 2.6, bob: 0.05, pitch: 0.03 },
+      walk: { radPerM: 2.2, bob: 0.08, roll: 0.08, lean: 0.14, yawOsc: 0.05 },
+      // windup rears back + rises (the body-lean telegraph), the active
+      // window slams forward past upright, recover eases back to stand
+      attack: { rear: -0.32, slam: 0.5, lift: 0.18, tremble: 0.012 },
+      hit: { flinch: -0.1 },
+      spare: { from: 0.15 }           // re-arm: grows from 15% out of the nest
+    },
+    rotspawn: {
+      clipScale: 1.3,                 // brief sec 6
+      names: { idle: 'RS_Idle', walk: 'RS_Crawl', attack: 'RS_Lunge', hit: null,
+               death: 'RS_Death', spare: 'RS_Emerge' },
+      idle: { period: 1.4, bob: 0.02, pitch: 0.05 },
+      walk: { radPerM: 4.5, bob: 0.03, roll: 0.05, lean: 0.0, yawOsc: 0.16 },
+      attack: { rear: -0.22, slam: 0.3, lift: 0.04, tremble: 0.02 },
+      hit: null,
+      spare: { from: 0.2 }            // spawn: wriggles up out of the rot ground
+    }
+  };
+
+  function easeInOut(p) { return p * p * (3 - 2 * p); }
+
+  function RigidAnim(variantKey) {
+    this.key = variantKey;
+    this.v = RIGID_CLIPS[variantKey];
+    this.clipScale = this.v.clipScale;
+    this.t = 0;                       // free-running clock (x clipScale)
+    this.walkPhase = 0;
+    this.clip = 'idle';
+    this.clipT = 0;                   // seconds in the current clip (x clipScale)
+    this.riseT = -1;                  // spare clip clock (-1 = off)
+    this.riseSec = 1;
+  }
+
+  // Spare clip: the body grows up out of the ground over seconds (/ clipScale).
+  RigidAnim.prototype.rise = function (seconds) {
+    this.riseT = 0;
+    this.riseSec = Math.max(0.05, seconds || 1);
+  };
+
+  RigidAnim.prototype.setClip = function (c) {
+    if (this.clip === c) return;
+    this.clip = c;
+    this.clipT = 0;
+  };
+
+  // One sample per frame from the enemy's live FSM. Returns null for death
+  // (the rigid fall owns the corpse) - else the pose enemy.js applies.
+  RigidAnim.prototype.pose = function (enemy, dt, moveSpeed) {
+    var v = this.v, s = this.clipScale;
+    this.t += dt * s;
+    this.clipT += dt * s;
+    if (enemy.fsm === 'dead') { this.setClip('death'); return null; }
+    var out = { rotX: 0, rotZ: 0, rotY: 0, swayX: 0, lift: 0, grow: 1 };
+    if (this.riseT >= 0) {
+      this.riseT += dt * s;
+      var rp = Math.min(1, this.riseT / this.riseSec);
+      out.grow = v.spare.from + (1 - v.spare.from) * easeInOut(rp);
+      out.rotZ = Math.sin(this.riseT * 9) * 0.06 * (1 - rp);
+      if (rp >= 1) this.riseT = -1;
+      this.setClip('spare');
+      return out;
+    }
+    if (enemy.fsm === 'attack' && enemy.attackPhase !== 'idle') {
+      // FSM-timed: phase fraction of the CONFIG phase edges (no clock drift)
+      var P = enemy.cfg.attackPhase, A = v.attack;
+      var f = Math.min(1, enemy.attackPhaseT / Math.max(1e-4, P[enemy.attackPhase] || 1));
+      if (enemy.attackPhase === 'windup') {
+        var w = easeInOut(f);
+        out.rotX = A.rear * w;
+        out.lift = A.lift * w;
+        out.rotZ = Math.sin(this.t * 40) * A.tremble * w;   // the strain shudder
+      } else if (enemy.attackPhase === 'active') {
+        out.rotX = A.rear + (A.slam - A.rear) * f;
+        out.lift = A.lift * (1 - f);
+      } else {
+        out.rotX = A.slam * (1 - easeInOut(f));
+      }
+      this.setClip('attack');
+      return out;
+    }
+    var moving = moveSpeed > 0;
+    if (moving) {
+      var W = v.walk;
+      this.walkPhase += dt * s * moveSpeed * W.radPerM;
+      var ph = this.walkPhase;
+      out.lift = Math.abs(Math.sin(ph)) * W.bob;
+      out.rotZ = Math.sin(ph * 0.5) * W.roll;
+      out.rotY = Math.sin(ph) * W.yawOsc;
+      out.rotX = W.lean;
+      out.swayX = Math.sin(ph * 0.5) * W.roll * 0.5;
+      this.setClip('walk');
+    } else {
+      var I = v.idle;
+      var b = Math.sin(this.t * Math.PI * 2 / I.period);
+      out.lift = (b * 0.5 + 0.5) * I.bob;
+      out.rotX = b * I.pitch;
+      this.setClip('idle');
+    }
+    // hit flinch rides over idle / walk while the stagger visual runs
+    if (v.hit && enemy.staggerTimer > 0) {
+      var k = enemy.staggerTimer / window.WH_CONFIG.anim.stagger.visualDuration;
+      out.rotX += v.hit.flinch * k;
+      if (this.clip !== 'walk') this.setClip('hit');
+    }
+    return out;
+  };
+
+  // Debug / validation read-out (same keys CharacterAnim.getState leads with).
+  RigidAnim.prototype.getState = function () {
+    return { clip: this.v.names[this.clip] || null, state: this.clip,
+      time: this.clipT, clipScale: this.clipScale, rigid: true };
+  };
+
+  RigidAnim.CLIPS = RIGID_CLIPS;
+  window.WH_RigidAnim = RigidAnim;
 })();

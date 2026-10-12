@@ -62,6 +62,9 @@
     fallenLog: 'art-direction/3d/assets/biome_library/m7-pixelated.glb',
     treeStump: 'art-direction/3d/assets/biome_library/m8-pixelated.glb',
     mossBoulder: 'art-direction/3d/assets/biome_library/m9-pixelated.glb',
+    // CC-C7 nest props: the EXISTING biome-library bone/rib pile (B6 batch,
+    // on disk since the biome pass; 10,889 tris) - first manifest row.
+    b6Bones: 'art-direction/3d/assets/biome_library/b6-bones-pixelated.glb',
     // R2: darkwood light-socket props (doc 61 batches B2/B3)
     banditCampfire: 'art-direction/3d/assets/biome_library/m15-bandit-campfire-pixelated.glb',
     lanternWaymarker: 'art-direction/3d/assets/biome_library/b3-waymarker-pixelated.glb',
@@ -118,6 +121,12 @@
     // 512px 5-bit atlas is embedded - mesh/skin/clips byte-identical to
     // wolf.rigged.glb, so no BODY_PNG row). Region C packs only.
     wolfBody: 'art-direction/3d/assets/races_regen/rigged/wolf.rigged.pixelated.glb',
+    // CC-C7 (2026-10-12): the Rot Mother boss (17,573 tris) + her rot spawn
+    // (2,094 tris), the SHIPPED 512px 5-bit pixelated bakes (raw-texture
+    // twins rotmother.glb / rotspawn.glb are NOT for the game). UNRIGGED: no
+    // CHARACTERS row (0 clips) - anim.js RIGID_CLIPS placeholders play.
+    rotmotherBody: 'art-direction/3d/assets/races/rotmother-pixelated.glb',
+    rotspawnBody: 'art-direction/3d/assets/races/rotspawn-pixelated.glb',
 
     // weapons (pixelated)
     longsword: 'art-direction/3d/assets/weapons/longsword-pixelated.glb',

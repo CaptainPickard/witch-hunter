@@ -87767,7 +87767,13 @@ window.WH_CONFIG = {
       { type: 'bandit', x: -130.5, z: -500.5 },    // Charlie (fire -140, -506)
       { type: 'bandit', x: -144.2, z: -496.9 },
       { type: 'bandit', x: -151.3, z: -510.1 },
-      { type: 'bandit', x: -138.1, z: -516.8 }
+      { type: 'bandit', x: -138.1, z: -516.8 },
+      // CC-C7 ROT MOTHER (doc 62 L3; io/missions/2026-10-12-cc-c7-rotmother-behavior.md):
+      // the nest boss, APPENDED after the guards (index 22) so saved per-index
+      // dead state keeps every earlier row. Row = CONFIG.enemy.rotmother.lair
+      // (C-local (-175, +95)) in world coords. Her rot spawn are NOT rows: the
+      // lair spawner (enemy.js) appends them at runtime, ephemeral, after her.
+      { type: 'rotmother', x: -175.0, z: -271.0 }
     ],
     // CC-C3 ANCIENT FOREST (R-62.6, io/missions/2026-10-07-cc-c3-ancient-forest.md):
     // hand-placed rows, no runtime random. CC-C2's 120-tree 8-10 band is
@@ -88131,8 +88137,39 @@ window.WH_CONFIG = {
       { asset: 'banditBedroll',    x: -143.4, z: -504.1, rotY: 3.65, scale: 1.1 },
       { asset: 'banditBedroll',    x: -143.4, z: -507.9, rotY: 2.63, scale: 1.1 },
       { asset: 'treeStump',        x: -138.2, z: -502.9, rotY: 0.53, scale: 1.3 },
-      { asset: 'rubblePile',       x: -138.8, z: -510.4, rotY: 1.10, scale: 1.0 }
-    ]
+      { asset: 'rubblePile',       x: -138.8, z: -510.4, rotY: 1.10, scale: 1.0 },
+      // CC-C7 ROT MOTHER NEST (doc 62 L3, C-local (-175, +95) = world (-175, -271)):
+      // 6 b6Bones piles on the arena rim (r 8.9-10.6 m from the nest; the inner
+      // fight ground + the 6 m minion ring stay open). Generated offline
+      // (scratch/cc-c7/gen_lair.py -> lair.json, seed 20261012). Site probe
+      // (scratch/cc-c7/site_probe.js): ground 0.19..1.89 m within 14 m, max
+      // slope 8.5 deg, nearest prop the yew 16.5 m out, roads >= 78 m, wolf
+      // loops >= 69 m. Ledger (scratch/cc-c7/ledger_probe.js): worst 170 m
+      // circle near the lair 1,799,747 -> <= 1,889k tris with these 6 rows
+      // (10,889 each) + the boss and 3 spawn (< 2M). All PROPOSED, Nicko tunes.
+      { asset: 'b6Bones',          x: -164.4, z: -271.7, rotY: 0.01, scale: 1.02 },
+      { asset: 'b6Bones',          x: -172.0, z: -261.5, rotY: 0.43, scale: 1.09 },
+      { asset: 'b6Bones',          x: -176.9, z: -262.1, rotY: 5.58, scale: 1.22 },
+      { asset: 'b6Bones',          x: -184.5, z: -268.1, rotY: 4.12, scale: 1.17 },
+      { asset: 'b6Bones',          x: -178.1, z: -279.3, rotY: 5.51, scale: 1.34 },
+      { asset: 'b6Bones',          x: -169.2, z: -279.7, rotY: 2.83, scale: 1.03 }
+    ],
+    // CC-C7 ROT MOTHER NEST dressing (enemy.js lair build, scratch/cc-c7/lair.json):
+    // a terrain-conforming rot-ground pool (the road-ribbon decal family:
+    // polygon-offset MeshStandard + NEAREST pixel canvas, dark swamp tones),
+    // slow green fog cards, and an always-on dim green rot-light riding the
+    // fixed light pool (game.js computeFireSockets -> poolTick: the bandit
+    // campfire socket pipeline, tinted, no flame card). All PROPOSED, Nicko tunes.
+    // The nest centre is NOT repeated here: enemy.rotmother.lair (C-local
+    // (-175, +95)) + this region's center = world (-175, -271), one source.
+    rotLair: {
+      pool: { radius: 12, segments: 40, rings: 6, lift: 0.08,
+        color: 0x1f2a17, color2: 0x2d3a1c, speck: 0x4d5f2a, textureSeed: 20261012, edgeFeather: 0.22 },
+      light: { height: 1.6, intensity: 2.4, color: 0x7fbf4f },
+      fog: { cards: 10, radiusMin: 2.5, radiusMax: 10.5, heightMin: 0.5, heightMax: 1.6,
+        width: 3.6, height: 1.5, opacity: 0.16, color: 0x7f9f55, driftSpeed: 0.12, showWithinM: 70 },
+      cullM: 170                      // pool + fog hide past this from the player (= cullDistanceM)
+    }
   },
 
   // Round E (io/missions/2026-10-05-cc-roundE-veg.md): seeded vegetation
@@ -88697,11 +88734,69 @@ window.WH_CONFIG = {
         slotGain: 1.5                  // follow speed = min(moveSpeed, slot distance x this) (no stop-go)
       }
     },
+    // CC-C7 ROT MOTHER + ROT SPAWN (doc 62 sec 5.2, R-62.4 repeatable nest boss;
+    // io/missions/2026-10-12-cc-c7-rotmother-behavior.md sec 2). The first
+    // block of each row is the BRIEF ROW VERBATIM (its keys + numbers); enemy.js
+    // cfgFor maps hp / dmg / speed / aggro onto the engine keys (hpMax /
+    // attackDamage / moveSpeed + chaseSpeed / sightRadius) once per type. The
+    // second block = engine tunables the brief row leaves to the builder
+    // (brief sec 3 AoE 3.2 m / 180-deg arc, leash, body radius, phase edges).
+    // lair = C-local (x, y=z) in region 'C' (regionC.rotLair.nest = world).
+    // scale = the literal body scale on the raw GLB (rotmother 1.90 m tall
+    // raw -> ~4.2 m; rotspawn 1.36 m raw -> ~1.1 m). Bodies are UNRIGGED: the
+    // anim.js RIGID_CLIPS placeholder set plays (bandit 6-clip pattern).
+    // poison = poison-lite v1 (game.js applyPlayerPoison: dps + slow for
+    // duration; a re-apply REFRESHES, never stacks). slow 0.45 = -45% move.
+    rotmother: {
+      name: 'Rot Mother', hp: 460, dmg: 26, speed: 1.6, aggro: 9,
+      lair: { x: -175, y: 95, region: 'C' }, scale: 2.2,
+      pattern: 'boss-slam', slamCooldown: 3.4, slamWindup: 1.15,
+      poison: { dps: 3.5, duration: 4.0, slow: 0.45 },   // poison-lite v1
+      rearm: { days: 3, trigger: 'proximity', radius: 14 },
+      loot: [{ mat: 'rot-silk', n: [2, 4] }, { mat: 'rot-gland', n: [1, 2] }],
+      minions: { asset: 'rotspawn', cap: 3, interval: 7.0, range: 6.0,
+                 dieOnMasterDeath: true },
+      // -- engine tunables (beyond the brief row). All PROPOSED, Nicko tunes.
+      radius: 1.1,                    // body circle (separation / firebolt / sweep reach)
+      leashRadius: 16,                // from the nest: kited farther -> lumbers home
+      staggerTime: 0.35,              // only a parry stagger lands (superArmor below)
+      superArmor: true,               // ordinary hits flinch her but never cancel a slam / stagger her (damage unchanged)
+      lairRadius: 14,                 // minion spawner runs while the player is this close to the nest (= rearm.radius)
+      engageRange: 2.6,               // a slam starts when the player is this close (and the cooldown is up)
+      slamRadius: 3.2,                // brief sec 3: AoE radius on impact (+ player radius)
+      slamArcDeg: 180,                // brief sec 3: FULL front arc (half-angle 90)
+      slamActive: 0.15,               // impact window (one damage check at entry)
+      slamRecover: 0.9,               // heavy recovery (the punish window)
+      slamTrackDegPerSec: 50,         // windup tracking (slow: a side-step beats it)
+      slamKnockbackM: 2.4,            // landed slam shoves the player this far...
+      slamKnockbackSec: 0.25,         // ...over this long
+      barLiftM: 2.2,                  // HP bar sits this much higher (a 4.2 m body)
+      riseSec: 1.6,                   // re-arm: the 'spare' rise clip length
+      poisonText: 'Rot poison - your limbs go heavy'   // toast on a fresh poison (not on a refresh)
+    },
+    rotspawn: {
+      name: 'Rot Spawn', hp: 26, dmg: 5, speed: 2.4, aggro: 14, scale: 0.8,
+      pattern: 'chase-melee', loot: [{ mat: 'rot-silk', n: [0, 1] }],
+      // -- engine tunables (beyond the brief row). All PROPOSED, Nicko tunes.
+      radius: 0.45,
+      attackRange: 1.3,
+      leashRadius: 24,                // from its spawn point
+      staggerTime: 0.3,
+      lunge: true,                    // brief sec 4 'tiny lunge' = the ghoul hop (CONFIG.anim.ghoulHop) at attack entry
+      attackPhase: { windup: 0.35, active: 0.10, recover: 0.55, hitArcDeg: 50, trackDegPerSec: 240 },
+      corpseLingerSec: 8,             // a looted / empty corpse leaves the scene after this
+      maxCorpses: 4,                  // and never more than this many lie around (oldest goes first)
+      riseSec: 0.8                    // spawn: the 'spare' emerge clip length
+    },
     // CC-C5: enemy type -> manifest body + anim.js VARIANTS key (was the
     // bandit/ghoul ternaries in region-manager buildRegion / enemy setBody;
     // an unknown type keeps the old fallbacks: ghoulBody / 'bandit').
-    bodyByType: { bandit: 'banditBody', ghoul: 'ghoulBody', wolf: 'wolfBody' },
+    // CC-C7: + the unrigged rot bodies; rigidAnimByType = their anim.js
+    // RIGID_CLIPS placeholder set (no skeleton, so no animVariantByType row).
+    bodyByType: { bandit: 'banditBody', ghoul: 'ghoulBody', wolf: 'wolfBody',
+      rotmother: 'rotmotherBody', rotspawn: 'rotspawnBody' },
     animVariantByType: { bandit: 'bandit', ghoul: 'zombie', wolf: 'wolf' },
+    rigidAnimByType: { rotmother: 'rotmother', rotspawn: 'rotspawn' },
     // CC-C5 WOLF PACKS (doc 62 L7/L8/L9 dens): closed patrol loops (world x,
     // z; walked in row order, last -> first). Each loop crosses its King's
     // Road branch (east / west / north) twice; designed offline against the
@@ -88890,6 +88985,10 @@ window.WH_CONFIG = {
     // CC-C5: wolfBody (2.08 MB) is boot-critical too - CONTINUE restores a
     // region C save straight into buildRegion(C), and a late-swapped rigged
     // body gets the mesh but never its clips (or its measured scale).
+    // CC-C7: b6Bones (0.87 MB, nest props: region C's scatter / collider
+    // plans need every prop footprint) + rotmotherBody (0.74 MB, a C row:
+    // CONTINUE into C builds her at boot). rotspawnBody stays deferred - the
+    // spawner instances it at runtime and a rigid body late-swaps cleanly.
     bootCritical: [
       'playerBody', 'banditBody', 'ghoulBody', 'wolfBody', 'playerDagClips', 'bramble',
       'whCampkit', 'whTent', 'yewTree', 'livingOak', 'youngAsh', 'cemeteryGate',
@@ -88900,7 +88999,7 @@ window.WH_CONFIG = {
       'graveMound', 'dagger', 'grassTuft', 'rubblePile', 'stoneCrossTilted',
       'roundShield', 'ironFenceSection', 'churchCornerButtress',
       'gravestoneObelisk', 'churchPewBroken', 'buriedCoffin', 'handAxe',
-      'churchArchway', 'whBushSnare', 'longsword'
+      'churchArchway', 'whBushSnare', 'longsword', 'b6Bones', 'rotmotherBody'
     ],
     // MAGANIM (doc 65 R-65.3): caster-implement registry (v1; future caster
     // weapons append here). BOTH hands holding one of these = the caster body
@@ -89416,6 +89515,19 @@ window.WH_CONFIG.items = {
   // vendor / currency systems are NOT built - it only stacks for now.
   stolenCoin:     { id: 'stolenCoin', name: 'Stolen Coin', glyph: 'SC',
                     category: 'valuable', stackCap: 999 },
+  // CC-C7 Rot Mother materials (doc 62 R-62.4 farmable nest loop; rows
+  // CONFIG.enemy.rotmother / rotspawn .loot). Crafting is NOT built: they
+  // stack as valuables until a crafting ruling lands (the 'valuable' tip +
+  // colour; no new inventory category). flavor = the tooltip line; dropLog =
+  // the one-time journal toast on the first loot of each (game.js).
+  'rot-silk':     { id: 'rot-silk', name: 'Rot-Silk', glyph: 'RS',
+                    category: 'valuable', stackCap: 99, material: true,
+                    flavor: 'Damp grey thread, spun to swaddle young that never woke',
+                    dropLog: 'Rot-Silk: she wove it soft, and wrapped each one as if it might still breathe.' },
+  'rot-gland':    { id: 'rot-gland', name: 'Rot-Gland', glyph: 'RG',
+                    category: 'valuable', stackCap: 99, material: true,
+                    flavor: 'A swollen sac, still warm, still trying to make milk',
+                    dropLog: 'Rot-Gland: it kept working after everything else in her had given up.' },
   // Stage 2 cooking ingredients: ONLY from gather nodes (CONFIG.gather) and,
   // in a later stage, wild animals - never enemy drops. Default stackCap.
   forestHerb:     { id: 'forestHerb', name: 'Forest Herb', glyph: 'FH', category: 'ingredient' },
@@ -89967,6 +90079,8 @@ window.WH_CONFIG.leveling = {
     kill_bandit: 35,                // bandit hpMax 70
     kill_ghoul: 25,                 // ghoul hpMax 45
     kill_wolf: 20,                  // CC-C5: wolf hpMax 38 (same ~0.53 x hpMax law)
+    kill_rotmother: 240,            // CC-C7: rotmother hp 460 (same law; every re-armed kill pays again)
+    kill_rotspawn: 14,              // CC-C7: rotspawn hp 26 (withered on her death = no kill, no XP)
     gather: 5,                      // per harvested node
     cook_meal: 15,                  // per finished cook (recipe or Bland Mush)
     recipe_learn: 40,               // the first cook of a recipe (stacks with cook_meal)
@@ -90727,6 +90841,9 @@ window.WH_ICONS = {
     fallenLog: 'art-direction/3d/assets/biome_library/m7-pixelated.glb',
     treeStump: 'art-direction/3d/assets/biome_library/m8-pixelated.glb',
     mossBoulder: 'art-direction/3d/assets/biome_library/m9-pixelated.glb',
+    // CC-C7 nest props: the EXISTING biome-library bone/rib pile (B6 batch,
+    // on disk since the biome pass; 10,889 tris) - first manifest row.
+    b6Bones: 'art-direction/3d/assets/biome_library/b6-bones-pixelated.glb',
     // R2: darkwood light-socket props (doc 61 batches B2/B3)
     banditCampfire: 'art-direction/3d/assets/biome_library/m15-bandit-campfire-pixelated.glb',
     lanternWaymarker: 'art-direction/3d/assets/biome_library/b3-waymarker-pixelated.glb',
@@ -90783,6 +90900,12 @@ window.WH_ICONS = {
     // 512px 5-bit atlas is embedded - mesh/skin/clips byte-identical to
     // wolf.rigged.glb, so no BODY_PNG row). Region C packs only.
     wolfBody: 'art-direction/3d/assets/races_regen/rigged/wolf.rigged.pixelated.glb',
+    // CC-C7 (2026-10-12): the Rot Mother boss (17,573 tris) + her rot spawn
+    // (2,094 tris), the SHIPPED 512px 5-bit pixelated bakes (raw-texture
+    // twins rotmother.glb / rotspawn.glb are NOT for the game). UNRIGGED: no
+    // CHARACTERS row (0 clips) - anim.js RIGID_CLIPS placeholders play.
+    rotmotherBody: 'art-direction/3d/assets/races/rotmother-pixelated.glb',
+    rotspawnBody: 'art-direction/3d/assets/races/rotspawn-pixelated.glb',
 
     // weapons (pixelated)
     longsword: 'art-direction/3d/assets/weapons/longsword-pixelated.glb',
@@ -92163,6 +92286,140 @@ window.WH_ICONS = {
 
   CharacterAnim.VARIANTS = VARIANTS;
   window.WH_CharacterAnim = CharacterAnim;
+
+  // ---- CC-C7 RIGID_CLIPS: placeholder clip set for UNRIGGED bodies -----------
+  // The rot mother / rot spawn GLBs ship without a skeleton, so no
+  // AnimationClip can drive them. V1 placeholder = the bandit 6-clip pattern
+  // (idle / walk / attack / hit / death + 1 spare) authored as procedural
+  // rigid poses on the body holder; a real rig round replaces this table.
+  // Presentation-only like CharacterAnim: the enemy FSM owns every timing
+  // edge (attack = the windup / active / recover phase fractions). clipScale
+  // = playback rate of the free-running clips (idle / walk / spare); 'death'
+  // is the existing rigid fall in enemy.js updateDeathVisual (pose() null).
+  // A null name = the body has no such clip (rot spawn: no hit flinch).
+  // Pose: rotX (+ = pitch forward, facing +Z), rotZ roll, rotY yaw wobble,
+  // swayX lateral shift, lift root y (m), grow holder scale factor (spare).
+  var RIGID_CLIPS = {
+    rotmother: {
+      clipScale: 1.0,                 // brief sec 6: the slow feel comes from pattern timing
+      names: { idle: 'RM_Idle', walk: 'RM_Lumber', attack: 'RM_Slam', hit: 'RM_Hit',
+               death: 'RM_Death', spare: 'RM_Rise' },
+      idle: { period: 2.6, bob: 0.05, pitch: 0.03 },
+      walk: { radPerM: 2.2, bob: 0.08, roll: 0.08, lean: 0.14, yawOsc: 0.05 },
+      // windup rears back + rises (the body-lean telegraph), the active
+      // window slams forward past upright, recover eases back to stand
+      attack: { rear: -0.32, slam: 0.5, lift: 0.18, tremble: 0.012 },
+      hit: { flinch: -0.1 },
+      spare: { from: 0.15 }           // re-arm: grows from 15% out of the nest
+    },
+    rotspawn: {
+      clipScale: 1.3,                 // brief sec 6
+      names: { idle: 'RS_Idle', walk: 'RS_Crawl', attack: 'RS_Lunge', hit: null,
+               death: 'RS_Death', spare: 'RS_Emerge' },
+      idle: { period: 1.4, bob: 0.02, pitch: 0.05 },
+      walk: { radPerM: 4.5, bob: 0.03, roll: 0.05, lean: 0.0, yawOsc: 0.16 },
+      attack: { rear: -0.22, slam: 0.3, lift: 0.04, tremble: 0.02 },
+      hit: null,
+      spare: { from: 0.2 }            // spawn: wriggles up out of the rot ground
+    }
+  };
+
+  function easeInOut(p) { return p * p * (3 - 2 * p); }
+
+  function RigidAnim(variantKey) {
+    this.key = variantKey;
+    this.v = RIGID_CLIPS[variantKey];
+    this.clipScale = this.v.clipScale;
+    this.t = 0;                       // free-running clock (x clipScale)
+    this.walkPhase = 0;
+    this.clip = 'idle';
+    this.clipT = 0;                   // seconds in the current clip (x clipScale)
+    this.riseT = -1;                  // spare clip clock (-1 = off)
+    this.riseSec = 1;
+  }
+
+  // Spare clip: the body grows up out of the ground over seconds (/ clipScale).
+  RigidAnim.prototype.rise = function (seconds) {
+    this.riseT = 0;
+    this.riseSec = Math.max(0.05, seconds || 1);
+  };
+
+  RigidAnim.prototype.setClip = function (c) {
+    if (this.clip === c) return;
+    this.clip = c;
+    this.clipT = 0;
+  };
+
+  // One sample per frame from the enemy's live FSM. Returns null for death
+  // (the rigid fall owns the corpse) - else the pose enemy.js applies.
+  RigidAnim.prototype.pose = function (enemy, dt, moveSpeed) {
+    var v = this.v, s = this.clipScale;
+    this.t += dt * s;
+    this.clipT += dt * s;
+    if (enemy.fsm === 'dead') { this.setClip('death'); return null; }
+    var out = { rotX: 0, rotZ: 0, rotY: 0, swayX: 0, lift: 0, grow: 1 };
+    if (this.riseT >= 0) {
+      this.riseT += dt * s;
+      var rp = Math.min(1, this.riseT / this.riseSec);
+      out.grow = v.spare.from + (1 - v.spare.from) * easeInOut(rp);
+      out.rotZ = Math.sin(this.riseT * 9) * 0.06 * (1 - rp);
+      if (rp >= 1) this.riseT = -1;
+      this.setClip('spare');
+      return out;
+    }
+    if (enemy.fsm === 'attack' && enemy.attackPhase !== 'idle') {
+      // FSM-timed: phase fraction of the CONFIG phase edges (no clock drift)
+      var P = enemy.cfg.attackPhase, A = v.attack;
+      var f = Math.min(1, enemy.attackPhaseT / Math.max(1e-4, P[enemy.attackPhase] || 1));
+      if (enemy.attackPhase === 'windup') {
+        var w = easeInOut(f);
+        out.rotX = A.rear * w;
+        out.lift = A.lift * w;
+        out.rotZ = Math.sin(this.t * 40) * A.tremble * w;   // the strain shudder
+      } else if (enemy.attackPhase === 'active') {
+        out.rotX = A.rear + (A.slam - A.rear) * f;
+        out.lift = A.lift * (1 - f);
+      } else {
+        out.rotX = A.slam * (1 - easeInOut(f));
+      }
+      this.setClip('attack');
+      return out;
+    }
+    var moving = moveSpeed > 0;
+    if (moving) {
+      var W = v.walk;
+      this.walkPhase += dt * s * moveSpeed * W.radPerM;
+      var ph = this.walkPhase;
+      out.lift = Math.abs(Math.sin(ph)) * W.bob;
+      out.rotZ = Math.sin(ph * 0.5) * W.roll;
+      out.rotY = Math.sin(ph) * W.yawOsc;
+      out.rotX = W.lean;
+      out.swayX = Math.sin(ph * 0.5) * W.roll * 0.5;
+      this.setClip('walk');
+    } else {
+      var I = v.idle;
+      var b = Math.sin(this.t * Math.PI * 2 / I.period);
+      out.lift = (b * 0.5 + 0.5) * I.bob;
+      out.rotX = b * I.pitch;
+      this.setClip('idle');
+    }
+    // hit flinch rides over idle / walk while the stagger visual runs
+    if (v.hit && enemy.staggerTimer > 0) {
+      var k = enemy.staggerTimer / window.WH_CONFIG.anim.stagger.visualDuration;
+      out.rotX += v.hit.flinch * k;
+      if (this.clip !== 'walk') this.setClip('hit');
+    }
+    return out;
+  };
+
+  // Debug / validation read-out (same keys CharacterAnim.getState leads with).
+  RigidAnim.prototype.getState = function () {
+    return { clip: this.v.names[this.clip] || null, state: this.clip,
+      time: this.clipT, clipScale: this.clipScale, rigid: true };
+  };
+
+  RigidAnim.CLIPS = RIGID_CLIPS;
+  window.WH_RigidAnim = RigidAnim;
 })();
 
 </script>
@@ -97566,8 +97823,33 @@ window.WH_ICONS = {
     return a;
   }
 
+  // CC-C7: a row carrying a brief-style `pattern` (rotmother / rotspawn) is
+  // mapped ONCE onto the engine keys every FSM branch reads (hp -> hpMax,
+  // dmg -> attackDamage, speed -> moveSpeed + chaseSpeed, aggro ->
+  // sightRadius; boss-slam: slamRadius / slamArcDeg / slam* phase edges ->
+  // attackRange + attackPhase). Every other row is returned as-is.
+  var DERIVED = {};
+  function deriveCfg(row) {
+    var c = {};
+    for (var k in row) c[k] = row[k];
+    c.hpMax = row.hp;
+    c.attackDamage = row.dmg;
+    c.moveSpeed = row.speed;
+    c.chaseSpeed = row.speed;          // brief: one speed (the slow lumber / the crawl)
+    c.sightRadius = row.aggro;
+    if (row.pattern === 'boss-slam') {
+      c.attackRange = row.slamRadius;  // the AoE reach the active-entry check reads
+      c.attackPhase = { windup: row.slamWindup, active: row.slamActive, recover: row.slamRecover,
+        hitArcDeg: row.slamArcDeg / 2, trackDegPerSec: row.slamTrackDegPerSec };   // hitArcDeg = HALF-angle
+    }
+    return c;
+  }
+
   function cfgFor(type) {
-    return CFG[type] || CFG.bandit;
+    var row = CFG[type];
+    if (!row) return CFG.bandit;
+    if (!row.pattern) return row;
+    return DERIVED[type] || (DERIVED[type] = deriveCfg(row));
   }
 
   // AI1: the decision-loop rows, or null when the type opts out (ghoul
@@ -97658,6 +97940,14 @@ window.WH_ICONS = {
     this.pack = null;                  // the pack record this member belongs to
     this.packGoal = null;              // { x, z, speed, gain } patrol slot / regroup / anchor
     this.packRegroup = false;          // beyond leashFromCentroid: running back, refuses pulls
+    // CC-C7 rot nest (null / 0 for every other enemy): slam cooldown, the
+    // mother's per-build lair record (nest, spawner, dressing), the spawn's
+    // master, and the RIGID_CLIPS placeholder player (setBody)
+    this.slamCd = 0;
+    this.lair = this.cfg.pattern === 'boss-slam' && this.cfg.lair ? newLair(this.cfg) : null;
+    this.master = null;
+    this.withered = false;             // died with its master (no kill: no loot / XP)
+    this.rigidAnim = null;
   }
 
   // CC-C5: the home region's ground under the enemy (0 off-terrain)
@@ -97667,12 +97957,25 @@ window.WH_ICONS = {
 
   Enemy.prototype.setBody = function (meshRoot) {
     if (this.body) this.yawFrame.remove(this.body);
+    var bodyName = bodyNameFor(this.type);
+    // CC-C7: a row with a literal `scale` (rot bodies) overrides the
+    // height-normalized holder scale of region-manager buildRegion / makeBody
+    // (same pin law: holder y = -groundMinY x scale, so the feet stay on root)
+    if (this.cfg.scale) {
+      meshRoot.scale.setScalar(this.cfg.scale);
+      meshRoot.position.y = -(window.WH_ASSETS.groundMinY(bodyName) * this.cfg.scale);
+    }
     this.body = meshRoot;
     this.bodyBaseY = meshRoot.position.y || 0;
     this.bodyBaseRotX = meshRoot.rotation.x || 0;   // Order D deflect overlay base
     this.bodyBaseRotY = meshRoot.rotation.y || 0;
+    this.bodyScale = meshRoot.scale.x;               // CC-C7: RIGID_CLIPS grow base
     this.yawFrame.add(this.body);
-    var bodyName = bodyNameFor(this.type);
+    // CC-C7: an unrigged body (0 clips) of a type with a RIGID_CLIPS row
+    // plays the placeholder set; everything else keeps the old paths
+    this.rigidAnim = !window.WH_ASSETS.getClips(bodyName).length && CFG.rigidAnimByType &&
+      CFG.rigidAnimByType[this.type] && window.WH_RigidAnim ?
+      new window.WH_RigidAnim(CFG.rigidAnimByType[this.type]) : null;
     if (window.WH_ASSETS.getClips(bodyName).length) {
       // 10-05: ghouls play the Mixamo zombie set, bandits the Mixamo axe set.
       // CC-C5: wolves the WH_Wolf_* set (CONFIG.enemy.animVariantByType;
@@ -97767,6 +98070,15 @@ window.WH_ICONS = {
       this.root.position.copy(this.pos);
       this.root.position.y = 0;          // CC-C5: measure over y = 0 (pos.y = ground in C)
       this.yawFrame.rotation.y = this.yaw;
+      if (this.rigidAnim) {
+        // CC-C7: drop the RIGID_CLIPS pose (feet-pivot shift, sway, grow)
+        // and the slam cue before the fall is measured
+        this.body.position.x = 0;
+        this.body.position.z = 0;
+        this.body.rotation.z = 0;
+        this.body.scale.setScalar(this.bodyScale);
+        this.slamCueShow(0, 0);
+      }
       this.body.position.y = this.bodyBaseY || 0;
       this.body.rotation.set(-Math.PI / 2, 0, 0);
       // Include the equipped axe: the validation box spans the whole corpse.
@@ -97796,11 +98108,15 @@ window.WH_ICONS = {
   // (block/parry/i-frames; its return value is unused). boundary:
   // {z, holdMargin} clamps movement to home side.
   Enemy.prototype.update = function (dt, playerPos, playerAlive, canDamagePlayer, boundary, regionManager) {
+    // CC-C7: the nest runs whether she lives or not (save-flag sync, 3-day
+    // re-arm, spawner, dressing) - before the dead early-out below
+    if (this.lair && regionManager) this.lairTick(dt, playerPos, playerAlive, regionManager);
     if (this.fsm === 'dead') {
       this.updateDeathVisual(dt);
       return;
     }
     this.fsmTime += dt;
+    if (this.slamCd > 0) this.slamCd = Math.max(0, this.slamCd - dt);   // CC-C7 (boss-slam only)
     // DAGBLEED: bleed ticks (CONFIG.combat.bleed.tickSec) go through
     // takeDamage so the hit feedback + death/corpse flow fire as for any hit
     // (no fromDir: no knockback, no guard arc). A lethal tick ends the update.
@@ -97855,6 +98171,13 @@ window.WH_ICONS = {
           this.root.position.z = this.pos.z;
           // CC-C5: the recoil slides over the hills (terrain homes only)
           if (this.terrainHome) this.root.position.y = this.pos.y = this.groundY();
+          if (this.rigidAnim) {
+            // CC-C7: frozen upright - drop the RIGID_CLIPS feet-pivot shift
+            this.body.position.set(0, this.bodyBaseY || 0, 0);
+            this.body.rotation.z = 0;
+            this.body.scale.setScalar(this.bodyScale);
+            if (this.lair) this.updateSlamCue(dt);
+          }
           this.applyDeflectPose(this.anim ? this.bodyBaseRotX : 0,
             this.anim ? this.bodyBaseRotY : 0);
         }
@@ -97889,10 +98212,16 @@ window.WH_ICONS = {
             // A-2 ruling 2026-10-02: hitArcDeg is a HALF-angle (±50°), per
             // the audit of record (doc 60 L221 arcHalfDeg 50); D1 renamed
             // the key only. /180 == *deg/2 in radians.
-            if (distToPlayer <= this.cfg.attackRange + window.WH_CONFIG.player.radius &&
-                Math.abs(hitYaw) <= phase.hitArcDeg * Math.PI / 180) {
+            // CC-C7 boss-slam: the same check IS the AoE (attackRange =
+            // slamRadius 3.2, half-angle 90 = the 180-deg front arc).
+            var inArc = distToPlayer <= this.cfg.attackRange + window.WH_CONFIG.player.radius &&
+                Math.abs(hitYaw) <= phase.hitArcDeg * Math.PI / 180;
+            var slamP = this.cfg.slamCooldown ? livePlayer() : null;
+            var hpBefore = slamP ? slamP.hp : 0;
+            if (inArc) {
               canDamagePlayer(this.cfg.attackDamage, this);
             }
+            if (this.cfg.slamCooldown) this.slamImpact(inArc, slamP, hpBefore, toPlayerX, toPlayerZ, distToPlayer);
           }
         } else if (this.attackPhase === 'active') {
           if (this.attackPhaseT >= phase.active) {
@@ -97901,7 +98230,9 @@ window.WH_ICONS = {
           }
         } else if (this.attackPhase === 'recover' && this.attackPhaseT >= phase.recover) {
           // AI1: one swing per decision - the bandit returns to the loop
-          if (!ai1 && distToPlayer <= this.cfg.attackRange * 1.4) {
+          // CC-C7: a slammer never chains - back to the lumber chase while
+          // slamCooldown runs (brief sec 3: slow chase between heavy slams)
+          if (!ai1 && !this.cfg.slamCooldown && distToPlayer <= this.cfg.attackRange * 1.4) {
             this.attackPhase = 'windup';
             this.attackPhaseT = 0;
           } else {
@@ -97931,9 +98262,14 @@ window.WH_ICONS = {
         this.setFsm('idle');           // leash: disengage, walk home
       } else if (ai1) {
         this.ai1Decide(dt, ai1, distToPlayer);
-      } else if (distToPlayer <= this.cfg.attackRange) {
+      } else if (distToPlayer <= (this.cfg.engageRange || this.cfg.attackRange) && !(this.slamCd > 0) &&
+                 !(this.rigidAnim && this.rigidAnim.riseT >= 0)) {
+        // CC-C7: engageRange (boss-slam) starts the slam inside the AoE;
+        // slamCd gates the cadence (0 for every other type: unchanged); a
+        // rot body still rising (spare clip) cannot swing yet
         // v3: ghoul telegraphs the strike with a short forward hop
-        if (this.type === 'ghoul' && ANIM.ghoulHop.duration > 0) {
+        // CC-C7: + any type with cfg.lunge (rot spawn's tiny lunge)
+        if ((this.type === 'ghoul' || this.cfg.lunge) && ANIM.ghoulHop.duration > 0) {
           this.hopTimer = 0;
           this.hopDir = distToPlayer > 0.001
             ? { x: toPlayerX / distToPlayer, z: toPlayerZ / distToPlayer }
@@ -98053,6 +98389,12 @@ window.WH_ICONS = {
         return;
       }
       this.body.rotation.y = 0;
+      // CC-C7: unrigged rot bodies play the RIGID_CLIPS placeholder set
+      // (their own pose + feet pivot; no layered cycle, no idle re-level)
+      if (this.rigidAnim) {
+        this.applyRigidPose(dt, moveSpeed);
+        return;
+      }
       // v3 D3: layered walk cycle with per-type amplitude multipliers
       if (this.fsm !== 'dead') {
         var mult = ANIM.enemyWalk[this.type] ||
@@ -98279,13 +98621,20 @@ window.WH_ICONS = {
     this.hp -= amount;
     // A hit cancels the swing (stagger or death): no phase leak, as in
     // enterStagger. The next attack entry re-arms windup.
-    this.attackPhase = 'idle';
-    this.attackPhaseT = 0;
+    // CC-C7: superArmor (Rot Mother) keeps the swing through a hit
+    if (!this.cfg.superArmor) {
+      this.attackPhase = 'idle';
+      this.attackPhaseT = 0;
+    }
     if (this.hp <= 0) {
       this.hp = 0;
+      this.attackPhase = 'idle';         // CC-C7: death ends a superArmor swing too
+      this.attackPhaseT = 0;
       this.bleed = null;                 // DAGBLEED: death clears the bleed
       this.setFsm('dead');
       if (this.anim) this.anim.death();
+      // CC-C7: the nest clears (save flag + day) and her spawn wither
+      if (this.lair) this.lairOnDeath();
       // stage 2: the one kill entry point (melee sweep + firebolt both land
       // here) - game.js stores the CONFIG.drops roll on the corpse (S4)
       if (Enemy.onKilled) Enemy.onKilled(this);
@@ -98294,6 +98643,9 @@ window.WH_ICONS = {
     if (this.anim) this.anim.hit();
     // v3: hit stagger visual (0.15s lean-back + knockback)
     this.staggerTimer = ANIM.stagger.visualDuration;
+    // CC-C7 superArmor: the flinch visual only - no knockback, no stagger
+    // state (damage itself went through unchanged above)
+    if (this.cfg.superArmor) return false;
     if (ANIM.stagger.knockback > 0 && fromDir) {
       var kLen = Math.sqrt(fromDir.x * fromDir.x + fromDir.z * fromDir.z);
       if (kLen > 0.001) {
@@ -98532,6 +98884,488 @@ window.WH_ICONS = {
     return n < pack.P.membersInFlight;
   };
 
+  // ---- CC-C7 ROT MOTHER NEST (doc 62 sec 5.2, R-62.4) -----------------------
+  // io/missions/2026-10-12-cc-c7-rotmother-behavior.md. Contained here like
+  // the packs (no new script file). The mother is an ordinary CONFIG row
+  // (regionC.enemies); her lair record is per build, the CLEARED flag is
+  // module state persisted through the additive save block 'lairs'
+  // ({ rotmother_cleared_<region>: dayOfDeath }, game.js save hooks). Her rot
+  // spawn are runtime enemies appended to the region list after every row
+  // (never CONFIG rows, never restored: a rebuild starts them from zero).
+
+  var LAIR_STATE = {};                 // region letter -> { cleared, day }
+
+  function lairFlag(letter) { return 'rotmother_cleared_' + letter; }
+
+  function gameDay() {
+    var dn = window.WH_GAME ? window.WH_GAME.dayNight : null;
+    return dn ? dn.day : 0;
+  }
+
+  // brief lair { x, y, region } = C-local (x, z) in CONFIG['region' + letter]
+  function lairNest(cfg) {
+    var R = window.WH_CONFIG['region' + cfg.lair.region];
+    return { x: R.center.x + cfg.lair.x, z: R.center.z + cfg.lair.y,
+      letter: cfg.lair.region, regionId: R.id, dress: R.rotLair || null };
+  }
+
+  function newLair(cfg) {
+    return { nest: lairNest(cfg), built: false, entered: false, spawnT: 0,
+      minions: [], group: null, fog: [], cue: null, cueFlash: 0 };
+  }
+
+  // Save flag sync + 3-day re-arm + minion spawner + dressing, every frame of
+  // the active region (alive or dead).
+  Enemy.prototype.lairTick = function (dt, playerPos, playerAlive, rm) {
+    var L = this.lair, N = L.nest, cfg = this.cfg;
+    if (!L.built && this.root.parent) this.buildLair();
+    var st = LAIR_STATE[N.letter];
+    var dx = playerPos.x - N.x, dz = playerPos.z - N.z;
+    var dNest = Math.sqrt(dx * dx + dz * dz);
+    if (this.fsm === 'dead') {
+      if (!st || !st.cleared) {
+        // the profile says she lives (LOAD of a pre-kill save): stand her up
+        this.revive(rm, false);
+      } else if (gameDay() - st.day >= cfg.rearm.days &&
+                 (!L.entered || dNest <= cfg.rearm.radius)) {
+        // RE-ARM, once per cycle: first entry after day +3 (she is simply
+        // back when the region builds) or the player within rearm.radius
+        // while already here (she rises out of the nest). The next kill
+        // re-rolls her loot (storeCorpseLoot rolls at every death).
+        st.cleared = false;
+        this.revive(rm, L.entered);
+      }
+    } else if (st && st.cleared) {
+      // a cleared nest restored into a fresh build: her corpse, no kill
+      this.hp = 0;
+      this.attackPhase = 'idle';
+      this.setFsm('dead');
+      this.deadFall = 1;
+    }
+    L.entered = true;
+    // MINION SPAWNER (brief sec 4): she lives + the player inside lairRadius
+    // -> 1 rot spawn per interval from range m around her, cap alive
+    var M = cfg.minions;
+    var alive = 0;
+    for (var i = 0; i < L.minions.length; i++) if (L.minions[i].fsm !== 'dead') alive++;
+    if (this.fsm !== 'dead' && playerAlive && dNest <= cfg.lairRadius) {
+      L.spawnT = Math.min(M.interval, L.spawnT + dt);
+      if (L.spawnT >= M.interval && alive < M.cap && this.spawnMinion(rm, playerPos)) L.spawnT = 0;
+    } else {
+      L.spawnT = 0;
+    }
+    this.pruneMinions(dt, rm);
+    this.lairDressingTick(dt, dNest);
+  };
+
+  // Death entry (takeDamage only - a restored corpse never runs it): flag +
+  // day, then dieOnMasterDeath withers every live spawn (no kill: no loot /
+  // XP, so a dying mother is not a minion piñata).
+  Enemy.prototype.lairOnDeath = function () {
+    var L = this.lair;
+    LAIR_STATE[L.nest.letter] = { cleared: true, day: gameDay() };
+    L.spawnT = 0;
+    this.slamCd = 0;
+    if (this.cfg.minions.dieOnMasterDeath) {
+      for (var i = 0; i < L.minions.length; i++) {
+        var m = L.minions[i];
+        if (m.fsm === 'dead') continue;
+        m.hp = 0;
+        m.bleed = null;
+        m.attackPhase = 'idle';
+        m.withered = true;
+        m.setFsm('dead');
+      }
+    }
+  };
+
+  // Stand the mother back up at the nest (re-arm / profile sync). rise =
+  // play the RIGID_CLIPS spare (she grows out of the nest in view).
+  Enemy.prototype.revive = function (rm, rise) {
+    // unlooted loot rots away with the old corpse: hand it to a sink so the
+    // corpse glow fades through the public loot path (never re-awarded)
+    var CL = window.WH_GAME ? window.WH_GAME.corpseLoot : null;
+    if (CL && this.corpseLoot && this.corpseLoot.length) {
+      CL.loot(this, { addItem: function (id, n) { return n; } });
+    }
+    this.corpseLoot = null;
+    this.hp = this.hpMax;
+    this.setFsm('idle');
+    this.attackPhase = 'idle';
+    this.attackPhaseT = 0;
+    this.deadFall = 0;
+    this.corpseFinalY = null;
+    this.settleTime = -1;
+    this.staggerTimer = 0;
+    this.riposteStaggerTimer = 0;
+    this.riposteArmed = false;
+    this.bleed = null;
+    this.slamCd = 0;
+    this.pos.set(this.spawn.x, 0, this.spawn.z);
+    if (this.terrainHome) this.pos.y = this.groundY();
+    if (this.body) {
+      this.body.rotation.set(this.bodyBaseRotX, this.bodyBaseRotY, 0);
+      this.body.position.set(0, this.bodyBaseY, 0);
+      this.body.scale.setScalar(this.bodyScale);
+      this.root.position.copy(this.pos);
+    }
+    if (rise && this.rigidAnim) this.rigidAnim.rise(this.cfg.riseSec);
+    // the session dead mark (region-manager per-index state) goes too, so a
+    // later rebuild of this region does not lay her down again
+    var list = rm.enemies[this.homeRegionId] || [];
+    var idx = list.indexOf(this);
+    if (idx >= 0) delete rm.logic.stateFor(this.homeRegionId).enemies[idx];
+  };
+
+  // The region-manager buildRegion body steps for a runtime enemy (setBody
+  // then applies the row scale + the holder pin).
+  Enemy.makeBody = function (type) {
+    var name = bodyNameFor(type);
+    var body = window.WH_ASSETS.instance(name);
+    body.children[0].position.y += window.WH_ASSETS.groundMinY(name);
+    return body;
+  };
+
+  // One rot spawn, range m from her at a random bearing, facing the player.
+  Enemy.prototype.spawnMinion = function (rm, playerPos) {
+    var list = rm.enemies[this.homeRegionId];
+    var parent = this.root.parent;
+    if (!list || !parent) return false;
+    var M = this.cfg.minions;
+    var a = Math.random() * Math.PI * 2;
+    var m = new Enemy(M.asset, null, this.homeRegionId,
+      this.pos.x + Math.cos(a) * M.range, this.pos.z + Math.sin(a) * M.range);
+    m.master = this;
+    m.yaw = Math.atan2(playerPos.x - m.pos.x, playerPos.z - m.pos.z);
+    m.setBody(Enemy.makeBody(M.asset));
+    if (m.terrainHome) m.pos.y = m.groundY();
+    m.root.position.copy(m.pos);
+    m.yawFrame.rotation.y = m.yaw;
+    if (m.rigidAnim) m.rigidAnim.rise(m.cfg.riseSec);
+    list.push(m);
+    parent.add(m.root);
+    this.lair.minions.push(m);
+    return true;
+  };
+
+  // Spawn corpses leave once looted / empty and corpseLingerSec dead, and
+  // never more than maxCorpses lie around (oldest first; its unlooted loot
+  // goes with it - corpse-loot drops a body that left the list).
+  Enemy.prototype.pruneMinions = function (dt, rm) {
+    var L = this.lair, list = rm.enemies[this.homeRegionId] || [];
+    var dead = [], removed = false, i, m;
+    for (i = 0; i < L.minions.length; i++) {
+      m = L.minions[i];
+      if (m.fsm !== 'dead') continue;
+      m.deadT = (m.deadT || 0) + dt;
+      dead.push(m);
+    }
+    var drop = [];
+    for (i = 0; i < dead.length; i++) {
+      m = dead[i];
+      var empty = !m.corpseLoot || !m.corpseLoot.length;
+      if ((empty && m.deadT >= m.cfg.corpseLingerSec) || dead.length - i > m.cfg.maxCorpses) drop.push(m);
+    }
+    for (i = 0; i < drop.length; i++) {
+      m = drop[i];
+      var at = list.indexOf(m);
+      if (at >= 0) list.splice(at, 1);
+      if (m.root.parent) m.root.parent.remove(m.root);   // shared template geometry: no dispose
+      L.minions.splice(L.minions.indexOf(m), 1);
+      removed = true;
+    }
+    if (removed) {
+      // the per-index dead marks past the CONFIG rows belonged to spawn
+      // (a rebuild never restores them); keep the session state tidy
+      var rows = window.WH_REGION_DEFS.regions[this.homeRegionId].cfg.enemies.length;
+      var se = rm.logic.stateFor(this.homeRegionId).enemies;
+      Object.keys(se).forEach(function (k) { if (Number(k) >= rows) delete se[k]; });
+    }
+  };
+
+  // ---- nest dressing: rot-ground pool + fog cards (region group children,
+  // disposed with the region like every prop); the rot-light is a static
+  // socket (Enemy.lairSockets -> game.js light pool) ----
+  function hashNoise(seed, x, y) {
+    var h = (seed ^ (x * 374761393) ^ (y * 668265263)) | 0;
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+  }
+
+  function hexRgb(c) { return [(c >> 16) & 255, (c >> 8) & 255, c & 255]; }
+
+  // 64 px NEAREST canvas: dark swamp mottling + specks, alpha feathered to 0
+  // at the rim in hard pixel steps (the pixel-art ground family)
+  function poolCanvas(P) {
+    var S = 64, cv = document.createElement('canvas');
+    cv.width = cv.height = S;
+    var g = cv.getContext('2d'), img = g.createImageData(S, S);
+    var c1 = hexRgb(P.color), c2 = hexRgb(P.color2), c3 = hexRgb(P.speck);
+    for (var y = 0; y < S; y++) {
+      for (var x = 0; x < S; x++) {
+        var u = (x + 0.5) / S * 2 - 1, v = (y + 0.5) / S * 2 - 1;
+        var r = Math.sqrt(u * u + v * v);
+        var n = hashNoise(P.textureSeed, x >> 1, y >> 1);
+        var c = n < 0.08 ? c3 : (n < 0.5 ? c1 : c2);
+        var edge = Math.max(0, Math.min(1, (1 - r) / P.edgeFeather));
+        var o = (y * S + x) * 4;
+        img.data[o] = c[0]; img.data[o + 1] = c[1]; img.data[o + 2] = c[2];
+        img.data[o + 3] = Math.round(Math.round(edge * 4) / 4 * 235);   // 4 alpha steps
+      }
+    }
+    g.putImageData(img, 0, 0);
+    return cv;
+  }
+
+  function fogCanvas() {
+    var S = 64, cv = document.createElement('canvas');
+    cv.width = cv.height = S;
+    var g = cv.getContext('2d');
+    var grad = g.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+    grad.addColorStop(0, 'rgba(255,255,255,0.9)');
+    grad.addColorStop(0.5, 'rgba(255,255,255,0.35)');
+    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = grad;
+    g.fillRect(0, 0, S, S);
+    return cv;
+  }
+
+  Enemy.prototype.buildLair = function () {
+    var L = this.lair, N = L.nest, D = N.dress;
+    L.built = true;
+    if (!D || typeof document === 'undefined') return;
+    var G = window.WH_GROUND, rid = this.homeRegionId;
+    var hAt = function (x, z) { return G && G.has(rid) ? G.heightAt(rid, x, z) : 0; };
+    var group = new THREE.Group();
+    group.name = 'rot-lair';
+    // pool: center + rings x segments, every vertex on the ground + lift
+    var P = D.pool, pos = [], uvs = [], idx = [];
+    pos.push(N.x, hAt(N.x, N.z) + P.lift, N.z);
+    uvs.push(0.5, 0.5);
+    for (var r = 1; r <= P.rings; r++) {
+      var rr = P.radius * r / P.rings;
+      for (var s = 0; s < P.segments; s++) {
+        var a = s / P.segments * Math.PI * 2;
+        var x = N.x + Math.cos(a) * rr, z = N.z + Math.sin(a) * rr;
+        pos.push(x, hAt(x, z) + P.lift, z);
+        uvs.push(0.5 + (x - N.x) / (2 * P.radius), 0.5 - (z - N.z) / (2 * P.radius));
+      }
+    }
+    for (s = 0; s < P.segments; s++) idx.push(0, 1 + (s + 1) % P.segments, 1 + s);
+    for (r = 1; r < P.rings; r++) {
+      var o0 = 1 + (r - 1) * P.segments, o1 = 1 + r * P.segments;
+      for (s = 0; s < P.segments; s++) {
+        var s1 = (s + 1) % P.segments;
+        idx.push(o0 + s, o0 + s1, o1 + s, o0 + s1, o1 + s1, o1 + s);
+      }
+    }
+    var geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pos), 3));
+    geo.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(uvs), 2));
+    geo.setIndex(idx);
+    geo.computeVertexNormals();
+    var tex = new THREE.CanvasTexture(poolCanvas(P));
+    tex.magFilter = THREE.NearestFilter;
+    tex.minFilter = THREE.NearestFilter;
+    tex.generateMipmaps = false;
+    tex.colorSpace = THREE.SRGBColorSpace;
+    var pool = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
+      color: 0xffffff, map: tex, roughness: 0.85, metalness: 0.0,
+      transparent: true, depthWrite: false, side: THREE.DoubleSide,
+      polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1
+    }));
+    pool.name = 'rot-pool';
+    group.add(pool);
+    // fog cards: slow orbits around the nest, yaw-billboarded each frame
+    var F = D.fog, fogTex = new THREE.CanvasTexture(fogCanvas());
+    var fogGeo = new THREE.PlaneGeometry(F.width, F.height);
+    var fogMat = new THREE.MeshBasicMaterial({ map: fogTex, color: F.color, transparent: true,
+      opacity: F.opacity, depthWrite: false, side: THREE.DoubleSide });
+    var baseY = hAt(N.x, N.z);
+    for (var k = 0; k < F.cards; k++) {
+      var card = new THREE.Mesh(fogGeo, fogMat);
+      card.name = 'rot-fog';
+      card.userData.orbit = {
+        r: F.radiusMin + (F.radiusMax - F.radiusMin) * hashNoise(P.textureSeed, k, 1),
+        a: Math.PI * 2 * k / F.cards,
+        w: F.driftSpeed * (hashNoise(P.textureSeed, k, 2) < 0.5 ? -1 : 1) * (0.6 + 0.8 * hashNoise(P.textureSeed, k, 3)),
+        h: F.heightMin + (F.heightMax - F.heightMin) * hashNoise(P.textureSeed, k, 4),
+        ph: Math.PI * 2 * hashNoise(P.textureSeed, k, 5)
+      };
+      card.position.set(N.x, baseY + card.userData.orbit.h, N.z);
+      group.add(card);
+      L.fog.push(card);
+    }
+    L.fogBaseY = baseY;
+    L.group = group;
+    this.root.parent.add(group);
+  };
+
+  Enemy.prototype.lairDressingTick = function (dt, dNest) {
+    var L = this.lair, D = L.nest.dress;
+    if (!L.group || !D) return;
+    L.group.visible = dNest <= D.cullM;
+    if (dNest > D.fog.showWithinM) return;
+    var cam = window.WH_GAME ? window.WH_GAME.camera : null;
+    var N = L.nest;
+    for (var i = 0; i < L.fog.length; i++) {
+      var c = L.fog[i], o = c.userData.orbit;
+      o.a += o.w * dt;
+      o.ph += dt * 0.7;
+      c.position.set(N.x + Math.cos(o.a) * o.r, L.fogBaseY + o.h + Math.sin(o.ph) * 0.15,
+        N.z + Math.sin(o.a) * o.r);
+      if (cam) c.rotation.y = Math.atan2(cam.position.x - c.position.x, cam.position.z - c.position.z);
+    }
+  };
+
+  // ---- the slam: telegraph cue (ground sector under the 180-deg arc) +
+  // impact effects (poison-lite + knockback through game.js) ----
+  var CUE_DARK = null, CUE_HOT = null;
+  Enemy.prototype.buildSlamCue = function () {
+    var R = this.cfg.slamRadius, half = this.cfg.slamArcDeg / 2 * Math.PI / 180;
+    var SEG = 16, RINGS = 3, pos = [0, 0, 0], idx = [];
+    for (var r = 1; r <= RINGS; r++) {
+      for (var s = 0; s <= SEG; s++) {
+        var a = -half + 2 * half * s / SEG;
+        pos.push(Math.sin(a) * R * r / RINGS, 0, Math.cos(a) * R * r / RINGS);   // yawFrame local: +Z = her front
+      }
+    }
+    for (s = 0; s < SEG; s++) idx.push(0, 1 + s, 2 + s);
+    for (r = 1; r < RINGS; r++) {
+      var o0 = 1 + (r - 1) * (SEG + 1), o1 = 1 + r * (SEG + 1);
+      for (s = 0; s < SEG; s++) idx.push(o0 + s, o1 + s, o0 + s + 1, o0 + s + 1, o1 + s, o1 + s + 1);
+    }
+    var geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pos), 3));
+    geo.setIndex(idx);
+    var cue = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0x101a08, transparent: true,
+      opacity: 0, depthWrite: false, side: THREE.DoubleSide,
+      polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+    cue.name = 'rot-slam-cue';
+    cue.visible = false;
+    cue.frustumCulled = false;          // vertices are re-seated every frame it shows
+    this.yawFrame.add(cue);
+    this.lair.cue = cue;
+    if (!CUE_DARK) { CUE_DARK = new THREE.Color(0x101a08); CUE_HOT = new THREE.Color(0xa8d84a); }
+  };
+
+  // heat 0..1 (dark shadow -> sickly green), opacity 0 hides it
+  Enemy.prototype.slamCueShow = function (heat, opacity) {
+    var cue = this.lair ? this.lair.cue : null;
+    if (!cue) return;
+    cue.visible = opacity > 0.01;
+    if (!cue.visible) return;
+    cue.material.opacity = opacity;
+    cue.material.color.copy(CUE_DARK).lerp(CUE_HOT, heat);
+    // seat every vertex on the ground under it (yawFrame local -> world)
+    var G = window.WH_GROUND, rid = this.homeRegionId, terr = G && G.has(rid);
+    var p = cue.geometry.attributes.position, arr = p.array;
+    var c = Math.cos(this.yaw), sn = Math.sin(this.yaw), rootY = this.root.position.y;
+    for (var i = 0; i < arr.length; i += 3) {
+      var wx = this.pos.x + arr[i] * c + arr[i + 2] * sn;
+      var wz = this.pos.z - arr[i] * sn + arr[i + 2] * c;
+      arr[i + 1] = (terr ? G.heightAt(rid, wx, wz) : 0) - rootY + 0.1;
+    }
+    p.needsUpdate = true;
+  };
+
+  Enemy.prototype.updateSlamCue = function (dt) {
+    if (!this.lair) return;
+    if (!this.lair.cue) this.buildSlamCue();
+    var L = this.lair;
+    if (this.fsm === 'attack' && this.attackPhase === 'windup') {
+      var f = Math.min(1, this.attackPhaseT / this.cfg.attackPhase.windup);
+      this.slamCueShow(f * 0.6, 0.2 + 0.45 * f);
+    } else if (this.fsm === 'attack' && this.attackPhase === 'active') {
+      this.slamCueShow(1, 0.8);
+    } else if (L.cueFlash > 0) {
+      L.cueFlash = Math.max(0, L.cueFlash - dt);
+      this.slamCueShow(1, 0.8 * L.cueFlash / 0.35);
+    } else {
+      this.slamCueShow(0, 0);
+    }
+  };
+
+  // Active entry of a boss-slam (after the shared AoE check): cooldown,
+  // cue flash, and - only on a slam that LANDED (hp dropped, no guard up,
+  // not parried / rolled through) - poison-lite + knockback.
+  Enemy.prototype.slamImpact = function (inArc, P, hpBefore, toX, toZ, dist) {
+    this.slamCd = this.cfg.slamCooldown;
+    if (this.lair) this.lair.cueFlash = 0.35;
+    var G = window.WH_GAME;
+    if (!inArc || !P || !G || !(P.hp < hpBefore) || P.blockActive) return;
+    if (G.applyPlayerPoison) G.applyPlayerPoison(this.cfg.poison, this.cfg.poisonText);
+    if (G.knockbackPlayer && dist > 0.001) {
+      G.knockbackPlayer(toX / dist, toZ / dist, this.cfg.slamKnockbackM, this.cfg.slamKnockbackSec);
+    }
+  };
+
+  // RIGID_CLIPS pose onto the body holder. The holder origin sits at the raw
+  // mesh origin (bodyBaseY above the feet), so pitch is re-pivoted about the
+  // FEET: shift = (0, -h (1 - cos), h sin) keeps the ground point planted.
+  Enemy.prototype.applyRigidPose = function (dt, moveSpeed) {
+    var pz = this.rigidAnim.pose(this, dt, moveSpeed);
+    if (!pz) return;
+    var hopY = 0;
+    if (this.hopTimer >= 0) {
+      var hf = this.hopTimer / ANIM.ghoulHop.duration;
+      hopY = 4 * hf * (1 - hf) * ANIM.ghoulHop.height;
+    }
+    var h = (this.bodyBaseY || 0) * pz.grow;
+    this.body.scale.setScalar(this.bodyScale * pz.grow);
+    this.body.rotation.set(pz.rotX, pz.rotY, pz.rotZ);
+    this.body.position.set(pz.swayX, h * Math.cos(pz.rotX), h * Math.sin(pz.rotX));
+    this.root.position.y = this.pos.y + hopY + pz.lift;
+    this.applyDeflectPose(this.body.rotation.x, this.body.rotation.y, true);
+    if (this.lair) this.updateSlamCue(dt);
+  };
+
+  // Save block (game.js wraps WH_SAVE): { rotmother_cleared_C: dayOfDeath }
+  // while cleared; an armed nest writes nothing. Restore REPLACES the state
+  // (last save wins: a profile without the block = every nest armed).
+  Enemy.captureLairs = function () {
+    var out = {};
+    Object.keys(LAIR_STATE).forEach(function (letter) {
+      var st = LAIR_STATE[letter];
+      if (st && st.cleared) out[lairFlag(letter)] = st.day;
+    });
+    return out;
+  };
+  Enemy.restoreLairs = function (block) {
+    LAIR_STATE = {};
+    if (!block || typeof block !== 'object') return;
+    Object.keys(block).forEach(function (k) {
+      var m = /^rotmother_cleared_([A-Z])$/.exec(k);
+      var day = block[k];
+      if (m && typeof day === 'number' && isFinite(day)) LAIR_STATE[m[1]] = { cleared: true, day: Math.floor(day) };
+    });
+  };
+
+  // Always-on rot-light sockets of the region's nests (game.js
+  // computeFireSockets: the bandit-campfire socket pipeline, tinted, no
+  // flame card). Static: lit whether she lives or not.
+  Enemy.lairSockets = function (regionId) {
+    var out = [];
+    Object.keys(CFG).forEach(function (type) {
+      var row = CFG[type];
+      if (!row || row.pattern !== 'boss-slam' || !row.lair) return;
+      var N = lairNest(row);
+      if (N.regionId !== regionId || !N.dress || !N.dress.light) return;
+      var G = window.WH_GROUND;
+      var gy = G && G.has(regionId) ? G.heightAt(regionId, N.x, N.z) : 0;
+      out.push({ id: 'rotLair@' + N.x + ',' + N.z, x: N.x, y: gy + N.dress.light.height, z: N.z,
+        intensity: N.dress.light.intensity, weight: 1, color: N.dress.light.color, noCard: true });
+    });
+    return out;
+  };
+
+  // debug / validation read-out (WH_DEBUG-friendly, no side effects)
+  Enemy.lairState = function () {
+    var out = {};
+    Object.keys(LAIR_STATE).forEach(function (k) { out[k] = { cleared: LAIR_STATE[k].cleared, day: LAIR_STATE[k].day }; });
+    return out;
+  };
+
   Enemy.bodyNameFor = bodyNameFor;
   // pure loop helpers (offline spawn-row derivation, scratch/cc-c5)
   Enemy.packGeometry = { makeLoop: makeLoop, loopAt: loopAt, loopProject: loopProject, packSlot: packSlot };
@@ -98539,7 +99373,7 @@ window.WH_ICONS = {
   Enemy.onKilled = null;              // stage 2: fn(enemy), set by game.js (corpse loot)
 
   window.WH_Enemy = Enemy;
-  window.WH_ENEMY_TYPES = ['bandit', 'ghoul', 'wolf'];
+  window.WH_ENEMY_TYPES = ['bandit', 'ghoul', 'wolf', 'rotmother', 'rotspawn'];
 })();
 </script>
 <script>
@@ -103371,8 +104205,11 @@ window.WH_ICONS = {
         b = { el: el, fill: fill, deathT: 0, done: restoredCorpse };
         bars.set(e, b);
       }
-      if (b.done) { b.el.style.display = 'none'; continue; }
       var dead = e.fsm === 'dead' || e.hp <= 0;
+      // CC-C7: a re-armed Rot Mother is the same enemy object risen again -
+      // her finished bar comes back with her
+      if (b.done && !dead) { b.done = false; b.deathT = 0; }
+      if (b.done) { b.el.style.display = 'none'; continue; }
       var deathAlpha = 1;
       if (dead) {
         b.deathT += dt;
@@ -103389,7 +104226,7 @@ window.WH_ICONS = {
       var dx = e.pos.x - p.pos.x, dz = e.pos.z - p.pos.z;
       var dist = Math.sqrt(dx * dx + dz * dz);
       if (dist > H.hideBeyondM) { b.el.style.display = 'none'; continue; }
-      _ehbV.set(e.pos.x, e.pos.y + H.heightAboveHeadM, e.pos.z);
+      _ehbV.set(e.pos.x, e.pos.y + H.heightAboveHeadM + (e.cfg.barLiftM || 0), e.pos.z);   // CC-C7 barLiftM (4.2 m boss)
       _ehbV.project(game.camera);
       if (_ehbV.z > 1 || _ehbV.z < -1) { b.el.style.display = 'none'; continue; }
       var sx = (_ehbV.x * 0.5 + 0.5) * window.innerWidth;
@@ -104190,8 +105027,22 @@ window.WH_ICONS = {
   // never spawned as boxes - the body glows until it is looted empty.
   // L1: the same one kill entry point awards the kill XP (enemy.js never
   // imports WH_LEVEL) + the first-of-kind foe discovery.
+  // CC-C7: a type with its own CONFIG.enemy[type].loot rows ([{ mat, n:
+  // [min, max] }], rot mother / rot spawn) rolls ONLY those (uniform integer
+  // per row, 0 = nothing); every other type keeps the shared CONFIG.drops.
+  function rollTypeLoot(rows) {
+    var items = [];
+    for (var i = 0; i < rows.length; i++) {
+      var lo = rows[i].n[0], hi = rows[i].n[1];
+      var count = lo + Math.floor(Math.random() * (hi - lo + 1));
+      if (count > 0 && CFG.items[rows[i].mat]) items.push({ id: rows[i].mat, count: count });
+    }
+    return items;
+  }
+
   function storeCorpseLoot(enemy) {
-    game.corpseLoot.attach(enemy, rollDrops());
+    var typeCfg = CFG.enemy[enemy.type];
+    game.corpseLoot.attach(enemy, typeCfg && typeCfg.loot ? rollTypeLoot(typeCfg.loot) : rollDrops());
     window.WH_LEVEL.awardXP('kill_' + enemy.type);
     window.WH_LEVEL.discover('foe', enemy.type);
   }
@@ -104211,8 +105062,21 @@ window.WH_ICONS = {
     var parts = r.taken.map(function (t) {
       return window.WH_INVENTORY.itemDef(t.id).name + ' x' + t.count;
     });
+    // CC-C7 drop-log: the first loot of an item carrying a dropLog line
+    // (rot-silk / rot-gland) appends its journal line once per session (one
+    // toast: a second toast would replace the loot line), held 2x as long
+    game.dropLogSeen = game.dropLogSeen || {};
+    var journal = [];
+    r.taken.forEach(function (t) {
+      var d = CFG.items[t.id];
+      if (d && d.dropLog && !game.dropLogSeen[t.id]) {
+        game.dropLogSeen[t.id] = true;
+        journal.push(d.dropLog);
+      }
+    });
     game.inventoryUI.toast(L.lootToast.replace('{list}', parts.join(', ')) +
-      (r.remaining ? L.partialSuffix : ''));
+      (r.remaining ? L.partialSuffix : '') + (journal.length ? ' - ' + journal.join(' ') : ''),
+      journal.length ? CFG.inventoryUI.toastSeconds * 2 : undefined);
     return true;
   }
 
@@ -104667,6 +105531,32 @@ window.WH_ICONS = {
       reloadActionMap: function () { game.actionMap = loadActionMap(); },
       setClassId: setClassId        // R-64.5: restore hands the saved class through
     };
+    // CC-C7: the nest flags ride an additive optional profile block 'lairs'
+    // ({ rotmother_cleared_C: dayOfDeath } while cleared; schema v1, an older
+    // profile = every nest armed), registered here so save.js stays as is:
+    // capture() gains the block, save() writes it next to save.js's own
+    // write (same key, same v / ts), restore() hands it to WH_Enemy first.
+    var S = window.WH_SAVE;
+    var baseCapture = S.capture, baseSave = S.save, baseRestore = S.restore;
+    S.capture = function (g, opts) {
+      var data = baseCapture(g, opts);
+      data.lairs = window.WH_Enemy.captureLairs();
+      return data;
+    };
+    S.save = function (g, opts) {
+      if (!baseSave(g, opts)) return false;
+      try {
+        var stored = JSON.parse(window.localStorage.getItem(CFG.save.lsKey) || 'null');
+        if (!stored) return true;
+        stored.lairs = window.WH_Enemy.captureLairs();
+        window.localStorage.setItem(CFG.save.lsKey, JSON.stringify(stored));
+      } catch (e) { /* the base profile stands; the nest re-arms on load */ }
+      return true;
+    };
+    S.restore = function (g, data) {
+      if (data) window.WH_Enemy.restoreLairs(data.lairs);
+      baseRestore(g, data);
+    };
     // S5 quit persist: tab close / reload writes the same capture() profile,
     // once, best-effort and quiet - only once a cycle has begun (day > 0 or
     // a deployed camp), never on a fresh untouched boot, never while dead.
@@ -104850,6 +105740,10 @@ window.WH_ICONS = {
     // Round F: world-level sockets (gate-arch lantern), live in both regions.
     var ws = rm.worldSockets ? rm.worldSockets() : [];
     for (var w = 0; w < ws.length; w++) out.push(ws[w]);
+    // CC-C7: the active region's rot-nest lights (always on, green tint,
+    // no flame card - poolTick reads socket.color / socket.noCard)
+    var ls = window.WH_Enemy.lairSockets(rm.logic.activeId);
+    for (var q = 0; q < ls.length; q++) out.push(ls[q]);
     return out;
   }
 
@@ -104880,10 +105774,13 @@ window.WH_ICONS = {
       if (tgt) {
         l.position.set(tgt.x, tgt.y, tgt.z);
         l.whSocketId = tgt.id;
+        // CC-C7: a tinted socket (rot-nest light) sets its own colour; every
+        // other socket keeps the pool's fire colour
+        l.color.setHex(tgt.color !== undefined ? tgt.color : CFG.lightPool.color);
       }
       var card = game.flameCards[i];
       if (card) {
-        var on = !!tgt && l.intensity > 0.06;
+        var on = !!tgt && !tgt.noCard && l.intensity > 0.06;   // CC-C7: no flame over the rot-light
         card.visible = on;
         if (on) card.position.set(tgt.x,
           tgt.y + 0.06 * Math.sin(2.1 * game.lightPoolT + i * 1.7), tgt.z);
@@ -104907,6 +105804,65 @@ window.WH_ICONS = {
   }
   game.applyBleedToEnemy = applyBleedToEnemy;
 
+  // ---- CC-C7 POISON-LITE v1 + slam knockback (player side) --------------------
+  // doc 62 sec 5.2: damage + slow debuff, NOT a status system. One instance:
+  // a re-apply REFRESHES dps / slow / duration (never stacks). The DOT ticks
+  // once per POISON_TICK_SEC; a non-lethal tick is quiet (no flinch, no cast
+  // fizzle), a lethal one takes the full player.takeDamage death path. The
+  // slow scales the move this update made (walk / sprint / roll / root motion
+  // alike) before the ordinary bounds / props / door / ground clamp. Death
+  // or respawn clears both. enemy.js slamImpact is the only caller.
+  var POISON_TICK_SEC = 1.0;
+  game.poison = null;               // { dps, slow, ticks, next }
+  game.knock = null;                // { x, z, speed, t }
+  function applyPlayerPoison(def, text) {
+    if (!def || !game.player || game.player.state !== 'alive') return;
+    var fresh = !game.poison;
+    game.poison = { dps: def.dps, slow: def.slow,
+      ticks: Math.max(1, Math.round(def.duration / POISON_TICK_SEC)), next: POISON_TICK_SEC };
+    if (fresh && text) game.inventoryUI.toast(text);
+  }
+  function knockbackPlayer(dirX, dirZ, meters, seconds) {
+    var t = Math.max(0.05, seconds || 0.25);
+    game.knock = { x: dirX, z: dirZ, speed: meters / t, t: t };
+  }
+  game.applyPlayerPoison = applyPlayerPoison;
+  game.knockbackPlayer = knockbackPlayer;
+
+  // player.update's clamp callback: slow + knockback first, then the clamp
+  // (game.groundPrevX / doorPrevZ = this frame's pre-move spot)
+  function clampPlayerWithStatus(player) {
+    if (game.poison && player.state === 'alive') {
+      var k = 1 - game.poison.slow;
+      player.pos.x = game.groundPrevX + (player.pos.x - game.groundPrevX) * k;
+      player.pos.z = game.doorPrevZ + (player.pos.z - game.doorPrevZ) * k;
+    }
+    if (game.knock) {
+      var step = Math.min(game.groundDt || 0, game.knock.t);
+      player.pos.x += game.knock.x * game.knock.speed * step;
+      player.pos.z += game.knock.z * game.knock.speed * step;
+      game.knock.t -= game.groundDt || 0;
+      if (game.knock.t <= 0) game.knock = null;
+    }
+    clampPlayerToBounds(player);
+  }
+
+  function poisonTick(dt) {
+    var P = game.poison, p = game.player;
+    if (p.state !== 'alive') { game.poison = null; game.knock = null; return; }
+    if (!P) return;
+    P.next -= dt;
+    while (P && P.next <= 0) {
+      var dmg = P.dps * POISON_TICK_SEC;
+      var ward = window.WH_LEVEL ? window.WH_LEVEL.statTotal('ward') : 0;
+      if (p.hp - dmg * (1 - ward) <= 0) p.takeDamage(dmg);   // lethal: the real death path
+      else p.hp -= dmg * (1 - ward);
+      P.ticks -= 1;
+      P.next += POISON_TICK_SEC;
+      if (P.ticks <= 0 || p.state !== 'alive') { game.poison = P = null; }
+    }
+  }
+
   // ---- main loop ----------------------------------------------------------------
 
   function loop(now) {
@@ -104923,7 +105879,8 @@ window.WH_ICONS = {
     game.doorPrevZ = game.player.pos.z;   // CC-C2: door gate crossing-frame test
     game.groundPrevX = game.player.pos.x; // CC-C4: slope guard pre-move spot (+ doorPrevZ)
     game.groundDt = dt;
-    game.player.update(dt, clampPlayerToBounds);
+    game.player.update(dt, clampPlayerWithStatus);   // CC-C7: poison slow + slam knockback, then the clamp
+    poisonTick(dt);                                  // CC-C7: poison-lite DOT
 
     // ---- v7: cast windup tick (fires the bolt at windup end). Order C: both
     // hands tick independently; 0-2 casts complete per frame. ----

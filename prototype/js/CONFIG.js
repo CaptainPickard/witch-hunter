@@ -596,7 +596,13 @@ window.WH_CONFIG = {
       { type: 'bandit', x: -130.5, z: -500.5 },    // Charlie (fire -140, -506)
       { type: 'bandit', x: -144.2, z: -496.9 },
       { type: 'bandit', x: -151.3, z: -510.1 },
-      { type: 'bandit', x: -138.1, z: -516.8 }
+      { type: 'bandit', x: -138.1, z: -516.8 },
+      // CC-C7 ROT MOTHER (doc 62 L3; io/missions/2026-10-12-cc-c7-rotmother-behavior.md):
+      // the nest boss, APPENDED after the guards (index 22) so saved per-index
+      // dead state keeps every earlier row. Row = CONFIG.enemy.rotmother.lair
+      // (C-local (-175, +95)) in world coords. Her rot spawn are NOT rows: the
+      // lair spawner (enemy.js) appends them at runtime, ephemeral, after her.
+      { type: 'rotmother', x: -175.0, z: -271.0 }
     ],
     // CC-C3 ANCIENT FOREST (R-62.6, io/missions/2026-10-07-cc-c3-ancient-forest.md):
     // hand-placed rows, no runtime random. CC-C2's 120-tree 8-10 band is
@@ -960,8 +966,39 @@ window.WH_CONFIG = {
       { asset: 'banditBedroll',    x: -143.4, z: -504.1, rotY: 3.65, scale: 1.1 },
       { asset: 'banditBedroll',    x: -143.4, z: -507.9, rotY: 2.63, scale: 1.1 },
       { asset: 'treeStump',        x: -138.2, z: -502.9, rotY: 0.53, scale: 1.3 },
-      { asset: 'rubblePile',       x: -138.8, z: -510.4, rotY: 1.10, scale: 1.0 }
-    ]
+      { asset: 'rubblePile',       x: -138.8, z: -510.4, rotY: 1.10, scale: 1.0 },
+      // CC-C7 ROT MOTHER NEST (doc 62 L3, C-local (-175, +95) = world (-175, -271)):
+      // 6 b6Bones piles on the arena rim (r 8.9-10.6 m from the nest; the inner
+      // fight ground + the 6 m minion ring stay open). Generated offline
+      // (scratch/cc-c7/gen_lair.py -> lair.json, seed 20261012). Site probe
+      // (scratch/cc-c7/site_probe.js): ground 0.19..1.89 m within 14 m, max
+      // slope 8.5 deg, nearest prop the yew 16.5 m out, roads >= 78 m, wolf
+      // loops >= 69 m. Ledger (scratch/cc-c7/ledger_probe.js): worst 170 m
+      // circle near the lair 1,799,747 -> <= 1,889k tris with these 6 rows
+      // (10,889 each) + the boss and 3 spawn (< 2M). All PROPOSED, Nicko tunes.
+      { asset: 'b6Bones',          x: -164.4, z: -271.7, rotY: 0.01, scale: 1.02 },
+      { asset: 'b6Bones',          x: -172.0, z: -261.5, rotY: 0.43, scale: 1.09 },
+      { asset: 'b6Bones',          x: -176.9, z: -262.1, rotY: 5.58, scale: 1.22 },
+      { asset: 'b6Bones',          x: -184.5, z: -268.1, rotY: 4.12, scale: 1.17 },
+      { asset: 'b6Bones',          x: -178.1, z: -279.3, rotY: 5.51, scale: 1.34 },
+      { asset: 'b6Bones',          x: -169.2, z: -279.7, rotY: 2.83, scale: 1.03 }
+    ],
+    // CC-C7 ROT MOTHER NEST dressing (enemy.js lair build, scratch/cc-c7/lair.json):
+    // a terrain-conforming rot-ground pool (the road-ribbon decal family:
+    // polygon-offset MeshStandard + NEAREST pixel canvas, dark swamp tones),
+    // slow green fog cards, and an always-on dim green rot-light riding the
+    // fixed light pool (game.js computeFireSockets -> poolTick: the bandit
+    // campfire socket pipeline, tinted, no flame card). All PROPOSED, Nicko tunes.
+    // The nest centre is NOT repeated here: enemy.rotmother.lair (C-local
+    // (-175, +95)) + this region's center = world (-175, -271), one source.
+    rotLair: {
+      pool: { radius: 12, segments: 40, rings: 6, lift: 0.08,
+        color: 0x1f2a17, color2: 0x2d3a1c, speck: 0x4d5f2a, textureSeed: 20261012, edgeFeather: 0.22 },
+      light: { height: 1.6, intensity: 2.4, color: 0x7fbf4f },
+      fog: { cards: 10, radiusMin: 2.5, radiusMax: 10.5, heightMin: 0.5, heightMax: 1.6,
+        width: 3.6, height: 1.5, opacity: 0.16, color: 0x7f9f55, driftSpeed: 0.12, showWithinM: 70 },
+      cullM: 170                      // pool + fog hide past this from the player (= cullDistanceM)
+    }
   },
 
   // Round E (io/missions/2026-10-05-cc-roundE-veg.md): seeded vegetation
@@ -1526,11 +1563,69 @@ window.WH_CONFIG = {
         slotGain: 1.5                  // follow speed = min(moveSpeed, slot distance x this) (no stop-go)
       }
     },
+    // CC-C7 ROT MOTHER + ROT SPAWN (doc 62 sec 5.2, R-62.4 repeatable nest boss;
+    // io/missions/2026-10-12-cc-c7-rotmother-behavior.md sec 2). The first
+    // block of each row is the BRIEF ROW VERBATIM (its keys + numbers); enemy.js
+    // cfgFor maps hp / dmg / speed / aggro onto the engine keys (hpMax /
+    // attackDamage / moveSpeed + chaseSpeed / sightRadius) once per type. The
+    // second block = engine tunables the brief row leaves to the builder
+    // (brief sec 3 AoE 3.2 m / 180-deg arc, leash, body radius, phase edges).
+    // lair = C-local (x, y=z) in region 'C' (regionC.rotLair.nest = world).
+    // scale = the literal body scale on the raw GLB (rotmother 1.90 m tall
+    // raw -> ~4.2 m; rotspawn 1.36 m raw -> ~1.1 m). Bodies are UNRIGGED: the
+    // anim.js RIGID_CLIPS placeholder set plays (bandit 6-clip pattern).
+    // poison = poison-lite v1 (game.js applyPlayerPoison: dps + slow for
+    // duration; a re-apply REFRESHES, never stacks). slow 0.45 = -45% move.
+    rotmother: {
+      name: 'Rot Mother', hp: 460, dmg: 26, speed: 1.6, aggro: 9,
+      lair: { x: -175, y: 95, region: 'C' }, scale: 2.2,
+      pattern: 'boss-slam', slamCooldown: 3.4, slamWindup: 1.15,
+      poison: { dps: 3.5, duration: 4.0, slow: 0.45 },   // poison-lite v1
+      rearm: { days: 3, trigger: 'proximity', radius: 14 },
+      loot: [{ mat: 'rot-silk', n: [2, 4] }, { mat: 'rot-gland', n: [1, 2] }],
+      minions: { asset: 'rotspawn', cap: 3, interval: 7.0, range: 6.0,
+                 dieOnMasterDeath: true },
+      // -- engine tunables (beyond the brief row). All PROPOSED, Nicko tunes.
+      radius: 1.1,                    // body circle (separation / firebolt / sweep reach)
+      leashRadius: 16,                // from the nest: kited farther -> lumbers home
+      staggerTime: 0.35,              // only a parry stagger lands (superArmor below)
+      superArmor: true,               // ordinary hits flinch her but never cancel a slam / stagger her (damage unchanged)
+      lairRadius: 14,                 // minion spawner runs while the player is this close to the nest (= rearm.radius)
+      engageRange: 2.6,               // a slam starts when the player is this close (and the cooldown is up)
+      slamRadius: 3.2,                // brief sec 3: AoE radius on impact (+ player radius)
+      slamArcDeg: 180,                // brief sec 3: FULL front arc (half-angle 90)
+      slamActive: 0.15,               // impact window (one damage check at entry)
+      slamRecover: 0.9,               // heavy recovery (the punish window)
+      slamTrackDegPerSec: 50,         // windup tracking (slow: a side-step beats it)
+      slamKnockbackM: 2.4,            // landed slam shoves the player this far...
+      slamKnockbackSec: 0.25,         // ...over this long
+      barLiftM: 2.2,                  // HP bar sits this much higher (a 4.2 m body)
+      riseSec: 1.6,                   // re-arm: the 'spare' rise clip length
+      poisonText: 'Rot poison - your limbs go heavy'   // toast on a fresh poison (not on a refresh)
+    },
+    rotspawn: {
+      name: 'Rot Spawn', hp: 26, dmg: 5, speed: 2.4, aggro: 14, scale: 0.8,
+      pattern: 'chase-melee', loot: [{ mat: 'rot-silk', n: [0, 1] }],
+      // -- engine tunables (beyond the brief row). All PROPOSED, Nicko tunes.
+      radius: 0.45,
+      attackRange: 1.3,
+      leashRadius: 24,                // from its spawn point
+      staggerTime: 0.3,
+      lunge: true,                    // brief sec 4 'tiny lunge' = the ghoul hop (CONFIG.anim.ghoulHop) at attack entry
+      attackPhase: { windup: 0.35, active: 0.10, recover: 0.55, hitArcDeg: 50, trackDegPerSec: 240 },
+      corpseLingerSec: 8,             // a looted / empty corpse leaves the scene after this
+      maxCorpses: 4,                  // and never more than this many lie around (oldest goes first)
+      riseSec: 0.8                    // spawn: the 'spare' emerge clip length
+    },
     // CC-C5: enemy type -> manifest body + anim.js VARIANTS key (was the
     // bandit/ghoul ternaries in region-manager buildRegion / enemy setBody;
     // an unknown type keeps the old fallbacks: ghoulBody / 'bandit').
-    bodyByType: { bandit: 'banditBody', ghoul: 'ghoulBody', wolf: 'wolfBody' },
+    // CC-C7: + the unrigged rot bodies; rigidAnimByType = their anim.js
+    // RIGID_CLIPS placeholder set (no skeleton, so no animVariantByType row).
+    bodyByType: { bandit: 'banditBody', ghoul: 'ghoulBody', wolf: 'wolfBody',
+      rotmother: 'rotmotherBody', rotspawn: 'rotspawnBody' },
     animVariantByType: { bandit: 'bandit', ghoul: 'zombie', wolf: 'wolf' },
+    rigidAnimByType: { rotmother: 'rotmother', rotspawn: 'rotspawn' },
     // CC-C5 WOLF PACKS (doc 62 L7/L8/L9 dens): closed patrol loops (world x,
     // z; walked in row order, last -> first). Each loop crosses its King's
     // Road branch (east / west / north) twice; designed offline against the
@@ -1719,6 +1814,10 @@ window.WH_CONFIG = {
     // CC-C5: wolfBody (2.08 MB) is boot-critical too - CONTINUE restores a
     // region C save straight into buildRegion(C), and a late-swapped rigged
     // body gets the mesh but never its clips (or its measured scale).
+    // CC-C7: b6Bones (0.87 MB, nest props: region C's scatter / collider
+    // plans need every prop footprint) + rotmotherBody (0.74 MB, a C row:
+    // CONTINUE into C builds her at boot). rotspawnBody stays deferred - the
+    // spawner instances it at runtime and a rigid body late-swaps cleanly.
     bootCritical: [
       'playerBody', 'banditBody', 'ghoulBody', 'wolfBody', 'playerDagClips', 'bramble',
       'whCampkit', 'whTent', 'yewTree', 'livingOak', 'youngAsh', 'cemeteryGate',
@@ -1729,7 +1828,7 @@ window.WH_CONFIG = {
       'graveMound', 'dagger', 'grassTuft', 'rubblePile', 'stoneCrossTilted',
       'roundShield', 'ironFenceSection', 'churchCornerButtress',
       'gravestoneObelisk', 'churchPewBroken', 'buriedCoffin', 'handAxe',
-      'churchArchway', 'whBushSnare', 'longsword'
+      'churchArchway', 'whBushSnare', 'longsword', 'b6Bones', 'rotmotherBody'
     ],
     // MAGANIM (doc 65 R-65.3): caster-implement registry (v1; future caster
     // weapons append here). BOTH hands holding one of these = the caster body
@@ -2245,6 +2344,19 @@ window.WH_CONFIG.items = {
   // vendor / currency systems are NOT built - it only stacks for now.
   stolenCoin:     { id: 'stolenCoin', name: 'Stolen Coin', glyph: 'SC',
                     category: 'valuable', stackCap: 999 },
+  // CC-C7 Rot Mother materials (doc 62 R-62.4 farmable nest loop; rows
+  // CONFIG.enemy.rotmother / rotspawn .loot). Crafting is NOT built: they
+  // stack as valuables until a crafting ruling lands (the 'valuable' tip +
+  // colour; no new inventory category). flavor = the tooltip line; dropLog =
+  // the one-time journal toast on the first loot of each (game.js).
+  'rot-silk':     { id: 'rot-silk', name: 'Rot-Silk', glyph: 'RS',
+                    category: 'valuable', stackCap: 99, material: true,
+                    flavor: 'Damp grey thread, spun to swaddle young that never woke',
+                    dropLog: 'Rot-Silk: she wove it soft, and wrapped each one as if it might still breathe.' },
+  'rot-gland':    { id: 'rot-gland', name: 'Rot-Gland', glyph: 'RG',
+                    category: 'valuable', stackCap: 99, material: true,
+                    flavor: 'A swollen sac, still warm, still trying to make milk',
+                    dropLog: 'Rot-Gland: it kept working after everything else in her had given up.' },
   // Stage 2 cooking ingredients: ONLY from gather nodes (CONFIG.gather) and,
   // in a later stage, wild animals - never enemy drops. Default stackCap.
   forestHerb:     { id: 'forestHerb', name: 'Forest Herb', glyph: 'FH', category: 'ingredient' },
@@ -2796,6 +2908,8 @@ window.WH_CONFIG.leveling = {
     kill_bandit: 35,                // bandit hpMax 70
     kill_ghoul: 25,                 // ghoul hpMax 45
     kill_wolf: 20,                  // CC-C5: wolf hpMax 38 (same ~0.53 x hpMax law)
+    kill_rotmother: 240,            // CC-C7: rotmother hp 460 (same law; every re-armed kill pays again)
+    kill_rotspawn: 14,              // CC-C7: rotspawn hp 26 (withered on her death = no kill, no XP)
     gather: 5,                      // per harvested node
     cook_meal: 15,                  // per finished cook (recipe or Bland Mush)
     recipe_learn: 40,               // the first cook of a recipe (stacks with cook_meal)
