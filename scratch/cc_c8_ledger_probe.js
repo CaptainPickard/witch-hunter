@@ -14,7 +14,7 @@ require(path.join(ROOT, 'prototype/js/region-defs.js'));
 require(path.join(ROOT, 'prototype/js/region-manager.js'));
 const C = window.WH_CONFIG, G = window.WH_GROUND, RID = 'forest_of_the_old_king', RC = C.regionC;
 // GLB-header tris (C7 probe table + the C8 kit, scratch/cc_c8_check.js scan)
-const T = {"yewTree": 28243, "witchwoodTree": 28084, "treeStump": 8109, "mourningStatue": 21384, "cemeteryGate": 20585, "mossBoulder": 21599, "lanternPost": 2500, "deadTree": 30174, "banditCampfire": 3792, "banditBedroll": 4666, "rubblePile": 2000, "fallenLog": 20788, "b6Bones": 10889,
+const T = {"yewTree": 28243, "witchwoodTree": 28084, "treeStump": 8109, "mourningStatue": 21384, "cemeteryGate": 20585, "mossBoulder": 21599, "mossBoulderSmall": 8109, "lanternPost": 2500, "deadTree": 30174, "banditCampfire": 3792, "banditBedroll": 4666, "rubblePile": 2000, "fallenLog": 20788, "b6Bones": 10889,
   bushA: 2321, bushB: 2836, whBushSnare: 3000, bramble: 2288, grassTuft: 848, whWallA: 4118, whWallB: 4375, graveMound: 2000};
 const M = {"bushA": {"width": 1.775, "height": 0.962}, "bushB": {"width": 1.813, "height": 1.488}, "bramble": {"width": 1.778, "height": 1.797}, "whBushSnare": {"width": 1.896, "height": 1.621}, "grassTuft": {"width": 1.463, "height": 1.859}, "yewTree": {"width": 1.011, "height": 1.894}, "witchwoodTree": {"width": 0.642, "height": 1.889}, "deadTree": {"width": 1.38, "height": 1.896}, "mossBoulder": {"width": 1.897, "height": 1.402}, "treeStump": {"width": 1.898, "height": 1.827}};
 const meta = function (n) { return M[n] ? { width: M[n].width, height: M[n].height, groundMinY: 0 } : { width: 1.5, height: 1.5, groundMinY: 0 }; };

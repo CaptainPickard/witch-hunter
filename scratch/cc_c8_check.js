@@ -4,7 +4,10 @@
 // for line evidence, node --check on every edited js, scope-audits the diff.
 // No harness, no browser, no game run, no network.
 var fs = require('fs'), vm = require('vm'), cp = require('child_process');
-var BASE = process.argv[2] || 'a631fa6', HEAD = process.argv[3] || 'eae8cbe', C7 = 'bef33f1';
+// HEAD 'WT' = the uncommitted working tree (CC-C8 TRIM re-run: eae8cbe + the trim diff).
+var BASE = process.argv[2] || 'a631fa6', HEAD = process.argv[3] || 'eae8cbe', C7 = 'bef33f1', BUILD = 'eae8cbe';
+var WT = HEAD === 'WT', TRIM = WT;
+function range() { return WT ? [BASE] : [BASE, HEAD]; }
 var J = 'prototype/js/';
 function src(f) { return fs.readFileSync(J + f, 'utf8').split('\n'); }
 function L(f, re) {
@@ -77,7 +80,7 @@ var a = {
   lairGains: !!RL && Array.isArray(RL.stains) && RL.stains.length === 4 && RL.stains[0].radius === 5 &&
     eq(RL.stains.slice(1).map(function (s) { return s.radius; }), [1.8, 1.4, 1.0]) && !!RL.void,
   lairLoses: !!RL && RL.light === undefined && RL.fog === undefined && RL.pool && RL.pool.radius === undefined,
-  outcrop: RC.props.filter(function (p) { return p.cullM === 120; }).length === 25,
+  outcrop: RC.props.filter(function (p) { return p.cullM === 120; }).length === (TRIM ? 26 : 25),
   keepOut: RC.scatterOverrides.keepOut.some(function (k) { return k.x === -136 && k.z === -219 && k.rx === 22 && k.rz === 18; })
 };
 check('a', 'regionD + C<->D door + C row gone + rotLair reshaped', Object.keys(a).every(function (k) { return a[k]; }),
@@ -96,7 +99,11 @@ check('a', 'regionD + C<->D door + C row gone + rotLair reshaped', Object.keys(a
 // (b) den build rows
 var P = RD.props;
 var ring = P.filter(function (p) { return /^whWall/.test(p.asset); });
-var bould = P.filter(function (p) { return p.asset === 'mossBoulder'; });
+var BOULDER_KEYS = ['mossBoulder', 'mossBoulderSmall'];
+var bould = P.filter(function (p) { return BOULDER_KEYS.indexOf(p.asset) >= 0; });
+// silhouette law: a boulder-family key must not resolve to another asset's GLB (m8 = treeStump, doc 59 L129)
+var aliasOf = function (k) { return Object.keys(manifest).filter(function (o) { return o !== k && manifest[o] === manifest[k]; }); };
+var notBoulder = BOULDER_KEYS.filter(function (k) { return manifest[k] && manifest[k] !== manifest.mossBoulder; });
 var furn = { stoneSteps: 0, skullPile: 0, blightcap: 0, graveMound: 0 };
 P.forEach(function (p) { if (furn[p.asset] !== undefined) furn[p.asset]++; });
 var nestSacs = P.filter(function (p) {
@@ -127,6 +134,7 @@ var b = {
   ring10: ring.length === 10 && ring.every(function (p) { return p.wall > 0; }),
   ringR24: ringR.every(function (r) { return near(r, 23.5, 1.0); }),
   boulders9: bould.length === 9,
+  bouldersAreBoulders: bould.every(function (p) { return manifest[p.asset] === manifest.mossBoulder; }),
   furniture: furn.stoneSteps === 4 && furn.skullPile === 2 && furn.blightcap === 6 && furn.graveMound === 8,
   nestSacs5: nestSacs === 5,
   pool10: DL.pool.radius === 10, light16: DL.light.intensity === 1.6 && DL.light.height === 1.2 && DL.light.color === 0x7fbf4f,
@@ -140,7 +148,9 @@ var b = {
 };
 check('b', 'den build rows', Object.keys(b).every(function (k) { return b[k]; }),
   'CONFIG regionD.props L' + L('CONFIG.js', /cavern ring: 10 segments/) + '..; ring ' + ring.length + ' segs (r ' +
-  Math.min.apply(null, ringR).toFixed(1) + '-' + Math.max.apply(null, ringR).toFixed(1) + ', sy 11.55/11.69, wall 8 each), boulders ' + bould.length +
+  Math.min.apply(null, ringR).toFixed(1) + '-' + Math.max.apply(null, ringR).toFixed(1) + ', sy 11.55/11.69, wall 8 each), boulder rows ' + bould.length +
+  ' (mossBoulder ' + P.filter(function (p) { return p.asset === 'mossBoulder'; }).length + ' / mossBoulderSmall ' + P.filter(function (p) { return p.asset === 'mossBoulderSmall'; }).length +
+  (notBoulder.length ? '; NOT A BOULDER: ' + notBoulder.map(function (k) { return k + ' = ' + manifest[k] + ' (assets.js L' + L('assets.js', new RegExp('^\\s+' + k + ':')) + ') = the same GLB as ' + aliasOf(k).join('/'); }).join('; ') : '') + ')' +
   ', stoneSteps ' + furn.stoneSteps + ' skullPile ' + furn.skullPile + ' blightcap ' + furn.blightcap + ' graveMound ' + furn.graveMound +
   ' (5 nest ring r7.5 + 3 brood); nest pool r ' + DL.pool.radius + ' L' + L('CONFIG.js', /pool: \{ radius: 10,/) + ', light ' + DL.light.intensity +
   '/h ' + DL.light.height + ' L' + L('CONFIG.js', /light: \{ height: 1\.2, intensity: 1\.6/) + '; exit gap (collider edge-to-edge) ' + mouthClear.toFixed(2) + ' m (player-centre lane +-' + (mouth.d / 2 - WR - PR).toFixed(2) + ' vs door window +-' + RD.door.doorHalfWidth + ')' +
@@ -230,7 +240,7 @@ var e = {
   dnBranch: has('daynight.js', /function constantRow\(areaId\)/) && has('daynight.js', /if \(constantRow\(areaId\)\) return;/) &&
     has('daynight.js', /if \(constantRow\(this\.area\)\) \{/) && has('daynight.js', /copyRow\(this\.state, K\)/),
   noClockChange: has('daynight.js', /coreTick\.call\(this, dt\);/),
-  noRegionLightOnBodies: !/rotmother|rotspawn/.test(git(['diff', BASE, HEAD, '--', J + 'game.js']).split('\n').filter(function (l) { return /^\+/.test(l) && /light/i.test(l); }).join('\n')),
+  noRegionLightOnBodies: !/rotmother|rotspawn/.test(git(['diff'].concat(range(), ['--', J + 'game.js'])).split('\n').filter(function (l) { return /^\+/.test(l) && /light/i.test(l); }).join('\n')),
   lightDies: has('enemy.js', /var st = LAIR_STATE\[N\.letter\];/) && has('enemy.js', /if \(st && st\.cleared\) return;/),
   fogDies: has('enemy.js', /lit = !\(st && st\.cleared\)/),
   rearmRelight: has('enemy.js', /st\.cleared = false;/) && has('game.js', /window\.WH_Enemy\.lairSockets\(rm\.logic\.activeId\)/) &&
@@ -249,7 +259,7 @@ check('e', 'always-dark phase + her/no region light + light dies/relights', Obje
 
 // ============================================================================
 // (f) save round-trip (flag) + per-index den roster + pre-C8 load
-var saveDiff = git(['diff', '--stat', BASE, HEAD, '--', J + 'save.js']).trim();
+var saveDiff = git(['diff', '--stat'].concat(range(), ['--', J + 'save.js'])).trim();
 var f = {
   flagKey: M.lair.flag === 'C' && has('enemy.js', /\/\^rotmother_cleared_\(\[A-Z\]\)\$\//),
   capture: has('enemy.js', /out\[lairFlag\(letter\)\] = st\.day;/) && has('game.js', /data\.lairs = window\.WH_Enemy\.captureLairs\(\)/),
@@ -271,14 +281,14 @@ check('f', 'save: cleared flag + den roster + pre-C8 compat', Object.keys(f).eve
 
 // ============================================================================
 // (g) scope
-var files = git(['diff', '--name-only', BASE, HEAD]).trim().split('\n');
+var files = git(['diff', '--name-only'].concat(range())).trim().split('\n');
 var allowed = [/^prototype\/js\/(CONFIG|region-defs|region-manager|assets|enemy|game)\.js$/, /^prototype\/builds\/v8-playable\.html$/,
   /^io\/missions\//, /^scratch\//];
 var forbidden = [/save\.js$/, /player\.js$/, /camp\.js$/, /cooking\.js$/, /style\.css$/, /index\.html$/, /^docs\/planning\//];
 var flagged = files.filter(function (x) { return !allowed.some(function (r) { return r.test(x); }); });
 var forb = files.filter(function (x) { return forbidden.some(function (r) { return r.test(x); }); });
-var dnStat = git(['diff', '--numstat', BASE, HEAD, '--', J + 'daynight.js']).trim();
-var dnRemoved = git(['diff', BASE, HEAD, '--', J + 'daynight.js']).split('\n').filter(function (l) { return /^-[^-]/.test(l); }).length;
+var dnStat = git(['diff', '--numstat'].concat(range(), ['--', J + 'daynight.js'])).trim();
+var dnRemoved = git(['diff'].concat(range(), ['--', J + 'daynight.js'])).split('\n').filter(function (l) { return /^-[^-]/.test(l); }).length;
 check('g', 'scope audit ' + BASE + '..' + HEAD, forb.length === 0 && flagged.every(function (x) { return x === J + 'daynight.js'; }),
   files.length + ' files: ' + files.join(', ') + '; FORBIDDEN touched: ' + (forb.join(', ') || 'none') + '; outside the sec-8g allowed list: ' +
   (flagged.join(', ') || 'none') + (dnStat ? ' (daynight numstat ' + dnStat.replace(/\s+/g, ' ') + ', removed lines ' + dnRemoved + ')' : ''));
@@ -302,18 +312,64 @@ var stainTris = RL.stains.length * (RL.pool.segments * (1 + 2 * (RL.pool.rings -
 var poolTris = DL.pool.segments * (1 + 2 * (DL.pool.rings - 1));
 var bodies = glb('rotmotherBody').tris;
 var newTris = trisOut + trisDen + stainTris + poolTris;
+var h_probe = '';
 var h = {
   nodeCheck: nc.every(function (x) { return x[1] === 'OK'; }),
-  bundle: inBundle.every(function (x) { return x[1]; }) && bundleBytes === 3251738,
-  ledger: newTris <= 40000
+  bundle: inBundle.every(function (x) { return x[1]; }) && bundleBytes === (TRIM ? 3252430 : 3251738),
+  // TRIM gate (io/missions/2026-10-12-cc-c8-trim.md): the C worst 170 m circle < 2M (probe); the
+  // sec-7 <= 40k raw target stays reported, not gated, in TRIM mode (see the verdict watch-items)
+  ledger: TRIM ? probeWorst() < 2000000 : newTris <= 40000
 };
+function probeWorst() {
+  var o = cp.execFileSync(process.execPath, ['scratch/cc_c8_ledger_probe.js', '.', '-84', '-309', '170'], { encoding: 'utf8' });
+  h_probe = o.trim().split('\n').join(' | ');
+  var m = /C8 LAYOUT\s*:\s*(\d+)/.exec(o); return m ? +m[1] : Infinity;
+}
 var perAsset = {};
 outcrop.concat(P).forEach(function (p) { perAsset[p.asset] = glb(p.asset).tris; });
 check('h', 'node --check + bundle + tris ledger', Object.keys(h).every(function (k) { return h[k]; }),
   'node --check: ' + nc.map(function (x) { return x[0].replace(J, '') + ' ' + x[1]; }).join(', ') + '; bundle v8-playable.html ' + bundleBytes +
   ' B, every edited js inlined verbatim: ' + inBundle.every(function (x) { return x[1]; }) + '; GLB-header tris: outcrop ' + outcrop.length + ' rows = ' + trisOut +
   ', den ' + P.length + ' rows = ' + trisDen + ', pools/stains/void ~' + (stainTris + poolTris) + ' -> NEW ' + newTris + ' (target <= 40,000); removed from C: 6 b6Bones = ' +
-  trisBones + ' -> net C ' + (trisOut + stainTris - trisBones) + '; per-asset ' + JSON.stringify(perAsset));
+  trisBones + ' -> net C ' + (trisOut + stainTris - trisBones) + '; per-asset ' + JSON.stringify(perAsset) + (h_probe ? '; PROBE ' + h_probe : ''));
+
+// ============================================================================
+// (T) TRIM brief conformance: vs eae8cbe, only the asset key changes on kept rows (no x/z/rotY/
+// scale/y/wall/sy/sz/tint/cullM/noCollide change), the east gate row gone, +2 bramble rows, and the
+// replacement keeps the silhouette ("same shapes, cheaper rock mesh")
+if (TRIM) {
+  var bx = { window: {} }; vm.createContext(bx);
+  vm.runInContext(git(['show', BUILD + ':prototype/js/CONFIG.js']), bx);
+  var CBu = bx.window.WH_CONFIG;
+  function geo(p) { var c = JSON.parse(JSON.stringify(p)); delete c.asset; return JSON.stringify(c); }
+  function rowDiff(oldP, newP) {
+    var o = oldP.map(geo), n = newP.map(geo), gone = [], added = [], swapped = [];
+    var used = {};
+    oldP.forEach(function (p, i) {
+      var j = n.findIndex(function (g, k) { return !used[k] && g === o[i]; });
+      if (j < 0) gone.push(p.asset + '@' + p.x + ',' + p.z); else { used[j] = 1; if (newP[j].asset !== p.asset) swapped.push(p.asset + '->' + newP[j].asset + '@' + p.x + ',' + p.z); }
+    });
+    newP.forEach(function (p, k) { if (!used[k]) added.push(p.asset + '@' + p.x + ',' + p.z + ' s' + p.scale); });
+    return { gone: gone, added: added, swapped: swapped };
+  }
+  var dC = rowDiff(CBu.regionC.props, RC.props), dD = rowDiff(CBu.regionD.props, RD.props);
+  var t = {
+    outcropRows: eq(dC.gone, ['cemeteryGate@-134.4,-228.9']) && dC.added.length === 2 &&
+      dC.added.every(function (x) { return /^bramble@/.test(x); }) && dC.swapped.length === 7,
+    denRows: dD.gone.length === 0 && dD.added.length === 0 && dD.swapped.length === 6,
+    otherBlocksEqual: eq(strip(RC, ['props']), strip(CBu.regionC, ['props'])) && eq(strip(RD, ['props']), strip(CBu.regionD, ['props'])),
+    boot: C.assets && Array.isArray(C.assets.bootCritical) ? C.assets.bootCritical.indexOf('mossBoulderSmall') >= 0 : has('CONFIG.js', /'mossBoulderSmall'\s*$/),
+    silhouette: notBoulder.length === 0
+  };
+  check('T', 'TRIM brief conformance (rows, untouched geometry, silhouette law)', Object.keys(t).every(function (k) { return t[k]; }),
+    'vs ' + BUILD + ': C outcrop gone ' + JSON.stringify(dC.gone) + ' added ' + JSON.stringify(dC.added) + ' swapped ' + dC.swapped.length +
+    '; D gone ' + dD.gone.length + ' added ' + dD.added.length + ' swapped ' + dD.swapped.length + ' (geometry of every kept row identical); non-prop blocks of C/D equal ' + t.otherBlocksEqual +
+    '; bootCritical row L' + L('CONFIG.js', /'skullPile', 'blightcap', 'mossBoulderSmall'/) + '; manifest row assets.js L' + L('assets.js', /^\s+mossBoulderSmall:/) +
+    '; silhouette: ' + (notBoulder.length ? 'FAIL - mossBoulderSmall -> ' + manifest.mossBoulderSmall + ' is the TREE STUMP (same path as treeStump assets.js L' +
+      L('assets.js', /^\s+treeStump:/) + '; docs/planning/59-biome-object-library.md L129 "M8 | Tree stump"), not a boulder (m9 L130); ' + glb('mossBoulderSmall').tris +
+      ' tris, raw ext x ' + glb('mossBoulderSmall').extX.toFixed(3) : 'OK') +
+    (Object.keys(t).filter(function (k) { return !t[k]; }).length ? ' FAILED: ' + Object.keys(t).filter(function (k) { return !t[k]; }) : ''));
+}
 
 // ---- report ------------------------------------------------------------------
 res.forEach(function (r) { console.log((r.ok ? 'PASS' : 'FAIL') + ' | ' + r.id + ' | ' + r.name + ' | ' + r.ev); });

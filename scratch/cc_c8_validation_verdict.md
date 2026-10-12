@@ -1,80 +1,76 @@
-# CC-C8 validation verdict (Testerbot) - the Rot Mother's den instance
+# CC-C8 validation verdict (Testerbot) - the Rot Mother's den instance (re-run 2: the TRIM)
 
-**VERDICT: FAIL** (h only: the tri budget. The change order targets <= 40k new tris and the build adds ~574k.
-In region C that pushes the worst 170 m circle to ~2.06M, over the 2M ledger. Every other blocking check
-(a-g) passes, and so do the node --check and bundle parts of h.)
+**VERDICT: FAIL** (b + T: the trim's replacement "boulder" is the tree stump. `mossBoulderSmall` points at
+`biome_library/m8-pixelated.glb`, which is the M8 **tree stump**, the same GLB as the existing `treeStump` key. It is
+not a cheaper moss boulder. So 7 outcrop rows (one of them the lintel, now a stump floating 7 m up) and 6 den
+shoulders render as stumps, which breaks the trim brief's own law: "WITHOUT changing any silhouette ... same shapes,
+cheaper rock mesh". Everything else passes. **The tri budget (h) now passes:** the region-C worst circle is 1,949,432,
+97.5% of 2M.)
 
-- Builder commit: `eae8cbe` feat(cc-c8), author CaptainPickard, parent `a631fa6` (the change-order commit).
-- Spec: scratch/cc_c8_valspec.md (from io/missions/2026-10-12-cc-c8-rotmother-den.md sec 8, Nicko rulings sec 0).
-- Method: HEADLESS. `node scratch/cc_c8_check.js` (node v22.23.3) runs a vm eval of CONFIG.js, region-defs.js
-  and region-manager.js with a `window` stub, scans GLB headers for tris and x-extent, line-greps the sources,
-  runs `node --check` and audits the diff. `node scratch/cc_c8_ledger_probe.js . -136 -219 170` is an offline
-  region-C tri upper bound (the CC-C7 probe re-pointed). No harness, browser, game run or network.
-- The checker exits 1 (h). Line numbers are @ eae8cbe.
+- Builder commit: `eae8cbe` feat(cc-c8), author CaptainPickard, parent `a631fa6`. The first verdict was `f34e430`
+  (FAIL h, tris).
+- What I validated: eae8cbe plus the **uncommitted** CC-C8 TRIM working-tree diff (io/missions/2026-10-12-cc-c8-trim.md;
+  scratch/cc_c8_trim_log.txt). That is 3 files, +54/-40: CONFIG.js sha256 `fee6ffdf80432237`, assets.js `8bec9f9f01ef1842`,
+  v8-playable.html `86d0a017bb200e85`. The trim diff is NOT in this commit; IO commits it.
+- Spec: scratch/cc_c8_valspec.md (sec 8 a-i, plus row T for the trim brief).
+- Method: HEADLESS. `node scratch/cc_c8_check.js a631fa6 WT` (node v22.23.3) exits 1 with FAIL (b,T).
+  `node scratch/cc_c8_ledger_probe.js . -84 -309 170`. No harness, browser, game run or network.
+- Line numbers are from the worktree.
 
-| id | check | result | evidence (line numbers @ eae8cbe) |
-|----|-------|--------|-----------------------------------|
-| a | regionD + C<->D door + C row gone + rotLair reshaped | PASS | CONFIG.js regionD L1052: id rot_den L1053, groundRadius 34 L1056, fogColor 0x05070a / fogDensity 0.12 L1067-1068, ambientLightLevel 0.06 L1069. region-defs.js registers it at L46; the door connection is pushed at L93 (axis z, planeZ -295.6, `door` object), sides C -1 / D +1 at L111-112. vm finds exactly 1 C<->D connection. regionC.enemies 23 -> 22, rotmother rows 1 -> 0 (removal note L602). C rotLair L1027 now has stains L1028 (mouth r 5 + trail 1.8/1.4/1.0) + void card L1036, and no light, fog or pool.radius (vm). 25 outcrop rows (cullM 120). keepOut (-136,-219) rx 22 rz 18 at L501 |
-| b | den build rows | PASS | regionD.props from L1111. 10 whWall ring segments at r 24.0 (wall 8 colliders each). 9 mossBoulder. 4 stoneSteps, 2 skullPile, 6 blightcap, 8 graveMound (5 = nest ring r 7.5 + 3 brood). rotLair pool r 10 L1161, light 1.6 / h 1.2 / 0x7fbf4f L1163. Exit gap centred (-175.00,-295.57) = den-local z -24.57. Widest other ring hole is 1.01 m, under the 1.4 m player body, so the den is closed. Seat: region-manager L1833 `whGroundFeed(...) + (p.y\|\|0)` on every row; flat disc (no terrain row, groundY 0). The gap width is a deviation, see D1 |
-| c | lair re-home + params byte-equal C7 | PASS | rotmother.lair `{x 0, y 6, region 'D', flag 'C'}` L1751 -> rot_den, world (-175,-265). regionD.lairs row L1101. vm deep-equal against bef33f1: `enemy.rotmother` minus `lair` = true (minions 7 s / 6 m / cap 3 / dieOnMasterDeath, rearm 3 d / proximity / 14 m, loot, poison, slam), `enemy.rotspawn` = true. Lair rows are instanced after the enemy rows at region-manager L1909 |
-| d | E-to-enter 3.5 m + 0.8 s fade + walk-back exit, no pause/menu | PASS | door L1078: interactM 3.5 L1084, fadeIn 0.3 + fadeOut 0.5 = 0.8 s, exitFadeOut 0.8 L1092, prompt 'E - Enter the den' L1093. game.js: interact chain L1863, tryDenDoor L1876 (forceCross at the dip peak L1882), prompt L2172, dip on #wh-death-overlay startDenFade L1891 / denFadeTick L1916, tick L2953, walk-out dip L2960. region-manager: portalNear L128, logic forceCross L144, live forceCross L2047, planeIn filter L49. No pause/menu token in the block. **vm sim of RegionManagerLogic, all true:** no crossing on the C side of the line; portal at 3.4 m yes / 3.6 m no; forceCross -> rot_den at land (-175,-292.6); no portal while in D; no crossing inside the mouth; walk-out at z -296 -> C at land (-142.6,-227.8); no bounce-back; no crossing outside the window (x -180); C's pre-warm survives anywhere inside the ring (47.4 m < 30 + 20) |
-| e | always-dark phase + light rules | PASS | dayNight.constantPhases.rot_den L2849: lightIntensity 0 (moon 0), exposureMult 0.75 L2852, stars 0.15, discOpacity 0.2 L2856, fog rot_den 0x05070a / 0.12. Hemi = hemiBaseIntensity x 0.06 (game.js L1358) x hemiFillMult 1.0. daynight.js: constantRow L225, setArea skip L391, SkyPool.tick underlay-only L444, DayNight.tick copyRow L500 after an untouched coreTick L494 (no clock math). No region light targets her or the spawns: the only den light is the nest socket. Nest light: lairSockets skips while cleared (L1568) and computeSockets polls it every frame (game.js L2720 -> L2769). Death sets the flag (L1163), re-arm clears it (L1132), and the fog cards follow (L1418) |
-| f | save round-trip + pre-C8 compat | PASS | The flag letter stays 'C' (lairNest L1106), so the key `rotmother_cleared_C` is byte-equal to C7. captureLairs L1538 / restoreLairs L1546; a missing block means all armed (L1548). game.js WH_SAVE wrap: capture L2567, restore L2581. Den roster: enemies [] + lairs[0], so she is index 0; the spawn-prune boundary counts lair rows (enemy.js L1278). Per-index dead state is session-only as in C7 (save.js L8). save.js validRegion accepts rot_den (L40). save.js diff: none |
-| g | scope audit a631fa6..eae8cbe | PASS (1 flag) | 10 files: v8-playable.html, CONFIG.js, assets.js, **daynight.js (flagged)**, enemy.js, game.js, region-defs.js, region-manager.js, scratch/cc-c8/gen_den.py, scratch/cc-c8/glb_tris.py. FORBIDDEN touched: none |
-| h | node --check + bundle + tris ledger | **FAIL** (tris) | node --check OK on all 7 edited js. Bundle v8-playable.html is 3,251,738 B (matches the commit) and inlines every edited js verbatim. Tri delta was reported by the builder (log + commit). **Measured new tris = 574,430 against the <= 40,000 target.** Outcrop 25 rows = 256,794 (8 mossBoulder x 21,599 + 2 gates x 20,585 + walls/bramble/sacs), den 39 rows = 316,410, pools/stains ~1.2k. Region C net = +192k (+168k with her and the spawn bodies moved out). **C ledger probe: the worst 170 m circle around the outcrop is 2,059,871 (103.0% of 2M) at (-84,-309), 1,802,291 without the outcrop.** The den (~340k with bodies) never draws with C |
+| id | check | result | evidence (line numbers @ worktree) |
+|----|-------|--------|------------------------------------|
+| a | regionD + C<->D door + C row gone + rotLair reshaped | PASS | CONFIG regionD L1054: id rot_den L1055, groundRadius 34 L1058, fog 0x05070a / 0.12 L1069-1070, ambient 0.06 L1071. region-defs registers it at L46; the door connection is pushed at L93, sides C -1 / D +1 at L111-112. vm: 1 connection, door, planeZ -295.6. C enemies 23 -> 22, rotmother rows 1 -> 0 (removal note L602). C rotLair L1029: stains L1030, void L1038, no light, fog or pool.radius. Outcrop rows (cullM 120): 26 (25 - 1 gate + 2 bramble). keepOut at L501 |
+| b | den build rows | **FAIL** | regionD.props from L1113. 10 ring segments at r 24.0, wall 8 each. 9 boulder rows = 3 mossBoulder + **6 mossBoulderSmall, and those 6 are the tree stump** (assets.js L75 -> m8-pixelated.glb, the same file as treeStump at L63; docs/planning/59-biome-object-library.md L129 "M8, Tree stump", L130 "M9, Moss boulder"). Everything else passes: 4 stoneSteps, 2 skullPile, 6 blightcap, 8 graveMound (5 nest ring r 7.5 + 3 brood); pool r 10 L1164; light 1.6 / h 1.2 L1166; exit gap 7.01 m collider edge-to-edge, centred (-175.00,-295.57); lane +-2.81 inside the door window +-3; widest other hole 1.01 m < 1.4 m body; seat region-manager L1833; flat disc |
+| c | lair re-home + params byte-equal C7 | PASS | rotmother.lair L1754 -> rot_den, world (-175,-265). regionD.lairs row L1103. enemy.js lairNest letter=flag L1106, lairFlag L1093. vm deep-equal against bef33f1: rotmother minus lair = true, rotspawn = true. Lair rows are instanced after the enemy rows at region-manager L1909 |
+| d | E-to-enter 3.5 m + 0.8 s fade + walk-back, no pause/menu | PASS | door L1080: interactM 3.5 L1086, fadeIn 0.3 + fadeOut 0.5, exitFadeOut 0.8 L1094, prompt L1095. game.js: interact chain L1863, tryDenDoor L1876, forceCross L1882, prompt L2172, fade L1891 / L1916, tick L2953, walk-out dip L2960. region-manager: portalNear L128, forceCross L144 / L2047, planeIn filter L49. vm logic sim: all 10 cases true (no crossing in C, portal at 3.4 m yes / 3.6 m no, forceCross land, no portal in D, no crossing inside, walk-out, no bounce-back, window-only, hysteresis) |
+| e | always-dark phase + light rules | PASS | constantPhases.rot_den L2853: moon 0, exposure 0.75 L2856, stars 0.15, disc 0.2 L2860. Hemi = base x 0.06 (game.js L1358). daynight.js: constantRow L225, setArea skip L391, SkyPool.tick L444, copyRow L500 after an untouched coreTick L494. Nest light: cleared-skip enemy.js L1568, polled per frame (game.js L2720 -> L2769). Death flag L1163, re-arm L1132, fog cards L1418. No region light on her or the spawns |
+| f | save round-trip + pre-C8 compat | PASS | Flag key rotmother_cleared_C is byte-equal to C7 (lairNest L1106). captureLairs L1538 / restoreLairs L1546; a missing block means all armed (L1548). game.js WH_SAVE capture L2567 / restore L2581. Den roster is index 0; the prune boundary counts lair rows (enemy.js L1278). save.js validRegion L40. save.js diff: none |
+| g | scope audit a631fa6..worktree | PASS (1 flag) | eae8cbe files as before, plus the trim, which touches only CONFIG.js, assets.js and v8-playable.html (all allowed). FORBIDDEN touched: none. The daynight.js flag (+30/-0, sec 6 sanctioned) carries over from f34e430, non-blocking. The untracked docs/planning/64-*.md predates C8 and isn't in any C8 diff |
+| h | node --check + bundle + tris ledger | PASS (trim gate) | node --check OK on CONFIG, assets, daynight, enemy, game, region-defs, region-manager and both scratch scripts. Bundle is 3,252,430 B (matches the trim log) and inlines every edited js verbatim. **Probe: C8 LAYOUT worst 170 m circle = 1,949,432 (97.5% of 2M) at (-84,-309)**, 1,854,909 without the outcrop, missing tri rows: none. Raw new tris: outcrop 26 rows = 146,355, den 39 rows = 235,470, pools/stains ~1.2k, total 383,051. That is still well over sec 7's <= 40k target, which the trim brief replaces with the < 2M probe gate (W9) |
+| T | TRIM brief conformance | **FAIL** (silhouette) | vm row diff against eae8cbe. C: gone = [cemeteryGate @ -134.4,-228.9]; added = bramble (-135.2,-227 s2.0) + (-133.6,-226.2 s1.6); 7 swaps. D: 0 gone, 0 added, 6 swaps. Every kept row's x/z/rotY/scale/y/wall/sy/sz/tint/cullM/noCollide is identical, and the non-prop blocks of C and D are equal. Manifest row assets.js L75; bootCritical L2010. **Silhouette: FAIL.** m8 is the tree stump (8,109 tris, raw ext 1.898 x 1.827 x 0.342) against m9's boulder (1.897 x 1.402 x 0.327). The brief's "boulder family, 1.9 x 1.8 x 0.34 slab" description is wrong; the error is in the brief, and the builder followed it as written |
 
-## Why h fails (root cause = the change order's ledger)
-Sec 7 priced a mossBoulder at ~1k tris and the gate pair at ~4k. The shipped GLBs are 21,599 and 20,585 tris
-each (header scan; the CC-C7 probe table agrees). The kit counts sec 1/3 mandate (8 + 9 boulders, 2 gates)
-can't fit 40k on their own, so the builder built to spec and reported the overrun honestly. The cullM 120
-band limits it but doesn't fix it: C's worst circle goes over 2M. **A Nicko ruling is needed:** (1) accept the
-budget, or (2) trim or swap the kit, e.g. fewer or lower-poly outcrop boulders and gates (the outcrop's 8
-boulders + 2 gates = 214k of the 257k), and/or a tighter outcrop cullM. Then re-run h.
-
-## Scope flag (g) ruling
-`prototype/js/daynight.js` (+30 / -0) isn't on sec 8g's allowed list, and it isn't on the forbidden list
-either. Sec 6 sanctions it in so many words ("daynight gains ONE always-dark branch read, no clock changes"),
-as does sec 9. The builder used one helper and three read sites (SkyPool.setArea, SkyPool.tick, a
-DayNight.tick post-step) instead of literally one. No clock code changed: coreTick runs untouched first and
-no lines were removed. **Non-blocking**; Nicko can overrule.
+## Why it fails, and the fix
+The trim brief picked m8 by tri count (8,109), and m8 is the stump. The builder did exactly what the brief asked, so the
+error is upstream, in the brief. Options for a ruling:
+1. **Bake a real low-poly moss boulder.** Decimate m9 to <= ~8k tris (the same pipeline that took rotmother from 182k
+   to 17.6k) and point `mossBoulderSmall` at it. Nothing else changes and the probe stays at ~1.95M. Recommended.
+2. Swap fewer rows. Cutting the gate alone leaves C at ~2.039M, still over. The outcrop needs about 40k more trimmed,
+   for example by dropping 2 horseshoe boulders or switching 3 of them to a <= 8k boulder. The den swaps don't affect
+   C's ledger at all: D never draws with C.
+3. Nicko accepts stumps as outcrop and den dressing. Even then, the lintel row (y 7.0, a stump floating over the
+   doorway) needs a different asset.
 
 ## Testerbot deviations (my own)
-- T1: In the checker, ring collider circles use the GLB accessor x-extent (1.899, no node transforms) as the
-  runtime `meta.width`. That is the same value the CC-C7 probe table uses for mossBoulder.
-- T2: The h ledger is a GLB-header upper bound (prop counts x tris, no frustum culling), the same method as CC-C7.
-- T3: d goes one step past grep: a vm simulation of the THREE-free RegionManagerLogic. This is pure logic,
-  not a game run.
-- T4: f's "per-index den roster round-trip" is checked as session state (stateFor) plus the persistent flag.
-  save.js never persisted per-index enemy state (L8), in C7 or now.
+- T1-T4 are as in f34e430: wall-collider x-extent from the GLB accessor, the h ledger is a header upper bound, d uses a
+  vm logic simulation, and f checks the den roster as session state.
+- T5: This run validates an uncommitted working tree. The checker gained a `WT` mode (diffs against the worktree;
+  bundle bytes 3,252,430; outcrop 26; h gated on the probe < 2M), plus the boulder-identity sub-check in b and row T.
+- T6: I added `"mossBoulderSmall": 8109` to the probe's tri table, as the trim builder flagged. Without it the probe
+  reads low (1,892,669, with a NaN outcrop total).
+- T7: The silhouette verdict comes from asset identity (manifest path equality + the doc 59 asset table), not from a
+  render. Seeing it would need a runtime or render pass, which is out of scope for a headless run.
 
-## Builder deviations noted (non-blocking unless Nicko rules otherwise)
-- D1: **The mouth is wider than the brief's 4.6 m.** The visual mesh gap is ~6.2 m and the collider gap
-  7.0 m edge-to-edge. The player-centre lane is +-2.81 m, inside the door window of +-3.0, so every walk-out
-  crosses. The builder's log quotes +-2.65.
-- D2: Hemi fill mult is 1.0, not 0.06. Applying 0.06 twice would be pitch black. Effective fill = base x 0.06.
-- D3: Wall rows are per-axis scaled (sy / sz) instead of "3 stacked rows at scale 2": den segments are 15 m x
-  ~9 m, outcrop walls 13-15 m. Colliders: 6 per outcrop facade (3 recess sides, 4 back) and 8 per den segment.
-- D4: Manifest gets 3 rows (blightcap + stoneSteps + skullPile), not 1. All three join bootCritical and
-  b6Bones leaves it.
-- D5: The door gained `walkFrom` / `interact` / `land` and a new `planeIn` helper. In C the line isn't a
-  plane at all, and x is not preserved across the door (land rows).
-- D6: enemy.js goes past "homeRegionId + coords": a rotPoolMesh refactor (shared with the stains), light + fog
-  gating on cleared (required by sec 4 / e), and the prune row count includes lair rows. No combat logic changed.
-- D7: fogDensity 0.12 (FogExp2) gives d95 = 14.4 m, not the brief's "~24 m". The values match the spec;
-  the brief's arithmetic was off.
+## Builder deviations (trim; non-blocking on their own)
+- DT1: For the den's third m9 row the builder kept the 2.30 row, because the largest (2.40) is already a gap flanker.
+  That reading is sound.
+- DT2: The 2 new brambles got rotY 3.67 (the cut gate's angle) and 5.30. The brief gave none.
+- D1-D7 from f34e430 still stand: mouth ~6.2 m visual / 7.0 m collider, hemi mult 1.0, per-axis wall scale, 3 manifest
+  rows, door helper rows, enemy.js refactor, fog d95 14.4 m.
 
 ## Watch-items (i, runtime only, not verified)
-1. Fade timings: E gives 0.3 s to black, the cross, then 0.5 s up. Walk-out starts black and lifts over 0.8 s.
-   A death mid-dip cancels the dip. Check that the camera carry-over hides the ~60 m jump.
-2. Doorway sightline: C shows a black void card (4.6 x 9 m) in the recess, not the den, so check that it reads
-   as depth. The wall mesh ends poke ~0.35 m past the mouth plane.
-3. Torch light radius 10.5 m vs a 24 m cavern under a 14.4 m fog d95: the far wall should be invisible, and the
-   nest light at 1.6 is the only landmark.
+1. Fade timings: 0.3 s to black, the cross, 0.5 s up. Walk-out starts black and lifts over 0.8 s. A death mid-dip
+   cancels the dip. Check that the camera carry-over hides the ~60 m jump.
+2. Doorway sightline: check that the 4.6 x 9 m void card in the recess reads as depth. The wall ends poke ~0.35 m
+   past the mouth plane. With one gate leaf the east jamb is bramble only, so check the doorway still frames.
+3. Torch radius 10.5 m vs the 24 m cavern under a 14.4 m fog d95. The nest light at 1.6 is the only landmark.
 4. Her 4.2 m body vs the ~9 m walls, and the 6 m minion ring vs the egg-sac ring at r 7.5.
-5. Wolves and bandits outside: outcrop colliders and keepOut near the patrol line. region-manager skips the
-   enemy plane-hold for a plane that doesn't exist in the home region (L253ff).
-6. Builder-flagged: camps can be pitched inside the den, and a quit-save inside the den makes CONTINUE build
-   regionD at boot (spawn (-175,-291)).
-7. forceCross keeps C hidden but resident while D is active, so both groups sit in memory.
-8. Perf: once the h ruling lands, re-check C's worst circle (scratch/cc_c8_ledger_probe.js) and the outcrop's
-   cullM 120 pop-in.
+5. Wolves and bandits outside: outcrop colliders and keepOut near the patrol line. The plane-hold skip is at
+   region-manager L253ff.
+6. Camps can be pitched inside the den, and a quit-save in the den makes CONTINUE build regionD at boot.
+7. forceCross keeps C resident while D is active.
+8. Outcrop cullM 120 pop-in. C is at 97.5% of the ledger, so ~50k of headroom remains for anything else in that circle.
+9. **Sec 7's <= 40k raw new-tris target is replaced only by the trim brief's < 2M probe gate.** 383k raw new tris ship
+   (the den's 235k never draws with C). Nicko should confirm the gate change explicitly.
+10. `mossBoulderSmall` and `treeStump` share one GLB path. The loader caches by logical name (assets.js L186
+    `cache = {}  // logical name -> ...`), so the same file is probably loaded and parsed twice. Option 1 fixes this
+    too.
