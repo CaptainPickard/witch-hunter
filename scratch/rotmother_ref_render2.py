@@ -36,7 +36,9 @@ bx, by, bz = V[:, 0], V[:, 1], V[:, 2]        # import space: z = vertical, y = 
 cX, cY, cZ = cent[:, 0], cent[:, 1], cent[:, 2]
 
 # ---------------- per-face masks (vertical = cZ, depth = cY) ----------------
-belly = (cZ >= -0.30) & (cZ < 0.12)
+# v2 deltas: pale island smaller (green frame at the gut rim, no frayed
+# silhouette edges); moss fewer + upper-torso/head interiors only.
+belly = (cZ >= -0.16) & (cZ < -0.00) & (np.abs(cX) < 0.205) & (cY >= 0.03) & (cY <= 0.17)
 ribcage = (cZ >= 0.12) & (cZ < 0.79)
 legs = (cZ < -0.30) & (np.abs(cX) >= 0.09) & (np.abs(cX) < 0.34)
 feet = (cZ < -0.75) & (np.abs(cX) >= 0.075)
@@ -45,12 +47,15 @@ crest = (cZ >= 0.79) & (np.abs(cX) >= 0.30)
 head = (cZ >= 0.79) & (np.abs(cX) < 0.30)
 claw = feet & (cY < 0.12)
 
-# moss blotches: clustered noise on arms/crest/head/upper ribs
+# moss blotches: interior upper zones only (head/crest/shoulder-top),
+# sparse clustered noise, away from arm silhouette edges
 rng = np.random.default_rng(71104)
 g = rng.uniform(0, 1, len(cent))
-coarse = (g > 0.72) & (g < 0.80)
-fine = g > 0.95
-moss = ((coarse | fine) & (arms | crest | head | (ribcage & (cZ > 0.25))))
+coarse = (g > 0.85) & (g < 0.89)
+fine = g > 0.945
+upper = (cZ > 0.35) & (arms | crest | head | (ribcage & (cZ > 0.45)))
+arm_front = arms & (cY < -0.10)          # avoid arm silhouette edges
+moss = ((coarse | fine) & upper & ~arm_front)
 
 # face-level palette decision (sequential precedence: base -> moss -> claw)
 face_mat = np.zeros(len(cent), dtype=np.int64)     # 0 skin green
