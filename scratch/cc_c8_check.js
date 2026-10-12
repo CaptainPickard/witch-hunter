@@ -5,8 +5,10 @@
 // No harness, no browser, no game run, no network.
 var fs = require('fs'), vm = require('vm'), cp = require('child_process');
 // HEAD 'WT' = the uncommitted working tree (CC-C8 TRIM re-run: eae8cbe + the trim diff).
+// HEAD 'WT2' = the uncommitted working tree after CC-C8 TRIM 2 (io/missions/2026-10-12-cc-c8-trim2.md:
+// mossBoulderSmall gone, 6 horseshoe + 5 den shoulder mossBoulder rows DELETED, gate stays 1 leaf).
 var BASE = process.argv[2] || 'a631fa6', HEAD = process.argv[3] || 'eae8cbe', C7 = 'bef33f1', BUILD = 'eae8cbe';
-var WT = HEAD === 'WT', TRIM = WT;
+var TRIM2 = HEAD === 'WT2', WT = HEAD === 'WT' || TRIM2, TRIM = WT;
 function range() { return WT ? [BASE] : [BASE, HEAD]; }
 var J = 'prototype/js/';
 function src(f) { return fs.readFileSync(J + f, 'utf8').split('\n'); }
@@ -80,7 +82,7 @@ var a = {
   lairGains: !!RL && Array.isArray(RL.stains) && RL.stains.length === 4 && RL.stains[0].radius === 5 &&
     eq(RL.stains.slice(1).map(function (s) { return s.radius; }), [1.8, 1.4, 1.0]) && !!RL.void,
   lairLoses: !!RL && RL.light === undefined && RL.fog === undefined && RL.pool && RL.pool.radius === undefined,
-  outcrop: RC.props.filter(function (p) { return p.cullM === 120; }).length === (TRIM ? 26 : 25),
+  outcrop: RC.props.filter(function (p) { return p.cullM === 120; }).length === (TRIM2 ? 20 : TRIM ? 26 : 25),
   keepOut: RC.scatterOverrides.keepOut.some(function (k) { return k.x === -136 && k.z === -219 && k.rx === 22 && k.rz === 18; })
 };
 check('a', 'regionD + C<->D door + C row gone + rotLair reshaped', Object.keys(a).every(function (k) { return a[k]; }),
@@ -133,7 +135,7 @@ var seatLine = L('region-manager.js', /obj\.position\.set\(p\.x, whGroundFeed\(r
 var b = {
   ring10: ring.length === 10 && ring.every(function (p) { return p.wall > 0; }),
   ringR24: ringR.every(function (r) { return near(r, 23.5, 1.0); }),
-  boulders9: bould.length === 9,
+  boulders9: bould.length === (TRIM2 ? 4 : 9),
   bouldersAreBoulders: bould.every(function (p) { return manifest[p.asset] === manifest.mossBoulder; }),
   furniture: furn.stoneSteps === 4 && furn.skullPile === 2 && furn.blightcap === 6 && furn.graveMound === 8,
   nestSacs5: nestSacs === 5,
@@ -315,7 +317,7 @@ var newTris = trisOut + trisDen + stainTris + poolTris;
 var h_probe = '';
 var h = {
   nodeCheck: nc.every(function (x) { return x[1] === 'OK'; }),
-  bundle: inBundle.every(function (x) { return x[1]; }) && bundleBytes === (TRIM ? 3252430 : 3251738),
+  bundle: inBundle.every(function (x) { return x[1]; }) && bundleBytes === (TRIM2 ? 3251156 : TRIM ? 3252430 : 3251738),
   // TRIM gate (io/missions/2026-10-12-cc-c8-trim.md): the C worst 170 m circle < 2M (probe); the
   // sec-7 <= 40k raw target stays reported, not gated, in TRIM mode (see the verdict watch-items)
   ledger: TRIM ? probeWorst() < 2000000 : newTris <= 40000
@@ -353,7 +355,7 @@ if (TRIM) {
     return { gone: gone, added: added, swapped: swapped };
   }
   var dC = rowDiff(CBu.regionC.props, RC.props), dD = rowDiff(CBu.regionD.props, RD.props);
-  var t = {
+  var t = TRIM2 ? trim2(dC, dD) : {
     outcropRows: eq(dC.gone, ['cemeteryGate@-134.4,-228.9']) && dC.added.length === 2 &&
       dC.added.every(function (x) { return /^bramble@/.test(x); }) && dC.swapped.length === 7,
     denRows: dD.gone.length === 0 && dD.added.length === 0 && dD.swapped.length === 6,
@@ -361,7 +363,17 @@ if (TRIM) {
     boot: C.assets && Array.isArray(C.assets.bootCritical) ? C.assets.bootCritical.indexOf('mossBoulderSmall') >= 0 : has('CONFIG.js', /'mossBoulderSmall'\s*$/),
     silhouette: notBoulder.length === 0
   };
-  check('T', 'TRIM brief conformance (rows, untouched geometry, silhouette law)', Object.keys(t).every(function (k) { return t[k]; }),
+  if (TRIM2) check('T2', 'TRIM 2 brief conformance (count cut, real m9 kept, no geometry change)', Object.keys(t).every(function (k) { return t[k]; }),
+    'vs ' + BUILD + ': C gone ' + JSON.stringify(dC.gone) + ' added ' + JSON.stringify(dC.added) + ' swapped ' + JSON.stringify(dC.swapped) +
+    '; D gone ' + JSON.stringify(dD.gone) + ' added ' + JSON.stringify(dD.added) + ' swapped ' + JSON.stringify(dD.swapped) +
+    ' (every kept row geometry+asset byte-identical); non-prop blocks of C/D equal ' + t.otherBlocksEqual +
+    '; kept boulders C ' + JSON.stringify(RC.props.filter(function (p) { return p.cullM === 120 && p.asset === 'mossBoulder'; }).map(function (p) { return [p.x, p.z, p.scale, p.y || 0]; })) +
+    ' D ' + JSON.stringify(P.filter(function (p) { return p.asset === 'mossBoulder'; }).map(function (p) { return [p.x, p.z, p.scale]; })) +
+    '; outcrop bramble ' + RC.props.filter(function (p) { return p.cullM === 120 && p.asset === 'bramble'; }).length + ', gate leaves ' + RC.props.filter(function (p) { return p.cullM === 120 && p.asset === 'cemeteryGate'; }).length +
+    '; mossBoulderSmall anywhere in prototype/js: ' + (t.noSmall ? 'none' : 'PRESENT') + '; assets.js byte-identical to ' + BUILD + ': ' + t.assetsEq +
+    '; bootCritical equal: ' + t.bootEq + '; m9 tris ' + glb('mossBoulder').tris + ' (' + manifest.mossBoulder + '); comments L' + L('CONFIG.js', /2 mossBoulder \(lintel \+ mouth\), 1 gate leaf/) + ' / L' + L('CONFIG.js', /4 mossBoulder shoulders/) +
+    (Object.keys(t).filter(function (k) { return !t[k]; }).length ? ' FAILED: ' + Object.keys(t).filter(function (k) { return !t[k]; }) : ''));
+  else check('T', 'TRIM brief conformance (rows, untouched geometry, silhouette law)', Object.keys(t).every(function (k) { return t[k]; }),
     'vs ' + BUILD + ': C outcrop gone ' + JSON.stringify(dC.gone) + ' added ' + JSON.stringify(dC.added) + ' swapped ' + dC.swapped.length +
     '; D gone ' + dD.gone.length + ' added ' + dD.added.length + ' swapped ' + dD.swapped.length + ' (geometry of every kept row identical); non-prop blocks of C/D equal ' + t.otherBlocksEqual +
     '; bootCritical row L' + L('CONFIG.js', /'skullPile', 'blightcap', 'mossBoulderSmall'/) + '; manifest row assets.js L' + L('assets.js', /^\s+mossBoulderSmall:/) +
@@ -369,6 +381,32 @@ if (TRIM) {
       L('assets.js', /^\s+treeStump:/) + '; docs/planning/59-biome-object-library.md L129 "M8 | Tree stump"), not a boulder (m9 L130); ' + glb('mossBoulderSmall').tris +
       ' tris, raw ext x ' + glb('mossBoulderSmall').extX.toFixed(3) : 'OK') +
     (Object.keys(t).filter(function (k) { return !t[k]; }).length ? ' FAILED: ' + Object.keys(t).filter(function (k) { return !t[k]; }) : ''));
+}
+
+function trim2(dC, dD) {
+  var bx2 = { window: {} }; vm.createContext(bx2);
+  vm.runInContext(git(['show', BUILD + ':prototype/js/CONFIG.js']), bx2);
+  var CB2 = bx2.window.WH_CONFIG;
+  var goneC = ['cemeteryGate@-134.4,-228.9', 'mossBoulder@-148.2,-213.6', 'mossBoulder@-144.1,-209.8', 'mossBoulder@-138.5,-211.5',
+    'mossBoulder@-128.1,-219.3', 'mossBoulder@-124.9,-224.2', 'mossBoulder@-127.4,-229.2'];
+  var goneD = ['mossBoulder@-154.6,-277.8', 'mossBoulder@-162.3,-253.6', 'mossBoulder@-175,-250.5', 'mossBoulder@-187.7,-253.6', 'mossBoulder@-194.5,-264.7'];
+  var keptC = RC.props.filter(function (p) { return p.cullM === 120 && p.asset === 'mossBoulder'; });
+  var keptD = P.filter(function (p) { return p.asset === 'mossBoulder'; });
+  var jsAll = fs.readdirSync(J).filter(function (x) { return /\.js$/.test(x); }).map(function (x) { return fs.readFileSync(J + x, 'utf8'); }).join('\n');
+  return {
+    outcropRows: eq(dC.gone.slice().sort(), goneC.slice().sort()) && eq(dC.added, ['bramble@-135.2,-227 s2', 'bramble@-133.6,-226.2 s1.6']) && dC.swapped.length === 0,
+    denRows: eq(dD.gone.slice().sort(), goneD.slice().sort()) && dD.added.length === 0 && dD.swapped.length === 0,
+    keptBoulders: eq(keptC.map(function (p) { return [p.x, p.z]; }), [[-139.8, -224.1], [-133.0, -215.0]]) &&
+      eq(keptD.map(function (p) { return p.x; }).sort(), [-195.4, -186.9, -163.1, -155.5].sort()),
+    bramble8gate1: RC.props.filter(function (p) { return p.cullM === 120 && p.asset === 'bramble'; }).length === 8 &&
+      RC.props.filter(function (p) { return p.cullM === 120 && p.asset === 'cemeteryGate'; }).length === 1,
+    otherBlocksEqual: eq(strip(RC, ['props']), strip(CB2.regionC, ['props'])) && eq(strip(RD, ['props']), strip(CB2.regionD, ['props'])),
+    noSmall: !/mossBoulderSmall|m8-boulder-small/.test(jsAll),
+    assetsEq: git(['show', BUILD + ':' + J + 'assets.js']) === fs.readFileSync(J + 'assets.js', 'utf8'),
+    bootEq: eq(C.assets.bootCritical, CB2.assets.bootCritical),
+    realM9: manifest.mossBoulder === 'art-direction/3d/assets/biome_library/m9-pixelated.glb' && glb('mossBoulder').tris === 21599,
+    comments: has('CONFIG.js', /2 mossBoulder \(lintel \+ mouth\), 1 gate leaf/) && L('CONFIG.js', /4 mossBoulder shoulders/).split(',').length === 2
+  };
 }
 
 // ---- report ------------------------------------------------------------------
