@@ -1,0 +1,49 @@
+=== CC-C8 TRIM dispatch start 2026-10-12T06:04:53Z ===
+The trim is applied and Region C now comes in under the 2M cap at 1,949,432 tris (97.5%). That counts the new rock at its real 8,109 tris. The probe's own `C8 LAYOUT` line reads lower because the probe has no tri count for the new asset and counts it as 0. Nothing is committed.
+
+**Rows changed**
+
+`prototype/js/assets.js`:
+- New manifest row `mossBoulderSmall` pointing to `m8-pixelated.glb`, the same file `treeStump` already uses. Measured at 8,109 tris, same 1.9 m footprint as `mossBoulder` (m9, 21,599).
+
+`prototype/js/CONFIG.js`, boot-load list (`bootCritical`): added `'mossBoulderSmall'` after `'blightcap'`, with a comment, the same way C8 added its den assets.
+
+`CONFIG.js`, Region C outcrop:
+- Lintel (-139.8, -224.1): `mossBoulder` → `mossBoulderSmall`.
+- Horseshoe rows 1, 2, 3, 5, 6, 7 (x -148.2 / -144.1 / -138.5 / -128.1 / -124.9 / -127.4): `mossBoulder` → `mossBoulderSmall`.
+- Horseshoe row 4 (-133.0, scale 1.40): stays `mossBoulder`.
+- East gate (-134.4, -228.9): **deleted**. The west gate (-146.0) stays.
+- 2 new bramble rows, `cullM 120`:
+  - (-135.2, -227.0), scale 2.00
+  - (-133.6, -226.2), scale 1.60
+- Count comments updated: "ONE m1 gate leaf", "1 mossBoulder + 6 mossBoulderSmall", "8 bramble".
+
+`CONFIG.js`, den ring (Region D):
+- Kept as `mossBoulder`: the two boulders either side of the exit gap (-163.1 at scale 1.60, -186.9 at scale 2.40) and -195.4 at scale 2.30.
+- → `mossBoulderSmall`: -154.6, -155.5, -162.3, -175.0, -187.7 and -194.5.
+- Both count comments now say "3 mossBoulder + 6 mossBoulderSmall".
+
+**Decisions for you to check:**
+- **Den boulder choice:** the brief says keep the two gap boulders plus the largest. But the largest (2.40) is one of the gap boulders, which leaves only two. To keep the 3 + 6 split, I kept the next largest (2.30) as the third.
+- **Bramble rotation:** the brief didn't give one, so I chose 3.67 (the removed gate's angle) and 5.30.
+
+No position, scale, `y`, `cullM`, tint, wall or collider value changed, and no collider row names an asset.
+
+**Tri totals** (old → new)
+- Outcrop (26 rows, was 25): 256,794 → **146,355**, plus stains 786
+- Den (39 rows): 316,410 → **235,470**
+
+**Probe line, verbatim from `node scratch/cc_c8_ledger_probe.js . -84 -309 170`:**
+```
+worst within 170 m of (-84,-309) C8 LAYOUT   : 1892669 (94.6% of 2M) at -84 -309
+```
+The same run printed `missing tri rows: mossBoulderSmall` and `outcrop ... tris NaN`, confirming the zero count. I ran a temp copy at `/tmp/c8trim/probe_fixed.js` with `"mossBoulderSmall": 8109` added, leaving the scratch file alone:
+```
+worst within 170 m of (-84,-309) C8 LAYOUT   : 1949432 (97.5% of 2M) at -84 -309
+```
+That passes the < 2,000,000 gate but is above the brief's ~1.87M estimate. Testerbot's re-run needs `mossBoulderSmall: 8109` added to the probe's tri table, or it will report the low number.
+
+**Bundle:** `python3 tools/build_v8.py` wrote `prototype/builds/v8-playable.html` at **3,252,430 bytes** (was 3,251,738).
+
+**`node --check`:** `CONFIG.js` passed, `assets.js` passed.
+=== CC-C8 TRIM dispatch end 2026-10-12T06:06:12Z exit=0 ===
