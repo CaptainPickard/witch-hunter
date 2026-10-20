@@ -1704,10 +1704,13 @@ window.WH_CONFIG = {
       // 'night' (dawn / day / dusk = x 1). The landed clock only, no state.
       nightBoldnessMult: 1.5,
       // body (region-manager buildRegion): standing height in m (the measured
-      // GLB 1.19 raw -> ~0.80 scale: ~1.6 m nose-to-tail) and the model yaw
-      // (the rig's nose points model -Z; enemies face local +Z)
+      // GLB 1.19 raw -> ~0.80 scale: ~1.6 m nose-to-tail). CC-C10 (Nicko
+      // ruling 2026-10-20): the shipped rig's nose points model +Z (bone
+      // head z +0.65, visible mesh ear/skull cluster z +0.68) - the C5
+      // "-Z nose" read was wrong, so the old bodyYawDeg: 180 pin (which
+      // DOUBLED the correction and made wolves lead with their rear) is
+      // REMOVED; no override row = enemies face local +Z like everything else.
       bodyHeight: 0.95,
-      bodyYawDeg: 180,
       // PACK MACHINERY (enemy.js WH_Enemy.buildPacks / updatePacks). Pack
       // state is DERIVED at buildRegion from the alive members (never saved).
       pack: {
