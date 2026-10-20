@@ -1,0 +1,9 @@
+CC-C17 SPOOKY DRESSING (v2 step 5; existing manifest assets). Den corridor (bearing-225
+band, r 200-235, mutual spacing >= 26.1 m): 2 deadTree (one per side of the approach
+axis) + skullPile (15 m off the doorway) + 2 blightcap. A 26 m gate vs every prop is
+infeasible in this band (3 of 3,321 grid points), so the dressing gate = >= 10 m to every
+prop row (min 11.4), doorway >= 12, stains >= 4 + r, axis lateral 6-32 m (the walking
+line stays open), camp-3 guards >= 12; seeded search random.Random(20261020), 4000 draws.
+Ring fragment: 3 mossBoulder (2.8 / 2.2 / 2.5) on an 8 m arc, half-swallowed (y = -0.3 x
+height), centre bearing 200 r 244 (nearest gate-clear slot to r 238; centre -> props
+27.0, rows >= 19.2; slope <= 5.8 deg). scratch/cc-c17/gen_spooky.py. PROPOSED, Nicko tunes.

@@ -1,0 +1,29 @@
+[
+{
+"asset": "okTreeOak",
+"x": -110.3,
+"z": -158.5,
+"rotY": 2.34,
+"scale": 13.0,
+"cullM": 140,
+"_c": "CC-C17 den-approach sentinel oak (nominal bearing 210 r 232; nearest clear slot)"
+},
+{
+"asset": "okTreeOak",
+"x": -200.3,
+"z": -272.6,
+"rotY": 0.88,
+"scale": 12.5,
+"cullM": 140,
+"_c": "CC-C17 den-approach sentinel oak (nominal bearing 240 r 232; nearest clear slot)"
+},
+{
+"asset": "okTreePine",
+"x": -13.0,
+"z": -567.0,
+"rotY": 1.2,
+"scale": 12.0,
+"cullM": 140,
+"_c": "CC-C17 N road bend pine (nominal -15, -570; nearest clear slot)"
+}
+]

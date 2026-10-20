@@ -100,6 +100,20 @@
     churchPewBroken: 'art-direction/3d/assets/church-kit/church-pew-broken-pixelated.glb',
     ironFenceSection: 'art-direction/3d/assets/church-kit/iron-fence-section-pixelated.glb',
     ironFenceCorner: 'art-direction/3d/assets/church-kit/iron-fence-corner-pixelated.glb',
+    // CC-C17 (2026-10-20): Old King's Forest kit (Astrabot Meshy bakes, 512
+    // NEAREST + 5-bit; ~1.9-unit normalized GLBs). Region C streaming props -
+    // NOT bootCritical. Barn/silo/haybale/rubble/ruin-wall bakes are on disk
+    // but deferred (tri budget); ok-fence-corner v2 IS wired (IO v2 ruling).
+    okFarmCottage: 'art-direction/3d/assets/old_king/ok-farm-cottage-pixelated.glb',
+    okFarmWell: 'art-direction/3d/assets/old_king/ok-farm-well-pixelated.glb',
+    okTreeOak: 'art-direction/3d/assets/old_king/ok-tree-oak-pixelated.glb',
+    okTreePine: 'art-direction/3d/assets/old_king/ok-tree-pine-pixelated.glb',
+    okFencePost: 'art-direction/3d/assets/old_king/ok-fence-post-pixelated.glb',
+    okFenceGate: 'art-direction/3d/assets/old_king/ok-fence-gate-pixelated.glb',
+    okFenceStonewall: 'art-direction/3d/assets/old_king/ok-fence-stonewall-pixelated.glb',
+    okFenceCornerV2: 'art-direction/3d/assets/old_king/ok-fence-corner-v2-pixelated.glb',
+    okRuinArch: 'art-direction/3d/assets/old_king/ok-ruin-arch-pixelated.glb',
+    okRuinColumn: 'art-direction/3d/assets/old_king/ok-ruin-column-pixelated.glb',
 
     // characters (whanim1 rigged exports; props below stay rigid)
     // 10-04: rigged copy + WH_SlashR2L/WH_SlashL2R/WH_Thrust chain clips

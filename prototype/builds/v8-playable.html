@@ -87987,75 +87987,78 @@ window.WH_CONFIG = {
       { asset: 'mossBoulder',   x: -15.0, z: -371.5, rotY: 0.20, scale: 2.20 },
       { asset: 'mossBoulder',   x: -15.5, z: -361.9, rotY: 2.80, scale: 1.50 },
       { asset: 'mossBoulder',   x: -10.3, z: -353.7, rotY: 4.90, scale: 2.00 },
+      // CC-C17 ROW SHAPE LAW: every live giant row below carries cullM 140 (the v2
+      // brief's C4b-giant shape; hide 140 / show 128.8 m > the 94.2 m fog reach = no
+      // visible pop). Ledger relief for the C17 set (scratch/cc-c17/apply_giant_cull.py).
       // king specimen giants (R-62.6 rare band 28-30): lane + Stone approach anchors
-      { asset: 'yewTree',       x: -28.0, z: -296.0, rotY: 5.91, scale: 29.00 },
-      { asset: 'witchwoodTree', x: 30.0, z: -238.0, rotY: 0.19, scale: 28.41 },
-      { asset: 'yewTree',       x: -26.0, z: -178.0, rotY: 4.65, scale: 28.21 },
-      { asset: 'yewTree',       x: 24.0, z: -128.0, rotY: 1.94, scale: 28.73 },
-      { asset: 'witchwoodTree', x: -56.0, z: -404.0, rotY: 5.65, scale: 29.93 },
-      { asset: 'yewTree',       x: 56.0, z: -404.0, rotY: 1.91, scale: 28.67 },
+      { asset: 'yewTree',       x: -28.0, z: -296.0, rotY: 5.91, scale: 29.00, cullM: 140 },   // CC-C17 shape
+      { asset: 'witchwoodTree', x: 30.0, z: -238.0, rotY: 0.19, scale: 28.41, cullM: 140 },   // CC-C17 shape
+      { asset: 'yewTree',       x: -26.0, z: -178.0, rotY: 4.65, scale: 28.21, cullM: 140 },   // CC-C17 shape
+      { asset: 'yewTree',       x: 24.0, z: -128.0, rotY: 1.94, scale: 28.73, cullM: 140 },   // CC-C17 shape
+      { asset: 'witchwoodTree', x: -56.0, z: -404.0, rotY: 5.65, scale: 29.93, cullM: 140 },   // CC-C17 shape
+      { asset: 'yewTree',       x: 56.0, z: -404.0, rotY: 1.91, scale: 28.67, cullM: 140 },   // CC-C17 shape
       // ancient band (R-62.6 scale 16-26, min spacing 55 m)
-      { asset: 'yewTree',       x: 86.4, z: -461.4, rotY: 4.40, scale: 20.19 },
-      { asset: 'witchwoodTree', x: 35.9, z: -498.1, rotY: 3.28, scale: 20.74 },
-      { asset: 'witchwoodTree', x: -55.0, z: -348.3, rotY: 1.52, scale: 24.40 },
-      { asset: 'yewTree',       x: -109.2, z: -337.1, rotY: 5.97, scale: 16.98 },
+      { asset: 'yewTree',       x: 86.4, z: -461.4, rotY: 4.40, scale: 20.19, cullM: 140 },   // CC-C17 shape
+      { asset: 'witchwoodTree', x: 35.9, z: -498.1, rotY: 3.28, scale: 20.74, cullM: 140 },   // CC-C17 shape
+      { asset: 'witchwoodTree', x: -55.0, z: -348.3, rotY: 1.52, scale: 24.40, cullM: 140 },   // CC-C17 shape
+      { asset: 'yewTree',       x: -109.2, z: -337.1, rotY: 5.97, scale: 16.98, cullM: 140 },   // CC-C17 shape
       // C4b-CLIFF { asset: 'yewTree',       x: 79.8, z: -120.5, rotY: 1.76, scale: 17.44 },
-      { asset: 'yewTree',       x: -50.1, z: -245.3, rotY: 3.37, scale: 21.49 },
-      { asset: 'yewTree',       x: 103.5, z: -513.8, rotY: 4.77, scale: 22.99 },
-      { asset: 'witchwoodTree', x: -126.7, z: -281.9, rotY: 4.90, scale: 23.08 },
-      { asset: 'witchwoodTree', x: -141.2, z: -382.4, rotY: 2.69, scale: 21.34 },
-      { asset: 'yewTree',       x: 83.4, z: -220.7, rotY: 0.58, scale: 19.02 },
-      { asset: 'yewTree',       x: 73.1, z: -559.7, rotY: 4.38, scale: 23.50 },
-      { asset: 'witchwoodTree', x: -81.1, z: -164.7, rotY: 1.76, scale: 22.24 },
-      { asset: 'yewTree',       x: 135.9, z: -560.5, rotY: 0.46, scale: 22.61 },
-      { asset: 'yewTree',       x: -117.3, z: -227.3, rotY: 2.84, scale: 25.03 },
-      { asset: 'yewTree',       x: 84.7, z: -614.0, rotY: 0.30, scale: 18.29 },
-      { asset: 'witchwoodTree', x: 111.3, z: -406.2, rotY: 3.47, scale: 19.09 },
-      { asset: 'yewTree',       x: 56.0, z: -349.0, rotY: 5.87, scale: 24.35 },
-      { asset: 'witchwoodTree', x: 15.1, z: -446.0, rotY: 2.01, scale: 19.14 },
+      { asset: 'yewTree',       x: -50.1, z: -245.3, rotY: 3.37, scale: 21.49, cullM: 140 },   // CC-C17 shape
+      { asset: 'yewTree',       x: 103.5, z: -513.8, rotY: 4.77, scale: 22.99, cullM: 140 },   // CC-C17 shape
+      { asset: 'witchwoodTree', x: -126.7, z: -281.9, rotY: 4.90, scale: 23.08, cullM: 140 },   // CC-C17 shape
+      { asset: 'witchwoodTree', x: -141.2, z: -382.4, rotY: 2.69, scale: 21.34, cullM: 140 },   // CC-C17 shape
+      { asset: 'yewTree',       x: 83.4, z: -220.7, rotY: 0.58, scale: 19.02, cullM: 140 },   // CC-C17 shape
+      { asset: 'yewTree',       x: 73.1, z: -559.7, rotY: 4.38, scale: 23.50, cullM: 140 },   // CC-C17 shape
+      { asset: 'witchwoodTree', x: -81.1, z: -164.7, rotY: 1.76, scale: 22.24, cullM: 140 },   // CC-C17 shape
+      { asset: 'yewTree',       x: 135.9, z: -560.5, rotY: 0.46, scale: 22.61, cullM: 140 },   // CC-C17 shape
+      { asset: 'yewTree',       x: -117.3, z: -227.3, rotY: 2.84, scale: 25.03, cullM: 140 },   // CC-C17 shape
+      { asset: 'yewTree',       x: 84.7, z: -614.0, rotY: 0.30, scale: 18.29, cullM: 140 },   // CC-C17 shape
+      { asset: 'witchwoodTree', x: 111.3, z: -406.2, rotY: 3.47, scale: 19.09, cullM: 140 },   // CC-C17 shape
+      { asset: 'yewTree',       x: 56.0, z: -349.0, rotY: 5.87, scale: 24.35, cullM: 140 },   // CC-C17 shape
+      { asset: 'witchwoodTree', x: 15.1, z: -446.0, rotY: 2.01, scale: 19.14, cullM: 140 },   // CC-C17 shape
       // C4b-CLIFF { asset: 'witchwoodTree', x: -51.9, z: -115.1, rotY: 0.97, scale: 24.73 },
       // C4b-CLIFF { asset: 'yewTree',       x: 27.9, z: -626.2, rotY: 3.88, scale: 20.17 },
-      { asset: 'witchwoodTree', x: 166.7, z: -514.8, rotY: 2.29, scale: 17.33 },
-      { asset: 'witchwoodTree', x: -19.3, z: -499.0, rotY: 2.08, scale: 17.17 },
-      { asset: 'yewTree',       x: 82.6, z: -276.2, rotY: 3.71, scale: 20.35 },
-      { asset: 'witchwoodTree', x: 10.4, z: -551.8, rotY: 2.47, scale: 24.72 },
+      { asset: 'witchwoodTree', x: 166.7, z: -514.8, rotY: 2.29, scale: 17.33, cullM: 140 },   // CC-C17 shape
+      { asset: 'witchwoodTree', x: -19.3, z: -499.0, rotY: 2.08, scale: 17.17, cullM: 140 },   // CC-C17 shape
+      { asset: 'yewTree',       x: 82.6, z: -276.2, rotY: 3.71, scale: 20.35, cullM: 140 },   // CC-C17 shape
+      { asset: 'witchwoodTree', x: 10.4, z: -551.8, rotY: 2.47, scale: 24.72, cullM: 140 },   // CC-C17 shape
       // C4b-CLIFF { asset: 'yewTree',       x: 213.5, z: -485.0, rotY: 0.29, scale: 24.29 },
-      { asset: 'witchwoodTree', x: 133.6, z: -133.8, rotY: 0.83, scale: 23.07 },
-      { asset: 'witchwoodTree', x: 257.7, z: -451.6, rotY: 0.40, scale: 21.53 },
-      { asset: 'yewTree',       x: -176.1, z: -254.5, rotY: 5.39, scale: 20.42 },
-      { asset: 'yewTree',       x: -172.3, z: -199.5, rotY: 1.21, scale: 20.27 },
+      { asset: 'witchwoodTree', x: 133.6, z: -133.8, rotY: 0.83, scale: 23.07, cullM: 140 },   // CC-C17 shape
+      { asset: 'witchwoodTree', x: 257.7, z: -451.6, rotY: 0.40, scale: 21.53, cullM: 140 },   // CC-C17 shape
+      { asset: 'yewTree',       x: -176.1, z: -254.5, rotY: 5.39, scale: 20.42, cullM: 140 },   // CC-C17 shape
+      { asset: 'yewTree',       x: -172.3, z: -199.5, rotY: 1.21, scale: 20.27, cullM: 140 },   // CC-C17 shape
       // C4b-CLIFF { asset: 'witchwoodTree', x: 170.5, z: -175.1, rotY: 4.18, scale: 25.92 },
-      { asset: 'witchwoodTree', x: -174.5, z: -312.4, rotY: 6.28, scale: 19.49 },
-      { asset: 'witchwoodTree', x: 215.3, z: -208.5, rotY: 4.54, scale: 21.10 },
+      { asset: 'witchwoodTree', x: -174.5, z: -312.4, rotY: 6.28, scale: 19.49, cullM: 140 },   // CC-C17 shape
+      { asset: 'witchwoodTree', x: 215.3, z: -208.5, rotY: 4.54, scale: 21.10, cullM: 140 },   // CC-C17 shape
       // C4b-CLIFF { asset: 'yewTree',       x: -128.5, z: -135.7, rotY: 3.79, scale: 23.96 },
-      { asset: 'yewTree',       x: -70.6, z: -476.1, rotY: 0.66, scale: 17.22 },
-      { asset: 'yewTree',       x: 153.1, z: -460.7, rotY: 4.43, scale: 24.56 },
-      { asset: 'yewTree',       x: 166.7, z: -405.7, rotY: 3.46, scale: 21.21 },
-      { asset: 'witchwoodTree', x: -178.2, z: -424.2, rotY: 3.80, scale: 18.06 },
+      { asset: 'yewTree',       x: -70.6, z: -476.1, rotY: 0.66, scale: 17.22, cullM: 140 },   // CC-C17 shape
+      { asset: 'yewTree',       x: 153.1, z: -460.7, rotY: 4.43, scale: 24.56, cullM: 140 },   // CC-C17 shape
+      { asset: 'yewTree',       x: 166.7, z: -405.7, rotY: 3.46, scale: 21.21, cullM: 140 },   // CC-C17 shape
+      { asset: 'witchwoodTree', x: -178.2, z: -424.2, rotY: 3.80, scale: 18.06, cullM: 140 },   // CC-C17 shape
       // C4b-CLIFF { asset: 'witchwoodTree', x: 234.8, z: -262.1, rotY: 0.64, scale: 22.96 },
-      { asset: 'yewTree',       x: -225.0, z: -453.3, rotY: 3.29, scale: 18.43 },
-      { asset: 'witchwoodTree', x: -124.3, z: -436.8, rotY: 2.66, scale: 21.83 },
-      { asset: 'yewTree',       x: 229.5, z: -404.2, rotY: 1.94, scale: 21.67 },
-      { asset: 'yewTree',       x: 191.0, z: -297.9, rotY: 2.52, scale: 23.34 },
-      { asset: 'yewTree',       x: 172.1, z: -242.9, rotY: 1.81, scale: 22.22 },
-      { asset: 'witchwoodTree', x: 213.9, z: -351.0, rotY: 5.37, scale: 19.05 },
-      { asset: 'witchwoodTree', x: -225.1, z: -281.7, rotY: 5.06, scale: 24.34 },
-      { asset: 'yewTree',       x: 134.1, z: -353.5, rotY: 3.67, scale: 25.62 },
+      { asset: 'yewTree',       x: -225.0, z: -453.3, rotY: 3.29, scale: 18.43, cullM: 140 },   // CC-C17 shape
+      { asset: 'witchwoodTree', x: -124.3, z: -436.8, rotY: 2.66, scale: 21.83, cullM: 140 },   // CC-C17 shape
+      { asset: 'yewTree',       x: 229.5, z: -404.2, rotY: 1.94, scale: 21.67, cullM: 140 },   // CC-C17 shape
+      { asset: 'yewTree',       x: 191.0, z: -297.9, rotY: 2.52, scale: 23.34, cullM: 140 },   // CC-C17 shape
+      { asset: 'yewTree',       x: 172.1, z: -242.9, rotY: 1.81, scale: 22.22, cullM: 140 },   // CC-C17 shape
+      { asset: 'witchwoodTree', x: 213.9, z: -351.0, rotY: 5.37, scale: 19.05, cullM: 140 },   // CC-C17 shape
+      { asset: 'witchwoodTree', x: -225.1, z: -281.7, rotY: 5.06, scale: 24.34, cullM: 140 },   // CC-C17 shape
+      { asset: 'yewTree',       x: 134.1, z: -353.5, rotY: 3.67, scale: 25.62, cullM: 140 },   // CC-C17 shape
       // C4b-CLIFF { asset: 'witchwoodTree', x: -27.4, z: -626.8, rotY: 1.85, scale: 16.17 },
       // C4b-CLIFF { asset: 'yewTree',       x: -223.2, z: -508.4, rotY: 2.75, scale: 16.17 },
       // C4b-CLIFF { asset: 'witchwoodTree', x: -82.5, z: -615.5, rotY: 2.89, scale: 19.50 },
-      { asset: 'yewTree',       x: -44.9, z: -574.4, rotY: 4.00, scale: 25.82 },
-      { asset: 'yewTree',       x: -233.6, z: -398.8, rotY: 1.10, scale: 18.37 },
+      { asset: 'yewTree',       x: -44.9, z: -574.4, rotY: 4.00, scale: 25.82, cullM: 140 },   // CC-C17 shape
+      { asset: 'yewTree',       x: -233.6, z: -398.8, rotY: 1.10, scale: 18.37, cullM: 140 },   // CC-C17 shape
       // C4b-CLIFF { asset: 'witchwoodTree', x: -257.6, z: -326.4, rotY: 3.82, scale: 22.80 },
       // C4b-CLIFF { asset: 'yewTree',       x: -133.9, z: -595.6, rotY: 1.92, scale: 18.84 },
-      { asset: 'yewTree',       x: -172.1, z: -487.9, rotY: 3.54, scale: 25.24 },
-      { asset: 'yewTree',       x: -87.1, z: -528.6, rotY: 1.31, scale: 19.80 },
-      { asset: 'yewTree',       x: -153.6, z: -544.1, rotY: 0.28, scale: 24.45 },
+      { asset: 'yewTree',       x: -172.1, z: -487.9, rotY: 3.54, scale: 25.24, cullM: 140 },   // CC-C17 shape
+      { asset: 'yewTree',       x: -87.1, z: -528.6, rotY: 1.31, scale: 19.80, cullM: 140 },   // CC-C17 shape
+      { asset: 'yewTree',       x: -153.6, z: -544.1, rotY: 0.28, scale: 24.45, cullM: 140 },   // CC-C17 shape
       // C4b-CLIFF { asset: 'yewTree',       x: 254.5, z: -313.8, rotY: 4.53, scale: 17.00 },
-      { asset: 'yewTree',       x: 136.1, z: -293.7, rotY: 4.93, scale: 22.37 },
-      { asset: 'witchwoodTree', x: 47.4, z: -179.1, rotY: 3.90, scale: 24.15 },
-      { asset: 'yewTree',       x: 27.0, z: -298.1, rotY: 3.88, scale: 17.84 },
-      { asset: 'yewTree',       x: -224.8, z: -216.6, rotY: 5.98, scale: 22.85 },
+      { asset: 'yewTree',       x: 136.1, z: -293.7, rotY: 4.93, scale: 22.37, cullM: 140 },   // CC-C17 shape
+      { asset: 'witchwoodTree', x: 47.4, z: -179.1, rotY: 3.90, scale: 24.15, cullM: 140 },   // CC-C17 shape
+      { asset: 'yewTree',       x: 27.0, z: -298.1, rotY: 3.88, scale: 17.84, cullM: 140 },   // CC-C17 shape
+      { asset: 'yewTree',       x: -224.8, z: -216.6, rotY: 5.98, scale: 22.85, cullM: 140 },   // CC-C17 shape
       // C4b-NOTCH { asset: 'yewTree',       x: 272.4, z: -369.0, rotY: 3.76, scale: 25.93 },
       // ancient stumps (R-62.6 scale 2.4-3.4)
       // C4b-CLIFF { asset: 'treeStump',     x: -194.5, z: -194.7, rotY: 4.64, scale: 3.00 },
@@ -88226,6 +88229,71 @@ window.WH_CONFIG = {
       { asset: 'banditCampfire', x: 118.0, z: -448.6, rotY: 0.70, scale: 2.02, cullM: 140 },   // CC-C16b camp 2 fire
       { asset: 'banditCampfire', x: -207.8, z: -246.0, rotY: 1.40, scale: 2.02, cullM: 140 },   // CC-C16b camp 3 fire
       { asset: 'banditCampfire', x: 144.2, z: -536.9, rotY: 2.10, scale: 2.02, cullM: 140 },   // CC-C16b camp 4 fire
+      // CC-C17 FARM HOMESTEAD (v2 trimmed set; io/missions/2026-10-20-cc-c17b-integration-v2.md
+      // step 2): cottage + well + a front yard (6 ok-fence-post rail sections + 2 ok-fence-
+      // stonewall + ok-fence-gate + 2 ok-fence-corner-v2 brackets) + the gate lanternPost.
+      // Site: cottage (150.5, -256.7), yard centre (150.4, -263.7) = bearing 124 r 182 from
+      // the Stone, east of the spine; probe scratch/cc-c17/gen_farm.py (deterministic grid
+      // scan bear 60-180 x r 150-200 step 2, no RNG): centre -> props 30.0 (yew 172.1,-242.9),
+      // roads 104.3 (eastRoad), fires 62.0 (Bravo), loops 67.2 (east), zones clear; every row
+      // >= 23.3 m to props / 96.7 to roads / 57.3 to loop segments; ground span 1.4 m.
+      // Scales: cottage 3.68 (7.0 m) / well 1.26 (2.4 m) / gate 1.32 / corner-v2 1.5 (brief) /
+      // rail section 1.85 (1.2 m tall, 3.5 m long: the GLB's 1.9 units are its LENGTH) /
+      // stonewall 2.5 (= len 4.75 / 1.9). wall = segment colliders along local X (C8 tech).
+      // cullM 120 (prop band). Barn/silo/haybales DEFERRED (tri budget). PROPOSED, Nicko tunes.
+      { asset: 'okFarmCottage', x: 150.5, z: -256.7, rotY: 3.15, scale: 3.68, cullM: 120 },   // CC-C17 farm cottage, door +Z faces the east road (N)
+      { asset: 'okFarmWell', x: 154.9, z: -264.7, rotY: 3.75, scale: 1.26, cullM: 120 },   // CC-C17 farm well, in the yard
+      { asset: 'okFenceGate', x: 150.4, z: -269.7, rotY: 3.15, scale: 1.32, wall: 2, cullM: 120 },   // CC-C17 farm yard gate (front line)
+      { asset: 'okFencePost', x: 147.4, z: -269.7, rotY: 3.15, scale: 1.85, wall: 3, cullM: 120 },
+      { asset: 'okFencePost', x: 143.9, z: -269.6, rotY: 3.15, scale: 1.85, wall: 3, cullM: 120 },
+      { asset: 'okFencePost', x: 153.4, z: -269.7, rotY: 3.15, scale: 1.85, wall: 3, cullM: 120 },
+      { asset: 'okFencePost', x: 156.9, z: -269.7, rotY: 3.15, scale: 1.85, wall: 3, cullM: 120 },
+      { asset: 'okFenceCornerV2', x: 141.7, z: -269.6, rotY: 3.15, scale: 1.50, cullM: 120 },   // CC-C17 farm corner-v2 bracket W
+      { asset: 'okFenceCornerV2', x: 159.1, z: -269.7, rotY: 0.00, scale: 1.50, cullM: 120 },   // CC-C17 farm corner-v2 bracket E
+      { asset: 'okFenceStonewall', x: 141.7, z: -266.5, rotY: 4.72, scale: 2.50, wall: 4, cullM: 120 },
+      { asset: 'okFenceStonewall', x: 159.1, z: -266.6, rotY: 4.72, scale: 2.50, wall: 4, cullM: 120 },
+      { asset: 'okFencePost', x: 141.8, z: -262.2, rotY: 4.72, scale: 1.85, wall: 3, cullM: 120 },
+      { asset: 'okFencePost', x: 159.2, z: -262.3, rotY: 4.72, scale: 1.85, wall: 3, cullM: 120 },
+      { asset: 'lanternPost', x: 148.2, z: -271.3, rotY: 3.15, scale: 2.535, cullM: 120 },   // CC-C17 farm gate beacon (amber = safety)
+      // CC-C17 RUIN ACCENT (v2 step 3): okRuinArch + 2 okRuinColumn ADDED to the CC-C13b C1
+      // cluster (churchArchway -101, -207 rows; kept as-is, no removals). Probe scratch/cc-c17/gen_ruin.py
+      // (deterministic slot scan, no RNG): arch on the cluster's WSW side, opening facing the
+      // cluster; columns 6 m either side along the arch's X (no interpenetration). Cluster
+      // envelope (8 rows): centre (-105.3, -205.1) r 9.1 - nearest non-cluster prop 14.7 m =
+      // the C4a boulder field (brief-sanctioned tight cluster); each new row >= 20.6 m to every
+      // non-cluster prop, roads >= 111, loops >= 69, den opening 58. Scales 3.79 / 3.95 (7.2 /
+      // 7.5 m). cullM 120. PROPOSED, Nicko tunes.
+      { asset: 'okRuinArch', x: -111.2, z: -201.7, rotY: 2.10, scale: 3.79, cullM: 120 },   // CC-C17 ruin arch (7.2 m), opening faces the cluster
+      { asset: 'okRuinColumn', x: -114.2, z: -206.9, rotY: 2.80, scale: 3.95, cullM: 120 },   // CC-C17 ruin column (7.5 m) flanking the arch
+      { asset: 'okRuinColumn', x: -108.2, z: -196.5, rotY: 4.70, scale: 3.95, cullM: 120 },   // CC-C17 ruin column (7.5 m) flanking the arch
+      // CC-C17 SENTINEL TREES (v2 step 4): 2 okTreeOak framing the den approach + 1 okTreePine
+      // at the N road bend. The brief's nominal slots fail the 26 m gate (bearing 210: boulder
+      // 17.8 m; bearing 240: camp-3 fire 8.0 m; (-15, -570): scree boulder 22.7 m), so each
+      // row = the NEAREST clear slot (scratch/cc-c17/gen_trees.py, deterministic scan, no RNG):
+      // props >= 26, fires >= 26, road >= 8 + trunk, den opening >= 26, seat slope <= 31 deg.
+      // Oaks: bearing 208 r 235 (props 26.3, den 69.0) + bearing 245 r 221 (props 26.4, fire
+      // 27.6, den 79.1); pine: road 10.4, props 26.1. ~1.9-unit GLBs: oak 13 / 12.5 (~24 m),
+      // pine 12 (~22 m). cullM 140 (tall: culls past the prop band). PROPOSED, Nicko tunes.
+      { asset: 'okTreeOak', x: -110.3, z: -158.5, rotY: 2.34, scale: 13.00, cullM: 140 },   // CC-C17 den-approach sentinel oak (nominal bearing 210 r 232; nearest clear slot)
+      { asset: 'okTreeOak', x: -200.3, z: -272.6, rotY: 0.88, scale: 12.50, cullM: 140 },   // CC-C17 den-approach sentinel oak (nominal bearing 240 r 232; nearest clear slot)
+      { asset: 'okTreePine', x: -13.0, z: -567.0, rotY: 1.20, scale: 12.00, cullM: 140 },   // CC-C17 N road bend pine (nominal -15, -570; nearest clear slot)
+      // CC-C17 SPOOKY DRESSING (v2 step 5; existing manifest assets). Den corridor (bearing-225
+      // band, r 200-235, mutual spacing >= 26.1 m): 2 deadTree (one per side of the approach
+      // axis) + skullPile (15 m off the doorway) + 2 blightcap. A 26 m gate vs every prop is
+      // infeasible in this band (3 of 3,321 grid points), so the dressing gate = >= 10 m to every
+      // prop row (min 11.4), doorway >= 12, stains >= 4 + r, axis lateral 6-32 m (the walking
+      // line stays open), camp-3 guards >= 12; seeded search random.Random(20261020), 4000 draws.
+      // Ring fragment: 3 mossBoulder (2.8 / 2.2 / 2.5) on an 8 m arc, half-swallowed (y = -0.3 x
+      // height), centre bearing 200 r 244 (nearest gate-clear slot to r 238; centre -> props
+      // 27.0, rows >= 19.2; slope <= 5.8 deg). scratch/cc-c17/gen_spooky.py. PROPOSED, Nicko tunes.
+      { asset: 'deadTree', x: -144.7, z: -180.8, rotY: 1.10, scale: 8.60, cullM: 140 },   // CC-C17 den-corridor dead tree (N of the approach)
+      { asset: 'deadTree', x: -176.5, z: -233.0, rotY: 3.40, scale: 9.20, cullM: 140 },   // CC-C17 den-corridor dead tree (S of the approach)
+      { asset: 'skullPile', x: -148.7, z: -206.6, rotY: 2.40, scale: 1.20, cullM: 120 },   // CC-C17 den-corridor skull pile (nearest the mouth)
+      { asset: 'blightcap', x: -149.8, z: -233.5, rotY: 0.50, scale: 1.40, cullM: 120 },   // CC-C17 den-corridor blightcap
+      { asset: 'blightcap', x: -123.1, z: -199.6, rotY: 2.20, scale: 1.60, cullM: 120 },   // CC-C17 den-corridor blightcap
+      { asset: 'mossBoulder', x: -76.3, z: -140.4, rotY: 0.90, scale: 2.80, y: -1.18, cullM: 120 },   // CC-C17 ring fragment (half-swallowed, sink 0.3 x height)
+      { asset: 'mossBoulder', x: -80.7, z: -144.2, rotY: 3.10, scale: 2.20, y: -0.93, cullM: 120 },   // CC-C17 ring fragment (half-swallowed, sink 0.3 x height)
+      { asset: 'mossBoulder', x: -86.6, z: -144.1, rotY: 5.00, scale: 2.50, y: -1.05, cullM: 120 },   // CC-C17 ring fragment (half-swallowed, sink 0.3 x height)
     ],
     // CC-C8 ROT MOTHER'S DOORWAY dressing (sec 1-2; region-manager buildRegion
     // -> WH_Enemy.buildRotStains). The CC-C7 pool / light / fog rows MOVED into
@@ -91185,6 +91253,20 @@ window.WH_ICONS = {
     churchPewBroken: 'art-direction/3d/assets/church-kit/church-pew-broken-pixelated.glb',
     ironFenceSection: 'art-direction/3d/assets/church-kit/iron-fence-section-pixelated.glb',
     ironFenceCorner: 'art-direction/3d/assets/church-kit/iron-fence-corner-pixelated.glb',
+    // CC-C17 (2026-10-20): Old King's Forest kit (Astrabot Meshy bakes, 512
+    // NEAREST + 5-bit; ~1.9-unit normalized GLBs). Region C streaming props -
+    // NOT bootCritical. Barn/silo/haybale/rubble/ruin-wall bakes are on disk
+    // but deferred (tri budget); ok-fence-corner v2 IS wired (IO v2 ruling).
+    okFarmCottage: 'art-direction/3d/assets/old_king/ok-farm-cottage-pixelated.glb',
+    okFarmWell: 'art-direction/3d/assets/old_king/ok-farm-well-pixelated.glb',
+    okTreeOak: 'art-direction/3d/assets/old_king/ok-tree-oak-pixelated.glb',
+    okTreePine: 'art-direction/3d/assets/old_king/ok-tree-pine-pixelated.glb',
+    okFencePost: 'art-direction/3d/assets/old_king/ok-fence-post-pixelated.glb',
+    okFenceGate: 'art-direction/3d/assets/old_king/ok-fence-gate-pixelated.glb',
+    okFenceStonewall: 'art-direction/3d/assets/old_king/ok-fence-stonewall-pixelated.glb',
+    okFenceCornerV2: 'art-direction/3d/assets/old_king/ok-fence-corner-v2-pixelated.glb',
+    okRuinArch: 'art-direction/3d/assets/old_king/ok-ruin-arch-pixelated.glb',
+    okRuinColumn: 'art-direction/3d/assets/old_king/ok-ruin-column-pixelated.glb',
 
     // characters (whanim1 rigged exports; props below stay rigid)
     // 10-04: rigged copy + WH_SlashR2L/WH_SlashL2R/WH_Thrust chain clips

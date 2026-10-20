@@ -1,0 +1,29 @@
+[
+{
+"asset": "okRuinArch",
+"x": -111.2,
+"z": -201.7,
+"rotY": 2.1,
+"scale": 3.79,
+"cullM": 120,
+"_c": "CC-C17 ruin arch (7.2 m), opening faces the cluster"
+},
+{
+"asset": "okRuinColumn",
+"x": -114.2,
+"z": -206.9,
+"rotY": 2.8,
+"scale": 3.95,
+"cullM": 120,
+"_c": "CC-C17 ruin column (7.5 m) flanking the arch"
+},
+{
+"asset": "okRuinColumn",
+"x": -108.2,
+"z": -196.5,
+"rotY": 4.7,
+"scale": 3.95,
+"cullM": 120,
+"_c": "CC-C17 ruin column (7.5 m) flanking the arch"
+}
+]

@@ -1,0 +1,12 @@
+CC-C17 FARM HOMESTEAD (v2 trimmed set; io/missions/2026-10-20-cc-c17b-integration-v2.md
+step 2): cottage + well + a front yard (6 ok-fence-post rail sections + 2 ok-fence-
+stonewall + ok-fence-gate + 2 ok-fence-corner-v2 brackets) + the gate lanternPost.
+Site: cottage (150.5, -256.7), yard centre (150.4, -263.7) = bearing 124 r 182 from
+the Stone, east of the spine; probe scratch/cc-c17/gen_farm.py (deterministic grid
+scan bear 60-180 x r 150-200 step 2, no RNG): centre -> props 30.0 (yew 172.1,-242.9),
+roads 104.3 (eastRoad), fires 62.0 (Bravo), loops 67.2 (east), zones clear; every row
+>= 23.3 m to props / 96.7 to roads / 57.3 to loop segments; ground span 1.4 m.
+Scales: cottage 3.68 (7.0 m) / well 1.26 (2.4 m) / gate 1.32 / corner-v2 1.5 (brief) /
+rail section 1.85 (1.2 m tall, 3.5 m long: the GLB's 1.9 units are its LENGTH) /
+stonewall 2.5 (= len 4.75 / 1.9). wall = segment colliders along local X (C8 tech).
+cullM 120 (prop band). Barn/silo/haybales DEFERRED (tri budget). PROPOSED, Nicko tunes.

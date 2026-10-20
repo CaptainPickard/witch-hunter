@@ -1,0 +1,8 @@
+CC-C17 RUIN ACCENT (v2 step 3): okRuinArch + 2 okRuinColumn ADDED to the CC-C13b C1
+cluster above (church-kit rows kept as-is, no removals). Probe scratch/cc-c17/gen_ruin.py
+(deterministic slot scan, no RNG): arch on the cluster's WSW side, opening facing the
+cluster; columns 6 m either side along the arch's X (no interpenetration). Cluster
+envelope (8 rows): centre (-105.3, -205.1) r 9.1 - nearest non-cluster prop 14.7 m =
+the C4a boulder field (brief-sanctioned tight cluster); each new row >= 20.6 m to every
+non-cluster prop, roads >= 111, loops >= 69, den opening 58. Scales 3.79 / 3.95 (7.2 /
+7.5 m). cullM 120. PROPOSED, Nicko tunes.

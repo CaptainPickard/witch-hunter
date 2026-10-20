@@ -1,0 +1,129 @@
+[
+{
+"asset": "okFarmCottage",
+"x": 150.5,
+"z": -256.7,
+"rotY": 3.15,
+"scale": 3.68,
+"cullM": 120,
+"_c": "CC-C17 farm cottage, door +Z faces the east road (N)"
+},
+{
+"asset": "okFarmWell",
+"x": 154.9,
+"z": -264.7,
+"rotY": 3.75,
+"scale": 1.26,
+"cullM": 120,
+"_c": "CC-C17 farm well, in the yard"
+},
+{
+"asset": "okFenceGate",
+"x": 150.4,
+"z": -269.7,
+"rotY": 3.15,
+"scale": 1.32,
+"cullM": 120,
+"wall": 2,
+"_c": "CC-C17 farm yard gate (front line)"
+},
+{
+"asset": "okFencePost",
+"x": 147.4,
+"z": -269.7,
+"rotY": 3.15,
+"scale": 1.85,
+"cullM": 120,
+"wall": 3
+},
+{
+"asset": "okFencePost",
+"x": 143.9,
+"z": -269.6,
+"rotY": 3.15,
+"scale": 1.85,
+"cullM": 120,
+"wall": 3
+},
+{
+"asset": "okFencePost",
+"x": 153.4,
+"z": -269.7,
+"rotY": 3.15,
+"scale": 1.85,
+"cullM": 120,
+"wall": 3
+},
+{
+"asset": "okFencePost",
+"x": 156.9,
+"z": -269.7,
+"rotY": 3.15,
+"scale": 1.85,
+"cullM": 120,
+"wall": 3
+},
+{
+"asset": "okFenceCornerV2",
+"x": 141.7,
+"z": -269.6,
+"rotY": 3.15,
+"scale": 1.5,
+"cullM": 120,
+"_c": "CC-C17 farm corner-v2 bracket W"
+},
+{
+"asset": "okFenceCornerV2",
+"x": 159.1,
+"z": -269.7,
+"rotY": 0.0,
+"scale": 1.5,
+"cullM": 120,
+"_c": "CC-C17 farm corner-v2 bracket E"
+},
+{
+"asset": "okFenceStonewall",
+"x": 141.7,
+"z": -266.5,
+"rotY": 4.72,
+"scale": 2.5,
+"cullM": 120,
+"wall": 4
+},
+{
+"asset": "okFenceStonewall",
+"x": 159.1,
+"z": -266.6,
+"rotY": 4.72,
+"scale": 2.5,
+"cullM": 120,
+"wall": 4
+},
+{
+"asset": "okFencePost",
+"x": 141.8,
+"z": -262.2,
+"rotY": 4.72,
+"scale": 1.85,
+"cullM": 120,
+"wall": 3
+},
+{
+"asset": "okFencePost",
+"x": 159.2,
+"z": -262.3,
+"rotY": 4.72,
+"scale": 1.85,
+"cullM": 120,
+"wall": 3
+},
+{
+"asset": "lanternPost",
+"x": 148.2,
+"z": -271.3,
+"rotY": 3.15,
+"scale": 2.535,
+"cullM": 120,
+"_c": "CC-C17 farm gate beacon (amber = safety)"
+}
+]
