@@ -585,6 +585,34 @@ window.WH_CONFIG = {
       { type: 'wolf', x: -18.8, z: -521.2, packId: 'north', waypointPhase: 1 },
       { type: 'wolf', x: -13.4, z: -516.4, packId: 'north', waypointPhase: 2 },
       { type: 'wolf', x: -6.9, z: -519.6, packId: 'north', waypointPhase: 3 },
+      { type: 'bandit', x: -103.9, z: -469.5 },   // CC-C16b camp 1 guard 1
+      { type: 'bandit', x: -108.7, z: -470.1 },   // CC-C16b camp 1 guard 2
+      { type: 'bandit', x: -106.1, z: -468.7 },   // CC-C16b camp 1 guard 3
+      { type: 'bandit', x: 120.2, z: -446.0 },   // CC-C16b camp 2 guard 1
+      { type: 'bandit', x: 115.4, z: -446.6 },   // CC-C16b camp 2 guard 2
+      { type: 'bandit', x: 118.0, z: -445.2 },   // CC-C16b camp 2 guard 3
+      { type: 'bandit', x: -205.6, z: -243.4 },   // CC-C16b camp 3 guard 1
+      { type: 'bandit', x: -210.4, z: -244.0 },   // CC-C16b camp 3 guard 2
+      { type: 'bandit', x: -207.8, z: -242.6 },   // CC-C16b camp 3 guard 3
+      { type: 'bandit', x: 146.4, z: -534.3 },   // CC-C16b camp 4 guard 1
+      { type: 'bandit', x: 141.6, z: -534.9 },   // CC-C16b camp 4 guard 2
+      { type: 'bandit', x: 144.2, z: -533.5 },   // CC-C16b camp 4 guard 3
+      { type: 'wolf', x: -89.9, z: -336.7, packId: 'sw', waypointPhase: 0 },
+      { type: 'wolf', x: -78.4, z: -328.0, packId: 'sw', waypointPhase: 1 },
+      { type: 'wolf', x: -70.9, z: -290.5, packId: 'sw', waypointPhase: 2 },
+      { type: 'wolf', x: -86.6, z: -279.6, packId: 'sw', waypointPhase: 3 },
+      { type: 'wolf', x: 79.6, z: -186.8, packId: 'se', waypointPhase: 0 },
+      { type: 'wolf', x: 115.2, z: -158.5, packId: 'se', waypointPhase: 1 },
+      { type: 'wolf', x: 110.4, z: -142.3, packId: 'se', waypointPhase: 2 },
+      { type: 'wolf', x: 108.8, z: -127.6, packId: 'se', waypointPhase: 3 },
+      { type: 'wolf', x: 62.5, z: -249.5, packId: 'ss', waypointPhase: 0 },
+      { type: 'wolf', x: 73.9, z: -256.9, packId: 'ss', waypointPhase: 1 },
+      { type: 'wolf', x: 92.1, z: -203.5, packId: 'ss', waypointPhase: 2 },
+      { type: 'wolf', x: 74.8, z: -188.5, packId: 'ss', waypointPhase: 3 },
+      { type: 'wolf', x: 223.3, z: -482.5, packId: 'nw2', waypointPhase: 0 },
+      { type: 'wolf', x: 236.3, z: -473.8, packId: 'nw2', waypointPhase: 1 },
+      { type: 'wolf', x: 240.9, z: -461.0, packId: 'nw2', waypointPhase: 2 },
+      { type: 'wolf', x: 229.4, z: -440.0, packId: 'nw2', waypointPhase: 3 },
       // CC-C6 BANDIT CAMP GUARDS (doc 62 L4/L5/L6; io/missions/2026-10-09-cc-c6-
       // bandit-camps.md): ordinary bandit rows (AI1 by type), APPENDED after the
       // wolves so saved per-index dead state keeps its wolf rows. Guard spread
@@ -992,11 +1020,11 @@ window.WH_CONFIG = {
       //    bearing 225 r 238; den centre (-181.0, -185.0), r 256). Rows = the
       //    shipped CC-C8 TRIM block rigidly transformed (translate to the new
       //    opening + rotate by the new FACE 1.71). Same tri set = ledger flat.
-      { asset: 'whWallA', x: -175.9, z: -200.3, rotY: 5.50, scale: 5.27, sy: 19.48, sz: 2.00, y: -0.4, wall: 6, cullM: 120 },
-      { asset: 'whWallB', x: -168.8, z: -187.4, rotY: 5.50, scale: 5.27, sy: 19.26, sz: 2.00, y: -0.4, wall: 6, cullM: 120 },
-      { asset: 'whWallA', x: -175.9, z: -195.1, rotY: 0.78, scale: 2.95, sy: 16.88, sz: 2.00, y: -0.4, wall: 3, cullM: 120 },
-      { asset: 'whWallB', x: -173.1, z: -190.2, rotY: 0.78, scale: 2.95, sy: 16.69, sz: 2.00, y: -0.4, wall: 3, cullM: 120 },
-      { asset: 'whWallA', x: -176.8, z: -191.3, rotY: 5.50, scale: 3.37, sy: 16.88, sz: 2.00, y: -0.4, wall: 4, cullM: 120 },
+      { asset: 'whWallA', x: -160.7, z: -195.1, rotY: 2.36, scale: 5.27, sy: 19.48, sz: 2.00, y: -0.4, wall: 6, cullM: 120 },
+      { asset: 'whWallB', x: -167.8, z: -208.0, rotY: 2.36, scale: 5.27, sy: 19.26, sz: 2.00, y: -0.4, wall: 6, cullM: 120 },
+      { asset: 'whWallA', x: -160.7, z: -200.3, rotY: 3.92, scale: 2.95, sy: 16.88, sz: 2.00, y: -0.4, wall: 3, cullM: 120 },
+      { asset: 'whWallB', x: -163.5, z: -205.2, rotY: 3.92, scale: 2.95, sy: 16.69, sz: 2.00, y: -0.4, wall: 3, cullM: 120 },
+      { asset: 'whWallA', x: -159.8, z: -204.1, rotY: 2.36, scale: 3.37, sy: 16.88, sz: 2.00, y: -0.4, wall: 4, cullM: 120 },
       { asset: 'cemeteryGate',     x: -174.5, z: -200.9, rotY: 5.62, scale: 5.20, cullM: 120 },
       { asset: 'mossBoulder',      x: -171.6, z: -194.3, rotY: 5.90, scale: 1.60, y: 7.0, noCollide: true, cullM: 120 },
       { asset: 'mossBoulder',      x: -181.5, z: -188.8, rotY: 1.91, scale: 1.40, cullM: 120 },
@@ -1021,7 +1049,12 @@ window.WH_CONFIG = {
       { asset: 'rubblePile',           x: -31.0,  z: -139.0, rotY: 0.8, scale: 1.4 },
       { asset: 'churchCornerButtress', x: -33.0,  z: -143.5, rotY: 2.2, scale: 1.4 },
       { asset: 'mossBoulder',          x: -29.0,  z: -144.0, rotY: 5.0, scale: 1.0 },
-      { asset: 'stoneCrossTilted',     x: -26.5,  z: -146.5, rotY: 3.0, scale: 1.55 }
+      { asset: 'stoneCrossTilted',     x: -26.5,  z: -146.5, rotY: 3.0, scale: 1.55 },
+      // CC-C16b DENSIFY: 4 bandit camp fires (CC-C6C kind campfire, night-only atmospheric; the STARTING tutorial fire stays the only cookable one)
+      { asset: 'banditCampfire', x: -106.1, z: -472.1, rotY: 0.00, scale: 2.02, cullM: 140 },   // CC-C16b camp 1 fire
+      { asset: 'banditCampfire', x: 118.0, z: -448.6, rotY: 0.70, scale: 2.02, cullM: 140 },   // CC-C16b camp 2 fire
+      { asset: 'banditCampfire', x: -207.8, z: -246.0, rotY: 1.40, scale: 2.02, cullM: 140 },   // CC-C16b camp 3 fire
+      { asset: 'banditCampfire', x: 144.2, z: -536.9, rotY: 2.10, scale: 2.02, cullM: 140 },   // CC-C16b camp 4 fire
     ],
     // CC-C8 ROT MOTHER'S DOORWAY dressing (sec 1-2; region-manager buildRegion
     // -> WH_Enemy.buildRotStains). The CC-C7 pool / light / fog rows MOVED into
@@ -1036,14 +1069,14 @@ window.WH_CONFIG = {
     // opening; the trail steps SE away from the doorway into the forest).
     rotLair: {
       stains: [
-        { x: -168.8, z: -195.8, radius: 5.0 },     // mouth pool
-        { x: -158.5, z: -205.0, radius: 1.8 },     // trail
-        { x: -150.5, z: -212.9, radius: 1.4 },
-        { x: -139.7, z: -215.4, radius: 1.0 },
+        { x: -167.8, z: -199.6, radius: 5.0 },     // mouth pool
+        { x: -178.1, z: -190.4, radius: 1.8 },     // trail
+        { x: -186.1, z: -182.5, radius: 1.4 },
+        { x: -196.9, z: -180.0, radius: 1.0 },
       ],
       pool: { segments: 28, rings: 4, lift: 0.08,
         color: 0x141c10, color2: 0x222d15, speck: 0x3d4c22, textureSeed: 20261013, edgeFeather: 0.3 },
-      void: { x: -176.2, z: -191.8, rotY: 5.50, width: 4.6, height: 9.0, color: 0x000000 },
+      void: { x: -160.4, z: -203.6, rotY: 2.36, width: 4.6, height: 9.0, color: 0x000000 },
       cullM: 120                      // stains + void hide past this from the player (the outcrop rows' band)
     }
   },
@@ -1062,14 +1095,14 @@ window.WH_CONFIG = {
   regionD: {
     id: 'rot_den',
     name: "The Rot Mother's Den",
-    center: { x: -181, z: -185 },     // CC-C15 SW relocation (bearing 225, r 256 from C center)     // = the CC-C7 nest (C-local (-175, +95))
+    center: { x: -186, z: -180 },     // CC-C16a: cave body buried behind the mouth (r 263, ridge band)     // CC-C15 SW relocation (bearing 225, r 256 from C center)     // = the CC-C7 nest (C-local (-175, +95))
     groundRadius: 34,
     groundY: 0,                       // flat disc (C is hidden while D is active: no z-fight)
     groundColor: 0x12160e,            // wet black loam
     groundColor2: 0x1d2414,           // rot-moss secondary
     groundSeed: 1662061218,
     scatter: false,                   // hand rows only (no Round E scatter in the den)
-    spawn: { x: -181, z: -205 },                      // CC-C15      // inside the mouth (a death here without a camp)
+    spawn: { x: -156, z: -190 },                      // CC-C16a                      // CC-C15      // inside the mouth (a death here without a camp)
     gravityY: -22,
     // sec 4 DARKNESS: d95 = sqrt(-ln 0.05) / 0.12 = 14.4 m (the far wall is a
     // black thought); the hemi fill = hemiBaseIntensity x 0.06. The always-
@@ -1086,16 +1119,16 @@ window.WH_CONFIG = {
     // (the death overlay element, non-lethal): fadeIn before the E cross,
     // fadeOut after either cross (E: 0.3 + 0.5 = 0.8; walk-out: 0 + 0.8).
     door: {
-      planeZ: -209.6,                      // CC-C15 (den mouth plane)
-      doorX: -181.0,                      // CC-C15
+      planeZ: -215.2,                      // CC-C16a: the mouth plane, dug into the ridge band
+      doorX: -150.8,                      // CC-C16a: mouth x on the plane
       doorHalfWidth: 3.0,             // the 4.6 m gap's walkable lane between the ring's end colliders is +-2.65: every way out crosses
       suspendDepthM: 0,
       wallGapPadM: 0,
       interactM: 3.5,
-      interactAt: { x: -171.9, z: -194.1 },   // CC-C15: the SW outcrop opening centre (C)     // the outcrop opening centre (C)
+      interactAt: { x: -163.4, z: -202.6 },   // CC-C16a: mouth centre (faces the map centre)   // CC-C15: the SW outcrop opening centre (C)     // the outcrop opening centre (C)
       land: {
-        forest_of_the_old_king: { x: -171.9, z: -194.1, faceX: -168.3, faceZ: -207.7 },
-        rot_den: { x: -181.0, z: -212.6, faceX: -181.0, faceZ: -195.0 }
+        forest_of_the_old_king: { x: -163.4, z: -202.6, faceX: 0.0, faceZ: -366.0 },
+        rot_den: { x: -185.8, z: -180.2, faceX: -185.8, faceZ: -180.2 }
       },
       fadeIn: 0.3,
       fadeOut: 0.5,
@@ -1108,7 +1141,7 @@ window.WH_CONFIG = {
     // append after her at runtime. Position = CONFIG.enemy.rotmother.lair
     // (den-local (0, +6)) in world coords.
     lairs: [
-      { type: 'rotmother', x: -181.0, z: -191.0 }
+      { type: 'rotmother', x: -185.8, z: -180.2 }
     ],
     // DEN BUILD (sec 3; scratch/cc-c8/gen_den.py). Flat ground: every row sits
     // at y 0 (+ its sink). Cavern = 10 vinestone ring segments r 24 (per-axis:
@@ -1119,16 +1152,16 @@ window.WH_CONFIG = {
     // sacs (moved INSIDE from the open lair).
     props: [
       // -- cavern ring: 10 segments, exit gap between the first and the last
-      { asset: 'whWallA', x: -171.1, z: -206.9, rotY: 5.86, scale: 7.84, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
-      { asset: 'whWallB', x: -160.5, z: -197.4, rotY: 5.26, scale: 7.84, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
-      { asset: 'whWallA', x: -157.0, z: -183.5, rotY: 4.65, scale: 7.84, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
-      { asset: 'whWallB', x: -162.1, z: -170.2, rotY: 4.05, scale: 7.84, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
-      { asset: 'whWallA', x: -173.9, z: -162.1, rotY: 3.44, scale: 7.84, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
-      { asset: 'whWallB', x: -188.1, z: -162.1, rotY: 2.84, scale: 7.84, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
-      { asset: 'whWallA', x: -199.9, z: -170.2, rotY: 2.24, scale: 7.84, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
-      { asset: 'whWallB', x: -205.0, z: -183.5, rotY: 1.63, scale: 7.84, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
-      { asset: 'whWallA', x: -201.5, z: -197.4, rotY: 1.03, scale: 7.84, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
-      { asset: 'whWallB', x: -190.9, z: -206.9, rotY: 0.42, scale: 7.84, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: -165.5, z: -188.5, rotY: 2.72, scale: 7.84, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: -176.1, z: -198.0, rotY: 2.12, scale: 7.84, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: -179.6, z: -211.9, rotY: 1.51, scale: 7.84, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: -174.5, z: -225.2, rotY: 0.91, scale: 7.84, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: -162.7, z: -233.3, rotY: 0.30, scale: 7.84, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: -148.5, z: -233.3, rotY: 5.98, scale: 7.84, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: -136.7, z: -225.2, rotY: 5.38, scale: 7.84, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: -131.6, z: -211.9, rotY: 4.77, scale: 7.84, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: -135.1, z: -198.0, rotY: 4.17, scale: 7.84, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: -145.7, z: -188.5, rotY: 3.56, scale: 7.84, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
       // -- 4 mossBoulder shoulders at the wall foot (r 20.5-21.5), clear of the mouth
       //    (CC-C8 TRIM 2: kept the 2 gap flankers, the 2.30 row + the nest-adjacent 1.80; 5 cut)
       { asset: 'mossBoulder',      x: -163.1, z: -287.7, rotY: 0.00, scale: 1.60 },
@@ -1825,7 +1858,17 @@ window.WH_CONFIG = {
           [-178, -340], [-166, -372], [-172, -402]] },
       { id: 'north', regionId: 'forest_of_the_old_king', members: 4, spawnSpread: 6,  // L9 Wolf den North
         waypoints: [[-25, -520], [-30, -548], [-62, -562], [-50, -585], [-25, -586],
-          [10, -578], [25, -545], [12, -515]] }
+          [10, -578], [25, -545], [12, -515]] },
+      // CC-C16b densify packs (sw/se/ss/nw2): 4 more packs, loops probed >= 30 m
+      // from every old loop point, >= 60 m from all fires, >= 36 m off roads.
+      { id: 'sw', regionId: 'forest_of_the_old_king', members: 4, spawnSpread: 6,   // CC-C16b densify pack 1
+        waypoints: [[-89.9, -336.7], [-78.4, -328.0], [-70.9, -290.5], [-86.6, -279.6], [-112.5, -276.1], [-140.3, -293.6], [-141.4, -322.0], [-122.7, -329.6]] },
+      { id: 'se', regionId: 'forest_of_the_old_king', members: 4, spawnSpread: 6,   // CC-C16b densify pack 2
+        waypoints: [[79.6, -186.8], [115.2, -158.5], [110.4, -142.3], [108.8, -127.6], [61.1, -118.7], [56.4, -130.3], [45.7, -161.7], [65.2, -193.3]] },
+      { id: 'ss', regionId: 'forest_of_the_old_king', members: 4, spawnSpread: 6,   // CC-C16b densify pack 3
+        waypoints: [[62.5, -249.5], [73.9, -256.9], [92.1, -203.5], [74.8, -188.5], [69.7, -181.7], [37.7, -203.8], [17.8, -224.5], [38.3, -254.6]] },
+      { id: 'nw2', regionId: 'forest_of_the_old_king', members: 4, spawnSpread: 6,   // CC-C16b densify pack 4
+        waypoints: [[223.3, -482.5], [236.3, -473.8], [240.9, -461.0], [229.4, -440.0], [213.5, -436.9], [199.7, -452.5], [198.2, -467.8], [200.4, -482.0]] }
     ],
     separationPush: 6.0,              // circle push-out strength
     holdAtBoundaryMargin: 1.5         // enemies stop this far before the boundary
@@ -2611,7 +2654,15 @@ window.WH_CONFIG.cooking = {
     { id: 'banditFireB', kind: 'campfire', regionId: 'forest_of_the_old_king',
       asset: 'banditCampfire', x: 95.0, z: -236.0, startLit: true },     // L5 Bravo
     { id: 'banditFireC', kind: 'campfire', regionId: 'forest_of_the_old_king',
-      asset: 'banditCampfire', x: -140.0, z: -506.0, startLit: true }    // L6 Charlie
+      asset: 'banditCampfire', x: -140.0, z: -506.0, startLit: true },
+    { id: 'banditFireD1', kind: 'campfire', regionId: 'forest_of_the_old_king',
+      asset: 'banditCampfire', x: -106.1, z: -472.1, startLit: true },    // CC-C16b camp 1
+    { id: 'banditFireD2', kind: 'campfire', regionId: 'forest_of_the_old_king',
+      asset: 'banditCampfire', x: 118.0, z: -448.6, startLit: true },    // CC-C16b camp 2
+    { id: 'banditFireD3', kind: 'campfire', regionId: 'forest_of_the_old_king',
+      asset: 'banditCampfire', x: -207.8, z: -246.0, startLit: true },    // CC-C16b camp 3
+    { id: 'banditFireD4', kind: 'campfire', regionId: 'forest_of_the_old_king',
+      asset: 'banditCampfire', x: 144.2, z: -536.9, startLit: true },    // CC-C16b camp 4    // L6 Charlie
   ],
   // Recipes: exactly 3 ingredients, order-free, no preview ever. Any other
   // trio at a fire = fallbackResult (the gamble's waste). known flips true on
