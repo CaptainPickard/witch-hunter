@@ -87369,13 +87369,14 @@ window.WH_CONFIG = {
       { asset: 'yewTree', x: 29.4, z: 1.3, rotY: 3.03, scale: 6.5 },
       { asset: 'lanternPost', x: -2, z: 30, rotY: 0.0, scale: 2.535 },
       { asset: 'lanternPost', x: 4, z: -2, rotY: 0.0, scale: 2.535 },
-      { asset: 'picketFence', x: 15.4, z: 13.2, rotY: 0.0, scale: 1.63 },
-      { asset: 'picketFence', x: 12.2, z: 12.2, rotY: 0.0, scale: 1.55 },
-      { asset: 'picketFence', x: -19.1, z: 10.8, rotY: 1.57, scale: 1.59 },
-      { asset: 'picketFence', x: -19.8, z: 7.6, rotY: 1.57, scale: 1.67 },
-      { asset: 'picketFence', x: -20.8, z: 13.3, rotY: 1.57, scale: 1.57 },
-      { asset: 'ironFenceSection', x: -5.6, z: 28.9, rotY: 1.65, scale: 1.33 },
-      { asset: 'ironFenceSection', x: -7.6, z: 31.1, rotY: 3.54, scale: 1.36 },
+      // CC-C13b fence normalization: one scale per asset (picket 1.40, iron 1.35), rotY re-seated per run; x/z unchanged
+      { asset: 'picketFence', x: 15.4, z: 13.2, rotY: 0.0, scale: 1.40 },
+      { asset: 'picketFence', x: 12.2, z: 12.2, rotY: 0.0, scale: 1.40 },
+      { asset: 'picketFence', x: -19.1, z: 10.8, rotY: 1.57, scale: 1.40 },
+      { asset: 'picketFence', x: -19.8, z: 7.6, rotY: 1.57, scale: 1.40 },
+      { asset: 'picketFence', x: -20.8, z: 13.3, rotY: 1.57, scale: 1.40 },
+      { asset: 'ironFenceSection', x: -5.6, z: 28.9, rotY: 3.97, scale: 1.35 },
+      { asset: 'ironFenceSection', x: -7.6, z: 31.1, rotY: 3.97, scale: 1.35 },
       { asset: 'mossBoulder', x: 17.2, z: -9.0, rotY: 5.46, scale: 1.37 },
       { asset: 'mossBoulder', x: -24.4, z: 23.0, rotY: 0.73, scale: 1.34 },
       { asset: 'treeStump', x: 7.2, z: 18.4, rotY: 6.18, scale: 1.14 },
@@ -87601,10 +87602,11 @@ window.WH_CONFIG = {
       { asset: 'treeStump', x: -11.1, z: -44.1, rotY: 3.43, scale: 1.04 },
       { asset: 'treeStump', x: 13.0, z: -55.5, rotY: 5.02, scale: 1.23 },
       { asset: 'treeStump', x: -25.4, z: -46.9, rotY: 1.05, scale: 1.24 },
-      { asset: 'cemeteryGate', x: 25.8, z: -42.0, rotY: 0.3, scale: 1.53 },
-      { asset: 'cemeteryGate', x: 20.1, z: -50.4, rotY: 1.2, scale: 1.71 },
-      { asset: 'picketFence', x: 22.1, z: -53.0, rotY: 1.57, scale: 1.46 },
-      { asset: 'picketFence', x: -27.4, z: -51.6, rotY: 2.2, scale: 1.29 },
+      // CC-C13b fence/gate normalization: one scale per asset (gate 1.62, picket 1.40), rotY re-seated per run; x/z unchanged
+      { asset: 'cemeteryGate', x: 25.8, z: -42.0, rotY: 0.0, scale: 1.62 },
+      { asset: 'cemeteryGate', x: 20.1, z: -50.4, rotY: 0.0, scale: 1.62 },
+      { asset: 'picketFence', x: 22.1, z: -53.0, rotY: 1.57, scale: 1.40 },
+      { asset: 'picketFence', x: -27.4, z: -51.6, rotY: 1.57, scale: 1.40 },
       { asset: 'gravestoneObelisk', x: 13.1, z: -41.5, rotY: 3.73, scale: 1.38 },
       { asset: 'gravestoneObelisk', x: 20.1, z: -40.0, rotY: 0.14, scale: 1.38 },
       { asset: 'stoneCrossTilted', x: -13.5, z: -36.6, rotY: 5.5, scale: 1.22 },
@@ -88090,13 +88092,8 @@ window.WH_CONFIG = {
       // ring's south junction - stands in for b3-waymarker (its only manifest key,
       // lanternWaymarker, carries a lightSockets row: a prop row would light the fork)
       { asset: 'mossBoulder',      x: -6.5, z: -326.0, rotY: 1.57, scale: 2.40 },
-      // CC-C12 DEN TRAIL SIGNAGE (Nicko 2026-10-20): lit waymarkers beside the
-      // denTrail line (props auto-light via CONFIG.lightSockets.lanternWaymarker).
-      // #1 at the fork (east side of the spine branch), #2 mid-trail, #3 at the
-      // doorway approach. All PROPOSED, Nicko tunes.
-      { asset: 'lanternWaymarker', x: 8.0,   z: -217.5, rotY: 2.03, scale: 2.8 },
-      { asset: 'lanternWaymarker', x: -93.5, z: -224.8, rotY: 2.03, scale: 2.8 },
-      { asset: 'lanternWaymarker', x: -131.5, z: -227.8, rotY: 2.6, scale: 2.8 },
+      // CC-C15 (Nicko 2026-10-20): the 3 CC-C12 den-trail lanternWaymarker
+      // sign rows are REMOVED (den relocated to the SW rim; no trail signs).
       // CC-C4b SCREE FOOT (R-62.8): 12 rockfall boulders at the ring's foot (local
       // r 225-240, seat slope <= 22 deg over the footprint, no ridge under them):
       // one flanking each side of the N/E/W notch mouths (lat 14-23 m) + 6 spread
@@ -88161,54 +88158,63 @@ window.WH_CONFIG = {
       // the outcrop's 21.6k-tri boulders + 20.6k gates leave C's 2M ledger
       // beyond 120 m instead of 170 m. Site: nearest trunk row (yew -117.3,
       // -227.3) 20.5 m from the centre. All PROPOSED, Nicko tunes.
-      // -- outcrop wall core: 5 vinestone segments (2 facade, recess sides + back)
-      { asset: 'whWallA', x: -145.2, z: -219.0, rotY: 3.79, scale: 5.27, sy: 19.48, sz: 2.00, y: -0.4, wall: 6, cullM: 120 },
-      { asset: 'whWallB', x: -133.4, z: -227.8, rotY: 3.79, scale: 5.27, sy: 19.26, sz: 2.00, y: -0.4, wall: 6, cullM: 120 },
-      { asset: 'whWallA', x: -140.0, z: -219.7, rotY: 5.36, scale: 2.95, sy: 16.88, sz: 2.00, y: -0.4, wall: 3, cullM: 120 },
-      { asset: 'whWallB', x: -135.6, z: -223.1, rotY: 5.36, scale: 2.95, sy: 16.69, sz: 2.00, y: -0.4, wall: 3, cullM: 120 },
-      { asset: 'whWallA', x: -136.2, z: -219.3, rotY: 3.79, scale: 3.37, sy: 16.88, sz: 2.00, y: -0.4, wall: 4, cullM: 120 },
-      // -- doorway: ONE m1 gate leaf (the west, scale 5.2) on the 4.6 m opening;
-      //    CC-C8 TRIM cut the east leaf (20.6k tris) - 2 bramble re-dress it below
-      { asset: 'cemeteryGate',     x: -146.0, z: -220.3, rotY: 3.91, scale: 5.20, cullM: 120 },
-      // -- lintel mass over the opening (raised 7 m; noCollide keeps the lane open)
-      { asset: 'mossBoulder',      x: -139.8, z: -224.1, rotY: 4.19, scale: 1.60, y: 7.0, noCollide: true, cullM: 120 },
-      // -- horseshoe: 1 mossBoulder (the mouth feature rock); CC-C8 TRIM 2 cut the
-      //    other 6 (m9 21.6k tris each) - 2 mossBoulder (lintel + mouth), 1 gate leaf
-      { asset: 'mossBoulder',      x: -133.0, z: -215.0, rotY: 0.20, scale: 1.40, cullM: 120 },
-      // -- the blackened face: 8 bramble (2 on the cut east leaf's side) + 4 rot egg sacs (graveMound 1.1, rot tint) at the mouth
-      { asset: 'bramble',          x: -143.8, z: -223.7, rotY: 3.79, scale: 1.80, cullM: 120 },
-      { asset: 'bramble',          x: -138.2, z: -227.6, rotY: 5.09, scale: 2.10, cullM: 120 },
-      { asset: 'bramble',          x: -146.0, z: -224.2, rotY: 0.10, scale: 1.40, cullM: 120 },
-      { asset: 'bramble',          x: -138.4, z: -230.2, rotY: 1.40, scale: 2.40, cullM: 120 },
-      { asset: 'bramble',          x: -144.6, z: -227.3, rotY: 2.70, scale: 1.60, cullM: 120 },
-      { asset: 'bramble',          x: -141.8, z: -230.4, rotY: 4.00, scale: 1.50, cullM: 120 },
-      { asset: 'bramble',          x: -135.2, z: -227.0, rotY: 3.67, scale: 2.00, cullM: 120 },
-      { asset: 'bramble',          x: -133.6, z: -226.2, rotY: 5.30, scale: 1.60, cullM: 120 },
-      { asset: 'graveMound',       x: -146.4, z: -226.9, rotY: 3.79, scale: 1.10, tint: 0x6f7a4a, cullM: 120 },
-      { asset: 'graveMound',       x: -139.9, z: -230.8, rotY: 5.89, scale: 1.10, tint: 0x6f7a4a, cullM: 120 },
-      { asset: 'graveMound',       x: -146.2, z: -222.6, rotY: 1.70, scale: 1.10, tint: 0x6f7a4a, cullM: 120 },
-      { asset: 'graveMound',       x: -139.1, z: -233.4, rotY: 3.80, scale: 1.10, tint: 0x6f7a4a, cullM: 120 }
+      // -- CC-C15 SW RELOCATION (Nicko 2026-10-20): the whole outcrop moved to
+      //    the rim-mountain foot, SW quadrant (outcrop centre (-168.3, -197.7),
+      //    bearing 225 r 238; den centre (-181.0, -185.0), r 256). Rows = the
+      //    shipped CC-C8 TRIM block rigidly transformed (translate to the new
+      //    opening + rotate by the new FACE 1.71). Same tri set = ledger flat.
+      { asset: 'whWallA', x: -175.9, z: -200.3, rotY: 5.50, scale: 5.27, sy: 19.48, sz: 2.00, y: -0.4, wall: 6, cullM: 120 },
+      { asset: 'whWallB', x: -168.8, z: -187.4, rotY: 5.50, scale: 5.27, sy: 19.26, sz: 2.00, y: -0.4, wall: 6, cullM: 120 },
+      { asset: 'whWallA', x: -175.9, z: -195.1, rotY: 0.78, scale: 2.95, sy: 16.88, sz: 2.00, y: -0.4, wall: 3, cullM: 120 },
+      { asset: 'whWallB', x: -173.1, z: -190.2, rotY: 0.78, scale: 2.95, sy: 16.69, sz: 2.00, y: -0.4, wall: 3, cullM: 120 },
+      { asset: 'whWallA', x: -176.8, z: -191.3, rotY: 5.50, scale: 3.37, sy: 16.88, sz: 2.00, y: -0.4, wall: 4, cullM: 120 },
+      { asset: 'cemeteryGate',     x: -174.5, z: -200.9, rotY: 5.62, scale: 5.20, cullM: 120 },
+      { asset: 'mossBoulder',      x: -171.6, z: -194.3, rotY: 5.90, scale: 1.60, y: 7.0, noCollide: true, cullM: 120 },
+      { asset: 'mossBoulder',      x: -181.5, z: -188.8, rotY: 1.91, scale: 1.40, cullM: 120 },
+      { asset: 'bramble',          x: -171.4, z: -198.3, rotY: 5.50, scale: 1.80, cullM: 120 },
+      { asset: 'bramble',          x: -168.3, z: -192.2, rotY: 0.51, scale: 2.10, cullM: 120 },
+      { asset: 'bramble',          x: -170.6, z: -200.4, rotY: 1.81, scale: 1.40, cullM: 120 },
+      { asset: 'bramble',          x: -165.7, z: -192.0, rotY: 3.11, scale: 2.40, cullM: 120 },
+      { asset: 'bramble',          x: -167.7, z: -198.6, rotY: 4.41, scale: 1.60, cullM: 120 },
+      { asset: 'bramble',          x: -165.1, z: -195.4, rotY: 5.71, scale: 1.50, cullM: 120 },
+      { asset: 'bramble',          x: -169.3, z: -189.3, rotY: 5.38, scale: 2.00, cullM: 120 },
+      { asset: 'bramble',          x: -170.3, z: -187.8, rotY: 0.72, scale: 1.60, cullM: 120 },
+      { asset: 'graveMound',       x: -167.9, z: -200.4, rotY: 5.50, scale: 1.10, tint: 0x6f7a4a, cullM: 120 },
+      { asset: 'graveMound',       x: -164.9, z: -193.4, rotY: 1.31, scale: 1.10, tint: 0x6f7a4a, cullM: 120 },
+      { asset: 'graveMound',       x: -172.2, z: -200.8, rotY: 3.41, scale: 1.10, tint: 0x6f7a4a, cullM: 120 },
+      { asset: 'graveMound',       x: -162.5, z: -192.3, rotY: 5.51, scale: 1.10, tint: 0x6f7a4a, cullM: 120 },
+      // CC-C13b stone-ruin clusters (existing assets; probed scratch/cc13b_probe.cjs): C1 north of the old den approach, C2 west of the spawn glade
+      { asset: 'churchArchway',        x: -101.0, z: -207.0, rotY: 2.6, scale: 1.7 },
+      { asset: 'churchCornerButtress', x: -104.5, z: -205.0, rotY: 1.2, scale: 1.5 },
+      { asset: 'stoneSteps',           x: -100.5, z: -210.5, rotY: 0.4, scale: 1.1 },
+      { asset: 'rubblePile',           x: -98.5,  z: -203.5, rotY: 2.9, scale: 1.2 },
+      { asset: 'mossBoulder',          x: -104.0, z: -210.0, rotY: 4.1, scale: 1.05 },
+      { asset: 'rubblePile',           x: -31.0,  z: -139.0, rotY: 0.8, scale: 1.4 },
+      { asset: 'churchCornerButtress', x: -33.0,  z: -143.5, rotY: 2.2, scale: 1.4 },
+      { asset: 'mossBoulder',          x: -29.0,  z: -144.0, rotY: 5.0, scale: 1.0 },
+      { asset: 'stoneCrossTilted',     x: -26.5,  z: -146.5, rotY: 3.0, scale: 1.55 }
     ],
     // CC-C8 ROT MOTHER'S DOORWAY dressing (sec 1-2; region-manager buildRegion
     // -> WH_Enemy.buildRotStains). The CC-C7 pool / light / fog rows MOVED into
     // the den (CONFIG.regionD.rotLair). What stays outside: a SECOND rot pool
     // (the C7 pool params, radius 5, darker) at the mouth + a 3-blob stain
-    // trail stepping from the mouth toward the old glade edge (r 1.8 / 1.4 /
-    // 1.0, bent around the treeStump row at (-156.7, -245.8)); NO light. The
+    // trail stepping from the mouth toward the map interior. NO light. The
     // doorway void = a black card in the recess (reads as the den's dark).
     // enter = the E-to-enter interact (game.js tryDenDoor; region-defs C<->D
     // door.interact): prompt within interactM of the opening centre.
     // All PROPOSED, Nicko tunes.
+    // CC-C15: stains/void moved with the outcrop (mouth pool at the SW
+    // opening; the trail steps SE away from the doorway into the forest).
     rotLair: {
       stains: [
-        { x: -141.7, z: -226.6, radius: 5.0 },     // mouth pool
-        { x: -152.2, z: -235.6, radius: 1.8 },     // trail (mouth -> glade edge (-167.8, -261.4))
-        { x: -161.1, z: -242.4, radius: 1.4 },
-        { x: -165.1, z: -252.8, radius: 1.0 }
+        { x: -168.8, z: -195.8, radius: 5.0 },     // mouth pool
+        { x: -158.5, z: -205.0, radius: 1.8 },     // trail
+        { x: -150.5, z: -212.9, radius: 1.4 },
+        { x: -139.7, z: -215.4, radius: 1.0 },
       ],
       pool: { segments: 28, rings: 4, lift: 0.08,
         color: 0x141c10, color2: 0x222d15, speck: 0x3d4c22, textureSeed: 20261013, edgeFeather: 0.3 },
-      void: { x: -136.7, z: -219.9, rotY: 3.79, width: 4.6, height: 9.0, color: 0x000000 },
+      void: { x: -176.2, z: -191.8, rotY: 5.50, width: 4.6, height: 9.0, color: 0x000000 },
       cullM: 120                      // stains + void hide past this from the player (the outcrop rows' band)
     }
   },
@@ -88227,14 +88233,14 @@ window.WH_CONFIG = {
   regionD: {
     id: 'rot_den',
     name: "The Rot Mother's Den",
-    center: { x: -175, z: -271 },     // = the CC-C7 nest (C-local (-175, +95))
+    center: { x: -181, z: -185 },     // CC-C15 SW relocation (bearing 225, r 256 from C center)     // = the CC-C7 nest (C-local (-175, +95))
     groundRadius: 34,
     groundY: 0,                       // flat disc (C is hidden while D is active: no z-fight)
     groundColor: 0x12160e,            // wet black loam
     groundColor2: 0x1d2414,           // rot-moss secondary
     groundSeed: 1662061218,
     scatter: false,                   // hand rows only (no Round E scatter in the den)
-    spawn: { x: -175, z: -291 },      // inside the mouth (a death here without a camp)
+    spawn: { x: -181, z: -205 },                      // CC-C15      // inside the mouth (a death here without a camp)
     gravityY: -22,
     // sec 4 DARKNESS: d95 = sqrt(-ln 0.05) / 0.12 = 14.4 m (the far wall is a
     // black thought); the hemi fill = hemiBaseIntensity x 0.06. The always-
@@ -88251,16 +88257,16 @@ window.WH_CONFIG = {
     // (the death overlay element, non-lethal): fadeIn before the E cross,
     // fadeOut after either cross (E: 0.3 + 0.5 = 0.8; walk-out: 0 + 0.8).
     door: {
-      planeZ: -295.6,
-      doorX: -175,
+      planeZ: -209.6,                      // CC-C15 (den mouth plane)
+      doorX: -181.0,                      // CC-C15
       doorHalfWidth: 3.0,             // the 4.6 m gap's walkable lane between the ring's end colliders is +-2.65: every way out crosses
       suspendDepthM: 0,
       wallGapPadM: 0,
       interactM: 3.5,
-      interactAt: { x: -139.6, z: -223.8 },     // the outcrop opening centre (C)
+      interactAt: { x: -171.9, z: -194.1 },   // CC-C15: the SW outcrop opening centre (C)     // the outcrop opening centre (C)
       land: {
-        forest_of_the_old_king: { x: -142.6, z: -227.8, faceX: -148.0, faceZ: -235.0 },
-        rot_den: { x: -175.0, z: -292.6, faceX: -175.0, faceZ: -265.0 }
+        forest_of_the_old_king: { x: -171.9, z: -194.1, faceX: -168.3, faceZ: -207.7 },
+        rot_den: { x: -181.0, z: -212.6, faceX: -181.0, faceZ: -195.0 }
       },
       fadeIn: 0.3,
       fadeOut: 0.5,
@@ -88273,7 +88279,7 @@ window.WH_CONFIG = {
     // append after her at runtime. Position = CONFIG.enemy.rotmother.lair
     // (den-local (0, +6)) in world coords.
     lairs: [
-      { type: 'rotmother', x: -175.0, z: -265.0 }
+      { type: 'rotmother', x: -181.0, z: -191.0 }
     ],
     // DEN BUILD (sec 3; scratch/cc-c8/gen_den.py). Flat ground: every row sits
     // at y 0 (+ its sink). Cavern = 10 vinestone ring segments r 24 (per-axis:
@@ -88284,16 +88290,16 @@ window.WH_CONFIG = {
     // sacs (moved INSIDE from the open lair).
     props: [
       // -- cavern ring: 10 segments, exit gap between the first and the last
-      { asset: 'whWallA', x: -165.1, z: -292.9, rotY: 5.86, scale: 7.84, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
-      { asset: 'whWallB', x: -154.5, z: -283.4, rotY: 5.26, scale: 7.84, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
-      { asset: 'whWallA', x: -151.0, z: -269.5, rotY: 4.65, scale: 7.84, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
-      { asset: 'whWallB', x: -156.1, z: -256.2, rotY: 4.05, scale: 7.84, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
-      { asset: 'whWallA', x: -167.9, z: -248.1, rotY: 3.44, scale: 7.84, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
-      { asset: 'whWallB', x: -182.1, z: -248.1, rotY: 2.84, scale: 7.84, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
-      { asset: 'whWallA', x: -193.9, z: -256.2, rotY: 2.24, scale: 7.84, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
-      { asset: 'whWallB', x: -199.0, z: -269.5, rotY: 1.63, scale: 7.84, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
-      { asset: 'whWallA', x: -195.5, z: -283.4, rotY: 1.03, scale: 7.84, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
-      { asset: 'whWallB', x: -184.9, z: -292.9, rotY: 0.42, scale: 7.84, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: -171.1, z: -206.9, rotY: 5.86, scale: 7.84, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: -160.5, z: -197.4, rotY: 5.26, scale: 7.84, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: -157.0, z: -183.5, rotY: 4.65, scale: 7.84, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: -162.1, z: -170.2, rotY: 4.05, scale: 7.84, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: -173.9, z: -162.1, rotY: 3.44, scale: 7.84, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: -188.1, z: -162.1, rotY: 2.84, scale: 7.84, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: -199.9, z: -170.2, rotY: 2.24, scale: 7.84, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: -205.0, z: -183.5, rotY: 1.63, scale: 7.84, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: -201.5, z: -197.4, rotY: 1.03, scale: 7.84, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: -190.9, z: -206.9, rotY: 0.42, scale: 7.84, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
       // -- 4 mossBoulder shoulders at the wall foot (r 20.5-21.5), clear of the mouth
       //    (CC-C8 TRIM 2: kept the 2 gap flankers, the 2.30 row + the nest-adjacent 1.80; 5 cut)
       { asset: 'mossBoulder',      x: -163.1, z: -287.7, rotY: 0.00, scale: 1.60 },
@@ -88468,24 +88474,10 @@ window.WH_CONFIG = {
     { id: 'westNotch', regionId: 'forest_of_the_old_king',
       points: [[-240, -366], [-270, -366]],
       halfWidth: 2.2, swayAmp: 0,
-      lift: 0.14, tileLengthMeters: 3.0, repeatAcrossWidth: 1, textureSeed: 20261008 },
-    // CC-C12 (Nicko 2026-10-20): TEMPORARY findable trail to the rot mother's
-    // den - branches off the King's Road spine at (4, -215) and runs NW to the
-    // outcrop mouth (-139.6, -223.8), ending 14 m short of the wall rows (the
-    // doorway IS the destination). Route probed offline: <= 12 m from every
-    // prop row on the corridor, west/north wolf loops 120+/295+ m away.
-    // Signage: 2 lit lanternWaymarkers beside the line (the manifest key's
-    // lightSockets row lights them - visible markers at dusk/night when the
-    // den must be found by dark). TEMPORARY: the Astrabot area-dressing pass
-    // (CC-C13) may replace/re-route this when the first-quest farm ships.
-    { id: 'denTrail', regionId: 'forest_of_the_old_king',
-      points: [[4, -215], [-20, -218], [-45, -220], [-70, -221], [-95, -221], [-115, -222], [-126, -223]],
-      halfWidth: 1.8, swayAmp: 3, swayPeriod: 60, swayRampM: 18,
-      lift: 0.12, tileLengthMeters: 3.0, repeatAcrossWidth: 1, textureSeed: 20261020 },
-    { id: 'denTrailNotch', regionId: 'forest_of_the_old_king',   // bed over the doorway lip
-      points: [[-126, -223], [-136, -223.4]],
-      halfWidth: 1.8, swayAmp: 0,
-      lift: 0.12, tileLengthMeters: 3.0, repeatAcrossWidth: 1, textureSeed: 20261020 }
+      lift: 0.14, tileLengthMeters: 3.0, repeatAcrossWidth: 1, textureSeed: 20261008 }
+    // CC-C15 (Nicko 2026-10-20): the temporary denTrail + denTrailNotch rows
+    // are REMOVED - the den is relocated to the SW rim mountain foot and the
+    // Old King's Roads are once again the only roads (CC-C4a geometry intact).
   ],
 
   // Boundary between A and B: the plane z = CONFIG.boundary.z.
@@ -103549,28 +103541,78 @@ window.WH_ICONS = {
     'background:rgba(0,0,0,0.75);color:#9fe89f;font:11px/1.5 monospace;' +
     'padding:6px 9px;border:1px solid #3a5a3a;white-space:pre;pointer-events:none;';
   document.getElementById('wh-hud').appendChild(el);
+  // CC-C13b: every helper below is read-only and guarded (the chip never throws)
+  function actW(act) {
+    try { return act && act.isRunning && act.isRunning() ? act.getEffectiveWeight() : 0; } catch (err) { return 0; }
+  }
+  function wOf(a, key) {
+    var act = a && a.mixer && a.actions ? a.actions[key] : null;
+    return act ? actW(act).toFixed(2) : '?';
+  }
+  function top2(a) {
+    var acts = a && a.actions ? a.actions : {}, rows = [];
+    Object.keys(acts).forEach(function (k) {
+      var w = actW(acts[k]);
+      if (w >= 0.01) rows.push({ k: k.replace(/^WH_Wolf_/, ''), w: w });
+    });
+    rows.sort(function (p, q) { return q.w - p.w; });
+    return rows.length ? rows.slice(0, 2).map(function (r) { return r.k + ':' + r.w.toFixed(2); }).join('/') : 'none';
+  }
+  function standIn(e) {
+    var hit = null;
+    try {
+      if (e.body && e.body.traverse) {
+        e.body.traverse(function (o) { if (!hit && o && /standin/i.test(o.name || '')) hit = o.name; });
+      }
+    } catch (err) { hit = null; }
+    return hit;
+  }
+  function clipCount() {
+    try {
+      var A = window.WH_ASSETS, cfg = window.WH_CONFIG;
+      var name = (cfg && cfg.assets && cfg.assets.bodyByType && cfg.assets.bodyByType.wolf) || 'wolfBody';
+      var c = A && A.getClips ? A.getClips(name) : [];
+      return c && c.length != null ? c.length : 0;
+    } catch (err) { return 0; }
+  }
+  function tailLines(e, n) {
+    var si = standIn(e);
+    var out = ['  CLIPS=' + n + (n === 0 ? ' (0 CLIPS = LATE-SWAP/STAND-IN BUG)' : '') +
+      ' rigid=' + (e.rigidAnim ? 'yes' : 'no') + ' standin=' + (si ? 'y' : 'n')];
+    if (si) out.push('  STAND-IN IN PLAY: ' + si);
+    return out;
+  }
   function snap() {
     var g = window.WH_GAME;
     if (!g || !g.regionManager) { el.textContent = 'whdbg: waiting for game...'; return; }
     var rm = g.regionManager;
     var lines = ['WH WOLF DBG'];
     var regions = Object.keys(rm.enemies || {});
-    var found = 0;
+    var found = 0, nClips = clipCount();
     for (var r = 0; r < regions.length && found < 2; r++) {
-      var list = rm.enemies[regions[r]];
+      var list = rm.enemies[regions[r]] || [];
       for (var i = 0; i < list.length && found < 2; i++) {
         var e = list[i];
-        if (e.type !== 'wolf' || e.fsm === 'dead') continue;
+        if (!e || e.type !== 'wolf' || e.fsm === 'dead') continue;
         found++;
         var a = e.anim;
-        if (!a) { lines.push('wolf#' + i + ' NO ANIM OBJ (stand-in or late-swap bug - capture this!)'); continue; }
-        var st = a.getState ? a.getState() : {};
+        if (!a) {
+          lines.push('wolf#' + i + ' NO ANIM OBJ (stand-in or late-swap bug - capture this!)');
+          lines.push.apply(lines, tailLines(e, nClips));
+          continue;
+        }
+        var st = {};
+        try { st = (a.getState ? a.getState() : {}) || {}; } catch (err) { st = {}; }
         var wlk = st.weights && st.weights.WH_Wolf_Walk != null ? st.weights.WH_Wolf_Walk.toFixed(2) : '?';
         var idl = st.weights && st.weights.WH_Wolf_Idle != null ? st.weights.WH_Wolf_Idle.toFixed(2) : '?';
+        var mts = a.mixer && typeof a.mixer.timeScale === 'number' ? a.mixer.timeScale.toFixed(2) : '?';
         lines.push('wolf#' + i + ' fsm=' + e.fsm + ' spd=' + (e.animMoveSpeed || 0).toFixed(1) +
-          ' clip=' + (st.clip || '?') + ' ts=' + (st.timeScale || 0).toFixed(2) +
-          ' W(walk)=' + wlk + ' W(idle)=' + idl +
-          ' loco=' + (st.locomotion || '?') + ' t=' + (st.time || 0).toFixed(2) + '/' + '?');
+          ' clip=' + (st.clip || '?') + ' ts=' + (st.timeScale || 0).toFixed(2) + ' mts=' + mts +
+          ' W(walk)=' + wlk + ' W(idle)=' + idl);
+        lines.push('  W(Hit)=' + wOf(a, 'WH_Wolf_Hit') + ' W(Death)=' + wOf(a, 'WH_Wolf_Death') +
+          ' loco=' + (st.locomotion || '?') + ' t=' + (st.time || 0).toFixed(2) + '/' + '?' +
+          ' top=' + top2(a));
+        lines.push.apply(lines, tailLines(e, nClips));
       }
     }
     if (!found) lines.push('no live wolves in loaded regions (walk to a pack)');
