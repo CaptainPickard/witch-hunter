@@ -2726,6 +2726,8 @@ window.WH_CONFIG.camp = {
     cancel: 'Cancel',
     savedToast: 'Respawn point set',
     restedToast: 'You wake at dawn - Day {day}',
+    // CC-C11 (Nicko ruling 2026-10-20): Save and Heal refused before dusk/night
+    sleepGate: 'Cannot sleep, it is not yet Dusk/Night.',
     placingToast: 'Choose open ground - click / E to camp, Esc / CAMP to cancel',
     placedToast: 'Camp set up',
     refuseToast: 'No room to camp here - {why}',

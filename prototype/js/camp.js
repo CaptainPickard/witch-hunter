@@ -312,9 +312,17 @@
   // C3.1 WAKE-SNAP: prepareWake() pre-warms the dawn pano while the screen
   // is black; the rest rolls to HELD dawn (daynight wakeBlendSec) and the
   // wake pano hard-commits behind the fade - you open your eyes at dawn.
+  // CC-C11 (Nicko ruling 2026-10-20): sleep = dusk or night ONLY (dormant
+  // first rest included - beginCycle is called ONLY here, tutorial law).
+  // Before that: refusal toast, menu stays open, nothing else runs.
   Camp.prototype.saveAndHeal = function () {
     var c = this.menuCamp;
     if (!c || this.resting) return;
+    var dn = this.dayNight;
+    if (!dn.dormant && dn.phase !== 'dusk' && dn.phase !== 'night') {
+      this.toast(K.text.sleepGate);
+      return;
+    }
     var self = this, ms = K.sleepFadeSec * 1000;
     // C4.1 (IO amend, doc 35 law "camps save on completion"): the profile
     // write moved to AFTER rest() - the checkpoint is the WAKE state
