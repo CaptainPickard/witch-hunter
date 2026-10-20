@@ -919,6 +919,13 @@ window.WH_CONFIG = {
       // ring's south junction - stands in for b3-waymarker (its only manifest key,
       // lanternWaymarker, carries a lightSockets row: a prop row would light the fork)
       { asset: 'mossBoulder',      x: -6.5, z: -326.0, rotY: 1.57, scale: 2.40 },
+      // CC-C12 DEN TRAIL SIGNAGE (Nicko 2026-10-20): lit waymarkers beside the
+      // denTrail line (props auto-light via CONFIG.lightSockets.lanternWaymarker).
+      // #1 at the fork (east side of the spine branch), #2 mid-trail, #3 at the
+      // doorway approach. All PROPOSED, Nicko tunes.
+      { asset: 'lanternWaymarker', x: 8.0,   z: -217.5, rotY: 2.03, scale: 2.8 },
+      { asset: 'lanternWaymarker', x: -93.5, z: -224.8, rotY: 2.03, scale: 2.8 },
+      { asset: 'lanternWaymarker', x: -131.5, z: -227.8, rotY: 2.6, scale: 2.8 },
       // CC-C4b SCREE FOOT (R-62.8): 12 rockfall boulders at the ring's foot (local
       // r 225-240, seat slope <= 22 deg over the footprint, no ridge under them):
       // one flanking each side of the N/E/W notch mouths (lat 14-23 m) + 6 spread
@@ -1290,7 +1297,24 @@ window.WH_CONFIG = {
     { id: 'westNotch', regionId: 'forest_of_the_old_king',
       points: [[-240, -366], [-270, -366]],
       halfWidth: 2.2, swayAmp: 0,
-      lift: 0.14, tileLengthMeters: 3.0, repeatAcrossWidth: 1, textureSeed: 20261008 }
+      lift: 0.14, tileLengthMeters: 3.0, repeatAcrossWidth: 1, textureSeed: 20261008 },
+    // CC-C12 (Nicko 2026-10-20): TEMPORARY findable trail to the rot mother's
+    // den - branches off the King's Road spine at (4, -215) and runs NW to the
+    // outcrop mouth (-139.6, -223.8), ending 14 m short of the wall rows (the
+    // doorway IS the destination). Route probed offline: <= 12 m from every
+    // prop row on the corridor, west/north wolf loops 120+/295+ m away.
+    // Signage: 2 lit lanternWaymarkers beside the line (the manifest key's
+    // lightSockets row lights them - visible markers at dusk/night when the
+    // den must be found by dark). TEMPORARY: the Astrabot area-dressing pass
+    // (CC-C13) may replace/re-route this when the first-quest farm ships.
+    { id: 'denTrail', regionId: 'forest_of_the_old_king',
+      points: [[4, -215], [-20, -218], [-45, -220], [-70, -221], [-95, -221], [-115, -222], [-126, -223]],
+      halfWidth: 1.8, swayAmp: 3, swayPeriod: 60, swayRampM: 18,
+      lift: 0.12, tileLengthMeters: 3.0, repeatAcrossWidth: 1, textureSeed: 20261020 },
+    { id: 'denTrailNotch', regionId: 'forest_of_the_old_king',   // bed over the doorway lip
+      points: [[-126, -223], [-136, -223.4]],
+      halfWidth: 1.8, swayAmp: 0,
+      lift: 0.12, tileLengthMeters: 3.0, repeatAcrossWidth: 1, textureSeed: 20261020 }
   ],
 
   // Boundary between A and B: the plane z = CONFIG.boundary.z.
