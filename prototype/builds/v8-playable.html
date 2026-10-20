@@ -89743,14 +89743,21 @@ window.WH_CONFIG.cooking = {
   // CONFIG.camp.modules.fire). 'campfire' = an atmospheric bandit fire: lit
   // exactly while the clock phase is 'night' (dormant clock = out), never
   // cookable, never refuels, no fuel burn (startLit / fuel stay inert); E
-  // = text.promptCampfire + text.campfireToast only. Future designated cook
-  // stations ride 'cookFire'.
+  // = text.promptCampfire + text.campfireToast only. CC-C9 (Nicko ruling
+  // 2026-10-20): the Region B STARTING bandit fire is NOT an atmospheric
+  // campfire - CC-C6C was over-applied there; the C3 world-camp ruling kept
+  // it the tutorial's DESIGNATED cooking station, so it rides 'cookFire'
+  // again. Future designated cook stations also ride 'cookFire'.
   stations: [
-    // Region B bandit campfire (prop banditCampfire x 2.5, z -52)
-    { id: 'banditFire', kind: 'campfire', regionId: 'darkwood_edge',
+    // Region B bandit campfire (prop banditCampfire x 2.5, z -52). CC-C9
+    // (Nicko ruling 2026-10-20): this is the ONE bandit fire that cooks - the
+    // tutorial's designated cooking station (C3 world-camp ruling) beside the
+    // tent; cooking here teaches the first recipe and arms the CAMP kit.
+    { id: 'banditFire', kind: 'cookFire', regionId: 'darkwood_edge',
       asset: 'banditCampfire', x: 2.5, z: -52, startLit: true },
     // CC-C6 Region C bandit camp fires (props banditCampfire at these exact
-    // x/z: socketIntensity matches station <-> prop within 0.01 m)
+    // x/z: socketIntensity matches station <-> prop within 0.01 m). CC-C6C
+    // night-only atmospheric holds for THESE (not for the tutorial fire).
     { id: 'banditFireA', kind: 'campfire', regionId: 'forest_of_the_old_king',
       asset: 'banditCampfire', x: -60.0, z: -186.0, startLit: true },    // L4 Alpha
     { id: 'banditFireB', kind: 'campfire', regionId: 'forest_of_the_old_king',
