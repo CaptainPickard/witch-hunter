@@ -193,6 +193,13 @@
 
   // ---- HUD -------------------------------------------------------------------
 
+  // CC-C10: the findDaughter quest line shows only while the quest is active
+  function updateQuestLine() {
+    var on = !!window.WH_NPC && window.WH_NPC.questState() === 'active';   // findDaughter === 'active'
+    var el = game.hud.questLine;
+    if (el.style.opacity !== (on ? '1' : '0')) el.style.opacity = on ? '1' : '0';
+  }
+
   function setupHud() {
     game.hud = {
       hpBar: document.getElementById('wh-hp-bar'),
@@ -205,6 +212,16 @@
       loadNote: document.getElementById('wh-load-note'),
       reticle: document.getElementById('wh-lock-reticle')
     };
+    // CC-C10 quest line: one line under #wh-gate-hint (bottom 18%), its own
+    // element (setGateHint owns the hint's text); shown by updateQuestLine
+    var questLine = document.createElement('div');
+    questLine.id = 'wh-quest-line';
+    questLine.textContent = CFG.regionC.quest.hudText;
+    questLine.style.cssText = 'position:absolute;bottom:calc(18% - 28px);width:100%;text-align:center;' +
+      'font-size:13px;letter-spacing:2px;color:#c9bf9f;text-shadow:0 1px 6px rgba(0,0,0,0.9);' +
+      'opacity:0;transition:opacity 0.4s ease;pointer-events:none;';
+    document.getElementById('wh-hud').appendChild(questLine);
+    game.hud.questLine = questLine;
     // 2026-10-03 boot loading screen: title + REAL progress bar overlay.
     // The bar is the fraction of manifest assets settled (loaded OR
     // stand-in); assets.js fires one tick per asset settle.
@@ -1860,7 +1877,7 @@
     if (game.player.inputSuspended || game.player.state !== 'alive') return false;
     var p = game.player.pos;
     return tryPickup() || lootCorpseNearest(p.x, p.z, CFG.corpseLoot.lootRadius) ||
-      tryCookStation() || tryCampSleep() || tryDenDoor() || tryDoorway() || tryNotch() || tryGather();
+      tryCookStation() || tryCampSleep() || tryDenDoor() || tryDoorway() || tryNotch() || tryTalkNpc() || tryGather();   // CC-C10: + tryTalkNpc
   }
 
   // ---- CC-C8 the Rot Mother's den door (CONFIG.regionD.door) ----------------------
@@ -1953,6 +1970,18 @@
     if (!notchNear()) return false;
     game.inventoryUI.toast(CFG.regionC.notchText.locked);
     return true;
+  }
+
+  // ---- CC-C10 farmer talk (CONFIG.regionC.npc, js/npc.js WH_NPC) -----------------
+  // E / USE within interactM of Farmer Aldric (Region C only) opens his
+  // dialog panel; false when WH_NPC is absent, out of range or not in C.
+  function npcNear() {
+    return !!(window.WH_NPC && window.WH_NPC.talkPrompt());
+  }
+
+  function tryTalkNpc() {
+    if (!npcNear()) return false;
+    return window.WH_NPC.openDialog();
   }
 
   // ---- C1 cooking stations (CONFIG.cooking, js/cooking.js) -----------------------
@@ -2174,6 +2203,8 @@
         text = CFG.regionC.door.text.prompt; // CC-C2: locked B/C door
       } else if (notchNear()) {
         text = CFG.regionC.notchText.prompt; // CC-C4b: rim notch mouth
+      } else if (npcNear()) {
+        text = CFG.regionC.npc.dialog.prompt; // CC-C10: talk to the farmer
       } else {
         var node = nearestGatherNode();
         if (node) text = CFG.gather.promptText.replace('{name}', CFG.gather.nodeTypes[node.type].name);
@@ -2534,6 +2565,8 @@
           restore: function () { window.WH_SAVE.restore(game, window.WH_SAVE.load(game)); }
         }
       });
+      // CC-C10: Farmer Aldric + his dialog panel (js/npc.js; built lazily on the first C visit)
+      if (window.WH_NPC) window.WH_NPC.init(game);
       // C4 boot CONTINUE: with a save the overlay waits for the player's row
       // (CONTINUE = restore the profile, NEW GAME = the fresh flow; the
       // profile is never wiped - the first camp save replaces it). The
@@ -2560,11 +2593,17 @@
     // profile = every nest armed), registered here so save.js stays as is:
     // capture() gains the block, save() writes it next to save.js's own
     // write (same key, same v / ts), restore() hands it to WH_Enemy first.
+    // CC-C10: the quest flags ride a second additive block 'questState'
+    // ({ findDaughter: one of CONFIG.regionC.quest.states }; schema v1, an
+    // older profile / a bad value = 'available'). Holder = js/npc.js WH_NPC
+    // (questState / restoreQuest) - capture, save, restore and the HUD quest
+    // line all read that one state; death never touches it.
     var S = window.WH_SAVE;
     var baseCapture = S.capture, baseSave = S.save, baseRestore = S.restore;
     S.capture = function (g, opts) {
       var data = baseCapture(g, opts);
       data.lairs = window.WH_Enemy.captureLairs();
+      if (window.WH_NPC) data.questState = { findDaughter: window.WH_NPC.questState() };   // CC-C10
       return data;
     };
     S.save = function (g, opts) {
@@ -2573,12 +2612,14 @@
         var stored = JSON.parse(window.localStorage.getItem(CFG.save.lsKey) || 'null');
         if (!stored) return true;
         stored.lairs = window.WH_Enemy.captureLairs();
+        if (window.WH_NPC) stored.questState = { findDaughter: window.WH_NPC.questState() };   // CC-C10
         window.localStorage.setItem(CFG.save.lsKey, JSON.stringify(stored));
       } catch (e) { /* the base profile stands; the nest re-arms on load */ }
       return true;
     };
     S.restore = function (g, data) {
       if (data) window.WH_Enemy.restoreLairs(data.lairs);
+      if (data && window.WH_NPC) window.WH_NPC.restoreQuest(data.questState);   // CC-C10
       baseRestore(g, data);
     };
     // S5 quit persist: tab close / reload writes the same capture() profile,
@@ -3059,6 +3100,8 @@
     // C1: fire burn + cook channel (after combat so this frame's hits interrupt)
     game.cooking.update(dt);
     game.camp.update();   // C3: camp groups per region, placement ghost, menu close on death
+    if (window.WH_NPC) window.WH_NPC.update(dt);   // CC-C10: farmer show/cull, name plate, dialog close on death
+    updateQuestLine();    // CC-C10: HUD quest line (findDaughter active)
     applyBuffStats();   // C1: effective hpMax from active food buffs
     updateHud(dt);
     updateEnemyBars(dt);   // HP1: after the camera update so bars track this frame

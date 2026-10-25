@@ -1,0 +1,28 @@
+PASS surface
+PASS new game state = available
+PASS built in C, seated on footY  3.51
+PASS visible in range
+PASS talkPrompt in range
+PASS talkPrompt out of range = false
+PASS stand-in -> GLB clone swap
+PASS open -> line1
+PASS open suspends input + blocks inventory
+PASS talkPrompt false while open (chain refuses)
+PASS continue -> line2 (quest still available)
+PASS continue -> line3 activates
+PASS continue past line3 = no-op
+PASS close restores input
+PASS re-talk while active = repeat line only
+PASS Esc closes
+PASS death force-closes
+PASS death keeps quest
+PASS region change force-closes + hides
+PASS talkPrompt false outside C
+PASS restore missing block -> available
+PASS restore active
+PASS restore non-object -> available
+PASS restore bad state -> available
+PASS restore complete kept (CC-C11 state)
+PASS complete -> repeat line, no re-activation
+PASS culled past cullM
+DIALOG PROBE PASS

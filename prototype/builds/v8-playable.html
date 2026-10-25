@@ -88255,6 +88255,13 @@ window.WH_CONFIG = {
       { asset: 'okFencePost', x: 141.8, z: -262.2, rotY: 4.72, scale: 1.85, wall: 3, cullM: 120 },
       { asset: 'okFencePost', x: 159.2, z: -262.3, rotY: 4.72, scale: 1.85, wall: 3, cullM: 120 },
       { asset: 'lanternPost', x: 148.2, z: -271.3, rotY: 3.15, scale: 2.535, cullM: 120 },   // CC-C17 farm gate beacon (amber = safety)
+      // CC-C10 FARM BARN (io/missions/2026-10-25-cc-c10-farmer-npc-dialog.md step 5): ONE
+      // ok-farm-barn row behind the cottage. Probe scratch/cc-c10/probe_barn.js (deterministic
+      // 1 m grid scan within 60 m of the cottage, no RNG; nearest gate-clear slot): props 26.1
+      // (cottage), fires 41.5 (camp 95,-236), roads 133.7 (eastRoad), wolf loops 52.1 (ss);
+      // seat span 0.45 m over r 5 (5.2 deg). Scale 5.5 (~10.4 m long, ~7 m tall); rotY faces
+      // the east road (N) like the cottage. cullM 140 (giant row). PROPOSED, Nicko tunes.
+      { asset: 'okFarmBarn', x: 136.5, z: -234.7, rotY: 3.15, scale: 5.50, cullM: 140 },   // CC-C10 farm barn (behind the cottage)
       // CC-C17 RUIN ACCENT (v2 step 3): okRuinArch + 2 okRuinColumn ADDED to the CC-C13b C1
       // cluster (churchArchway -101, -207 rows; kept as-is, no removals). Probe scratch/cc-c17/gen_ruin.py
       // (deterministic slot scan, no RNG): arch on the cluster's WSW side, opening facing the
@@ -88317,6 +88324,47 @@ window.WH_CONFIG = {
         color: 0x141c10, color2: 0x222d15, speck: 0x3d4c22, textureSeed: 20261013, edgeFeather: 0.3 },
       void: { x: -160.4, z: -203.6, rotY: 2.36, width: 4.6, height: 9.0, color: 0x000000 },
       cullM: 120                      // stains + void hide past this from the player (the outcrop rows' band)
+    },
+    // CC-C10 FARMER NPC (io/missions/2026-10-25-cc-c10-farmer-npc-dialog.md; js/npc.js
+    // WH_NPC): one static placeholder body in the CC-C17 homestead yard, seated on the
+    // heightfield (WH_GROUND.footY), shown + talkable only while C is active and the
+    // player is inside cullM. E / touch USE within interactM opens the dialog panel
+    // (game.js interact chain, after tryNotch). Probe scratch/cc-c10/probe_npc.js:
+    // cottage 8.8 m, nearest prop 5.2 m (stonewall W), slope 3.8 deg over 1 m.
+    // Body = the RAW rigged dwarf smith GLB (IO ruling B3b: art-law waiver, placeholder
+    // for Astrabot; bind pose, no mixer). Direction copy = WEST (IO ruling B2: the den
+    // mouth is due west of the farmstead); "the Old King's Barrow" = the Region D den
+    // door (IO ruling B1, lore naming). PROPOSED, Nicko tunes.
+    npc: {
+      asset: 'farmerBody',
+      x: 146.5, z: -264.5,            // PROPOSED, Nicko tunes (yard, W of the well, inside the gate)
+      rotY: 3.15,                     // PROPOSED, Nicko tunes (faces the yard gate / the east road, N)
+      footR: 0.4,                     // footY seat radius (m)
+      bodyHeight: 1.8,                // PROPOSED, Nicko tunes (normalized height, = world.characterHeight)
+      interactM: 3,                   // PROPOSED, Nicko tunes (talk range, m)
+      cullM: 120,                     // PROPOSED, Nicko tunes (hidden past this from the player: the prop band)
+      name: 'Farmer Aldric',
+      labelLiftM: 0.35,               // name plate height above the head (m)
+      labelM: 14,                     // PROPOSED, Nicko tunes (name plate shows within this, m)
+      dialog: {
+        // line1 -> line2 -> line3 on Continue; reaching line3 activates the quest
+        line1: 'Hunter! Thank the old gods. They took my daughter - dragged her off in the night.',
+        line2: 'Into the Old King\'s Barrow, the den in the hillside due west of here. Follow the setting sun past the dead trees.',
+        line3: 'Bring her home. Whatever it costs. I will watch the road for you.',
+        repeat: 'The barrow door, hunter. Bring her home.',
+        cont: 'Continue',
+        close: 'Close',
+        hint: 'Esc close',
+        prompt: 'E - Talk to Farmer Aldric'                    // PROPOSED, Nicko tunes (B9 house style)
+      }
+    },
+    // CC-C10 QUEST SEED: findDaughter. 'active' on the farmer's line 3 (js/npc.js);
+    // 'complete' is CC-C11's job. Rides the additive save block questState
+    // (game.js setupSaveHooks; schema v1, an older profile = 'available').
+    quest: {
+      id: 'findDaughter',
+      states: ['available', 'active', 'complete'],
+      hudText: 'Find the farmer\'s daughter - Old King\'s Barrow (W)'   // PROPOSED, Nicko tunes (B2 / B11)
     }
   },
 
@@ -91267,6 +91315,9 @@ window.WH_ICONS = {
     okFenceCornerV2: 'art-direction/3d/assets/old_king/ok-fence-corner-v2-pixelated.glb',
     okRuinArch: 'art-direction/3d/assets/old_king/ok-ruin-arch-pixelated.glb',
     okRuinColumn: 'art-direction/3d/assets/old_king/ok-ruin-column-pixelated.glb',
+    // CC-C10 (2026-10-25): the farm barn (29,499 tris, 512 NEAREST + 5-bit bake
+    // from CC-C17; one regionC.props row at the homestead, cullM 140).
+    okFarmBarn: 'art-direction/3d/assets/old_king/ok-farm-barn-pixelated.glb',
 
     // characters (whanim1 rigged exports; props below stay rigid)
     // 10-04: rigged copy + WH_SlashR2L/WH_SlashL2R/WH_Thrust chain clips
@@ -91299,6 +91350,11 @@ window.WH_ICONS = {
     // CHARACTERS row (0 clips) - anim.js RIGID_CLIPS placeholders play.
     rotmotherBody: 'art-direction/3d/assets/races/rotmother-pixelated.glb',
     rotspawnBody: 'art-direction/3d/assets/races/rotspawn-pixelated.glb',
+    // CC-C10 (2026-10-25): Farmer Aldric PLACEHOLDER body = the RAW rigged dwarf
+    // smith (28,024 tris, 2048 JPEG texture, 6 WH_* clips unused). IO ruling B3b:
+    // art-law waiver until Astrabot's farmer lands; no CHARACTERS / BODY_PNG row,
+    // static bind pose (js/npc.js clones it with WHSkeletonUtils, no mixer).
+    farmerBody: 'art-direction/3d/assets/races_regen/rigged/dwarf-male-smith.rigged.glb',
 
     // weapons (pixelated)
     longsword: 'art-direction/3d/assets/weapons/longsword-pixelated.glb',
@@ -102645,6 +102701,241 @@ window.WH_ICONS = {
 
 </script>
 <script>
+// Witch Hunter prototype - NPCs (CC-C10, io/missions/2026-10-25-cc-c10-farmer-npc-dialog.md).
+// One villager for now: Farmer Aldric (CONFIG.regionC.npc) in the CC-C17
+// homestead yard, the quest giver of findDaughter (CONFIG.regionC.quest).
+// The farmer = a static placeholder body (the raw rigged dwarf smith GLB,
+// bind pose, no mixer - IO ruling B3b) seated on the heightfield through
+// WH_GROUND.footY, added straight to the scene (camp.js pattern: region
+// dispose never eats it) and shown only while Region C is active and the
+// player is inside npc.cullM. A small DOM name plate floats over his head.
+// Talk = the game.js interact chain (tryTalkNpc, after tryNotch): E / touch
+// USE within npc.interactM opens the DIALOG PANEL (tent-menu pattern: inv-
+// panel + cook-btns, own el() copy, inline overlay style - no style.css).
+// Lines 1 -> 2 -> 3 advance on Continue; reaching line 3 sets the quest
+// 'active' (once); re-talk while active shows only the repeat line. Close /
+// Esc close; death or a region change force-closes. The panel suspends
+// input like the camp menu (player.setInputSuspended + inventoryUI.blocked),
+// so the interact chain refuses E while it is open.
+// QUEST HOLDER: this module owns the findDaughter state (one source of
+// truth); game.js setupSaveHooks captures / restores it (questState block)
+// and drives the HUD quest line from it. Completion = CC-C11.
+// Every player-facing string comes from CONFIG.regionC.npc / .quest.
+// Exposes window.WH_NPC = { init, update, talkPrompt, openDialog,
+// closeDialog, questState, restoreQuest } (game.js owns the calls).
+
+(function () {
+  'use strict';
+
+  var CFG = window.WH_CONFIG;
+  var N = CFG.regionC.npc;
+  var Q = CFG.regionC.quest;
+  var D = N.dialog;
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  var game = null;
+  var root = null;            // scene group at the farmer's seat (built on first C visit)
+  var body = null;            // the body holder inside root
+  var real = false;           // body = the loaded GLB clone (not the stand-in box)
+  var shown = false;
+  var label = null;           // DOM name plate (#wh-hud)
+  var dlg = null;             // dialog DOM refs
+  var dialogOpen = false;
+  var lineIdx = 0;            // 0..2 = line1..line3; -1 = the repeat line
+  var quest = Q.states[0];    // findDaughter state ('available' on a NEW GAME)
+  var _v = null;
+
+  // ---- farmer body ---------------------------------------------------------------
+  // Loaded GLB -> a WHSkeletonUtils clone (bones rebound to the clone; the
+  // manifest key has no CHARACTERS row, so WH_ASSETS.instance would share the
+  // template skeleton). Still in flight / failed -> the WH_ASSETS stand-in box;
+  // update() swaps the real clone in once the asset lands.
+  function makeBody() {
+    var A = window.WH_ASSETS;
+    real = A.isLoaded(N.asset) && !A.isFailed(N.asset);
+    var b = real ? window.WHSkeletonUtils.clone(A.getTemplate(N.asset)) : A.instance(N.asset);
+    b.scale.setScalar(N.bodyHeight / (A.groundHeight(N.asset) || N.bodyHeight));
+    return b;
+  }
+
+  function mountBody() {
+    if (body) root.remove(body);
+    body = makeBody();
+    root.add(body);
+  }
+
+  function build() {
+    var y = window.WH_GROUND ? window.WH_GROUND.footY(CFG.regionC.id, N.x, N.z, N.footR) : 0;
+    root = new THREE.Group();
+    root.name = 'npc-' + N.asset;
+    root.position.set(N.x, y, N.z);
+    root.rotation.y = N.rotY;
+    root.visible = false;
+    game.scene.add(root);
+    mountBody();
+  }
+
+  // ---- DOM: name plate + dialog panel ----------------------------------------------
+  function buildLabel() {
+    label = el('div', null, N.name);
+    label.id = 'wh-npc-label';
+    label.style.cssText = 'position:absolute;display:none;transform:translate(-50%,-100%);' +
+      'font-family:monospace;font-size:12px;letter-spacing:2px;color:#e3dcc4;white-space:nowrap;' +
+      'text-shadow:1px 1px 0 #000,0 0 6px rgba(0,0,0,0.9);pointer-events:none;';
+    document.getElementById('wh-hud').appendChild(label);
+  }
+
+  function buildDialog() {
+    var r = el('div');
+    r.id = 'wh-npc-dialog';
+    // #wh-camp-menu's overlay rules, inline (style.css is ID-scoped there)
+    r.style.cssText = 'position:absolute;inset:0;display:none;align-items:flex-end;' +
+      'justify-content:center;padding-bottom:14%;box-sizing:border-box;' +
+      'background:rgba(5,4,3,0.35);z-index:20;font-family:monospace;color:#d8d2c0;' +
+      'image-rendering:pixelated;user-select:none;';
+    var panel = el('div', 'inv-panel npc-dialog-panel');
+    panel.style.cssText = 'max-width:520px;width:86%;';
+    r.appendChild(panel);
+    panel.appendChild(el('div', 'inv-title', N.name));
+    var line = el('div', 'npc-dialog-line');
+    line.style.cssText = 'margin:12px 4px 14px;font-size:14px;line-height:1.5;text-align:center;color:#d8d2c0;';
+    panel.appendChild(line);
+    var rows = el('div', 'cook-btns npc-dialog-btns');
+    var cont = el('button', 'cook-btn npc-dialog-btn', D.cont);
+    var close = el('button', 'cook-btn npc-dialog-btn', D.close);
+    [cont, close].forEach(function (b) { b.type = 'button'; b.tabIndex = -1; rows.appendChild(b); });
+    cont.addEventListener('click', advance);
+    close.addEventListener('click', closeDialog);
+    panel.appendChild(rows);
+    panel.appendChild(el('div', 'inv-hint', D.hint));
+    document.getElementById('wh-root').appendChild(r);
+    dlg = { root: r, line: line, cont: cont };
+  }
+
+  function showLine() {
+    var last = lineIdx < 0 || lineIdx >= 2;
+    dlg.line.textContent = lineIdx < 0 ? D.repeat : D['line' + (lineIdx + 1)];
+    dlg.cont.style.display = last ? 'none' : '';
+    // line 3 = the quest seed: available -> active, the one assignment site
+    if (lineIdx === 2 && quest === Q.states[0]) quest = 'active';
+  }
+
+  function advance() {
+    if (!dialogOpen || lineIdx < 0 || lineIdx >= 2) return;
+    lineIdx++;
+    showLine();
+  }
+
+  function setOpen(open) {
+    if (dialogOpen === open) return;
+    dialogOpen = open;
+    dlg.root.style.display = open ? 'flex' : 'none';
+    game.inventoryUI.blocked = open;
+    game.player.setInputSuspended(open);
+  }
+
+  // ---- talk range ------------------------------------------------------------------
+  function inC() {
+    var rm = game && game.regionManager;
+    return !!rm && rm.logic.activeId === CFG.regionC.id;
+  }
+
+  function playerDist() {
+    var p = game.player.pos;
+    return Math.hypot(p.x - N.x, p.z - N.z);
+  }
+
+  // true while E / USE would open the dialog (the interact prompt mirrors it)
+  function talkPrompt() {
+    if (!game || dialogOpen || !shown || !inC()) return false;
+    var p = game.player;
+    if (p.state !== 'alive' || p.inputSuspended) return false;
+    return playerDist() <= N.interactM;
+  }
+
+  // the farmer's dialog: lines 1-3 while the quest is available, else the
+  // short state-aware line (CC-C11 owns the completion copy)
+  function openDialog() {
+    if (!game || dialogOpen) return false;
+    lineIdx = quest === Q.states[0] ? 0 : -1;
+    showLine();
+    setOpen(true);
+    return true;
+  }
+
+  function closeDialog() {
+    if (dlg) setOpen(false);
+  }
+
+  // ---- per frame -------------------------------------------------------------------
+  function update(dt) {
+    if (!game || !game.regionManager) return;
+    var here = inC();
+    if (here && !root) build();
+    if (!root) return;
+    var A = window.WH_ASSETS;
+    if (!real && A.isLoaded(N.asset) && !A.isFailed(N.asset)) mountBody();   // stand-in -> GLB
+    var dist = playerDist();
+    shown = here && dist <= N.cullM;
+    root.visible = shown;
+    // death / region change: never leave the input suspended behind the panel
+    if (dialogOpen && (!here || game.player.state !== 'alive')) closeDialog();
+    updateLabel(dist);
+  }
+
+  function updateLabel(dist) {
+    if (!shown || dialogOpen || dist > N.labelM) { label.style.display = 'none'; return; }
+    if (!_v) _v = new THREE.Vector3();
+    _v.set(N.x, root.position.y + N.bodyHeight + N.labelLiftM, N.z);
+    _v.project(game.camera);
+    if (_v.z > 1 || _v.z < -1) { label.style.display = 'none'; return; }
+    label.style.display = 'block';
+    label.style.left = Math.round((_v.x * 0.5 + 0.5) * window.innerWidth) + 'px';
+    label.style.top = Math.round((-_v.y * 0.5 + 0.5) * window.innerHeight) + 'px';
+  }
+
+  // ---- quest state (save block questState, game.js setupSaveHooks) ------------------
+  function questState() {
+    return quest;
+  }
+
+  // schema v1: missing / non-object / unknown state -> 'available'
+  function restoreQuest(block) {
+    var s = block && typeof block === 'object' ? block[Q.id] : null;
+    quest = Q.states.indexOf(s) >= 0 ? s : Q.states[0];
+    closeDialog();
+  }
+
+  function init(g) {
+    game = g;
+    buildLabel();
+    buildDialog();
+    document.addEventListener('keydown', function (e) {
+      if (e.code !== 'Escape' || e.repeat || !dialogOpen) return;
+      e.preventDefault();
+      closeDialog();
+    });
+  }
+
+  window.WH_NPC = {
+    init: init,
+    update: update,
+    talkPrompt: talkPrompt,
+    openDialog: openDialog,
+    closeDialog: closeDialog,
+    questState: questState,
+    restoreQuest: restoreQuest
+  };
+})();
+
+</script>
+<script>
 // Witch Hunter prototype - save profile (C4, io/missions/2026-10-06-cc-c4-save-profile.md).
 // ONE rolling profile in localStorage (CONFIG.save.lsKey 'wh-save-v1'),
 // JSON schema v1 = { v, ts, player, inventory, cooking, camp, world } +
@@ -103951,6 +104242,13 @@ window.WH_ICONS = {
 
   // ---- HUD -------------------------------------------------------------------
 
+  // CC-C10: the findDaughter quest line shows only while the quest is active
+  function updateQuestLine() {
+    var on = !!window.WH_NPC && window.WH_NPC.questState() === 'active';   // findDaughter === 'active'
+    var el = game.hud.questLine;
+    if (el.style.opacity !== (on ? '1' : '0')) el.style.opacity = on ? '1' : '0';
+  }
+
   function setupHud() {
     game.hud = {
       hpBar: document.getElementById('wh-hp-bar'),
@@ -103963,6 +104261,16 @@ window.WH_ICONS = {
       loadNote: document.getElementById('wh-load-note'),
       reticle: document.getElementById('wh-lock-reticle')
     };
+    // CC-C10 quest line: one line under #wh-gate-hint (bottom 18%), its own
+    // element (setGateHint owns the hint's text); shown by updateQuestLine
+    var questLine = document.createElement('div');
+    questLine.id = 'wh-quest-line';
+    questLine.textContent = CFG.regionC.quest.hudText;
+    questLine.style.cssText = 'position:absolute;bottom:calc(18% - 28px);width:100%;text-align:center;' +
+      'font-size:13px;letter-spacing:2px;color:#c9bf9f;text-shadow:0 1px 6px rgba(0,0,0,0.9);' +
+      'opacity:0;transition:opacity 0.4s ease;pointer-events:none;';
+    document.getElementById('wh-hud').appendChild(questLine);
+    game.hud.questLine = questLine;
     // 2026-10-03 boot loading screen: title + REAL progress bar overlay.
     // The bar is the fraction of manifest assets settled (loaded OR
     // stand-in); assets.js fires one tick per asset settle.
@@ -105618,7 +105926,7 @@ window.WH_ICONS = {
     if (game.player.inputSuspended || game.player.state !== 'alive') return false;
     var p = game.player.pos;
     return tryPickup() || lootCorpseNearest(p.x, p.z, CFG.corpseLoot.lootRadius) ||
-      tryCookStation() || tryCampSleep() || tryDenDoor() || tryDoorway() || tryNotch() || tryGather();
+      tryCookStation() || tryCampSleep() || tryDenDoor() || tryDoorway() || tryNotch() || tryTalkNpc() || tryGather();   // CC-C10: + tryTalkNpc
   }
 
   // ---- CC-C8 the Rot Mother's den door (CONFIG.regionD.door) ----------------------
@@ -105711,6 +106019,18 @@ window.WH_ICONS = {
     if (!notchNear()) return false;
     game.inventoryUI.toast(CFG.regionC.notchText.locked);
     return true;
+  }
+
+  // ---- CC-C10 farmer talk (CONFIG.regionC.npc, js/npc.js WH_NPC) -----------------
+  // E / USE within interactM of Farmer Aldric (Region C only) opens his
+  // dialog panel; false when WH_NPC is absent, out of range or not in C.
+  function npcNear() {
+    return !!(window.WH_NPC && window.WH_NPC.talkPrompt());
+  }
+
+  function tryTalkNpc() {
+    if (!npcNear()) return false;
+    return window.WH_NPC.openDialog();
   }
 
   // ---- C1 cooking stations (CONFIG.cooking, js/cooking.js) -----------------------
@@ -105932,6 +106252,8 @@ window.WH_ICONS = {
         text = CFG.regionC.door.text.prompt; // CC-C2: locked B/C door
       } else if (notchNear()) {
         text = CFG.regionC.notchText.prompt; // CC-C4b: rim notch mouth
+      } else if (npcNear()) {
+        text = CFG.regionC.npc.dialog.prompt; // CC-C10: talk to the farmer
       } else {
         var node = nearestGatherNode();
         if (node) text = CFG.gather.promptText.replace('{name}', CFG.gather.nodeTypes[node.type].name);
@@ -106292,6 +106614,8 @@ window.WH_ICONS = {
           restore: function () { window.WH_SAVE.restore(game, window.WH_SAVE.load(game)); }
         }
       });
+      // CC-C10: Farmer Aldric + his dialog panel (js/npc.js; built lazily on the first C visit)
+      if (window.WH_NPC) window.WH_NPC.init(game);
       // C4 boot CONTINUE: with a save the overlay waits for the player's row
       // (CONTINUE = restore the profile, NEW GAME = the fresh flow; the
       // profile is never wiped - the first camp save replaces it). The
@@ -106318,11 +106642,17 @@ window.WH_ICONS = {
     // profile = every nest armed), registered here so save.js stays as is:
     // capture() gains the block, save() writes it next to save.js's own
     // write (same key, same v / ts), restore() hands it to WH_Enemy first.
+    // CC-C10: the quest flags ride a second additive block 'questState'
+    // ({ findDaughter: one of CONFIG.regionC.quest.states }; schema v1, an
+    // older profile / a bad value = 'available'). Holder = js/npc.js WH_NPC
+    // (questState / restoreQuest) - capture, save, restore and the HUD quest
+    // line all read that one state; death never touches it.
     var S = window.WH_SAVE;
     var baseCapture = S.capture, baseSave = S.save, baseRestore = S.restore;
     S.capture = function (g, opts) {
       var data = baseCapture(g, opts);
       data.lairs = window.WH_Enemy.captureLairs();
+      if (window.WH_NPC) data.questState = { findDaughter: window.WH_NPC.questState() };   // CC-C10
       return data;
     };
     S.save = function (g, opts) {
@@ -106331,12 +106661,14 @@ window.WH_ICONS = {
         var stored = JSON.parse(window.localStorage.getItem(CFG.save.lsKey) || 'null');
         if (!stored) return true;
         stored.lairs = window.WH_Enemy.captureLairs();
+        if (window.WH_NPC) stored.questState = { findDaughter: window.WH_NPC.questState() };   // CC-C10
         window.localStorage.setItem(CFG.save.lsKey, JSON.stringify(stored));
       } catch (e) { /* the base profile stands; the nest re-arms on load */ }
       return true;
     };
     S.restore = function (g, data) {
       if (data) window.WH_Enemy.restoreLairs(data.lairs);
+      if (data && window.WH_NPC) window.WH_NPC.restoreQuest(data.questState);   // CC-C10
       baseRestore(g, data);
     };
     // S5 quit persist: tab close / reload writes the same capture() profile,
@@ -106817,6 +107149,8 @@ window.WH_ICONS = {
     // C1: fire burn + cook channel (after combat so this frame's hits interrupt)
     game.cooking.update(dt);
     game.camp.update();   // C3: camp groups per region, placement ghost, menu close on death
+    if (window.WH_NPC) window.WH_NPC.update(dt);   // CC-C10: farmer show/cull, name plate, dialog close on death
+    updateQuestLine();    // CC-C10: HUD quest line (findDaughter active)
     applyBuffStats();   // C1: effective hpMax from active food buffs
     updateHud(dt);
     updateEnemyBars(dt);   // HP1: after the camera update so bars track this frame

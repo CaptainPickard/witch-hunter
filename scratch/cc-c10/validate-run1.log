@@ -1,0 +1,32 @@
+CC-C10 passes static validation: all 7 acceptance criteria passed, with no blocking findings. That means it's ready for Nicko's playtest, not accepted.
+
+**What I checked myself:**
+- **Door code (A6):** the den door, its fade helpers and the arch door in `game.js` have the same content hash as at e3444ec. So do the region C and region D door blocks in `CONFIG.js` and everything from regionD to the end of the file.
+- **Ledger (A7):** I re-ran `scratch/cc-c10/ledger3.py`. All three centres pass (94.78%, 93.81% and 89.47% of the 2M budget), with nothing missing.
+- **Untouched files:** the protected files (camp, save, player and the rest) are unchanged against e3444ec. So are `scratch/cc-c17` and both GLBs.
+- **Changed set:** every changed or new file is in the sanctioned set. There are no new GLBs, no `tests/` and no browser or Meshy files. HEAD is still e3444ec.
+- **Talk hook (A2):** exactly one new term, `tryTalkNpc`, sits between `tryNotch` and `tryGather`. The prompt branch is at the same rank.
+- **Quest state (A3):** `'active'` is set in one place only (`npc.js:123`), and `'complete'` is never set in `npc.js` or `game.js`.
+- **Save (A5):** the `questState` block sits next to the lairs block in capture, save and restore. A missing or bad value falls back to `'available'`.
+- **Bundle:** the rebuilt bundle is 3,289,591 bytes and is newer than every edited file. The builder's finish line is in the right format.
+
+**What I couldn't re-run:** the sandbox blocked calling node directly. So I relied on your pre-check for `node --check`, and read the builder's three node probe outputs and audited their code instead of re-running them. I recomputed the key distances by hand from the CONFIG rows instead:
+- the farmer is 5.2 m from the nearest prop and 8.77 m from the cottage
+- the barn is 26.08 m from the cottage
+- the barn's fire and road distances are the builder's figures only
+
+**The two extra scratch files are allowed.** `probe_dialog.js` is an offline node logic probe and `glb_header.py` only reads the GLB. Neither is a harness.
+
+**All six deviations are non-blocking:**
+- **Repeat line on `'complete'`:** nothing can set that state yet, so CC-C11 inherits it.
+- **No collider:** neither the brief nor any acceptance check asks for one.
+- **Extra CONFIG keys:** they are additions only, and they keep values and text out of the code.
+- **Keys `line1`/`line2`/`line3`:** these are the names my spec uses.
+- **"(W)", the plain hyphen and the "E - Talk to Farmer Aldric" prompt:** your rulings B2, B11 and B9.
+- **Raw, unpixelated farmer in bind pose:** your rulings B3(b) and B10.
+
+The report also lists four things for Nicko to look at in the playtest: whether the farmer clips the cottage, whether his feet sink or float, the quest activating as line 3 appears (before Close), and a small harmless leftover object from the asset swap.
+
+Report: `io/reports/2026-10-25-cc-c10-farmer-validation.md`
+
+C10 VALIDATION PASS ac-passed 7/7 blocking 0

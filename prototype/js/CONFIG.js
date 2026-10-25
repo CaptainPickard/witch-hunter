@@ -1084,6 +1084,13 @@ window.WH_CONFIG = {
       { asset: 'okFencePost', x: 141.8, z: -262.2, rotY: 4.72, scale: 1.85, wall: 3, cullM: 120 },
       { asset: 'okFencePost', x: 159.2, z: -262.3, rotY: 4.72, scale: 1.85, wall: 3, cullM: 120 },
       { asset: 'lanternPost', x: 148.2, z: -271.3, rotY: 3.15, scale: 2.535, cullM: 120 },   // CC-C17 farm gate beacon (amber = safety)
+      // CC-C10 FARM BARN (io/missions/2026-10-25-cc-c10-farmer-npc-dialog.md step 5): ONE
+      // ok-farm-barn row behind the cottage. Probe scratch/cc-c10/probe_barn.js (deterministic
+      // 1 m grid scan within 60 m of the cottage, no RNG; nearest gate-clear slot): props 26.1
+      // (cottage), fires 41.5 (camp 95,-236), roads 133.7 (eastRoad), wolf loops 52.1 (ss);
+      // seat span 0.45 m over r 5 (5.2 deg). Scale 5.5 (~10.4 m long, ~7 m tall); rotY faces
+      // the east road (N) like the cottage. cullM 140 (giant row). PROPOSED, Nicko tunes.
+      { asset: 'okFarmBarn', x: 136.5, z: -234.7, rotY: 3.15, scale: 5.50, cullM: 140 },   // CC-C10 farm barn (behind the cottage)
       // CC-C17 RUIN ACCENT (v2 step 3): okRuinArch + 2 okRuinColumn ADDED to the CC-C13b C1
       // cluster (churchArchway -101, -207 rows; kept as-is, no removals). Probe scratch/cc-c17/gen_ruin.py
       // (deterministic slot scan, no RNG): arch on the cluster's WSW side, opening facing the
@@ -1146,6 +1153,47 @@ window.WH_CONFIG = {
         color: 0x141c10, color2: 0x222d15, speck: 0x3d4c22, textureSeed: 20261013, edgeFeather: 0.3 },
       void: { x: -160.4, z: -203.6, rotY: 2.36, width: 4.6, height: 9.0, color: 0x000000 },
       cullM: 120                      // stains + void hide past this from the player (the outcrop rows' band)
+    },
+    // CC-C10 FARMER NPC (io/missions/2026-10-25-cc-c10-farmer-npc-dialog.md; js/npc.js
+    // WH_NPC): one static placeholder body in the CC-C17 homestead yard, seated on the
+    // heightfield (WH_GROUND.footY), shown + talkable only while C is active and the
+    // player is inside cullM. E / touch USE within interactM opens the dialog panel
+    // (game.js interact chain, after tryNotch). Probe scratch/cc-c10/probe_npc.js:
+    // cottage 8.8 m, nearest prop 5.2 m (stonewall W), slope 3.8 deg over 1 m.
+    // Body = the RAW rigged dwarf smith GLB (IO ruling B3b: art-law waiver, placeholder
+    // for Astrabot; bind pose, no mixer). Direction copy = WEST (IO ruling B2: the den
+    // mouth is due west of the farmstead); "the Old King's Barrow" = the Region D den
+    // door (IO ruling B1, lore naming). PROPOSED, Nicko tunes.
+    npc: {
+      asset: 'farmerBody',
+      x: 146.5, z: -264.5,            // PROPOSED, Nicko tunes (yard, W of the well, inside the gate)
+      rotY: 3.15,                     // PROPOSED, Nicko tunes (faces the yard gate / the east road, N)
+      footR: 0.4,                     // footY seat radius (m)
+      bodyHeight: 1.8,                // PROPOSED, Nicko tunes (normalized height, = world.characterHeight)
+      interactM: 3,                   // PROPOSED, Nicko tunes (talk range, m)
+      cullM: 120,                     // PROPOSED, Nicko tunes (hidden past this from the player: the prop band)
+      name: 'Farmer Aldric',
+      labelLiftM: 0.35,               // name plate height above the head (m)
+      labelM: 14,                     // PROPOSED, Nicko tunes (name plate shows within this, m)
+      dialog: {
+        // line1 -> line2 -> line3 on Continue; reaching line3 activates the quest
+        line1: 'Hunter! Thank the old gods. They took my daughter - dragged her off in the night.',
+        line2: 'Into the Old King\'s Barrow, the den in the hillside due west of here. Follow the setting sun past the dead trees.',
+        line3: 'Bring her home. Whatever it costs. I will watch the road for you.',
+        repeat: 'The barrow door, hunter. Bring her home.',
+        cont: 'Continue',
+        close: 'Close',
+        hint: 'Esc close',
+        prompt: 'E - Talk to Farmer Aldric'                    // PROPOSED, Nicko tunes (B9 house style)
+      }
+    },
+    // CC-C10 QUEST SEED: findDaughter. 'active' on the farmer's line 3 (js/npc.js);
+    // 'complete' is CC-C11's job. Rides the additive save block questState
+    // (game.js setupSaveHooks; schema v1, an older profile = 'available').
+    quest: {
+      id: 'findDaughter',
+      states: ['available', 'active', 'complete'],
+      hudText: 'Find the farmer\'s daughter - Old King\'s Barrow (W)'   // PROPOSED, Nicko tunes (B2 / B11)
     }
   },
 

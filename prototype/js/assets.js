@@ -114,6 +114,9 @@
     okFenceCornerV2: 'art-direction/3d/assets/old_king/ok-fence-corner-v2-pixelated.glb',
     okRuinArch: 'art-direction/3d/assets/old_king/ok-ruin-arch-pixelated.glb',
     okRuinColumn: 'art-direction/3d/assets/old_king/ok-ruin-column-pixelated.glb',
+    // CC-C10 (2026-10-25): the farm barn (29,499 tris, 512 NEAREST + 5-bit bake
+    // from CC-C17; one regionC.props row at the homestead, cullM 140).
+    okFarmBarn: 'art-direction/3d/assets/old_king/ok-farm-barn-pixelated.glb',
 
     // characters (whanim1 rigged exports; props below stay rigid)
     // 10-04: rigged copy + WH_SlashR2L/WH_SlashL2R/WH_Thrust chain clips
@@ -146,6 +149,11 @@
     // CHARACTERS row (0 clips) - anim.js RIGID_CLIPS placeholders play.
     rotmotherBody: 'art-direction/3d/assets/races/rotmother-pixelated.glb',
     rotspawnBody: 'art-direction/3d/assets/races/rotspawn-pixelated.glb',
+    // CC-C10 (2026-10-25): Farmer Aldric PLACEHOLDER body = the RAW rigged dwarf
+    // smith (28,024 tris, 2048 JPEG texture, 6 WH_* clips unused). IO ruling B3b:
+    // art-law waiver until Astrabot's farmer lands; no CHARACTERS / BODY_PNG row,
+    // static bind pose (js/npc.js clones it with WHSkeletonUtils, no mixer).
+    farmerBody: 'art-direction/3d/assets/races_regen/rigged/dwarf-male-smith.rigged.glb',
 
     // weapons (pixelated)
     longsword: 'art-direction/3d/assets/weapons/longsword-pixelated.glb',
