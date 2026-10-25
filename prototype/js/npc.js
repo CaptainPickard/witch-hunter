@@ -46,6 +46,9 @@
   var dialogOpen = false;
   var lineIdx = 0;            // 0..2 = line1..line3; -1 = the repeat line
   var quest = Q.states[0];    // findDaughter state ('available' on a NEW GAME)
+  // CC-C11: rescued is a sub-field of findDaughter, not a fourth quest state.
+  var rescued = false;
+  var daughterRoot = null, daughterBody = null, daughterReal = false;
   var _v = null;
 
   // ---- farmer body ---------------------------------------------------------------
@@ -76,6 +79,41 @@
     root.visible = false;
     game.scene.add(root);
     mountBody();
+  }
+
+  // CC-C11: one daughter body moves from chamber to homestead when rescued.
+  // The streamed GLB uses the same skeleton-safe clone path as the farmer.
+  function mountDaughter() {
+    var A = window.WH_ASSETS, name = 'dwarfFemaleBody';
+    if (daughterBody) daughterRoot.remove(daughterBody);
+    daughterReal = A.isLoaded(name) && !A.isFailed(name);
+    daughterBody = daughterReal ? window.WHSkeletonUtils.clone(A.getTemplate(name)) : A.instance(name);
+    daughterBody.scale.setScalar(N.bodyHeight / (A.groundHeight(name) || N.bodyHeight));
+    daughterRoot.add(daughterBody);
+  }
+  function updateDaughter() {
+    if (!game || !game.regionManager) return;
+    var rid = game.regionManager.logic.activeId;
+    var inDen = quest === 'active' && !rescued && rid === CFG.regionD.id;
+    var atHome = rescued && rid === CFG.regionC.id;
+    if (!inDen && !atHome) {
+      if (daughterRoot) daughterRoot.visible = false; // chamber removal on rescue
+      return;
+    }
+    if (!daughterRoot) {
+      daughterRoot = new THREE.Group();
+      daughterRoot.name = 'cc-c11-daughter';
+      game.scene.add(daughterRoot);
+      mountDaughter();
+    }
+    var A = window.WH_ASSETS;
+    if (!daughterReal && A.isLoaded('dwarfFemaleBody') && !A.isFailed('dwarfFemaleBody')) mountDaughter();
+    var x = inDen ? CFG.regionD.props.filter(function (p) { return p.asset === 'stoneSarcophagus'; })[0].x + 2 : N.x + 2;
+    var z = inDen ? CFG.regionD.props.filter(function (p) { return p.asset === 'stoneSarcophagus'; })[0].z + 0.5 : N.z + 1;
+    var y = window.WH_GROUND ? window.WH_GROUND.footY(rid, x, z, N.footR) : 0;
+    daughterRoot.position.set(x, y, z);
+    daughterRoot.rotation.y = inDen ? 0 : N.rotY;
+    daughterRoot.visible = true;
   }
 
   // ---- DOM: name plate + dialog panel ----------------------------------------------
@@ -118,6 +156,10 @@
   function showLine() {
     var last = lineIdx < 0 || lineIdx >= 2;
     dlg.line.textContent = lineIdx < 0 ? D.repeat : D['line' + (lineIdx + 1)];
+    // CC-C11: negative sentinel lines keep the three original intro lines intact.
+    if (lineIdx === -2) dlg.line.textContent = D.lineRescued;
+    if (lineIdx === -3) dlg.line.textContent = D.lineComplete;
+    if (lineIdx === -4) dlg.line.textContent = D.lineRescue;
     dlg.cont.style.display = last ? 'none' : '';
     // line 3 = the quest seed: available -> active, the one assignment site
     if (lineIdx === 2 && quest === Q.states[0]) quest = 'active';
@@ -161,6 +203,9 @@
   function openDialog() {
     if (!game || dialogOpen) return false;
     lineIdx = quest === Q.states[0] ? 0 : -1;
+    // CC-C11: rescued return talk completes the quest; later talks stay complete.
+    if (quest === 'active' && rescued) { quest = 'complete'; lineIdx = -2; }
+    else if (quest === 'complete') lineIdx = -3;
     showLine();
     setOpen(true);
     return true;
@@ -170,11 +215,34 @@
     if (dlg) setOpen(false);
   }
 
+  // CC-C11: rescue is a den-only E action; no quest, no sarcophagus action.
+  function rescuePrompt() {
+    if (!game || dialogOpen || quest !== 'active' || rescued || !game.regionManager ||
+        game.regionManager.logic.activeId !== CFG.regionD.id) return false;
+    var p = game.player;
+    if (p.state !== 'alive' || p.inputSuspended) return false;
+    var sarc = CFG.regionD.props.filter(function (row) { return row.asset === 'stoneSarcophagus'; })[0];
+    if (!sarc) return false;
+    return Math.hypot(p.pos.x - sarc.x, p.pos.z - sarc.z) <= Q.rescueInteractM;
+  }
+  function tryRescue() {
+    if (!rescuePrompt()) return false;
+    rescued = true;
+    updateDaughter(); // hide chamber body on this press, before the next frame
+    lineIdx = -4;
+    showLine();
+    setOpen(true);
+    game.inventoryUI.toast(Q.rescuedToast);
+    return true;
+  }
+
   // ---- per frame -------------------------------------------------------------------
   function update(dt) {
     if (!game || !game.regionManager) return;
     var here = inC();
     if (here && !root) build();
+    // CC-C11: daughter can exist in D before the C farmer has ever been built.
+    updateDaughter();
     if (!root) return;
     var A = window.WH_ASSETS;
     if (!real && A.isLoaded(N.asset) && !A.isFailed(N.asset)) mountBody();   // stand-in -> GLB
@@ -201,11 +269,19 @@
   function questState() {
     return quest;
   }
+  // CC-C11: persistent findDaughter object, retaining the C10 string getter.
+  function questStateDetail() {
+    return { state: quest, rescued: rescued };
+  }
 
   // schema v1: missing / non-object / unknown state -> 'available'
   function restoreQuest(block) {
     var s = block && typeof block === 'object' ? block[Q.id] : null;
+    var rescueBit = s && typeof s === 'object' && s.rescued === true;
+    if (s && typeof s === 'object') s = s.state;
     quest = Q.states.indexOf(s) >= 0 ? s : Q.states[0];
+    rescued = rescueBit && (quest === 'active' || quest === 'complete');
+    updateDaughter();
     closeDialog();
   }
 
@@ -227,6 +303,10 @@
     openDialog: openDialog,
     closeDialog: closeDialog,
     questState: questState,
+    // CC-C11 rescue state + den interact seam.
+    questStateDetail: questStateDetail,
+    rescuePrompt: rescuePrompt,
+    tryRescue: tryRescue,
     restoreQuest: restoreQuest
   };
 })();

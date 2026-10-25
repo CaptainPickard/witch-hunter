@@ -1,0 +1,7 @@
+CC-C10 rows: 2  (farmerBody x1, okFarmBarn x1; farmer via the argv[6] hook at (146.5,-264.5) cullM 120)
+CC-C10 added tris (sum, before cull): 57524
+LEDGER centre (0,-366) R 170: worst 1895571 = 94.78% of 2M at (-102,-282)  missing none  -> PASS
+LEDGER centre (-175,-266) R 170: worst 1876200 = 93.81% of 2M at (-103,-278)  missing none  -> PASS
+LEDGER centre (150.5,-256.7) R 170: worst 1789446 = 89.47% of 2M at (82.5,-342.7)  missing none  -> PASS
+whole disc (0,-366) R 280 (info): worst 1895571 = 94.78% at (-102,-282)
+LEDGER PASS (cap 1980000)

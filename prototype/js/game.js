@@ -196,6 +196,11 @@
   // CC-C10: the findDaughter quest line shows only while the quest is active
   function updateQuestLine() {
     var on = !!window.WH_NPC && window.WH_NPC.questState() === 'active';   // findDaughter === 'active'
+    // CC-C11: active+rescued and complete have their own CONFIG HUD copy.
+    var detail = window.WH_NPC && window.WH_NPC.questStateDetail();
+    if (detail && detail.state === 'complete') on = true;
+    if (detail) game.hud.questLine.textContent = detail.state === 'complete' ? CFG.regionC.quest.hudComplete :
+      detail.rescued ? CFG.regionC.quest.hudRescued : CFG.regionC.quest.hudText;
     var el = game.hud.questLine;
     if (el.style.opacity !== (on ? '1' : '0')) el.style.opacity = on ? '1' : '0';
   }
@@ -1877,7 +1882,8 @@
     if (game.player.inputSuspended || game.player.state !== 'alive') return false;
     var p = game.player.pos;
     return tryPickup() || lootCorpseNearest(p.x, p.z, CFG.corpseLoot.lootRadius) ||
-      tryCookStation() || tryCampSleep() || tryDenDoor() || tryDoorway() || tryNotch() || tryTalkNpc() || tryGather();   // CC-C10: + tryTalkNpc
+      tryCookStation() || tryCampSleep() || tryDenDoor() || tryDoorway() || tryNotch() || tryTalkNpc() ||
+      tryRescue() || tryChest() || tryGather();   // CC-C11: talk -> rescue -> chest -> gather
   }
 
   // ---- CC-C8 the Rot Mother's den door (CONFIG.regionD.door) ----------------------
@@ -1982,6 +1988,14 @@
   function tryTalkNpc() {
     if (!npcNear()) return false;
     return window.WH_NPC.openDialog();
+  }
+
+  // CC-C11: the rescue interaction and quest-unlocked deployed-site chest.
+  function tryRescue() {
+    return !!(window.WH_NPC && window.WH_NPC.tryRescue());
+  }
+  function tryChest() {
+    return !!(window.WH_Chest && window.WH_Chest.tryOpen());
   }
 
   // ---- C1 cooking stations (CONFIG.cooking, js/cooking.js) -----------------------
@@ -2205,6 +2219,11 @@
         text = CFG.regionC.notchText.prompt; // CC-C4b: rim notch mouth
       } else if (npcNear()) {
         text = CFG.regionC.npc.dialog.prompt; // CC-C10: talk to the farmer
+      // CC-C11: prompt priority mirrors the E chain.
+      } else if (window.WH_NPC && window.WH_NPC.rescuePrompt()) {
+        text = CFG.regionC.quest.rescuePrompt;
+      } else if (window.WH_Chest && window.WH_Chest.interactPrompt()) {
+        text = window.WH_Chest.interactPrompt();
       } else {
         var node = nearestGatherNode();
         if (node) text = CFG.gather.promptText.replace('{name}', CFG.gather.nodeTypes[node.type].name);
@@ -2567,6 +2586,8 @@
       });
       // CC-C10: Farmer Aldric + his dialog panel (js/npc.js; built lazily on the first C visit)
       if (window.WH_NPC) window.WH_NPC.init(game);
+      // CC-C11: chest manager follows the NPC quest owner and the deployed camp manager.
+      if (window.WH_Chest) window.WH_Chest.init(game);
       // C4 boot CONTINUE: with a save the overlay waits for the player's row
       // (CONTINUE = restore the profile, NEW GAME = the fresh flow; the
       // profile is never wiped - the first camp save replaces it). The
@@ -2604,6 +2625,9 @@
       var data = baseCapture(g, opts);
       data.lairs = window.WH_Enemy.captureLairs();
       if (window.WH_NPC) data.questState = { findDaughter: window.WH_NPC.questState() };   // CC-C10
+      // CC-C11: retain the C10 wrap and enrich its existing findDaughter row.
+      if (window.WH_NPC) data.questState.findDaughter = window.WH_NPC.questStateDetail();
+      if (window.WH_Chest) data.chest = window.WH_Chest.capture();
       return data;
     };
     S.save = function (g, opts) {
@@ -2613,6 +2637,9 @@
         if (!stored) return true;
         stored.lairs = window.WH_Enemy.captureLairs();
         if (window.WH_NPC) stored.questState = { findDaughter: window.WH_NPC.questState() };   // CC-C10
+        // CC-C11: the explicit storage write follows the house save-wrap pattern.
+        if (window.WH_NPC) stored.questState.findDaughter = window.WH_NPC.questStateDetail();
+        if (window.WH_Chest) stored.chest = window.WH_Chest.capture();
         window.localStorage.setItem(CFG.save.lsKey, JSON.stringify(stored));
       } catch (e) { /* the base profile stands; the nest re-arms on load */ }
       return true;
@@ -2620,6 +2647,8 @@
     S.restore = function (g, data) {
       if (data) window.WH_Enemy.restoreLairs(data.lairs);
       if (data && window.WH_NPC) window.WH_NPC.restoreQuest(data.questState);   // CC-C10
+      // CC-C11: a missing chest block is a no-op (fresh model stays empty).
+      if (data && window.WH_Chest) window.WH_Chest.restore(data.chest);
       baseRestore(g, data);
     };
     // S5 quit persist: tab close / reload writes the same capture() profile,
@@ -3101,6 +3130,8 @@
     game.cooking.update(dt);
     game.camp.update();   // C3: camp groups per region, placement ghost, menu close on death
     if (window.WH_NPC) window.WH_NPC.update(dt);   // CC-C10: farmer show/cull, name plate, dialog close on death
+    // CC-C11: spawn / re-place / region gate after the camp and quest updates.
+    if (window.WH_Chest) window.WH_Chest.update(dt);
     updateQuestLine();    // CC-C10: HUD quest line (findDaughter active)
     applyBuffStats();   // C1: effective hpMax from active food buffs
     updateHud(dt);

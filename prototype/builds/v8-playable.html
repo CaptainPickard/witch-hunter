@@ -88352,6 +88352,10 @@ window.WH_CONFIG = {
         line2: 'Into the Old King\'s Barrow, the den in the hillside due west of here. Follow the setting sun past the dead trees.',
         line3: 'Bring her home. Whatever it costs. I will watch the road for you.',
         repeat: 'The barrow door, hunter. Bring her home.',
+        // CC-C11: rescue and homecoming copy (Nicko tunes).
+        lineRescue: 'You are safe now. Go to your father; I will follow.',
+        lineRescued: 'She is home, hunter. You have given me back my world.',
+        lineComplete: 'My daughter is home. The chest at your camp is yours to use.',
         cont: 'Continue',
         close: 'Close',
         hint: 'Esc close',
@@ -88364,6 +88368,12 @@ window.WH_CONFIG = {
     quest: {
       id: 'findDaughter',
       states: ['available', 'active', 'complete'],
+      // CC-C11: two further stages of the same three-state quest.
+      hudRescued: 'Return to Farmer Aldric - his daughter is safe',
+      hudComplete: 'Daughter home - camp chest unlocked',
+      rescuedToast: 'The daughter is safe. Return to Farmer Aldric.',
+      rescuePrompt: 'E - Search the sarcophagus',
+      rescueInteractM: 3,
       hudText: 'Find the farmer\'s daughter - Old King\'s Barrow (W)'   // PROPOSED, Nicko tunes (B2 / B11)
     }
   },
@@ -88438,6 +88448,8 @@ window.WH_CONFIG = {
     // there). 4 mossBoulder shoulders, the brood furniture, the nest's 5 egg
     // sacs (moved INSIDE from the open lair).
     props: [
+      // CC-C11: seed CC-C11-20261025-01; den-local (-15,-5); probe_sarc.js PASS.
+      { asset: 'stoneSarcophagus', x: -201, z: -185, rotY: 0.4, scale: 1.2 },
       // -- cavern ring: 10 segments, exit gap between the first and the last
       { asset: 'whWallA', x: -165.5, z: -188.5, rotY: 2.72, scale: 7.84, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
       { asset: 'whWallB', x: -176.1, z: -198.0, rotY: 2.12, scale: 7.84, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
@@ -90071,6 +90083,10 @@ window.WH_CONFIG.camp = {
     ghostOpacity: 0.45,
     ghostOkColor: 0x3ad26a          // FIX 10-06b: green = placeable right now
   },
+  // CC-C11: the chest follows deployed kit pegs (offset in site frame, not world coordinates).
+  chest: { offset: [2.2, 1.8], interactM: 2.5, capacity: 24, slotsX: 6, slotsY: 4,
+    prompt: 'E - Open the chest', title: 'CAMP CHEST', deposit: 'Deposit', withdraw: 'Withdraw',
+    empty: 'Empty', close: 'Close', hint: 'Select a bag slot to deposit; select a chest slot to withdraw. Esc close.' },
   sleepFadeSec: 0.6,                // Save and Heal: fade to black, rest, fade back
   text: {
     prompt: 'E - Camp',
@@ -91271,6 +91287,8 @@ window.WH_ICONS = {
     blightcap: 'art-direction/3d/assets/biome_library/m14-blightcap-pixelated.glb',
     stoneSteps: 'art-direction/3d/assets/crypt/stone-steps-pixelated.glb',
     skullPile: 'art-direction/3d/assets/crypt/skull-pile-pixelated.glb',
+    // CC-C11: crypt furniture (already pixelated, deferred).
+    stoneSarcophagus: 'art-direction/3d/assets/crypt/stone-sarcophagus-pixelated.glb',
     // R2: darkwood light-socket props (doc 61 batches B2/B3)
     banditCampfire: 'art-direction/3d/assets/biome_library/m15-bandit-campfire-pixelated.glb',
     lanternWaymarker: 'art-direction/3d/assets/biome_library/b3-waymarker-pixelated.glb',
@@ -91355,6 +91373,8 @@ window.WH_ICONS = {
     // art-law waiver until Astrabot's farmer lands; no CHARACTERS / BODY_PNG row,
     // static bind pose (js/npc.js clones it with WHSkeletonUtils, no mixer).
     farmerBody: 'art-direction/3d/assets/races_regen/rigged/dwarf-male-smith.rigged.glb',
+    // CC-C11: RAW bind-pose daughter placeholder; Astrabot replacement pending.
+    dwarfFemaleBody: 'art-direction/3d/assets/races_regen/rigged/dwarf-female.rigged.glb',
 
     // weapons (pixelated)
     longsword: 'art-direction/3d/assets/weapons/longsword-pixelated.glb',
@@ -102749,6 +102769,9 @@ window.WH_ICONS = {
   var dialogOpen = false;
   var lineIdx = 0;            // 0..2 = line1..line3; -1 = the repeat line
   var quest = Q.states[0];    // findDaughter state ('available' on a NEW GAME)
+  // CC-C11: rescued is a sub-field of findDaughter, not a fourth quest state.
+  var rescued = false;
+  var daughterRoot = null, daughterBody = null, daughterReal = false;
   var _v = null;
 
   // ---- farmer body ---------------------------------------------------------------
@@ -102779,6 +102802,41 @@ window.WH_ICONS = {
     root.visible = false;
     game.scene.add(root);
     mountBody();
+  }
+
+  // CC-C11: one daughter body moves from chamber to homestead when rescued.
+  // The streamed GLB uses the same skeleton-safe clone path as the farmer.
+  function mountDaughter() {
+    var A = window.WH_ASSETS, name = 'dwarfFemaleBody';
+    if (daughterBody) daughterRoot.remove(daughterBody);
+    daughterReal = A.isLoaded(name) && !A.isFailed(name);
+    daughterBody = daughterReal ? window.WHSkeletonUtils.clone(A.getTemplate(name)) : A.instance(name);
+    daughterBody.scale.setScalar(N.bodyHeight / (A.groundHeight(name) || N.bodyHeight));
+    daughterRoot.add(daughterBody);
+  }
+  function updateDaughter() {
+    if (!game || !game.regionManager) return;
+    var rid = game.regionManager.logic.activeId;
+    var inDen = quest === 'active' && !rescued && rid === CFG.regionD.id;
+    var atHome = rescued && rid === CFG.regionC.id;
+    if (!inDen && !atHome) {
+      if (daughterRoot) daughterRoot.visible = false; // chamber removal on rescue
+      return;
+    }
+    if (!daughterRoot) {
+      daughterRoot = new THREE.Group();
+      daughterRoot.name = 'cc-c11-daughter';
+      game.scene.add(daughterRoot);
+      mountDaughter();
+    }
+    var A = window.WH_ASSETS;
+    if (!daughterReal && A.isLoaded('dwarfFemaleBody') && !A.isFailed('dwarfFemaleBody')) mountDaughter();
+    var x = inDen ? CFG.regionD.props.filter(function (p) { return p.asset === 'stoneSarcophagus'; })[0].x + 2 : N.x + 2;
+    var z = inDen ? CFG.regionD.props.filter(function (p) { return p.asset === 'stoneSarcophagus'; })[0].z + 0.5 : N.z + 1;
+    var y = window.WH_GROUND ? window.WH_GROUND.footY(rid, x, z, N.footR) : 0;
+    daughterRoot.position.set(x, y, z);
+    daughterRoot.rotation.y = inDen ? 0 : N.rotY;
+    daughterRoot.visible = true;
   }
 
   // ---- DOM: name plate + dialog panel ----------------------------------------------
@@ -102821,6 +102879,10 @@ window.WH_ICONS = {
   function showLine() {
     var last = lineIdx < 0 || lineIdx >= 2;
     dlg.line.textContent = lineIdx < 0 ? D.repeat : D['line' + (lineIdx + 1)];
+    // CC-C11: negative sentinel lines keep the three original intro lines intact.
+    if (lineIdx === -2) dlg.line.textContent = D.lineRescued;
+    if (lineIdx === -3) dlg.line.textContent = D.lineComplete;
+    if (lineIdx === -4) dlg.line.textContent = D.lineRescue;
     dlg.cont.style.display = last ? 'none' : '';
     // line 3 = the quest seed: available -> active, the one assignment site
     if (lineIdx === 2 && quest === Q.states[0]) quest = 'active';
@@ -102864,6 +102926,9 @@ window.WH_ICONS = {
   function openDialog() {
     if (!game || dialogOpen) return false;
     lineIdx = quest === Q.states[0] ? 0 : -1;
+    // CC-C11: rescued return talk completes the quest; later talks stay complete.
+    if (quest === 'active' && rescued) { quest = 'complete'; lineIdx = -2; }
+    else if (quest === 'complete') lineIdx = -3;
     showLine();
     setOpen(true);
     return true;
@@ -102873,11 +102938,34 @@ window.WH_ICONS = {
     if (dlg) setOpen(false);
   }
 
+  // CC-C11: rescue is a den-only E action; no quest, no sarcophagus action.
+  function rescuePrompt() {
+    if (!game || dialogOpen || quest !== 'active' || rescued || !game.regionManager ||
+        game.regionManager.logic.activeId !== CFG.regionD.id) return false;
+    var p = game.player;
+    if (p.state !== 'alive' || p.inputSuspended) return false;
+    var sarc = CFG.regionD.props.filter(function (row) { return row.asset === 'stoneSarcophagus'; })[0];
+    if (!sarc) return false;
+    return Math.hypot(p.pos.x - sarc.x, p.pos.z - sarc.z) <= Q.rescueInteractM;
+  }
+  function tryRescue() {
+    if (!rescuePrompt()) return false;
+    rescued = true;
+    updateDaughter(); // hide chamber body on this press, before the next frame
+    lineIdx = -4;
+    showLine();
+    setOpen(true);
+    game.inventoryUI.toast(Q.rescuedToast);
+    return true;
+  }
+
   // ---- per frame -------------------------------------------------------------------
   function update(dt) {
     if (!game || !game.regionManager) return;
     var here = inC();
     if (here && !root) build();
+    // CC-C11: daughter can exist in D before the C farmer has ever been built.
+    updateDaughter();
     if (!root) return;
     var A = window.WH_ASSETS;
     if (!real && A.isLoaded(N.asset) && !A.isFailed(N.asset)) mountBody();   // stand-in -> GLB
@@ -102904,11 +102992,19 @@ window.WH_ICONS = {
   function questState() {
     return quest;
   }
+  // CC-C11: persistent findDaughter object, retaining the C10 string getter.
+  function questStateDetail() {
+    return { state: quest, rescued: rescued };
+  }
 
   // schema v1: missing / non-object / unknown state -> 'available'
   function restoreQuest(block) {
     var s = block && typeof block === 'object' ? block[Q.id] : null;
+    var rescueBit = s && typeof s === 'object' && s.rescued === true;
+    if (s && typeof s === 'object') s = s.state;
     quest = Q.states.indexOf(s) >= 0 ? s : Q.states[0];
+    rescued = rescueBit && (quest === 'active' || quest === 'complete');
+    updateDaughter();
     closeDialog();
   }
 
@@ -102930,8 +103026,197 @@ window.WH_ICONS = {
     openDialog: openDialog,
     closeDialog: closeDialog,
     questState: questState,
+    // CC-C11 rescue state + den interact seam.
+    questStateDetail: questStateDetail,
+    rescuePrompt: rescuePrompt,
+    tryRescue: tryRescue,
     restoreQuest: restoreQuest
   };
+})();
+
+</script>
+<script>
+// CC-C11: quest-unlocked camp chest; only deployed campkit sites, not world camps.
+(function () {
+  'use strict';
+  var CFG = window.WH_CONFIG, K = CFG.camp, C = K.chest;
+  var game = null, model = null, body = null, panel = null, chestGrid = null, bagGrid = null;
+  var open = false, anchor = null, signature = '';
+
+  function el(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  // CC-C11: pegs are a module of each deployed site. Translate the chest's
+  // [right, back] offset from the pegs in the site's own placement frame.
+  function positionOf(site) {
+    var pegs = site.modules.filter(function (m) { return m.row.id === 'pegs'; })[0];
+    if (!pegs || !site.f) return null;
+    return { x: pegs.x + site.f.z * C.offset[0] - site.f.x * C.offset[1],
+      z: pegs.z - site.f.x * C.offset[0] - site.f.z * C.offset[1] };
+  }
+
+  function nearest() {
+    if (!game || !game.camp || !window.WH_NPC || window.WH_NPC.questState() !== 'complete') return null;
+    var rid = game.regionManager && game.regionManager.logic.activeId, p = game.player.pos;
+    var best = null, bestD2 = Infinity;
+    // camps() includes world camps, which have no pegs or site orientation.
+    game.camp.camps().forEach(function (site) {
+      if (site.world || site.regionId !== rid) return;
+      var pos = positionOf(site);
+      if (!pos) return;
+      var d2 = Math.pow(p.x - pos.x, 2) + Math.pow(p.z - pos.z, 2);
+      if (d2 < bestD2) { best = { site: site, pos: pos, d2: d2 }; bestD2 = d2; }
+    });
+    return best;
+  }
+
+  function buildBody() {
+    var root = new THREE.Group();
+    root.name = 'cc-c11-camp-chest';
+    var wood = new THREE.MeshStandardMaterial({ color: 0x493726, roughness: 1 });
+    var iron = new THREE.MeshStandardMaterial({ color: 0x858070, roughness: 0.8 });
+    var box = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.65, 0.6), wood);
+    box.position.y = 0.39; root.add(box);
+    var lid = new THREE.Mesh(new THREE.BoxGeometry(1.08, 0.15, 0.68), wood);
+    lid.position.y = 0.79; root.add(lid);
+    var latch = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.3, 0.05), iron);
+    latch.position.set(0, 0.6, 0.33); root.add(latch);
+    root.visible = false;
+    game.scene.add(root);
+    return root;
+  }
+
+  function close() {
+    if (!open) return;
+    open = false;
+    panel.style.display = 'none';
+    game.inventoryUI.blocked = false;
+    game.player.setInputSuspended(false);
+  }
+
+  function moveDeposit(i) {
+    var item = game.inventory.slotAt(i);
+    if (!item) return;
+    var added = model.addItem(item.id, item.count);
+    if (added) game.inventory.removeFromSlot(i, added);
+    render();
+  }
+  function moveWithdraw(i) {
+    var item = model.slotAt(i);
+    if (!item) return;
+    var added = game.inventory.addItem(item.id, item.count);
+    if (added) model.removeFromSlot(i, added);
+    render();
+  }
+
+  function fillGrid(grid, inventory, label, action) {
+    grid.textContent = '';
+    inventory.forEachSlot(function (item, i) {
+      var d = item && window.WH_INVENTORY.itemDef(item.id);
+      var btn = el('button', 'cook-btn', item ? label + ': ' + (d ? d.name : item.id) + ' x' + item.count : C.empty);
+      btn.type = 'button'; btn.tabIndex = -1; btn.disabled = !item;
+      btn.style.cssText = 'min-height:45px;white-space:normal;font-size:10px;padding:3px;';
+      btn.addEventListener('click', function () { action(i); });
+      grid.appendChild(btn);
+    });
+  }
+  function render() {
+    if (!panel || !game || !model) return;
+    signature = JSON.stringify([model.slots, game.inventory.slots]);
+    fillGrid(chestGrid, model, C.withdraw, moveWithdraw);
+    fillGrid(bagGrid, game.inventory, C.deposit, moveDeposit);
+  }
+
+  function buildPanel() {
+    var root = el('div'); root.id = 'wh-chest-menu';
+    root.style.cssText = 'position:absolute;inset:0;display:none;align-items:flex-end;justify-content:center;' +
+      'padding-bottom:8%;box-sizing:border-box;background:rgba(5,4,3,.6);z-index:20;' +
+      'font-family:monospace;color:#d8d2c0;image-rendering:pixelated;user-select:none;';
+    var box = el('div', 'inv-panel'); box.style.cssText = 'max-width:780px;width:94%;max-height:82vh;overflow-y:auto;';
+    root.appendChild(box);
+    box.appendChild(el('div', 'inv-title', C.title));
+    box.appendChild(el('div', 'inv-hint', C.withdraw));
+    chestGrid = el('div', 'cook-btns');
+    chestGrid.style.cssText = 'display:grid;grid-template-columns:repeat(' + C.slotsX + ',minmax(0,1fr));gap:3px;';
+    box.appendChild(chestGrid);
+    box.appendChild(el('div', 'inv-hint', C.deposit));
+    bagGrid = el('div', 'cook-btns');
+    bagGrid.style.cssText = 'display:grid;grid-template-columns:repeat(' + C.slotsX + ',minmax(0,1fr));gap:3px;';
+    box.appendChild(bagGrid);
+    var row = el('div', 'cook-btns');
+    var done = el('button', 'cook-btn', C.close);
+    done.type = 'button'; done.tabIndex = -1; done.addEventListener('click', close);
+    row.appendChild(done); box.appendChild(row);
+    box.appendChild(el('div', 'inv-hint', C.hint));
+    document.getElementById('wh-root').appendChild(root);
+    panel = root;
+  }
+
+  // Camp interactRadius is binding; chest.interactM may narrow, never widen it.
+  function interactPrompt() {
+    var hit = nearest();
+    return !!hit && !!body && body.visible && !open && game.player.state === 'alive' &&
+      !game.player.inputSuspended && hit.d2 <= Math.pow(Math.min(K.interactRadius, C.interactM), 2);
+  }
+  function tryOpen() {
+    if (!interactPrompt()) return false;
+    render();
+    open = true;
+    panel.style.display = 'flex';
+    game.inventoryUI.blocked = true;
+    game.player.setInputSuspended(true);
+    return true;
+  }
+  function update(dt) {
+    if (!game || !game.regionManager) return;
+    // Re-read camps() every frame: a packed/re-placed site moves the chest.
+    var hit = nearest();
+    if (hit && !body) body = buildBody();
+    if (body) {
+      body.visible = !!hit;
+      if (hit) {
+        anchor = hit.site;
+        var G = window.WH_GROUND;
+        var y = G && G.has(hit.site.regionId) ? G.footY(hit.site.regionId, hit.pos.x, hit.pos.z, 0.4) : 0;
+        body.position.set(hit.pos.x, y, hit.pos.z);
+        body.rotation.y = Math.atan2(hit.site.f.x, hit.site.f.z);
+      } else anchor = null;
+    }
+    if (open && (!hit || hit.site !== anchor || game.player.state !== 'alive' ||
+        hit.d2 > Math.pow(Math.min(K.interactRadius, C.interactM), 2))) close();
+    if (open && signature !== JSON.stringify([model.slots, game.inventory.slots])) render();
+  }
+
+  // CC-C11: save only slot contents; restore never transfers items to the bag.
+  function capture() {
+    return model.slots.map(function (s) { return s ? { id: s.id, count: s.count } : null; });
+  }
+  function restore(slots) {
+    if (slots === undefined) return; // old v1 profile with no chest block
+    if (!Array.isArray(slots)) return;
+    model.slots = Array.from({ length: C.capacity }, function (_, i) {
+      var s = slots[i];
+      if (!s || typeof s.id !== 'string' || !Number.isInteger(s.count) || s.count < 1 ||
+          !window.WH_INVENTORY.itemDef(s.id)) return null;
+      return { id: s.id, count: Math.min(s.count, window.WH_INVENTORY.stackCapOf(s.id)) };
+    });
+    render();
+  }
+  function init(g) {
+    game = g;
+    model = new window.WH_INVENTORY.Inventory(C.capacity);
+    buildPanel();
+    document.addEventListener('keydown', function (e) {
+      if (e.code !== 'Escape' || e.repeat || !open) return;
+      e.preventDefault(); close();
+    });
+  }
+  window.WH_Chest = { init: init, update: update, interactPrompt: interactPrompt,
+    tryOpen: tryOpen, capture: capture, restore: restore };
 })();
 
 </script>
@@ -104245,6 +104530,11 @@ window.WH_ICONS = {
   // CC-C10: the findDaughter quest line shows only while the quest is active
   function updateQuestLine() {
     var on = !!window.WH_NPC && window.WH_NPC.questState() === 'active';   // findDaughter === 'active'
+    // CC-C11: active+rescued and complete have their own CONFIG HUD copy.
+    var detail = window.WH_NPC && window.WH_NPC.questStateDetail();
+    if (detail && detail.state === 'complete') on = true;
+    if (detail) game.hud.questLine.textContent = detail.state === 'complete' ? CFG.regionC.quest.hudComplete :
+      detail.rescued ? CFG.regionC.quest.hudRescued : CFG.regionC.quest.hudText;
     var el = game.hud.questLine;
     if (el.style.opacity !== (on ? '1' : '0')) el.style.opacity = on ? '1' : '0';
   }
@@ -105926,7 +106216,8 @@ window.WH_ICONS = {
     if (game.player.inputSuspended || game.player.state !== 'alive') return false;
     var p = game.player.pos;
     return tryPickup() || lootCorpseNearest(p.x, p.z, CFG.corpseLoot.lootRadius) ||
-      tryCookStation() || tryCampSleep() || tryDenDoor() || tryDoorway() || tryNotch() || tryTalkNpc() || tryGather();   // CC-C10: + tryTalkNpc
+      tryCookStation() || tryCampSleep() || tryDenDoor() || tryDoorway() || tryNotch() || tryTalkNpc() ||
+      tryRescue() || tryChest() || tryGather();   // CC-C11: talk -> rescue -> chest -> gather
   }
 
   // ---- CC-C8 the Rot Mother's den door (CONFIG.regionD.door) ----------------------
@@ -106031,6 +106322,14 @@ window.WH_ICONS = {
   function tryTalkNpc() {
     if (!npcNear()) return false;
     return window.WH_NPC.openDialog();
+  }
+
+  // CC-C11: the rescue interaction and quest-unlocked deployed-site chest.
+  function tryRescue() {
+    return !!(window.WH_NPC && window.WH_NPC.tryRescue());
+  }
+  function tryChest() {
+    return !!(window.WH_Chest && window.WH_Chest.tryOpen());
   }
 
   // ---- C1 cooking stations (CONFIG.cooking, js/cooking.js) -----------------------
@@ -106254,6 +106553,11 @@ window.WH_ICONS = {
         text = CFG.regionC.notchText.prompt; // CC-C4b: rim notch mouth
       } else if (npcNear()) {
         text = CFG.regionC.npc.dialog.prompt; // CC-C10: talk to the farmer
+      // CC-C11: prompt priority mirrors the E chain.
+      } else if (window.WH_NPC && window.WH_NPC.rescuePrompt()) {
+        text = CFG.regionC.quest.rescuePrompt;
+      } else if (window.WH_Chest && window.WH_Chest.interactPrompt()) {
+        text = window.WH_Chest.interactPrompt();
       } else {
         var node = nearestGatherNode();
         if (node) text = CFG.gather.promptText.replace('{name}', CFG.gather.nodeTypes[node.type].name);
@@ -106616,6 +106920,8 @@ window.WH_ICONS = {
       });
       // CC-C10: Farmer Aldric + his dialog panel (js/npc.js; built lazily on the first C visit)
       if (window.WH_NPC) window.WH_NPC.init(game);
+      // CC-C11: chest manager follows the NPC quest owner and the deployed camp manager.
+      if (window.WH_Chest) window.WH_Chest.init(game);
       // C4 boot CONTINUE: with a save the overlay waits for the player's row
       // (CONTINUE = restore the profile, NEW GAME = the fresh flow; the
       // profile is never wiped - the first camp save replaces it). The
@@ -106653,6 +106959,9 @@ window.WH_ICONS = {
       var data = baseCapture(g, opts);
       data.lairs = window.WH_Enemy.captureLairs();
       if (window.WH_NPC) data.questState = { findDaughter: window.WH_NPC.questState() };   // CC-C10
+      // CC-C11: retain the C10 wrap and enrich its existing findDaughter row.
+      if (window.WH_NPC) data.questState.findDaughter = window.WH_NPC.questStateDetail();
+      if (window.WH_Chest) data.chest = window.WH_Chest.capture();
       return data;
     };
     S.save = function (g, opts) {
@@ -106662,6 +106971,9 @@ window.WH_ICONS = {
         if (!stored) return true;
         stored.lairs = window.WH_Enemy.captureLairs();
         if (window.WH_NPC) stored.questState = { findDaughter: window.WH_NPC.questState() };   // CC-C10
+        // CC-C11: the explicit storage write follows the house save-wrap pattern.
+        if (window.WH_NPC) stored.questState.findDaughter = window.WH_NPC.questStateDetail();
+        if (window.WH_Chest) stored.chest = window.WH_Chest.capture();
         window.localStorage.setItem(CFG.save.lsKey, JSON.stringify(stored));
       } catch (e) { /* the base profile stands; the nest re-arms on load */ }
       return true;
@@ -106669,6 +106981,8 @@ window.WH_ICONS = {
     S.restore = function (g, data) {
       if (data) window.WH_Enemy.restoreLairs(data.lairs);
       if (data && window.WH_NPC) window.WH_NPC.restoreQuest(data.questState);   // CC-C10
+      // CC-C11: a missing chest block is a no-op (fresh model stays empty).
+      if (data && window.WH_Chest) window.WH_Chest.restore(data.chest);
       baseRestore(g, data);
     };
     // S5 quit persist: tab close / reload writes the same capture() profile,
@@ -107150,6 +107464,8 @@ window.WH_ICONS = {
     game.cooking.update(dt);
     game.camp.update();   // C3: camp groups per region, placement ghost, menu close on death
     if (window.WH_NPC) window.WH_NPC.update(dt);   // CC-C10: farmer show/cull, name plate, dialog close on death
+    // CC-C11: spawn / re-place / region gate after the camp and quest updates.
+    if (window.WH_Chest) window.WH_Chest.update(dt);
     updateQuestLine();    // CC-C10: HUD quest line (findDaughter active)
     applyBuffStats();   // C1: effective hpMax from active food buffs
     updateHud(dt);

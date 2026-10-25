@@ -70,6 +70,8 @@
     blightcap: 'art-direction/3d/assets/biome_library/m14-blightcap-pixelated.glb',
     stoneSteps: 'art-direction/3d/assets/crypt/stone-steps-pixelated.glb',
     skullPile: 'art-direction/3d/assets/crypt/skull-pile-pixelated.glb',
+    // CC-C11: crypt furniture (already pixelated, deferred).
+    stoneSarcophagus: 'art-direction/3d/assets/crypt/stone-sarcophagus-pixelated.glb',
     // R2: darkwood light-socket props (doc 61 batches B2/B3)
     banditCampfire: 'art-direction/3d/assets/biome_library/m15-bandit-campfire-pixelated.glb',
     lanternWaymarker: 'art-direction/3d/assets/biome_library/b3-waymarker-pixelated.glb',
@@ -154,6 +156,8 @@
     // art-law waiver until Astrabot's farmer lands; no CHARACTERS / BODY_PNG row,
     // static bind pose (js/npc.js clones it with WHSkeletonUtils, no mixer).
     farmerBody: 'art-direction/3d/assets/races_regen/rigged/dwarf-male-smith.rigged.glb',
+    // CC-C11: RAW bind-pose daughter placeholder; Astrabot replacement pending.
+    dwarfFemaleBody: 'art-direction/3d/assets/races_regen/rigged/dwarf-female.rigged.glb',
 
     // weapons (pixelated)
     longsword: 'art-direction/3d/assets/weapons/longsword-pixelated.glb',

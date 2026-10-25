@@ -1181,6 +1181,10 @@ window.WH_CONFIG = {
         line2: 'Into the Old King\'s Barrow, the den in the hillside due west of here. Follow the setting sun past the dead trees.',
         line3: 'Bring her home. Whatever it costs. I will watch the road for you.',
         repeat: 'The barrow door, hunter. Bring her home.',
+        // CC-C11: rescue and homecoming copy (Nicko tunes).
+        lineRescue: 'You are safe now. Go to your father; I will follow.',
+        lineRescued: 'She is home, hunter. You have given me back my world.',
+        lineComplete: 'My daughter is home. The chest at your camp is yours to use.',
         cont: 'Continue',
         close: 'Close',
         hint: 'Esc close',
@@ -1193,6 +1197,12 @@ window.WH_CONFIG = {
     quest: {
       id: 'findDaughter',
       states: ['available', 'active', 'complete'],
+      // CC-C11: two further stages of the same three-state quest.
+      hudRescued: 'Return to Farmer Aldric - his daughter is safe',
+      hudComplete: 'Daughter home - camp chest unlocked',
+      rescuedToast: 'The daughter is safe. Return to Farmer Aldric.',
+      rescuePrompt: 'E - Search the sarcophagus',
+      rescueInteractM: 3,
       hudText: 'Find the farmer\'s daughter - Old King\'s Barrow (W)'   // PROPOSED, Nicko tunes (B2 / B11)
     }
   },
@@ -1267,6 +1277,8 @@ window.WH_CONFIG = {
     // there). 4 mossBoulder shoulders, the brood furniture, the nest's 5 egg
     // sacs (moved INSIDE from the open lair).
     props: [
+      // CC-C11: seed CC-C11-20261025-01; den-local (-15,-5); probe_sarc.js PASS.
+      { asset: 'stoneSarcophagus', x: -201, z: -185, rotY: 0.4, scale: 1.2 },
       // -- cavern ring: 10 segments, exit gap between the first and the last
       { asset: 'whWallA', x: -165.5, z: -188.5, rotY: 2.72, scale: 7.84, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
       { asset: 'whWallB', x: -176.1, z: -198.0, rotY: 2.12, scale: 7.84, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
@@ -2900,6 +2912,10 @@ window.WH_CONFIG.camp = {
     ghostOpacity: 0.45,
     ghostOkColor: 0x3ad26a          // FIX 10-06b: green = placeable right now
   },
+  // CC-C11: the chest follows deployed kit pegs (offset in site frame, not world coordinates).
+  chest: { offset: [2.2, 1.8], interactM: 2.5, capacity: 24, slotsX: 6, slotsY: 4,
+    prompt: 'E - Open the chest', title: 'CAMP CHEST', deposit: 'Deposit', withdraw: 'Withdraw',
+    empty: 'Empty', close: 'Close', hint: 'Select a bag slot to deposit; select a chest slot to withdraw. Esc close.' },
   sleepFadeSec: 0.6,                // Save and Heal: fade to black, rest, fade back
   text: {
     prompt: 'E - Camp',
