@@ -129,7 +129,14 @@
     // 10-05 Round C: combat-chain.glb + 12 Mixamo WH_Sword*/WH_Shield* clips
     // (scratch/mixamo_player.json; chain clips byte-identical). Rollback:
     // human-hunter-male.combat-chain.glb
-    playerBody: 'art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-sword.glb',
+    // IO GEAR 2026-10-26: playerBody = combat-gear.glb = combat-sword.glb +
+    // skinned witch-hat (Head bone) + belt satchel (Hips bone) appended via
+    // append-only GLB splice (nodes/materials/meshes/accessors appended; the
+    // 43 clips and the base BIN chunk are byte-identical prefixes; gear
+    // JOINTS_0 remapped to the base skin joint order). Rollback:
+    // human-hunter-male.combat-sword.glb. Splicer + author:
+    // scratch/io_gear_author.py / scratch/io_gear_splice.py
+    playerBody: 'art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-gear.glb',
     // DAG (2026-10-09) CLIP SOURCE ONLY (never instanced): a rigged.glb copy
     // + WH_DagSlashR2L / WH_DagSlashL2R / WH_DagSlashR2Lb (Phase A2,
     // scratch/blender_dagger_clips.py; same 22 nodes / 20 joints). player.js
@@ -218,6 +225,7 @@
   // MAGANIM Phase A: 42 = 28 + 14 WH_Mag_* (Lite Magic Pack, 5477e98).
   // DAG: playerDagClips 9 = 6 whanim1 + 3 WH_Dag* (clip source only).
   // CC-C5: wolfBody 6 = WH_Wolf_Idle/Walk/Run/Attack1/Hit/Death.
+  // IO GEAR 10-26: playerBody 43 unchanged - gear splice adds ZERO clips.
   var CHARACTERS = { playerBody: 43, banditBody: 6, ghoulBody: 6, playerDagClips: 9, wolfBody: 6 };
   var failed = {};     // logical name -> true (stand-in substituted)
   var loadedCount = 0;
