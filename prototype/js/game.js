@@ -1904,7 +1904,7 @@
     var conn = denDoorNear();
     if (!conn) return false;
     if (game.denFade) return true;          // already on the way in
-    var D = CFG.regionD.door;
+    var D = conn.door;
     startDenFade(D.fadeIn, D.fadeOut, function () {
       applyCross(game.regionManager.forceCross(conn));
     });
@@ -2216,7 +2216,7 @@
       } else if (nearestCampSleep()) {
         text = CFG.camp.text.prompt;         // C3: tent menu
       } else if (denDoorNear()) {
-        text = CFG.regionD.door.text.prompt; // CC-C8: the den doorway (E - Enter the den)
+        text = denDoorNear().door.text.prompt; // C8/AD1 veil_crypt: the den + crypt doorways (conn-carried prompt)
       } else if (lockedDoorNear()) {
         text = CFG.regionC.door.text.prompt; // CC-C2: locked B/C door
       } else if (notchNear()) {
@@ -3068,7 +3068,7 @@
       applyCross(tr);
       // CC-C8: walking out of the den mouth = the same dip, lifting from black
       if (tr.conn && tr.conn.door && tr.conn.door.land && !game.denFade) {
-        startDenFade(0, CFG.regionD.door.exitFadeOut, null);
+        startDenFade(0, tr.conn.door.exitFadeOut, null); // C8/AD1: exitFade rides the crossed conn
       }
     }
 

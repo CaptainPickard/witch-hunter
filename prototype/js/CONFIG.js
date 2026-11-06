@@ -1346,6 +1346,112 @@ window.WH_CONFIG = {
     }
   },
 
+  // CC-AD1 veil_crypt: The Old Throne's Crypt (io/specs/cc-ad1-veil-crypt-spec.md;
+  // art anchor concept-08-veil-spire):
+  // THE OLD THRONE'S CRYPT (doc 47 strata V1) - a hand-authored interior pocket
+  // region reached from C's north-rim notch through a CC-C8-shaped tomb door
+  // (region-defs connections[3]). The row below is shaped EXACTLY on regionD
+  // (same key set, new values); PROPOSED seats, Nicko tunes). ART LAW: basalt
+  // charcoal 0x121418 ground, bruised-purple 0x0a0810 fog, ONE crimson accent
+  // (the albetar blightcap caps); dressing uses existing manifest assets ONLY
+  // (whWallA/whWallB/stoneSarcophagus/stoneSteps/skullPile/blightcap/
+  // mossBoulder/rubblePile - manifest keys listed here for the build note).
+  regionE: {
+    id: 'veil_crypt',
+    name: "The Old Throne's Crypt",
+    center: { x: 0, z: -596 },        // the north notch's mouth coordinate; the crypt disc lands beneath
+    groundRadius: 20,                 // den is 34; a tighter pocket per the art anchor. PROPOSED
+    groundY: 0,                       // flat disc (C is hidden while E is active: same law as the den)
+    groundColor: 0x121418,            // basalt charcoal
+    groundColor2: 0x171a20,           // slate-purple shadow secondary
+    groundSeed: 1662061219,
+    scatter: false,                   // hand rows only (no Round E scatter in the crypt)
+    spawn: { x: 0, z: -604 },                         // the landing row's crypt end (crypt-local (0,-8))
+    gravityY: -22,                    // den's value
+    // sec DARKNESS: d95 = sqrt(-ln 0.05) / 0.13 = 13.3 m (the far wall is a
+    // black thought). Region row fog/fill/ambient only - no constantPhase row
+    // added this round (spec sec 5 excluded surface).
+    fogColor: 0x0a0810,
+    fogDensity: 0.13,
+    ambientLightLevel: 0.07,
+    // C<->E door (region-defs connections[3]). Shaped EXACTLY on regionD.door
+    // above. veil_crypt law: same one-conn-one-door shape, the walk-back plane
+    // exists ONLY from the crypt side. planeZ = the crypt-side mouth (crypt-local z -16 = world -612);
+    // the window = the 4.8 m gap between the ring's end colliders (walkable
+    // lane +-2.4: every way out crosses). walkFrom: the plane crossing exists
+    // ONLY from the crypt side (walk-back; in C the line runs underground: no
+    // crossing, no clamp, no scatter clear there). interact = the notch
+    // mouth's E hook (C side). land = where a crossing INTO each region puts
+    // the player + what they face. fadeSec = the black dip (the death overlay
+    // element, non-lethal): E-descend 0.3 + 0.5; walk-out 0 + 0.8.
+    door: {
+      planeZ: -612,                       // crypt-local z -16
+      doorX: 0,
+      doorHalfWidth: 2.4,             // the tomb mouth (den is 3.0). PROPOSED
+      suspendDepthM: 0,
+      wallGapPadM: 0,
+      interactM: 3.5,
+      interactAt: { x: 0, z: -596 },   // C side: the notch mouth itself - E there enters the crypt
+      land: {
+        forest_of_the_old_king: { x: 0, z: -596, faceX: 0, faceZ: -366 },
+        veil_crypt: { x: 0, z: -604, faceX: 0, faceZ: -604 }
+      },
+      fadeIn: 0.3,
+      fadeOut: 0.5,
+      exitFadeOut: 0.8,
+      text: { prompt: 'E - Descend into the crypt' }
+    },
+    // 2 veil_crypt coven casters (CC-EC1 behavior contract: keep-distance ON
+    // inside the
+    // crypt). Crypt-local (5,4) / (-6,6) = world (5,-592) / (-6,-590); each
+    // >= 8.0 m from the spawn/land row and from each other (13.0 / 15.23 /
+    // 11.18 m), >= 4 m walk-clear of the ring (valspec-verified margins).
+    enemies: [
+      { type: 'coven', x: 5, z: -592 },
+      { type: 'coven', x: -6, z: -590 }
+    ],
+    // CRYPT BUILD (scratch/cc-ad1/solve_geometry.py - the gen_den ring math
+    // scaled to r 18). Flat ground: every row sits at y 0 (+ its sink). Cavern
+    // = 8 vinestone ring segments (per-axis: scale = the 13.96 m chord, sy =
+    // heightM 9, sz = thickness 2.4; wall = 7 r 0.45 colliders ~ every 2 m -
+    // the crypt is CLOSED except the tomb mouth), the door gap at world
+    // (0, -612) = the open-arch pattern (no segment there). Dressing: the
+    // ALBETAR (sarcophagus + steps plinth, crypt-local (0,6), rotY facing the
+    // door), dignified-dead scatter (the blightcap caps are the ONE crimson
+    // accent), mossBoulder shoulders + a rubble flanker by the mouth. Every
+    // row >= 4.34 m walk-clear of the ring (margin 4.0 + collider r 0.45).
+    props: [
+      // -- the albetar: 1 sarcophagus + 2 steps as a plinth at crypt-local (0,6)
+      { asset: 'stoneSarcophagus', x: 0, z: -590, rotY: 0.00, scale: 1.20 },
+      { asset: 'stoneSteps',       x: -1.0, z: -588.2, rotY: 0.60, scale: 1.10 },
+      { asset: 'stoneSteps',       x: 1.0, z: -588.2, rotY: 5.68, scale: 1.10 },
+      // -- veil_crypt cavern ring: 8 segments, door gap between the first and the last
+      { asset: 'whWallA', x: 8.3, z: -612.0, rotY: 5.80, scale: 7.35, sy: 11.69, sz: 2.40, y: -0.2, wall: 7 },
+      { asset: 'whWallB', x: 17.0, z: -601.8, rotY: 5.04, scale: 7.35, sy: 11.55, sz: 2.40, y: -0.2, wall: 7 },
+      { asset: 'whWallA', x: 16.4, z: -588.5, rotY: 4.28, scale: 7.35, sy: 11.69, sz: 2.40, y: -0.2, wall: 7 },
+      { asset: 'whWallB', x: 6.7, z: -579.3, rotY: 3.52, scale: 7.35, sy: 11.55, sz: 2.40, y: -0.2, wall: 7 },
+      { asset: 'whWallA', x: -6.7, z: -579.3, rotY: 2.76, scale: 7.35, sy: 11.69, sz: 2.40, y: -0.2, wall: 7 },
+      { asset: 'whWallB', x: -16.4, z: -588.5, rotY: 2.00, scale: 7.35, sy: 11.55, sz: 2.40, y: -0.2, wall: 7 },
+      { asset: 'whWallA', x: -17.0, z: -601.8, rotY: 1.24, scale: 7.35, sy: 11.69, sz: 2.40, y: -0.2, wall: 7 },
+      { asset: 'whWallB', x: -8.3, z: -612.0, rotY: 0.48, scale: 7.35, sy: 11.55, sz: 2.40, y: -0.2, wall: 7 },
+      // -- veil_crypt dignified dead: 2 skull piles, 4 blightcaps, 2 moss
+      //    boulders, and a
+      //    rubble flanker near the tomb mouth (crypt-local (-7,-3)); every row
+      //    >= 4 m walk-clear of the ring (16 - rho), >= 4.45 m from every wall
+      //    collider, >= 6 m from spawn/land, >= 5 m from covens — the full
+      //    table re-verified by scratch/cc-ad1/solve_geometry.py (ALL PASS)
+      { asset: 'skullPile',   x: -11, z: -600, rotY: 4.40, scale: 1.00 },
+      { asset: 'skullPile',   x: -11, z: -593, rotY: 5.50, scale: 1.00 },
+      { asset: 'blightcap',   x: 11, z: -599.5, rotY: 3.62, scale: 0.90 },
+      { asset: 'blightcap',   x: 6, z: -586.5, rotY: 4.72, scale: 0.90 },
+      { asset: 'blightcap',   x: -10, z: -596, rotY: 5.82, scale: 0.90 },
+      { asset: 'blightcap',   x: 11, z: -592, rotY: 0.63, scale: 0.90 },
+      { asset: 'mossBoulder', x: -9, z: -603.5, rotY: 2.00, scale: 2.20 },
+      { asset: 'mossBoulder', x: 9, z: -603.5, rotY: 4.90, scale: 2.20 },
+      { asset: 'rubblePile',  x: -7, z: -599, rotY: 5.80, scale: 0.90 }
+    ]
+  },
+
   // Round E (io/missions/2026-10-05-cc-roundE-veg.md): seeded vegetation
   // scatter, built by region-manager whScatterPlan. PARAMETERS ONLY - no
   // placement tables: every position is a pure function of this block, the

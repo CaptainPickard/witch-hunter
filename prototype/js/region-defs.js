@@ -111,6 +111,40 @@
   connections[2].sides[CFG.regionC.id] = -1;
   connections[2].sides[CFG.regionD.id] = 1;
 
+  // CC-AD1 veil_crypt: the crypt (own disc r 20 beneath the north notch). side -1 = the
+  // plane-0 convention only (E is on no plane-0 side). C0-7 law: the crypt
+  // never lies ON the C-side plane z = -612, so sideOfBoundary(C, 3) = -1.
+  regions[CFG.regionE.id] = makeRegion(CFG.regionE, -1);
+
+  // CC-AD1 veil_crypt C<->E tomb door, shaped EXACTLY on the CC-C8 row above (connections[2]):
+  // axis z, the plane = the crypt-side mouth (E.door.planeZ), the window =
+  // the door's walkable lane, walkFrom the crypt ONLY (walk-back; in C the
+  // line runs underground: no crossing, no clamp). The C-side E hook sits at
+  // the notch mouth (door.interactAt, radius interactM). land rows per region.
+  var ED = CFG.regionE.door;
+  connections.push({
+    from: CFG.regionC.id,
+    to: CFG.regionE.id,
+    axis: 'z',
+    planeCoord: ED.planeZ,
+    sides: {},
+    door: {
+      doorX: ED.doorX,
+      doorHalfWidth: ED.doorHalfWidth,
+      suspendDepthM: ED.suspendDepthM,
+      wallGapPadM: ED.wallGapPadM,
+      arch: null,
+      gatedTo: null,
+      walkFrom: CFG.regionE.id,
+      interact: { from: CFG.regionC.id, x: ED.interactAt.x, z: ED.interactAt.z, radius: ED.interactM },
+      land: ED.land
+    }
+  });
+  // C0-3 SIDES TABLE: regionE occupies z <= planeZ (D-symmetry: D is
+  // z >= planeZ on its conn). E side +1, C side -1.
+  connections[3].sides[CFG.regionC.id] = -1;
+  connections[3].sides[CFG.regionE.id] = 1;
+
   // ---- THREE-free transition helpers (used by region-manager and tests) ------
 
   // Returns the connection between two region ids, or null.
