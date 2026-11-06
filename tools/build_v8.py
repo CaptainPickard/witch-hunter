@@ -36,7 +36,12 @@ try:
     from datetime import datetime as _dt, timezone as _tz
     _head = _sp.run(['git', 'rev-parse', '--short', 'HEAD'], cwd=str(ROOT),
                     capture_output=True, text=True, timeout=10).stdout.strip()
-    _stamp = _dt.now(_tz.utc).strftime('%m-%d %H:%MZ')
+    # DETERMINISTIC-BUILD LAW (2026-11-06): stamp from the HEAD commit's
+    # author time, not wall clock — rebuilds of the same HEAD are
+    # byte-identical, which keep coherence guards and release flips stable.
+    _r2 = _sp.run(['git', 'show', '-s', '--format=%cI', 'HEAD'], cwd=str(ROOT),
+                  capture_output=True, text=True, timeout=10)
+    _stamp = _dt.fromisoformat((_r2.stdout or '').strip()).astimezone(_tz.utc).strftime('%m-%d %H:%MZ')
     html = html.replace('<title>Witch Hunter v9 - EPR1 Combat</title>',
                         f'<title>Witch Hunter v9 - EPR1 Combat (build {_stamp} {_head})</title>', 1)
 except Exception:
