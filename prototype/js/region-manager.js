@@ -2100,7 +2100,9 @@
     // record dead state for persistence
     var st = this.logic.stateFor(activeId);
     for (var m = 0; m < list.length; m++) {
-      if (list[m].fsm === 'dead') st.enemies[m] = 'dead';
+      // CC-AE1: raid-member corpses stay TRANSIENT - raiders are not CONFIG
+      // roster rows; saving their indexes would inflate regionStates forever.
+      if (list[m].fsm === 'dead' && !list[m].raidMember) st.enemies[m] = 'dead';
     }
   };
 

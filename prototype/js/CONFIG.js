@@ -1649,6 +1649,35 @@ window.WH_CONFIG = {
     // Old King's Roads are once again the only roads (CC-C4a geometry intact).
   ],
 
+  // CC-AE1 (io/specs/cc-ae1-night-raids-spec.md): night raid director over
+  // the Old King's Roads. Values PROPOSED, Nicko tunes. Doc 34 §6 night road
+  // row = the party; doc 41 R3 = 1-2 concurrent per region, V1 = 2 max with
+  // 1 alive at a time. All thresholds are consumed by js/ambush.js only.
+  raid: {
+    regionId: 'forest_of_the_old_king',
+    warnSec: 2.0,                 // doc 34: cue fires 2.00s before spawn resolves
+    warnLine: 'Something stalks the road behind you.',
+    party: { banditCount: 2, wolfCount: 1 },   // doc 34 night road row (low end)
+    spawnBandM: [14, 17.5],       // lateral off road centerline (18m radii law)
+    roadSeekRadiusM: 25,          // rear-anchor -> nearest road sample max distance
+    rearSpreadDeg: 60,            // rear-arc bearing jitter (yaw + PI +- this)
+    seatSlideM: 6,                // per-retry slide along the road when a seat fails
+    seatRetries: 3,
+    seatMaxSlopeTan: 0.45,        // seat rejection slope (WH_GROUND.slopeTan)
+    seatMinPropM: 3.0,            // seat rejection: CONFIG prop rows clearance
+    nearFireExclusionM: 50,       // one number everywhere: player-check gate AND seat gate (A-1 evidence)
+    notchMouthExclusionM: 26,     // A-1: no seats within this of a branch road's terminal point IN ITS NOTCH ARC (north (0,-596) / east (240,-366) / west (-240,-366)); kingsRoad exempt
+    seatMinRoadRenderedM: 14,     // AE1-A: rendered-road distance floor (SWAYED geometry, window.WH_RegionGeom.distToRoad - the road the player sees); polyline fallback only when WH_RegionGeom is absent
+    minPlayerDistM: 14,           // AE1-A: seat-to-PLAYER straight-line floor (pop-in guard; worst poly-band case measured 8.96 m with player on a sway bulge)
+    stoneRingExclusionR: 40,      // seat rejection radius around the Stone (0, -366)
+    checkSec: 20,                 // trigger check cadence while eligible
+    triggerChance: 0.25,          // per check roll (debugForce bypasses)
+    partiesPerNightMax: 2,        // doc 41 R3: 1-2 concurrent per region; V1 = 2 max, 1 alive at a time
+    cooldownSec: 180,             // after a raid ends (wipe or leash-out)
+    debugForce: false,            // Nicko dev knob (dayNight.debugTimeScale pattern)
+    debugMute: false              // dev knob: silence the state toasts below
+  },
+
   // Boundary between A and B: the plane z = CONFIG.boundary.z.
   // Region A occupies z > boundaryZ, region B occupies z < boundaryZ.
   boundary: {

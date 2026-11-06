@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Witch Hunter - Playable Concept v1</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="wh-root">
+  <canvas id="wh-canvas"></canvas>
+  <div id="wh-hud">
+    <div id="wh-bars">
+      <div class="bar-label" id="wh-hp-label">HP</div>
+      <div class="bar-outer" id="wh-hp-bar-outer"><div class="bar-fill hp" id="wh-hp-bar"></div></div>
+      <div class="bar-label">Stamina</div>
+      <div class="bar-outer" id="wh-stam-bar-outer"><div class="bar-fill stam" id="wh-stam-bar"></div></div>
+    </div>
+    <div id="wh-fps">FPS: 0</div>
+    <!-- 2026-10-03 pixel-fidelity tuner (change order: pixels too large):
+         F1 steps the internal buffer finer, F2 chunkier; readout pulses. -->
+    <div id="wh-res-tuner">
+      <div id="wh-res-readout"></div>
+      <div id="wh-res-hint">F1 finer pixels - F2 chunkier pixels</div>
+    </div>
+    <div id="wh-region-name"></div>
+    <div id="wh-gate-hint">Enter the Darkwood</div>
+    <div id="wh-gather-prompt"></div>
+    <div id="wh-lock-reticle"></div>
+    <div id="wh-mouse-chip" title="Backquote toggles mouse bind">MOUSE: UNBOUND [`]</div>
+    <div id="wh-death-overlay"><div id="wh-death-text">You died</div><div id="wh-death-sub">Respawning...</div></div>
+    <!-- 2026-10-03 boot loading screen: title over a real per-asset progress
+         bar (tick count lives in js/assets.js). Replaces the bare text note. -->
+    <div id="wh-load-note">
+      <div id="wh-boot-title">Witch Hunter</div>
+      <div id="wh-boot-bar"><div id="wh-boot-bar-fill"></div></div>
+      <div id="wh-boot-sub">Loading assets...</div>
+    </div>
+  </div>
+</div>
+<script src="vendor/three.classic.js"></script>
+<script src="vendor/gltf-loader.classic.js"></script>
+<script src="vendor/skeleton-utils.classic.js"></script>
+<script src="js/moveset.js"></script>
+<script src="js/CONFIG.js"></script>
+<script src="js/wh-ground.js"></script>
+<script src="js/icons-data.js"></script>
+<script src="js/region-defs.js"></script>
+<script src="js/assets.js"></script>
+<script src="js/anim.js"></script>
+<script src="js/spells.js"></script>
+<script src="js/inventory.js"></script>
+<script src="js/cooking.js"></script>
+<script src="js/daynight.js"></script>
+<script src="js/light.js"></script>
+<script src="js/gather.js"></script>
+<script src="js/corpse-loot.js"></script>
+<!-- L1: WH_LEVEL before player.js (player / inventory / game read it at
+     runtime; the first read is game.js boot applyBuffStats - save.js has no
+     load-order tie to it) -->
+<script src="js/leveling.js"></script>
+<script src="js/player.js"></script>
+<script src="js/enemy.js"></script>
+<script src="js/region-manager.js"></script>
+<script src="js/camp.js"></script>
+<script src="js/npc.js"></script>
+<script src="js/chest.js"></script>
+<script src="js/save.js"></script>
+<script src="js/touch-controls.js"></script>
+<!-- CC-C12: DIAGNOSTIC ONLY - wolf anim readout; inert without ?whdbg=1 -->
+<script src="js/wolf-debug.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>

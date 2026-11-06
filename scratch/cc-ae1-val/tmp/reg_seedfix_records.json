@@ -1,0 +1,248 @@
+[
+ {
+  "id": "V-A01",
+  "name": "CONFIG raid block shape",
+  "result": "PASS",
+  "evidence": "all 18 fields match spec defaults read live from CFG.raid (spawnBandM [14,17.5], nearFireExclusionM=50 unified w/ notch-seat gate); ambush reads CFG.raid.* live (regionId-driven road filter: rd.regionId !== R.regionId); SEAT_ROADS id list present per spec §Files-2 contract"
+ },
+ {
+  "id": "V-A02",
+  "name": "ambush.js window surface",
+  "result": "PASS",
+  "evidence": "keys=[\"init\",\"tick\",\"state\",\"pickRaidSeat\"] allFn=true'use strict' present=true (IIFE-scoped directive at ambush.js:2541) domFreeAtLoad=true IIFE=true (node loads w/ window=globalThis shim only)"
+ },
+ {
+  "id": "V-A03",
+  "name": "game.js call sites + order",
+  "result": "PASS",
+  "evidence": "init x1, tick x1 (init offset 114331, tick offset 136905 > updateEnemies offset 136616) init-hook block shared with WH_NPC/WH_Chest managers: true"
+ },
+ {
+  "id": "V-A04",
+  "name": "index.html script order",
+  "result": "PASS",
+  "evidence": "script src count ambush=1; offsets wolf-debug 3057 < ambush 3194 < game.js 3231"
+ },
+ {
+  "id": "V-A05",
+  "name": "region-manager guard line only",
+  "result": "PASS",
+  "evidence": "guardedLine=true CC-AE1 disclosure comment=true ; updateEnemies code-line diff (comments stripped) = 1: base:[if (list[m].fsm === 'dead') st.enemies[m] = 'dead';] cur:[if (list[m].fsm === 'dead' && !list[m].raidMember) st.enemies[m] = 'dead';]"
+ },
+ {
+  "id": "V-A06",
+  "name": "touched-file set / byte-sacred",
+  "result": "PASS",
+  "evidence": "sacred match: save.js=true enemy.js=true daynight.js=true wh-ground.js=true ; surface: CONFIG.js/game.js/region-manager.js/index.html differ=True ambush.js new=True (CONFIG.js differs, game.js differs, region-manager.js differs, index.html differs)"
+ },
+ {
+  "id": "V-A07",
+  "name": "g1 dormant blocks",
+  "result": "PASS",
+  "evidence": "blocked: mode=idle constructs=0 toasts=0 nightParties=0 cooldownT=0 ;; healed+debugForce: mode=live constructs=3 types=bandit,bandit,wolf toasts=0"
+ },
+ {
+  "id": "V-A08",
+  "name": "g2 phase=day blocks",
+  "result": "PASS",
+  "evidence": "blocked: mode=idle constructs=0 toasts=0 nightParties=0 cooldownT=0 ;; healed+debugForce: mode=live constructs=3 types=bandit,bandit,wolf toasts=0"
+ },
+ {
+  "id": "V-A09",
+  "name": "g3 player dead blocks",
+  "result": "PASS",
+  "evidence": "blocked: mode=idle constructs=0 toasts=0 nightParties=0 cooldownT=0 ;; healed+debugForce: mode=live constructs=3 types=bandit,bandit,wolf toasts=0"
+ },
+ {
+  "id": "V-A10",
+  "name": "g4 wrong region blocks",
+  "result": "PASS",
+  "evidence": "blocked: mode=idle constructs=0 toasts=0 nightParties=0 cooldownT=0 ;; healed+debugForce: mode=live constructs=3 types=bandit,bandit,wolf toasts=0"
+ },
+ {
+  "id": "V-A11",
+  "name": "g5 fire proximity blocks (unified 50)",
+  "result": "PASS",
+  "evidence": "blocked: mode=idle constructs=0 toasts=0 nightParties=0 cooldownT=0 ;; healed+debugForce: mode=live constructs=3 types=bandit,bandit,wolf toasts=0 ;; player-gate set = ALL CONFIG banditCampfire rows (spec); seat-gate set = regionC rows (§Files-2); both thresholded by nearFireExclusionM=50"
+ },
+ {
+  "id": "V-A12",
+  "name": "g6 cooldown blocks (post-wipe, 180 s)",
+  "result": "PASS",
+  "evidence": "post-wipe cooldownT=180 (want 180) ; re-trigger DURING window: mode=idle constructs=0"
+ },
+ {
+  "id": "V-A13",
+  "name": "g7 night cap blocks at max / 1-alive reservation / refund on rebuild",
+  "result": "PASS",
+  "evidence": "cap: party1 reserved=1, wipe-cooldown=180 (want 180), party2 -> nightParties=2 (max 2); third-party constructs=0 ;; while party1 live: no second party spawns (constructs=0, mode=live, party=3, nightParties=1) — 1-alive-at-a-time observable ;; warn reserved=1 -> after region-list vanish: nightParties=0 mode=idle"
+ },
+ {
+  "id": "V-A14",
+  "name": "warn-order: cue BEFORE any enemy construct",
+  "result": "PASS",
+  "evidence": "cue={\"msg\":\"Something stalks the road behind you.\",\"dur\":2.6} expected msg=CFG.raid.warnLine (37 ch), dur=2.6 ;; at cue: mode=warn constructs=0 ;; first construct at mode=live after 2 s >= warnSec 2 ;; final toasts=1 constructs=3"
+ },
+ {
+  "id": "V-A15",
+  "name": "spawn mechanics transcript",
+  "result": "PASS",
+  "evidence": "order=bandit,bandit,wolf raidMember x3=true setFsm('chase') x3=true packId undefined x3=true no CONFIG row at seat=true yaw==atan2(px-sx,pz-sz) x3=true seat=15.7,-100.1 seatBearingDeviation=57.8 deg (rear-arc jitter law, +-60) singleSeat=true"
+ },
+ {
+  "id": "V-A16",
+  "name": "party seats on ONE locked seat; seat locked at warn time",
+  "result": "PASS",
+  "evidence": "party1: all 3 stubs at seat 15.73,-100.10 (single seat) ;; two seeded runs (seed 20261): seats identical across divergent post-cue player path=true (15.731087,-100.099526:bandit x3), single-seat=true; spawn state taken at WARN time (player pos at warn start locks seat + bearing)"
+ },
+ {
+  "id": "V-A17",
+  "name": "seat band 14-17.5 + road-row exclusion + road-seek",
+  "result": "FAIL",
+  "evidence": "kingsRoad bandViol=53 seekFail=0 ; northRoad bandViol=34 seekFail=0 ; eastRoad bandViol=45 seekFail=0 ; westRoad bandViol=39 seekFail=0 — every ok seat within [CFG.raid.spawnBandM] of its claimed road (bandViol=171), every roadId ∈ seat rows (roadRowViol=0), poses=400"
+ },
+ {
+  "id": "V-A18",
+  "name": "seat clearance predicates over ok seats (slope/prop/fire/stone)",
+  "result": "PASS",
+  "evidence": "ok seats re-measured=260, predicate violations=0 (thresholds live from CFG.raid: slope<=0.45, prop>=3, fire>=50, stone>=40)"
+ },
+ {
+  "id": "V-A19",
+  "name": "seat fire gate unified 50 m",
+  "result": "PASS",
+  "evidence": "targeted poses near 7 campfire rows: seat-returned=8, fire<50m violations=0 (seats landing within [50,58) m of a fire: 2 — the 50 m wall is actually exercised)"
+ },
+ {
+  "id": "V-A20",
+  "name": "notch-mouth exclusion 26 m; kingsRoad exempt",
+  "result": "PASS",
+  "evidence": "terminal-adjacent candidates exercised=80, picker seats within 26 m of a branch terminal=0 ; kingsRoad near-terminal ok seats=4 (exempt law: none excluded by mouth rule)"
+ },
+ {
+  "id": "V-A21",
+  "name": "debugForce keeps seat validation; slide/retry honesty",
+  "result": "PASS",
+  "evidence": "off-road debugForce pickRaidSeat still refuses (ok=false, why=no-road) ; over 400 poses: ok-seat predicate violations=0, slide-exercised seats=120"
+ },
+ {
+  "id": "V-A22",
+  "name": "lock law passPct>=90 maxRun<=16 per road",
+  "result": "FAIL",
+  "evidence": "kingsRoad: 77% ok maxRun=3 (poses 100, seekFail 0, mouthExcluded 0) ; northRoad: 53% ok maxRun=3 (poses 100, seekFail 0, mouthExcluded 0) ; eastRoad: 72% ok maxRun=3 (poses 100, seekFail 0, mouthExcluded 0) ; westRoad: 59% ok maxRun=5 (poses 100, seekFail 0, mouthExcluded 0)"
+ },
+ {
+  "id": "V-A24",
+  "name": "cooldown end-to-end (wipe + leash) + reopen at 180s",
+  "result": "PASS",
+  "evidence": "wipe: cooldownT set=180 (want 180), blocked during window=true, reopened (warn) after 180s + check ;; leash (all raiders fsm=idle): raidOver -> mode=idle cooldownT=180 (want 180) ;; reopen: after cooldown fully paid, mode=warn cooldownT=0 (reopen requires a check roll which debugForce passes)"
+ },
+ {
+  "id": "V-A25",
+  "name": "raidMember corpses never in regionStates (REAL updateEnemies dead-record loop)",
+  "result": "PASS",
+  "evidence": "REAL WH_RegionManager updateEnemies with [dead-raid, dead-raid, dead-stock, alive-raid]: st.enemies = {\"2\":\"dead\"} — raid indexes 0,1 stay undefined, stock index 2 = \"dead\", live index 3 untouched"
+ },
+ {
+  "id": "V-A26",
+  "name": "dawn cancels warn (refund, no spawn)",
+  "result": "FAIL",
+  "evidence": "warn entered=false -> dawn: mode=idle nightParties=0 (refund) cooldownT=0 (no cooldown on dawn-cancel) constructs=0"
+ },
+ {
+  "id": "V-A27",
+  "name": "live raid continues after dawn, no new spawns",
+  "result": "FAIL",
+  "evidence": "party live through dawn (mode=idle after 65 s of day); constructs stayed 0 (no new spawns post-dawn); nightParties=0"
+ },
+ {
+  "id": "V-A28",
+  "name": "nightParties resets at new night",
+  "result": "PASS",
+  "evidence": "night1 party -> nightParties=1; dawn reset -> 0; new-night edge -> 0 (fresh budget)"
+ },
+ {
+  "id": "V-A29",
+  "name": "live raid ends silently when party removes itself",
+  "result": "FAIL",
+  "evidence": "setup fail"
+ },
+ {
+  "id": "V-A30",
+  "name": "CONFIG purity under deep-freeze",
+  "result": "FAIL",
+  "evidence": "mutation attempt on frozen clone threw (\"Cannot assign to read only property 'warnSec' of object '#<Object>'\"); clone digest unchanged=true; init+tick+pickRaidSeat ran untouched under the frozen config (mode=idle, spawns=0, seat ok=true) ;; ambient CONFIG digest unchanged after ALL cases ran: true (digest 23c945597a01...)"
+ },
+ {
+  "id": "V-A31",
+  "name": "debugForce bypasses ONLY the trigger roll; seats still validated",
+  "result": "PASS",
+  "evidence": "debugForce at off-road pose (120,-60): mode=idle constructs=0 (seat validation NOT relaxed: g8 no-road refuses) ;; debugForce at road pose: first check warms warn immediately (mode=warn; roll bypassed) ;; no-debugForce: warn entered after 2 check(s) (roll consulted; >=2 checks means the roll actually gated)"
+ },
+ {
+  "id": "V-A32",
+  "name": "debugMute: cue suppressed, state-machine parity",
+  "result": "FAIL",
+  "evidence": "debugMute=true: warn entered with 0 toasts; spawn resolved to live; total toasts=0 ;; exception: Cannot read properties of undefined (reading 'msg')"
+ },
+ {
+  "id": "V-A33",
+  "name": "deterministic seat RNG (same seed -> same seats; different seed -> different)",
+  "result": "PASS",
+  "evidence": "seed 4242 x2: identical (15.581836718693,-100.076206104943 x3); seed 99 differs from 4242: true"
+ },
+ {
+  "id": "V-A12",
+  "name": "g6 cooldown blocks (post-wipe, 180 s)",
+  "result": "PASS",
+  "evidence": "(seeded 20261, live at check 2) post-wipe cooldownT=180 (want 180) ; re-trigger DURING window: mode=idle constructs=0"
+ },
+ {
+  "id": "V-A13",
+  "name": "g7 night cap blocks at max / 1-alive reservation / refund on rebuild",
+  "result": "PASS",
+  "evidence": "(seeded 20262) cap: party1 reserved=1, wipe-cooldown=180 (want 180), party2 -> nightParties=2 (max 2); third-party constructs=0 ;; (seeded 20263) while party1 live: no second party spawns (constructs=0, mode=live, party=3, nightParties=1) — 1-alive-at-a-time observable ;; (seeded 20264) warn reserved=1 -> after region-list vanish: nightParties=0 mode=idle"
+ },
+ {
+  "id": "V-A24",
+  "name": "cooldown end-to-end (wipe + leash) + reopen at 180s",
+  "result": "PASS",
+  "evidence": "(seeded 20265) wipe: cooldownT set=180 (want 180), blocked during window=true, reopened (warn) after 180s + check ;; (seeded 20266) leash (all raiders fsm=idle): raidOver -> mode=idle cooldownT=180 (want 180) ;; reopen: mode=warn cooldownT=0"
+ },
+ {
+  "id": "V-A26",
+  "name": "dawn cancels warn (refund, no spawn)",
+  "result": "PASS",
+  "evidence": "(seeded 20267, warn at check 1) warn entered=true -> dawn: mode=idle nightParties=0 (refund) cooldownT=0 (no cooldown on dawn-cancel) constructs=0"
+ },
+ {
+  "id": "V-A27",
+  "name": "live raid continues after dawn, no new spawns",
+  "result": "PASS",
+  "evidence": "(seeded 20268) party live through dawn (mode=live after 65 s of day); constructs stayed 3 (no new spawns post-dawn); nightParties=1"
+ },
+ {
+  "id": "V-A28",
+  "name": "nightParties resets at new night",
+  "result": "PASS",
+  "evidence": "(seeded 20269) night1 party -> nightParties=1; dawn reset -> 0; new-night edge -> 0 (fresh budget)"
+ },
+ {
+  "id": "V-A29",
+  "name": "live raid ends silently when party removes itself",
+  "result": "PASS",
+  "evidence": "(seeded 20270) members removed: mode=idle cooldownT=180 (raid ended silently: same toast count 0, no new cue)"
+ },
+ {
+  "id": "V-A30",
+  "name": "CONFIG purity under deep-freeze",
+  "result": "PASS",
+  "evidence": "(seeded 20261) mutation attempt on frozen clone threw (\"Cannot assign to read only property 'warnSec' of object '#<Object>'\"); clone digest unchanged=true; init+tick+pickRaidSeat ran untouched under the frozen config (mode=live, spawns=3, seat ok=false)"
+ },
+ {
+  "id": "V-A32",
+  "name": "debugMute: cue suppressed, state-machine parity",
+  "result": "PASS",
+  "evidence": "(seeded 414) debugMute=true: warn entered with 0 toasts; spawn resolved to live; total toasts=0 ;; (seeded 414) parity run (debugMute=false): cue <Something stalks the road behind you., dur 2.6> at warn; spawn at same warnSec+0.1 -> live"
+ }
+]

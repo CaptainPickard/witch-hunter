@@ -2592,6 +2592,9 @@
       if (window.WH_NPC) window.WH_NPC.init(game);
       // CC-C11: chest manager follows the NPC quest owner and the deployed camp manager.
       if (window.WH_Chest) window.WH_Chest.init(game);
+      // CC-AE1: night raid director (js/ambush.js) - same init-hook tier as
+      // the NPC/chest managers; WH_AMBUSH holds the game ref only.
+      if (window.WH_AMBUSH) window.WH_AMBUSH.init(game);
       // C4 boot CONTINUE: with a save the overlay waits for the player's row
       // (CONTINUE = restore the profile, NEW GAME = the fresh flow; the
       // profile is never wiped - the first camp save replaces it). The
@@ -3076,6 +3079,10 @@
     rm.updateEnemies(dt, game.player.pos, game.player.state === 'alive',
       function (amount, attacker) { damagePlayerFromEnemy(amount, attacker); },
       rm.logic.activeId);
+
+    // CC-AE1: night raid director (js/ambush.js) - one tick right after the
+    // region's enemy sweep ran
+    window.WH_AMBUSH.tick(dt);
 
     // attack sweep vs enemies
     var sweep = game.player.consumeAttackSweep();
