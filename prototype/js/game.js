@@ -2608,6 +2608,7 @@
       // CC-AE1: night raid director (js/ambush.js) - same init-hook tier as
       // the NPC/chest managers; WH_AMBUSH holds the game ref only.
       if (window.WH_AMBUSH) window.WH_AMBUSH.init(game);
+      if (window.WH_JOURNAL) window.WH_JOURNAL.init(game);   // QJR-1: journal core
       // C4 boot CONTINUE: with a save the overlay waits for the player's row
       // (CONTINUE = restore the profile, NEW GAME = the fresh flow; the
       // profile is never wiped - the first camp save replaces it). The
@@ -2650,6 +2651,7 @@
       if (window.WH_Chest) data.chest = window.WH_Chest.capture();
       // CC-WB1: board state rides the save-wrap ({active, postedDay, resolvedDay}).
       if (window.WH_WarEffort) data.warEffort = window.WH_WarEffort.capture();
+      if (window.WH_JOURNAL) data.journal = window.WH_JOURNAL.capture();   // QJR-1
       return data;
     };
     S.save = function (g, opts) {
@@ -2664,6 +2666,7 @@
         if (window.WH_Chest) stored.chest = window.WH_Chest.capture();
         // CC-WB1: explicit storage write, chest-line shape.
         if (window.WH_WarEffort) stored.warEffort = window.WH_WarEffort.capture();
+        if (window.WH_JOURNAL) stored.journal = window.WH_JOURNAL.capture();   // QJR-1
         window.localStorage.setItem(CFG.save.lsKey, JSON.stringify(stored));
       } catch (e) { /* the base profile stands; the nest re-arms on load */ }
       return true;
@@ -2675,6 +2678,7 @@
       if (data && window.WH_Chest) window.WH_Chest.restore(data.chest);
       // CC-WB1: a missing warEffort block is a no-op (fresh idle board).
       if (data && window.WH_WarEffort) window.WH_WarEffort.restore(data.warEffort);
+      if (window.WH_JOURNAL) window.WH_JOURNAL.restore(data && data.journal);   // QJR-1
       baseRestore(g, data);
     };
     // S5 quit persist: tab close / reload writes the same capture() profile,
@@ -3197,6 +3201,7 @@
     game.cooking.update(dt);
     game.camp.update();   // C3: camp groups per region, placement ghost, menu close on death
     if (window.WH_NPC) window.WH_NPC.update(dt);   // CC-C10: farmer show/cull, name plate, dialog close on death
+    if (window.WH_JOURNAL) window.WH_JOURNAL.update(dt);   // QJR-1
     // CC-C11: spawn / re-place / region gate after the camp and quest updates.
     if (window.WH_Chest) window.WH_Chest.update(dt);
     updateQuestLine();    // CC-C10: HUD quest line (findDaughter active)

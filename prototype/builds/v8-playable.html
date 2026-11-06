@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Witch Hunter v9 - EPR1 Combat (build 11-06 19:12Z a4d3736)</title>
+<title>Witch Hunter v9 - EPR1 Combat (build 11-06 21:19Z 53f0edf)</title>
 
 <style>
 /* Witch Hunter prototype v1 - HUD + overlay styling */
@@ -1579,6 +1579,43 @@ html, body {
 .ap-icon.wh-icon {
   height: 24px;
 }
+
+/* QJR-1 journal (js/journal.js): darkwood frame + parchment page insert;
+   single amber rule accent. Button mirrors the camp button body. */
+#wh-journal-btn {
+  position: fixed;
+  z-index: 46;
+  min-width: 44px;
+  height: 30px;
+  padding: 0 8px;
+  font-family: monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #c9bf9f;
+  background: #1a1510;
+  border: 2px solid #4a4034;
+  box-shadow: 0 0 0 2px #14110e, inset 0 0 0 1px #2a231b;
+  cursor: pointer;
+  display: block;
+  user-select: none;
+  touch-action: manipulation;
+}
+#wh-journal-btn:hover { border-color: #c9a94a; }
+#wh-journal { position:absolute; inset:0; display:none; align-items:center;
+  justify-content:center; background: rgba(5,4,3,0.55); z-index:20;
+  font-family:monospace; color:#d8d2c0; image-rendering:pixelated;
+  user-select:none; }
+#wh-journal.open { display:flex; }
+.journal-panel { width:320px; max-height:70vh; display:flex; flex-direction:column; }
+.journal-rule { height:2px; background:#d8b24a; margin:6px 0 10px; }
+.journal-page { background:#e3dcc4; color:#221c15; border:2px solid #4a4034;
+  box-shadow: inset 0 0 0 2px #d3c8a8; padding:10px 12px; overflow-y:auto;
+  flex:1 1 auto; min-height:0; }
+.journal-row { padding:6px 2px; border-bottom:1px solid #b7ac8f; }
+.journal-row:last-child { border-bottom:none; }
+.journal-row-title { font-size:12px; letter-spacing:1px; color:#2a231b; }
+.journal-row-day { font-size:10px; color:#6a6350; font-style:italic; margin-top:2px; }
+.journal-empty { color:#6a6350; font-style:italic; font-size:11px; padding:6px 2px; }
 
 </style>
 </head>
@@ -90930,6 +90967,23 @@ window.WH_CONFIG.inventoryUI = {
   openButton: { enabled: true, label: 'INV', left: 16, bottom: 20 }
 };
 
+// QJR-1 journal core (Nicko MorROWIND order 2026-11-06; all PROPOSED,
+// Nicko tunes). Sits in the HUD row right of INV (16) and CAMP (76).
+window.WH_CONFIG.journal = {
+  button: { glyph: '☰', label: 'JOURNAL', left: 152, bottom: 20 },
+  openKey: 'KeyJ',
+  text: {
+    title: 'JOURNAL',
+    empty: 'No entries yet. The road will give you words.',
+    dayStamp: 'Day {day} - {source}',
+    seedTitle: "The farmer's daughter",
+    seedBody: "Farmer Aldric: the Old King's Barrow, west past the dead trees. Bring her home.",
+    seedSource: 'Farmer Aldric',
+    toastNew: 'Journal: ',
+    hint: 'Esc close'
+  }
+};
+
 // L1 (2026-10-07, io/missions/2026-10-07-cc-l1-leveling.md) LEVELING -
 // js/leveling.js WH_LEVEL. Layer 1 (doc 07): XP -> character level -> 5
 // stat points per level -> the NINE stats (list LOCKED). Layer 2 (doc 18):
@@ -104307,6 +104361,209 @@ window.WH_ICONS = {
 
 </script>
 <script>
+// QJR-1 journal core (build card: io/specs/qjr-1-buildcard.md, 2026-11-06).
+// Pure DOM module: HUD journal button + quest journal panel. No THREE, no
+// scene roots, no new assets. Every player-facing string lives in
+// window.WH_CONFIG.journal.text (A9 law); ids/classes/events are card-allowlisted.
+(function () {
+  'use strict';
+
+  var CFG = window.WH_CONFIG.journal;
+
+  // Same shape as the camp.js buildMenu helper.
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined && text !== null) n.textContent = text;
+    return n;
+  }
+
+  var game = null, born = false, entries = [], open = false;
+  var seedDone = false, btn = null, rootEl = null, pageEl = null;
+
+  function toast(t) {
+    if (game && game.inventoryUI && typeof game.inventoryUI.toast === 'function') {
+      game.inventoryUI.toast(t);
+    }
+  }
+
+  function rebuildRows() {
+    if (!pageEl) return;
+    pageEl.textContent = '';
+    if (!entries.length) {
+      pageEl.appendChild(el('div', 'journal-empty', CFG.text.empty));
+      return;
+    }
+    entries.forEach(function (e) {
+      var row = el('div', 'journal-row');
+      row.appendChild(el('div', 'journal-row-title', e.title));
+      row.appendChild(el('div', 'journal-row-day', CFG.text.dayStamp
+        .replace('{day}', String(e.day))
+        .replace('{source}', e.source || '')));
+      pageEl.appendChild(row);
+    });
+  }
+
+  function openPanel() {
+    if (!born || open) return;
+    open = true;
+    rootEl.classList.add('open');
+    rebuildRows();
+    if (game) {
+      if (game.inventoryUI) game.inventoryUI.blocked = true;
+      if (game.player && game.player.setInputSuspended) game.player.setInputSuspended(true);
+    }
+  }
+
+  function closePanel() {
+    if (!open) return;
+    open = false;
+    rootEl.classList.remove('open');
+    if (game && game.inventoryUI) game.inventoryUI.blocked = false;
+    if (game && game.player && game.player.setInputSuspended) game.player.setInputSuspended(false);
+  }
+
+  // Returns a clean int day or null when the value must be dropped.
+  function normalizeDay(day) {
+    var d = (day === undefined || day === null)
+      ? ((game && game.dayNight) ? game.dayNight.day : 0)
+      : Number(day);
+    if (!isFinite(d)) return null;
+    d = Math.round(d);
+    if (d < 0) return null;
+    return d;
+  }
+
+  // append(id, title, body, day, source): newest-FIRST; dedupe by id; seed stays silent.
+  function append(id, title, body, day, source) {
+    var i, sid = String(id);
+    for (i = 0; i < entries.length; i++) {
+      if (entries[i].id === sid) return;
+    }
+    var d = normalizeDay(day);
+    if (d === null) return;
+    entries.unshift({
+      id: sid, title: String(title), body: String(body),
+      day: d, source: String(source)
+    });
+    rebuildRows();
+    if (seedDone) toast(CFG.text.toastNew + title);
+    seedDone = true;
+  }
+
+  function capture() {
+    return {
+      born: born,
+      entries: entries.map(function (e) {
+        return { id: e.id, title: e.title, body: e.body, day: e.day, source: e.source };
+      })
+    };
+  }
+
+  // restore(block): never seeds, never toasts. Malformed rows are dropped.
+  function restore(block) {
+    entries = [];
+    var wasBorn = false;
+    if (block && typeof block === 'object') {
+      if (block.born === true) wasBorn = true;
+      if (Array.isArray(block.entries)) {
+        block.entries.forEach(function (r) {
+          if (!r || typeof r !== 'object') return;
+          var d = Number(r.day);
+          if (!isFinite(d)) return;
+          d = Math.round(d);
+          if (d < 0) return;
+          entries.push({
+            id: String(r.id), title: String(r.title), body: String(r.body),
+            day: d, source: String(r.source)
+          });
+        });
+      }
+    }
+    // OLD-SAVE LAW: a save predating the journal still unlocks if the quest is underway.
+    if (!wasBorn && window.WH_NPC && window.WH_NPC.questState() !== 'available') wasBorn = true;
+    born = wasBorn;
+    rebuildRows();
+    if (btn) btn.style.display = born ? '' : 'none';
+  }
+
+  // Called every frame: unlock edge + death law (AM-1: player.state === 'dead').
+  function update(dt) {
+    if (!born && window.WH_NPC && window.WH_NPC.questState() !== 'available') {
+      born = true;
+      seedDone = false;
+      append('quest-findDaughter', CFG.text.seedTitle, CFG.text.seedBody, undefined, CFG.text.seedSource);
+      if (btn) btn.style.display = '';
+    }
+    if (open && game && game.player && game.player.state === 'dead') closePanel();
+  }
+
+  function init(g) {
+    game = g;
+
+    btn = el('button', '', CFG.button.glyph + ' ' + CFG.button.label);
+    btn.id = 'wh-journal-btn';
+    btn.type = 'button';
+    btn.tabIndex = -1;
+    btn.title = 'Journal (J)';
+    btn.style.left = CFG.button.left + 'px';
+    btn.style.bottom = CFG.button.bottom + 'px';
+    btn.style.display = 'none';
+    btn.addEventListener('pointerdown', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      openPanel();
+    });
+    ['mousedown', 'click', 'contextmenu'].forEach(function (t) {
+      btn.addEventListener(t, function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+    });
+    document.body.appendChild(btn);
+
+    rootEl = el('div');
+    rootEl.id = 'wh-journal';
+    var panel = el('div', 'journal-panel');
+    panel.appendChild(el('div', 'inv-title', CFG.text.title));
+    panel.appendChild(el('div', 'journal-rule'));
+    pageEl = el('div', 'journal-page');
+    panel.appendChild(pageEl);
+    panel.appendChild(el('div', 'inv-hint', CFG.text.hint));
+    rootEl.appendChild(panel);
+    var r = document.getElementById('wh-root');
+    (r || document.body).appendChild(rootEl);
+
+    document.addEventListener('keydown', function (e) {
+      if (e.repeat) return;
+      if (e.code === CFG.openKey && born) {
+        if (open) closePanel();
+        else openPanel();
+        e.preventDefault();
+      } else if (e.code === 'Escape' && open) {
+        closePanel();
+        e.preventDefault();
+      }
+    });
+  }
+
+  function isBorn() { return born; }
+  function isOpen() { return open; }
+
+  window.WH_JOURNAL = {
+    init: init,
+    update: update,
+    capture: capture,
+    restore: restore,
+    append: append,
+    isBorn: isBorn,
+    isOpen: isOpen,
+    closeForTest: closePanel
+  };
+})();
+
+</script>
+<script>
 // Witch Hunter prototype - save profile (C4, io/missions/2026-10-06-cc-c4-save-profile.md).
 // ONE rolling profile in localStorage (CONFIG.save.lsKey 'wh-save-v1'),
 // JSON schema v1 = { v, ts, player, inventory, cooking, camp, world } +
@@ -108487,6 +108744,7 @@ window.WH_ICONS = {
       // CC-AE1: night raid director (js/ambush.js) - same init-hook tier as
       // the NPC/chest managers; WH_AMBUSH holds the game ref only.
       if (window.WH_AMBUSH) window.WH_AMBUSH.init(game);
+      if (window.WH_JOURNAL) window.WH_JOURNAL.init(game);   // QJR-1: journal core
       // C4 boot CONTINUE: with a save the overlay waits for the player's row
       // (CONTINUE = restore the profile, NEW GAME = the fresh flow; the
       // profile is never wiped - the first camp save replaces it). The
@@ -108529,6 +108787,7 @@ window.WH_ICONS = {
       if (window.WH_Chest) data.chest = window.WH_Chest.capture();
       // CC-WB1: board state rides the save-wrap ({active, postedDay, resolvedDay}).
       if (window.WH_WarEffort) data.warEffort = window.WH_WarEffort.capture();
+      if (window.WH_JOURNAL) data.journal = window.WH_JOURNAL.capture();   // QJR-1
       return data;
     };
     S.save = function (g, opts) {
@@ -108543,6 +108802,7 @@ window.WH_ICONS = {
         if (window.WH_Chest) stored.chest = window.WH_Chest.capture();
         // CC-WB1: explicit storage write, chest-line shape.
         if (window.WH_WarEffort) stored.warEffort = window.WH_WarEffort.capture();
+        if (window.WH_JOURNAL) stored.journal = window.WH_JOURNAL.capture();   // QJR-1
         window.localStorage.setItem(CFG.save.lsKey, JSON.stringify(stored));
       } catch (e) { /* the base profile stands; the nest re-arms on load */ }
       return true;
@@ -108554,6 +108814,7 @@ window.WH_ICONS = {
       if (data && window.WH_Chest) window.WH_Chest.restore(data.chest);
       // CC-WB1: a missing warEffort block is a no-op (fresh idle board).
       if (data && window.WH_WarEffort) window.WH_WarEffort.restore(data.warEffort);
+      if (window.WH_JOURNAL) window.WH_JOURNAL.restore(data && data.journal);   // QJR-1
       baseRestore(g, data);
     };
     // S5 quit persist: tab close / reload writes the same capture() profile,
@@ -109076,6 +109337,7 @@ window.WH_ICONS = {
     game.cooking.update(dt);
     game.camp.update();   // C3: camp groups per region, placement ghost, menu close on death
     if (window.WH_NPC) window.WH_NPC.update(dt);   // CC-C10: farmer show/cull, name plate, dialog close on death
+    if (window.WH_JOURNAL) window.WH_JOURNAL.update(dt);   // QJR-1
     // CC-C11: spawn / re-place / region gate after the camp and quest updates.
     if (window.WH_Chest) window.WH_Chest.update(dt);
     updateQuestLine();    // CC-C10: HUD quest line (findDaughter active)

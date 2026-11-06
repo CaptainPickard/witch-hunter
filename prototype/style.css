@@ -1571,3 +1571,40 @@ html, body {
 .ap-icon.wh-icon {
   height: 24px;
 }
+
+/* QJR-1 journal (js/journal.js): darkwood frame + parchment page insert;
+   single amber rule accent. Button mirrors the camp button body. */
+#wh-journal-btn {
+  position: fixed;
+  z-index: 46;
+  min-width: 44px;
+  height: 30px;
+  padding: 0 8px;
+  font-family: monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #c9bf9f;
+  background: #1a1510;
+  border: 2px solid #4a4034;
+  box-shadow: 0 0 0 2px #14110e, inset 0 0 0 1px #2a231b;
+  cursor: pointer;
+  display: block;
+  user-select: none;
+  touch-action: manipulation;
+}
+#wh-journal-btn:hover { border-color: #c9a94a; }
+#wh-journal { position:absolute; inset:0; display:none; align-items:center;
+  justify-content:center; background: rgba(5,4,3,0.55); z-index:20;
+  font-family:monospace; color:#d8d2c0; image-rendering:pixelated;
+  user-select:none; }
+#wh-journal.open { display:flex; }
+.journal-panel { width:320px; max-height:70vh; display:flex; flex-direction:column; }
+.journal-rule { height:2px; background:#d8b24a; margin:6px 0 10px; }
+.journal-page { background:#e3dcc4; color:#221c15; border:2px solid #4a4034;
+  box-shadow: inset 0 0 0 2px #d3c8a8; padding:10px 12px; overflow-y:auto;
+  flex:1 1 auto; min-height:0; }
+.journal-row { padding:6px 2px; border-bottom:1px solid #b7ac8f; }
+.journal-row:last-child { border-bottom:none; }
+.journal-row-title { font-size:12px; letter-spacing:1px; color:#2a231b; }
+.journal-row-day { font-size:10px; color:#6a6350; font-style:italic; margin-top:2px; }
+.journal-empty { color:#6a6350; font-style:italic; font-size:11px; padding:6px 2px; }

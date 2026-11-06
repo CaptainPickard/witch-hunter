@@ -3759,6 +3759,23 @@ window.WH_CONFIG.inventoryUI = {
   openButton: { enabled: true, label: 'INV', left: 16, bottom: 20 }
 };
 
+// QJR-1 journal core (Nicko MorROWIND order 2026-11-06; all PROPOSED,
+// Nicko tunes). Sits in the HUD row right of INV (16) and CAMP (76).
+window.WH_CONFIG.journal = {
+  button: { glyph: '☰', label: 'JOURNAL', left: 152, bottom: 20 },
+  openKey: 'KeyJ',
+  text: {
+    title: 'JOURNAL',
+    empty: 'No entries yet. The road will give you words.',
+    dayStamp: 'Day {day} - {source}',
+    seedTitle: "The farmer's daughter",
+    seedBody: "Farmer Aldric: the Old King's Barrow, west past the dead trees. Bring her home.",
+    seedSource: 'Farmer Aldric',
+    toastNew: 'Journal: ',
+    hint: 'Esc close'
+  }
+};
+
 // L1 (2026-10-07, io/missions/2026-10-07-cc-l1-leveling.md) LEVELING -
 // js/leveling.js WH_LEVEL. Layer 1 (doc 07): XP -> character level -> 5
 // stat points per level -> the NINE stats (list LOCKED). Layer 2 (doc 18):
