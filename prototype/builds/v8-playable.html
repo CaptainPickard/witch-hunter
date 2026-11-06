@@ -99032,7 +99032,10 @@ window.WH_ICONS = {
         // distance movement lives in the movement block below.
         if (distToPlayer <= this.covenCastRange) {
           this.setFsm('attack');
-          this.attackPhase = 'windup';
+          // CC-EC1 IO fix (deep review): arm the windup THROUGH the re-cast
+          // gate - a chase->attack re-entry while castCd runs holds 'idle'
+          // (like every cycle re-entry); never bypasses the 2.6s cooldown.
+          this.attackPhase = this.castCd <= 0 ? 'windup' : 'idle';
           this.attackPhaseT = 0;
         }
       } else if (distToPlayer <= (this.cfg.engageRange || this.cfg.attackRange) && !(this.slamCd > 0) &&
@@ -107703,10 +107706,12 @@ window.WH_ICONS = {
       for (var eb = 0; eb < game.enemyBolts.length; eb++) {
         var boltEB = game.enemyBolts[eb];
         if (boltEB.alive && boltEB.update(dt, playerPosEB)) {
-          if (boltEB.spent) {
-            // FIRST frame after the circle test hit (bolt.update flipped
-            // spent on contact). Damage routes through resolveIncomingHit
-            // for roll/block/parry handling. MD applies here, once:
+          if (boltEB.spent && !boltEB.hitApplied) {
+            boltEB.hitApplied = true;   // CC-EC1 IO fix: ONE damage application
+            // per bolt — spent stays true for the 0.15s hit-flash window, so
+            // gating on the first spent frame here prevents the multi-hit.
+            // Damage routes through resolveIncomingHit for roll/block/parry
+            // handling; MD applies here, once:
             var dmgEB = boltEB.damage;   // CONFIG.enemySpell.covenBolt.damage read as-is
             var reducedEB = Math.round(dmgEB * (1 - window.WH_LEVEL.magicDefense()));
             // bare {isSpell, pos} attacker: NO enterStagger, so resolveIncoming-

@@ -3038,10 +3038,12 @@
       for (var eb = 0; eb < game.enemyBolts.length; eb++) {
         var boltEB = game.enemyBolts[eb];
         if (boltEB.alive && boltEB.update(dt, playerPosEB)) {
-          if (boltEB.spent) {
-            // FIRST frame after the circle test hit (bolt.update flipped
-            // spent on contact). Damage routes through resolveIncomingHit
-            // for roll/block/parry handling. MD applies here, once:
+          if (boltEB.spent && !boltEB.hitApplied) {
+            boltEB.hitApplied = true;   // CC-EC1 IO fix: ONE damage application
+            // per bolt — spent stays true for the 0.15s hit-flash window, so
+            // gating on the first spent frame here prevents the multi-hit.
+            // Damage routes through resolveIncomingHit for roll/block/parry
+            // handling; MD applies here, once:
             var dmgEB = boltEB.damage;   // CONFIG.enemySpell.covenBolt.damage read as-is
             var reducedEB = Math.round(dmgEB * (1 - window.WH_LEVEL.magicDefense()));
             // bare {isSpell, pos} attacker: NO enterStagger, so resolveIncoming-

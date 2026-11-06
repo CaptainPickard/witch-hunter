@@ -536,7 +536,10 @@
         // distance movement lives in the movement block below.
         if (distToPlayer <= this.covenCastRange) {
           this.setFsm('attack');
-          this.attackPhase = 'windup';
+          // CC-EC1 IO fix (deep review): arm the windup THROUGH the re-cast
+          // gate - a chase->attack re-entry while castCd runs holds 'idle'
+          // (like every cycle re-entry); never bypasses the 2.6s cooldown.
+          this.attackPhase = this.castCd <= 0 ? 'windup' : 'idle';
           this.attackPhaseT = 0;
         }
       } else if (distToPlayer <= (this.cfg.engageRange || this.cfg.attackRange) && !(this.slamCd > 0) &&
