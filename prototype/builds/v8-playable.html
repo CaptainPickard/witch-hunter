@@ -87814,6 +87814,13 @@ window.WH_CONFIG = {
       // stays byte-identical (append-only diff law: zero '-' lines anywhere).
       ,{ type: 'coven', x: -118.4, z: -238.2 },
       { type: 'coven', x: -99.2, z: -249.1 }
+      // CC-WM1 redseam: the CONTESTED light state (doc 42 Part 5 WHO — the ore
+      // is why the fight is there). 3 bandit squatters bivouacking in the
+      // scar (no fire row this round; WM1-A3 spacing verified in
+      // scratch/cc-wm1/clearance_wm1.py).
+      ,{ type: 'bandit', x: 56.5, z: -580.5 },   // redseam squatter 1 (CC-WM1)
+      { type: 'bandit', x: 61.5, z: -580 },     // redseam squatter 2 (CC-WM1)
+      { type: 'bandit', x: 59, z: -574.5 }      // redseam squatter 3 (CC-WM1)
     ],
     // CC-C3 ANCIENT FOREST (R-62.6, io/missions/2026-10-07-cc-c3-ancient-forest.md):
     // hand-placed rows, no runtime random. CC-C2's 120-tree 8-10 band is
@@ -88355,6 +88362,24 @@ window.WH_CONFIG = {
       { asset: 'buriedCoffin', x: 202, z: -450, rotY: 1.20, scale: 1.60 },   // east_hollow_den larder: the past victim's cache
       { asset: 'rubblePile', x: 205, z: -443, rotY: 5.10, scale: 1.10 },   // east_hollow_den chewed earth W
       { asset: 'rubblePile', x: 202, z: -440, rotY: 0.90, scale: 1.00 },   // east_hollow_den chewed earth NW
+      // CC-WM1 redseam: mined-scar dressing (doc 42 Part 5 WORKED SITE; art
+      // anchor day/night-01-darkwood: cold stone light vs dark veg, moss
+      // reclaiming the scar). 7-boulder quarried bank arc SW->N + 3 talus
+      // tails + 2 stumps + 2 leaners = the forest reclaiming the pit.
+      { asset: 'mossBoulder', x: 54, z: -586, rotY: 4.2, scale: 1.90 },   // redseam quarried bank S boulder (CC-WM1)
+      { asset: 'mossBoulder', x: 59, z: -587, rotY: 5.3, scale: 2.10 },   // redseam quarried bank SE boulder (CC-WM1)
+      { asset: 'mossBoulder', x: 64, z: -585, rotY: 0.6, scale: 1.80 },   // redseam quarried bank E boulder (CC-WM1)
+      { asset: 'mossBoulder', x: 67, z: -581, rotY: 1.4, scale: 1.60 },   // redseam quarried bank E boulder 2 (CC-WM1)
+      { asset: 'mossBoulder', x: 67.5, z: -575, rotY: 2.7, scale: 2.00 }, // redseam quarried bank NE boulder (CC-WM1)
+      { asset: 'mossBoulder', x: 65, z: -570, rotY: 3.5, scale: 1.70 },   // redseam quarried bank N boulder (CC-WM1)
+      { asset: 'mossBoulder', x: 60, z: -567, rotY: 4.9, scale: 1.50 },   // redseam quarried bank NNW boulder (CC-WM1)
+      { asset: 'rubblePile', x: 57.5, z: -588, rotY: 2.1, scale: 1.20 },  // redseam talus tailing S (CC-WM1)
+      { asset: 'rubblePile', x: 60.5, z: -578.5, rotY: 5.0, scale: 1.00 }, // redseam talus tailing center (CC-WM1)
+      { asset: 'rubblePile', x: 51.5, z: -570, rotY: 3.3, scale: 1.10 },  // redseam talus tailing W (CC-WM1)
+      { asset: 'treeStump', x: 49.5, z: -578, rotY: 1.1, scale: 1.30 },   // redseam clearing stump W (CC-WM1)
+      { asset: 'treeStump', x: 66.5, z: -573, rotY: 5.8, scale: 1.20 },   // redseam clearing stump E (CC-WM1)
+      { asset: 'deadTree', x: 47, z: -585, rotY: 2.4, scale: 1.60 },      // redseam scar-lip leaner SW (CC-WM1)
+      { asset: 'deadTree', x: 68, z: -578, rotY: 5.9, scale: 1.40 },      // redseam scar-lip leaner E (CC-WM1)
     ],
     // west_hollow_den CC-WD1: the den LARDER cache nodes (doc 41 Family 1: the
     // den's loot identity is what the beast ate; CONFIG.gather bonePile, boneShard
@@ -88374,6 +88399,17 @@ window.WH_CONFIG = {
       { type: 'bonePile', x: 199.5, z: -446 },   // east_hollow_den larder cache W (by the coffin)
       { type: 'bonePile', x: 220, z: -447.5 },   // east_hollow_den outer scatter E
       { type: 'bonePile', x: 214.5, z: -435 },   // east_hollow_den thicket mouth approach N
+      // CC-WM1 redseam: the rich seam's 8 vein nodes (doc 42 Part 5 entry
+      // tier; dense cluster worth many trips, deplete/recover per doc 06 node
+      // rules; squatters' bowl floor + bench foot + lips). WM1-A3 seats.
+      { type: 'ironVein', x: 53, z: -577 },     // CC-WM1 redseam vein 1 (bowl floor W)
+      { type: 'ironVein', x: 55.5, z: -573.5 },  // CC-WM1 redseam vein 2 (bowl floor E of fire)
+      { type: 'ironVein', x: 61, z: -572 },      // CC-WM1 redseam vein 3 (bowl floor NE)
+      { type: 'ironVein', x: 64, z: -575.5 },    // CC-WM1 redseam vein 4 (E bench foot)
+      { type: 'ironVein', x: 63.5, z: -582 },    // CC-WM1 redseam vein 5 (SE bowl lip)
+      { type: 'ironVein', x: 57, z: -584 },      // CC-WM1 redseam vein 6 (S bowl lip)
+      { type: 'ironVein', x: 51.5, z: -581.5 },  // CC-WM1 redseam vein 7 (SW bowl lip)
+      { type: 'ironVein', x: 50, z: -574 },      // CC-WM1 redseam vein 8 (W bowl floor)
     ],
     // CC-C8 ROT MOTHER'S DOORWAY dressing (sec 1-2; region-manager buildRegion
     // -> WH_Enemy.buildRotStains). The CC-C7 pool / light / fog rows MOVED into
@@ -90284,6 +90320,8 @@ window.WH_CONFIG.items = {
   wildMushroom:   { id: 'wildMushroom', name: 'Wild Mushroom', glyph: 'WM', category: 'ingredient' },
   graveMoss:      { id: 'graveMoss', name: 'Grave Moss', glyph: 'GM', category: 'ingredient' },
   boneShard:      { id: 'boneShard', name: 'Bone Shard', glyph: 'BS', category: 'ingredient' },
+  // CC-WM1 redseam: smelting raw (doc 42 Part 5; icon = glyph fallback IO, icon lane later).
+  ironOre:        { id: 'ironOre', name: 'Iron Ore', glyph: 'IO', category: 'ingredient' },
   // C1 cooked food (CONFIG.cooking). category 'food' = eaten from the
   // inventory screen (select + E / EAT). useHint.buff keys CONFIG.cooking
   // .buffs (absent = edible, no buff). weight = item weight (no carry
@@ -90738,6 +90776,9 @@ window.WH_CONFIG.gather = {
                        respawnSec: 150, glowColor: 0x77bbaa, scale: 1.0 },
     bonePile:        { name: 'Bone Pile', rarity: 'common', yield: { id: 'boneShard', count: 2 },
                        respawnSec: 150, glowColor: 0xbbbbaa, scale: 1.0 }
+      // CC-WM1 redseam: the rich iron seam gather node (doc 42 Part 5 entry tier).
+      ,ironVein:        { name: 'Iron Vein', rarity: 'common', yield: { id: 'ironOre', count: 3 },
+                       respawnSec: 240, glowColor: 0x8f5a33, scale: 1.15 }
   }
 };
 
