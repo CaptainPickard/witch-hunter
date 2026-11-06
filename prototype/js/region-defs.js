@@ -145,6 +145,44 @@
   connections[3].sides[CFG.regionC.id] = -1;
   connections[3].sides[CFG.regionE.id] = 1;
 
+  // CC-AD2 veil_galleries: the galleries (own disc r 26 beneath the crypt's
+  // west flank). side -1 = the plane-0 convention only (F is on no plane-0
+  // side). C0-7 law: the galleries never lie ON the C-side plane, so
+  // sideOfBoundary(F, any C-conn) = -1.
+  regions[CFG.regionF.id] = makeRegion(CFG.regionF, -1);
+
+  // CC-AD2 veil_galleries E<->F tomb door, shaped EXACTLY on the CC-AD1
+  // crypt row above (connections[3]): axis z, the plane = the galleries
+  // mouth (F.door.planeZ), the window = the door's walkable lane, walkFrom
+  // the galleries ONLY (walk-back; in E the line runs underground: no
+  // crossing, no clamp). The E-side F hook sits at the crypt's west aisle
+  // aperture (door.interactAt, radius interactM). land rows per region.
+  var FD = CFG.regionF.door;
+  connections.push({
+    from: CFG.regionE.id,
+    to: CFG.regionF.id,
+    axis: 'z',
+    planeCoord: FD.planeZ,
+    sides: {},
+    door: {
+      doorX: FD.doorX,
+      doorHalfWidth: FD.doorHalfWidth,
+      suspendDepthM: FD.suspendDepthM,
+      wallGapPadM: FD.wallGapPadM,
+      arch: null,
+      gatedTo: null,
+      walkFrom: CFG.regionF.id,
+      interact: { from: CFG.regionE.id, x: FD.interactAt.x, z: FD.interactAt.z, radius: FD.interactM },
+      land: FD.land
+    }
+  });
+  // D-symmetry SIDES TABLE: F occupies z <= planeZ (the galleries mouth);
+  // E is the FROM region on this chain and occupies z > planeZ. E side -1,
+  // F side +1 (the CC-AD1 conn[3] shape with the sides flipped for this
+  // chain's direction).
+  connections[4].sides[CFG.regionE.id] = -1;
+  connections[4].sides[CFG.regionF.id] = 1;
+
   // ---- THREE-free transition helpers (used by region-manager and tests) ------
 
   // Returns the connection between two region ids, or null.

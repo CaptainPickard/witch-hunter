@@ -1494,7 +1494,9 @@ window.WH_CONFIG = {
       { asset: 'whWallA', x: -6.7, z: -579.3, rotY: 2.76, scale: 7.35, sy: 11.69, sz: 2.40, y: -0.2, wall: 7 },
       { asset: 'whWallB', x: -16.4, z: -588.5, rotY: 2.00, scale: 7.35, sy: 11.55, sz: 2.40, y: -0.2, wall: 7 },
       { asset: 'whWallA', x: -17.0, z: -601.8, rotY: 1.24, scale: 7.35, sy: 11.69, sz: 2.40, y: -0.2, wall: 7 },
-      { asset: 'whWallB', x: -8.3, z: -612.0, rotY: 0.48, scale: 7.35, sy: 11.55, sz: 2.40, y: -0.2, wall: 7 },
+      // -- CC-AD2: the whWallB at (-8.3, -612.0) is ERASED this round — its
+      //    slot is the crypt's west aisle aperture (the mourners below flank
+      //    it; region-defs connections[4] hook). No other ring row moves.
       // -- veil_crypt dignified dead: 2 skull piles, 4 blightcaps, 2 moss
       //    boulders, and a
       //    rubble flanker near the tomb mouth (crypt-local (-7,-3)); every row
@@ -1509,7 +1511,127 @@ window.WH_CONFIG = {
       { asset: 'blightcap',   x: 11, z: -592, rotY: 0.63, scale: 0.90 },
       { asset: 'mossBoulder', x: -9, z: -603.5, rotY: 2.00, scale: 2.20 },
       { asset: 'mossBoulder', x: 9, z: -603.5, rotY: 4.90, scale: 2.20 },
-      { asset: 'rubblePile',  x: -7, z: -599, rotY: 5.80, scale: 0.90 }
+      // -- CC-AD2 the west aisle: the crypt ring's west-south arch piece
+      //    (whWallB (-8.3,-612.0)) is ERASED — its slot is the aperture;
+      //    the kneeling mourner pair flanks the opening (the processional
+      //    gap; the E-side hook of the galleries door sits at (-14.5,-596),
+      //    radius 3.5, region-defs connections[4]). Probe: aperture lane
+      //    walkable (no ring collider within 1.5 m of x [-16,-13] z
+      //    [-597.5,-594.5]), mourners >= 4 m from the remaining ring
+      //    colliders, >= 5 m from covens, >= 6 m from the crypt spawn/land
+      //    rows (scratch/cc-ad2/solve_geometry.py, ALL PASS).
+      { asset: 'rubblePile',  x: -7, z: -599, rotY: 5.80, scale: 0.90 },
+      // -- CC-AD2 the west aisle mourners: the pair is appended AFTER the AD1
+      //    flanker rows, per the spec's "append mourner pair" (A-5). Seats are
+      //    the compliant scan (spec seats blocked: aperture lane + ring
+      //    colliders; scratch/cc-ad2/solve_geometry.py, ALL PASS).
+      { asset: 'mourningStatue', x: -12.35, z: -589.15, rotY: 2.60, scale: 0.90 },
+      { asset: 'rubblePile',     x: -14.25, z: -597.55, rotY: 1.20, scale: 1.10 }
+    ]
+  },
+
+  // CC-AD2 veil_galleries: THE ERASED GALLERIES (io/specs/cc-ad2-veil-galleries-spec.md;
+  // art anchors concept-08-veil-spire + concept-05-night-ambush):
+  // doc 47 strata V2 - a hand-authored interior pocket region chained off the
+  // crypt's WEST flank through a CC-AD1-shaped tomb door (region-defs
+  // connections[4]). The row below is shaped EXACTLY on regionE
+  // (same key set, new values); PROPOSED seats, Nicko tunes. ART LAW: basalt
+  // 0x11131a ground one step colder than the crypt's 0x121418, bruised-purple
+  // 0x0a0810 fog one step tighter (d95 12.0 m "the galleries swallowed the
+  // light"), ambient 0.055 one step darker, ONE crimson accent = the
+  // blightcap caps; dressing uses existing manifest assets ONLY (whWallA/
+  // whWallB/mourningStatue/skullPile/blightcap/mossBoulder/rubblePile -
+  // manifest keys listed here for the build note; NO new accent colors).
+  regionF: {
+    id: 'veil_galleries',
+    name: "The Erased Galleries",
+    center: { x: 0, z: -640 },        // 44 m due west-ward of the crypt center along -z; the galleries sit under C's west rim band
+    groundRadius: 26,                 // crypt is 20; the galleries are one stratum wider - still a tight pocket. PROPOSED
+    groundY: 0,                       // flat disc (C/E hidden while F is active: one-active-region law)
+    groundColor: 0x11131a,            // basalt, one step colder than the crypt
+    groundColor2: 0x16181f,           // shadow secondary
+    groundSeed: 1662061329,           // FRESH - floor pattern must DIFFER from the crypt's 1662061219
+    scatter: false,                   // hand rows only (no Round E scatter in the galleries)
+    spawn: { x: 0, z: -650 },                         // the landing row's galleries end (10 m deep)
+    gravityY: -22,                    // den's value
+    // sec DARKNESS: d95 = sqrt(-ln 0.05) / 0.145 = 12.0 m (the far wall is a
+    // black thought, one step quieter than the crypt's 13.3). Region row
+    // fog/fill/ambient only - no constantPhase row (excluded surface).
+    fogColor: 0x0a0810,
+    fogDensity: 0.145,
+    ambientLightLevel: 0.055,
+    // E<->F door (region-defs connections[4]). Shaped EXACTLY on regionE.door.
+    // veil_galleries law: same one-conn-one-door shape, the walk-back plane
+    // exists ONLY from the galleries side. planeZ = the galleries mouth
+    // (z -640); the window = the 4.4 m gap lane (|x| <= 2.2) between the
+    // ring's end colliders (walkable lane: every way out crosses).
+    // walkFrom: the plane crossing exists ONLY from the galleries side
+    // (walk-back; in E the line runs underground: no crossing, no clamp).
+    // interact = the crypt's WEST aisle aperture hook (E side, probe-verified
+    // clear of the crypt dressing). land = where a crossing INTO each region
+    // puts the player + what they face. fadeSec = the black dip: F-descend
+    // 0.3 + 0.5; walk-out 0 + 0.8.
+    door: {
+      planeZ: -640,                       // the galleries mouth plane
+      doorX: 0,
+      doorHalfWidth: 2.2,             // the tomb-mouth lane (crypt 2.4). PROPOSED
+      suspendDepthM: 0,
+      wallGapPadM: 0,
+      interactM: 3.5,
+      interactAt: { x: -14.5, z: -596 },   // E side: the crypt's west aisle aperture
+      land: {
+        veil_crypt:      { x: 0, z: -604, faceX: 0, faceZ: -604 },
+        veil_galleries:  { x: 0, z: -650, faceX: 0, faceZ: -650 }
+      },
+      fadeIn: 0.3,
+      fadeOut: 0.5,
+      exitFadeOut: 0.8,
+      text: { prompt: 'E - Descend into the galleries' }
+    },
+    // 2 veil_galleries GHOUL wardens (doc 34 undead grammar: no dodge, no
+    // parry, relentless, zone denial). Galleries-local computed to world;
+    // each >= 8.0 m from spawn/land, >= 12.5 m from each other (12.51),
+    // >= 4.45 m walk-clear of the ring (scratch/cc-ad2/solve_geometry.py).
+    enemies: [
+      { type: 'ghoul', x: -6, z: -636 },
+      { type: 'ghoul', x: 6.5, z: -635.5 }
+    ],
+    // GALLERIES BUILD (scratch/cc-ad2/solve_geometry.py - the crypt ring math
+    // on an r 22 chord-circle). Flat ground: every row sits at y 0 (+ its
+    // sink). Pantheon = 8 whWall ring segments per the crypt's 45-deg cadence
+    // (per-axis: scale = chord, sy = heightM, sz = thickness 2.4; wall = 7 r
+    // 0.45 colliders ~ every 2 m - the galleries are CLOSED except the
+    // mouth), the gap at world (0, -640) = the open-arch pattern (segment
+    // angular position 22.5 deg OMITTED; the gap lane |x| <= 2.2 at the
+    // z -640 plane). Dressing: THE ERASED FIGURE (the ONE mourningStatue,
+    // "names once stood"), dignified-dead erasure scatter (the blightcap caps
+    // are the ONE crimson accent), mossBoulder shoulders + a rubble flanker
+    // by the mouth. Every row >= 4.0 m raw of the ring colliders (margin
+    // 4.0 + collider r 0.45).
+    props: [
+      // -- THE ERASED FIGURE: the ONE headless plinth statue, "names once stood"
+      { asset: 'mourningStatue', x: 7, z: -641, rotY: 4.00, scale: 1.00 },
+      // -- veil_galleries basalt ring: 7 segments, the EAST mouth gap between
+      //    the first and the last (segment angular position 22.5 deg OMITTED)
+      { asset: 'whWallA', x: 8.42, z: -619.67, rotY: 3.53, scale: 7.35, sy: 11.69, sz: 2.40, y: -0.2, wall: 7 },
+      { asset: 'whWallB', x: -8.42, z: -619.67, rotY: 2.75, scale: 7.35, sy: 11.55, sz: 2.40, y: -0.2, wall: 7 },
+      { asset: 'whWallA', x: -20.33, z: -631.58, rotY: 1.96, scale: 7.35, sy: 11.69, sz: 2.40, y: -0.2, wall: 7 },
+      { asset: 'whWallB', x: -20.33, z: -648.42, rotY: 1.18, scale: 7.35, sy: 11.55, sz: 2.40, y: -0.2, wall: 7 },
+      { asset: 'whWallA', x: -8.42, z: -660.33, rotY: 0.39, scale: 7.35, sy: 11.69, sz: 2.40, y: -0.2, wall: 7 },
+      { asset: 'whWallB', x: 8.42, z: -660.33, rotY: 5.89, scale: 7.35, sy: 11.55, sz: 2.40, y: -0.2, wall: 7 },
+      { asset: 'whWallA', x: 20.33, z: -648.42, rotY: 5.11, scale: 7.35, sy: 11.69, sz: 2.40, y: -0.2, wall: 7 },
+      // -- veil_galleries erasure dressing: 2 skull piles, 2 blightcaps (the
+      //    ONE crimson accent), 2 moss boulders, and a rubble flanker near
+      //    the mouth; every row >= 4 m raw of the ring colliders, >= 6 m
+      //    from spawn/land, >= 5 m from BOTH ghouls, >= 4 m from each other
+      //    (scratch/cc-ad2/solve_geometry.py, ALL PASS)
+      { asset: 'skullPile',   x: -10, z: -630, rotY: 4.40, scale: 1.00 },
+      { asset: 'skullPile',   x: -12, z: -645, rotY: 5.50, scale: 1.00 },
+      { asset: 'blightcap',   x: 11, z: -632, rotY: 3.62, scale: 0.90 },
+      { asset: 'blightcap',   x: 10.5, z: -646, rotY: 4.72, scale: 0.90 },
+      { asset: 'mossBoulder', x: -9, z: -650, rotY: 2.00, scale: 2.20 },
+      { asset: 'mossBoulder', x: 9, z: -650, rotY: 4.90, scale: 2.20 },
+      { asset: 'rubblePile',  x: -7, z: -641, rotY: 5.80, scale: 0.90 }
     ]
   },
 
