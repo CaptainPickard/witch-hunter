@@ -88313,6 +88313,37 @@ window.WH_CONFIG = {
       { asset: 'mossBoulder', x: -76.3, z: -140.4, rotY: 0.90, scale: 2.80, y: -1.18, cullM: 120 },   // CC-C17 ring fragment (half-swallowed, sink 0.3 x height)
       { asset: 'mossBoulder', x: -80.7, z: -144.2, rotY: 3.10, scale: 2.20, y: -0.93, cullM: 120 },   // CC-C17 ring fragment (half-swallowed, sink 0.3 x height)
       { asset: 'mossBoulder', x: -86.6, z: -144.1, rotY: 5.00, scale: 2.50, y: -1.05, cullM: 120 },   // CC-C17 ring fragment (half-swallowed, sink 0.3 x height)
+      // west_hollow_den CC-WD1: the west pack's DEN SITE (doc 41 Family 1, first
+      // den body; io/specs/cc-wd1-west-wolfpack-den-spec.md; art anchor
+      // concept-05-night-ambush - moonlit hollow, indigo/charcoal base, NO new
+      // warm accents: den dressing = bone/bare-earth neutrals). Hollow center
+      // (-194,-451), south of the west pack patrol loop (nearest prop row/
+      // patrol stop 25.96 m); site probe: y 1.2-2.0, slope <= 8.6 deg over 1 m;
+      // clearance.py CLEARED (G-1..G-7). Thicket mouth arc (3 deadTree,
+      // NE-facing) / hollow rim (3 mossBoulder, SW arc) / the LARDER (2
+      // skullPile + buriedCoffin = a past victim's cache) / chewed-earth
+      // rubble (2 rubblePile).
+      { asset: 'deadTree', x: -190, z: -446, rotY: 5.60, scale: 1.70 },   // west_hollow_den thicket mouth E
+      { asset: 'deadTree', x: -197, z: -445, rotY: 5.90, scale: 1.90 },   // west_hollow_den thicket mouth mid (tallest, the mouth's gate)
+      { asset: 'deadTree', x: -201, z: -445, rotY: 0.40, scale: 1.40 },   // west_hollow_den thicket mouth W
+      { asset: 'mossBoulder', x: -199, z: -455, rotY: 0.80, scale: 1.80 },   // west_hollow_den rim SW
+      { asset: 'mossBoulder', x: -196, z: -458, rotY: 2.10, scale: 2.00 },   // west_hollow_den rim S
+      { asset: 'mossBoulder', x: -201, z: -451, rotY: 4.60, scale: 1.30 },   // west_hollow_den rim W
+      { asset: 'skullPile', x: -189, z: -454, rotY: 0.30, scale: 1.20 },   // west_hollow_den larder pile 1
+      { asset: 'skullPile', x: -187, z: -452, rotY: 2.80, scale: 1.00 },   // west_hollow_den larder pile 2
+      { asset: 'buriedCoffin', x: -186, z: -456, rotY: 1.20, scale: 1.60 },   // west_hollow_den larder: the past victim's cache
+      { asset: 'rubblePile', x: -189, z: -449, rotY: 5.10, scale: 1.10 },   // west_hollow_den chewed earth SE
+      { asset: 'rubblePile', x: -186, z: -446, rotY: 0.90, scale: 1.00 },   // west_hollow_den chewed earth E
+    ],
+    // west_hollow_den CC-WD1: the den LARDER cache nodes (doc 41 Family 1: the
+    // den's loot identity is what the beast ate; CONFIG.gather bonePile, boneShard
+    // x2 yield, respawn 150). FIRST C gather nodes: C had no nodes key before this
+    // round. Node seats ride the new gather.js WH_GROUND terrain seat (2 lines).
+    nodes: [
+      { type: 'bonePile', x: -192.5, z: -461 },   // west_hollow_den larder cache S (by the rim boulders)
+      { type: 'bonePile', x: -184, z: -450 },   // west_hollow_den larder cache E (by the coffin)
+      { type: 'bonePile', x: -204, z: -453.5 },   // west_hollow_den outer scatter W
+      { type: 'bonePile', x: -198.5, z: -441 },   // west_hollow_den thicket mouth approach NE
     ],
     // CC-C8 ROT MOTHER'S DOORWAY dressing (sec 1-2; region-manager buildRegion
     // -> WH_Enemy.buildRotStains). The CC-C7 pool / light / fog rows MOVED into
@@ -95622,7 +95653,7 @@ window.WH_ICONS = {
     var kit = this.kits[type];
     var s = def.scale || 1;
     var holder = new THREE.Group();
-    holder.position.set(x, 0, z);
+    holder.position.set(x, window.WH_GROUND && window.WH_GROUND.has(regionId) ? window.WH_GROUND.heightAt(regionId, x, z) : 0, z);
     holder.rotation.y = Math.random() * Math.PI * 2;
     var body = new THREE.Group();     // fades (scale + sink) on harvest / respawn
     holder.add(body);
@@ -95708,7 +95739,7 @@ window.WH_ICONS = {
     var pick = free[Math.floor(Math.random() * free.length)];
     node.x = pick.x;
     node.z = pick.z;
-    node.mesh.position.set(pick.x, 0, pick.z);
+    node.mesh.position.set(pick.x, window.WH_GROUND && window.WH_GROUND.has(node.regionId) ? window.WH_GROUND.heightAt(node.regionId, pick.x, pick.z) : 0, pick.z);
   };
 
   NodeManager.prototype.update = function (dt, activeRegionId) {

@@ -57,7 +57,7 @@
     var kit = this.kits[type];
     var s = def.scale || 1;
     var holder = new THREE.Group();
-    holder.position.set(x, 0, z);
+    holder.position.set(x, window.WH_GROUND && window.WH_GROUND.has(regionId) ? window.WH_GROUND.heightAt(regionId, x, z) : 0, z);
     holder.rotation.y = Math.random() * Math.PI * 2;
     var body = new THREE.Group();     // fades (scale + sink) on harvest / respawn
     holder.add(body);
@@ -143,7 +143,7 @@
     var pick = free[Math.floor(Math.random() * free.length)];
     node.x = pick.x;
     node.z = pick.z;
-    node.mesh.position.set(pick.x, 0, pick.z);
+    node.mesh.position.set(pick.x, window.WH_GROUND && window.WH_GROUND.has(node.regionId) ? window.WH_GROUND.heightAt(node.regionId, pick.x, pick.z) : 0, pick.z);
   };
 
   NodeManager.prototype.update = function (dt, activeRegionId) {
