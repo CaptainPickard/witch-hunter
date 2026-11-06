@@ -1,0 +1,12 @@
+  ok  d12 take
+  ok  d12 fill
+  ok  2 entries after d12 take+fill (got 2)
+  ok  pre-roll: requisition exactly once
+  ok  d13 re-take accepted
+  ok  d13 re-award: requisition STILL exactly once (no dupe after day roll)
+  ok  original requisition row survives untouched (day stays 12 — journal keep-first dedupe law)
+  ok  firstFill untouched
+  ok  d13 re-fill accepted
+  ok  d13 re-fill: firstFill STILL exactly once (no dupe after day roll)
+  ok  total entries still 2 after the day rolled and both events replayed
+V7b-CHECK 11/11

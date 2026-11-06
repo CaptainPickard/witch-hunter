@@ -19,6 +19,7 @@
 
   var CFG = window.WH_CONFIG;
   var K = CFG.camp;
+  var CJ = CFG.journal && CFG.journal.topics;  // QJR-3
 
   function el(tag, cls, text) {
     var e = document.createElement(tag);
@@ -323,6 +324,7 @@
       this.toast(K.text.sleepGate);
       return;
     }
+    if (CJ && window.WH_JOURNAL) window.WH_JOURNAL.append(CJ.campRest.id, CJ.campRest.title, CJ.campRest.body, undefined, CJ.campRest.source);  // QJR-3
     var self = this, ms = K.sleepFadeSec * 1000;
     // C4.1 (IO amend, doc 35 law "camps save on completion"): the profile
     // write moved to AFTER rest() - the checkpoint is the WAKE state

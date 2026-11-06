@@ -1,0 +1,11 @@
+  ok  take
+  ok  award day stamp = live dayNight.day (13)
+  ok  award source = A1 string
+  ok  fill
+  ok  fill day stamp = LIVE day at event time (14)
+  ok  fill source = A1 string
+  ok  camp-first-rest entry exists after real rest
+  ok  rest source = A1 string ("Camp folk")
+  ok  rest day stamp = live day at event time (15, before nextDawn rolls)
+  ok  titles always CONFIG verbatim
+V8-CHECK 10/10

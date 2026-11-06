@@ -1,0 +1,16 @@
+  ok  take
+  ok  fill
+  ok  3 entries after take+fill+rest (got 3: camp-first-rest,war-effort-first-fill,war-effort-requisition)
+  ok  requisition once
+  ok  firstFill once
+  ok  campRest once
+  ok  newest-first order campRest>firstFill>requisition
+  ok  capture block = {born, entries} client-only (born=false is correct: no seed path taken)
+  ok  warEffort capture keys unchanged (4, no journal pollution)
+  ok  roundtrip: entries survive exactly, order preserved
+  ok  no phantom dupes after restore
+  ok  post-restore take
+  ok  repeat take after restore: STILL exactly one requisition (dedupe across save/load)
+  ok  camp rest rolled day 6 -> 7 (rest lifecycle ran)
+  ok  camp profile respawn payload keys identical live vs HEAD blob (campId,face,regionId,x,z)
+V7-CHECK 15/15

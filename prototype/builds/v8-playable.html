@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Witch Hunter v9 - EPR1 Combat (build 11-06 22:16Z 4e723af)</title>
+<title>Witch Hunter v9 - EPR1 Combat (build 11-06 22:16Z e694562)</title>
 
 <style>
 /* Witch Hunter prototype v1 - HUD + overlay styling */
@@ -90997,6 +90997,26 @@ window.WH_CONFIG.journal = {
     searchNoMatch: 'Nothing in the journal matches.'
   },
   topics: {
+    // QJR-3: remaining content voices (board clerk + camp folk), A1 verbatim
+    // from io/specs/qjr-3-content-wiring-spec.md.
+    requisition: {
+      id: 'war-effort-requisition',
+      title: 'Requisition papers',
+      source: 'The quartermaster',
+      body: "I took requisition papers from the war board. The quartermaster wants iron for the front - full quota pays coin, excess pays a bonus. The garrison's hunger grows with every report from the pass."
+    },
+    firstFill: {
+      id: 'war-effort-first-fill',
+      title: 'Iron delivered',
+      source: 'The quartermaster',
+      body: 'Haul delivered at the war board. The quartermaster marked the tally and paid coin for the quota, a bonus for the extra. The garrison feeds the forge, the forge feeds the war.'
+    },
+    campRest: {
+      id: 'camp-first-rest',
+      title: 'Taken in at the camp',
+      source: 'Camp folk',
+      body: "The camp folk shared their fire and patched my wounds - for coin or kindness, they did not say. They whisper about the barrow west of the dead trees, the Old King's Barrow, where the mist keeps its own accounts."
+    },
     rescue: {
       id: 'rescue-findDaughter',
       title: "The farmer's daughter",
@@ -102954,6 +102974,7 @@ window.WH_ICONS = {
 
   var CFG = window.WH_CONFIG;
   var K = CFG.camp;
+  var CJ = CFG.journal && CFG.journal.topics;  // QJR-3
 
   function el(tag, cls, text) {
     var e = document.createElement(tag);
@@ -103258,6 +103279,7 @@ window.WH_ICONS = {
       this.toast(K.text.sleepGate);
       return;
     }
+    if (CJ && window.WH_JOURNAL) window.WH_JOURNAL.append(CJ.campRest.id, CJ.campRest.title, CJ.campRest.body, undefined, CJ.campRest.source);  // QJR-3
     var self = this, ms = K.sleepFadeSec * 1000;
     // C4.1 (IO amend, doc 35 law "camps save on completion"): the profile
     // write moved to AFTER rest() - the checkpoint is the WAKE state
@@ -104126,6 +104148,7 @@ window.WH_ICONS = {
 ;(function () {
   'use strict';
   var CFG = window.WH_CONFIG;
+  var JT = CFG.journal && CFG.journal.topics;  // QJR-3
   var W = CFG.warEffort || {};
   var RQ = W.requisition || {};
   var game = null, body = null, papers = null, tallyGroup = null;
@@ -104306,6 +104329,7 @@ window.WH_ICONS = {
       logic.postedDay = dayNumber();
       var awardQuota = quotaQ(logic.repeatIndex);   // S-2: quota is set at award time
       toast(RQ.offerText || 'The garrison wants iron for the war.');
+      if (JT && window.WH_JOURNAL) window.WH_JOURNAL.append(JT.requisition.id, JT.requisition.title, JT.requisition.body, undefined, JT.requisition.source);  // QJR-3
       return true;
     }
     // active: fill the requisition (37-C11 law). CC-WB2: the quota climbs per
@@ -104332,6 +104356,7 @@ window.WH_ICONS = {
     logic.resolvedDay = dayNumber();
     setPapersVisible(false);
     rebuildTallyPins();                 // S-3: rebuilt on resolve
+    if (JT && window.WH_JOURNAL) window.WH_JOURNAL.append(JT.firstFill.id, JT.firstFill.title, JT.firstFill.body, undefined, JT.firstFill.source);  // QJR-3
     toast(over >= 1
       ? (LAD && LAD.overDoneText || 'Requisition filled. The quartermaster pays a bonus for the extra iron.')
       : (RQ.doneText || 'Requisition filled.'));

@@ -1,0 +1,2 @@
+23:12:17 final    | status=completed duration=464.32s summary: **VERDICT: PASS** — report at `/tmp/wh-worldfeat/io/reports/2026-11-06-qjr-3-content-wiring-validation.md`; HEAD unchanged `e694562`; all probes from `/tmp/qjr3-val-scratch` against the REAL modules. - **V-1 census/tags**: exact 4-path set, 0 source deletions, QJR-3 tags 1/3/2 per file — PASS - **V-2 topics shape+verbatim**: keys exactly {requisition,firstFill,campRest,rescue,complete}, all A1 cop …(+98 chars)
+23:12:17 final    | end status=completed exit_reason=completed

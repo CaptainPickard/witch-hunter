@@ -1,0 +1,23 @@
+  ok  WH_JOURNAL deleted
+  ok  camp.saveAndHeal without WH_JOURNAL (no throw)
+  ok  rest lifecycle still proceeds (guard is write-only)
+  ok  wareffort.take without WH_JOURNAL (no throw)
+  ok  award still granted without journal
+  ok    idle take ok
+  ok    exact-quota fill ok (no journal, no throw)
+  ok  wareffort idle-take/fill without WH_JOURNAL (no throw)
+  ok    idle take ok
+  ok    below-quota refusal ok (no journal, no throw)
+  ok    satchel-full refusal ok (no journal, no throw)
+  ok  wareffort refusal paths without WH_JOURNAL (no throw)
+  ok    daytime refusal toast fired without journal
+  ok  camp day-refusal path without WH_JOURNAL (no throw)
+  ok  camp.save without WH_JOURNAL (no throw)
+  ok  camp.saveAndHeal with null topics (no throw)
+  ok  null topics: append never called (guard short-circuit)
+  ok  wareffort.tryOpen with null topics (no throw)
+  ok  null topics: wareffort append never called
+  ok  camp.saveAndHeal with healthy recorder (no throw)
+  ok  healthy recorder: append called once (guard passes through)
+  ok  TOTAL THROWS = 0
+V6-CHECK 22/22

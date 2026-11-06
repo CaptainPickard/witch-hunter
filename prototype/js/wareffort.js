@@ -7,6 +7,7 @@
 ;(function () {
   'use strict';
   var CFG = window.WH_CONFIG;
+  var JT = CFG.journal && CFG.journal.topics;  // QJR-3
   var W = CFG.warEffort || {};
   var RQ = W.requisition || {};
   var game = null, body = null, papers = null, tallyGroup = null;
@@ -187,6 +188,7 @@
       logic.postedDay = dayNumber();
       var awardQuota = quotaQ(logic.repeatIndex);   // S-2: quota is set at award time
       toast(RQ.offerText || 'The garrison wants iron for the war.');
+      if (JT && window.WH_JOURNAL) window.WH_JOURNAL.append(JT.requisition.id, JT.requisition.title, JT.requisition.body, undefined, JT.requisition.source);  // QJR-3
       return true;
     }
     // active: fill the requisition (37-C11 law). CC-WB2: the quota climbs per
@@ -213,6 +215,7 @@
     logic.resolvedDay = dayNumber();
     setPapersVisible(false);
     rebuildTallyPins();                 // S-3: rebuilt on resolve
+    if (JT && window.WH_JOURNAL) window.WH_JOURNAL.append(JT.firstFill.id, JT.firstFill.title, JT.firstFill.body, undefined, JT.firstFill.source);  // QJR-3
     toast(over >= 1
       ? (LAD && LAD.overDoneText || 'Requisition filled. The quartermaster pays a bonus for the extra iron.')
       : (RQ.doneText || 'Requisition filled.'));

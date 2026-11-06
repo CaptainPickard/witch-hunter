@@ -3777,6 +3777,26 @@ window.WH_CONFIG.journal = {
     searchNoMatch: 'Nothing in the journal matches.'
   },
   topics: {
+    // QJR-3: remaining content voices (board clerk + camp folk), A1 verbatim
+    // from io/specs/qjr-3-content-wiring-spec.md.
+    requisition: {
+      id: 'war-effort-requisition',
+      title: 'Requisition papers',
+      source: 'The quartermaster',
+      body: "I took requisition papers from the war board. The quartermaster wants iron for the front - full quota pays coin, excess pays a bonus. The garrison's hunger grows with every report from the pass."
+    },
+    firstFill: {
+      id: 'war-effort-first-fill',
+      title: 'Iron delivered',
+      source: 'The quartermaster',
+      body: 'Haul delivered at the war board. The quartermaster marked the tally and paid coin for the quota, a bonus for the extra. The garrison feeds the forge, the forge feeds the war.'
+    },
+    campRest: {
+      id: 'camp-first-rest',
+      title: 'Taken in at the camp',
+      source: 'Camp folk',
+      body: "The camp folk shared their fire and patched my wounds - for coin or kindness, they did not say. They whisper about the barrow west of the dead trees, the Old King's Barrow, where the mist keeps its own accounts."
+    },
     rescue: {
       id: 'rescue-findDaughter',
       title: "The farmer's daughter",

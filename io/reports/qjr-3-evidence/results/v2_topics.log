@@ -1,0 +1,22 @@
+  ok  topic keys exactly {campRest,complete,firstFill,requisition,rescue}
+  ok  no id collisions among 5 topics
+  ok  no id: 'quest-findDaughter' literal
+  ok  rescue id intact
+  ok  complete id intact
+  ok  requisition.id verbatim (war-effort-requisition)
+  ok  requisition.title verbatim
+  ok  requisition.source verbatim
+  ok  requisition.body verbatim
+  ok  requisition.body hyphen (no em-dash)
+  ok  firstFill.id verbatim (war-effort-first-fill)
+  ok  firstFill.title verbatim
+  ok  firstFill.source verbatim
+  ok  firstFill.body verbatim
+  ok  campRest.id verbatim (camp-first-rest)
+  ok  campRest.title verbatim
+  ok  campRest.source verbatim
+  ok  campRest.body verbatim
+  ok  campRest.body hyphen (no em-dash)
+  ok  journal.dayStamp untouched
+  ok  seed body intact (barrow lore still anchored by QJR-3 campRest wording)
+V2-CHECK 21/21

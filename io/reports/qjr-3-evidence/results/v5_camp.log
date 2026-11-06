@@ -1,0 +1,25 @@
+  ok  WH_CAMP.Camp exported
+  ok  menu open on world camp (day)
+  ok  daytime refusal toast = sleepGate
+  ok  DAYTIME REFUSED REST: journal NOT written
+  ok  no camp-first-rest entry after daytime refusal
+  ok  not resting (gate returned early)
+  ok  dusk rest appended exactly once
+  ok  camp-first-rest entry present
+  ok  entry id camp-first-rest
+  ok  title === CONFIG verbatim
+  ok  body === CONFIG verbatim
+  ok  source === CONFIG verbatim ("Camp folk")
+  ok  day = live dayNight.day (9)
+  ok  A9 letter: campRest append day arg positionally UNDEFINED
+  ok  rest lifecycle started (fade in flight)
+  ok  no second write after rest completes
+  ok  resting cleared after wake
+  ok  rested toast fired
+  ok  night rest appends too (dedupe collapses the second id)
+  ok  plain save(): journal NOT written
+  ok  no camp-first-rest from save()
+  ok  save toast fired (CONFIG saved + respawn-set combo)
+  ok  load(): journal NOT written
+  ok  no camp-first-rest from load()
+V5-CHECK 24/24
