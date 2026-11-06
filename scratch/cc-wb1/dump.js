@@ -1,0 +1,11 @@
+globalThis.window = globalThis; globalThis.self = globalThis;
+const path = require('path');
+const R = '/tmp/wh-worldfeat';
+require(path.join(R, 'prototype/vendor/three.classic.js'));
+require(path.join(R, 'prototype/js/CONFIG.js'));
+const A = window.WH_CONFIG.regionA;
+console.log('GROUND regionA id:', A.id);
+console.log('NODE_TYPES keys:', Object.keys(window.WH_CONFIG.gather.nodeTypes).join(','));
+console.log('NODES:', JSON.stringify(A.nodes || []));
+console.log('ENEMIES:', JSON.stringify((A.enemies||[]).map(e=>({type:e.type,x:e.x,z:e.z}))));
+console.log('SPAWN:', JSON.stringify(A.spawn));

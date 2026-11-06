@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Witch Hunter v9 - EPR1 Combat (build 11-06 18:55Z 877cda4)</title>
+<title>Witch Hunter v9 - EPR1 Combat (build 11-06 19:09Z a495503)</title>
 
 <style>
 /* Witch Hunter prototype v1 - HUD + overlay styling */
@@ -90331,7 +90331,12 @@ window.WH_CONFIG.items = {
                     flavor: 'Earthy, bitter, strangely fortifying' },
   blandMush:      { id: 'blandMush', name: 'Bland Mush', glyph: 'BM', category: 'food',
                     weight: 15, useHint: { kind: 'eat', buff: 'blandMush' },
-                    flavor: 'A sad grey mush' }
+                    flavor: 'A sad grey mush' },
+  // CC-WB1: war-effort requisition paper (doc 42 Part 3). New category
+  // 'document' (plain string, no system reads it yet - stolenCoin 'valuable'
+  // precedent); glyph fallback law, no icon PNG (ironOre WH1-W2 precedent).
+  warOrder:       { id: 'warOrder', name: 'War Requisition', glyph: 'WO',
+                    category: 'document', desc: 'Garrison order: 6 iron ore for the war effort.' }
 };
 
 // C1 (io/missions/2026-10-05-cc-c1-cooking.md): cooking at a fire station.
@@ -90536,6 +90541,35 @@ window.WH_CONFIG.camp = {
       tree: 'too close to a tree', prop: 'something is in the way', enemy: 'enemies nearby',
       node: 'too close to forage', camp: 'too close to another camp'
     }
+  }
+};
+
+// CC-WB1 (doc 42 Part 3, doc 37-C11 lifecycle): war-effort requisition board -
+// a CONTRACT LOOP anchored at the hold (region A, south road). The board hands
+// out ONE Requisition paper per in-game day; filling it means mining ironOre
+// at Redseam (CC-WM1, already live) and turning 6 ore in at the board for a
+// coin reward. Module js/wareffort.js (WH_WarEffort); state rides the save
+// wrap (B-5), NOT localStorage this round.
+window.WH_CONFIG.warEffort = {
+  lsKey: 'wh_wareffort_v1',            // unused this round; state rides the save-wrap (B-5)
+  boardSeat: { regionId: 'hold_outskirts', x: 5.9, z: -15.5, rotY: 3.14 },
+    // PROPOSED, Nicko tunes. Pre-spec lock BY DATA: scratch/cc-wb1/site_scan.js —
+    // (6.7,-14.5) chosen then shifted to (5.9,-15.5): > 4.6 m from every
+    // regionA static prop (nearest originally 3.34 m bandit row = enemy, 8.09 m
+    // statics; clearance re-verified at final seat: nearest static
+    // mossBoulder (10.5,-14.5) = 5.36 m), 88.6 m from spawn, on the south
+    // road sight-line (churchArchway x=8 z=-58), 566.8 m from the Redseam
+    // seam center. Region A is FLAT (WH_GROUND.has = false by design; board
+    // sits y=0).
+  rotYFacesRoadNorth: true,            // PROPOSED: papers face the incoming traveler
+  requisition: {
+    itemId: 'warOrder',                // B-2
+    oreItemId: 'ironOre',              // CC-WM1 item, already live
+    oreRequired: 6,                    // PROPOSED, Nicko tunes (8 veins, ~1 E-dig each)
+    reward: { id: 'stolenCoin', count: 3 },  // PROPOSED, Nicko tunes; reward authority = THIS table only (37-C11)
+    title: 'War Requisition',
+    offerText: 'The garrison wants iron for the war. Bring 6 iron ore to this board.',
+    doneText: 'Requisition filled. The quartermaster marks the board.'
   }
 };
 
@@ -103988,6 +104022,193 @@ window.WH_ICONS = {
 
 </script>
 <script>
+// CC-WB1 war-effort requisition board (doc 42 Part 3 entry tier; doc 37-C11
+// lifecycle). IO spec io/specs/cc-wb1-warboard-spec.md; module per chest.js
+// conventions (IIFE, game couplings, proximity gate, save-wrap payload).
+// 2026-11-06 note: the first Devbot build of this file was overwritten by an
+// orphaned dispatch; this version is the IO-inline rebuild against the same
+// spec + the surviving turn-in smoke (/tmp/wb1_smoke2.js, 34 checks).
+;(function () {
+  'use strict';
+  var CFG = window.WH_CONFIG;
+  var W = CFG.warEffort || {};
+  var RQ = W.requisition || {};
+  var game = null, body = null, papers = null;
+
+  function el(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  // B-3 state model: the whole payload is these three keys (B-5).
+  var logic = { postedDay: null, active: false, resolvedDay: null };
+
+  function dayNumber() {
+    return (game && game.dayNight && typeof game.dayNight.day === 'number') ? game.dayNight.day : 0;
+  }
+
+  function inv() {
+    var gi = game && game.inventory;
+    if (gi && typeof gi.addItem === 'function' && typeof gi.countOf === 'function') return gi;
+    return window.WH_INVENTORY || null;
+  }
+  function oreCount() {
+    var bag = inv();
+    return bag && typeof bag.countOf === 'function' ? (bag.countOf(RQ.oreItemId) || 0) : 0;
+  }
+  function toast(t) {
+    if (game && game.inventoryUI && typeof game.inventoryUI.toast === 'function') {
+      game.inventoryUI.toast(t);
+    }
+  }
+
+  // Board body: the ONLY scene object this round (engine untouched, art law).
+  // Dark-oak two-post board per the concept-04-tavern anchor: desaturated
+  // oak/parchment, ONE amber emissive lantern = the single warm accent.
+  function setPapersVisible(v) {
+    if (!papers) return;
+    for (var i = 0; i < papers.length; i++) papers[i].visible = !!v;
+  }
+
+  function buildBody() {
+    var root = new THREE.Group();
+    root.name = 'cc-wb1-war-effort-board';
+    var oak = new THREE.MeshStandardMaterial({ color: 0x4a3a2a, roughness: 1 });
+    var dark = new THREE.MeshStandardMaterial({ color: 0x3d2b1f, roughness: 0.95 });
+    var parch = new THREE.MeshStandardMaterial({ color: 0xd2b48c, roughness: 1,
+      side: THREE.DoubleSide });
+    var iron = new THREE.MeshStandardMaterial({ color: 0x6e6a63, roughness: 0.8, metalness: 0.4 });
+    var pl = new THREE.Mesh(new THREE.BoxGeometry(0.18, 2.2, 0.18), oak);
+    pl.position.set(-0.8, 1.1, 0); root.add(pl);                     // left post
+    var pr = pl.clone(); pr.position.x = 0.8; root.add(pr);          // right post
+    var frame = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.1, 0.12), dark);
+    frame.position.y = 1.5; root.add(frame);                         // board face
+    papers = [];
+    for (var i = 0; i < 3; i++) {                                    // parchment papers
+      var p = new THREE.Mesh(new THREE.PlaneGeometry(0.48, 0.62), parch);
+      p.position.set(-0.5 + i * 0.5, 1.5 + (i - 1) * 0.06, 0.08);
+      p.rotation.y = (i - 1) * 0.06;                                 // nail slouch jitter
+      root.add(p); papers.push(p);
+    }
+    var strip = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.09, 0.05), iron);
+    strip.position.set(0, 2.0, 0.08); root.add(strip);               // iron bracket strip
+    var arm = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.05, 0.05), iron);
+    arm.position.set(0.68, 2.34, 0.1); root.add(arm);                // lantern arm
+    var lamp = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.22, 0.16),
+      new THREE.MeshStandardMaterial({ color: 0x332a1a, roughness: 0.6,
+        emissive: 0xffb347, emissiveIntensity: 0.9 }));              // THE one amber accent
+    lamp.name = 'cc-wb1-lantern';
+    lamp.position.set(0.85, 2.26, 0.1); root.add(lamp);
+    root.position.set(SEAT.x, 0, SEAT.z);                            // region A FLAT: y = 0
+    root.rotation.y = SEAT.rotY;
+    game.scene.add(root);
+    return root;
+  }
+
+  var SEAT = (W.boardSeat && typeof W.boardSeat.x === 'number')
+    ? W.boardSeat : { x: 5.9, z: -15.5, rotY: 3.14 };
+
+  // Proximity gate (chest.js law): region-gated, CONFIG radius, alive + not
+  // suspended. Radius PROPOSED 2.6 (chest feel).
+  function near() {
+    if (!game || !game.player || !game.player.pos) return false;
+    if (game.regionManager) {
+      var activeId = game.regionManager.logic.activeId;
+      if (activeId !== SEAT.regionId) return false;
+    }
+    var p = game.player.pos;
+    var r = 2.6;                       // PROPOSED, chest-feel
+    return game.player.state === 'alive' && !game.player.inputSuspended &&
+      Math.hypot(p.x - SEAT.x, p.z - SEAT.z) <= r;
+  }
+
+  // NEW DAY LAW (doc 42 cadence): one contract per day. Interaction-time roll
+  // only - no timers, no tick hook. A resolved board resets at the NEXT dawn.
+  function rollNewDay() {
+    var d = dayNumber();
+    if (logic.resolvedDay !== null && d > logic.resolvedDay) {
+      logic.active = false; logic.postedDay = null; logic.resolvedDay = null;
+      setPapersVisible(true);
+    }
+  }
+
+  function spentToday() {
+    return logic.resolvedDay !== null && logic.resolvedDay === dayNumber();
+  }
+
+  function tryOpen() {
+    if (!near() || open()) return false;
+    rollNewDay();
+    if (spentToday()) return true;                 // press consumed, board does nothing
+    var bag = inv();
+    if (!logic.active) {                            // idle: award the requisition paper
+      var added = bag ? (bag.addItem(RQ.itemId, 1) || 0) : 0;
+      if (added < 1) { toast('Your satchel is full.'); return true; }
+      logic.active = true;
+      logic.postedDay = dayNumber();
+      toast(RQ.offerText || 'The garrison wants iron for the war.');
+      return true;
+    }
+    // active: fill the requisition (37-C11 single reward authority = RQ.reward)
+    var have = oreCount();
+    if (have < RQ.oreRequired) {
+      toast('Not enough iron ore. (' + have + '/' + RQ.oreRequired + ')');
+      return true;
+    }
+    var removed = bag.removeItem(RQ.oreItemId, RQ.oreRequired);
+    if (removed < RQ.oreRequired) {                 // never partially charge (defensive)
+      if (removed > 0) bag.addItem(RQ.oreItemId, removed);
+      toast('Not enough iron ore. (' + have + '/' + RQ.oreRequired + ')');
+      return true;
+    }
+    var granted = bag.addItem(RQ.reward.id, RQ.reward.count) || 0;
+    logic.active = false;
+    logic.resolvedDay = dayNumber();
+    setPapersVisible(false);
+    toast(RQ.doneText || 'Requisition filled.');
+    return granted > 0 || true;
+  }
+
+  function open() { return false; }   // this round the board never holds a modal
+
+  function interactPrompt() {
+    if (!near()) return '';
+    rollNewDay();
+    if (spentToday()) return 'The board is spent until dawn.';
+    if (logic.active) return 'E - War Board (' + oreCount() + '/' + RQ.oreRequired + ' iron ore)';
+    return 'E - War Board (Take a requisition)';
+  }
+
+  // B-5 persistence: exactly the payload keys; restore merges known shape,
+  // missing/foreign block = no-op (fresh idle board keeps default state).
+  function capture() {
+    return { active: logic.active, postedDay: logic.postedDay, resolvedDay: logic.resolvedDay };
+  }
+  function restore(data) {
+    if (!data || typeof data !== 'object') return;
+    var known = 'active' in data || 'postedDay' in data || 'resolvedDay' in data;
+    if (!known) return;
+    logic.active = data.active === true;
+    logic.postedDay = typeof data.postedDay === 'number' ? data.postedDay : null;
+    logic.resolvedDay = typeof data.resolvedDay === 'number' ? data.resolvedDay : null;
+    setPapersVisible(!spentToday());
+  }
+
+  function boardPos() { return { x: SEAT.x, z: SEAT.z }; }
+
+  function init(g) {
+    game = g;
+    if (game && game.scene && window.THREE) body = buildBody();
+  }
+
+  window.WH_WarEffort = { init: init, tryOpen: tryOpen, interactPrompt: interactPrompt,
+    capture: capture, restore: restore, boardPos: boardPos };
+})();
+
+</script>
+<script>
 // Witch Hunter prototype - save profile (C4, io/missions/2026-10-06-cc-c4-save-profile.md).
 // ONE rolling profile in localStorage (CONFIG.save.lsKey 'wh-save-v1'),
 // JSON schema v1 = { v, ts, player, inventory, cooking, camp, world } +
@@ -107447,7 +107668,14 @@ window.WH_ICONS = {
     var p = game.player.pos;
     return tryPickup() || lootCorpseNearest(p.x, p.z, CFG.corpseLoot.lootRadius) ||
       tryCookStation() || tryCampSleep() || tryDenDoor() || tryDoorway() || tryNotch() || tryTalkNpc() ||
-      tryRescue() || tryChest() || tryGather();   // CC-C11: talk -> rescue -> chest -> gather
+      tryRescue() || tryChest() || tryWareffort() || tryGather();   // CC-C11: talk -> rescue -> chest -> gather (CC-WB1: board before gather)
+  }
+
+  // CC-WB1: war-effort requisition board (js/wareffort.js) - a contract loop
+  // next to the south road: take a requisition, mine Redseam iron, fill it
+  // here for coins. Board checks before gather nodes (B-4).
+  function tryWareffort() {
+    return !!(window.WH_WarEffort && window.WH_WarEffort.tryOpen());
   }
 
   // ---- CC-C8 the Rot Mother's den door (CONFIG.regionD.door) ----------------------
@@ -107788,6 +108016,9 @@ window.WH_ICONS = {
         text = CFG.regionC.quest.rescuePrompt;
       } else if (window.WH_Chest && window.WH_Chest.interactPrompt()) {
         text = window.WH_Chest.interactPrompt();
+      // CC-WB1: war board prompt (same shape as the chest branch above).
+      } else if (window.WH_WarEffort && window.WH_WarEffort.interactPrompt()) {
+        text = window.WH_WarEffort.interactPrompt();
       } else {
         var node = nearestGatherNode();
         if (node) text = CFG.gather.promptText.replace('{name}', CFG.gather.nodeTypes[node.type].name);
@@ -108152,6 +108383,9 @@ window.WH_ICONS = {
       if (window.WH_NPC) window.WH_NPC.init(game);
       // CC-C11: chest manager follows the NPC quest owner and the deployed camp manager.
       if (window.WH_Chest) window.WH_Chest.init(game);
+      // CC-WB1: war-effort board manager (js/wareffort.js) - same init-hook
+      // tier as the chest; builds the board mesh and holds the game ref.
+      if (window.WH_WarEffort) window.WH_WarEffort.init(game);
       // CC-AE1: night raid director (js/ambush.js) - same init-hook tier as
       // the NPC/chest managers; WH_AMBUSH holds the game ref only.
       if (window.WH_AMBUSH) window.WH_AMBUSH.init(game);
@@ -108195,6 +108429,8 @@ window.WH_ICONS = {
       // CC-C11: retain the C10 wrap and enrich its existing findDaughter row.
       if (window.WH_NPC) data.questState.findDaughter = window.WH_NPC.questStateDetail();
       if (window.WH_Chest) data.chest = window.WH_Chest.capture();
+      // CC-WB1: board state rides the save-wrap ({active, postedDay, resolvedDay}).
+      if (window.WH_WarEffort) data.warEffort = window.WH_WarEffort.capture();
       return data;
     };
     S.save = function (g, opts) {
@@ -108207,6 +108443,8 @@ window.WH_ICONS = {
         // CC-C11: the explicit storage write follows the house save-wrap pattern.
         if (window.WH_NPC) stored.questState.findDaughter = window.WH_NPC.questStateDetail();
         if (window.WH_Chest) stored.chest = window.WH_Chest.capture();
+        // CC-WB1: explicit storage write, chest-line shape.
+        if (window.WH_WarEffort) stored.warEffort = window.WH_WarEffort.capture();
         window.localStorage.setItem(CFG.save.lsKey, JSON.stringify(stored));
       } catch (e) { /* the base profile stands; the nest re-arms on load */ }
       return true;
@@ -108216,6 +108454,8 @@ window.WH_ICONS = {
       if (data && window.WH_NPC) window.WH_NPC.restoreQuest(data.questState);   // CC-C10
       // CC-C11: a missing chest block is a no-op (fresh model stays empty).
       if (data && window.WH_Chest) window.WH_Chest.restore(data.chest);
+      // CC-WB1: a missing warEffort block is a no-op (fresh idle board).
+      if (data && window.WH_WarEffort) window.WH_WarEffort.restore(data.warEffort);
       baseRestore(g, data);
     };
     // S5 quit persist: tab close / reload writes the same capture() profile,

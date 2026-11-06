@@ -1887,7 +1887,14 @@
     var p = game.player.pos;
     return tryPickup() || lootCorpseNearest(p.x, p.z, CFG.corpseLoot.lootRadius) ||
       tryCookStation() || tryCampSleep() || tryDenDoor() || tryDoorway() || tryNotch() || tryTalkNpc() ||
-      tryRescue() || tryChest() || tryGather();   // CC-C11: talk -> rescue -> chest -> gather
+      tryRescue() || tryChest() || tryWareffort() || tryGather();   // CC-C11: talk -> rescue -> chest -> gather (CC-WB1: board before gather)
+  }
+
+  // CC-WB1: war-effort requisition board (js/wareffort.js) - a contract loop
+  // next to the south road: take a requisition, mine Redseam iron, fill it
+  // here for coins. Board checks before gather nodes (B-4).
+  function tryWareffort() {
+    return !!(window.WH_WarEffort && window.WH_WarEffort.tryOpen());
   }
 
   // ---- CC-C8 the Rot Mother's den door (CONFIG.regionD.door) ----------------------
@@ -2228,6 +2235,9 @@
         text = CFG.regionC.quest.rescuePrompt;
       } else if (window.WH_Chest && window.WH_Chest.interactPrompt()) {
         text = window.WH_Chest.interactPrompt();
+      // CC-WB1: war board prompt (same shape as the chest branch above).
+      } else if (window.WH_WarEffort && window.WH_WarEffort.interactPrompt()) {
+        text = window.WH_WarEffort.interactPrompt();
       } else {
         var node = nearestGatherNode();
         if (node) text = CFG.gather.promptText.replace('{name}', CFG.gather.nodeTypes[node.type].name);
@@ -2592,6 +2602,9 @@
       if (window.WH_NPC) window.WH_NPC.init(game);
       // CC-C11: chest manager follows the NPC quest owner and the deployed camp manager.
       if (window.WH_Chest) window.WH_Chest.init(game);
+      // CC-WB1: war-effort board manager (js/wareffort.js) - same init-hook
+      // tier as the chest; builds the board mesh and holds the game ref.
+      if (window.WH_WarEffort) window.WH_WarEffort.init(game);
       // CC-AE1: night raid director (js/ambush.js) - same init-hook tier as
       // the NPC/chest managers; WH_AMBUSH holds the game ref only.
       if (window.WH_AMBUSH) window.WH_AMBUSH.init(game);
@@ -2635,6 +2648,8 @@
       // CC-C11: retain the C10 wrap and enrich its existing findDaughter row.
       if (window.WH_NPC) data.questState.findDaughter = window.WH_NPC.questStateDetail();
       if (window.WH_Chest) data.chest = window.WH_Chest.capture();
+      // CC-WB1: board state rides the save-wrap ({active, postedDay, resolvedDay}).
+      if (window.WH_WarEffort) data.warEffort = window.WH_WarEffort.capture();
       return data;
     };
     S.save = function (g, opts) {
@@ -2647,6 +2662,8 @@
         // CC-C11: the explicit storage write follows the house save-wrap pattern.
         if (window.WH_NPC) stored.questState.findDaughter = window.WH_NPC.questStateDetail();
         if (window.WH_Chest) stored.chest = window.WH_Chest.capture();
+        // CC-WB1: explicit storage write, chest-line shape.
+        if (window.WH_WarEffort) stored.warEffort = window.WH_WarEffort.capture();
         window.localStorage.setItem(CFG.save.lsKey, JSON.stringify(stored));
       } catch (e) { /* the base profile stands; the nest re-arms on load */ }
       return true;
@@ -2656,6 +2673,8 @@
       if (data && window.WH_NPC) window.WH_NPC.restoreQuest(data.questState);   // CC-C10
       // CC-C11: a missing chest block is a no-op (fresh model stays empty).
       if (data && window.WH_Chest) window.WH_Chest.restore(data.chest);
+      // CC-WB1: a missing warEffort block is a no-op (fresh idle board).
+      if (data && window.WH_WarEffort) window.WH_WarEffort.restore(data.warEffort);
       baseRestore(g, data);
     };
     // S5 quit persist: tab close / reload writes the same capture() profile,

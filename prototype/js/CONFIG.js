@@ -3160,7 +3160,12 @@ window.WH_CONFIG.items = {
                     flavor: 'Earthy, bitter, strangely fortifying' },
   blandMush:      { id: 'blandMush', name: 'Bland Mush', glyph: 'BM', category: 'food',
                     weight: 15, useHint: { kind: 'eat', buff: 'blandMush' },
-                    flavor: 'A sad grey mush' }
+                    flavor: 'A sad grey mush' },
+  // CC-WB1: war-effort requisition paper (doc 42 Part 3). New category
+  // 'document' (plain string, no system reads it yet - stolenCoin 'valuable'
+  // precedent); glyph fallback law, no icon PNG (ironOre WH1-W2 precedent).
+  warOrder:       { id: 'warOrder', name: 'War Requisition', glyph: 'WO',
+                    category: 'document', desc: 'Garrison order: 6 iron ore for the war effort.' }
 };
 
 // C1 (io/missions/2026-10-05-cc-c1-cooking.md): cooking at a fire station.
@@ -3365,6 +3370,35 @@ window.WH_CONFIG.camp = {
       tree: 'too close to a tree', prop: 'something is in the way', enemy: 'enemies nearby',
       node: 'too close to forage', camp: 'too close to another camp'
     }
+  }
+};
+
+// CC-WB1 (doc 42 Part 3, doc 37-C11 lifecycle): war-effort requisition board -
+// a CONTRACT LOOP anchored at the hold (region A, south road). The board hands
+// out ONE Requisition paper per in-game day; filling it means mining ironOre
+// at Redseam (CC-WM1, already live) and turning 6 ore in at the board for a
+// coin reward. Module js/wareffort.js (WH_WarEffort); state rides the save
+// wrap (B-5), NOT localStorage this round.
+window.WH_CONFIG.warEffort = {
+  lsKey: 'wh_wareffort_v1',            // unused this round; state rides the save-wrap (B-5)
+  boardSeat: { regionId: 'hold_outskirts', x: 5.9, z: -15.5, rotY: 3.14 },
+    // PROPOSED, Nicko tunes. Pre-spec lock BY DATA: scratch/cc-wb1/site_scan.js —
+    // (6.7,-14.5) chosen then shifted to (5.9,-15.5): > 4.6 m from every
+    // regionA static prop (nearest originally 3.34 m bandit row = enemy, 8.09 m
+    // statics; clearance re-verified at final seat: nearest static
+    // mossBoulder (10.5,-14.5) = 5.36 m), 88.6 m from spawn, on the south
+    // road sight-line (churchArchway x=8 z=-58), 566.8 m from the Redseam
+    // seam center. Region A is FLAT (WH_GROUND.has = false by design; board
+    // sits y=0).
+  rotYFacesRoadNorth: true,            // PROPOSED: papers face the incoming traveler
+  requisition: {
+    itemId: 'warOrder',                // B-2
+    oreItemId: 'ironOre',              // CC-WM1 item, already live
+    oreRequired: 6,                    // PROPOSED, Nicko tunes (8 veins, ~1 E-dig each)
+    reward: { id: 'stolenCoin', count: 3 },  // PROPOSED, Nicko tunes; reward authority = THIS table only (37-C11)
+    title: 'War Requisition',
+    offerText: 'The garrison wants iron for the war. Bring 6 iron ore to this board.',
+    doneText: 'Requisition filled. The quartermaster marks the board.'
   }
 };
 
