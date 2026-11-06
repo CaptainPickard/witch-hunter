@@ -165,6 +165,16 @@
     farmerBody: 'art-direction/3d/assets/races_regen/rigged/dwarf-male-smith.rigged.glb',
     // CC-C11: RAW bind-pose daughter placeholder; Astrabot replacement pending.
     dwarfFemaleBody: 'art-direction/3d/assets/races_regen/rigged/dwarf-female.rigged.glb',
+    // CC-EC1 (2026-11-06): Coven Acolyte caster body. census: the preferred
+    // human-female-caster.rigged.glb does NOT exist (expected deviation ED-1) -
+    // sanctioned fallback = the raw rigged elf dawn-refuser (6 universal
+    // WH_* clips: Idle/Walk/Run/Attack1/Hit/Death; CHARACTERS.covenBody 6
+    // captures them). Raw 2048 JPEG texture (the elf has no pixelated bake;
+    // no races_regen/rspec/ dir) - BODY_PNG omitted (ED-2), body renders raw.
+    // Art anchor: art-direction/concepts/char-09-coven-wizard.png - charcoal /
+    // deep-teal robes; the ONE cyan accent arrives with the bolt + cast glow,
+    // NOT here (placeholder robe palette, accent law governs the spell only).
+    covenBody: 'art-direction/3d/assets/races_regen/rigged/elf-dawn-refuser-male.rigged.glb',
 
     // weapons (pixelated)
     longsword: 'art-direction/3d/assets/weapons/longsword-pixelated.glb',
@@ -226,7 +236,12 @@
   // DAG: playerDagClips 9 = 6 whanim1 + 3 WH_Dag* (clip source only).
   // CC-C5: wolfBody 6 = WH_Wolf_Idle/Walk/Run/Attack1/Hit/Death.
   // IO GEAR 10-26: playerBody 43 unchanged - gear splice adds ZERO clips.
-  var CHARACTERS = { playerBody: 43, banditBody: 6, ghoulBody: 6, playerDagClips: 9, wolfBody: 6 };
+  // CC-EC1: covenBody 6 = the elf dawn-refuser's 6 universal WH_* clips
+  // (Idle/Walk/Run/Attack1/Hit/Death) - REQUIRED: without this row the loader
+  // captures zero clips (:714 gate) and instances share one skeleton
+  // (:814 cloneTemplate) instead of WHSkeletonUtils clones.
+  var CHARACTERS = { playerBody: 43, banditBody: 6, ghoulBody: 6, playerDagClips: 9, wolfBody: 6,
+    covenBody: 6 };
   var failed = {};     // logical name -> true (stand-in substituted)
   var loadedCount = 0;
   var GROUND_META = {}; // holder uuid -> measured height, width, raw groundMinY

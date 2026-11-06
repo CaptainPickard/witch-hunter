@@ -138,6 +138,17 @@
     // mother's per-build lair record (nest, spawner, dressing), the spawn's
     // master, and the RIGID_CLIPS placeholder player (setBody)
     this.slamCd = 0;
+    // CC-EC1 coven cast state (inert for every other type): seconds left on
+    // the re-cast cooldown, the glow pulse level 0..1, and the per-instance
+    // glow mesh (cyan orb on the staff hand; created lazily on first windup)
+    this.castCd = 0;
+    this.castGlow = 0;
+    this.castGlowMesh = null;
+    // CC-EC1: isCoven + the cast range (= enemySpell.covenBolt.maxRange, live)
+    this.isCoven = type === 'coven';
+    this.covenCastRange = (window.WH_CONFIG.enemySpell &&
+      window.WH_CONFIG.enemySpell.covenBolt) ?
+      window.WH_CONFIG.enemySpell.covenBolt.maxRange : 22;
     this.lair = this.cfg.pattern === 'boss-slam' && this.cfg.lair ? newLair(this.cfg) : null;
     this.master = null;
     this.withered = false;             // died with its master (no kill: no loot / XP)
@@ -387,6 +398,69 @@
         this.setFsm('idle');
         this.attackPhase = 'idle';
         this.attackPhaseT = 0;
+      } else if (this.isCoven) {
+        // CC-EC1 CAST CYCLE (doc 34): 'attack' for a coven is the spell cast,
+        // not melee. Clock: castT 0 -> windup (0.55, cyan glow growing) -> the
+        // bolt spawns (spawnEnemyBolt, snap-shot dir at the spawn instant) ->
+        // recover (0.85) -> back to the attack hold; the NEXT cast is gated by
+        // covenBolt.castCooldown (2.6 > windup+recover 1.4). Leaving castRange
+        // (22 = enemySpell.maxRange) during windup CANCELS the cast (glow
+        // decays, no bolt, cycle restarts on re-entry). The shared attack-
+        // phase window is never armed for coven - melee harm is impossible.
+        // (Melee-choice note for the valspec V5.5: option (b) - the coven gate
+        // skips the canDamagePlayer(0) melee call entirely.)
+        var es = window.WH_CONFIG.enemySpell && window.WH_CONFIG.enemySpell.covenBolt;
+        var phase = this.cfg.attackPhase;      // local mirror of the shared branch's `phase`
+        this.castCd = Math.max(0, this.castCd - dt);
+        if (distToPlayer > this.covenCastRange) {
+          // player left cast range: cancel (any phase) -> idle, re-chase on re-entry
+          this.setFsm('chase');
+          this.attackPhase = 'idle';
+          this.attackPhaseT = 0;
+          this.castGlow = 0;
+        } else if (this.attackPhase === 'idle') {
+          // attack hold pending the cast cooldown (re-cast gate 2.6s)
+          this.faceYawToward(toPlayerX, toPlayerZ, distToPlayer, dt);
+          if (this.castCd <= 0) {
+            this.attackPhase = 'windup';
+            this.attackPhaseT = 0;
+          }
+        } else if (this.attackPhase === 'windup') {
+          var cWU = es ? es.castWindup : phase.windup;
+          // glow ramps over the windup, pulses while windup holds
+          var ramp = Math.min(1, this.attackPhaseT / Math.max(0.001, cWU));
+          this.castGlow = ramp * (0.75 + 0.25 * Math.sin(this.fsmTime * 10));
+          this.faceYawToward(toPlayerX, toPlayerZ, distToPlayer, dt);
+          if (this.attackPhaseT >= cWU) {
+            // SPAWN INSTANT: snap-shot the direction NOW (no tracking after)
+            var dirLen = distToPlayer > 0.001 ? distToPlayer : 1;
+            var sdirX = toPlayerX / dirLen, sdirZ = toPlayerZ / dirLen;
+            var ex = this.pos.x + sdirX * 0.3;
+            var ez = this.pos.z + sdirZ * 0.3;
+            var bolt = window.WH_SPELLS && window.WH_SPELLS.spawnEnemyBolt &&
+              window.WH_GAME && window.WH_GAME.scene ?
+              window.WH_SPELLS.spawnEnemyBolt(window.WH_GAME.scene, 'covenBolt',
+                { x: ex, y: this.pos.y + 1.2, z: ez }, sdirX, sdirZ) : null;
+            if (bolt && Enemy.onEnemyBolt) Enemy.onEnemyBolt(bolt);
+            this.castGlow = 0;
+            this.castCd = es ? es.castCooldown : 2.6;
+            this.attackPhase = 'active';
+            this.attackPhaseT = 0;
+          }
+        } else if (this.attackPhase === 'active') {
+          // the 0.12s spell-release window: presentation only, no melee call
+          this.faceYawToward(toPlayerX, toPlayerZ, distToPlayer, dt);
+          if (this.attackPhaseT >= phase.active) {
+            this.attackPhase = 'recover';
+            this.attackPhaseT = 0;
+          }
+        } else if (this.attackPhase === 'recover') {
+          this.faceYawToward(toPlayerX, toPlayerZ, distToPlayer, dt);
+          if (this.attackPhaseT >= phase.recover) {
+            this.attackPhase = 'idle';
+            this.attackPhaseT = 0;
+          }
+        }
       } else {
         var phase = this.cfg.attackPhase;
         this.attackPhaseT += dt;
@@ -456,6 +530,15 @@
         this.setFsm('idle');           // leash: disengage, walk home
       } else if (ai1) {
         this.ai1Decide(dt, ai1, distToPlayer);
+      } else if (this.isCoven) {
+        // CC-EC1: ranged caster - no chase-to-melee. Inside castRange the
+        // cast branch takes hold (FSM 'attack' = the cast cycle); the keep-
+        // distance movement lives in the movement block below.
+        if (distToPlayer <= this.covenCastRange) {
+          this.setFsm('attack');
+          this.attackPhase = 'windup';
+          this.attackPhaseT = 0;
+        }
       } else if (distToPlayer <= (this.cfg.engageRange || this.cfg.attackRange) && !(this.slamCd > 0) &&
                  !(this.rigidAnim && this.rigidAnim.riseT >= 0)) {
         // CC-C7: engageRange (boss-slam) starts the slam inside the AoE;
@@ -527,6 +610,23 @@
     } else if (this.fsm === 'attack') {
       // stand ground, face player
       moveSpeed = 0;
+      // CC-EC1: a coven in the attack hold KEEPS DISTANCE instead (V5.2) -
+      // overrides the stand-ground above: <8m back away at moveSpeed x 0.6,
+      // >16m approach at chaseSpeed x 0.5, 8-16m stays drift 0 (moveSpeed 0
+      // from the pre-existing line). Face the player continuously (ai1Face
+      // yaw below). Non-coven: the line above stands unchanged (byte-equal).
+      if (this.isCoven && distToPlayer > 0.001) {
+        if (distToPlayer < 8) {
+          moveSpeed = this.cfg.moveSpeed * 0.6;
+          dirX = -toPlayerX / distToPlayer;
+          dirZ = -toPlayerZ / distToPlayer;
+        } else if (distToPlayer > 16) {
+          moveSpeed = this.cfg.chaseSpeed * 0.5;
+          dirX = toPlayerX / distToPlayer;
+          dirZ = toPlayerZ / distToPlayer;
+        }
+        ai1Face = true;
+      }
     }
 
     if (moveSpeed > 0) {
@@ -539,6 +639,32 @@
       this.bobPhase += dt * 3;
     }
     if (ai1Face) this.yaw = Math.atan2(toPlayerX, toPlayerZ);
+
+    // CC-EC1 cast glow presentation: a cyan school-colored orb hovering at the
+    // staff hand. ONE MeshBasicMaterial (no light, ED-3 - light.js untouched),
+    // created lazily on the first windup (the holder bone is unknown at ctor
+    // time), dies with the body on death. Self-decaying: windup refreshes it
+    // every frame; any cancel / stagger / expiry just decays it out (~0.25s).
+    // Cyan 0x4fd8c8 ONLY - the art-law accent (char-09 anchor).
+    if (this.isCoven && this.castGlow > 0) {
+      var covenWindup = this.fsm === 'attack' && this.attackPhase === 'windup';
+      if (!covenWindup) this.castGlow = Math.max(0, this.castGlow - dt / 0.25);
+      if (!this.castGlowMesh && this.body) {
+        var holder = this.body.getObjectByName('R_Hand') || this.body;
+        this.castGlowMesh = new THREE.Mesh(
+          new THREE.SphereGeometry(0.16, 8, 6),
+          new THREE.MeshBasicMaterial({ color: 0x4fd8c8, transparent: true, opacity: 0 }));
+        this.castGlowMesh.position.set(0, 0.1, 0.12);
+        holder.add(this.castGlowMesh);
+      }
+      if (this.castGlowMesh) {
+        this.castGlowMesh.visible = this.castGlow > 0;
+        this.castGlowMesh.material.opacity = Math.min(1, this.castGlow) * 0.85;
+        this.castGlowMesh.scale.setScalar(1 + 0.25 * this.castGlow);
+      }
+    } else if (this.castGlowMesh && this.castGlowMesh.visible) {
+      this.castGlowMesh.visible = false;
+    }
 
     // v3: ghoul lunge hop progress (0.25 over 0.25s, fired at chase->attack)
     if (this.hopTimer >= 0) {
@@ -662,6 +788,17 @@
     if (this.fsm === next) return;
     this.fsm = next;
     this.fsmTime = 0;
+  };
+
+  // CC-EC1: free continuous facing for the coven cast cycle (the melee branch
+  // only tracks during windup; a caster keeps facing its target throughout).
+  // Same wrapAngle clamp law as the windup tracker (trackDegPerSec-capped).
+  Enemy.prototype.faceYawToward = function (toPlayerX, toPlayerZ, distToPlayer, dt) {
+    if (distToPlayer > 0.001) {
+      var deltaYaw = wrapAngle(Math.atan2(toPlayerX, toPlayerZ) - this.yaw);
+      var maxYaw = this.cfg.attackPhase.trackDegPerSec * Math.PI / 180 * dt;
+      this.yaw += Math.max(-maxYaw, Math.min(maxYaw, deltaYaw));
+    }
   };
 
   // AI1 R3-R5: the bandit decision loop, run from the chase state. Movement
@@ -1582,6 +1719,9 @@
   };
 
   Enemy.bodyNameFor = bodyNameFor;
+  // CC-EC1: fn(bolt), set by game.js - pushes a freshly spawned enemy bolt
+  // into the game's enemy-bolts array (mirrors the onKilled hand-off pattern)
+  Enemy.onEnemyBolt = null;
   Enemy.rotPoolMesh = rotPoolMesh;      // CC-C8: region-manager outcrop stains
   // pure loop helpers (offline spawn-row derivation, scratch/cc-c5)
   Enemy.packGeometry = { makeLoop: makeLoop, loopAt: loopAt, loopProject: loopProject, packSlot: packSlot };

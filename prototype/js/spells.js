@@ -84,6 +84,88 @@
     }
   };
 
+  // ---- Coven Bolt (CC-EC1, doc 34 enemy caster) -------------------------------
+
+  // The ENEMY projectile: same straight-flying shape as Firebolt, but the
+  // collision circle is tested vs THE PLAYER, and the damage does NOT apply
+  // here - the game.js enemy-bolt loop owns the hit (it applies magicDefense
+  // exactly once at that call site, then routes damagePlayerFromEnemy with a
+  // bare {isSpell, pos} attacker). Config lives in CONFIG.enemySpell (NOT
+  // spell.* - the player registry stays untouched; WH_SPELLS.spawn would
+  // return null for 'covenBolt'). One MeshBasicMaterial sphere per bolt
+  // (school color 0x4fd8c8, the art-law cyan); NO light (ED-3: the
+  // enemySpell.projectileLight numbers stay inert - light.js and the
+  // player-firebolt light pool untouched).
+  function WH_CovenBolt(scene, spellId, origin, dirX, dirZ) {
+    var S = window.WH_CONFIG.enemySpell[spellId];
+    this.spellId = spellId;
+    this.config = S;
+    this.pos = new THREE.Vector3(origin.x, origin.y, origin.z);
+    this.dirX = dirX;
+    this.dirZ = dirZ;
+    this.speed = S.speed;
+    this.hitRadius = S.hitRadius;
+    this.maxRange = S.maxRange;
+    this.damage = S.damage;
+    this.traveled = 0;
+    this.alive = true;
+    this.spent = false;               // one hit per bolt (Firebolt pattern)
+    this.hitFlash = 0;
+
+    // small emissive-style sphere (school-colored cyan) as the bolt body
+    this.mesh = new THREE.Mesh(
+      new THREE.SphereGeometry(0.22, 8, 6),
+      new THREE.MeshBasicMaterial({ color: S.schoolColor })
+    );
+    this.mesh.position.copy(this.pos);
+    scene.add(this.mesh);
+    this.scene = scene;
+  }
+
+  // update(dt): advance, lifetime-check (maxRange / speed = 1.375 s), circle
+  // test vs the PLAYER circle (hitRadius + CONFIG.player.radius LIVE = 1.5 m).
+  // Returns false when the bolt can be dropped; game.js keeps it on true.
+  WH_CovenBolt.prototype.update = function (dt, playerPos) {
+    if (!this.alive) return false;
+    // hit flash countdown -> die when expired (spells.js Firebolt shape)
+    if (this.spent) {
+      this.hitFlash -= dt;
+      if (this.hitFlash <= 0) { this.die(); return false; }
+      return true;     // still alive during flash: no more movement/collision
+    }
+    var step = this.speed * dt;
+    this.pos.x += this.dirX * step;
+    this.pos.z += this.dirZ * step;
+    this.traveled += step;
+    this.mesh.position.copy(this.pos);
+    if (this.traveled >= this.maxRange) {
+      this.die();
+      return false;
+    }
+    if (playerPos) {
+      // 2D circle test vs the player (C1: CONFIG.player.radius pre-exists
+      // = 0.7 and is reused live - never hardcoded).
+      var pr = window.WH_CONFIG.player.radius;
+      var dx = playerPos.x - this.pos.x;
+      var dz = playerPos.z - this.pos.z;
+      var rr = this.hitRadius + pr;
+      if (dx * dx + dz * dz <= rr * rr) {
+        this.spent = true;            // can't hit again
+        this.hitFlash = 0.15;         // brief alive period for visual + debug
+        return true;                  // keep ticking (alive) during flash
+      }
+    }
+    return true;    // still flying
+  };
+
+  WH_CovenBolt.prototype.die = function () {
+    this.alive = false;
+    if (this.mesh) {
+      this.scene.remove(this.mesh);
+      this.mesh = null;
+    }
+  };
+
   // ---- Radiance follow-light (10-04, Nicko) ---------------------------------
 
   // Emissive orb + its OWN PointLight (never the prop light pool), parented
@@ -163,12 +245,24 @@
   window.WH_SPELLS = {
     Firebolt: Firebolt,
     RadianceEffect: RadianceEffect,
+    // CC-EC1: the enemy caster bolt class (doc 34). Config = CONFIG.enemySpell.
+    CovenBolt: WH_CovenBolt,
     // Spawn helper: CONFIG kind 'followLight' -> RadianceEffect handle,
     // anything else -> Firebolt. null if the spell id is unknown.
     spawn: function (scene, spellId, origin, dirX, dirZ) {
       if (!SPELLS[spellId]) return null;
       if (SPELLS[spellId].kind === 'followLight') return new RadianceEffect(scene, spellId);
       return new Firebolt(scene, spellId, origin, dirX, dirZ);
+    },
+    // CC-EC1: ENEMY bolt spawn (never route coven bolts through spawn() -
+    // it reads CONFIG.spell and returns null for 'covenBolt'). Reads
+    // CONFIG.enemySpell[spellId]: null for an unknown id; a kind that is not
+    // the projectile family also returns null (only 'projectile' exists).
+    spawnEnemyBolt: function (scene, spellId, origin, dirX, dirZ) {
+      var ES = window.WH_CONFIG.enemySpell;
+      if (!ES || !ES[spellId]) return null;
+      if (ES[spellId].kind !== 'projectile') return null;
+      return new WH_CovenBolt(scene, spellId, origin, dirX, dirZ);
     },
     getSpellConfig: function (spellId) { return SPELLS[spellId] || null; }
   };

@@ -87802,6 +87802,18 @@ window.WH_CONFIG = {
       { type: 'bandit', x: -138.1, z: -516.8 }
       // CC-C8: the CC-C7 rotmother row (index 22) is GONE - she is instanced by
       // her lair record inside the den (CONFIG.regionD.lairs), not a C row.
+      // CC-EC1 COVEN ACOLYTES (doc 34): 2 caster rows APPENDED at the array END
+      // (row-index persistence law: append-only, indices 50/51 after the CC-C6
+      // Charlie bandit rows). SW moor pair between the SW camps and the den
+      // mouth lane, away from camps / pack loops / the den door. Clearance
+      // verified vs the full check set (scratch/cc-ec1/clearance.py, 123
+      // members): min 38.4m (row 1) / 30.1m (row 2) - nearest member the sw
+      // wolf-pack loop point (-112.5,-276.1); >25m to every camp guard, camp
+      // fire, wolf waypoint/row and the den door interactAt (-163.4,-202.6).
+      // NOTE: comma-first continuation below - the last pre-existing row above
+      // stays byte-identical (append-only diff law: zero '-' lines anywhere).
+      ,{ type: 'coven', x: -118.4, z: -238.2 },
+      { type: 'coven', x: -99.2, z: -249.1 }
     ],
     // CC-C3 ANCIENT FOREST (R-62.6, io/missions/2026-10-07-cc-c3-ancient-forest.md):
     // hand-placed rows, no runtime random. CC-C2's 120-tree 8-10 band is
@@ -88950,6 +88962,31 @@ window.WH_CONFIG = {
     }
   },
 
+  // CC-EC1: enemy spell registry (sibling of spell.*, NOT inside it - the
+  // player spell registry stays untouched; WH_SPELLS.spawnEnemyBolt reads
+  // this). ONE caster bolt for now (doc 34 sec 5 analog). kind 'projectile'
+  // is the spells.js projectile family (spawnEnemyBolt rejects other kinds).
+  enemySpell: {
+    covenBolt: {
+      kind: 'projectile',
+      focusCost: 0,                   // enemy: no focus pool
+      damage: 14,
+      speed: 16,
+      hitRadius: 0.8,                 // circle test vs player (+ CONFIG.player.radius LIVE value)
+      maxRange: 22,                   // lifetime = maxRange / speed; == coven castRange
+      castWindup: 0.55,               // == coven attackPhase.windup (the glow grows over it)
+      castCooldown: 2.6,              // seconds between bolt spawns (gates the re-cast)
+      schoolColor: 0x4fd8c8,          // art law: the ONE cyan accent (char-09 anchor; no red/orange)
+      name: 'Coven Bolt', glyph: 'CB',
+      // ED-3 (recorded deviation): these rows LAND here but stay INERT this
+      // round - the coven bolt carries NO pooled light (light.js and the
+      // player-firebolt light pool untouched). Kept so the numbers ride the
+      // spec verbatim for a later light pass.
+      light: { color: 0x4fd8c8, intensity: 6.0, distance: 9, decay: 2, flickerPct: 8 },
+      projectileLight: { color: 0x4fd8c8, intensity: 2.0, distance: 6, decay: 2, flickerPct: 10 }
+    }
+  },
+
   enemy: {
     // All senses/combat numbers are POC-scaled; doc 33 has no sight values (D4b-1).
     bandit: {
@@ -89073,6 +89110,39 @@ window.WH_CONFIG = {
         slotGain: 1.5                  // follow speed = min(moveSpeed, slot distance x this) (no stop-go)
       }
     },
+    // CC-EC1 COVEN ACOLYTE (doc 34 enemy caster + magicDefense hook activation;
+    // io/specs/cc-ec1-coven-acolyte-spec.md). PALETTE LAW (art anchor
+    // art-direction/concepts/char-09-coven-wizard.png): charcoal/deep-teal
+    // robes, ONE cyan accent per frame (0x4fd8c8 family), NO red/orange on
+    // the acolyte or its bolt. HOOK LAW: the coven bolt's magicDefense is
+    // applied exactly ONCE at the game.js enemy-bolt call site (player.js's
+    // resolveIncomingHit untouched). Ranged caster: the FSM 'attack'
+    // state is the CAST CYCLE (enemy.js coven branch), not melee - the melee
+    // numbers below are wired to zero (attackDamage 0 / attackRange 0 /
+    // attackCooldown 0) so no melee harm ever lands. movementSpeed < bandit:
+    // it drifts, it casts, it backs away - it does not brawl. All PROPOSED,
+    // Nicko tunes.
+    coven: {
+      hpMax: 60.0,
+      moveSpeed: 3.4,
+      chaseSpeed: 4.6,                // slower than the bandit's 5.0 press
+      attackDamage: 0.0,              // melee disabled in v1: harm is the bolt only
+      attackRange: 0,                 // no melee reach at all
+      attackCooldown: 0,              // cast cadence owns re-cast (covenBolt.castCooldown)
+      sightRadius: 20.0,
+      leashRadius: 40.0,
+      staggerTime: 0.45,              // staggers like bandits; a stagger cancels an in-flight cast
+      radius: 0.7,
+      aggroPingInterval: 0.2,
+      attackPhase: {                  // the cast cycle clock (enemy.js coven branch)
+        windup: 0.55,                 // == enemySpell.covenBolt.castWindup: the cyan glow grows...
+        active: 0.12,                 // ...the bolt spawns at THIS entry (windup expiry), no melee harm
+        recover: 0.85,                // post-spawn hold, then the attack-hold re-cast gate
+        hitArcDeg: 50,                // unused by the cast branch (no melee hit check) - kept for shape parity
+        trackDegPerSec: 180
+      },
+      castRange: 22.0                 // = enemySpell.covenBolt.maxRange: enter/hold the cast inside this
+    },
     // CC-C7 ROT MOTHER + ROT SPAWN (doc 62 sec 5.2, R-62.4 repeatable nest boss;
     // io/missions/2026-10-12-cc-c7-rotmother-behavior.md sec 2). The first
     // block of each row is the BRIEF ROW VERBATIM (its keys + numbers); enemy.js
@@ -89136,9 +89206,12 @@ window.WH_CONFIG = {
     // an unknown type keeps the old fallbacks: ghoulBody / 'bandit').
     // CC-C7: + the unrigged rot bodies; rigidAnimByType = their anim.js
     // RIGID_CLIPS placeholder set (no skeleton, so no animVariantByType row).
+    // CC-EC1: + the coven caster (elf-dawn-refuser rig; variant 'bandit' over
+    // its universal 6-clip set - anim.js universal-name fallback covers the
+    // rest, ~5 benign anim warns per coven body; death IS universal WH_Death).
     bodyByType: { bandit: 'banditBody', ghoul: 'ghoulBody', wolf: 'wolfBody',
-      rotmother: 'rotmotherBody', rotspawn: 'rotspawnBody' },
-    animVariantByType: { bandit: 'bandit', ghoul: 'zombie', wolf: 'wolf' },
+      rotmother: 'rotmotherBody', rotspawn: 'rotspawnBody', coven: 'covenBody' },
+    animVariantByType: { bandit: 'bandit', ghoul: 'zombie', wolf: 'wolf', coven: 'bandit' },
     rigidAnimByType: { rotmother: 'rotmother', rotspawn: 'rotspawn' },
     // CC-C5 WOLF PACKS (doc 62 L7/L8/L9 dens): closed patrol loops (world x,
     // z; walked in row order, last -> first). Each loop crosses its King's
@@ -90479,6 +90552,7 @@ window.WH_CONFIG.leveling = {
     kill_wolf: 20,                  // CC-C5: wolf hpMax 38 (same ~0.53 x hpMax law)
     kill_rotmother: 240,            // CC-C7: rotmother hp 460 (same law; every re-armed kill pays again)
     kill_rotspawn: 14,              // CC-C7: rotspawn hp 26 (withered on her death = no kill, no XP)
+    kill_coven: 30,                 // CC-EC1: coven hp 60 (same ~0.5 x hpMax law)
     gather: 5,                      // per harvested node
     cook_meal: 15,                  // per finished cook (recipe or Bland Mush)
     recipe_learn: 40,               // the first cook of a recipe (stacks with cook_meal)
@@ -91346,7 +91420,14 @@ window.WH_ICONS = {
     // 10-05 Round C: combat-chain.glb + 12 Mixamo WH_Sword*/WH_Shield* clips
     // (scratch/mixamo_player.json; chain clips byte-identical). Rollback:
     // human-hunter-male.combat-chain.glb
-    playerBody: 'art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-sword.glb',
+    // IO GEAR 2026-10-26: playerBody = combat-gear.glb = combat-sword.glb +
+    // skinned witch-hat (Head bone) + belt satchel (Hips bone) appended via
+    // append-only GLB splice (nodes/materials/meshes/accessors appended; the
+    // 43 clips and the base BIN chunk are byte-identical prefixes; gear
+    // JOINTS_0 remapped to the base skin joint order). Rollback:
+    // human-hunter-male.combat-sword.glb. Splicer + author:
+    // scratch/io_gear_author.py / scratch/io_gear_splice.py
+    playerBody: 'art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-gear.glb',
     // DAG (2026-10-09) CLIP SOURCE ONLY (never instanced): a rigged.glb copy
     // + WH_DagSlashR2L / WH_DagSlashL2R / WH_DagSlashR2Lb (Phase A2,
     // scratch/blender_dagger_clips.py; same 22 nodes / 20 joints). player.js
@@ -91375,6 +91456,16 @@ window.WH_ICONS = {
     farmerBody: 'art-direction/3d/assets/races_regen/rigged/dwarf-male-smith.rigged.glb',
     // CC-C11: RAW bind-pose daughter placeholder; Astrabot replacement pending.
     dwarfFemaleBody: 'art-direction/3d/assets/races_regen/rigged/dwarf-female.rigged.glb',
+    // CC-EC1 (2026-11-06): Coven Acolyte caster body. census: the preferred
+    // human-female-caster.rigged.glb does NOT exist (expected deviation ED-1) -
+    // sanctioned fallback = the raw rigged elf dawn-refuser (6 universal
+    // WH_* clips: Idle/Walk/Run/Attack1/Hit/Death; CHARACTERS.covenBody 6
+    // captures them). Raw 2048 JPEG texture (the elf has no pixelated bake;
+    // no races_regen/rspec/ dir) - BODY_PNG omitted (ED-2), body renders raw.
+    // Art anchor: art-direction/concepts/char-09-coven-wizard.png - charcoal /
+    // deep-teal robes; the ONE cyan accent arrives with the bolt + cast glow,
+    // NOT here (placeholder robe palette, accent law governs the spell only).
+    covenBody: 'art-direction/3d/assets/races_regen/rigged/elf-dawn-refuser-male.rigged.glb',
 
     // weapons (pixelated)
     longsword: 'art-direction/3d/assets/weapons/longsword-pixelated.glb',
@@ -91435,7 +91526,13 @@ window.WH_ICONS = {
   // MAGANIM Phase A: 42 = 28 + 14 WH_Mag_* (Lite Magic Pack, 5477e98).
   // DAG: playerDagClips 9 = 6 whanim1 + 3 WH_Dag* (clip source only).
   // CC-C5: wolfBody 6 = WH_Wolf_Idle/Walk/Run/Attack1/Hit/Death.
-  var CHARACTERS = { playerBody: 43, banditBody: 6, ghoulBody: 6, playerDagClips: 9, wolfBody: 6 };
+  // IO GEAR 10-26: playerBody 43 unchanged - gear splice adds ZERO clips.
+  // CC-EC1: covenBody 6 = the elf dawn-refuser's 6 universal WH_* clips
+  // (Idle/Walk/Run/Attack1/Hit/Death) - REQUIRED: without this row the loader
+  // captures zero clips (:714 gate) and instances share one skeleton
+  // (:814 cloneTemplate) instead of WHSkeletonUtils clones.
+  var CHARACTERS = { playerBody: 43, banditBody: 6, ghoulBody: 6, playerDagClips: 9, wolfBody: 6,
+    covenBody: 6 };
   var failed = {};     // logical name -> true (stand-in substituted)
   var loadedCount = 0;
   var GROUND_META = {}; // holder uuid -> measured height, width, raw groundMinY
@@ -92979,6 +93076,88 @@ window.WH_ICONS = {
     }
   };
 
+  // ---- Coven Bolt (CC-EC1, doc 34 enemy caster) -------------------------------
+
+  // The ENEMY projectile: same straight-flying shape as Firebolt, but the
+  // collision circle is tested vs THE PLAYER, and the damage does NOT apply
+  // here - the game.js enemy-bolt loop owns the hit (it applies magicDefense
+  // exactly once at that call site, then routes damagePlayerFromEnemy with a
+  // bare {isSpell, pos} attacker). Config lives in CONFIG.enemySpell (NOT
+  // spell.* - the player registry stays untouched; WH_SPELLS.spawn would
+  // return null for 'covenBolt'). One MeshBasicMaterial sphere per bolt
+  // (school color 0x4fd8c8, the art-law cyan); NO light (ED-3: the
+  // enemySpell.projectileLight numbers stay inert - light.js and the
+  // player-firebolt light pool untouched).
+  function WH_CovenBolt(scene, spellId, origin, dirX, dirZ) {
+    var S = window.WH_CONFIG.enemySpell[spellId];
+    this.spellId = spellId;
+    this.config = S;
+    this.pos = new THREE.Vector3(origin.x, origin.y, origin.z);
+    this.dirX = dirX;
+    this.dirZ = dirZ;
+    this.speed = S.speed;
+    this.hitRadius = S.hitRadius;
+    this.maxRange = S.maxRange;
+    this.damage = S.damage;
+    this.traveled = 0;
+    this.alive = true;
+    this.spent = false;               // one hit per bolt (Firebolt pattern)
+    this.hitFlash = 0;
+
+    // small emissive-style sphere (school-colored cyan) as the bolt body
+    this.mesh = new THREE.Mesh(
+      new THREE.SphereGeometry(0.22, 8, 6),
+      new THREE.MeshBasicMaterial({ color: S.schoolColor })
+    );
+    this.mesh.position.copy(this.pos);
+    scene.add(this.mesh);
+    this.scene = scene;
+  }
+
+  // update(dt): advance, lifetime-check (maxRange / speed = 1.375 s), circle
+  // test vs the PLAYER circle (hitRadius + CONFIG.player.radius LIVE = 1.5 m).
+  // Returns false when the bolt can be dropped; game.js keeps it on true.
+  WH_CovenBolt.prototype.update = function (dt, playerPos) {
+    if (!this.alive) return false;
+    // hit flash countdown -> die when expired (spells.js Firebolt shape)
+    if (this.spent) {
+      this.hitFlash -= dt;
+      if (this.hitFlash <= 0) { this.die(); return false; }
+      return true;     // still alive during flash: no more movement/collision
+    }
+    var step = this.speed * dt;
+    this.pos.x += this.dirX * step;
+    this.pos.z += this.dirZ * step;
+    this.traveled += step;
+    this.mesh.position.copy(this.pos);
+    if (this.traveled >= this.maxRange) {
+      this.die();
+      return false;
+    }
+    if (playerPos) {
+      // 2D circle test vs the player (C1: CONFIG.player.radius pre-exists
+      // = 0.7 and is reused live - never hardcoded).
+      var pr = window.WH_CONFIG.player.radius;
+      var dx = playerPos.x - this.pos.x;
+      var dz = playerPos.z - this.pos.z;
+      var rr = this.hitRadius + pr;
+      if (dx * dx + dz * dz <= rr * rr) {
+        this.spent = true;            // can't hit again
+        this.hitFlash = 0.15;         // brief alive period for visual + debug
+        return true;                  // keep ticking (alive) during flash
+      }
+    }
+    return true;    // still flying
+  };
+
+  WH_CovenBolt.prototype.die = function () {
+    this.alive = false;
+    if (this.mesh) {
+      this.scene.remove(this.mesh);
+      this.mesh = null;
+    }
+  };
+
   // ---- Radiance follow-light (10-04, Nicko) ---------------------------------
 
   // Emissive orb + its OWN PointLight (never the prop light pool), parented
@@ -93058,12 +93237,24 @@ window.WH_ICONS = {
   window.WH_SPELLS = {
     Firebolt: Firebolt,
     RadianceEffect: RadianceEffect,
+    // CC-EC1: the enemy caster bolt class (doc 34). Config = CONFIG.enemySpell.
+    CovenBolt: WH_CovenBolt,
     // Spawn helper: CONFIG kind 'followLight' -> RadianceEffect handle,
     // anything else -> Firebolt. null if the spell id is unknown.
     spawn: function (scene, spellId, origin, dirX, dirZ) {
       if (!SPELLS[spellId]) return null;
       if (SPELLS[spellId].kind === 'followLight') return new RadianceEffect(scene, spellId);
       return new Firebolt(scene, spellId, origin, dirX, dirZ);
+    },
+    // CC-EC1: ENEMY bolt spawn (never route coven bolts through spawn() -
+    // it reads CONFIG.spell and returns null for 'covenBolt'). Reads
+    // CONFIG.enemySpell[spellId]: null for an unknown id; a kind that is not
+    // the projectile family also returns null (only 'projectile' exists).
+    spawnEnemyBolt: function (scene, spellId, origin, dirX, dirZ) {
+      var ES = window.WH_CONFIG.enemySpell;
+      if (!ES || !ES[spellId]) return null;
+      if (ES[spellId].kind !== 'projectile') return null;
+      return new WH_CovenBolt(scene, spellId, origin, dirX, dirZ);
     },
     getSpellConfig: function (spellId) { return SPELLS[spellId] || null; }
   };
@@ -98443,6 +98634,17 @@ window.WH_ICONS = {
     // mother's per-build lair record (nest, spawner, dressing), the spawn's
     // master, and the RIGID_CLIPS placeholder player (setBody)
     this.slamCd = 0;
+    // CC-EC1 coven cast state (inert for every other type): seconds left on
+    // the re-cast cooldown, the glow pulse level 0..1, and the per-instance
+    // glow mesh (cyan orb on the staff hand; created lazily on first windup)
+    this.castCd = 0;
+    this.castGlow = 0;
+    this.castGlowMesh = null;
+    // CC-EC1: isCoven + the cast range (= enemySpell.covenBolt.maxRange, live)
+    this.isCoven = type === 'coven';
+    this.covenCastRange = (window.WH_CONFIG.enemySpell &&
+      window.WH_CONFIG.enemySpell.covenBolt) ?
+      window.WH_CONFIG.enemySpell.covenBolt.maxRange : 22;
     this.lair = this.cfg.pattern === 'boss-slam' && this.cfg.lair ? newLair(this.cfg) : null;
     this.master = null;
     this.withered = false;             // died with its master (no kill: no loot / XP)
@@ -98692,6 +98894,69 @@ window.WH_ICONS = {
         this.setFsm('idle');
         this.attackPhase = 'idle';
         this.attackPhaseT = 0;
+      } else if (this.isCoven) {
+        // CC-EC1 CAST CYCLE (doc 34): 'attack' for a coven is the spell cast,
+        // not melee. Clock: castT 0 -> windup (0.55, cyan glow growing) -> the
+        // bolt spawns (spawnEnemyBolt, snap-shot dir at the spawn instant) ->
+        // recover (0.85) -> back to the attack hold; the NEXT cast is gated by
+        // covenBolt.castCooldown (2.6 > windup+recover 1.4). Leaving castRange
+        // (22 = enemySpell.maxRange) during windup CANCELS the cast (glow
+        // decays, no bolt, cycle restarts on re-entry). The shared attack-
+        // phase window is never armed for coven - melee harm is impossible.
+        // (Melee-choice note for the valspec V5.5: option (b) - the coven gate
+        // skips the canDamagePlayer(0) melee call entirely.)
+        var es = window.WH_CONFIG.enemySpell && window.WH_CONFIG.enemySpell.covenBolt;
+        var phase = this.cfg.attackPhase;      // local mirror of the shared branch's `phase`
+        this.castCd = Math.max(0, this.castCd - dt);
+        if (distToPlayer > this.covenCastRange) {
+          // player left cast range: cancel (any phase) -> idle, re-chase on re-entry
+          this.setFsm('chase');
+          this.attackPhase = 'idle';
+          this.attackPhaseT = 0;
+          this.castGlow = 0;
+        } else if (this.attackPhase === 'idle') {
+          // attack hold pending the cast cooldown (re-cast gate 2.6s)
+          this.faceYawToward(toPlayerX, toPlayerZ, distToPlayer, dt);
+          if (this.castCd <= 0) {
+            this.attackPhase = 'windup';
+            this.attackPhaseT = 0;
+          }
+        } else if (this.attackPhase === 'windup') {
+          var cWU = es ? es.castWindup : phase.windup;
+          // glow ramps over the windup, pulses while windup holds
+          var ramp = Math.min(1, this.attackPhaseT / Math.max(0.001, cWU));
+          this.castGlow = ramp * (0.75 + 0.25 * Math.sin(this.fsmTime * 10));
+          this.faceYawToward(toPlayerX, toPlayerZ, distToPlayer, dt);
+          if (this.attackPhaseT >= cWU) {
+            // SPAWN INSTANT: snap-shot the direction NOW (no tracking after)
+            var dirLen = distToPlayer > 0.001 ? distToPlayer : 1;
+            var sdirX = toPlayerX / dirLen, sdirZ = toPlayerZ / dirLen;
+            var ex = this.pos.x + sdirX * 0.3;
+            var ez = this.pos.z + sdirZ * 0.3;
+            var bolt = window.WH_SPELLS && window.WH_SPELLS.spawnEnemyBolt &&
+              window.WH_GAME && window.WH_GAME.scene ?
+              window.WH_SPELLS.spawnEnemyBolt(window.WH_GAME.scene, 'covenBolt',
+                { x: ex, y: this.pos.y + 1.2, z: ez }, sdirX, sdirZ) : null;
+            if (bolt && Enemy.onEnemyBolt) Enemy.onEnemyBolt(bolt);
+            this.castGlow = 0;
+            this.castCd = es ? es.castCooldown : 2.6;
+            this.attackPhase = 'active';
+            this.attackPhaseT = 0;
+          }
+        } else if (this.attackPhase === 'active') {
+          // the 0.12s spell-release window: presentation only, no melee call
+          this.faceYawToward(toPlayerX, toPlayerZ, distToPlayer, dt);
+          if (this.attackPhaseT >= phase.active) {
+            this.attackPhase = 'recover';
+            this.attackPhaseT = 0;
+          }
+        } else if (this.attackPhase === 'recover') {
+          this.faceYawToward(toPlayerX, toPlayerZ, distToPlayer, dt);
+          if (this.attackPhaseT >= phase.recover) {
+            this.attackPhase = 'idle';
+            this.attackPhaseT = 0;
+          }
+        }
       } else {
         var phase = this.cfg.attackPhase;
         this.attackPhaseT += dt;
@@ -98761,6 +99026,15 @@ window.WH_ICONS = {
         this.setFsm('idle');           // leash: disengage, walk home
       } else if (ai1) {
         this.ai1Decide(dt, ai1, distToPlayer);
+      } else if (this.isCoven) {
+        // CC-EC1: ranged caster - no chase-to-melee. Inside castRange the
+        // cast branch takes hold (FSM 'attack' = the cast cycle); the keep-
+        // distance movement lives in the movement block below.
+        if (distToPlayer <= this.covenCastRange) {
+          this.setFsm('attack');
+          this.attackPhase = 'windup';
+          this.attackPhaseT = 0;
+        }
       } else if (distToPlayer <= (this.cfg.engageRange || this.cfg.attackRange) && !(this.slamCd > 0) &&
                  !(this.rigidAnim && this.rigidAnim.riseT >= 0)) {
         // CC-C7: engageRange (boss-slam) starts the slam inside the AoE;
@@ -98832,6 +99106,23 @@ window.WH_ICONS = {
     } else if (this.fsm === 'attack') {
       // stand ground, face player
       moveSpeed = 0;
+      // CC-EC1: a coven in the attack hold KEEPS DISTANCE instead (V5.2) -
+      // overrides the stand-ground above: <8m back away at moveSpeed x 0.6,
+      // >16m approach at chaseSpeed x 0.5, 8-16m stays drift 0 (moveSpeed 0
+      // from the pre-existing line). Face the player continuously (ai1Face
+      // yaw below). Non-coven: the line above stands unchanged (byte-equal).
+      if (this.isCoven && distToPlayer > 0.001) {
+        if (distToPlayer < 8) {
+          moveSpeed = this.cfg.moveSpeed * 0.6;
+          dirX = -toPlayerX / distToPlayer;
+          dirZ = -toPlayerZ / distToPlayer;
+        } else if (distToPlayer > 16) {
+          moveSpeed = this.cfg.chaseSpeed * 0.5;
+          dirX = toPlayerX / distToPlayer;
+          dirZ = toPlayerZ / distToPlayer;
+        }
+        ai1Face = true;
+      }
     }
 
     if (moveSpeed > 0) {
@@ -98844,6 +99135,32 @@ window.WH_ICONS = {
       this.bobPhase += dt * 3;
     }
     if (ai1Face) this.yaw = Math.atan2(toPlayerX, toPlayerZ);
+
+    // CC-EC1 cast glow presentation: a cyan school-colored orb hovering at the
+    // staff hand. ONE MeshBasicMaterial (no light, ED-3 - light.js untouched),
+    // created lazily on the first windup (the holder bone is unknown at ctor
+    // time), dies with the body on death. Self-decaying: windup refreshes it
+    // every frame; any cancel / stagger / expiry just decays it out (~0.25s).
+    // Cyan 0x4fd8c8 ONLY - the art-law accent (char-09 anchor).
+    if (this.isCoven && this.castGlow > 0) {
+      var covenWindup = this.fsm === 'attack' && this.attackPhase === 'windup';
+      if (!covenWindup) this.castGlow = Math.max(0, this.castGlow - dt / 0.25);
+      if (!this.castGlowMesh && this.body) {
+        var holder = this.body.getObjectByName('R_Hand') || this.body;
+        this.castGlowMesh = new THREE.Mesh(
+          new THREE.SphereGeometry(0.16, 8, 6),
+          new THREE.MeshBasicMaterial({ color: 0x4fd8c8, transparent: true, opacity: 0 }));
+        this.castGlowMesh.position.set(0, 0.1, 0.12);
+        holder.add(this.castGlowMesh);
+      }
+      if (this.castGlowMesh) {
+        this.castGlowMesh.visible = this.castGlow > 0;
+        this.castGlowMesh.material.opacity = Math.min(1, this.castGlow) * 0.85;
+        this.castGlowMesh.scale.setScalar(1 + 0.25 * this.castGlow);
+      }
+    } else if (this.castGlowMesh && this.castGlowMesh.visible) {
+      this.castGlowMesh.visible = false;
+    }
 
     // v3: ghoul lunge hop progress (0.25 over 0.25s, fired at chase->attack)
     if (this.hopTimer >= 0) {
@@ -98967,6 +99284,17 @@ window.WH_ICONS = {
     if (this.fsm === next) return;
     this.fsm = next;
     this.fsmTime = 0;
+  };
+
+  // CC-EC1: free continuous facing for the coven cast cycle (the melee branch
+  // only tracks during windup; a caster keeps facing its target throughout).
+  // Same wrapAngle clamp law as the windup tracker (trackDegPerSec-capped).
+  Enemy.prototype.faceYawToward = function (toPlayerX, toPlayerZ, distToPlayer, dt) {
+    if (distToPlayer > 0.001) {
+      var deltaYaw = wrapAngle(Math.atan2(toPlayerX, toPlayerZ) - this.yaw);
+      var maxYaw = this.cfg.attackPhase.trackDegPerSec * Math.PI / 180 * dt;
+      this.yaw += Math.max(-maxYaw, Math.min(maxYaw, deltaYaw));
+    }
   };
 
   // AI1 R3-R5: the bandit decision loop, run from the chase state. Movement
@@ -99887,6 +100215,9 @@ window.WH_ICONS = {
   };
 
   Enemy.bodyNameFor = bodyNameFor;
+  // CC-EC1: fn(bolt), set by game.js - pushes a freshly spawned enemy bolt
+  // into the game's enemy-bolts array (mirrors the onKilled hand-off pattern)
+  Enemy.onEnemyBolt = null;
   Enemy.rotPoolMesh = rotPoolMesh;      // CC-C8: region-manager outcrop stains
   // pure loop helpers (offline spawn-row derivation, scratch/cc-c5)
   Enemy.packGeometry = { makeLoop: makeLoop, loopAt: loopAt, loopProject: loopProject, packSlot: packSlot };
@@ -104364,6 +104695,7 @@ window.WH_ICONS = {
     shakeTimer: 0,                    // v3 camera shake remaining seconds
     shakeSeed: 0,                     // per-pulse random phase
     firebolts: [],                    // v7: live Firebolt projectiles
+    enemyBolts: [],                   // CC-EC1: live WH_CovenBolt enemies' bolts (magicDefense loop)
     radiances: [],                    // 10-04: the ONE Radiance effect (max 1, kept parked)
     corpseLoot: null                  // S4: WH_CORPSE_LOOT.Manager (kill loot lives on the body)
   };
@@ -106157,6 +106489,9 @@ window.WH_ICONS = {
     game.corpseLoot = new window.WH_CORPSE_LOOT.Manager(game.scene,
       function () { return game.regionManager; });
     window.WH_Enemy.onKilled = storeCorpseLoot;
+    // CC-EC1: enemy-caster bolt hand-off (mirrors onKilled) - a cast cycle
+    // spawns the bolt in enemy.js, game.js owns the array + the hit loop.
+    window.WH_Enemy.onEnemyBolt = function (bolt) { game.enemyBolts.push(bolt); };
     // stage 2: gather nodes from every region's CONFIG nodes list
     game.gatherNodes = new window.WH_GATHER.NodeManager(game.scene,
       window.WH_REGION_DEFS.regions);
@@ -107353,6 +107688,41 @@ window.WH_ICONS = {
         if (b.alive && b.update(dt, activeEnemies)) keep.push(b);
       }
       game.firebolts = keep;
+    }
+
+    // ---- CC-EC1: enemy bolts (coven casters) - update + collision vs PLAYER.
+    // same keep-alive filter shape as the firebolt loop above. The MD choice:
+    // magicDefense applies HERE, at this call site, EXACTLY ONCE
+    // (reduced = round(dmg * (1 - WH_LEVEL magicDefense fraction))); player.js's
+    // resolveIncomingHit is NOT modified (no double mitigation). Art anchor:
+    // art-direction/concepts/char-09-coven-wizard.png - the bolt is the frame's
+    // ONE cyan accent (0x4fd8c8 family); no red/orange in this block.
+    if (game.enemyBolts.length > 0) {
+      var playerPosEB = game.player.pos;
+      var keepEB = [];
+      for (var eb = 0; eb < game.enemyBolts.length; eb++) {
+        var boltEB = game.enemyBolts[eb];
+        if (boltEB.alive && boltEB.update(dt, playerPosEB)) {
+          if (boltEB.spent) {
+            // FIRST frame after the circle test hit (bolt.update flipped
+            // spent on contact). Damage routes through resolveIncomingHit
+            // for roll/block/parry handling. MD applies here, once:
+            var dmgEB = boltEB.damage;   // CONFIG.enemySpell.covenBolt.damage read as-is
+            var reducedEB = Math.round(dmgEB * (1 - window.WH_LEVEL.magicDefense()));
+            // bare {isSpell, pos} attacker: NO enterStagger, so resolveIncoming-
+            // Hit's parry branch can never stagger a bolt; shield block chips the
+            // already-reduced amount; roll i-frames early-exit unchanged. When the
+            // player is dead (or immune) the hit resolves to false harmlessly - a
+            // spent bolt dies on its 0.15s flash either way and never hits twice.
+            damagePlayerFromEnemy(reducedEB, {
+              isSpell: true,
+              pos: { x: boltEB.pos.x, y: boltEB.pos.y, z: boltEB.pos.z }
+            });
+          }
+          keepEB.push(boltEB);
+        }
+      }
+      game.enemyBolts = keepEB;
     }
     denFadeTick(dt);                       // CC-C8: the den door's black dip
     var tr = rm.tickTransition(game.player.pos.x, game.player.pos.z);

@@ -631,6 +631,18 @@ window.WH_CONFIG = {
       { type: 'bandit', x: -138.1, z: -516.8 }
       // CC-C8: the CC-C7 rotmother row (index 22) is GONE - she is instanced by
       // her lair record inside the den (CONFIG.regionD.lairs), not a C row.
+      // CC-EC1 COVEN ACOLYTES (doc 34): 2 caster rows APPENDED at the array END
+      // (row-index persistence law: append-only, indices 50/51 after the CC-C6
+      // Charlie bandit rows). SW moor pair between the SW camps and the den
+      // mouth lane, away from camps / pack loops / the den door. Clearance
+      // verified vs the full check set (scratch/cc-ec1/clearance.py, 123
+      // members): min 38.4m (row 1) / 30.1m (row 2) - nearest member the sw
+      // wolf-pack loop point (-112.5,-276.1); >25m to every camp guard, camp
+      // fire, wolf waypoint/row and the den door interactAt (-163.4,-202.6).
+      // NOTE: comma-first continuation below - the last pre-existing row above
+      // stays byte-identical (append-only diff law: zero '-' lines anywhere).
+      ,{ type: 'coven', x: -118.4, z: -238.2 },
+      { type: 'coven', x: -99.2, z: -249.1 }
     ],
     // CC-C3 ANCIENT FOREST (R-62.6, io/missions/2026-10-07-cc-c3-ancient-forest.md):
     // hand-placed rows, no runtime random. CC-C2's 120-tree 8-10 band is
@@ -1779,6 +1791,31 @@ window.WH_CONFIG = {
     }
   },
 
+  // CC-EC1: enemy spell registry (sibling of spell.*, NOT inside it - the
+  // player spell registry stays untouched; WH_SPELLS.spawnEnemyBolt reads
+  // this). ONE caster bolt for now (doc 34 sec 5 analog). kind 'projectile'
+  // is the spells.js projectile family (spawnEnemyBolt rejects other kinds).
+  enemySpell: {
+    covenBolt: {
+      kind: 'projectile',
+      focusCost: 0,                   // enemy: no focus pool
+      damage: 14,
+      speed: 16,
+      hitRadius: 0.8,                 // circle test vs player (+ CONFIG.player.radius LIVE value)
+      maxRange: 22,                   // lifetime = maxRange / speed; == coven castRange
+      castWindup: 0.55,               // == coven attackPhase.windup (the glow grows over it)
+      castCooldown: 2.6,              // seconds between bolt spawns (gates the re-cast)
+      schoolColor: 0x4fd8c8,          // art law: the ONE cyan accent (char-09 anchor; no red/orange)
+      name: 'Coven Bolt', glyph: 'CB',
+      // ED-3 (recorded deviation): these rows LAND here but stay INERT this
+      // round - the coven bolt carries NO pooled light (light.js and the
+      // player-firebolt light pool untouched). Kept so the numbers ride the
+      // spec verbatim for a later light pass.
+      light: { color: 0x4fd8c8, intensity: 6.0, distance: 9, decay: 2, flickerPct: 8 },
+      projectileLight: { color: 0x4fd8c8, intensity: 2.0, distance: 6, decay: 2, flickerPct: 10 }
+    }
+  },
+
   enemy: {
     // All senses/combat numbers are POC-scaled; doc 33 has no sight values (D4b-1).
     bandit: {
@@ -1902,6 +1939,39 @@ window.WH_CONFIG = {
         slotGain: 1.5                  // follow speed = min(moveSpeed, slot distance x this) (no stop-go)
       }
     },
+    // CC-EC1 COVEN ACOLYTE (doc 34 enemy caster + magicDefense hook activation;
+    // io/specs/cc-ec1-coven-acolyte-spec.md). PALETTE LAW (art anchor
+    // art-direction/concepts/char-09-coven-wizard.png): charcoal/deep-teal
+    // robes, ONE cyan accent per frame (0x4fd8c8 family), NO red/orange on
+    // the acolyte or its bolt. HOOK LAW: the coven bolt's magicDefense is
+    // applied exactly ONCE at the game.js enemy-bolt call site (player.js's
+    // resolveIncomingHit untouched). Ranged caster: the FSM 'attack'
+    // state is the CAST CYCLE (enemy.js coven branch), not melee - the melee
+    // numbers below are wired to zero (attackDamage 0 / attackRange 0 /
+    // attackCooldown 0) so no melee harm ever lands. movementSpeed < bandit:
+    // it drifts, it casts, it backs away - it does not brawl. All PROPOSED,
+    // Nicko tunes.
+    coven: {
+      hpMax: 60.0,
+      moveSpeed: 3.4,
+      chaseSpeed: 4.6,                // slower than the bandit's 5.0 press
+      attackDamage: 0.0,              // melee disabled in v1: harm is the bolt only
+      attackRange: 0,                 // no melee reach at all
+      attackCooldown: 0,              // cast cadence owns re-cast (covenBolt.castCooldown)
+      sightRadius: 20.0,
+      leashRadius: 40.0,
+      staggerTime: 0.45,              // staggers like bandits; a stagger cancels an in-flight cast
+      radius: 0.7,
+      aggroPingInterval: 0.2,
+      attackPhase: {                  // the cast cycle clock (enemy.js coven branch)
+        windup: 0.55,                 // == enemySpell.covenBolt.castWindup: the cyan glow grows...
+        active: 0.12,                 // ...the bolt spawns at THIS entry (windup expiry), no melee harm
+        recover: 0.85,                // post-spawn hold, then the attack-hold re-cast gate
+        hitArcDeg: 50,                // unused by the cast branch (no melee hit check) - kept for shape parity
+        trackDegPerSec: 180
+      },
+      castRange: 22.0                 // = enemySpell.covenBolt.maxRange: enter/hold the cast inside this
+    },
     // CC-C7 ROT MOTHER + ROT SPAWN (doc 62 sec 5.2, R-62.4 repeatable nest boss;
     // io/missions/2026-10-12-cc-c7-rotmother-behavior.md sec 2). The first
     // block of each row is the BRIEF ROW VERBATIM (its keys + numbers); enemy.js
@@ -1965,9 +2035,12 @@ window.WH_CONFIG = {
     // an unknown type keeps the old fallbacks: ghoulBody / 'bandit').
     // CC-C7: + the unrigged rot bodies; rigidAnimByType = their anim.js
     // RIGID_CLIPS placeholder set (no skeleton, so no animVariantByType row).
+    // CC-EC1: + the coven caster (elf-dawn-refuser rig; variant 'bandit' over
+    // its universal 6-clip set - anim.js universal-name fallback covers the
+    // rest, ~5 benign anim warns per coven body; death IS universal WH_Death).
     bodyByType: { bandit: 'banditBody', ghoul: 'ghoulBody', wolf: 'wolfBody',
-      rotmother: 'rotmotherBody', rotspawn: 'rotspawnBody' },
-    animVariantByType: { bandit: 'bandit', ghoul: 'zombie', wolf: 'wolf' },
+      rotmother: 'rotmotherBody', rotspawn: 'rotspawnBody', coven: 'covenBody' },
+    animVariantByType: { bandit: 'bandit', ghoul: 'zombie', wolf: 'wolf', coven: 'bandit' },
     rigidAnimByType: { rotmother: 'rotmother', rotspawn: 'rotspawn' },
     // CC-C5 WOLF PACKS (doc 62 L7/L8/L9 dens): closed patrol loops (world x,
     // z; walked in row order, last -> first). Each loop crosses its King's
@@ -3308,6 +3381,7 @@ window.WH_CONFIG.leveling = {
     kill_wolf: 20,                  // CC-C5: wolf hpMax 38 (same ~0.53 x hpMax law)
     kill_rotmother: 240,            // CC-C7: rotmother hp 460 (same law; every re-armed kill pays again)
     kill_rotspawn: 14,              // CC-C7: rotspawn hp 26 (withered on her death = no kill, no XP)
+    kill_coven: 30,                 // CC-EC1: coven hp 60 (same ~0.5 x hpMax law)
     gather: 5,                      // per harvested node
     cook_meal: 15,                  // per finished cook (recipe or Bland Mush)
     recipe_learn: 40,               // the first cook of a recipe (stacks with cook_meal)

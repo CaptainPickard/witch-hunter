@@ -30,6 +30,7 @@
     shakeTimer: 0,                    // v3 camera shake remaining seconds
     shakeSeed: 0,                     // per-pulse random phase
     firebolts: [],                    // v7: live Firebolt projectiles
+    enemyBolts: [],                   // CC-EC1: live WH_CovenBolt enemies' bolts (magicDefense loop)
     radiances: [],                    // 10-04: the ONE Radiance effect (max 1, kept parked)
     corpseLoot: null                  // S4: WH_CORPSE_LOOT.Manager (kill loot lives on the body)
   };
@@ -1823,6 +1824,9 @@
     game.corpseLoot = new window.WH_CORPSE_LOOT.Manager(game.scene,
       function () { return game.regionManager; });
     window.WH_Enemy.onKilled = storeCorpseLoot;
+    // CC-EC1: enemy-caster bolt hand-off (mirrors onKilled) - a cast cycle
+    // spawns the bolt in enemy.js, game.js owns the array + the hit loop.
+    window.WH_Enemy.onEnemyBolt = function (bolt) { game.enemyBolts.push(bolt); };
     // stage 2: gather nodes from every region's CONFIG nodes list
     game.gatherNodes = new window.WH_GATHER.NodeManager(game.scene,
       window.WH_REGION_DEFS.regions);
@@ -3019,6 +3023,41 @@
         if (b.alive && b.update(dt, activeEnemies)) keep.push(b);
       }
       game.firebolts = keep;
+    }
+
+    // ---- CC-EC1: enemy bolts (coven casters) - update + collision vs PLAYER.
+    // same keep-alive filter shape as the firebolt loop above. The MD choice:
+    // magicDefense applies HERE, at this call site, EXACTLY ONCE
+    // (reduced = round(dmg * (1 - WH_LEVEL magicDefense fraction))); player.js's
+    // resolveIncomingHit is NOT modified (no double mitigation). Art anchor:
+    // art-direction/concepts/char-09-coven-wizard.png - the bolt is the frame's
+    // ONE cyan accent (0x4fd8c8 family); no red/orange in this block.
+    if (game.enemyBolts.length > 0) {
+      var playerPosEB = game.player.pos;
+      var keepEB = [];
+      for (var eb = 0; eb < game.enemyBolts.length; eb++) {
+        var boltEB = game.enemyBolts[eb];
+        if (boltEB.alive && boltEB.update(dt, playerPosEB)) {
+          if (boltEB.spent) {
+            // FIRST frame after the circle test hit (bolt.update flipped
+            // spent on contact). Damage routes through resolveIncomingHit
+            // for roll/block/parry handling. MD applies here, once:
+            var dmgEB = boltEB.damage;   // CONFIG.enemySpell.covenBolt.damage read as-is
+            var reducedEB = Math.round(dmgEB * (1 - window.WH_LEVEL.magicDefense()));
+            // bare {isSpell, pos} attacker: NO enterStagger, so resolveIncoming-
+            // Hit's parry branch can never stagger a bolt; shield block chips the
+            // already-reduced amount; roll i-frames early-exit unchanged. When the
+            // player is dead (or immune) the hit resolves to false harmlessly - a
+            // spent bolt dies on its 0.15s flash either way and never hits twice.
+            damagePlayerFromEnemy(reducedEB, {
+              isSpell: true,
+              pos: { x: boltEB.pos.x, y: boltEB.pos.y, z: boltEB.pos.z }
+            });
+          }
+          keepEB.push(boltEB);
+        }
+      }
+      game.enemyBolts = keepEB;
     }
     denFadeTick(dt);                       // CC-C8: the den door's black dip
     var tr = rm.tickTransition(game.player.pos.x, game.player.pos.z);
