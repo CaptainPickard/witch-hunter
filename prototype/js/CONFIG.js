@@ -3772,7 +3772,23 @@ window.WH_CONFIG.journal = {
     seedBody: "Farmer Aldric: the Old King's Barrow, west past the dead trees. Bring her home.",
     seedSource: 'Farmer Aldric',
     toastNew: 'Journal: ',
-    hint: 'Esc close'
+    hint: 'Esc close',
+    searchPlaceholder: 'Search the journal...',
+    searchNoMatch: 'Nothing in the journal matches.'
+  },
+  topics: {
+    rescue: {
+      id: 'rescue-findDaughter',
+      title: "The farmer's daughter",
+      body: 'Rescue: I found Aldric\'s daughter by the stone sarcophagus in the Old King\'s Barrow. She is safe and walking to her father\'s farm.',
+      source: "Aldric's daughter"
+    },
+    complete: {
+      id: 'quest-findDaughter-complete',
+      title: "The farmer's daughter",
+      body: "Aldric: 'She is home, hunter. You have given me back my world.' The road is quiet again.",
+      source: 'Farmer Aldric'
+    }
   }
 };
 

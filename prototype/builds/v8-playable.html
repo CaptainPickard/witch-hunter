@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Witch Hunter v9 - EPR1 Combat (build 11-06 21:19Z 15ace4a)</title>
+<title>Witch Hunter v9 - EPR1 Combat (build 11-06 21:20Z ef97f4c)</title>
 
 <style>
 /* Witch Hunter prototype v1 - HUD + overlay styling */
@@ -1616,6 +1616,18 @@ html, body {
 .journal-row-title { font-size:12px; letter-spacing:1px; color:#2a231b; }
 .journal-row-day { font-size:10px; color:#6a6350; font-style:italic; margin-top:2px; }
 .journal-empty { color:#6a6350; font-style:italic; font-size:11px; padding:6px 2px; }
+/* QJR-2 journal dialogue capture + search (js/journal.js, js/npc.js):
+   parchment scrap search pinned above the page, body lines, amber accents.
+   Anchors: concept-04-tavern + concept-01-darkwood. */
+#wh-journal-search { width: 100%; box-sizing: border-box; margin: 8px 0;
+  padding: 5px 8px; font-family: monospace; font-size: 11px;
+  letter-spacing: 1px; color: #221c15; background: #d3c8a8;
+  border: 2px solid #4a4034; box-shadow: inset 0 0 0 1px #e3dcc4;
+  outline: none; }
+#wh-journal-search:focus { border-color: #d8b24a; }
+.journal-row-body { font-size: 11px; color: #2a231b; line-height: 1.45; }
+.journal-nomatch { color: #6a6350; font-style: italic; font-size: 11px;
+  padding: 6px 2px; }
 
 </style>
 </head>
@@ -90980,7 +90992,23 @@ window.WH_CONFIG.journal = {
     seedBody: "Farmer Aldric: the Old King's Barrow, west past the dead trees. Bring her home.",
     seedSource: 'Farmer Aldric',
     toastNew: 'Journal: ',
-    hint: 'Esc close'
+    hint: 'Esc close',
+    searchPlaceholder: 'Search the journal...',
+    searchNoMatch: 'Nothing in the journal matches.'
+  },
+  topics: {
+    rescue: {
+      id: 'rescue-findDaughter',
+      title: "The farmer's daughter",
+      body: 'Rescue: I found Aldric\'s daughter by the stone sarcophagus in the Old King\'s Barrow. She is safe and walking to her father\'s farm.',
+      source: "Aldric's daughter"
+    },
+    complete: {
+      id: 'quest-findDaughter-complete',
+      title: "The farmer's daughter",
+      body: "Aldric: 'She is home, hunter. You have given me back my world.' The road is quiet again.",
+      source: 'Farmer Aldric'
+    }
   }
 };
 
@@ -103615,6 +103643,7 @@ window.WH_ICONS = {
   var N = CFG.regionC.npc;
   var Q = CFG.regionC.quest;
   var D = N.dialog;
+  var JT = window.WH_CONFIG.journal && window.WH_CONFIG.journal.topics;   // QJR-2
 
   function el(tag, cls, text) {
     var e = document.createElement(tag);
@@ -103791,7 +103820,9 @@ window.WH_ICONS = {
     if (!game || dialogOpen) return false;
     lineIdx = quest === Q.states[0] ? 0 : -1;
     // CC-C11: rescued return talk completes the quest; later talks stay complete.
-    if (quest === 'active' && rescued) { quest = 'complete'; lineIdx = -2; }
+    if (quest === 'active' && rescued) { quest = 'complete'; lineIdx = -2;
+      if (JT && window.WH_JOURNAL) window.WH_JOURNAL.append(JT.complete.id, JT.complete.title, JT.complete.body, undefined, JT.complete.source);   // QJR-2
+    }
     else if (quest === 'complete') lineIdx = -3;
     showLine();
     setOpen(true);
@@ -103820,6 +103851,7 @@ window.WH_ICONS = {
     showLine();
     setOpen(true);
     game.inventoryUI.toast(Q.rescuedToast);
+    if (JT && window.WH_JOURNAL) window.WH_JOURNAL.append(JT.rescue.id, JT.rescue.title, JT.rescue.body, undefined, JT.rescue.source);   // QJR-2
     return true;
   }
 
@@ -104380,6 +104412,7 @@ window.WH_ICONS = {
 
   var game = null, born = false, entries = [], open = false;
   var seedDone = false, btn = null, rootEl = null, pageEl = null;
+  var searchEl = null, query = '';   // QJR-2: client-only filter state, reset on open
 
   function toast(t) {
     if (game && game.inventoryUI && typeof game.inventoryUI.toast === 'function') {
@@ -104390,24 +104423,33 @@ window.WH_ICONS = {
   function rebuildRows() {
     if (!pageEl) return;
     pageEl.textContent = '';
+    var q = query.toLowerCase();   // QJR-2 client-only search
+    var shown = 0;
     if (!entries.length) {
       pageEl.appendChild(el('div', 'journal-empty', CFG.text.empty));
       return;
     }
     entries.forEach(function (e) {
+      if (q && (e.title + ' ' + e.body + ' ' + e.source)
+        .toLowerCase().indexOf(q) < 0) return;
+      shown++;
       var row = el('div', 'journal-row');
       row.appendChild(el('div', 'journal-row-title', e.title));
       row.appendChild(el('div', 'journal-row-day', CFG.text.dayStamp
         .replace('{day}', String(e.day))
         .replace('{source}', e.source || '')));
+      row.appendChild(el('div', 'journal-row-body', e.body));   // QJR-2: body line now visible
       pageEl.appendChild(row);
     });
+    if (!shown) pageEl.appendChild(el('div', 'journal-nomatch', CFG.text.searchNoMatch));
   }
 
   function openPanel() {
     if (!born || open) return;
     open = true;
     rootEl.classList.add('open');
+    query = '';
+    if (searchEl) searchEl.value = '';
     rebuildRows();
     if (game) {
       if (game.inventoryUI) game.inventoryUI.blocked = true;
@@ -104527,6 +104569,18 @@ window.WH_ICONS = {
     var panel = el('div', 'journal-panel');
     panel.appendChild(el('div', 'inv-title', CFG.text.title));
     panel.appendChild(el('div', 'journal-rule'));
+    var searchWrap = el('div', 'journal-search');
+    searchEl = el('input');
+    searchEl.type = 'text';
+    searchEl.id = 'wh-journal-search';
+    searchEl.placeholder = CFG.text.searchPlaceholder;
+    searchEl.tabIndex = -1;
+    searchEl.addEventListener('input', function () {
+      query = searchEl.value;
+      rebuildRows();
+    });
+    searchWrap.appendChild(searchEl);
+    panel.appendChild(searchWrap);
     pageEl = el('div', 'journal-page');
     panel.appendChild(pageEl);
     panel.appendChild(el('div', 'inv-hint', CFG.text.hint));
@@ -104536,7 +104590,8 @@ window.WH_ICONS = {
 
     document.addEventListener('keydown', function (e) {
       if (e.repeat) return;
-      if (e.code === CFG.openKey && born) {
+      var inSearch = !!(open && searchEl && document.activeElement === searchEl);   // QJR-2
+      if (e.code === CFG.openKey && born && !inSearch) {
         if (open) closePanel();
         else openPanel();
         e.preventDefault();

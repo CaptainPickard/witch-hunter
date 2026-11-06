@@ -28,6 +28,7 @@
   var N = CFG.regionC.npc;
   var Q = CFG.regionC.quest;
   var D = N.dialog;
+  var JT = window.WH_CONFIG.journal && window.WH_CONFIG.journal.topics;   // QJR-2
 
   function el(tag, cls, text) {
     var e = document.createElement(tag);
@@ -204,7 +205,9 @@
     if (!game || dialogOpen) return false;
     lineIdx = quest === Q.states[0] ? 0 : -1;
     // CC-C11: rescued return talk completes the quest; later talks stay complete.
-    if (quest === 'active' && rescued) { quest = 'complete'; lineIdx = -2; }
+    if (quest === 'active' && rescued) { quest = 'complete'; lineIdx = -2;
+      if (JT && window.WH_JOURNAL) window.WH_JOURNAL.append(JT.complete.id, JT.complete.title, JT.complete.body, undefined, JT.complete.source);   // QJR-2
+    }
     else if (quest === 'complete') lineIdx = -3;
     showLine();
     setOpen(true);
@@ -233,6 +236,7 @@
     showLine();
     setOpen(true);
     game.inventoryUI.toast(Q.rescuedToast);
+    if (JT && window.WH_JOURNAL) window.WH_JOURNAL.append(JT.rescue.id, JT.rescue.title, JT.rescue.body, undefined, JT.rescue.source);   // QJR-2
     return true;
   }
 

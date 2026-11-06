@@ -17,6 +17,7 @@
 
   var game = null, born = false, entries = [], open = false;
   var seedDone = false, btn = null, rootEl = null, pageEl = null;
+  var searchEl = null, query = '';   // QJR-2: client-only filter state, reset on open
 
   function toast(t) {
     if (game && game.inventoryUI && typeof game.inventoryUI.toast === 'function') {
@@ -27,24 +28,33 @@
   function rebuildRows() {
     if (!pageEl) return;
     pageEl.textContent = '';
+    var q = query.toLowerCase();   // QJR-2 client-only search
+    var shown = 0;
     if (!entries.length) {
       pageEl.appendChild(el('div', 'journal-empty', CFG.text.empty));
       return;
     }
     entries.forEach(function (e) {
+      if (q && (e.title + ' ' + e.body + ' ' + e.source)
+        .toLowerCase().indexOf(q) < 0) return;
+      shown++;
       var row = el('div', 'journal-row');
       row.appendChild(el('div', 'journal-row-title', e.title));
       row.appendChild(el('div', 'journal-row-day', CFG.text.dayStamp
         .replace('{day}', String(e.day))
         .replace('{source}', e.source || '')));
+      row.appendChild(el('div', 'journal-row-body', e.body));   // QJR-2: body line now visible
       pageEl.appendChild(row);
     });
+    if (!shown) pageEl.appendChild(el('div', 'journal-nomatch', CFG.text.searchNoMatch));
   }
 
   function openPanel() {
     if (!born || open) return;
     open = true;
     rootEl.classList.add('open');
+    query = '';
+    if (searchEl) searchEl.value = '';
     rebuildRows();
     if (game) {
       if (game.inventoryUI) game.inventoryUI.blocked = true;
@@ -164,6 +174,18 @@
     var panel = el('div', 'journal-panel');
     panel.appendChild(el('div', 'inv-title', CFG.text.title));
     panel.appendChild(el('div', 'journal-rule'));
+    var searchWrap = el('div', 'journal-search');
+    searchEl = el('input');
+    searchEl.type = 'text';
+    searchEl.id = 'wh-journal-search';
+    searchEl.placeholder = CFG.text.searchPlaceholder;
+    searchEl.tabIndex = -1;
+    searchEl.addEventListener('input', function () {
+      query = searchEl.value;
+      rebuildRows();
+    });
+    searchWrap.appendChild(searchEl);
+    panel.appendChild(searchWrap);
     pageEl = el('div', 'journal-page');
     panel.appendChild(pageEl);
     panel.appendChild(el('div', 'inv-hint', CFG.text.hint));
@@ -173,7 +195,8 @@
 
     document.addEventListener('keydown', function (e) {
       if (e.repeat) return;
-      if (e.code === CFG.openKey && born) {
+      var inSearch = !!(open && searchEl && document.activeElement === searchEl);   // QJR-2
+      if (e.code === CFG.openKey && born && !inSearch) {
         if (open) closePanel();
         else openPanel();
         e.preventDefault();

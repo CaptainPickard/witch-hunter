@@ -1608,3 +1608,15 @@ html, body {
 .journal-row-title { font-size:12px; letter-spacing:1px; color:#2a231b; }
 .journal-row-day { font-size:10px; color:#6a6350; font-style:italic; margin-top:2px; }
 .journal-empty { color:#6a6350; font-style:italic; font-size:11px; padding:6px 2px; }
+/* QJR-2 journal dialogue capture + search (js/journal.js, js/npc.js):
+   parchment scrap search pinned above the page, body lines, amber accents.
+   Anchors: concept-04-tavern + concept-01-darkwood. */
+#wh-journal-search { width: 100%; box-sizing: border-box; margin: 8px 0;
+  padding: 5px 8px; font-family: monospace; font-size: 11px;
+  letter-spacing: 1px; color: #221c15; background: #d3c8a8;
+  border: 2px solid #4a4034; box-shadow: inset 0 0 0 1px #e3dcc4;
+  outline: none; }
+#wh-journal-search:focus { border-color: #d8b24a; }
+.journal-row-body { font-size: 11px; color: #2a231b; line-height: 1.45; }
+.journal-nomatch { color: #6a6350; font-style: italic; font-size: 11px;
+  padding: 6px 2px; }
