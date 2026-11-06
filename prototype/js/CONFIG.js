@@ -3399,6 +3399,15 @@ window.WH_CONFIG.warEffort = {
     title: 'War Requisition',
     offerText: 'The garrison wants iron for the war. Bring 6 iron ore to this board.',
     doneText: 'Requisition filled. The quartermaster marks the board.'
+  },
+  ladder: {                            // CC-WB2 (doc 42 Part 2; all PROPOSED, Nicko tunes)
+    basePay: 0.5,                      // coins per quota ore (WB1: 6 ore = 3 coins exactly)
+    overBonusStepPct: 10,              // +10% per item over quota
+    overBonusCapPct: 100,              // per-item bonus rate cap (+100%)
+    repeatQuotaGrowthPct: 50,          // re-post growth per resolution
+    repeatQuotaCapMult: 3,             // quota cap = 3x base (18 ore at base 6)
+    repeatBasePayStepPct: 15,          // +15% base pay per repeat
+    overDoneText: 'Requisition filled. The quartermaster pays a bonus for the extra iron.'
   }
 };
 

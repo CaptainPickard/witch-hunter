@@ -9,7 +9,7 @@
   var CFG = window.WH_CONFIG;
   var W = CFG.warEffort || {};
   var RQ = W.requisition || {};
-  var game = null, body = null, papers = null;
+  var game = null, body = null, papers = null, tallyGroup = null;
 
   function el(tag, cls, text) {
     var node = document.createElement(tag);
@@ -18,8 +18,11 @@
     return node;
   }
 
-  // B-3 state model: the whole payload is these three keys (B-5).
-  var logic = { postedDay: null, active: false, resolvedDay: null };
+  // B-3 state model: the payload is three keys (B-5) + CC-WB2 repeatIndex.
+  var logic = { postedDay: null, active: false, resolvedDay: null, repeatIndex: 0 };
+
+  // S-2: one resolution (fill) = one repeat: resolve() increments once.
+  function resolve() { logic.repeatIndex = logic.repeatIndex + 1; }
 
   function dayNumber() {
     return (game && game.dayNight && typeof game.dayNight.day === 'number') ? game.dayNight.day : 0;
@@ -77,14 +80,72 @@
         emissive: 0xffb347, emissiveIntensity: 0.9 }));              // THE one amber accent
     lamp.name = 'cc-wb1-lantern';
     lamp.position.set(0.85, 2.26, 0.1); root.add(lamp);
+    // CC-WB2 repeat tally (S-3): sub-group INSIDE the board root; pins reuse
+    // the board's own iron material (0x6e6a63), NO red, no second emissive.
+    var tally = new THREE.Group();       // sub-group INSIDE the board root (S-3)
+    tally.name = 'cc-wb2-repeat-tally';
+    tally.position.set(0.62, 1.5, 0.09); // board right side, parchment strip free spot
+    root.add(tally);
+    tallyGroup = tally;
+    pinsMat = iron;
+    rebuildTallyPins();
     root.position.set(SEAT.x, 0, SEAT.z);                            // region A FLAT: y = 0
     root.rotation.y = SEAT.rotY;
     game.scene.add(root);
     return root;
   }
 
-  var SEAT = (W.boardSeat && typeof W.boardSeat.x === 'number')
-    ? W.boardSeat : { x: 5.9, z: -15.5, rotY: 3.14 };
+  // S-3: one iron pin per repeat along the lower frame front lip,
+  // LEFT to RIGHT, cap 8 (render min(repeatIndex, 8)).
+  var pinsMat = null;
+
+  function rebuildTallyPins() {
+    var tally = tallyGroup;
+    if (!tally || !window.THREE) return;   // headless one-shots skip visuals
+    while (tally.children.length) tally.remove(tally.children[0]);
+    var n = Math.min(logic.repeatIndex, 8);
+    for (var k = 0; k < n; k++) {
+      var pin = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.12),
+        pinsMat || undefined);
+      pin.position.set(-0.42 + k * 0.12, 1.02, 0.08);
+      tally.add(pin);
+    }
+  }
+
+  var seatCfgW = W.boardSeat || {};
+  var SEAT = (typeof seatCfgW.x === 'number') ? seatCfgW
+    : { x: 5.9, z: -15.5, rotY: 3.14 };
+  var LAD = W.ladder || null;          // CC-WB2 (doc 42 Part 2): null = WB1 economics
+
+  // S-2 payout law: integer milli-unit (m4 = 1/10000 coin) money math, no
+  // floats in state. baseM4(r) = 5000 + 750*r exact; quotaQ(r) =
+  // min(round(6*1.5^r), 18) = round-half-up growth with the 3x cap; the
+  // over-band bonus rate k climbs +10%/item (cap +100%), bonuses stack from k=1.
+  function baseM4(r) {
+    r = Math.max(0, Math.floor(r) || 0);
+    return 5000 + 750 * r;
+  }
+  function quotaQ(r) {
+    r = Math.max(0, Math.floor(r) || 0);
+    var base = (typeof RQ.oreRequired === 'number') ? RQ.oreRequired : 6;
+    var grows = 1 + (LAD ? LAD.repeatQuotaGrowthPct : 0) / 100;
+    var q = Math.round(base * Math.pow(grows, r));
+    var capQ = LAD ? LAD.repeatQuotaCapMult * base : base;
+    return Math.min(q, capQ);
+  }
+  function ratePct(k) {
+    var cap = LAD ? 100 + LAD.overBonusCapPct : 100;
+    return Math.min(100 + (LAD ? LAD.overBonusStepPct : 0) * k, cap);
+  }
+  function bonusM4(k, r) { return Math.floor(baseM4(r) * ratePct(k) / 100); }
+  function payM4(ore, r) {
+    var q = quotaQ(r);
+    var pay = baseM4(r) * q;
+    var x = ore - q;
+    for (var i = 1; i <= x; i++) pay += bonusM4(i, r);
+    return pay;
+  }
+  function coinsFrom(pay) { return Math.floor((pay + 5000) / 10000); }
 
   // Proximity gate (chest.js law): region-gated, CONFIG radius, alive + not
   // suspended. Radius PROPOSED 2.6 (chest feel).
@@ -124,26 +185,37 @@
       if (added < 1) { toast('Your satchel is full.'); return true; }
       logic.active = true;
       logic.postedDay = dayNumber();
+      var awardQuota = quotaQ(logic.repeatIndex);   // S-2: quota is set at award time
       toast(RQ.offerText || 'The garrison wants iron for the war.');
       return true;
     }
-    // active: fill the requisition (37-C11 single reward authority = RQ.reward)
+    // active: fill the requisition (37-C11 law). CC-WB2: the quota climbs per
+    // repeat (S-2 quotaQ), the whole carried haul of the ore id is turned in
+    // (haul grammar), and the pay is exact integer milli-units per S-2.
+    var quota = quotaQ(logic.repeatIndex);
     var have = oreCount();
-    if (have < RQ.oreRequired) {
-      toast('Not enough iron ore. (' + have + '/' + RQ.oreRequired + ')');
+    if (have < quota) {
+      toast('Not enough iron ore. (' + have + '/' + quota + ')');
       return true;
     }
-    var removed = bag.removeItem(RQ.oreItemId, RQ.oreRequired);
-    if (removed < RQ.oreRequired) {                 // never partially charge (defensive)
+    var removed = bag.removeItem(RQ.oreItemId, have);
+    if (removed < have) {               // never partially charge (defensive)
       if (removed > 0) bag.addItem(RQ.oreItemId, removed);
-      toast('Not enough iron ore. (' + have + '/' + RQ.oreRequired + ')');
+      toast('Not enough iron ore. (' + have + '/' + quota + ')');
       return true;
     }
-    var granted = bag.addItem(RQ.reward.id, RQ.reward.count) || 0;
+    var pay = payM4(have, logic.repeatIndex);
+    var coins = coinsFrom(pay);
+    var granted = bag.addItem(RQ.reward.id, coins) || 0;
+    var over = have - quota;
+    resolve();
     logic.active = false;
     logic.resolvedDay = dayNumber();
     setPapersVisible(false);
-    toast(RQ.doneText || 'Requisition filled.');
+    rebuildTallyPins();                 // S-3: rebuilt on resolve
+    toast(over >= 1
+      ? (LAD && LAD.overDoneText || 'Requisition filled. The quartermaster pays a bonus for the extra iron.')
+      : (RQ.doneText || 'Requisition filled.'));
     return granted > 0 || true;
   }
 
@@ -153,22 +225,39 @@
     if (!near()) return '';
     rollNewDay();
     if (spentToday()) return 'The board is spent until dawn.';
-    if (logic.active) return 'E - War Board (' + oreCount() + '/' + RQ.oreRequired + ' iron ore)';
+    if (logic.active) {
+      var quota = quotaQ(logic.repeatIndex);      // award/turn-in share quotaQ (S-2)
+      return 'E - War Board (' + oreCount() + '/' + quota + ' iron ore)';
+    }
     return 'E - War Board (Take a requisition)';
   }
 
-  // B-5 persistence: exactly the payload keys; restore merges known shape,
-  // missing/foreign block = no-op (fresh idle board keeps default state).
+  // B-5 persistence: the payload keys; restore merges known shape, missing or
+  // foreign payload = no-op (fresh idle board keeps default state). CC-WB2:
+  // the payload gains repeatIndex (4 keys), and restores clamp it to a
+  // non-negative int (missing/foreign/negative = 0); WB1 3-key payloads
+  // (repeatIndex absent) restore clean as repeatIndex 0.
   function capture() {
-    return { active: logic.active, postedDay: logic.postedDay, resolvedDay: logic.resolvedDay };
+    return { active: logic.active, postedDay: logic.postedDay, resolvedDay: logic.resolvedDay,
+      repeatIndex: logic.repeatIndex };
   }
   function restore(data) {
     if (!data || typeof data !== 'object') return;
-    var known = 'active' in data || 'postedDay' in data || 'resolvedDay' in data;
-    if (!known) return;
+    if (typeof data.active !== 'boolean' &&
+        typeof data.postedDay !== 'number' &&
+        typeof data.resolvedDay !== 'number' &&
+        typeof data.repeatIndex !== 'number') {
+      return;                                        // foreign payload = no-op
+    }
     logic.active = data.active === true;
     logic.postedDay = typeof data.postedDay === 'number' ? data.postedDay : null;
     logic.resolvedDay = typeof data.resolvedDay === 'number' ? data.resolvedDay : null;
+    var ri = data.repeatIndex;
+    // V-5n clamp law: kept only when a finite non-negative INTEGER; anything
+    // else (missing / string / fractional / negative / Infinity) = foreign = 0.
+    if (typeof ri !== 'number' || !isFinite(ri) || ri < 0 || Math.floor(ri) !== ri) ri = 0;
+    logic.repeatIndex = ri;
+    rebuildTallyPins();                              // S-3: rebuilt on restore
     setPapersVisible(!spentToday());
   }
 
