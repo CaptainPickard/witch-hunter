@@ -29,6 +29,18 @@ html = re.sub(r'<script src="([^"]+)"></script>', inline_js, html)
 # 3. title
 html = html.replace('<title>Witch Hunter</title>', '<title>Witch Hunter v9 - EPR1 Combat</title>')
 html = re.sub(r'<title>.*?</title>', '<title>Witch Hunter v9 - EPR1 Combat</title>', html, count=1, flags=re.S)
+# Build stamp: tab title carries date + HEAD sha so a stale browser cache is
+# instantly visible (Nicko sweep fix 2026-11-06). Disclosed inline: no-logic tool change.
+try:
+    import subprocess as _sp
+    from datetime import datetime as _dt, timezone as _tz
+    _head = _sp.run(['git', 'rev-parse', '--short', 'HEAD'], cwd=str(ROOT),
+                    capture_output=True, text=True, timeout=10).stdout.strip()
+    _stamp = _dt.now(_tz.utc).strftime('%m-%d %H:%MZ')
+    html = html.replace('<title>Witch Hunter v9 - EPR1 Combat</title>',
+                        f'<title>Witch Hunter v9 - EPR1 Combat (build {_stamp} {_head})</title>', 1)
+except Exception:
+    pass
 
 OUT.write_text(html)
 print('wrote', OUT, OUT.stat().st_size, 'bytes')
