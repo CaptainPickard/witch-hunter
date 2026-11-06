@@ -82,7 +82,13 @@ def flip(sha, keep_old=False, dry_run=False):
         tmp = CURRENT + '.tmp'
         if os.path.exists(tmp):
             os.remove(tmp)
-        os.symlink(d, tmp)
+        # SELF-RELATIVE LAW (2026-11-06 IO fix): the 8793 container binds
+        # /tmp/wh-playtest-share:/srv but sees it at /srv — a HOST-absolute
+        # symlink target (/tmp/...) is unresolvable inside the container and
+        # every /current/... URL 404s after the flip. The link target must be
+        # relative to the share root (the container resolves /srv/current ->
+        # releases/<sha> within its own bind view).
+        os.symlink('releases/' + sha, tmp)
         os.rename(tmp, CURRENT)          # atomic flip
     pruned = None if keep_old else prune_old_releases(sha, dry_run=dry_run)
     print(json.dumps({'flipped_to': sha, 'release_dir': d,
