@@ -43,7 +43,15 @@ def release_for(sha):
         return None, False
     d = os.path.join(RELEASES, sha)
     if os.path.isdir(os.path.join(d, '.git')) or os.path.isdir(os.path.join(d, 'prototype')):
-        return d, True
+        # REUSE-SYNC LAW (2026-11-06): a reused dir may be a stale or
+        # half-baked clone (aborted flip left files but no checkout). Always
+        # force fetch + checkout on reuse; verify HEAD matches before trusting.
+        r2 = sh(f"git -C {d} fetch --quiet origin {BRANCH} && git -C {d} checkout --quiet --detach {sha}")
+        if r2.returncode == 0 and sh(f"git -C {d} rev-parse --short=7 HEAD").stdout.strip().startswith(sha[:7]):
+            return d, True
+        print('REUSE_STALE - rebuilding release dir')
+        sh(f"rm -rf {d}")
+        # fall through to fresh clone below
     r = sh(f"git clone --quiet --no-checkout --filter=blob:none --sparse {REPO} {d} && "
            f"rm -f {d}/.git/index.lock && "
            f"git -C {d} sparse-checkout set prototype art-direction && "
