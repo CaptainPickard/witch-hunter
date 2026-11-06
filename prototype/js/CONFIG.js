@@ -1163,6 +1163,27 @@ window.WH_CONFIG = {
       { asset: 'buriedCoffin', x: -186, z: -456, rotY: 1.20, scale: 1.60 },   // west_hollow_den larder: the past victim's cache
       { asset: 'rubblePile', x: -189, z: -449, rotY: 5.10, scale: 1.10 },   // west_hollow_den chewed earth SE
       { asset: 'rubblePile', x: -186, z: -446, rotY: 0.90, scale: 1.00 },   // west_hollow_den chewed earth E
+      // east_hollow_den CC-ED1: the east pack's DEN SITE (doc 41 Family 1,
+      // second den body; io/specs/cc-ed1-east-wolfpack-den-spec.md; art anchors
+      // concept-05-night-ambush + day-05-ambush - moonlit hollow, indigo/charcoal
+      // base, den dressing = bone/bare-earth neutrals, NO new warm accents).
+      // Hollow center (210,-445), south of the east pack patrol loop (southern
+      // extremity (205,-398), nearest prop row 41.77 m; site probe: y 0.05-1.42,
+      // slope <= 8.7 deg over 1 m; clearance_ed1.py CLEARED G-1..G-7). Thicket
+      // mouth arc (3 deadTree, N-facing) / hollow rim (3 mossBoulder, S arc) /
+      // the LARDER (2 skullPile + buriedCoffin = a past victim's cache) /
+      // chewed-earth rubble (2 rubblePile).
+      { asset: 'deadTree', x: 206, z: -440, rotY: 5.60, scale: 1.70 },   // east_hollow_den thicket mouth W
+      { asset: 'deadTree', x: 213, z: -439, rotY: 5.90, scale: 1.90 },   // east_hollow_den thicket mouth mid (tallest, the mouth's gate)
+      { asset: 'deadTree', x: 217, z: -440, rotY: 0.40, scale: 1.40 },   // east_hollow_den thicket mouth E
+      { asset: 'mossBoulder', x: 215, z: -449, rotY: 0.80, scale: 1.80 },   // east_hollow_den rim S
+      { asset: 'mossBoulder', x: 208, z: -452, rotY: 2.10, scale: 2.00 },   // east_hollow_den rim SW
+      { asset: 'mossBoulder', x: 217, z: -445, rotY: 4.60, scale: 1.30 },   // east_hollow_den rim E
+      { asset: 'skullPile', x: 205, z: -448, rotY: 0.30, scale: 1.20 },   // east_hollow_den larder pile 1
+      { asset: 'skullPile', x: 203, z: -446, rotY: 2.80, scale: 1.00 },   // east_hollow_den larder pile 2
+      { asset: 'buriedCoffin', x: 202, z: -450, rotY: 1.20, scale: 1.60 },   // east_hollow_den larder: the past victim's cache
+      { asset: 'rubblePile', x: 205, z: -443, rotY: 5.10, scale: 1.10 },   // east_hollow_den chewed earth W
+      { asset: 'rubblePile', x: 202, z: -440, rotY: 0.90, scale: 1.00 },   // east_hollow_den chewed earth NW
     ],
     // west_hollow_den CC-WD1: the den LARDER cache nodes (doc 41 Family 1: the
     // den's loot identity is what the beast ate; CONFIG.gather bonePile, boneShard
@@ -1173,6 +1194,15 @@ window.WH_CONFIG = {
       { type: 'bonePile', x: -184, z: -450 },   // west_hollow_den larder cache E (by the coffin)
       { type: 'bonePile', x: -204, z: -453.5 },   // west_hollow_den outer scatter W
       { type: 'bonePile', x: -198.5, z: -441 },   // west_hollow_den thicket mouth approach NE
+      // east_hollow_den CC-ED1: the east den's LARDER cache nodes (doc 41
+      // Family 1 loot-identity law; CONFIG.gather bonePile, boneShard x2 yield,
+      // respawn 150 - SAME type, no new node type, no new item, no new recipe).
+      // Node seats ride the CC-WD1 gather.js WH_GROUND terrain seat (already
+      // landed; NO code changes this round).
+      { type: 'bonePile', x: 208.5, z: -455 },   // east_hollow_den larder cache S (by the rim boulders)
+      { type: 'bonePile', x: 199.5, z: -446 },   // east_hollow_den larder cache W (by the coffin)
+      { type: 'bonePile', x: 220, z: -447.5 },   // east_hollow_den outer scatter E
+      { type: 'bonePile', x: 214.5, z: -435 },   // east_hollow_den thicket mouth approach N
     ],
     // CC-C8 ROT MOTHER'S DOORWAY dressing (sec 1-2; region-manager buildRegion
     // -> WH_Enemy.buildRotStains). The CC-C7 pool / light / fog rows MOVED into
