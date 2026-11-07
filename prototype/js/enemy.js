@@ -515,9 +515,11 @@
       var canPull = !this.packRegroup;
       if (canPull && playerAlive && distToPlayer <= sight) {
         this.setFsm('aggro');            // idle/aggro both walk home below
+        if (window.WH_BESTIARY) window.WH_BESTIARY.appendSight(this);   // QJR-4
       }
       if (canPull && playerAlive && distToPlayer <= sight * 0.8) {
         this.setFsm('chase');
+        if (window.WH_BESTIARY) window.WH_BESTIARY.appendSight(this);   // QJR-4
       }
       if (ai1) {
         this.ai1Press = false;
@@ -972,6 +974,8 @@
       // stage 2: the one kill entry point (melee sweep + firebolt both land
       // here) - game.js stores the CONFIG.drops roll on the corpse (S4)
       if (Enemy.onKilled) Enemy.onKilled(this);
+      // QJR-4: bestiary kill hand-off (set by game.js, mirrors onKilled)
+      if (window.WH_BESTIARY) window.WH_BESTIARY.appendKill(this);
       return true;
     }
     if (this.anim) this.anim.hit();
@@ -1743,6 +1747,8 @@
   // pure loop helpers (offline spawn-row derivation, scratch/cc-c5)
   Enemy.packGeometry = { makeLoop: makeLoop, loopAt: loopAt, loopProject: loopProject, packSlot: packSlot };
 
+  // QJR-4: stage 3 codex hand-off rides this same declaration spot (game.js
+  // wires the module; enemy.js only guards the per-event calls).
   Enemy.onKilled = null;              // stage 2: fn(enemy), set by game.js (corpse loot)
 
   window.WH_Enemy = Enemy;

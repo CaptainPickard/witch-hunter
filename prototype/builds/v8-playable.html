@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Witch Hunter v9 - EPR1 Combat (build 11-07 18:32Z bad99c9)</title>
+<title>Witch Hunter v9 - EPR1 Combat (build 11-07 19:09Z e1d66d6)</title>
 
 <style>
 /* Witch Hunter prototype v1 - HUD + overlay styling */
@@ -1648,6 +1648,56 @@ html, body {
 .aff-fill.fill-feared       { background: #b0472f; }
 .aff-fill.fill-sworn-light  { background: #efe3ad; }
 .aff-fill.fill-sworn-dark   { background: #8f1f1f; }
+
+/* QJR-4 BESTIARY CODEX (js/journal.js tabs + js/bestiary.js rows; EOF append
+   law). The J panel's second tab JOURNAL | BESTIARY reuses the inv-tab
+   grammar; the codex page reuses the parchment .journal-page (a
+   .bestiary-page modifier for its own rows). Sigils carry ONE accent each
+   via the .codex-accent-* classes mapped from the EXISTING palette tokens
+   below; no gradients, no glow, no new hex. Anchors: concept-06-siege-
+   council (sacred-archive codex) + concept-01-darkwood (field-guide). */
+.wh-journal-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid #4a4034;
+  margin-bottom: 12px;
+}
+
+.wh-journal-tab {
+  padding: 4px 12px;
+  font-size: 12px;
+  letter-spacing: 3px;
+  color: #6a6350;
+  background: #14110e;
+  border: 2px solid #3d382e;
+  border-bottom: none;
+  cursor: pointer;
+}
+
+.wh-journal-tab.active {
+  color: #d8d2c0;
+  background: #2a231b;
+  border-color: #5a5344;
+}
+
+.bestiary-row { padding: 6px 2px; border-bottom: 1px solid #b7ac8f; }
+.bestiary-row:last-child { border-bottom: none; }
+.bestiary-head { display: flex; align-items: center; gap: 8px; }
+.bestiary-row-sigil { font-size: 16px; line-height: 1; width: 18px; text-align: center; }
+.bestiary-row-title { font-size: 12px; letter-spacing: 1px; color: #2a231b; }
+.bestiary-row-stamp { font-size: 10px; color: #6a6350; font-style: italic; margin-top: 2px; }
+.bestiary-row-page { font-size: 11px; color: #2a231b; line-height: 1.45; margin-top: 2px; }
+.bestiary-row-locked .bestiary-row-sigil { color: #6a6350; }
+.bestiary-row-locked .bestiary-row-title { color: #6a6350; font-style: italic; }
+.bestiary-footer { color: #6a6350; font-style: italic; font-size: 11px; padding: 6px 2px; }
+.bestiary-hint { display: none; }
+
+/* Codex accent classes (QJR-4): each maps ONE existing palette token onto a
+   row's sigil glyph only (one accent per row; page stays parchment). */
+.codex-accent-amber   { color: #c9a94a; }
+.codex-accent-crimson { color: #b0472f; }
+.codex-accent-bone    { color: #d8d2c0; }
+.codex-accent-ash     { color: #7a7160; }
 
 </style>
 </head>
@@ -92139,6 +92189,60 @@ window.WH_CONFIG.journal = {
   }
 };
 
+// QJR-4 BESTIARY CODEX (io/specs/qjr-4-bestiary-spec.md, 2026-11-07; all
+// PROPOSED, Nicko tunes) - the hunter's own field book, one codex page per
+// enemy type. Rides the J panel (buttonless); page strings are drafted per
+// the ledger law (doc 44/51: no creditor, no signatory, no terms; the
+// pact/tithe/Veil-witnessed-fact rule) in field-note voice. Art anchor:
+// concept-06-siege-council (sacred-archive codex) + concept-01-darkwood
+// (beast field-guide in a hunter's hand). Accents map to the EXISTING
+// palette tokens via CSS classes .codex-accent-<accent> (style.css EOF).
+window.WH_CONFIG.journal.bestiary = {
+  buttonless: true,           // no own HUD button, rides the J panel (js/journal.js tab row)
+  killToastEvery: 5,          // toast on first kill + every 5th kill of a type
+  text: {
+    tabBestiary: 'BESTIARY',
+    tabJournal: 'JOURNAL',
+    killsLabel: 'slain:',      // lowercase in-world voice
+    seenStamp: 'Day {day}',
+    hiddenFooter: '{n} beasts remain undescribed.',
+    lockedTitle: 'Unknown beast',
+    lockedSigil: '—',
+    searchPlaceholder: 'Search the bestiary...',
+    nomatch: 'Nothing in the bestiary matches.',
+    killToast: 'Bestiary: {title} - slain x{n}',
+    killToastTitleUnseen: 'Bestiary: first kill - {title}',
+    killEveryLabel: 'Bestiary: {title} - slain x{n}',
+    seenToast: 'Bestiary: witnessed - {title}',
+    hint: 'Esc close'
+  },
+  // The ten codex pages keyed by enemy type (spec 2.2/2.8). Ledger law:
+  // killed as witnessed fact only; tithes/pacts named only as things seen,
+  // never as terms owed to a named creditor.
+  entries: {
+    bandit: { title: 'The Sloppy Blade', sigil: '†', accent: 'bone',
+      page: 'A moor man with a knife he does not clean. He fights for coin and takes it in tithes I have seen collected at crossroads. When his blade fails he swings harder, not smarter.' },
+    ghoul: { title: 'Grave-Hungry Ghoul', sigil: '☠', accent: 'ash',
+      page: 'It digs where the ground smells wrong and eats what the ground gives. Wounds weep rot; I burn the clothes after. It hops the fence-lines at dusk, always hungry, never full.' },
+    wolf: { title: 'Rot Wolf', sigil: '❂', accent: 'amber',
+      page: 'A wolf wearing the blight like a second pelt. They run in a loop around the carrion fields and pull no one down alone. The pack turns as one head.' },
+    coven: { title: 'Coven Witch', sigil: '✶', accent: 'crimson',
+      page: 'She keeps the old fire under her tongue and will not come to arm\'s length. The bolt she throws burns the same colour as the Veil storms I watched as a boy. I keep my shield raised and my distance longer.' },
+    zealot: { title: 'Veil-Touched Zealot', sigil: '☀', accent: 'crimson',
+      page: 'It walked into the Veil mist and walked out still chanting. It calls its wounds proof of keeping. Whatever pact it keeps, it keeps it out loud and alone.' },
+    rotmother: { title: 'The Rot Mother', sigil: '✿', accent: 'crimson',
+      page: 'She nests where the rot is thickest and the land goes quiet around her. I have seen her spawn walk the nests she keeps. When she falls the stains stay in the ground for days.' },
+    rotspawn: { title: 'Rot Spawn', sigil: '✿', accent: 'ash',
+      page: 'Small, quick, and born already rotten. They scatter when their mother is struck and return when she does not. Best kept burning at the nest\'s edge.' },
+    scarreader: { title: 'The Scar-Reader', sigil: '〰', accent: 'crimson',
+      page: 'It reads the cut lines on its own arms like a ledger and pays in the same coin. I saw it mark a fresh scar before striking. Its slams land wide, so I roll through, not away.' },
+    tithecaptain: { title: 'The Tithe Captain', sigil: '⚖', accent: 'crimson',
+      page: 'I have watched its carts take grain and iron at the crossroads and leave receipts no one can read. It counts everything twice. I have never seen it pay.' },
+    lastchancel: { title: 'The Last Chancel', sigil: '♆', accent: 'crimson',
+      page: 'A chancel that outlived its congregation, and something that wears it like a robe. At its threshold I have heard the tithes being counted. I have not yet stepped inside.' }
+  }
+};
+
 // CC-AF1 CAMP AFFINITY (docs 12 + 11 + 44/45; Nicko MorROWIND order
 // 2026-11-07) - doc 12's single visible good<->evil axis as a deed-driven
 // standing score, js/affinity.js WH_AFF. The kit camp fire tints with the
@@ -101082,9 +101186,11 @@ window.WH_ICONS = {
       var canPull = !this.packRegroup;
       if (canPull && playerAlive && distToPlayer <= sight) {
         this.setFsm('aggro');            // idle/aggro both walk home below
+        if (window.WH_BESTIARY) window.WH_BESTIARY.appendSight(this);   // QJR-4
       }
       if (canPull && playerAlive && distToPlayer <= sight * 0.8) {
         this.setFsm('chase');
+        if (window.WH_BESTIARY) window.WH_BESTIARY.appendSight(this);   // QJR-4
       }
       if (ai1) {
         this.ai1Press = false;
@@ -101539,6 +101645,8 @@ window.WH_ICONS = {
       // stage 2: the one kill entry point (melee sweep + firebolt both land
       // here) - game.js stores the CONFIG.drops roll on the corpse (S4)
       if (Enemy.onKilled) Enemy.onKilled(this);
+      // QJR-4: bestiary kill hand-off (set by game.js, mirrors onKilled)
+      if (window.WH_BESTIARY) window.WH_BESTIARY.appendKill(this);
       return true;
     }
     if (this.anim) this.anim.hit();
@@ -102310,6 +102418,8 @@ window.WH_ICONS = {
   // pure loop helpers (offline spawn-row derivation, scratch/cc-c5)
   Enemy.packGeometry = { makeLoop: makeLoop, loopAt: loopAt, loopProject: loopProject, packSlot: packSlot };
 
+  // QJR-4: stage 3 codex hand-off rides this same declaration spot (game.js
+  // wires the module; enemy.js only guards the per-event calls).
   Enemy.onKilled = null;              // stage 2: fn(enemy), set by game.js (corpse loot)
 
   window.WH_Enemy = Enemy;
@@ -106188,10 +106298,19 @@ window.WH_ICONS = {
 // Pure DOM module: HUD journal button + quest journal panel. No THREE, no
 // scene roots, no new assets. Every player-facing string lives in
 // window.WH_CONFIG.journal.text (A9 law); ids/classes/events are card-allowlisted.
+// QJR-4 (io/specs/qjr-4-bestiary-spec.md): a second text tab (JOURNAL |
+// BESTIARY) inside the same panel - journal.js still owns the panel DOM and
+// hands the codex module its page mount only; codex labels ride
+// CONFIG.journal.bestiary.text (A9). J / Esc / death law unchanged.
 (function () {
   'use strict';
 
   var CFG = window.WH_CONFIG.journal;
+
+  // QJR-4: the codex tab's labels live in the new CONFIG.journal.bestiary
+  // block (A9); a missing module / block simply means the panel stays a
+  // single-tab journal (pre-QJR-4 shape byte-equal).
+  var BC = window.WH_CONFIG.journal.bestiary;
 
   // Same shape as the camp.js buildMenu helper.
   function el(tag, cls, text) {
@@ -106204,6 +106323,8 @@ window.WH_ICONS = {
   var game = null, born = false, entries = [], open = false;
   var seedDone = false, btn = null, rootEl = null, pageEl = null;
   var searchEl = null, query = '';   // QJR-2: client-only filter state, reset on open
+  // QJR-4: the active page tab; 'journal' until the BESTIARY tab is picked.
+  var tab = 'journal', tabJournalEl = null, tabBestiaryEl = null, bestPageEl = null;
 
   function toast(t) {
     if (game && game.inventoryUI && typeof game.inventoryUI.toast === 'function') {
@@ -106211,7 +106332,9 @@ window.WH_ICONS = {
     }
   }
 
-  function rebuildRows() {
+  // QJR-4: the ORIGINAL buildJournalRows body, renamed under the dispatcher
+  // (same loop as QJR-2 search; callers unchanged below).
+  function buildJournalRows() {
     if (!pageEl) return;
     pageEl.textContent = '';
     var q = query.toLowerCase();   // QJR-2 client-only search
@@ -106235,9 +106358,39 @@ window.WH_ICONS = {
     if (!shown) pageEl.appendChild(el('div', 'journal-nomatch', CFG.text.searchNoMatch));
   }
 
+  // QJR-4: the codex page render - the module hands back filled rows for the
+  // page mount journal.js provides (bestiary.js never touches document.body).
+  function renderBestPage() {
+    if (!bestPageEl) return;
+    bestPageEl.textContent = '';
+    if (window.WH_BESTIARY && typeof window.WH_BESTIARY.renderPage === 'function') {
+      window.WH_BESTIARY.renderPage(bestPageEl, query.toLowerCase());
+    }
+  }
+
+  function renderCurrentPage() {
+    if (tab === 'bestiary') renderBestPage();
+    else buildJournalRows();
+  }
+
+  // QJR-4: the tab + shared-page dispatcher every existing caller
+  // (search input, openPanel, append, restore, unlock edge) already hits;
+  // one shared filter feeds both pages (spec 2.7: search applies to the
+  // codex tab too, nomatch grammar per page).
+  function rebuildRows() {
+    if (tab !== 'journal' && tab !== 'bestiary') tab = 'journal';
+    if (pageEl) pageEl.style.display = (tab === 'journal') ? '' : 'none';
+    if (bestPageEl) bestPageEl.style.display = (tab === 'bestiary') ? '' : 'none';
+    renderCurrentPage();
+    refreshTabs();
+  }
+
   function openPanel() {
     if (!born || open) return;
     open = true;
+    if (tab === 'bestiary' && !(window.WH_BESTIARY && window.WH_BESTIARY.isBorn())) {
+      tab = 'journal';              // spec 2.7: codex tab hides until born
+    }
     rootEl.classList.add('open');
     query = '';
     if (searchEl) searchEl.value = '';
@@ -106251,6 +106404,10 @@ window.WH_ICONS = {
   function closePanel() {
     if (!open) return;
     open = false;
+    // QJR-4: the codex tab is never left armed while the panel is down.
+    if (window.WH_BESTIARY && typeof window.WH_BESTIARY.setOpen === 'function') {
+      window.WH_BESTIARY.setOpen(false);
+    }
     rootEl.classList.remove('open');
     if (game && game.inventoryUI) game.inventoryUI.blocked = false;
     if (game && game.player && game.player.setInputSuspended) game.player.setInputSuspended(false);
@@ -106328,7 +106485,79 @@ window.WH_ICONS = {
       append('quest-findDaughter', CFG.text.seedTitle, CFG.text.seedBody, undefined, CFG.text.seedSource);
       if (btn) btn.style.display = '';
     }
+    // QJR-4: birth-edge re-render - once the codex is born, the BESTIARY tab
+    // may appear in the (open) tab row; the visibility check itself guards
+    // this branch (refreshTabs hides or shows it; page render only on the
+    // bestiary tab).
+    if (open && tabBestiaryEl && tabBestiaryEl.style.display === 'none' &&
+      window.WH_BESTIARY && window.WH_BESTIARY.isBorn()) {
+      refreshTabs();
+      if (tab === 'bestiary') renderCurrentPage();
+    }
     if (open && game && game.player && game.player.state === 'dead') closePanel();
+  }
+
+  // QJR-4: sync the two tab buttons with DOM state (no per-frame work:
+  // called only from rebuildRows, which itself is event- and edge-driven).
+  function refreshTabs() {
+    if (!tabJournalEl || !tabBestiaryEl) return;
+    var b = BC || { text: {} };
+    tabJournalEl.textContent = (BC && BC.text && BC.text.tabJournal) ? BC.text.tabJournal : CFG.text.tabJournal;
+    tabBestiaryEl.textContent = (BC && BC.text && BC.text.tabBestiary) ? BC.text.tabBestiary : CFG.text.tabJournal;
+    var showBest = !!(window.WH_BESTIARY && window.WH_BESTIARY.isBorn() &&
+      BC && BC.text && BC.text.tabBestiary);
+    tabBestiaryEl.style.display = showBest ? '' : 'none';
+    tabJournalEl.classList.toggle('active', tab !== 'bestiary');
+    tabBestiaryEl.classList.toggle('active', tab === 'bestiary');
+  }
+
+  // QJR-4: build the two text tabs (inv-tab grammar, pointerdown TC-FIX1
+  // pattern: focus/activation, preventDefault, stopPropagation, tabIndex -1).
+  function buildTabs(panel) {
+    if (!BC || !window.WH_BESTIARY) return;   // no module -> single-tab journal
+    var row = el('div', 'wh-journal-tabs');
+    function pick(name) {
+      if (name === 'bestiary' && !window.WH_BESTIARY.isBorn()) return;
+      tab = name;
+      rebuildRows();
+      // keep the module's isOpen() in step with the tab the journal shows
+      window.WH_BESTIARY.setOpen(tab === 'bestiary');
+    }
+    tabJournalEl = el('button', 'wh-journal-tab', '');
+    tabJournalEl.type = 'button';
+    tabJournalEl.tabIndex = -1;
+    tabJournalEl.textContent = BC.text.tabJournal;
+    tabJournalEl.addEventListener('pointerdown', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      pick('journal');
+    });
+    ['mousedown', 'click', 'contextmenu'].forEach(function (t) {
+      tabJournalEl.addEventListener(t, function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+    });
+    tabBestiaryEl = el('button', 'wh-journal-tab', '');
+    tabBestiaryEl.type = 'button';
+    tabBestiaryEl.tabIndex = -1;
+    tabBestiaryEl.style.display = 'none';
+    tabBestiaryEl.textContent = BC.text.tabBestiary;
+    tabBestiaryEl.addEventListener('pointerdown', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      pick('bestiary');
+    });
+    ['mousedown', 'click', 'contextmenu'].forEach(function (t) {
+      tabBestiaryEl.addEventListener(t, function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+    });
+    row.appendChild(tabJournalEl);
+    row.appendChild(tabBestiaryEl);
+    panel.appendChild(row);
+    refreshTabs();   // QJR-4: settle the labels/active states at build time
   }
 
   function init(g) {
@@ -106360,6 +106589,7 @@ window.WH_ICONS = {
     var panel = el('div', 'journal-panel');
     panel.appendChild(el('div', 'inv-title', CFG.text.title));
     panel.appendChild(el('div', 'journal-rule'));
+    buildTabs(panel);   // QJR-4: JOURNAL | BESTIARY tab row (no module = skipped)
     var searchWrap = el('div', 'journal-search');
     searchEl = el('input');
     searchEl.type = 'text';
@@ -106368,7 +106598,7 @@ window.WH_ICONS = {
     searchEl.tabIndex = -1;
     searchEl.addEventListener('input', function () {
       query = searchEl.value;
-      rebuildRows();
+      renderCurrentPage();   // QJR-4: the shared filter feeds both pages
     });
     // TC-FIX1 (F4): pointerdown focus so the virtual keyboard opens reliably
     // on touch devices (the layer's global stopPropagation noise can starve
@@ -106381,7 +106611,16 @@ window.WH_ICONS = {
     panel.appendChild(searchWrap);
     pageEl = el('div', 'journal-page');
     panel.appendChild(pageEl);
+    // QJR-4: the codex page mount - same .journal-page grammar, a
+    // .bestiary-page modifier; the module fills it via renderPage.
+    bestPageEl = el('div', 'journal-page bestiary-page');
+    bestPageEl.style.display = 'none';
+    panel.appendChild(bestPageEl);
     panel.appendChild(el('div', 'inv-hint', CFG.text.hint));
+    if (BC && BC.text && BC.text.hint) {
+      panel.appendChild(el('div', 'inv-hint bestiary-hint', BC.text.hint));
+    }
+    refreshTabs();   // QJR-4: initial tab labels + visibility
     rootEl.appendChild(panel);
     var r = document.getElementById('wh-root');
     (r || document.body).appendChild(rootEl);
@@ -106412,6 +106651,289 @@ window.WH_ICONS = {
     isBorn: isBorn,
     isOpen: isOpen,
     closeForTest: closePanel
+  };
+})();
+
+</script>
+<!-- QJR-4: bestiary codex loads right after the journal module it rides -->
+<script>
+// QJR-4 bestiary codex (io/specs/qjr-4-bestiary-spec.md, 2026-11-07).
+// Kill-log + first-sight witness module: rides the journal panel (journal.js
+// owns the panel DOM and hands this module its page mount). No THREE, no
+// scene roots, no new assets, no texture, no GLB, no audio. Sight arrives as
+// two guarded hand-offs from the enemy.js idle->aggro / idle->chase
+// transition sites; kills arrive as one guarded hand-off from the takeDamage
+// hp<=0 acknowledgement branch, after the onKilled loot hand-off (the same
+// attribution law corpse loot already uses). Every player-facing string
+// lives in window.WH_CONFIG.journal.bestiary (A9 law); zero literals here.
+(function () {
+  'use strict';
+
+  // QJR-4: a double boot would stomp a live codex; only the first load binds.
+  if (window.WH_BESTIARY) return;
+
+  var CFG = window.WH_CONFIG.journal.bestiary;
+
+  var game = null, born = false, tabActive = false;
+  var witnessed = {};        // typeKey -> true (per-TYPE codex rows)
+  var kills = {};            // typeKey -> int tally
+  var days = {};             // typeKey -> first-seen day
+  var seen = [];             // per-INSTANCE set (enemy object refs), Set semantics
+
+  // Same shape as the journal.js / camp.js buildMenu helper.
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined && text !== null) n.textContent = text;
+    return n;
+  }
+
+  function toast(t) {
+    if (game && game.inventoryUI && typeof game.inventoryUI.toast === 'function') {
+      game.inventoryUI.toast(t);
+    }
+  }
+
+  function entryFor(typeKey) {
+    if (!CFG || !CFG.entries) return null;
+    return CFG.entries[typeKey] || null;
+  }
+
+  // Clean int day (journal normalizeDay shape), never negative.
+  function currentDay() {
+    var d = (game && game.dayNight) ? Number(game.dayNight.day) : 0;
+    if (!isFinite(d)) return 0;
+    d = Math.round(d);
+    return d < 0 ? 0 : d;
+  }
+
+  // Per-TYPE witness: row unlock + first-seen day recorded once per save.
+  function witness(typeKey, day) {
+    if (!witnessed[typeKey]) {
+      witnessed[typeKey] = true;
+      if (days[typeKey] === undefined) days[typeKey] = day;
+    }
+  }
+
+  // appendSight(enemy): hand-off from the enemy.js canPull transition sites
+  // (idle->aggro / idle->chase). Idempotent per INSTANCE (the seen[] ref
+  // set): re-aggroing the same live mob adds nothing. The row set is
+  // per-TYPE, so a second instance of an already-witnessed type collapses
+  // into the row it already has (fresh instances still register in seen[]
+  // independently). Unknown / entryless types are silently ignored.
+  function appendSight(enemy) {
+    if (!enemy || typeof enemy !== 'object') return;
+    if (enemy.type === undefined || enemy.type === null) return;
+    var t = String(enemy.type);
+    if (!entryFor(t)) return;
+    for (var i = 0; i < seen.length; i++) {
+      if (seen[i] === enemy) return;      // this instance is already on file
+    }
+    seen.push(enemy);
+    var wasNewType = !witnessed[t];
+    witness(t, currentDay());
+    born = true;                          // the codex is born on first sight
+    if (wasNewType && CFG.text) {
+      toast(CFG.text.seenToast.replace('{title}', CFG.entries[t].title));
+    }
+  }
+
+  // appendKill(enemy): hand-off from takeDamage's hp<=0 acknowledgement
+  // branch, AFTER the onKilled loot hand-off - so withered minion deaths and
+  // save-restored dead corpses (which bypass takeDamage) never tally. Kill
+  // of an unseen type unlocks witnessed AND kills=1 in one event. Toast
+  // cadence (spec 2.9): kill #1 uses the first-kill shape (whether the type
+  // was previously only witnessed or unlocked by this very kill - the
+  // killToastTitleUnseen shape governs, no duplicate toasts); later kills
+  // toast only on every CONFIG killToastEvery-th (5, 10, 15...). Kill of a
+  // type with no codex entry: totally silent, no born flip.
+  function appendKill(enemy) {
+    if (!enemy || typeof enemy !== 'object') return;
+    if (enemy.type === undefined || enemy.type === null) return;
+    var t = String(enemy.type);
+    var entry = entryFor(t);
+    if (!entry) return;
+    witness(t, currentDay());
+    kills[t] = (kills[t] || 0) + 1;
+    born = true;
+    var n = kills[t];
+    var every = (CFG.killToastEvery && CFG.killToastEvery > 0) ? CFG.killToastEvery : 5;
+    if (n === 1) {
+      toast(CFG.text.killToastTitleUnseen.replace('{title}', entry.title));
+    } else if (n > 1 && n % every === 0) {
+      toast(CFG.text.killEveryLabel.replace('{title}', entry.title)
+        .replace('{n}', String(n)));
+    }
+  }
+
+  // update(dt): NOTHING is scanned per frame (spec 2.5). The map of
+  // witnessed instances lives in appendSight's seen[] set and is touched
+  // only by those event hand-offs; dt is ignored. The unlock edge and the
+  // save roundtrip carry born; journal.js re-renders its tab row when the
+  // isBorn() boolean changes (journal owns the DOM).
+  function update(dt) { /* QJR-4: no per-frame scans */ }
+
+  function sightOf(typeKey) {
+    return !!witnessed[String(typeKey)];
+  }
+
+  function killsOf(typeKey) {
+    var n = kills[String(typeKey)];
+    return (typeof n === 'number' && n > 0) ? n : 0;
+  }
+
+  function capture() {
+    var w = [], k = {}, d = {};
+    Object.keys(witnessed).forEach(function (t) {
+      if (witnessed[t] && entryFor(t)) w.push(t);
+    });
+    Object.keys(kills).forEach(function (t) {
+      var n = kills[t];
+      if (typeof n === 'number' && isFinite(n) && n > 0 && entryFor(t)) k[t] = n;
+    });
+    Object.keys(days).forEach(function (t) {
+      var dv = days[t];
+      if (typeof dv === 'number' && isFinite(dv) && entryFor(t)) d[t] = dv;
+    });
+    return { born: born, witnessed: w, kills: k, days: d };
+  }
+
+  // restore(block): additive-safe roundtrip (spec 2.6). Missing / malformed
+  // block = fresh empty codex; malformed rows dropped (negative kill counts,
+  // non-array witnessed, unknown types); the journal module receives its own
+  // data.journal key untouched (independent blocks, A-7). Never seeds, never
+  // toasts. A codex block with content counts as born even if the born flag
+  // itself was lost.
+  function restore(block) {
+    witnessed = {}; kills = {}; days = {}; seen = [];
+    var wasBorn = false;
+    if (block && typeof block === 'object' && !Array.isArray(block)) {
+      if (block.born === true) wasBorn = true;
+      var w = block.witnessed;
+      if (Array.isArray(w)) {
+        w.forEach(function (t) {
+          var k = (t === undefined || t === null) ? '' : String(t);
+          if (k && entryFor(k)) witnessed[k] = true;
+        });
+      }
+      var kn = block.kills;
+      if (kn && typeof kn === 'object' && !Array.isArray(kn)) {
+        Object.keys(kn).forEach(function (t) {
+          var n = Number(kn[t]);
+          if (!isFinite(n)) return;
+          n = Math.floor(n);
+          if (n < 0) return;
+          if (n === 0) return;
+          if (!entryFor(t)) return;
+          kills[t] = n;
+        });
+      }
+      var dy = block.days;
+      if (dy && typeof dy === 'object' && !Array.isArray(dy)) {
+        Object.keys(dy).forEach(function (t) {
+          var d = Number(dy[t]);
+          if (!isFinite(d)) return;
+          d = Math.round(d);
+          if (d < 0) return;
+          if (!entryFor(t)) return;
+          days[t] = d;
+        });
+      }
+    }
+    if (Object.keys(witnessed).length > 0) wasBorn = true;
+    born = wasBorn;
+  }
+
+  // init(g): holds the game ref only. born is NOT set here (V-1: the codex
+  // is born only through appendKill / appendSight / restore).
+  function init(g) {
+    game = g;
+    tabActive = false;
+  }
+
+  function isBorn() { return born; }
+  function isOpen() { return tabActive; }
+  // setOpen(v): journal-owned tab state (the BESTIARY tab drives the page).
+  function setOpen(v) { tabActive = !!v; }
+  function closeForTest() { setOpen(false); }
+
+  // One codex row (journal-row family): [sigil] [title] on a head line,
+  // then the seen stamp ('Day N' / 'Day N - slain: m') and, when discovered,
+  // the hunter's field note. Undiscovered rows render as locked rows: the
+  // locked sigil placeholder and the locked title only - no day, no count,
+  // no note. Accent = ONE per row, on the sigil span only.
+  function rowFor(typeKey, entry, isSeen) {
+    var row = el('div', 'bestiary-row' + (isSeen ? '' : ' bestiary-row-locked'));
+    var head = el('div', 'bestiary-head');
+    head.appendChild(el('span', 'bestiary-row-sigil codex-accent-' + (entry.accent || 'ash'),
+      isSeen ? entry.sigil : CFG.text.lockedSigil));
+    head.appendChild(el('div', 'bestiary-row-title', isSeen ? entry.title : CFG.text.lockedTitle));
+    row.appendChild(head);
+    if (isSeen) {
+      var day = (typeof days[typeKey] === 'number' && isFinite(days[typeKey]))
+        ? days[typeKey] : 0;
+      day = Math.max(0, Math.round(day));
+      var n = (typeof kills[typeKey] === 'number' && kills[typeKey] > 0) ? kills[typeKey] : 0;
+      var stamp = CFG.text.seenStamp.replace('{day}', String(day));
+      if (n > 0) stamp += ' - ' + CFG.text.killsLabel + ' ' + String(n);
+      row.appendChild(el('div', 'bestiary-row-stamp', stamp));
+      if (entry.page) row.appendChild(el('div', 'bestiary-row-page', entry.page));
+    }
+    return row;
+  }
+
+  // renderPage(container, query): journal-owned mount (the page div), query
+  // already lowercased by journal.js. Discovered rows filter on title + page
+  // text (the nomatch grammar covers an empty result). Locked rows stay
+  // behind the sigil-only placeholder with a single footer count line.
+  function renderPage(container, query) {
+    if (!container || !CFG || !CFG.text || !CFG.entries) return;
+    var q = (typeof query === 'string' && query.length > 0) ? query : '';
+    var keys = Object.keys(CFG.entries);
+    var hidden = 0, shown = 0;
+    keys.forEach(function (t) {
+      var entry = CFG.entries[t];
+      if (!entry) return;
+      var isSeen = !!witnessed[t];
+      if (q) {
+        if (!isSeen) return;            // locked rows carry no searchable text
+        var hay = (entry.title + ' ' + (entry.page || '') + ' ' + (entry.sigil || ''))
+          .toLowerCase();
+        if (hay.indexOf(q) < 0) return;
+        shown++;
+        container.appendChild(rowFor(t, entry, true));
+        return;
+      }
+      if (isSeen) {
+        shown++;
+        container.appendChild(rowFor(t, entry, true));
+      } else {
+        hidden++;
+        container.appendChild(rowFor(t, entry, false));
+      }
+    });
+    if (q) {
+      if (!shown) container.appendChild(el('div', 'journal-nomatch', CFG.text.nomatch));
+    } else if (hidden > 0) {
+      container.appendChild(el('div', 'bestiary-footer',
+        CFG.text.hiddenFooter.replace('{n}', String(hidden))));
+    }
+  }
+
+  window.WH_BESTIARY = {
+    init: init,
+    update: update,
+    capture: capture,
+    restore: restore,
+    appendKill: appendKill,
+    appendSight: appendSight,
+    sightOf: sightOf,
+    killsOf: killsOf,
+    isBorn: isBorn,
+    isOpen: isOpen,
+    setOpen: setOpen,          // QJR-4: journal-owned tab state (small additive API)
+    closeForTest: closeForTest,
+    renderPage: renderPage     // journal hands the page mount; DOM never touches body
   };
 })();
 
@@ -111074,6 +111596,9 @@ window.WH_ICONS = {
         window.WH_HAZARDS.init(game);
       }
       if (window.WH_JOURNAL) window.WH_JOURNAL.init(game);   // QJR-1: journal core
+      // QJR-4: the codex module rides the journal's init-hook tier (load
+      // order: js/bestiary.js AFTER js/journal.js in index.html).
+      if (window.WH_BESTIARY) window.WH_BESTIARY.init(game);   // QJR-4: bestiary codex
       // C4 boot CONTINUE: with a save the overlay waits for the player's row
       // (CONTINUE = restore the profile, NEW GAME = the fresh flow; the
       // profile is never wiped - the first camp save replaces it). The
@@ -111119,6 +111644,7 @@ window.WH_ICONS = {
       // CC-WB3: strata board state rides the save-wrap too, chest-line shape.
       if (window.WH_StrataEffort) data.strataEffort = window.WH_StrataEffort.capture();
       if (window.WH_JOURNAL) data.journal = window.WH_JOURNAL.capture();   // QJR-1
+      if (window.WH_BESTIARY) data.bestiary = window.WH_BESTIARY.capture();   // QJR-4
       // CC-AF1: the standing ledger + its once-map ride the save-wrap
       data.affinity = window.WH_AFF ? window.WH_AFF.capture() : undefined;
       return data;
@@ -111138,6 +111664,8 @@ window.WH_ICONS = {
         // CC-WB3: explicit storage write, chest-line shape (strata board).
         if (window.WH_StrataEffort) stored.strataEffort = window.WH_StrataEffort.capture();
         if (window.WH_JOURNAL) stored.journal = window.WH_JOURNAL.capture();   // QJR-1
+        // QJR-4: explicit storage write, journal-line shape.
+        if (window.WH_BESTIARY) stored.bestiary = window.WH_BESTIARY.capture();   // QJR-4
         // CC-AF1: explicit storage write, journal-line shape
         stored.affinity = window.WH_AFF ? window.WH_AFF.capture() : undefined;
         window.localStorage.setItem(CFG.save.lsKey, JSON.stringify(stored));
@@ -111154,6 +111682,8 @@ window.WH_ICONS = {
       // CC-WB3: a missing strataEffort block is a no-op (fresh idle board).
       if (data && window.WH_StrataEffort) window.WH_StrataEffort.restore(data.strataEffort);
       if (window.WH_JOURNAL) window.WH_JOURNAL.restore(data && data.journal);   // QJR-1
+      // QJR-4: a missing bestiary block is a no-op (fresh empty codex).
+      if (window.WH_BESTIARY) window.WH_BESTIARY.restore(data && data.bestiary);   // QJR-4
       // CC-AF1: a missing affinity block is a no-op (fresh 0 / crossed {})
       if (window.WH_AFF) window.WH_AFF.restore(data && data.affinity);
       baseRestore(g, data);
@@ -111694,6 +112224,7 @@ window.WH_ICONS = {
     game.camp.update();   // C3: camp groups per region, placement ghost, menu close on death
     if (window.WH_NPC) window.WH_NPC.update(dt);   // CC-C10: farmer show/cull, name plate, dialog close on death
     if (window.WH_JOURNAL) window.WH_JOURNAL.update(dt);   // QJR-1
+    if (window.WH_BESTIARY) window.WH_BESTIARY.update(dt);   // QJR-4: event-driven codex
     // CC-C11: spawn / re-place / region gate after the camp and quest updates.
     if (window.WH_Chest) window.WH_Chest.update(dt);
     updateQuestLine();    // CC-C10: HUD quest line (findDaughter active)

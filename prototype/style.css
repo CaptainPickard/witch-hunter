@@ -1640,3 +1640,53 @@ html, body {
 .aff-fill.fill-feared       { background: #b0472f; }
 .aff-fill.fill-sworn-light  { background: #efe3ad; }
 .aff-fill.fill-sworn-dark   { background: #8f1f1f; }
+
+/* QJR-4 BESTIARY CODEX (js/journal.js tabs + js/bestiary.js rows; EOF append
+   law). The J panel's second tab JOURNAL | BESTIARY reuses the inv-tab
+   grammar; the codex page reuses the parchment .journal-page (a
+   .bestiary-page modifier for its own rows). Sigils carry ONE accent each
+   via the .codex-accent-* classes mapped from the EXISTING palette tokens
+   below; no gradients, no glow, no new hex. Anchors: concept-06-siege-
+   council (sacred-archive codex) + concept-01-darkwood (field-guide). */
+.wh-journal-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid #4a4034;
+  margin-bottom: 12px;
+}
+
+.wh-journal-tab {
+  padding: 4px 12px;
+  font-size: 12px;
+  letter-spacing: 3px;
+  color: #6a6350;
+  background: #14110e;
+  border: 2px solid #3d382e;
+  border-bottom: none;
+  cursor: pointer;
+}
+
+.wh-journal-tab.active {
+  color: #d8d2c0;
+  background: #2a231b;
+  border-color: #5a5344;
+}
+
+.bestiary-row { padding: 6px 2px; border-bottom: 1px solid #b7ac8f; }
+.bestiary-row:last-child { border-bottom: none; }
+.bestiary-head { display: flex; align-items: center; gap: 8px; }
+.bestiary-row-sigil { font-size: 16px; line-height: 1; width: 18px; text-align: center; }
+.bestiary-row-title { font-size: 12px; letter-spacing: 1px; color: #2a231b; }
+.bestiary-row-stamp { font-size: 10px; color: #6a6350; font-style: italic; margin-top: 2px; }
+.bestiary-row-page { font-size: 11px; color: #2a231b; line-height: 1.45; margin-top: 2px; }
+.bestiary-row-locked .bestiary-row-sigil { color: #6a6350; }
+.bestiary-row-locked .bestiary-row-title { color: #6a6350; font-style: italic; }
+.bestiary-footer { color: #6a6350; font-style: italic; font-size: 11px; padding: 6px 2px; }
+.bestiary-hint { display: none; }
+
+/* Codex accent classes (QJR-4): each maps ONE existing palette token onto a
+   row's sigil glyph only (one accent per row; page stays parchment). */
+.codex-accent-amber   { color: #c9a94a; }
+.codex-accent-crimson { color: #b0472f; }
+.codex-accent-bone    { color: #d8d2c0; }
+.codex-accent-ash     { color: #7a7160; }

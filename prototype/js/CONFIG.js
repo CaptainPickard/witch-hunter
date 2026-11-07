@@ -4899,6 +4899,60 @@ window.WH_CONFIG.journal = {
   }
 };
 
+// QJR-4 BESTIARY CODEX (io/specs/qjr-4-bestiary-spec.md, 2026-11-07; all
+// PROPOSED, Nicko tunes) - the hunter's own field book, one codex page per
+// enemy type. Rides the J panel (buttonless); page strings are drafted per
+// the ledger law (doc 44/51: no creditor, no signatory, no terms; the
+// pact/tithe/Veil-witnessed-fact rule) in field-note voice. Art anchor:
+// concept-06-siege-council (sacred-archive codex) + concept-01-darkwood
+// (beast field-guide in a hunter's hand). Accents map to the EXISTING
+// palette tokens via CSS classes .codex-accent-<accent> (style.css EOF).
+window.WH_CONFIG.journal.bestiary = {
+  buttonless: true,           // no own HUD button, rides the J panel (js/journal.js tab row)
+  killToastEvery: 5,          // toast on first kill + every 5th kill of a type
+  text: {
+    tabBestiary: 'BESTIARY',
+    tabJournal: 'JOURNAL',
+    killsLabel: 'slain:',      // lowercase in-world voice
+    seenStamp: 'Day {day}',
+    hiddenFooter: '{n} beasts remain undescribed.',
+    lockedTitle: 'Unknown beast',
+    lockedSigil: '—',
+    searchPlaceholder: 'Search the bestiary...',
+    nomatch: 'Nothing in the bestiary matches.',
+    killToast: 'Bestiary: {title} - slain x{n}',
+    killToastTitleUnseen: 'Bestiary: first kill - {title}',
+    killEveryLabel: 'Bestiary: {title} - slain x{n}',
+    seenToast: 'Bestiary: witnessed - {title}',
+    hint: 'Esc close'
+  },
+  // The ten codex pages keyed by enemy type (spec 2.2/2.8). Ledger law:
+  // killed as witnessed fact only; tithes/pacts named only as things seen,
+  // never as terms owed to a named creditor.
+  entries: {
+    bandit: { title: 'The Sloppy Blade', sigil: '†', accent: 'bone',
+      page: 'A moor man with a knife he does not clean. He fights for coin and takes it in tithes I have seen collected at crossroads. When his blade fails he swings harder, not smarter.' },
+    ghoul: { title: 'Grave-Hungry Ghoul', sigil: '☠', accent: 'ash',
+      page: 'It digs where the ground smells wrong and eats what the ground gives. Wounds weep rot; I burn the clothes after. It hops the fence-lines at dusk, always hungry, never full.' },
+    wolf: { title: 'Rot Wolf', sigil: '❂', accent: 'amber',
+      page: 'A wolf wearing the blight like a second pelt. They run in a loop around the carrion fields and pull no one down alone. The pack turns as one head.' },
+    coven: { title: 'Coven Witch', sigil: '✶', accent: 'crimson',
+      page: 'She keeps the old fire under her tongue and will not come to arm\'s length. The bolt she throws burns the same colour as the Veil storms I watched as a boy. I keep my shield raised and my distance longer.' },
+    zealot: { title: 'Veil-Touched Zealot', sigil: '☀', accent: 'crimson',
+      page: 'It walked into the Veil mist and walked out still chanting. It calls its wounds proof of keeping. Whatever pact it keeps, it keeps it out loud and alone.' },
+    rotmother: { title: 'The Rot Mother', sigil: '✿', accent: 'crimson',
+      page: 'She nests where the rot is thickest and the land goes quiet around her. I have seen her spawn walk the nests she keeps. When she falls the stains stay in the ground for days.' },
+    rotspawn: { title: 'Rot Spawn', sigil: '✿', accent: 'ash',
+      page: 'Small, quick, and born already rotten. They scatter when their mother is struck and return when she does not. Best kept burning at the nest\'s edge.' },
+    scarreader: { title: 'The Scar-Reader', sigil: '〰', accent: 'crimson',
+      page: 'It reads the cut lines on its own arms like a ledger and pays in the same coin. I saw it mark a fresh scar before striking. Its slams land wide, so I roll through, not away.' },
+    tithecaptain: { title: 'The Tithe Captain', sigil: '⚖', accent: 'crimson',
+      page: 'I have watched its carts take grain and iron at the crossroads and leave receipts no one can read. It counts everything twice. I have never seen it pay.' },
+    lastchancel: { title: 'The Last Chancel', sigil: '♆', accent: 'crimson',
+      page: 'A chancel that outlived its congregation, and something that wears it like a robe. At its threshold I have heard the tithes being counted. I have not yet stepped inside.' }
+  }
+};
+
 // CC-AF1 CAMP AFFINITY (docs 12 + 11 + 44/45; Nicko MorROWIND order
 // 2026-11-07) - doc 12's single visible good<->evil axis as a deed-driven
 // standing score, js/affinity.js WH_AFF. The kit camp fire tints with the

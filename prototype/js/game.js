@@ -2641,6 +2641,9 @@
         window.WH_HAZARDS.init(game);
       }
       if (window.WH_JOURNAL) window.WH_JOURNAL.init(game);   // QJR-1: journal core
+      // QJR-4: the codex module rides the journal's init-hook tier (load
+      // order: js/bestiary.js AFTER js/journal.js in index.html).
+      if (window.WH_BESTIARY) window.WH_BESTIARY.init(game);   // QJR-4: bestiary codex
       // C4 boot CONTINUE: with a save the overlay waits for the player's row
       // (CONTINUE = restore the profile, NEW GAME = the fresh flow; the
       // profile is never wiped - the first camp save replaces it). The
@@ -2686,6 +2689,7 @@
       // CC-WB3: strata board state rides the save-wrap too, chest-line shape.
       if (window.WH_StrataEffort) data.strataEffort = window.WH_StrataEffort.capture();
       if (window.WH_JOURNAL) data.journal = window.WH_JOURNAL.capture();   // QJR-1
+      if (window.WH_BESTIARY) data.bestiary = window.WH_BESTIARY.capture();   // QJR-4
       // CC-AF1: the standing ledger + its once-map ride the save-wrap
       data.affinity = window.WH_AFF ? window.WH_AFF.capture() : undefined;
       return data;
@@ -2705,6 +2709,8 @@
         // CC-WB3: explicit storage write, chest-line shape (strata board).
         if (window.WH_StrataEffort) stored.strataEffort = window.WH_StrataEffort.capture();
         if (window.WH_JOURNAL) stored.journal = window.WH_JOURNAL.capture();   // QJR-1
+        // QJR-4: explicit storage write, journal-line shape.
+        if (window.WH_BESTIARY) stored.bestiary = window.WH_BESTIARY.capture();   // QJR-4
         // CC-AF1: explicit storage write, journal-line shape
         stored.affinity = window.WH_AFF ? window.WH_AFF.capture() : undefined;
         window.localStorage.setItem(CFG.save.lsKey, JSON.stringify(stored));
@@ -2721,6 +2727,8 @@
       // CC-WB3: a missing strataEffort block is a no-op (fresh idle board).
       if (data && window.WH_StrataEffort) window.WH_StrataEffort.restore(data.strataEffort);
       if (window.WH_JOURNAL) window.WH_JOURNAL.restore(data && data.journal);   // QJR-1
+      // QJR-4: a missing bestiary block is a no-op (fresh empty codex).
+      if (window.WH_BESTIARY) window.WH_BESTIARY.restore(data && data.bestiary);   // QJR-4
       // CC-AF1: a missing affinity block is a no-op (fresh 0 / crossed {})
       if (window.WH_AFF) window.WH_AFF.restore(data && data.affinity);
       baseRestore(g, data);
@@ -3261,6 +3269,7 @@
     game.camp.update();   // C3: camp groups per region, placement ghost, menu close on death
     if (window.WH_NPC) window.WH_NPC.update(dt);   // CC-C10: farmer show/cull, name plate, dialog close on death
     if (window.WH_JOURNAL) window.WH_JOURNAL.update(dt);   // QJR-1
+    if (window.WH_BESTIARY) window.WH_BESTIARY.update(dt);   // QJR-4: event-driven codex
     // CC-C11: spawn / re-place / region gate after the camp and quest updates.
     if (window.WH_Chest) window.WH_Chest.update(dt);
     updateQuestLine();    // CC-C10: HUD quest line (findDaughter active)
