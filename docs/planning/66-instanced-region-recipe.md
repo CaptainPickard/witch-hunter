@@ -345,3 +345,45 @@ scratch/cc-h1a/sides_law_probe.js). LAW now:
    ticks).
 4. Enemy hold line follows the corrected sign automatically
    (clampEnemyToHomeSide): F ghouls cleared, no relocation needed.
+
+## 11. Amendment 2 (2026-11-07, CC-H2): the two-sided chained door + the live-entries rule
+
+CC-H2 landed the first TWO-SIDED chained door (conn[6], G<->H garrison
+breach) — a different grammar than the E/F/H1 one-way walk-back rows:
+
+1. Door grammar by topology. A door whose plane sits OUTSIDE the parent's
+   playable band must be ONE-SIDED (walkFrom = pocket only: the D/E/F/H1
+   rows). A door whose mouth is a PHYSICAL BREACH in the parent's own wall
+   ring (both discs playable up to the plane) is TWO-SIDED: shape the
+   connection on the CC-C2 B/C row (no walkFrom, no interact, no text row,
+   arch/gatedTo null) — the plane exists on BOTH sides and tickTransition
+   crosses in both directions via land rows (x NOT preserved).
+2. suspendDepthM = the two-sided reach law. planeZ -948 sits 1.5 m behind
+   G's playable rim (-946.5) and 2.5 m behind H2's (-945.5): with
+   suspendDepthM 0 the plane is reachable from NEITHER side and the breach
+   is accidentally one-way (the H1a trap in a new costume). suspendDepthM 4
+   (>= the max rim offset) lifts BOTH disc clamps inside the window band
+   (inOpenDoorBand is edge-inclusive). Every future two-sided claim: assert
+   `suspendDepthM > max(|rimOffset both discs|)` in the probe.
+3. Sides-table LIVE-entries rule (extends sec 10): the inert-record
+   convention applies ONLY to one-way rows (the non-walkFrom side never
+   reads its entry). On a TWO-SIDED row BOTH entries are live — the engine
+   reads sideIn(conn, activeId) from whichever region is active every frame
+   (tickTransition + inOpenDoorBand + clampEnemyToHomeSide). CC-H2 landed
+   G +1 / H -1; probe BOTH directions (verdict_sides.py shape).
+4. Parent aperture by erasure (E->F pattern, generalized): chaining through
+   a parent ring = verbatim deletion of the landed rows covering the mouth
+   (G's south-pole flank pair at z -947.92) + a dated ERASED comment above
+   the first remaining row. Probe the post-erase lane (0 colliders within
+   1.5 m of the lane samples) BEFORE freezing the spec; flank dressing lives
+   INSIDE the pocket, never ON the parent ring line (a prop there blocks the
+   lane; >= 4.0 m raw of the surviving parent ring is unreachable beside a
+   breach — put the flankers inside and tighten the pocket-ring margin
+   instead, CC-H2 used >= 16.0).
+5. Ring omit correction (seat-scan law): a pole-straddling mouth OMITS the
+   TWO flank segments whose bodies cover the pole bearings (i = N/4 and
+   N/4 - 1 at the -z face... for the CC-H1 cadence the pole lands ON A SEAM
+   — segment centers never hit it — so "omit the segment whose center is
+   exactly the face bearing" never fires there. Freeze omit = the segments
+   whose COLLIDER COVERAGE spans the face arc, verified by the mouth-arc
+   check (CC-H2: bearing arc 82.8..97.2 must hold 0 colliders).

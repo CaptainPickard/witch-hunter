@@ -185,6 +185,9 @@
   // no plane-0 side; like E/F above). C0-7 law: the hold never lies ON the
   // C-side plane, so sideOfBoundary(C, 5) = -1.
   regions[CFG.regionG.id] = makeRegion(CFG.regionG, -1);
+  // CC-H2 fort_garrison: side -1 = the plane-0 convention only (H sits on no
+  // plane-0 side). C0-7 law: fort_garrison never lies ON any other connection's plane.
+  regions[CFG.regionH.id] = makeRegion(CFG.regionH, -1);
 
   // CC-H1 lords_hold C<->G gate, shaped EXACTLY on the CC-AD1 crypt row above
   // (connections[3]) with AMENDMENT A: `from` = CFG.regionC.id (H1 hangs off
@@ -216,6 +219,40 @@
   // SIDES TABLE (CC-H1a): C occupies z > planeZ -700 (interior reading +1); G occupies z <= -700 (interior -711 reads -1). sideIn(R) must equal sideOfPlane at R's interior (engine law, region-defs sideOfPlane).
   connections[5].sides[CFG.regionC.id] = 1;
   connections[5].sides[CFG.regionG.id] = -1;
+
+  // CC-H2 garrison_keep: the FIRST TWO-SIDED chained door (B/C grammar: the
+  // physical plane exists on BOTH sides - no walkFrom, no interact, no
+  // gatedTo). The breach lane rides x 0 across G's erased south-pole flank
+  // pair; suspendDepthM 4 lifts BOTH disc clamps (planeZ -948 vs G playable
+  // rim -946.5 / H2 playable rim -945.5). Sides table (doc 66 sec 10): BOTH
+  // entries LIVE here (the engine reads sideIn from either active region
+  // every frame): sideOfPlane(G interior -822) = +1 = sideIn(lords_hold);
+  // sideOfPlane(H interior -1024) = -1 = sideIn(fort_garrison). Land rows
+  // per destination (x NOT preserved); cross fires both directions
+  // (tickTransition walks connectionsOf(activeId) with planeIn true in both).
+  var HD = CFG.regionH.door;
+  connections.push({
+    from: CFG.regionG.id,
+    to: CFG.regionH.id,
+    axis: 'z',
+    planeCoord: HD.planeZ,
+    sides: {},
+    door: {
+      doorX: HD.doorX,
+      doorHalfWidth: HD.doorHalfWidth,
+      suspendDepthM: HD.suspendDepthM,
+      wallGapPadM: HD.wallGapPadM,
+      arch: null,
+      gatedTo: null,
+      land: HD.land
+    }
+  });
+  // SIDES TABLE (CC-H2, doc 66 sec 10 interior law): BOTH entries live.
+  // sideOfPlane = z > planeCoord ? 1 : -1 (region-defs). G interior -822:
+  // -822 > -948 = +1. H interior -1024: -1. sideIn(R) == sideOfPlane(R
+  // interior) for EVERY member - asserted by the valspec probe both sides.
+  connections[6].sides[CFG.regionG.id] = 1;
+  connections[6].sides[CFG.regionH.id] = -1;
 
   // ---- THREE-free transition helpers (used by region-manager and tests) ------
 

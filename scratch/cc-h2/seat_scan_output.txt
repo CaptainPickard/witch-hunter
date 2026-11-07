@@ -1,0 +1,96 @@
+regionG parsed: 89 curtain rows | 24 dressing rows | center (0.0, -822.0) r 126
+regionG ring colliders: 1068
+G pole flank pair rows found (== 2)                              2 >=     2  ok
+  pole row |x| <= 9 and wall 12 (whWallA x=4.40)               4.4 <=   9.0  ok
+  pole row |x| <= 9 and wall 12 (whWallB x=-4.40)              4.4 <=   9.0  ok
+hook inside G playable radius (<= 124.5)                     112.0 <= 124.5  ok
+hook >= 6.0 m from every G dressing prop                   105.67875850898325 >=   6.0  ok
+hook >= 6.0 m from every G ring collider                   14.045803378851945 >=   6.0  ok
+G aperture lane nearest collider (>= 1.5 post-erasure)     5.1683092509478215 >=   1.5  ok
+hook >= 6.0 m from flankers                                35.4400902933387 >=   6.0  ok
+spawn inside H2 r 80 (margin < 78.5)                          69.0 <=  78.5  ok
+land.fort_garrison inside H2 r 80 (margin < 78.5)             69.0 <=  78.5  ok
+land.lords_hold inside G playable radius (<= 124.5)          119.0 <= 124.5  ok
+ring scale 2dp (== chord/AW)                                   0.0 >=   0.0  ok
+ring rows (== 48)                                               48 >=    48  ok
+ring colliders (== 384)                                        384 >=   384  ok
+colliders inside the door window strip (== 0)                    0 >=     0  ok
+H2 lane samples nearest collider (>= 1.0)                  7.490490330841313 >=   1.0  ok
+every octant holds >= 8 colliders                               34 >=     8  ok
+colliders bearing inside the mouth arc [82.8, 97.2] (== 0)       0 >=     0  ok
+sideOfPlane(spawn) == sideIn(fort_garrison) == -1               -1 >=    -1  ok
+sideOfPlane(hook) == sideIn(lords_hold) == +1                    1 >=     1  ok
+land.fort_garrison on home side (z <= plane)                     1 >=     1  ok
+land.lords_hold on G home side (z > plane)                       1 >=     1  ok
+NOTE: H2 plane z -948 sits ON G disc south rim (-948): the flat/flat sliver overlap (H2 rim -944 vs G rim -948) is harmless under the one-active law (both discs y 0; never rendered together)
+enemy 0 inside play radius (<= 78.5)                       50.00999900019995 <=  78.5  ok
+enemy 0 >= 4.45 walk-clear of ring                         29.990000999800053 >=  4.45  ok
+enemy 0 >= 8.0 from spawn                                  22.360679774997898 >=   8.0  ok
+enemy 1 inside play radius (<= 78.5)                       49.24428900898052 <=  78.5  ok
+enemy 1 >= 4.45 walk-clear of ring                         30.755710991019477 >=  4.45  ok
+enemy 1 >= 8.0 from spawn                                  23.706539182259394 >=   8.0  ok
+enemies mutual >= 12.5                                     21.02379604162864 >=  12.5  ok
+---
+SEAT: H2 center (0, -1024) r 80 | planeZ -948 doorX 0.0 doorHalfWidth 4.0
+hook (0.0, -934.0) interactM 3.5 | spawn (0.0, -955.0) | land.G (0.0, -941.0)
+G APERTURE ERASE (verbatim from CONFIG row order):
+  { asset: 'whWallA', x: 4.4, z: -947.92, rotY: 6.25, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: -4.4, z: -947.92, rotY: 0.03, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+G APERTURE PARAPETS:
+  { asset: 'okFenceStonewall', x: 10.0, z: -968.0, rotY: 0, scale: 1.2 },
+  { asset: 'okFenceStonewall', x: -10.0, z: -968.0, rotY: 0, scale: 1.2 },
+flanker >= 4.0 clearance against H2 OWN ring rows (re-checked by clearance.py)
+ring: N 50 chord 10.05 scale 5.29 wall 8 | rows 48 colliders 384
+enemies (2x bandit sentries): [(-10.0, -975.0), (11.0, -976.0)]
+FROZEN SPEC NUMBERS: planeZ -948.0 doorX 0.0 doorHalfWidth 4.0 interactAt (0.0, -934.0) interactM 3.5
+spawn (0.0, -955.0) | groundRadius 80 | center (0, -1024) | groundSeed 1662061651
+ALL SEAT CHECKS: PASS
+RING ROWS (i, x, z, rotY, scale, wall; A/B alternate by i parity):
+  { asset: 'whWallB', x: 14.99, z: -945.42, rotY: 3.33, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallA', x: 24.72, z: -947.92, rotY: 3.46, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallB', x: 34.06, z: -951.61, rotY: 3.58, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallA', x: 42.87, z: -956.45, rotY: 3.71, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallB', x: 50.99, z: -962.36, rotY: 3.83, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallA', x: 58.32, z: -969.24, rotY: 3.96, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallB', x: 64.72, z: -976.98, rotY: 4.08, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallA', x: 70.1, z: -985.46, rotY: 4.21, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallB', x: 74.38, z: -994.55, rotY: 4.34, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallA', x: 77.49, z: -1004.1, rotY: 4.46, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallB', x: 79.37, z: -1013.97, rotY: 4.59, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallA', x: 80.0, z: -1024.0, rotY: 4.71, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallB', x: 79.37, z: -1034.03, rotY: 4.84, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallA', x: 77.49, z: -1043.9, rotY: 4.96, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallB', x: 74.38, z: -1053.45, rotY: 5.09, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallA', x: 70.1, z: -1062.54, rotY: 5.22, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallB', x: 64.72, z: -1071.02, rotY: 5.34, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallA', x: 58.32, z: -1078.76, rotY: 5.47, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallB', x: 50.99, z: -1085.64, rotY: 5.59, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallA', x: 42.87, z: -1091.55, rotY: 5.72, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallB', x: 34.06, z: -1096.39, rotY: 5.84, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallA', x: 24.72, z: -1100.08, rotY: 5.97, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallB', x: 14.99, z: -1102.58, rotY: 6.09, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallA', x: 5.02, z: -1103.84, rotY: 6.22, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallB', x: -5.02, z: -1103.84, rotY: 0.06, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallA', x: -14.99, z: -1102.58, rotY: 0.19, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallB', x: -24.72, z: -1100.08, rotY: 0.31, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallA', x: -34.06, z: -1096.39, rotY: 0.44, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallB', x: -42.87, z: -1091.55, rotY: 0.57, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallA', x: -50.99, z: -1085.64, rotY: 0.69, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallB', x: -58.32, z: -1078.76, rotY: 0.82, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallA', x: -64.72, z: -1071.02, rotY: 0.94, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallB', x: -70.1, z: -1062.54, rotY: 1.07, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallA', x: -74.38, z: -1053.45, rotY: 1.19, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallB', x: -77.49, z: -1043.9, rotY: 1.32, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallA', x: -79.37, z: -1034.03, rotY: 1.45, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallB', x: -80.0, z: -1024.0, rotY: 1.57, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallA', x: -79.37, z: -1013.97, rotY: 1.7, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallB', x: -77.49, z: -1004.1, rotY: 1.82, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallA', x: -74.38, z: -994.55, rotY: 1.95, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallB', x: -70.1, z: -985.46, rotY: 2.07, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallA', x: -64.72, z: -976.98, rotY: 2.2, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallB', x: -58.32, z: -969.24, rotY: 2.32, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallA', x: -50.99, z: -962.36, rotY: 2.45, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallB', x: -42.87, z: -956.45, rotY: 2.58, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallA', x: -34.06, z: -951.61, rotY: 2.7, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallB', x: -24.72, z: -947.92, rotY: 2.83, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+  { asset: 'whWallA', x: -14.99, z: -945.42, rotY: 2.95, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
