@@ -184,6 +184,13 @@
       query = searchEl.value;
       rebuildRows();
     });
+    // TC-FIX1 (F4): pointerdown focus so the virtual keyboard opens reliably
+    // on touch devices (the layer's global stopPropagation noise can starve
+    // the default focus path). Deliberately NOT preventDefault'ed; keydown
+    // guard + Escape behavior below are byte-identical to the QJR-1 build.
+    searchEl.addEventListener('pointerdown', function () {
+      searchEl.focus({ preventScroll: true });
+    });
     searchWrap.appendChild(searchEl);
     panel.appendChild(searchWrap);
     pageEl = el('div', 'journal-page');

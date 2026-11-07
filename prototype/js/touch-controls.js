@@ -242,6 +242,7 @@
     });
     if (savedState) applySavedState(savedState);
     applyScale();
+    sanitizeLayout();         // TC-FIX1 (F3): repair stale off-screen layouts
   }
 
   // ---- toggle / show / hide ------------------------------------------------
@@ -331,29 +332,58 @@
     var minus = el('button', '', editBarEl);
     minus.textContent = '\u2212';
     minus.title = 'Smaller';
-    minus.addEventListener('click', function () { nudgeScale(-0.1); });
+    // TC-FIX1 (RC2): edit-bar buttons activate on pointerdown (same proven
+    // 10-03 pattern as buildToggle: pointerdown acts, click only swallows).
+    // Without this, the round div-style buttons ignore taps on Nicko's phone
+    // and the layer becomes unrecoverable; synthetic click is swallowed so
+    // desktop mouse still fires exactly once via pointerdown.
+    minus.addEventListener('pointerdown', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      nudgeScale(-0.1);
+    });
+    minus.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+    });
 
     var plus = el('button', '', editBarEl);
     plus.textContent = '+';
     plus.title = 'Bigger';
-    plus.addEventListener('click', function () { nudgeScale(0.1); });
+    plus.addEventListener('pointerdown', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      nudgeScale(0.1);
+    });
+    plus.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+    });
 
     var lockBtn = el('button', '', editBarEl);
     lockBtn.id = 'wh-touch-lockbtn';
     lockBtn.textContent = LOCKED_GLYPH;
     lockBtn.title = unlocked ? 'Lock placement (saves layout)' : 'Unlock placement';
-    lockBtn.addEventListener('click', function () {
+    lockBtn.addEventListener('pointerdown', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
       unlocked = !unlocked;
       rootEl.classList.toggle('unlocked', unlocked);
       lockBtn.textContent = unlocked ? UNLOCKED_GLYPH : LOCKED_GLYPH;
       if (!unlocked) saveState();   // locking placement saves the layout
       lockBtn.classList.toggle('amber', unlocked);
     });
+    lockBtn.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+    });
 
     var resetBtn = el('button', '', editBarEl);
     resetBtn.textContent = 'Reset';
     resetBtn.title = 'Restore default layout';
-    resetBtn.addEventListener('click', function () {
+    resetBtn.addEventListener('pointerdown', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
       scale = TC.scaleDefault || 1.0;
       order.forEach(function (name) {
         var c = controls[name];
@@ -365,15 +395,25 @@
       applyScale();
       saveState();
     });
+    resetBtn.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+    });
 
     var doneBtn = el('button', 'amber', editBarEl);
     doneBtn.textContent = 'Done';
     doneBtn.title = 'Lock placement and play';
-    doneBtn.addEventListener('click', function () {
+    doneBtn.addEventListener('pointerdown', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
       unlocked = false;
       rootEl.classList.remove('unlocked');
       setEditMode(false);         // locking saves layout (saveState inside)
       saveState();
+    });
+    doneBtn.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
     });
   }
 
@@ -476,9 +516,12 @@
     var c = controls[dragName];
     if (!c) return;
     var r = c.el.getBoundingClientRect();
-    // keep control CENTER inside the viewport (never fully off-screen)
-    var x = clamp(ev.clientX - dragOffX + r.width / 2, 0, window.innerWidth);
-    var y = clamp(ev.clientY - dragOffY + r.height / 2, 0, window.innerHeight);
+    // TC-FIX1 (RC1): clamp the placed TOP-LEFT point so the FULL element
+    // stays inside the viewport. (The old code clamped the CENTER and wrote
+    // it into style.left/top, letting the box hang over the right/bottom
+    // edge; endDrag then persisted the off-screen position.)
+    var x = clamp(ev.clientX - dragOffX, 0, window.innerWidth - r.width);
+    var y = clamp(ev.clientY - dragOffY, 0, window.innerHeight - r.height);
     c.el.style.left = (x / window.innerWidth * 100) + '%';
     c.el.style.top = (y / window.innerHeight * 100) + '%';
   }
@@ -674,6 +717,29 @@
       }
     });
     applyScale();
+  }
+
+  // TC-FIX1 (F3): load-time sanitation. Stale RC1-era saves can carry
+  // fractions that render partially/fully off-screen (they were recorded
+  // from center-clamped top-left writes), and a fraction in [0,1] cannot
+  // see the element's pixel size. Repair uses the RENDERED rect: clamp the
+  // top-left into [0, innerWidth - rect.width] / [0, innerHeight -
+  // rect.height], rewrite as viewport fractions, persist. Runs in
+  // buildControls AFTER applySavedState + applyScale so sizes exist before
+  // the clamps are computed (scripts load at body end, elements are laid out).
+  function sanitizeLayout() {
+    order.forEach(function (name) {
+      var c = controls[name];
+      if (!c) return;
+      var fx = fracX(c.el, name);
+      var fy = fracY(c.el, name);
+      var rect = c.el.getBoundingClientRect();
+      var leftPx = clamp(fx * window.innerWidth, 0, window.innerWidth - rect.width);
+      var topPx = clamp(fy * window.innerHeight, 0, window.innerHeight - rect.height);
+      c.el.style.left = (leftPx / window.innerWidth * 100) + '%';
+      c.el.style.top = (topPx / window.innerHeight * 100) + '%';
+    });
+    saveState();              // repaired layout is persisted immediately
   }
 
   // ---- public API ----------------------------------------------------------------
