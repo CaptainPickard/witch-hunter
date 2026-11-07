@@ -5,6 +5,9 @@ CONFIG.js 3936 lines). Companion to docs 49 (world GDD) + 61 (world audit) +
 62/63 (region C). Companion to the instanced-region recipe doc (planned next
 wake). Companion census note: io/REGION-CENSUS-2026-11-06.md (same day, prior
 tip; numbers there are superseded by this doc where they differ).
+RECIPE LANDED 2026-11-07 (wake 15): docs/planning/66-instanced-region-recipe.md
+— every slot claim below is now spec-from-template (doc 66 sec 2-8); H1's
+claim sheet is doc 66 sec 8.
 
 Purpose (Nicko directive 2026-11-06, "instanced areas"): every live region and
 pocket is registered here with its exact CONFIG keys, and RESERVED slot rows
