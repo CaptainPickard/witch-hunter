@@ -5116,3 +5116,14 @@ window.WH_CONFIG.leveling = {
   levelToastSeconds: 2.6,           // #wh-level-toast lifetime
   rankToastSeconds: 1.6
 };
+// CC-LS1 (doc 61 P1-1): blob contact shadows - one shared geometry+texture,
+// pooled meshes riding actor ground (pos.y) un-bobbed; fade+shrinks on lift.
+window.WH_CONFIG.contacts = {
+  poolSize: 24,        // player + live enemies worst case
+  textureSize: 128,
+  radiusBase: 0.55,    // fallback when body meta width is missing
+  groundOffset: 0.02,  // doc 61 law: y = 0.02 over ground
+  maxLift: 3.2,        // lift at which a blob vanishes
+  minScale: 0.55,      // distant/bounce floor so the blob never pops out
+  maxOpacity: 0.42
+};

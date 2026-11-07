@@ -1924,6 +1924,9 @@
       eBody.children[0].position.y += window.WH_ASSETS.groundMinY(bodyName);
       if (eCfg.bodyYawDeg) eBody.rotation.y = eCfg.bodyYawDeg * Math.PI / 180;
       enemy.setBody(eBody);
+      // CC-LS1: per-enemy contact blob; radius from body meta width x scale
+      if (window.WH_SHCONTACTS) window.WH_SHCONTACTS.attach(enemy,
+        { bodyName: bodyName, scale: eScale });
       this.enemies[regionId].push(enemy);
       group.add(enemy.root);
     }

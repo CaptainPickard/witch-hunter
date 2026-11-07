@@ -190,6 +190,9 @@
       game.scene.add(card);
       game.flameCards.push(card);
     }
+    // CC-LS1: contact-shadow pool builds once at boot (shared geo/tex/mat,
+    // no per-frame allocation - P1-8 pool law).
+    if (window.WH_SHCONTACTS) window.WH_SHCONTACTS.init(scene, CFG.contacts);
   }
 
   // ---- HUD -------------------------------------------------------------------
@@ -2581,6 +2584,9 @@
       // The animated holder owns this scaled lift; do not apply it twice.
       pBody.children[0].position.y += window.WH_ASSETS.groundMinY('playerBody');
       game.player.setBody(pBody);
+      // CC-LS1: player contact blob (radius from body meta width)
+      if (window.WH_SHCONTACTS) window.WH_SHCONTACTS.attach(game.player,
+        { bodyName: 'playerBody' });
       // v3: register the weapon with the player so attack stages drive its
       // pose. 10-04: which weapon = CONFIG.moveset.playerWeapon.
       setupHandMeshes();    // Order B: longsword + shield meshes, mounted per hand
@@ -3260,6 +3266,8 @@
     // 10-05: earned player light - hand lights follow hands + bindings this
     // frame, projectile lights follow live bolts (flicker per light)
     game.playerLight.update(game.player, game.firebolts);
+    // CC-LS1: contact blobs ride the actors' ground this frame
+    if (window.WH_SHCONTACTS) window.WH_SHCONTACTS.update();
     game.dayNight.tick(dt);   // C2: day/night clock (frozen while dormant)
     applyDayNight();    // C2: phase look -> lights / fog / sky (before the cemetery ramp)
     cemeteryFogTick();  // Round H: graveyard fog ramp (region A)
