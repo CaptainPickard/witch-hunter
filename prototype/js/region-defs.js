@@ -306,6 +306,34 @@
   connections[8].sides[CFG.regionF.id] = -1;
   connections[8].sides[CFG.regionJ.id] = +1;
 
+  // CC-H5 tithe_vaults: plane-0 convention only; J-side portal is an
+  // interact hook, K-side mouth is a walk-back plane (conn[7] precedent).
+  regions[CFG.regionK.id] = makeRegion(CFG.regionK, -1);
+  var KD = CFG.regionK.door;
+  connections.push({
+    from: CFG.regionJ.id,
+    to: CFG.regionK.id,
+    axis: 'z',
+    planeCoord: KD.planeZ,
+    sides: {},
+    door: {
+      doorX: KD.doorX, doorHalfWidth: KD.doorHalfWidth,
+      suspendDepthM: KD.suspendDepthM, wallGapPadM: KD.wallGapPadM,
+      arch: null, gatedTo: null,
+      walkFrom: CFG.regionK.id,
+      interact: { from: CFG.regionJ.id, x: KD.interact.x, z: KD.interact.z, radius: KD.interact.radius },
+      land: KD.land,
+      fadeIn: KD.fadeIn, fadeOut: KD.fadeOut, exitFadeOut: KD.exitFadeOut,
+      text: KD.text                       // AMENDMENT A: the portal prompt + fades ride the conn
+    }
+  });
+  // E-mirror: J's plane is underground/inactive for this conn; K's interior
+  // is SOUTH of its walk-back plane (-880/-856 < -848). The J-side table
+  // value follows the geometry (J's interior sits NORTH of -848 too), the
+  // K side follows sideOfPlane.
+  connections[9].sides[CFG.regionJ.id] = +1;
+  connections[9].sides[CFG.regionK.id] = -1;
+
   // ---- THREE-free transition helpers (used by region-manager and tests) ------
 
   // Returns the connection between two region ids, or null.
