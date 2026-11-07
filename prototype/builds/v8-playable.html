@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Witch Hunter v9 - EPR1 Combat (build 11-07 20:48Z f0db3af)</title>
+<title>Witch Hunter v9 - EPR1 Combat (build 11-07 22:39Z f6ea46b)</title>
 
 <style>
 /* Witch Hunter prototype v1 - HUD + overlay styling */
@@ -87398,6 +87398,19 @@ window.WH_CONFIG = {
                         offset: [0.0, 0.0] },
     lanternWaymarker: { heightFraction: 0.67, intensity: 9.5,
                         offset: [0.0, 0.35] },
+    // CC-B1 (2026-11-07): ruined-chapel altar candelabra (doc 61 P1-2). Joins
+    // region B's warm family — banditCampfire + lanternWaymarker + this — per
+    // the single-accent law (art-order 2026-11-06): one amber accent family
+    // per region; all three ruin-cluster seats ≤ 25 m apart. heightFraction
+    // 0.85 up the 1.98 m (× 0.45 scale) candelabrum = flame ≈ 1.9–2.0 m,
+    // riding the altar-top y. WAKE-34 IO AMENDMENT: computeFireSockets
+    // (game.js ~2904) computes h = groundHeight * scale * hf from GROUND
+    // level — row y is NOT read — so the altar-top STACK needs
+    // hf = (3.415 row y + 0.76 flame) / (1.98*0.45) = 4.175 / 0.891 ≈ 4.69
+    // to put the flame at its intended ≈ 4.18 m seat (3.415 stack base + 0.76
+    // flame).
+    candelabra:       { heightFraction: 4.69, intensity: 5.5,   // PROPOSED
+                        offset: [0.0, 0.0] },
     // Round F: gate-arch lantern (WORLD socket, both regions; not a region
     // prop). heightFraction is up the HUNG lantern's height from its base;
     // offset [x, z] is arch-local in meters (rotated with arch.rotY).
@@ -87732,7 +87745,80 @@ window.WH_CONFIG = {
       { asset: 'stoneCrossTilted', x: 18.0, z: -43.1, rotY: 6.16, scale: 1.6 },
       // R2: darkwood light-socket props (doc 61 batches B2/B3)
       { asset: 'banditCampfire', x: 2.5, z: -52, rotY: 0.0, scale: 1.8 },
-      { asset: 'lanternWaymarker', x: -6.5, z: -47, rotY: 1.1, scale: 1.9 }
+      { asset: 'lanternWaymarker', x: -6.5, z: -47, rotY: 1.1, scale: 1.9 },
+      // CC-B1 (2026-11-07): ruined-chapel landmark, doc 61 P1-2 (WAKE 34) —
+      // io/specs/cc-b1-chapel-spec.md. Nave ≈ (0,-58), long axis W-E, BROADSIDE
+      // to the south-entry walk: lit altar visible down the 33 m axis. Assembles
+      // AROUND the locked ruin rows (archway 8,-58 / buttress -14,-62 /
+      // pewBroken 16,-52 / campfire 2.5,-52 / waymarker -6.5,-47) — none moved.
+      // Cool monochrome masonry; ONE amber pool from the candelabra (single-accent).
+      // K1 west face: 2x wall windows along z at x -18 (IO wake-34 seat pass:
+      // -17.5 row line probed DEAD — bonePile (-17.0,-53.1) and graveMoss
+      // (-14.4,-66.6) node rings + the reachTreeC at (-10.9,-55.8) leave only
+      // z -65..-56.5 clear), planes facing EAST into the nave (rotY 1.57),
+      // scale 2.2 (~2.87 m run, ~2.0 m tall each). The ≈ 5 m centre gap is an
+      // INTENTIONAL walk-through (marked // gap).
+      { asset: 'churchWallWindow', x: -18, z: -63, rotY: 1.57, scale: 2.2 },
+      // gap — west face ruined section (walk-through; centre gap ≈ 5 m)
+      { asset: 'churchWallWindow', x: -18, z: -58, rotY: 1.57, scale: 2.2 },
+      // K2 south fragment: free-standing buttress (IO seat pass: the SW angle
+      // is owned by the bonePile node ring + reachTreeC; this seat keeps
+      // ≥ 3 m from both node rings and ≥ 1 m from the scattered reach tree)
+      { asset: 'churchCornerButtress', x: -11.8, z: -52, rotY: 5.7, scale: 2.0 },
+      // K3 north face: 2x wall windows at z -66, planes facing SOUTH into the
+      // nave (rotY ≈ 3.14); the ≈ 5.6/7.0 m openings between/beside them are
+      // the ruined gable walk-throughs
+      { asset: 'churchWallWindow', x: -3.5, z: -66, rotY: 3.14, scale: 2.2 },
+      // gap — north face ruined section (walk-through)
+      { asset: 'churchWallWindow', x: 3.5, z: -66, rotY: 3.14, scale: 2.2 },
+      // K4 interior: pulpit faces WEST toward the nave (rotY -1.57); IO
+      // wake-34 FINAL seat (5,-63): the first seat (10.5,-62) failed the NW
+      // locked-buttress floor (gap 0.71); (5,-64.5) failed the north-window
+      // ring (win3 gap 0.97). FINAL clears win3 1.55, win4 3.25, bandit 3.61,
+      // archway 6.26, altar 8.16, beams (raised, exempt), waymarker 2.62
+      { asset: 'churchPulpit', x: 5, z: -63, rotY: -1.57, scale: 2.0 },
+      // K4: second pew + intact pew REJECTED at review (probe: no legal seat —
+      // the archway/stump/node clearance web owns the east interior);
+      // churchPewBroken (16,-52) + the banditCampfire camp stand in
+      // congregational wear per the scene-01 ossuary anchor
+      // K5 ALTAR END: altar face points WEST into the nave; scale 2.2 =>
+      // 4.4 m wide, 1.16*2.2 = 2.55 m tall GLB bbox run (table top ≈ 1.16*2.2/2)
+      { asset: 'churchAltar', x: 14.5, z: -58, rotY: -1.57, scale: 2.2 },
+      // K5: candelabra ON the altar (same x/z, R3 stack exemption — this pair
+      // overlaps on purpose). Hosted-stack seat: y = altar-top plane below.
+      // Measured GLB groundMinY (cc-b1 trimesh probe) = -0.5974 at scale 1 =>
+      // altar top at 2.2 = (1.1612 + 0.5974) * 2.2 ≈ 3.867 m above its ground
+      // plane; candelabra groundMinY -1.0042 * 0.45 ≈ -0.452 re-seats its feet
+      // to that plane: y ≈ 3.415. (No-probe fallback was y 2.1; the measured
+      // value wins per spec R3.)
+      { asset: 'candelabra', x: 14.5, z: -58, rotY: -1.57, scale: 0.45, y: 3.415 },
+      // K6 gable fragment ABOVE the altar end: broken window in the collapsed
+      // gable (scene-01 moonbeam read), raised + noCollide (raised-row grammar);
+      // floor-level gable seating was probed and REJECTED (collides with the
+      // LOCKED pewBroken + altar circle). IO wake-34 FINAL: altar-stack x/z
+      // (14.5,-58) y 2.15 — V-WAKE34 A1: y/nocollide rows are R1/R2-exempt;
+      // the R3 interior rule (raised circle not covering altar/pulpit centres
+      // within 1 m) is scoped to WALKABLE-FLOOR raised rows (beams); the stack
+      // pair + gable window sit INSIDE the altar's own circle by design
+      { asset: 'churchWindowFrame', x: 14.5, z: -58, rotY: 1.57, scale: 1.0, y: 2.15, noCollide: true },
+      // K7 roof: 2x churchRoofBeam ACROSS the nave (rotY ≈ ±1.57 so the ~1.98 m
+      // length runs along z), scale 7.2 => ~14.2 m span (seats z -65..-51),
+      // raised y 3.9/4.0, noCollide (CC-C8 raised-row grammar) — the surviving
+      // west-half rafters over the nave
+      { asset: 'churchRoofBeam', x: -6, z: -58, rotY: 1.57, scale: 7.2, y: 4.0, noCollide: true },
+      { asset: 'churchRoofBeam', x: -2, z: -58, rotY: -1.57, scale: 7.2, y: 3.9, noCollide: true },
+      // K8 fallen rafter: GROUND debris — keeps its collider circle (r ≈ 2.57 m
+      // at 2.6), no y, no noCollide. IO wake-34 FINAL seat (7,-69) rotY 2.5
+      // north face — old (−9,−55) failed campfire/bandit floors; (18,-49.5)
+      // failed the yewTree (15.1,-49.5) + mossBoulder (17.1,-52.8) rings.
+      // FINAL clears: win4 0.61 (wall floor 0.6), yewTree (13.4,-70.9) 2.32,
+      // pulpit 2.67, bandit 8.8, ghoul 16.5, campfire 15.0, archway 11.05,
+      // BC door 14.7, keepOut ellipse e 0.886
+      { asset: 'churchRoofBeam', x: 7, z: -69, rotY: 2.5, scale: 2.6 },
+      // K9 nave dressing: west-half rubble; IO wake-34 FINAL seats (probe
+      // floors vs LOCKED buttress/fallenLog rings)
+      { asset: 'rubblePile', x: -13.5, z: -59.5, rotY: 0.7, scale: 1.3 },
+      { asset: 'rubblePile', x: -6.4, z: -64, rotY: 4.1, scale: 1.2 }
     ],
     // Stage 2 gather nodes: darkwood band (|x| < 42, z -82..-31), clear of
     // props 3-4m / enemies 5m / spawn 6m, 6m apart (gen_gather_nodes.py)
@@ -89846,7 +89932,13 @@ window.WH_CONFIG = {
     // region A cemetery yard + its tree ring = the gather-node graveyard zone
     // (scratch/gen_gather_nodes.py in_graveyard) - open combat ground stays open.
     keepOut: [
-      { regionId: 'hold_outskirts', x: 0, z: 10, rx: 36, rz: 33 }
+      { regionId: 'hold_outskirts', x: 0, z: 10, rx: 36, rz: 33 },
+      // CC-B1 (2026-11-07): ruined-chapel nave at region-B centre (footprint
+      // x -16..17, z -66..-50) — Round-E scatter trees/bushes never spawn
+      // inside. Grass stays (moss floor inside the ruin reads canon). WAKE-34
+      // IO amendment: rx 21 rz 12.5 — the re-seated west wall (x -18) and the
+      // K2 free-standing buttress (-11.8,-52) sit inside, whole ruin covered.
+      { regionId: 'darkwood_edge', x: 0, z: -58, rx: 21, rz: 12.5 }
     ],
     treesExtra: {
       minSpacingM: 7,                 // to every tree (CONFIG + scatter)
@@ -93410,6 +93502,16 @@ window.WH_ICONS = {
     churchPewBroken: 'art-direction/3d/assets/church-kit/church-pew-broken-pixelated.glb',
     ironFenceSection: 'art-direction/3d/assets/church-kit/iron-fence-section-pixelated.glb',
     ironFenceCorner: 'art-direction/3d/assets/church-kit/iron-fence-corner-pixelated.glb',
+    // CC-B1 (2026-11-07): ruined-chapel landmark pieces (doc 61 P1-2, region B);
+    // all on-disk -pixelated.glb variants, manifest rows only (dims/colliders
+    // derive at load — see io/specs/cc-b1-chapel-spec.md)
+    churchWallWindow: 'art-direction/3d/assets/church-kit/church-wall-window-pixelated.glb',
+    churchWindowFrame: 'art-direction/3d/assets/church-kit/church-window-frame-pixelated.glb',
+    churchRoofBeam: 'art-direction/3d/assets/church-kit/church-roof-beam-pixelated.glb',
+    churchAltar: 'art-direction/3d/assets/church-kit/church-altar-pixelated.glb',
+    churchPulpit: 'art-direction/3d/assets/church-kit/church-pulpit-pixelated.glb',
+    churchPew: 'art-direction/3d/assets/church-kit/church-pew-pixelated.glb',
+    candelabra: 'art-direction/3d/assets/church-kit/candelabra-pixelated.glb',
     // CC-C17 (2026-10-20): Old King's Forest kit (Astrabot Meshy bakes, 512
     // NEAREST + 5-bit; ~1.9-unit normalized GLBs). Region C streaming props -
     // NOT bootCritical. Barn/silo/haybale/rubble/ruin-wall bakes are on disk
