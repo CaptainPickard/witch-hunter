@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Witch Hunter v9 - EPR1 Combat (build 11-06 22:16Z e694562)</title>
+<title>Witch Hunter v9 - EPR1 Combat (build 11-07 03:04Z eb6d488)</title>
 
 <style>
 /* Witch Hunter prototype v1 - HUD + overlay styling */
@@ -88891,6 +88891,199 @@ window.WH_CONFIG = {
     ]
   },
 
+  // ============================== CC-H1 LORD'S HOLD =============================
+  // CC-H1 (doc 64 slot H1; doc 66 sec 8 recipe instance): the FIRST surface hold
+  // hub, reached from C's north road. Shaped EXACTLY on regionF's sibling block
+  // (Io spec sec 2; scratch/cc-h1/seat_scan.py frozen seat; amendments A/B/C
+  // applied). First big disc (r 126 vs F's 26), first constantPhase-free
+  // daylight-capable pocket, first zero-enemy region (a hub, not a hunt: the
+  // garrison lives in H2). The hold disc sits fully OUTSIDE C's world footprint
+  // (C's disc spans to z -646; the hold's south edge z -696 leaves a 50 m gap);
+  // H1 is a FLAT disc with NO terrain row, so its ground has zero world-coords
+  // overlap - the one-active-region law hides C while H1 is active.
+  regionG: {
+    id: 'lords_hold',
+    name: "Lord's Hold",               // double-quoted: the raw apostrophe
+    center: { x: 0, z: -822 },
+    groundRadius: 126,                 // playRadius 124.5 (r 126 minus playerMargin 1.5)
+    groundY: 0,                        // flat disc
+    groundColor: 0x2f3339,             // cold stone slate
+    groundColor2: 0x26292e,            // shadow secondary
+    groundSeed: 1662061440,            // FRESH - differs from the landed 1662061217/1218/1219/1329
+    scatter: false,                    // hand rows only: the hold yard is deliberately open
+    spawn: { x: 0, z: -711 },          // just inside the south gate (death without a camp)
+    gravityY: -22,                     // every landed region's value
+    // sec DARKNESS: density 0.08 -> d95 = sqrt(-ln 0.05)/0.08 ~ 21.6 m: the
+    // generous footprint READS across the yard; the hold runs the shared
+    // day/night clock (NO constantPhase row - doc 66 sec 2 surface hold law).
+    fogColor: 0x8a8f96,
+    fogDensity: 0.08,
+    ambientLightLevel: 0.10,
+    // C<->G door (region-defs connections[5]). Shaped EXACTLY on regionF.door: the
+    // walk-back plane exists ONLY from the hold side. planeZ = the gate plane
+    // (4 m inside the disc's south edge z -696: walk-out law); the window =
+    // the 9 m lane; interact = ON C's north road landing band (seat_scan.py
+    // hook (5.0, -500), 96.1 m clear of the crypt hook AND the notch mouth,
+    // every C prop >= 6.0 m, standable rC 134.1 <= 278.5). land = per-destination
+    // rows (x NOT preserved per the D/E/F law). fadeSec = the black dip.
+    door: {
+      planeZ: -700,                      // the gate plane (tail 4 inside the south edge -696)
+      doorX: 0,
+      doorHalfWidth: 4.5,                // the walk-in window |x| <= 4.5
+      suspendDepthM: 0,
+      wallGapPadM: 0,
+      interactM: 3.5,
+      interactAt: { x: 5.0, z: -500 },   // C side: ON the north road landing band
+      land: {
+        forest_of_the_old_king: { x: 5, z: -500, faceX: 5, faceZ: -488 },
+        lords_hold:           { x: 0, z: -711, faceX: 0, faceZ: -802 }
+      },
+      fadeIn: 0.3,
+      fadeOut: 0.5,
+      exitFadeOut: 0.8,
+      text: { prompt: "E - Enter Lord's Hold" }
+    },
+    // enemies: ZERO rows (a hub, not a hunt; the garrison lives in H2's round)
+    enemies: [],
+    // CC-H1 THE CURTAIN WALL + hold dressing (io spec sec 2; every row >= 4.0 m raw
+    // of the ring colliders, >= 6.0 m from spawn, >= 4.0 m mutual - the
+    // licensed lanternPost/parapet pair sits at exactly 4.00; probes:
+    // scratch/cc-h1/seat_scan.py + scratch/cc-h1/clearance.py).
+    props: [
+      { asset: 'whWallA', x: 4.4, z: -696.08, rotY: 3.18, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: 13.17, z: -696.69, rotY: 3.25, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: 21.88, z: -697.91, rotY: 3.32, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: 30.48, z: -699.74, rotY: 3.39, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: 38.94, z: -702.17, rotY: 3.46, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: 47.2, z: -705.17, rotY: 3.53, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: 55.23, z: -708.75, rotY: 3.6, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: 63.0, z: -712.88, rotY: 3.67, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: 70.46, z: -717.54, rotY: 3.74, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: 77.57, z: -722.71, rotY: 3.8, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: 84.31, z: -728.36, rotY: 3.87, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: 90.64, z: -734.47, rotY: 3.94, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: 96.52, z: -741.01, rotY: 4.01, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: 101.94, z: -747.94, rotY: 4.08, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: 106.85, z: -755.23, rotY: 4.15, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: 111.25, z: -762.85, rotY: 4.22, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: 115.11, z: -770.75, rotY: 4.29, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: 118.4, z: -778.91, rotY: 4.36, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: 121.12, z: -787.27, rotY: 4.43, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: 123.25, z: -795.8, rotY: 4.5, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: 124.77, z: -804.46, rotY: 4.57, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: 125.69, z: -813.21, rotY: 4.64, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: 125.69, z: -830.79, rotY: 4.78, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: 124.77, z: -839.54, rotY: 4.85, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: 123.25, z: -848.2, rotY: 4.92, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: 121.12, z: -856.73, rotY: 4.99, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: 118.4, z: -865.09, rotY: 5.06, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: 115.11, z: -873.25, rotY: 5.13, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: 111.25, z: -881.15, rotY: 5.2, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: 106.85, z: -888.77, rotY: 5.27, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: 101.94, z: -896.06, rotY: 5.34, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: 96.52, z: -902.99, rotY: 5.41, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: 90.64, z: -909.53, rotY: 5.48, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: 84.31, z: -915.64, rotY: 5.55, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: 77.57, z: -921.29, rotY: 5.62, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: 70.46, z: -926.46, rotY: 5.69, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: 63.0, z: -931.12, rotY: 5.76, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: 55.23, z: -935.25, rotY: 5.83, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: 47.2, z: -938.83, rotY: 5.9, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: 38.94, z: -941.83, rotY: 5.97, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: 30.48, z: -944.26, rotY: 6.04, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: 21.88, z: -946.09, rotY: 6.11, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: 13.17, z: -947.31, rotY: 6.18, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: 4.4, z: -947.92, rotY: 6.25, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: -4.4, z: -947.92, rotY: 0.03, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: -13.17, z: -947.31, rotY: 0.1, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: -21.88, z: -946.09, rotY: 0.17, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: -30.48, z: -944.26, rotY: 0.24, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: -38.94, z: -941.83, rotY: 0.31, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: -47.2, z: -938.83, rotY: 0.38, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: -55.23, z: -935.25, rotY: 0.45, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: -63.0, z: -931.12, rotY: 0.52, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: -70.46, z: -926.46, rotY: 0.59, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: -77.57, z: -921.29, rotY: 0.66, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: -84.31, z: -915.64, rotY: 0.73, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: -90.64, z: -909.53, rotY: 0.8, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: -96.52, z: -902.99, rotY: 0.87, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: -101.94, z: -896.06, rotY: 0.94, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: -106.85, z: -888.77, rotY: 1.01, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: -111.25, z: -881.15, rotY: 1.08, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: -115.11, z: -873.25, rotY: 1.15, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: -118.4, z: -865.09, rotY: 1.22, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: -121.12, z: -856.73, rotY: 1.29, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: -123.25, z: -848.2, rotY: 1.36, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: -124.77, z: -839.54, rotY: 1.43, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: -125.69, z: -830.79, rotY: 1.5, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: -126.0, z: -822.0, rotY: 1.57, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: -125.69, z: -813.21, rotY: 1.64, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: -124.77, z: -804.46, rotY: 1.71, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: -123.25, z: -795.8, rotY: 1.78, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: -121.12, z: -787.27, rotY: 1.85, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: -118.4, z: -778.91, rotY: 1.92, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: -115.11, z: -770.75, rotY: 1.99, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: -111.25, z: -762.85, rotY: 2.06, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: -106.85, z: -755.23, rotY: 2.13, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: -101.94, z: -747.94, rotY: 2.2, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: -96.52, z: -741.01, rotY: 2.27, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: -90.64, z: -734.47, rotY: 2.34, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: -84.31, z: -728.36, rotY: 2.41, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: -77.57, z: -722.71, rotY: 2.48, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: -70.46, z: -717.54, rotY: 2.55, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: -63.0, z: -712.88, rotY: 2.62, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: -55.23, z: -708.75, rotY: 2.69, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: -47.2, z: -705.17, rotY: 2.76, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: -38.94, z: -702.17, rotY: 2.83, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: -30.48, z: -699.74, rotY: 2.9, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: -21.88, z: -697.91, rotY: 2.97, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallA', x: -13.17, z: -696.69, rotY: 3.04, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+      { asset: 'whWallB', x: -4.4, z: -696.08, rotY: 3.11, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      // -- CC-H1 THE WAR-TABLE HUB (the hold's identity, 82 m up the lane from
+      //    the gate): ONE stoneSteps dais plinth at (0, -780). No table-shaped
+      //    asset in the manifest - the gap is RECORDED in the build note (doc 66
+      //    sec 8): the dais + banners carry the tableau v1.
+      { asset: 'stoneSteps', x: 0, z: -780, rotY: 0, scale: 1.4 },
+      // -- 4x banditCampfire braziers at the hub square (8.0 m from the hub,
+      //    11.3 m mutual): lightSockets.banditCampfire (hf 0.55, intensity 3.2)
+      //    = the amber accent. AMENDMENT B: the warm FAMILY is FIVE sockets -
+      //    these 4 + the gate lanternPost below (intensity 9.0), one family.
+      { asset: 'banditCampfire', x: -5.66, z: -776.34, rotY: 0, scale: 1.8 },
+      { asset: 'banditCampfire', x: 5.66, z: -776.34, rotY: 0, scale: 1.8 },
+      { asset: 'banditCampfire', x: -5.66, z: -787.66, rotY: 0, scale: 1.8 },
+      { asset: 'banditCampfire', x: 5.66, z: -787.66, rotY: 0, scale: 1.8 },
+      // -- CC-H1 banner dressing on the gate approach: 6x okFenceStonewall low
+      //    parapet walls flanking the lane (x -13.5/-6.5/6.5/13.5 at
+      //    z -702/-704/-706, alternating sides; both seat columns clear of
+      //    the 4.5 m window).
+      { asset: 'okFenceStonewall', x: -13.5, z: -702, rotY: 6.24, scale: 1.2 },
+      { asset: 'okFenceStonewall', x: -6.5, z: -704, rotY: 6.24, scale: 1.2 },
+      { asset: 'okFenceStonewall', x: 6.5, z: -702, rotY: 6.24, scale: 1.2 },
+      { asset: 'okFenceStonewall', x: 13.5, z: -704, rotY: 6.24, scale: 1.2 },
+      { asset: 'okFenceStonewall', x: -13.5, z: -706, rotY: 6.24, scale: 1.2 },
+      { asset: 'okFenceStonewall', x: 13.5, z: -706, rotY: 6.24, scale: 1.2 },
+      // -- CC-H1 barracks corner: 3x whTent (>= 4 m mutual, >= 30 m off the lane)
+      { asset: 'whTent', x: 38, z: -796, rotY: 1.2, scale: 1.0 },
+      { asset: 'whTent', x: 44, z: -802, rotY: 1.8, scale: 1.0 },
+      { asset: 'whTent', x: 32, z: -804, rotY: 0.9, scale: 1.0 },
+      // -- CC-H1 chapel corner: archway facing the yard + 2 buttresses flanking
+      { asset: 'churchArchway', x: -40, z: -800, rotY: 3.14, scale: 2.2 },
+      { asset: 'churchCornerButtress', x: -49, z: -804, rotY: 3.5, scale: 2.0 },
+      { asset: 'churchCornerButtress', x: -49, z: -796, rotY: 2.8, scale: 2.0 },
+      // -- CC-H1 yard dressing: 4 mossBoulders + 2 rubble piles scattered wide
+      { asset: 'mossBoulder', x: 20, z: -830, rotY: 1.94, scale: 1.5 },
+      { asset: 'mossBoulder', x: -22, z: -826, rotY: 0.73, scale: 2.2 },
+      { asset: 'mossBoulder', x: 52, z: -842, rotY: 4.82, scale: 1.7 },
+      { asset: 'mossBoulder', x: -58, z: -838, rotY: 2.43, scale: 1.9 },
+      { asset: 'rubblePile', x: 12, z: -724, rotY: 3.30, scale: 1.1 },
+      { asset: 'rubblePile', x: -16, z: -736, rotY: 5.10, scale: 1.1 },
+      // -- CC-H1 gate lanternPost at (6.5, -706): THE spec's own correction
+      //    (x 2.5 sat INSIDE the 4.5 m window; 6.5 keeps the lane clear).
+      //    lightSockets.lanternPost: hf 0.76, intensity 9.0.
+      { asset: 'lanternPost', x: 6.5, z: -706, rotY: 4.72, scale: 2.535 }
+    ],
+  },
+
   // Round E (io/missions/2026-10-05-cc-roundE-veg.md): seeded vegetation
   // scatter, built by region-manager whScatterPlan. PARAMETERS ONLY - no
   // placement tables: every position is a pure function of this block, the
@@ -91750,6 +91943,46 @@ window.WH_ICONS = {
   // chain's direction).
   connections[4].sides[CFG.regionE.id] = -1;
   connections[4].sides[CFG.regionF.id] = 1;
+
+  // CC-H1 lords_hold: the FIRST surface hold hub (own disc r 126 north of C,
+  // outside C's footprint). side -1 = the plane-0 convention only (G is on
+  // no plane-0 side; like E/F above). C0-7 law: the hold never lies ON the
+  // C-side plane, so sideOfBoundary(C, 5) = -1.
+  regions[CFG.regionG.id] = makeRegion(CFG.regionG, -1);
+
+  // CC-H1 lords_hold C<->G gate, shaped EXACTLY on the CC-AD1 crypt row above
+  // (connections[3]) with AMENDMENT A: `from` = CFG.regionC.id (H1 hangs off
+  // C's north road, NOT the galleries chain). Seat probe:
+  // scratch/cc-h1/seat_scan.py. Axis z, the plane = the hold's gate plane
+  // (G.door.planeZ), the window = the 9 m gate lane, walkFrom the hold ONLY
+  // (walk-back; in C the plane sits outside C's playable band: no crossing,
+  // no clamp). The C-side hook sits ON the north road landing band
+  // (door.interactAt, radius interactM). land rows per region.
+  var GD = CFG.regionG.door;
+  connections.push({
+    from: CFG.regionC.id,
+    to: CFG.regionG.id,
+    axis: 'z',
+    planeCoord: GD.planeZ,
+    sides: {},
+    door: {
+      doorX: GD.doorX,
+      doorHalfWidth: GD.doorHalfWidth,
+      suspendDepthM: GD.suspendDepthM,
+      wallGapPadM: GD.wallGapPadM,
+      arch: null,
+      gatedTo: null,
+      walkFrom: CFG.regionG.id,
+      interact: { from: CFG.regionC.id, x: GD.interactAt.x, z: GD.interactAt.z, radius: GD.interactM },
+      land: GD.land
+    }
+  });
+  // D-symmetry SIDES TABLE: G occupies z <= planeZ (-822 < -700); C is the
+  // FROM region on this chain and occupies z > planeZ. IDENTICAL to conn[3]'s
+  // crypt shape (C -1, pocket +1) - unlike conn[4] no flip needed because C
+  // is both the from AND the z > planeZ region on this chain.
+  connections[5].sides[CFG.regionC.id] = -1;
+  connections[5].sides[CFG.regionG.id] = 1;
 
   // ---- THREE-free transition helpers (used by region-manager and tests) ------
 
