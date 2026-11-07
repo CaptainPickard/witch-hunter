@@ -1290,6 +1290,9 @@ window.WH_CONFIG = {
         line2: 'Into the Old King\'s Barrow, the den in the hillside due west of here. Follow the setting sun past the dead trees.',
         line3: 'Bring her home. Whatever it costs. I will watch the road for you.',
         repeat: 'The barrow door, hunter. Bring her home.',
+        // CC-AF2: repeat line by Standing tier (io/specs/cc-af2-affinity-dialog-spec.md rule 3).
+        lineAffinityGood: 'Aldric: \'You are welcome at any fire in the camp, hunter. Word of the daughter travels further than you think.\'',
+        lineAffinityDark: 'Aldric: \'The camp watches its fires when you pass, hunter. I have my daughter thanks to you — I will not watch too closely.\'',
         // CC-C11: rescue and homecoming copy (Nicko tunes).
         lineRescue: 'You are safe now. Go to your father; I will follow.',
         lineRescued: 'She is home, hunter. You have given me back my world.',

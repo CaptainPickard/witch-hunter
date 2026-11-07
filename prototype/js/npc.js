@@ -154,6 +154,16 @@
     dlg = { root: r, line: line, cont: cont };
   }
 
+  // CC-AF2: repeat-line resolution by Standing tier (decided on tier id only;
+  // WH_AFF absent, tier() falsy or tierless -> the untouched v8 repeat line).
+  function repeatLine() {
+    var t = window.WH_AFF && typeof window.WH_AFF.tier === 'function' ? window.WH_AFF.tier() : null;
+    if (!t) return D.repeat;
+    if (t.id === 'honored' || t.id === 'sworn-light') return D.lineAffinityGood;
+    if (t.id === 'feared' || t.id === 'sworn-dark') return D.lineAffinityDark;
+    return D.repeat;                                            // neutral -> byte-identical v8 repeat
+  }
+
   function showLine() {
     var last = lineIdx < 0 || lineIdx >= 2;
     dlg.line.textContent = lineIdx < 0 ? D.repeat : D['line' + (lineIdx + 1)];
@@ -161,6 +171,8 @@
     if (lineIdx === -2) dlg.line.textContent = D.lineRescued;
     if (lineIdx === -3) dlg.line.textContent = D.lineComplete;
     if (lineIdx === -4) dlg.line.textContent = D.lineRescue;
+    // CC-AF2: only the plain repeat (-1) is tier-reactive; sentinels and quest flow stay byte-identical.
+    if (lineIdx === -1) dlg.line.textContent = repeatLine();
     dlg.cont.style.display = last ? 'none' : '';
     // line 3 = the quest seed: available -> active, the one assignment site
     if (lineIdx === 2 && quest === Q.states[0]) quest = 'active';
