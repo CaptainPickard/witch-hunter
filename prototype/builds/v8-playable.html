@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Witch Hunter v9 - EPR1 Combat (build 11-07 07:03Z 322ac1c)</title>
+<title>Witch Hunter v9 - EPR1 Combat (build 11-07 07:44Z 16ba05a)</title>
 
 <style>
 /* Witch Hunter prototype v1 - HUD + overlay styling */
@@ -88530,6 +88530,9 @@ window.WH_CONFIG = {
         line2: 'Into the Old King\'s Barrow, the den in the hillside due west of here. Follow the setting sun past the dead trees.',
         line3: 'Bring her home. Whatever it costs. I will watch the road for you.',
         repeat: 'The barrow door, hunter. Bring her home.',
+        // CC-AF2: repeat line by Standing tier (io/specs/cc-af2-affinity-dialog-spec.md rule 3).
+        lineAffinityGood: 'Aldric: \'You are welcome at any fire in the camp, hunter. Word of the daughter travels further than you think.\'',
+        lineAffinityDark: 'Aldric: \'The camp watches its fires when you pass, hunter. I have my daughter thanks to you — I will not watch too closely.\'',
         // CC-C11: rescue and homecoming copy (Nicko tunes).
         lineRescue: 'You are safe now. Go to your father; I will follow.',
         lineRescued: 'She is home, hunter. You have given me back my world.',
@@ -104449,6 +104452,16 @@ window.WH_ICONS = {
     dlg = { root: r, line: line, cont: cont };
   }
 
+  // CC-AF2: repeat-line resolution by Standing tier (decided on tier id only;
+  // WH_AFF absent, tier() falsy or tierless -> the untouched v8 repeat line).
+  function repeatLine() {
+    var t = window.WH_AFF && typeof window.WH_AFF.tier === 'function' ? window.WH_AFF.tier() : null;
+    if (!t) return D.repeat;
+    if (t.id === 'honored' || t.id === 'sworn-light') return D.lineAffinityGood;
+    if (t.id === 'feared' || t.id === 'sworn-dark') return D.lineAffinityDark;
+    return D.repeat;                                            // neutral -> byte-identical v8 repeat
+  }
+
   function showLine() {
     var last = lineIdx < 0 || lineIdx >= 2;
     dlg.line.textContent = lineIdx < 0 ? D.repeat : D['line' + (lineIdx + 1)];
@@ -104456,6 +104469,8 @@ window.WH_ICONS = {
     if (lineIdx === -2) dlg.line.textContent = D.lineRescued;
     if (lineIdx === -3) dlg.line.textContent = D.lineComplete;
     if (lineIdx === -4) dlg.line.textContent = D.lineRescue;
+    // CC-AF2: only the plain repeat (-1) is tier-reactive; sentinels and quest flow stay byte-identical.
+    if (lineIdx === -1) dlg.line.textContent = repeatLine();
     dlg.cont.style.display = last ? 'none' : '';
     // line 3 = the quest seed: available -> active, the one assignment site
     if (lineIdx === 2 && quest === Q.states[0]) quest = 'active';
