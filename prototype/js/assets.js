@@ -158,6 +158,11 @@
     // CHARACTERS row (0 clips) - anim.js RIGID_CLIPS placeholders play.
     rotmotherBody: 'art-direction/3d/assets/races/rotmother-pixelated.glb',
     rotspawnBody: 'art-direction/3d/assets/races/rotspawn-pixelated.glb',
+    // CC-H4 (2026-11-07): the Scar-Reader wears the SAME unrigged rot chassis
+    // as the rot mother (separate registry key = separate cached template =
+    // fully isolated bodies). Per-instance tint (sec 2.3) SKIPPED + disclosed
+    // in the CC-H4 build note. Still no CHARACTERS row (0 clips).
+    scarreaderBody: 'art-direction/3d/assets/races/rotmother-pixelated.glb',
     // CC-C10 (2026-10-25): Farmer Aldric PLACEHOLDER body = the RAW rigged dwarf
     // smith (28,024 tris, 2048 JPEG texture, 6 WH_* clips unused). IO ruling B3b:
     // art-law waiver until Astrabot's farmer lands; no CHARACTERS / BODY_PNG row,

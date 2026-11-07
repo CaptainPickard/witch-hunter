@@ -1300,7 +1300,10 @@
   // XP, so a dying mother is not a minion piñata).
   Enemy.prototype.lairOnDeath = function () {
     var L = this.lair;
-    LAIR_STATE[L.nest.letter] = { cleared: true, day: gameDay() };
+    // CC-H4: the entry carries the type's save-key prefix (undefined for the
+    // mother's row -> lairFlagPrefixed emits the literal rotmother_cleared_X)
+    LAIR_STATE[L.nest.letter] = { cleared: true, day: gameDay(),
+      prefix: (this.cfg.lair && this.cfg.lair.flagPrefix) || undefined };
     L.spawnT = 0;
     this.slamCd = 0;
     if (this.cfg.minions.dieOnMasterDeath) {
@@ -1608,7 +1611,13 @@
     cue.visible = opacity > 0.01;
     if (!cue.visible) return;
     cue.material.opacity = opacity;
-    cue.material.color.copy(CUE_DARK).lerp(CUE_HOT, heat);
+    // CC-H4 (+ AMB-3 PER-ELEMENT fallback): a row may carry cueDark / cueHot
+    // (the scar-reader's crimson pair); a missing key falls back to the SHARED
+    // constant for that element alone, so a row with neither renders the exact
+    // current colors (the mother's path byte-equal, no undefined lerp).
+    var dark = (this.cfg && this.cfg.cueDark) ? CUE_DARK.clone().setHex(this.cfg.cueDark) : CUE_DARK;
+    var hot = (this.cfg && this.cfg.cueHot) ? CUE_HOT.clone().setHex(this.cfg.cueHot) : CUE_HOT;
+    cue.material.color.copy(dark).lerp(hot, heat);
     // seat every vertex on the ground under it (yawFrame local -> world)
     var G = window.WH_GROUND, rid = this.homeRegionId, terr = G && G.has(rid);
     var p = cue.geometry.attributes.position, arr = p.array;
@@ -1679,7 +1688,7 @@
     var out = {};
     Object.keys(LAIR_STATE).forEach(function (letter) {
       var st = LAIR_STATE[letter];
-      if (st && st.cleared) out[lairFlag(letter)] = st.day;
+      if (st && st.cleared) out[(st.prefix || 'rotmother') + '_cleared_' + letter] = st.day;
     });
     return out;
   };
@@ -1687,9 +1696,14 @@
     LAIR_STATE = {};
     if (!block || typeof block !== 'object') return;
     Object.keys(block).forEach(function (k) {
-      var m = /^rotmother_cleared_([A-Z])$/.exec(k);
+      // CC-H4: any lowercase prefix + uppercase letter (old rotmother keys
+      // match with group 1 = 'rotmother'); the LOADED prefix rides the entry
+      // so a later capture re-emits the same key shape the profile came with.
+      var m = /^([a-z][a-z0-9]*)_cleared_([A-Z])$/.exec(k);
       var day = block[k];
-      if (m && typeof day === 'number' && isFinite(day)) LAIR_STATE[m[1]] = { cleared: true, day: Math.floor(day) };
+      if (m && typeof day === 'number' && isFinite(day)) {
+        LAIR_STATE[m[2]] = { cleared: true, day: Math.floor(day), prefix: m[1] };
+      }
     });
   };
 
@@ -1732,5 +1746,5 @@
   Enemy.onKilled = null;              // stage 2: fn(enemy), set by game.js (corpse loot)
 
   window.WH_Enemy = Enemy;
-  window.WH_ENEMY_TYPES = ['bandit', 'ghoul', 'wolf', 'rotmother', 'rotspawn'];
+  window.WH_ENEMY_TYPES = ['bandit', 'ghoul', 'wolf', 'rotmother', 'rotspawn', 'scarreader'];
 })();

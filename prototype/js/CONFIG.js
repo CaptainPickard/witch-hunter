@@ -2154,6 +2154,31 @@ window.WH_CONFIG = {
       { type: 'ghoul', x: -15, z: -708 },
       { type: 'ghoul', x: 15, z: -708 }
     ],
+    // CC-H4: the Scar-Reader nests at the wake-21-reserved boss space (0,-709),
+    // 9.0 m south of the spire-root column (its collider), inside the vault ring.
+    // SHAPE NOTE (V-5/N-2): the row CARRIES x/z (regionD legacy shape) because
+    // the live constructor path consumes them - region-manager buildRegion
+    // (~1912) passes row e.x/e.z straight into new WH_Enemy(.., e.x, e.z);
+    // a bare { type } row's undefined x/z would seat the body at world (0,0)
+    // (THREE r185 Vector3 defaults x=z=0) and NaN her on revive. The NEST
+    // itself (pool / light / fog / save letter 'J') is derived from
+    // CONFIG.enemy.scarreader.lair via lairNest regardless - the two agree.
+    lairs: [
+      { type: 'scarreader', x: 0, z: -709 }
+    ],
+    // CC-H4 nest dressing: the pact-scar pool + crimson light/fog (the
+    // concept-08 accent family); textureSeed 20261107 FRESH (den pool 20261012,
+    // ground 1651/1654, J groundSeed 1662061763).
+    rotLair: {
+      pool: { radius: 9, segments: 40, rings: 5, lift: 0.08,
+        color: 0x1a0f12, color2: 0x2a1116, speck: 0x5a2028, textureSeed: 20261107,
+        edgeFeather: 0.22 },
+      light: { height: 1.3, intensity: 1.7, color: 0xd85050 },
+      fog: { cards: 8, radiusMin: 2.0, radiusMax: 7.0, heightMin: 0.4, heightMax: 1.4,
+        width: 3.2, height: 1.3, opacity: 0.15, color: 0x8a4550, driftSpeed: 0.12,
+        showWithinM: 70 },
+      cullM: 170
+    },
   props: [
     // -- THE GAUNTLET: two mourners per side watching the processional
     { asset: 'mourningStatue', x: -7, z: -712, rotY: 4.00, scale: 1.00 },
@@ -2908,6 +2933,43 @@ window.WH_CONFIG = {
       maxCorpses: 4,                  // and never more than this many lie around (oldest goes first)
       riseSec: 0.8                    // spawn: the 'spare' emerge clip length
     },
+    // CC-H4 (2026-11-07): THE SCAR-READER, first warden of the Veil delve
+    // (doc 47 V3 THE PACT-SCAR + boss remix law: ghoul pool (45 hp / 8 dmg) x
+    // boss weights, size factor 3.0, kit verbs re-costed - all PROPOSED, Nicko
+    // tunes): hp 400 (~x8.9 pool), dmg 22 (~x2.75), wider slam arc (210 vs the
+    // mother's 180) tracked faster (70 vs 50 deg/s), venom one step hotter
+    // (dps 4.0 vs 3.5). crimson slam telegraph (concept-08: the ONE accent
+    // family extends into the boss cue; a row WITHOUT these keys renders the
+    // shared green pair - AMB-3 per-element fallback, rotmother path equal).
+    // Minions are GHOULS (doc 47 V3 'undead drawn to the wound') - NO new
+    // minion type this round; scarlings-as-new-type belongs to a later delve
+    // round. Second boss-slam lair: lair = region-local (x, y=z) in region J,
+    // flagPrefix = the save-key prefix (scarreader_cleared_J); regionJ.lairs
+    // CARRIES x: 0, z: -709 (regionD legacy shape - see the regionJ note: the
+    // Enemy constructor consumes row x/z for the BODY, lairNest consumes .lair
+    // for the nest/pool/light/save letter 'J').
+    scarreader: {
+      name: 'The Scar-Reader', hp: 400, dmg: 22, speed: 4.8, aggro: 16,
+      pattern: 'boss-slam',
+      slamRadius: 7.5, slamArcDeg: 210, slamWindup: 1.05, slamActive: 0.22,
+      slamRecover: 1.15, slamCooldown: 5.5, slamTrackDegPerSec: 70,
+      engageRange: 7.5,
+      poison: { dps: 4.0, duration: 5.0, slow: 0.5 },   // scar venom (poison-lite v1)
+      poisonText: 'Scar venom burns in the wound',
+      slamKnockbackM: 6.0, slamKnockbackSec: 0.32,
+      cueDark: 0x1a0508, cueHot: 0xd84a4a,              // crimson slam telegraph
+      scale: 3.0,                                        // doc 47 size-factor law
+      lair: { x: 0, y: -9, region: 'J', flagPrefix: 'scarreader' },   // world (0,-709)
+      lairRadius: 16,
+      rearm: { days: 3, trigger: 'proximity', radius: 14 },
+      loot: [{ mat: 'rot-silk', n: [2, 4] }, { mat: 'rot-gland', n: [1, 2] }],
+      minions: { asset: 'ghoul', cap: 2, interval: 7.0, range: 5.0,
+                 dieOnMasterDeath: true },               // undead drawn to the wound
+      radius: 1.3,
+      corpseLingerSec: 10, maxCorpses: 12,
+      riseSec: 1.4
+    },
+
     // CC-C5: enemy type -> manifest body + anim.js VARIANTS key (was the
     // bandit/ghoul ternaries in region-manager buildRegion / enemy setBody;
     // an unknown type keeps the old fallbacks: ghoulBody / 'bandit').
@@ -2917,9 +2979,10 @@ window.WH_CONFIG = {
     // its universal 6-clip set - anim.js universal-name fallback covers the
     // rest, ~5 benign anim warns per coven body; death IS universal WH_Death).
     bodyByType: { bandit: 'banditBody', ghoul: 'ghoulBody', wolf: 'wolfBody',
-      rotmother: 'rotmotherBody', rotspawn: 'rotspawnBody', coven: 'covenBody' },
+      rotmother: 'rotmotherBody', rotspawn: 'rotspawnBody', coven: 'covenBody',
+      scarreader: 'scarreaderBody' },    // CC-H4: the scar-reader wears the rot chassis
     animVariantByType: { bandit: 'bandit', ghoul: 'zombie', wolf: 'wolf', coven: 'bandit' },
-    rigidAnimByType: { rotmother: 'rotmother', rotspawn: 'rotspawn' },
+    rigidAnimByType: { rotmother: 'rotmother', rotspawn: 'rotspawn', scarreader: 'rotspawn' },   // CC-H4: crawler variant (scene-02 anchor)
     // CC-C5 WOLF PACKS (doc 62 L7/L8/L9 dens): closed patrol loops (world x,
     // z; walked in row order, last -> first). Each loop crosses its King's
     // Road branch (east / west / north) twice; designed offline against the
@@ -4374,6 +4437,7 @@ window.WH_CONFIG.affinity = {
     kill_ghoul: 4,              // blight cleansing
     kill_rotmother: 4,
     kill_rotspawn: 2,
+    kill_scarreader: 8,         // CC-H4: the hunter's trade vs the Fall's machinery
     kill_wolf: 0,               // wildlife; row explicit so the map is total
     kill_bandit: -4,            // moor men of the underworld kin; unwarranted blood
     kill_coven: 8               // the hunter's trade against the covens
@@ -4412,6 +4476,7 @@ window.WH_CONFIG.leveling = {
     kill_wolf: 20,                  // CC-C5: wolf hpMax 38 (same ~0.53 x hpMax law)
     kill_rotmother: 240,            // CC-C7: rotmother hp 460 (same law; every re-armed kill pays again)
     kill_rotspawn: 14,              // CC-C7: rotspawn hp 26 (withered on her death = no kill, no XP)
+    kill_scarreader: 200,           // CC-H4: scarreader hp 400 (the ~0.5 x hpMax law)
     kill_coven: 30,                 // CC-EC1: coven hp 60 (same ~0.5 x hpMax law)
     gather: 5,                      // per harvested node
     cook_meal: 15,                  // per finished cook (recipe or Bland Mush)
