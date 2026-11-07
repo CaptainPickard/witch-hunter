@@ -280,6 +280,32 @@
   connections[7].sides[CFG.regionH.id] = -1;
   connections[7].sides[CFG.regionI.id] = +1;
 
+  // CC-H3 veil_spire_approach: plane-0 convention only; F-side portal is an
+  // interact hook, J-side mouth is a walk-back plane (conn[7] precedent).
+  regions[CFG.regionJ.id] = makeRegion(CFG.regionJ, -1);
+  var JD = CFG.regionJ.door;
+  connections.push({
+    from: CFG.regionF.id,
+    to: CFG.regionJ.id,
+    axis: 'z',
+    planeCoord: JD.planeZ,
+    sides: {},
+    door: {
+      doorX: JD.doorX, doorHalfWidth: JD.doorHalfWidth,
+      suspendDepthM: JD.suspendDepthM, wallGapPadM: JD.wallGapPadM,
+      arch: null, gatedTo: null,
+      walkFrom: CFG.regionJ.id,
+      interact: { from: CFG.regionF.id, x: JD.interact.x, z: JD.interact.z, radius: JD.interact.radius },
+      land: JD.land,
+      fadeIn: JD.fadeIn, fadeOut: JD.fadeOut, exitFadeOut: JD.exitFadeOut,
+      text: JD.text                       // AMENDMENT A: the portal prompt + fades ride the conn
+    }
+  });
+  // E-mirror: F's plane is underground/inactive; J's interior is north
+  // of its walk-back plane. The F-side table value follows conn[7].
+  connections[8].sides[CFG.regionF.id] = -1;
+  connections[8].sides[CFG.regionJ.id] = +1;
+
   // ---- THREE-free transition helpers (used by region-manager and tests) ------
 
   // Returns the connection between two region ids, or null.

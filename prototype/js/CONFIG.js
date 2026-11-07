@@ -2112,6 +2112,89 @@ window.WH_CONFIG = {
     ]
   },
 
+  regionJ: {
+    id: 'veil_spire_approach',
+    name: "The Spire Approach",
+    center: { x: 0, z: -700 },        // 60 m deeper than F's center (0,-640); x-0 chain, mirror I's 8+ m pocket gap: J's north rim -660 vs F's ring north point -662 is the SAME one-active-region tolerance I/H landed (2-4 m overlaps)
+    groundRadius: 40,                 // doc 64 H3 boss-tier space: 2.2x F's 26, 2x I's 18. PROPOSED, Nicko tunes
+    groundY: 0,                       // flat disc (F hidden while J is active: one-active-region law)
+    groundColor: 0x0d0f15,            // basalt, one step colder than F's 0x11131a
+    groundColor2: 0x111318,           // shadow secondary
+    groundSeed: 1662061763,           // FRESH: must not equal any landed seed (1217/1218/1219/1329/1440/1651/1654)
+    scatter: false,                   // hand rows only (D/E/F/I law)
+    spawn: { x: 0, z: -730 },         // the landing row's J end (I-mirror: local (0,-30) lands 30 m deep, 8 m inside the far-wall plane)
+    gravityY: -22,                    // every landed region's value
+    // sec DARKNESS: density 0.15 -> d95 = sqrt(-ln 0.05)/0.15 = 11.61 m:
+    // one stratum quieter than F's 12.0. Region row fog/fill/ambient only.
+    fogColor: 0x0a0810,               // the veil fog family
+    fogDensity: 0.15,
+    ambientLightLevel: 0.05,          // F is 0.055; J is one step deeper
+    door: {
+      planeZ: -738,                   // J-local -38 (I-mirror: 2 m inside the far SOUTH rim -740; the plane exits THROUGH the ring's south point row)
+      doorX: 0,
+      doorHalfWidth: 2.2,             // F's tomb-mouth lane
+      suspendDepthM: 0,               // E/F/D/I value: the plane sits INSIDE the disc; no clamp lift needed
+      wallGapPadM: 0,
+      walkFrom: 'veil_spire_approach', // ONE-SIDED: the plane crosses ONLY from J (conn[7] grammar: F keeps no walkFrom)
+      interact: {
+        from: 'veil_galleries',       // the F-side hook (conn[7] H-side pattern)
+        x: 7.5, z: -654, radius: 3.5  // inside F's south rim (-666), 12 m north of it; probe-verified clear of every F prop, ring collider, ghoul, and F's own land row
+      },
+      land: {
+        veil_galleries:       { x: 2, z: -652, faceX: 2, faceZ: -644 },   // walk back INTO F just north of the hook, facing the galleries' heart
+        veil_spire_approach:  { x: 0, z: -730, faceX: 0, faceZ: -700 }    // INTO J = the spawn row, facing the gauntlet head monolith
+      },
+      fadeIn: 0.3, fadeOut: 0.5, exitFadeOut: 0.8,
+      text: { prompt: 'E - Descend toward the spire' }
+    },
+    // STATUE GAUNTLET wardens (doc 34 undead grammar, 2 rows, ghoul type):
+    // wide stance clears the processional; each >= 8 m from spawn/land,
+    // >= 12.5 m apart (30.0), >= 4.45 m walk-clear of the ring
+    enemies: [
+      { type: 'ghoul', x: -15, z: -708 },
+      { type: 'ghoul', x: 15, z: -708 }
+    ],
+  props: [
+    // -- THE GAUNTLET: two mourners per side watching the processional
+    { asset: 'mourningStatue', x: -7, z: -712, rotY: 4.00, scale: 1.00 },
+    { asset: 'mourningStatue', x:  7, z: -712, rotY: 5.28, scale: 1.00 },
+    { asset: 'mourningStatue', x: -7, z: -704, rotY: 4.00, scale: 1.00 },
+    { asset: 'mourningStatue', x:  7, z: -704, rotY: 5.28, scale: 1.00 },
+    { asset: 'stoneSteps',     x: -2.4, z: -718, rotY: 0.60, scale: 1.10 },
+    { asset: 'stoneSteps',     x:  2.4, z: -718, rotY: 5.68, scale: 1.10 },
+    // -- THE SPIRE ROOT (boss-tier heart, north end of the hall)
+    { asset: 'okRuinColumn', x: 0, z: -700, rotY: 0.00, scale: 2.40 },
+    { asset: 'okRuinColumn', x: -8, z: -696, rotY: 0.30, scale: 1.40 },
+    { asset: 'okRuinColumn', x:  8, z: -696, rotY: 5.98, scale: 1.40 },
+    // -- the crimson pair: 2 blightcap caps (the ONE accent family with the lamp)
+    { asset: 'blightcap', x: -12, z: -692, rotY: 3.62, scale: 0.90 },
+    { asset: 'blightcap', x:  12, z: -692, rotY: 0.63, scale: 0.90 },
+    // -- the ONE crimson lamp (regionI's family; NOT near the ghouls)
+    { asset: 'lanternPost', x: -6, z: -724, rotY: 5.20, scale: 1 },
+    // -- erasure scatter (F's grammar): 2 skull piles, 1 moss boulder
+    { asset: 'skullPile',   x: -13, z: -723, rotY: 4.40, scale: 1.00 },
+    { asset: 'skullPile',   x: -5,  z: -668, rotY: 3.60, scale: 1.00 },
+    { asset: 'mossBoulder', x: 0,   z: -672, rotY: 2.00, scale: 2.20 },
+    // -- CC-H3 VAULT RING: full 10-row closure (the I ring math on groundRadius
+    //    40: chord 24.7216 = 2*40*sin(18 deg) => scale 13.019 = chord/1.899;
+    //    centers k*36 deg on the r40 circle, listed clockwise from north;
+    //    rotY = 3.14 + k*0.6283; NO omission: the ring is closed behind the
+    //    plane like I/E's mouth. The walk-back lane (|x| <= 2.2 at z -738)
+    //    clears the south-point row (0,-740) colliders by 2.00 - 0.45 = 1.55 m
+    //    -- the governing >= 1.0 m lane clearance, same figure I's verdict carries)
+    { asset: 'whWallA', x: 0,     z: -660,    rotY: 3.14, scale: 13.019, sy: 11.69, sz: 2.40, y: -0.2, wall: 9 },
+    { asset: 'whWallB', x: 23.51, z: -667.64, rotY: 3.77, scale: 13.019, sy: 11.55, sz: 2.40, y: -0.2, wall: 9 },
+    { asset: 'whWallA', x: 38.04, z: -687.64, rotY: 4.40, scale: 13.019, sy: 11.69, sz: 2.40, y: -0.2, wall: 9 },
+    { asset: 'whWallB', x: 38.04, z: -712.36, rotY: 5.03, scale: 13.019, sy: 11.55, sz: 2.40, y: -0.2, wall: 9 },
+    { asset: 'whWallA', x: 23.51, z: -732.36, rotY: 5.65, scale: 13.019, sy: 11.69, sz: 2.40, y: -0.2, wall: 9 },
+    { asset: 'whWallB', x: 0,     z: -740,    rotY: 6.28, scale: 13.019, sy: 11.55, sz: 2.40, y: -0.2, wall: 9 },
+    { asset: 'whWallA', x: -23.51, z: -732.36, rotY: 6.91, scale: 13.019, sy: 11.69, sz: 2.40, y: -0.2, wall: 9 },
+    { asset: 'whWallB', x: -38.04, z: -712.36, rotY: 7.54, scale: 13.019, sy: 11.55, sz: 2.40, y: -0.2, wall: 9 },
+    { asset: 'whWallA', x: -38.04, z: -687.64, rotY: 8.17, scale: 13.019, sy: 11.69, sz: 2.40, y: -0.2, wall: 9 },
+    { asset: 'whWallB', x: -23.51, z: -667.64, rotY: 8.80, scale: 13.019, sy: 11.55, sz: 2.40, y: -0.2, wall: 9 }
+  ]
+  },
+
   // Round E (io/missions/2026-10-05-cc-roundE-veg.md): seeded vegetation
   // scatter, built by region-manager whScatterPlan. PARAMETERS ONLY - no
   // placement tables: every position is a pure function of this block, the
