@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Witch Hunter v9 - EPR1 Combat (build 11-07 03:04Z eb6d488)</title>
+<title>Witch Hunter v9 - EPR1 Combat (build 11-07 04:02Z f9fb8f4)</title>
 
 <style>
 /* Witch Hunter prototype v1 - HUD + overlay styling */
@@ -88828,7 +88828,7 @@ window.WH_CONFIG = {
     // puts the player + what they face. fadeSec = the black dip: F-descend
     // 0.3 + 0.5; walk-out 0 + 0.8.
     door: {
-      planeZ: -640,                       // the galleries mouth plane
+      planeZ: -662,                       // the galleries mouth plane (CC-H1a: south-rim grammar, 4 m inside the r26 south rim -666)
       doorX: 0,
       doorHalfWidth: 2.2,             // the tomb-mouth lane (crypt 2.4). PROPOSED
       suspendDepthM: 0,
@@ -91937,10 +91937,7 @@ window.WH_ICONS = {
       land: FD.land
     }
   });
-  // D-symmetry SIDES TABLE: F occupies z <= planeZ (the galleries mouth);
-  // E is the FROM region on this chain and occupies z > planeZ. E side -1,
-  // F side +1 (the CC-AD1 conn[3] shape with the sides flipped for this
-  // chain's direction).
+  // SIDES TABLE (CC-H1a): C occupies z > planeZ -700 (interior reading +1); G occupies z <= -700 (interior -711 reads -1). sideIn(R) must equal sideOfPlane at R's interior (engine law, region-defs sideOfPlane).
   connections[4].sides[CFG.regionE.id] = -1;
   connections[4].sides[CFG.regionF.id] = 1;
 
@@ -91977,12 +91974,9 @@ window.WH_ICONS = {
       land: GD.land
     }
   });
-  // D-symmetry SIDES TABLE: G occupies z <= planeZ (-822 < -700); C is the
-  // FROM region on this chain and occupies z > planeZ. IDENTICAL to conn[3]'s
-  // crypt shape (C -1, pocket +1) - unlike conn[4] no flip needed because C
-  // is both the from AND the z > planeZ region on this chain.
-  connections[5].sides[CFG.regionC.id] = -1;
-  connections[5].sides[CFG.regionG.id] = 1;
+  // SIDES TABLE (CC-H1a): C occupies z > planeZ -700 (interior reading +1); G occupies z <= -700 (interior -711 reads -1). sideIn(R) must equal sideOfPlane at R's interior (engine law, region-defs sideOfPlane).
+  connections[5].sides[CFG.regionC.id] = 1;
+  connections[5].sides[CFG.regionG.id] = -1;
 
   // ---- THREE-free transition helpers (used by region-manager and tests) ------
 
