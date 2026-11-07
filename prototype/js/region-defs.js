@@ -334,6 +334,33 @@
   connections[9].sides[CFG.regionJ.id] = +1;
   connections[9].sides[CFG.regionK.id] = -1;
 
+  // CC-H6 the_remains: plane-0 convention only; K-side portal is an
+  // interact hook, L-side mouth is a walk-back plane (conn[9] precedent).
+  regions[CFG.regionL.id] = makeRegion(CFG.regionL, -1);
+  var LD = CFG.regionL.door;
+  connections.push({
+    from: CFG.regionK.id,
+    to: CFG.regionL.id,
+    axis: 'z',
+    planeCoord: LD.planeZ,
+    sides: {},
+    door: {
+      doorX: LD.doorX, doorHalfWidth: LD.doorHalfWidth,
+      suspendDepthM: LD.suspendDepthM, wallGapPadM: LD.wallGapPadM,
+      arch: null, gatedTo: null,
+      walkFrom: CFG.regionL.id,
+      interact: { from: CFG.regionK.id, x: LD.interact.x, z: LD.interact.z, radius: LD.interact.radius },
+      land: LD.land,
+      fadeIn: LD.fadeIn, fadeOut: LD.fadeOut, exitFadeOut: LD.exitFadeOut,
+      text: LD.text                       // AMENDMENT A: the portal prompt + fades ride the conn
+    }
+  });
+  // E-mirror: K's plane is underground/inactive for this conn; L's interior
+  // is SOUTH of its walk-back plane (-1044 < -1036). K-side value follows
+  // the geometry (K's interior sits NORTH of -1036), L follows sideOfPlane.
+  connections[10].sides[CFG.regionK.id] = +1;
+  connections[10].sides[CFG.regionL.id] = -1;
+
   // ---- THREE-free transition helpers (used by region-manager and tests) ------
 
   // Returns the connection between two region ids, or null.

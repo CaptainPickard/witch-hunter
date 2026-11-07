@@ -2420,6 +2420,120 @@ window.WH_CONFIG = {
     ]
   },
 
+  // CC-H6 THE REMAINS (io/specs/cc-h6-remains-spec.md sec 2): delve strata
+  // V5 off the Tithe Vaults. Key-set law: L carries NO traps block and NO
+  // rotLair (doc 47 S5 "the chamber is a duel, not a gauntlet" + "the
+  // chamber is clean" - traps belong to the machine Vaults V4, a debris
+  // pool contradicts the clean chamber); every other K key carried with
+  // new values. All tunables PROPOSED (Nicko tunes).
+  regionL: {
+    id: 'the_remains',
+    name: 'The Remains',
+    center: { x: 0, z: -1064 },   // 184 m deeper than K (0,-880): one stratum
+                                  // gap; K south rim -914 vs L north rim -1034
+                                  // = 120 m unrendered dark (conn[9] pattern)
+    groundRadius: 30,             // PROPOSED (duel chamber: smaller than K 34)
+    groundY: 0,                   // flat disc
+    groundColor: 0x090b10,        // one step colder than K 0x0b0d12
+    groundColor2: 0x0c0e11,
+    groundSeed: 559043117,        // FRESH: differs from every landed seed
+    scatter: false,               // hand rows only (D/E/F/I/J/K law)
+    spawn: { x: 0, z: -1044 },    // 8 m SOUTH of the walk-back plane -1036
+                                  // (conn[9] ADJ-E mirror: crossing cannot
+                                  // re-trigger); landing row = spawn row
+    gravityY: -22,                // every landed region's value
+    fogColor: 0x090710,           // the veil fog family, one step deeper
+    fogDensity: 0.17,             // d95 = 1.7306/0.17 = 10.18 m: one stratum
+                                  // quieter than K (0.16 -> 10.82)
+    ambientLightLevel: 0.04,      // K is 0.045; L one step deeper
+    door: {
+      planeZ: -1036,              // 2 m inside the north rim -1034 (mirror law:
+                                  // every landed plane sits INSIDE its disc)
+      doorX: 0,
+      doorHalfWidth: 2.2,         // the F/J/K tomb-mouth lane
+      suspendDepthM: 0, wallGapPadM: 0,
+      walkFrom: 'the_remains',    // ONE-SIDED: plane crosses ONLY from L
+      interact: { from: 'tithe_vaults', x: 7.5, z: -854, radius: 3.5 },
+      //   ^ the K-side hook, east of K's mouth lane, INSIDE K's interior;
+      //   probe: >= 4.0 m from every K collider (ring, props, enemy rows;
+      //   ALSO >= 2.0 m outside the captain's lairRadius 16 circle about
+      //   (0,-872): dist 19.5 m).
+      land: {
+        tithe_vaults:  { x: 2, z: -858, faceX: 0, faceZ: -880 },
+        //   walk back INTO K beside the hook, facing the vault dais; >= 8 m
+        //   south of K's plane -848, on K's home side (z <= -848). 6.8 m from
+        //   the hook (J's landed mirror figure: no instant re-prompt, the
+        //   E-zone is 3.5 m).
+        the_remains:   { x: 0, z: -1044, faceX: 0, faceZ: -1060 }
+        //   INTO L = the spawn row, facing the chancel / boss nest (16 m off:
+        //   the K edge - no instant aggro on the landing fade).
+      },
+      fadeIn: 0.3, fadeOut: 0.5, exitFadeOut: 0.8,
+      text: { prompt: 'E - Descend into the remains' }
+    },
+    enemies: [],                  // doc 47 S5: the chamber holds no trash pool
+    lairs: [
+      { type: 'lastchancel', x: 0, z: -1060 }
+      //   ^ the CC-H5 note applies verbatim: the row CARRIES x/z and the NEST
+      //   derives from CONFIG.enemy.lastchancel.lair via lairNest - two agree.
+      //   K-MIRROR SPACING: the seat sits 16.0 m south of the landing row
+      //   (0,-1044), matching K's landed edge (landing 16 == aggro 16: no
+      //   instant aggro on arrival).
+    ],
+    props: [
+      // -- CC-H6 VAULT RING: K's 10-row closure carried down on groundRadius
+      //    30: chord 18.5410 = 2*30*sin(18 deg) => scale 9.7630 = chord/1.899;
+      //    centers k*36 deg on the r30 circle, clockwise from north
+      //    (x_k = 30 sin((180-36k) deg), z_k = -1064 - 30 cos((180-36k) deg)),
+      //    rotY = 3.14 + k*0.6283, whWallA/B alternating starting A,
+      //    sy 11.69 (A) / 11.55 (B), sz 2.40, y -0.2, wall 10.
+      //    SPEC-FIG FIX (the CC-H5 precedent): rows RE-DERIVED to the strict
+      //    2dp circle - rho == 30.0 +- 0.05 on all 10 LANDED rows + chord
+      //    uniformity <= 0.02 (the sec-2b literal table is context, not law).
+      //    NO omission (K law: the ring is closed behind the plane).
+      //    The walk-OUT lane (|x| <= 2.2 at the plane -1036) clears the
+      //    north-point row (0,-1034) colliders by 2.00 - 0.45 = 1.55 m edge
+      //    distance - the K landed figure carried by the mirror geometry
+      //    (the governing >= 1.0 m lane clearance).
+      { asset: 'whWallA', x:   0.00, z: -1034.00, rotY: 3.14, scale: 9.763, sy: 11.69, sz: 2.40, y: -0.2, wall: 10 },
+      { asset: 'whWallB', x:  17.63, z: -1039.73, rotY: 3.77, scale: 9.763, sy: 11.55, sz: 2.40, y: -0.2, wall: 10 },
+      { asset: 'whWallA', x:  28.53, z: -1054.73, rotY: 4.40, scale: 9.763, sy: 11.69, sz: 2.40, y: -0.2, wall: 10 },
+      { asset: 'whWallB', x:  28.53, z: -1073.27, rotY: 5.02, scale: 9.763, sy: 11.55, sz: 2.40, y: -0.2, wall: 10 },
+      { asset: 'whWallA', x:  17.63, z: -1088.27, rotY: 5.65, scale: 9.763, sy: 11.69, sz: 2.40, y: -0.2, wall: 10 },
+      { asset: 'whWallB', x:   0.00, z: -1094.00, rotY: 6.28, scale: 9.763, sy: 11.55, sz: 2.40, y: -0.2, wall: 10 },
+      { asset: 'whWallA', x: -17.63, z: -1088.27, rotY: 6.91, scale: 9.763, sy: 11.69, sz: 2.40, y: -0.2, wall: 10 },
+      { asset: 'whWallB', x: -28.53, z: -1073.27, rotY: 7.54, scale: 9.763, sy: 11.55, sz: 2.40, y: -0.2, wall: 10 },
+      { asset: 'whWallA', x: -28.53, z: -1054.73, rotY: 8.17, scale: 9.763, sy: 11.69, sz: 2.40, y: -0.2, wall: 10 },
+      { asset: 'whWallB', x: -17.63, z: -1039.73, rotY: 8.79, scale: 9.763, sy: 11.55, sz: 2.40, y: -0.2, wall: 10 },
+      // -- THE REMAINS: the working's shell at the chamber's south center
+      { asset: 'stoneSarcophagus', x: 0, z: -1086, rotY: 0.00, scale: 1.60 },
+      // -- melted colonnade flank pair (K dais grammar carried down one stratum)
+      { asset: 'okRuinColumn', x: -7, z: -1064, rotY: 0.30, scale: 1.40 },
+      { asset: 'okRuinColumn', x:  7, z: -1064, rotY: 5.98, scale: 1.40 },
+      // -- hooded sentinels flanking the chancel approach (H3/H5 processional)
+      { asset: 'mourningStatue', x: -4, z: -1052, rotY: 4.00, scale: 0.60 },
+      { asset: 'mourningStatue', x:  4, z: -1052, rotY: 5.28, scale: 0.60 },
+      // -- approach steps
+      { asset: 'stoneSteps', x: -2.4, z: -1068, rotY: 0.60, scale: 1.10 },
+      { asset: 'stoneSteps', x:  2.4, z: -1068, rotY: 5.68, scale: 1.10 },
+      // -- erasure scatter (J/K grammar)
+      { asset: 'skullPile',   x: -14, z: -1076, rotY: 4.40, scale: 1.00 },
+      //   SEAT AMENDMENT: the sec-2b literal (12,-1084) sat 0.11 m from the
+      //   RE-DERIVED k=4 ring band segment (0.44 from its engine collider
+      //   seat); per the amendment law (CC-H5b precedent: a probe failure
+      //   amends the seat, never the law) it moves to (12,-1090), raw >= 4.73.
+      //   The WEST+EAST blightcap literals (13,-1046) fail the same law
+      //   (2.30/2.79 m inside the k=9/k=1 band dips) and amend to (+-16,
+      //   -1047) - see their rows.
+      { asset: 'skullPile',   x:  12, z: -1090, rotY: 3.60, scale: 1.00 },
+      { asset: 'mossBoulder', x: -13, z: -1052, rotY: 2.00, scale: 2.20 },
+      // -- the ONE crimson family (lamp + caps; K's family continued)
+      { asset: 'lanternPost', x: -13, z: -1058, rotY: 5.20, scale: 1 },
+      { asset: 'blightcap', x: -16, z: -1047, rotY: 3.62, scale: 0.90 },  // SEAT AMENDMENT: the (-13,-1046) mirror pair sat 2.30/2.79 m inside the k=9/k=1 band dips (band minimum reaches radius 21.4 from center) and every nearer seat is blocked by the mossBoulder's mutual 2.0; (+-16,-1047) clears every band segment >= 4.92 raw (law floor 4.0) and every mutual >= 2.98
+      { asset: 'blightcap', x:  16, z: -1047, rotY: 0.63, scale: 0.90 }
+    ]
+  },
+
   // Round E (io/missions/2026-10-05-cc-roundE-veg.md): seeded vegetation
   // scatter, built by region-manager whScatterPlan. PARAMETERS ONLY - no
   // placement tables: every position is a pure function of this block, the
@@ -3250,6 +3364,55 @@ window.WH_CONFIG = {
         guardArcDeg: 45, guardDamageMult: 0.5 }    // smaller readable window: 45 vs 50 deg
     },
 
+    // CC-H6 THE LAST CHANCEL (io/specs/cc-h6-remains-spec.md sec 5; doc 47
+    // V5 warden concept 3: Veil Faithful zealot-captain boss at the remains'
+    // threshold; doc 04/34 faction-soldier grammar at boss scale,
+    // parry-capable, disciplined reads). ENGINE LAW (enemy.js:152): lair
+    // machinery attaches only to pattern 'boss-slam' rows - the captain's
+    // precedent carries verbatim: boss-slam chassis TUNED SOLDIER-DISCIPLINED
+    // (the narrow fast-tracked shock-slam = the disciplined shield-wall
+    // read), guard ai1 rides ALONGSIDE. All PROPOSED (Nicko tunes).
+    lastchancel: {
+      name: 'The Last Chancel', hp: 400, dmg: 24, speed: 4.2, aggro: 18,
+      pattern: 'boss-slam',
+      slamRadius: 4.6, slamArcDeg: 100, slamWindup: 0.8, slamActive: 0.18,
+      slamRecover: 0.85, slamCooldown: 3.4, slamTrackDegPerSec: 120,
+      engageRange: 4.6,
+      cueDark: 0x1a0508, cueHot: 0xd84a4a,              // the chain's ONE crimson family
+      scale: 2.3,                                        // soldier boss one step over K's 2.1
+      lair: { x: 0, y: 4, region: 'L', flagPrefix: 'lastchancel' },
+                                                   // world seat (0,-1060); save key
+                                                   // lastchancel_cleared_L (letter
+                                                   // derivation via the lairFlag
+                                                   // machinery is region-letter-generic:
+                                                   // K precedent). y 4 derives the nest
+                                                   // from regionL center (0,-1064): nest
+                                                   // = center + y (K law: y 8 on center
+                                                   // -880 gave seat -872) = (0,-1060) -
+                                                   // the lairs row, this derivation, and
+                                                   // the K-mirror 16.0 m landing spacing
+                                                   // all agree.
+      lairRadius: 16,
+      rearm: { days: 3, trigger: 'proximity', radius: 14 },
+      loot: [{ mat: 'stolenCoin', n: [2, 5] }],    // the LAST tithe
+      // SOLO-DUEL LAW + CENSUS FINDING: lairTick reads M.interval from
+      // cfg.minions UNGUARDED (enemy.js ~1285-1290) - a boss row with NO
+      // minions block crashes every lairTick. Engine edit REJECTED (all-
+      // config law): the row carries the cap-0 no-spawn minions row instead.
+      minions: { asset: 'zealot', cap: 0, interval: 999.0, range: 5.0 },
+      //   cap 0: alive(0) < cap(0) is false EVERY tick - the spawner never
+      //   fires (doc 47 S5: the chamber is the duel, not a gauntlet).
+      radius: 1.0,
+      corpseLingerSec: 10, maxCorpses: 8,
+      riseSec: 1.4,
+      barLiftM: 2.4,
+      ai1: { decisionSeconds: 0.35, alwaysKnowsRadius: 5.0,
+        strafeBandInner: 4.0, strafeBandOuter: 8.2, strafeSpeedMult: 0.75,
+        strafeDirFlipSeconds: 1.8, attackRadius: 4.6, attackBias: 0.55,
+        guardChance: 0.65, guardRespondRadius: 6.0, guardSecondsMax: 1.9,
+        guardArcDeg: 42, guardDamageMult: 0.5 }    // smaller window: captain 45
+    },
+
     // CC-C5: enemy type -> manifest body + anim.js VARIANTS key (was the
     // bandit/ghoul ternaries in region-manager buildRegion / enemy setBody;
     // an unknown type keeps the old fallbacks: ghoulBody / 'bandit').
@@ -3261,9 +3424,11 @@ window.WH_CONFIG = {
     bodyByType: { bandit: 'banditBody', ghoul: 'ghoulBody', wolf: 'wolfBody',
       rotmother: 'rotmotherBody', rotspawn: 'rotspawnBody', coven: 'covenBody',
       scarreader: 'scarreaderBody',                       // CC-H4: the scar-reader wears the rot chassis
-      zealot: 'banditBody', tithecaptain: 'banditBody' }, // CC-H5: zealot chassis family (bandit manifest); the captain too (symmetry law)
+      zealot: 'banditBody', tithecaptain: 'banditBody',   // CC-H5: zealot chassis family (bandit manifest); the captain too (symmetry law)
+      lastchancel: 'banditBody' },                 // CC-H6: the Last Chancel wears the bandit manifest (soldier-boss chassis law)
     animVariantByType: { bandit: 'bandit', ghoul: 'zombie', wolf: 'wolf', coven: 'bandit',
-      zealot: 'bandit', tithecaptain: 'bandit' },
+      zealot: 'bandit', tithecaptain: 'bandit',
+      lastchancel: 'bandit' },
     rigidAnimByType: { rotmother: 'rotmother', rotspawn: 'rotspawn', scarreader: 'rotspawn' },   // CC-H4: crawler variant (scene-02 anchor)
     // CC-C5 WOLF PACKS (doc 62 L7/L8/L9 dens): closed patrol loops (world x,
     // z; walked in row order, last -> first). Each loop crosses its King's
