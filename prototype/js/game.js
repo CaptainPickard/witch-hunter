@@ -1896,7 +1896,7 @@
     var p = game.player.pos;
     return tryPickup() || lootCorpseNearest(p.x, p.z, CFG.corpseLoot.lootRadius) ||
       tryCookStation() || tryCampSleep() || tryDenDoor() || tryDoorway() || tryNotch() || tryTalkNpc() ||
-      tryRescue() || tryChest() || tryWareffort() || tryGather();   // CC-C11: talk -> rescue -> chest -> gather (CC-WB1: board before gather)
+      tryRescue() || tryChest() || tryWareffort() || tryStrata() || tryGather();   // CC-C11: talk -> rescue -> chest -> gather (CC-WB1: board before gather; CC-WB3: strata board after the war board)
   }
 
   // CC-WB1: war-effort requisition board (js/wareffort.js) - a contract loop
@@ -1904,6 +1904,15 @@
   // here for coins. Board checks before gather nodes (B-4).
   function tryWareffort() {
     return !!(window.WH_WarEffort && window.WH_WarEffort.tryOpen());
+  }
+
+  // CC-WB3: strata requisition board (js/strataeffort.js) - the WB1 grammar
+  // on a second board at Lord's Hold (region G): take a requisition, turn in
+  // the delve harvest (rot-silk + rot-gland) for a fixed coin reward. Branch
+  // ADDED AFTER tryWareffort(): the boards are far apart and each is region-
+  // gated, so the two are mutually exclusive.
+  function tryStrata() {
+    return !!(window.WH_StrataEffort && window.WH_StrataEffort.tryOpen());
   }
 
   // ---- CC-C8 the Rot Mother's den door (CONFIG.regionD.door) ----------------------
@@ -2248,6 +2257,9 @@
       // CC-WB1: war board prompt (same shape as the chest branch above).
       } else if (window.WH_WarEffort && window.WH_WarEffort.interactPrompt()) {
         text = window.WH_WarEffort.interactPrompt();
+      // CC-WB3: strata board prompt, same shape, branch AFTER the war board.
+      } else if (window.WH_StrataEffort && window.WH_StrataEffort.interactPrompt()) {
+        text = window.WH_StrataEffort.interactPrompt();
       } else {
         var node = nearestGatherNode();
         if (node) text = CFG.gather.promptText.replace('{name}', CFG.gather.nodeTypes[node.type].name);
@@ -2615,6 +2627,9 @@
       // CC-WB1: war-effort board manager (js/wareffort.js) - same init-hook
       // tier as the chest; builds the board mesh and holds the game ref.
       if (window.WH_WarEffort) window.WH_WarEffort.init(game);
+      // CC-WB3: strata board manager (js/strataeffort.js) - same init-hook
+      // tier, right after the war board; builds its own board mesh (region G).
+      if (window.WH_StrataEffort) window.WH_StrataEffort.init(game);
       // CC-AE1: night raid director (js/ambush.js) - same init-hook tier as
       // the NPC/chest managers; WH_AMBUSH holds the game ref only.
       if (window.WH_AMBUSH) window.WH_AMBUSH.init(game);
@@ -2668,6 +2683,8 @@
       if (window.WH_Chest) data.chest = window.WH_Chest.capture();
       // CC-WB1: board state rides the save-wrap ({active, postedDay, resolvedDay}).
       if (window.WH_WarEffort) data.warEffort = window.WH_WarEffort.capture();
+      // CC-WB3: strata board state rides the save-wrap too, chest-line shape.
+      if (window.WH_StrataEffort) data.strataEffort = window.WH_StrataEffort.capture();
       if (window.WH_JOURNAL) data.journal = window.WH_JOURNAL.capture();   // QJR-1
       // CC-AF1: the standing ledger + its once-map ride the save-wrap
       data.affinity = window.WH_AFF ? window.WH_AFF.capture() : undefined;
@@ -2685,6 +2702,8 @@
         if (window.WH_Chest) stored.chest = window.WH_Chest.capture();
         // CC-WB1: explicit storage write, chest-line shape.
         if (window.WH_WarEffort) stored.warEffort = window.WH_WarEffort.capture();
+        // CC-WB3: explicit storage write, chest-line shape (strata board).
+        if (window.WH_StrataEffort) stored.strataEffort = window.WH_StrataEffort.capture();
         if (window.WH_JOURNAL) stored.journal = window.WH_JOURNAL.capture();   // QJR-1
         // CC-AF1: explicit storage write, journal-line shape
         stored.affinity = window.WH_AFF ? window.WH_AFF.capture() : undefined;
@@ -2699,6 +2718,8 @@
       if (data && window.WH_Chest) window.WH_Chest.restore(data.chest);
       // CC-WB1: a missing warEffort block is a no-op (fresh idle board).
       if (data && window.WH_WarEffort) window.WH_WarEffort.restore(data.warEffort);
+      // CC-WB3: a missing strataEffort block is a no-op (fresh idle board).
+      if (data && window.WH_StrataEffort) window.WH_StrataEffort.restore(data.strataEffort);
       if (window.WH_JOURNAL) window.WH_JOURNAL.restore(data && data.journal);   // QJR-1
       // CC-AF1: a missing affinity block is a no-op (fresh 0 / crossed {})
       if (window.WH_AFF) window.WH_AFF.restore(data && data.affinity);

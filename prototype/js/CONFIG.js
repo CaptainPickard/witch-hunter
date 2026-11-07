@@ -4199,7 +4199,11 @@ window.WH_CONFIG.items = {
   // 'document' (plain string, no system reads it yet - stolenCoin 'valuable'
   // precedent); glyph fallback law, no icon PNG (ironOre WH1-W2 precedent).
   warOrder:       { id: 'warOrder', name: 'War Requisition', glyph: 'WO',
-                    category: 'document', desc: 'Garrison order: 6 iron ore for the war effort.' }
+                    category: 'document', desc: 'Garrison order: 6 iron ore for the war effort.' },
+  // CC-WB3 strata board (js/strataeffort.js): requisition paper row mirroring
+  // the warOrder row exactly (document category, glyph-fallback law, no PNG).
+  strataOrder:    { id: 'strataOrder', name: 'Strata Requisition', glyph: 'SR',
+                    category: 'document', desc: 'Strata order: rot-silk + rot-gland from the delve strata.' }
 };
 
 // C1 (io/missions/2026-10-05-cc-c1-cooking.md): cooking at a fire station.
@@ -4443,6 +4447,32 @@ window.WH_CONFIG.warEffort = {
     repeatBasePayStepPct: 15,          // +15% base pay per repeat
     overDoneText: 'Requisition filled. The quartermaster pays a bonus for the extra iron.'
   }
+};
+
+// CC-WB3 (doc 42 Part 3, delve-chain loop 2026-11-11): strata requisition
+// board - the CC-WB1 board grammar re-dressed at Lord's Hold (region G, the
+// war table hub). Idle press hands ONE Strata Requisition paper per in-game
+// day; filling it means holding rot-silk >= 4 AND rot-gland >= 2 (CC-C7 delve
+// harvest, CONFIG.items rows already live) and turning the exact quota in at
+// the board for a coin reward. NO ladder math (WB2 ladder stays WB1-only) and
+// no over-band: fixed CONFIG pay per fill. Module js/strataeffort.js
+// (WH_StrataEffort, WB1 API surface); state rides the save-wrap (B-5) exactly
+// like the war board.
+window.WH_CONFIG.strataEffort = {     // CC-WB3; PROPOSED, Nicko tunes
+  boardSeat: { regionId: 'lords_hold', x: 6.0, z: -782.0, rotY: 4.712 },
+    // PROPOSED, Nicko tunes. Faces west toward the gate lane; 5.67 m clear of
+    // both dais braziers, 6.3 m east of the stoneSteps dais, 40.4 m radial
+    // (rim 124.5), 78 m off both door planes (z -700 / -948). Verified vs
+    // CONFIG regionG props (io/specs/cc-wb3-strata-board-spec.md).
+  itemId: 'strataOrder',              // CC-WB3 paper item, row above
+  mats: [
+    { id: 'rot-silk',  quota: 4 },
+    { id: 'rot-gland', quota: 2 }
+  ],
+  reward: { id: 'stolenCoin', count: 5 },   // PROPOSED, Nicko tunes
+  title: 'Strata Requisition',
+  offerText: 'The quartermaster wants rot-silk and rot-gland from the delve strata below.',
+  doneText: 'Strata requisition filled. The quartermaster marks the board.'
 };
 
 // C2 (io/missions/2026-10-05-cc-c2-daynight.md): day/night cycle
@@ -4856,6 +4886,15 @@ window.WH_CONFIG.journal = {
       title: 'The watched fire',
       body: 'The camp folk keep to their tents now. My fire burns low and red, and the shadows between the wagons watch me back. Word of my deeds travels too - the wrong kind.',
       source: 'Camp folk'
+    },
+    // CC-WB3 (io/specs/cc-wb3-strata-board-spec.md): the strata board's single
+    // journal topic, requisition voice ~ QJR-3's requisition/firstFill rows.
+    // ONE topic, appended on award AND on fill (js/strataeffort.js).
+    strata: {
+      id: 'strata-requisition',
+      title: 'Strata requisition',
+      source: 'The quartermaster',
+      body: 'I took a strata requisition from the Lord\'s Hold board. The quartermaster wants rot-silk and rot-gland from the delve strata below the rot nests - full quota pays coin. Whatever sleeps in the deeper strata stirs when it is robbed.'
     }
   }
 };
@@ -4881,6 +4920,7 @@ window.WH_CONFIG.affinity = {
   deeds: {
     rescue_findDaughter: 25,   // witnessed good deed: the daughter home
     warEffortFill: 10,          // the garrison is the light war's belly
+    strataFill: 10,             // CC-WB3: the delve harvest feeds the same front (same delta as warEffortFill)
     kill_ghoul: 4,              // blight cleansing
     kill_rotmother: 4,
     kill_rotspawn: 2,
