@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Witch Hunter v9 - EPR1 Combat (build 11-07 17:27Z 814e1f8)</title>
+<title>Witch Hunter v9 - EPR1 Combat (build 11-07 17:27Z cf9d61e)</title>
 
 <style>
 /* Witch Hunter prototype v1 - HUD + overlay styling */
@@ -91439,7 +91439,11 @@ window.WH_CONFIG.items = {
   // 'document' (plain string, no system reads it yet - stolenCoin 'valuable'
   // precedent); glyph fallback law, no icon PNG (ironOre WH1-W2 precedent).
   warOrder:       { id: 'warOrder', name: 'War Requisition', glyph: 'WO',
-                    category: 'document', desc: 'Garrison order: 6 iron ore for the war effort.' }
+                    category: 'document', desc: 'Garrison order: 6 iron ore for the war effort.' },
+  // CC-WB3 strata board (js/strataeffort.js): requisition paper row mirroring
+  // the warOrder row exactly (document category, glyph-fallback law, no PNG).
+  strataOrder:    { id: 'strataOrder', name: 'Strata Requisition', glyph: 'SR',
+                    category: 'document', desc: 'Strata order: rot-silk + rot-gland from the delve strata.' }
 };
 
 // C1 (io/missions/2026-10-05-cc-c1-cooking.md): cooking at a fire station.
@@ -91683,6 +91687,32 @@ window.WH_CONFIG.warEffort = {
     repeatBasePayStepPct: 15,          // +15% base pay per repeat
     overDoneText: 'Requisition filled. The quartermaster pays a bonus for the extra iron.'
   }
+};
+
+// CC-WB3 (doc 42 Part 3, delve-chain loop 2026-11-11): strata requisition
+// board - the CC-WB1 board grammar re-dressed at Lord's Hold (region G, the
+// war table hub). Idle press hands ONE Strata Requisition paper per in-game
+// day; filling it means holding rot-silk >= 4 AND rot-gland >= 2 (CC-C7 delve
+// harvest, CONFIG.items rows already live) and turning the exact quota in at
+// the board for a coin reward. NO ladder math (WB2 ladder stays WB1-only) and
+// no over-band: fixed CONFIG pay per fill. Module js/strataeffort.js
+// (WH_StrataEffort, WB1 API surface); state rides the save-wrap (B-5) exactly
+// like the war board.
+window.WH_CONFIG.strataEffort = {     // CC-WB3; PROPOSED, Nicko tunes
+  boardSeat: { regionId: 'lords_hold', x: 6.0, z: -782.0, rotY: 4.712 },
+    // PROPOSED, Nicko tunes. Faces west toward the gate lane; 5.67 m clear of
+    // both dais braziers, 6.3 m east of the stoneSteps dais, 40.4 m radial
+    // (rim 124.5), 78 m off both door planes (z -700 / -948). Verified vs
+    // CONFIG regionG props (io/specs/cc-wb3-strata-board-spec.md).
+  itemId: 'strataOrder',              // CC-WB3 paper item, row above
+  mats: [
+    { id: 'rot-silk',  quota: 4 },
+    { id: 'rot-gland', quota: 2 }
+  ],
+  reward: { id: 'stolenCoin', count: 5 },   // PROPOSED, Nicko tunes
+  title: 'Strata Requisition',
+  offerText: 'The quartermaster wants rot-silk and rot-gland from the delve strata below.',
+  doneText: 'Strata requisition filled. The quartermaster marks the board.'
 };
 
 // C2 (io/missions/2026-10-05-cc-c2-daynight.md): day/night cycle
@@ -92096,6 +92126,15 @@ window.WH_CONFIG.journal = {
       title: 'The watched fire',
       body: 'The camp folk keep to their tents now. My fire burns low and red, and the shadows between the wagons watch me back. Word of my deeds travels too - the wrong kind.',
       source: 'Camp folk'
+    },
+    // CC-WB3 (io/specs/cc-wb3-strata-board-spec.md): the strata board's single
+    // journal topic, requisition voice ~ QJR-3's requisition/firstFill rows.
+    // ONE topic, appended on award AND on fill (js/strataeffort.js).
+    strata: {
+      id: 'strata-requisition',
+      title: 'Strata requisition',
+      source: 'The quartermaster',
+      body: 'I took a strata requisition from the Lord\'s Hold board. The quartermaster wants rot-silk and rot-gland from the delve strata below the rot nests - full quota pays coin. Whatever sleeps in the deeper strata stirs when it is robbed.'
     }
   }
 };
@@ -92121,6 +92160,7 @@ window.WH_CONFIG.affinity = {
   deeds: {
     rescue_findDaughter: 25,   // witnessed good deed: the daughter home
     warEffortFill: 10,          // the garrison is the light war's belly
+    strataFill: 10,             // CC-WB3: the delve harvest feeds the same front (same delta as warEffortFill)
     kill_ghoul: 4,              // blight cleansing
     kill_rotmother: 4,
     kill_rotspawn: 2,
@@ -105916,6 +105956,233 @@ window.WH_ICONS = {
 })();
 
 </script>
+<!-- CC-WB3: strata board module loads right after the war board module -->
+<script>
+// CC-WB3 strata requisition board (doc 42 Part 3 delve-chain loop; IO spec
+// io/specs/cc-wb3-strata-board-spec.md). Generalizes js/wareffort.js (CC-WB1,
+// NOT edited this round) onto a second board: same IIFE + WB1 API surface
+// (init / tryOpen / interactPrompt / capture / restore / boardPos), same
+// one-day contract law, NO WB2 ladder math (fixed CONFIG pay per fill) and no
+// over-band - the board buys the CC-C7 delve harvest (rot-silk + rot-gland)
+// for a fixed coin reward. Reads CFG.strataEffort ONLY. State rides the save
+// wrap (B-5) exactly like the war board.
+;(function () {
+  'use strict';
+  var CFG = window.WH_CONFIG;
+  var JT = (CFG.journal && CFG.journal.topics) || null;   // QJR-3 voice, CC-WB3 topic
+  var S = CFG.strataEffort || {};
+  var game = null, body = null, papers = null;
+
+  // B-3 state model: the payload is exactly three keys (B-5) - NO repeatIndex
+  // ladder this round (CC-WB2's ladder stays WB1-only; deliberate scope cut).
+  var logic = { postedDay: null, active: false, resolvedDay: null };
+
+  function dayNumber() {
+    return (game && game.dayNight && typeof game.dayNight.day === 'number') ? game.dayNight.day : 0;
+  }
+
+  // WB1 inv() grammar: game.inventory first, WH_INVENTORY fallback; no slot
+  // poking, no facade bypass.
+  function inv() {
+    var gi = game && game.inventory;
+    if (gi && typeof gi.addItem === 'function' && typeof gi.countOf === 'function') return gi;
+    return window.WH_INVENTORY || null;
+  }
+  function matHave(id) {
+    var bag = inv();
+    return bag && typeof bag.countOf === 'function' ? (bag.countOf(id) || 0) : 0;
+  }
+  function toast(t) {
+    if (game && game.inventoryUI && typeof game.inventoryUI.toast === 'function') {
+      game.inventoryUI.toast(t);
+    }
+  }
+
+  // Board body: the ONLY scene object this round (engine untouched, art law).
+  // CC-WB1 board grammar re-dressed per concept-06-siege-council: two oak
+  // posts, dark board face, 2 parchment sheets, iron bracket strip, THE ONE
+  // amber emissive lantern (0xffb347 - the ONLY emissive; no crimson, no
+  // second light). Every node name carries the cc-wb3- prefix.
+  function setPapersVisible(v) {
+    if (!papers) return;
+    for (var i = 0; i < papers.length; i++) papers[i].visible = !!v;
+  }
+
+  function buildBody() {
+    var root = new THREE.Group();
+    root.name = 'cc-wb3-strata-effort-board';
+    var oak = new THREE.MeshStandardMaterial({ color: 0x4a3a2a, roughness: 1 });
+    var dark = new THREE.MeshStandardMaterial({ color: 0x3d2b1f, roughness: 0.95 });
+    var parch = new THREE.MeshStandardMaterial({ color: 0xd2b48c, roughness: 1,
+      side: THREE.DoubleSide });
+    var iron = new THREE.MeshStandardMaterial({ color: 0x6e6a63, roughness: 0.8, metalness: 0.4 });
+    var pl = new THREE.Mesh(new THREE.BoxGeometry(0.18, 2.2, 0.18), oak);   // left post
+    pl.name = 'cc-wb3-post-left';
+    pl.position.set(-0.8, 1.1, 0); root.add(pl);
+    var pr = pl.clone();                                                    // right post
+    pr.name = 'cc-wb3-post-right'; pr.position.x = 0.8; root.add(pr);
+    var frame = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.1, 0.12), dark);
+    frame.name = 'cc-wb3-board-face';
+    frame.position.y = 1.5; root.add(frame);                                // board face
+    papers = [];
+    for (var i = 0; i < 2; i++) {                                           // 2 parchment sheets
+      var p = new THREE.Mesh(new THREE.PlaneGeometry(0.48, 0.62), parch);
+      p.name = 'cc-wb3-sheet-' + (i + 1);
+      p.position.set(-0.25 + i * 0.5, 1.5 + (i - 0.5) * 0.12, 0.08);
+      p.rotation.y = (i - 0.5) * 0.12;                                      // nail slouch jitter
+      root.add(p); papers.push(p);
+    }
+    var strip = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.09, 0.05), iron);
+    strip.name = 'cc-wb3-iron-strip';
+    strip.position.set(0, 2.0, 0.08); root.add(strip);                      // iron bracket strip
+    var arm = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.05, 0.05), iron);
+    arm.name = 'cc-wb3-lantern-arm';
+    arm.position.set(0.68, 2.34, 0.1); root.add(arm);                       // lantern arm
+    var lamp = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.22, 0.16),
+      new THREE.MeshStandardMaterial({ color: 0x332a1a, roughness: 0.6,
+        emissive: 0xffb347, emissiveIntensity: 0.9 }));                     // THE one amber accent
+    lamp.name = 'cc-wb3-lantern';
+    lamp.position.set(0.85, 2.26, 0.1); root.add(lamp);
+    root.position.set(SEAT.x, 0, SEAT.z);          // Lord's Hold hub is FLAT: y = 0
+    root.rotation.y = SEAT.rotY;                                             // faces west to the gate lane
+    game.scene.add(root);
+    return root;
+  }
+
+  var seatCfg = S.boardSeat || {};
+  var SEAT = (typeof seatCfg.x === 'number') ? seatCfg
+    : { regionId: 'lords_hold', x: 6.0, z: -782.0, rotY: 4.712 };
+  var mats = (S.mats && S.mats.length) ? S.mats
+    : [{ id: 'rot-silk', quota: 4 }, { id: 'rot-gland', quota: 2 }];
+  var ITEM = S.itemId || 'strataOrder';
+  var REWARD = S.reward || { id: 'stolenCoin', count: 5 };
+
+  // Proximity gate (WB1/chest.js law): region-gated, alive + not suspended.
+  // Radius PROPOSED 2.6 (chest feel, WB1 verbatim grammar).
+  function near() {
+    if (!game || !game.player || !game.player.pos) return false;
+    if (game.regionManager) {
+      var activeId = game.regionManager.logic.activeId;
+      if (activeId !== SEAT.regionId) return false;
+    }
+    var p = game.player.pos;
+    var r = 2.6;                       // PROPOSED, chest-feel (WB1 radius)
+    return game.player.state === 'alive' && !game.player.inputSuspended &&
+      Math.hypot(p.x - SEAT.x, p.z - SEAT.z) <= r;
+  }
+
+  // ONE-DAY CONTRACT LAW (WB1 verbatim): one contract per day. Interaction-time
+  // roll only - no timers, no tick hook anywhere. A resolved board re-arms at
+  // the NEXT dawn.
+  function rollNewDay() {
+    var d = dayNumber();
+    if (logic.resolvedDay !== null && d > logic.resolvedDay) {
+      logic.active = false; logic.postedDay = null; logic.resolvedDay = null;
+      setPapersVisible(true);
+    }
+  }
+
+  function spentToday() {
+    return logic.resolvedDay !== null && logic.resolvedDay === dayNumber();
+  }
+
+  function tryOpen() {
+    if (!near() || open()) return false;
+    rollNewDay();
+    if (spentToday()) return true;                 // press consumed, board does nothing
+    var bag = inv();
+    if (!logic.active) {                            // idle: award the requisition paper
+      var added = bag ? (bag.addItem(ITEM, 1) || 0) : 0;
+      if (added < 1) { toast('Your satchel is full.'); return true; }
+      logic.active = true;
+      logic.postedDay = dayNumber();
+      toast(S.offerText || 'The quartermaster wants rot-silk and rot-gland from the delve strata below.');
+      if (JT && JT.strata && window.WH_JOURNAL) window.WH_JOURNAL.append(JT.strata.id, JT.strata.title, JT.strata.body, undefined, JT.strata.source);  // CC-WB3 award
+      return true;
+    }
+    // active: EVERY mat must meet its quota (A >= q AND B >= q); the toast
+    // carries the HAVE counts of the pair at press. Removes EXACTLY quota of
+    // each - surplus stays in the bag (no haul law, no over-band this round).
+    var haves = [], short = -1;
+    for (var i = 0; i < mats.length; i++) {
+      haves[i] = matHave(mats[i].id);
+      if (short < 0 && haves[i] < mats[i].quota) short = i;
+    }
+    if (short >= 0 || !bag) {
+      toast('Not enough ' + mats[0].id + '/' + mats[1].id + ' for the strata order. (' + haves[0] + '/' + haves[1] + ')');
+      return true;
+    }
+    var taken = [];
+    for (var j = 0; j < mats.length; j++) {         // never partially charge (defensive)
+      taken[j] = bag.removeItem(mats[j].id, mats[j].quota) || 0;
+    }
+    for (var k = 0; k < taken.length; k++) {
+      if (taken[k] < mats[k].quota) {               // unexpected short removal: put it all back
+        for (var n = 0; n < taken.length; n++) {
+          if (taken[n] > 0) bag.addItem(mats[n].id, taken[n]);
+        }
+        toast('Not enough ' + mats[0].id + '/' + mats[1].id + ' for the strata order. (' + haves[0] + '/' + haves[1] + ')');
+        return true;
+      }
+    }
+    var granted = bag.addItem(REWARD.id, REWARD.count) || 0;   // fixed CONFIG pay
+    logic.active = false;
+    logic.resolvedDay = dayNumber();
+    setPapersVisible(false);                        // papers hidden on resolve
+    if (JT && JT.strata && window.WH_JOURNAL) window.WH_JOURNAL.append(JT.strata.id, JT.strata.title, JT.strata.body, undefined, JT.strata.source);  // CC-WB3 fill
+    if (window.WH_AFF) window.WH_AFF.deed('strataFill');   // CC-AF1: a fill moves the standing
+    toast(S.doneText || 'Strata requisition filled.');
+    return granted >= 0 || true;
+  }
+
+  function open() { return false; }   // this round the board never holds a modal
+
+  function interactPrompt() {
+    if (!near()) return '';
+    rollNewDay();
+    if (spentToday()) return 'The board is spent until dawn.';
+    if (logic.active) {
+      // needs-list from CONFIG counts (no have-counts on this board)
+      return 'E - Strata Board (needs ' + mats[0].quota + ' ' + mats[0].id +
+        ' + ' + mats[1].quota + ' ' + mats[1].id + ')';
+    }
+    return 'E - Strata Board (Take a requisition)';
+  }
+
+  // B-5 persistence: the payload is EXACTLY 3 keys (repeatIndex-free). Restore
+  // merges the known shape; a missing or foreign payload = no-op (fresh idle
+  // board keeps default state); per-key V-5n clamps (boolean/number types,
+  // anything else = default). Papers visibility resets on restore.
+  function capture() {
+    return { active: logic.active, postedDay: logic.postedDay, resolvedDay: logic.resolvedDay };
+  }
+  function restore(data) {
+    if (!data || typeof data !== 'object') return;
+    if (typeof data.active !== 'boolean' &&
+        typeof data.postedDay !== 'number' &&
+        typeof data.resolvedDay !== 'number') {
+      return;                                        // foreign payload = no-op
+    }
+    logic.active = data.active === true;
+    logic.postedDay = typeof data.postedDay === 'number' ? data.postedDay : null;
+    logic.resolvedDay = typeof data.resolvedDay === 'number' ? data.resolvedDay : null;
+    setPapersVisible(!spentToday());
+  }
+
+  function boardPos() { return { x: SEAT.x, z: SEAT.z }; }
+
+  // HEADLESS-SAFE: visuals only when a scene + THREE exist (node one-shots
+  // with game.scene === null skip buildBody entirely; no throw).
+  function init(g) {
+    game = g;
+    if (game && game.scene && window.THREE) body = buildBody();
+  }
+
+  window.WH_StrataEffort = { init: init, tryOpen: tryOpen, interactPrompt: interactPrompt,
+    capture: capture, restore: restore, boardPos: boardPos };
+})();
+
+</script>
 <script>
 // QJR-1 journal core (build card: io/specs/qjr-1-buildcard.md, 2026-11-06).
 // Pure DOM module: HUD journal button + quest journal panel. No THREE, no
@@ -109989,7 +110256,7 @@ window.WH_ICONS = {
     var p = game.player.pos;
     return tryPickup() || lootCorpseNearest(p.x, p.z, CFG.corpseLoot.lootRadius) ||
       tryCookStation() || tryCampSleep() || tryDenDoor() || tryDoorway() || tryNotch() || tryTalkNpc() ||
-      tryRescue() || tryChest() || tryWareffort() || tryGather();   // CC-C11: talk -> rescue -> chest -> gather (CC-WB1: board before gather)
+      tryRescue() || tryChest() || tryWareffort() || tryStrata() || tryGather();   // CC-C11: talk -> rescue -> chest -> gather (CC-WB1: board before gather; CC-WB3: strata board after the war board)
   }
 
   // CC-WB1: war-effort requisition board (js/wareffort.js) - a contract loop
@@ -109997,6 +110264,15 @@ window.WH_ICONS = {
   // here for coins. Board checks before gather nodes (B-4).
   function tryWareffort() {
     return !!(window.WH_WarEffort && window.WH_WarEffort.tryOpen());
+  }
+
+  // CC-WB3: strata requisition board (js/strataeffort.js) - the WB1 grammar
+  // on a second board at Lord's Hold (region G): take a requisition, turn in
+  // the delve harvest (rot-silk + rot-gland) for a fixed coin reward. Branch
+  // ADDED AFTER tryWareffort(): the boards are far apart and each is region-
+  // gated, so the two are mutually exclusive.
+  function tryStrata() {
+    return !!(window.WH_StrataEffort && window.WH_StrataEffort.tryOpen());
   }
 
   // ---- CC-C8 the Rot Mother's den door (CONFIG.regionD.door) ----------------------
@@ -110341,6 +110617,9 @@ window.WH_ICONS = {
       // CC-WB1: war board prompt (same shape as the chest branch above).
       } else if (window.WH_WarEffort && window.WH_WarEffort.interactPrompt()) {
         text = window.WH_WarEffort.interactPrompt();
+      // CC-WB3: strata board prompt, same shape, branch AFTER the war board.
+      } else if (window.WH_StrataEffort && window.WH_StrataEffort.interactPrompt()) {
+        text = window.WH_StrataEffort.interactPrompt();
       } else {
         var node = nearestGatherNode();
         if (node) text = CFG.gather.promptText.replace('{name}', CFG.gather.nodeTypes[node.type].name);
@@ -110708,6 +110987,9 @@ window.WH_ICONS = {
       // CC-WB1: war-effort board manager (js/wareffort.js) - same init-hook
       // tier as the chest; builds the board mesh and holds the game ref.
       if (window.WH_WarEffort) window.WH_WarEffort.init(game);
+      // CC-WB3: strata board manager (js/strataeffort.js) - same init-hook
+      // tier, right after the war board; builds its own board mesh (region G).
+      if (window.WH_StrataEffort) window.WH_StrataEffort.init(game);
       // CC-AE1: night raid director (js/ambush.js) - same init-hook tier as
       // the NPC/chest managers; WH_AMBUSH holds the game ref only.
       if (window.WH_AMBUSH) window.WH_AMBUSH.init(game);
@@ -110761,6 +111043,8 @@ window.WH_ICONS = {
       if (window.WH_Chest) data.chest = window.WH_Chest.capture();
       // CC-WB1: board state rides the save-wrap ({active, postedDay, resolvedDay}).
       if (window.WH_WarEffort) data.warEffort = window.WH_WarEffort.capture();
+      // CC-WB3: strata board state rides the save-wrap too, chest-line shape.
+      if (window.WH_StrataEffort) data.strataEffort = window.WH_StrataEffort.capture();
       if (window.WH_JOURNAL) data.journal = window.WH_JOURNAL.capture();   // QJR-1
       // CC-AF1: the standing ledger + its once-map ride the save-wrap
       data.affinity = window.WH_AFF ? window.WH_AFF.capture() : undefined;
@@ -110778,6 +111062,8 @@ window.WH_ICONS = {
         if (window.WH_Chest) stored.chest = window.WH_Chest.capture();
         // CC-WB1: explicit storage write, chest-line shape.
         if (window.WH_WarEffort) stored.warEffort = window.WH_WarEffort.capture();
+        // CC-WB3: explicit storage write, chest-line shape (strata board).
+        if (window.WH_StrataEffort) stored.strataEffort = window.WH_StrataEffort.capture();
         if (window.WH_JOURNAL) stored.journal = window.WH_JOURNAL.capture();   // QJR-1
         // CC-AF1: explicit storage write, journal-line shape
         stored.affinity = window.WH_AFF ? window.WH_AFF.capture() : undefined;
@@ -110792,6 +111078,8 @@ window.WH_ICONS = {
       if (data && window.WH_Chest) window.WH_Chest.restore(data.chest);
       // CC-WB1: a missing warEffort block is a no-op (fresh idle board).
       if (data && window.WH_WarEffort) window.WH_WarEffort.restore(data.warEffort);
+      // CC-WB3: a missing strataEffort block is a no-op (fresh idle board).
+      if (data && window.WH_StrataEffort) window.WH_StrataEffort.restore(data.strataEffort);
       if (window.WH_JOURNAL) window.WH_JOURNAL.restore(data && data.journal);   // QJR-1
       // CC-AF1: a missing affinity block is a no-op (fresh 0 / crossed {})
       if (window.WH_AFF) window.WH_AFF.restore(data && data.affinity);
