@@ -2012,7 +2012,24 @@ window.WH_CONFIG = {
       { asset: 'whWallB', x: -42.87, z: -956.45, rotY: 2.58, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
       { asset: 'whWallA', x: -34.06, z: -951.61, rotY: 2.7, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
       { asset: 'whWallB', x: -24.72, z: -947.92, rotY: 2.83, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
-      { asset: 'whWallA', x: -14.99, z: -945.42, rotY: 2.95, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 }
+      { asset: 'whWallA', x: -14.99, z: -945.42, rotY: 2.95, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'b6Bones', x: 46, z: -1076, rotY: 2.4, scale: 1 },       // armory-corner dead-arms clutter
+      { asset: 'rubblePile', x: 36, z: -1042, rotY: 0, scale: 1 },      // rubble between kits and boulder
+      { asset: 'okFenceStonewall', x: -66, z: -1024, rotY: 1.57, scale: 1 },  // west ossuary partition
+      { asset: 'graveMound', x: -58, z: -1008, rotY: 0, scale: 1 }      // ossuary mound
+    ],
+    nodes: [
+      { type: 'bonePile', x: -56, z: -1032 },   // ossuary corner W heap
+      { type: 'bonePile', x: -63, z: -1044 },   // ossuary corner SW heap
+      { type: 'bonePile', x: -50, z: -1044 },   // ossuary corner S heap
+      { type: 'ironVein', x: 66,  z: -1042 },   // armory ore store E
+      { type: 'ironVein', x: 58,  z: -1050 },   // armory ore store W
+      { type: 'bonePile', x: 22,  z: -1046 },   // armory-yard wreckage heap
+      { type: 'bonePile', x: -20, z: -992 },    // yard wreck heap W
+      { type: 'bonePile', x: -13, z: -986 },    // breach approach flank (W of lane)
+      { type: 'bonePile', x: 13,  z: -986 },    // breach approach flank (E of lane)
+      { type: 'bonePile', x: 44,  z: -996 },    // yard-edge ossuary tail
+      { type: 'ironVein', x: 44,  z: -1022 }    // yard-edge ore cache
     ]
   },
 
