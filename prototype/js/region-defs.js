@@ -254,6 +254,32 @@
   connections[6].sides[CFG.regionG.id] = 1;
   connections[6].sides[CFG.regionH.id] = -1;
 
+  // CC-H2b armory_deep: plane-0 convention only; H-side portal is an
+  // interact hook, I-side mouth is a walk-back plane (E/C precedent).
+  regions[CFG.regionI.id] = makeRegion(CFG.regionI, -1);
+  var ID = CFG.regionI.door;
+  connections.push({
+    from: CFG.regionH.id,
+    to: CFG.regionI.id,
+    axis: 'z',
+    planeCoord: ID.planeZ,
+    sides: {},
+    door: {
+      doorX: ID.doorX, doorHalfWidth: ID.doorHalfWidth,
+      suspendDepthM: ID.suspendDepthM, wallGapPadM: ID.wallGapPadM,
+      arch: null, gatedTo: null,
+      walkFrom: CFG.regionI.id,
+      interact: { from: CFG.regionH.id, x: ID.interact.x, z: ID.interact.z, radius: ID.interact.radius },
+      land: ID.land,
+      fadeIn: ID.fadeIn, fadeOut: ID.fadeOut, exitFadeOut: ID.exitFadeOut,
+      text: ID.text                       // AMENDMENT A: the portal prompt + fades ride the conn
+    }
+  });
+  // E-mirror: H's plane is underground/inactive; I's interior is north
+  // of its walk-back plane. The H-side table value follows conn[3].
+  connections[7].sides[CFG.regionH.id] = -1;
+  connections[7].sides[CFG.regionI.id] = +1;
+
   // ---- THREE-free transition helpers (used by region-manager and tests) ------
 
   // Returns the connection between two region ids, or null.

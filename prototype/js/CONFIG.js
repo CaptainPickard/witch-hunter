@@ -2033,6 +2033,85 @@ window.WH_CONFIG = {
     ]
   },
 
+  regionI: {
+    id: 'armory_deep',
+    name: "The Armory Deep",
+    center: { x: 0, z: -1120 },       // 8 m further south than regionH's center (0,-1024); chained pocket
+    groundRadius: 18,                 // E is 20; D is 34; the pocket reads one stratum tighter. PROPOSED
+    groundY: 0,                       // flat disc (H hidden while I is active: one-active-region law)
+    groundColor: 0x101218,            // basalt, one step colder than H2's stone
+    groundColor2: 0x14161c,           // shadow secondary
+    groundSeed: 1662061654,           // FRESH: must not equal C 1662061217 / D ...218 / E ...219 / F ...1329 / G ...1440 / H ...1651
+    scatter: false,                   // hand rows only (D/E/F pattern)
+    spawn: { x: 0, z: -1128 },        // the landing row's I end (E-mirror: local (0,-8))
+    gravityY: -22,                    // E/D's value
+    fogColor: 0x0a0810,               // E's veil fog
+    fogDensity: 0.13,                 // E's value (d95 = 13.3 m: the chamber is one black thought)
+    ambientLightLevel: 0.07,          // E's value
+    door: {
+      planeZ: -1136,                  // I-local -16 (E-mirror: 2 m inside the r18 south rim -1138)
+      doorX: 0,
+      doorHalfWidth: 3.0,             // the E/F grammar (2.4/2.2) widened ONE step for a two-sided breach lane. PROPOSED
+      suspendDepthM: 0,               // E/F/D value: the plane sits INSIDE the disc; no clamp lift needed
+      wallGapPadM: 0,
+      walkFrom: 'armory_deep',        // ONE-SIDED: the plane crosses ONLY from the I side (C/E grammar: H keeps no walkFrom)
+      interact: {
+        from: 'fort_garrison',        // the H-side hook (E's C-side notch-mouth pattern)
+        x: -7.5, z: -1088.5, radius: 3.5
+      },
+      land: {
+        fort_garrison: { x: 0, z: -1083.99, faceX: 0, faceZ: -1097 },   // +0.01 m: torch walk-clear >= 8.85; facing H2's war-table dais
+        armory_deep:   { x: 0, z: -1128, faceX: 0, faceZ: -1120 }    // INTO I = the spawn row, facing the bier hall
+      },
+      fadeIn: 0.3, fadeOut: 0.5, exitFadeOut: 0.8,
+      text: { prompt: 'E - Descend into the armory' }
+    },
+    enemies: [
+      { type: 'ghoul', x: -6.3, z: -1117 },
+      { type: 'ghoul', x: 6.3, z: -1117 }
+    ],
+    props: [
+      // -- the bier dais (E's albetar plinth pattern, hall center-north)
+      { asset: 'stoneSarcophagus', x: 0, z: -1118.5, rotY: 0.00, scale: 1.20 },
+      { asset: 'stoneSteps',       x: -2.4, z: -1115.7, rotY: 0.60, scale: 1.10 },
+      { asset: 'stoneSteps',       x: 2.4, z: -1115.7, rotY: 5.68, scale: 1.10 },
+      // -- supply yard west: campkit + tent + fence + the crimson lantern
+      { asset: 'lanternPost',      x: 6.4, z: -1127.2, rotY: 5.2, scale: 1 },
+      { asset: 'skullPile',        x: -6.9, z: -1127.2, rotY: 4.4, scale: 1 },
+      { asset: 'whCampkit',        x: -9.9, z: -1123.6, rotY: 0.3, scale: 1 },
+      { asset: 'whCampkit',        x: 9.9, z: -1123.0, rotY: 5.9, scale: 1 },
+      { asset: 'whTent',           x: -12.1, z: -1120.6, rotY: 1.2, scale: 1 },
+      { asset: 'whTent',           x: 12.1, z: -1120.0, rotY: 5.2, scale: 1 },
+      // -- the crimson pair: 2 blightcap caps (the ONE accent family;
+      //    'blightcap' has NO lightSockets key: dark flowers by design)
+      { asset: 'blightcap',        x: -12.4, z: -1117.6, rotY: 3.62, scale: 0.90 },
+      { asset: 'blightcap',        x: 12.4, z: -1117.3, rotY: 0.63, scale: 0.90 },
+      // -- ruined columns flanking the hall's north wall
+      { asset: 'okRuinColumn',     x: -9.4, z: -1117.5, rotY: 5.9, scale: 1.4 },
+      { asset: 'okRuinColumn',     x: 9.4, z: -1117.0, rotY: 5.9, scale: 1.4 },
+      // -- CC-H2b CAVERN RING: full 10-row closure (the D/E/F closed-cavern
+      //    law; the plane exits THROUGH the ring's south point -1138 which
+      //    backs the door like E's -612/-614 pair). scale = chord/1.899
+      //    (chord 11.12 = 2*18*sin(18 deg) => 5.8581); centers k*36 deg;
+      //    rotY = bearing + PI. NO omission, NO window probe: the ring is
+      //    closed behind the plane like E's crypt mouth; the door lane
+      //    (|x|<=3 at z -1136) clears the NEAREST ring collider (the
+      //    south-point row (0,-1138)) by ~1.55-1.60 m — the governing
+      //    >= 1.0 m lane clearance (BV-002, Testerbot 11-07: my earlier
+      //    5.85 'nearest' figure named the wrong rows; geometry unchanged).
+      { asset: 'whWallA', x: 0, z: -1102, rotY: 3.14, scale: 5.8581, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: 10.58, z: -1105.44, rotY: 3.77, scale: 5.8581, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: 17.12, z: -1114.44, rotY: 4.4, scale: 5.8581, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: 17.12, z: -1125.56, rotY: 5.03, scale: 5.8581, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: 10.58, z: -1134.56, rotY: 5.65, scale: 5.8581, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: 0, z: -1138, rotY: 6.28, scale: 5.8581, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: -10.58, z: -1134.56, rotY: 6.91, scale: 5.8581, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: -17.12, z: -1125.56, rotY: 7.54, scale: 5.8581, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: -17.12, z: -1114.44, rotY: 8.17, scale: 5.8581, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: -10.58, z: -1105.44, rotY: 8.8, scale: 5.8581, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 }
+    ]
+  },
+
   // Round E (io/missions/2026-10-05-cc-roundE-veg.md): seeded vegetation
   // scatter, built by region-manager whScatterPlan. PARAMETERS ONLY - no
   // placement tables: every position is a pure function of this block, the
