@@ -1942,6 +1942,10 @@
     this.packs[regionId] = window.WH_Enemy.buildPacks(this.enemies[regionId],
       regionCfg.enemies, regionId);
 
+    // CC-H5b: hand hazards (the Tithe Vaults flame vents) hang their group
+    // off this region group (disposeRegion frees it with the region)
+    if (window.WH_HAZARDS) window.WH_HAZARDS.onRegionBuilt(regionId, group);
+
     group.visible = !hidden;
     this.scene.add(group);
     this.groups[regionId] = group;
@@ -1952,6 +1956,9 @@
   RegionManager.prototype.disposeRegion = function (regionId) {
     var group = this.groups[regionId];
     if (!group) return;
+    // CC-H5b: drop the module's per-region rows (the group itself is freed
+    // by the traverse below - it is a child of this region group)
+    if (window.WH_HAZARDS) window.WH_HAZARDS.onRegionDisposed(regionId);
     this.scene.remove(group);
     group.traverse(function (obj) {
       if (obj.isMesh) {

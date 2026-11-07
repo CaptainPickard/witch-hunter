@@ -2331,6 +2331,42 @@ window.WH_CONFIG = {
         showWithinM: 70 },
       cullM: 170
     },
+    // CC-H5b Traps as Authored Hazards (io/specs/cc-h5b-hazards-spec.md B1):
+    // the vault's OWN flame vents, hand-placed as a puzzle. Independent
+    // per-vent phase machine idle 6.0 / warn 1.5 / blast 0.9 / linger 0.6
+    // (9.0 s cycle); vents DE-SYNC phase-0 (+ 1.3 s x index, C5: reset at
+    // every region build). radiusM is the LETHAL damage seat;
+    // warnRadiusM / blastRadiusM are the cards' VISUAL reach; heightM floats
+    // the card over the pipe. cueHex = THE ONE crimson accent
+    // (matches tithecaptain.cueHot). SEAT AMENDMENT (disclosed in the build
+    // note): vent 2 sat (x -6.0, z -894) in the spec B1 literal table - its
+    // center stood 1.10 m from the mourningStatue (-6,-896) edge, below the
+    // >= 2.0 prop-edge floor; per the spec's amendment law ("a probe failure
+    // amends the seat, never the law") it moves to (-4.5,-899), which clears
+    // every B1 floor (scratch/cc-h5b/probe_placement.py prints the table).
+    hazards: {
+      vents: [
+        { x: -5.5, z: -864 },  // antechamber choke lane, left of the spawn walk-in
+        { x:  6.5, z: -869 },  // central floor, between antechamber and boss seat
+        { x: -4.5, z: -899 },  // boss-approach left flank (AMENDED, was -6.0,-894)
+        { x:  3.0, z: -897 }   // boss-approach right flank (asymmetric: harder read)
+      ],
+      idleSec: 6.0,             // dormant
+      warnSec: 1.5,             // telegraph (crimson card grow + light wick)
+      blastSec: 0.9,            // flame card at full + light at peak
+      lingerSec: 0.6,           // cooldown fade (harmless, dim)
+      radiusM: 2.0,             // LETHAL radius (damage seat), centered on the pipe
+      warnRadiusM: 1.1,         // visual radius the crimson card reaches at warn end
+      blastRadiusM: 2.0,        // visual radius the ember card reaches at blast start
+      heightM: 2.2,             // card float above ground (visual only)
+      damage: 14,               // hp per blast shot, once per player per vent-cycle
+      hitStop: 0.10,            // s of module-scoped hit-stop on an applied hit
+      cueHex: 0xd84a4a,         // THE ONE crimson accent (matches tithecaptain cueHot)
+      cardIdleHex: 0x8a2a20,    // idle ember dim red-brown (always visible vent eye)
+      cardBlastHex: 0xff8a3c,   // blast flame core (still inside the crimson family)
+      shakeM: 0.12,             // camera shake magnitude on a player hit (shake-channel scale)
+      staggerMeters: 4.0        // player knockback distance, away from the vent center
+    },
     props: [
       // -- THE VAULT GATE: mourning-statuette guards watching the dais
       //    (the J gauntlet family continues; the processional ends here)
@@ -2547,6 +2583,19 @@ window.WH_CONFIG = {
     cooldownSec: 180,             // after a raid ends (wipe or leash-out)
     debugForce: false,            // Nicko dev knob (dayNight.debugTimeScale pattern)
     debugMute: false              // dev knob: silence the state toasts below
+  },
+
+  // CC-H5b Traps as Authored Hazards (io/specs/cc-h5b-hazards-spec.md B2):
+  // global primitive block, sibling of CFG.raid. Values consumed by
+  // js/hazards.js only. hitCooldownSec is the per-player GLOBAL re-hit gate
+  // (across vents - one vent cannot chain into the next inside the gate);
+  // toastText = the one-time first-hit cue (inventoryUI.toast, session-scoped).
+  hazards: {
+    enabled: true,
+    regionIds: ['tithe_vaults'],  // gate: only these regions run vents
+    hitCooldownSec: 0.5,          // per-player global re-hit gate (all vents)
+    toastText: 'The vault flares!',  // one-time first-hit cue (inventoryUI toast)
+    firstHitOnly: true
   },
 
   // Boundary between A and B: the plane z = CONFIG.boundary.z.

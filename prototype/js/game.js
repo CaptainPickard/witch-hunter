@@ -2618,6 +2618,13 @@
       // CC-AE1: night raid director (js/ambush.js) - same init-hook tier as
       // the NPC/chest managers; WH_AMBUSH holds the game ref only.
       if (window.WH_AMBUSH) window.WH_AMBUSH.init(game);
+      // CC-H5b: hazards director (js/hazards.js) - same init-hook tier as
+      // the NPC/chest managers; the fx wiring hands the module the EXISTING
+      // camera-shake channel (triggerShake; no global hit-stop exists).
+      if (window.WH_HAZARDS) {
+        game.hazardsFx = { shake: triggerShake };
+        window.WH_HAZARDS.init(game);
+      }
       if (window.WH_JOURNAL) window.WH_JOURNAL.init(game);   // QJR-1: journal core
       // C4 boot CONTINUE: with a save the overlay waits for the player's row
       // (CONTINUE = restore the profile, NEW GAME = the fresh flow; the
@@ -2889,6 +2896,12 @@
     // no flame card - poolTick reads socket.color / socket.noCard)
     var ls = window.WH_Enemy.lairSockets(rm.logic.activeId);
     for (var q = 0; q < ls.length; q++) out.push(ls[q]);
+    // CC-H5b: the hazards' wick rows (warn/blast vents ONLY - zero rows at
+    // rest; noCard true + cueHex color, the lair-socket grammar)
+    if (window.WH_HAZARDS) {
+      var hs = window.WH_HAZARDS.socketsFor(rm.logic.activeId);
+      for (var hq = 0; hq < hs.length; hq++) out.push(hs[hq]);
+    }
     return out;
   }
 
@@ -3127,6 +3140,10 @@
     // CC-AE1: night raid director (js/ambush.js) - one tick right after the
     // region's enemy sweep ran
     window.WH_AMBUSH.tick(dt);
+
+    // CC-H5b: hazards director (js/hazards.js) - one tick right after the
+    // ambush sweep, its own call site (no enemy/hazard coupling)
+    if (window.WH_HAZARDS) window.WH_HAZARDS.tick(dt);
 
     // attack sweep vs enemies
     var sweep = game.player.consumeAttackSweep();
