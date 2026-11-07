@@ -627,6 +627,12 @@
   // light-pool socket pass (game.js computeFireSockets)
   Camp.prototype.fireProps = function (rid) {
     var out = [];
+    // CC-AF1: the kit fires tint with the standing tier (guarded; tierFire()
+    // null or module absent = rows exactly as today). Only kit rows - the
+    // ambient CONFIG banditCampfire props are other people's fires.
+    var AFF = window.WH_AFF;
+    var tint = (AFF && CFG.affinity && CFG.affinity.campTint &&
+      CFG.affinity.campTint.enabled) ? AFF.tierFire() : null;
     this.sites.forEach(function (s) {
       if (s.regionId !== rid) return;
       var yaw = siteYaw(s.f);
@@ -634,6 +640,9 @@
         if (m.row.hook !== 'cook') return;
         var A = K.assets[m.row.asset];
         out.push({ asset: A.glb, x: m.x, z: m.z, rotY: yaw + (m.row.rotY || 0), scale: A.scale });
+        // CC-AF1: the row we just pushed gains the tier colour (tint null /
+        // module absent = the row stays exactly as before)
+        if (tint != null) out[out.length - 1].color = tint;
       });
     });
     return out;

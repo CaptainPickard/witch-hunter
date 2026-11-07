@@ -1875,6 +1875,15 @@
       var ui = game.inventoryUI;
       if (ui && ui.open && ui.tab === 'character') ui.renderCharacter();
     };
+    // CC-AF1: STANDING column re-render, same shape as the leveling hook
+    // (guarded single call - the module may be absent)
+    var AFF = window.WH_AFF;
+    if (AFF) {
+      AFF.onChange = function () {
+        var ui = game.inventoryUI;
+        if (ui && ui.open && ui.tab === 'character') ui.renderCharacter();
+      };
+    }
   }
 
   // S3b: the one world-interact entry point - E key, touch USE button
@@ -2121,6 +2130,7 @@
     game.corpseLoot.attach(enemy, typeCfg && typeCfg.loot ? rollTypeLoot(typeCfg.loot) : rollDrops());
     window.WH_LEVEL.awardXP('kill_' + enemy.type);
     window.WH_LEVEL.discover('foe', enemy.type);
+    if (window.WH_AFF) window.WH_AFF.deed('kill_' + enemy.type);   // CC-AF1: the standing ledger (kill_wolf 0 = no-op)
   }
 
   // USE / E: everything that fits off the nearest unlooted corpse in reach;
@@ -2652,6 +2662,8 @@
       // CC-WB1: board state rides the save-wrap ({active, postedDay, resolvedDay}).
       if (window.WH_WarEffort) data.warEffort = window.WH_WarEffort.capture();
       if (window.WH_JOURNAL) data.journal = window.WH_JOURNAL.capture();   // QJR-1
+      // CC-AF1: the standing ledger + its once-map ride the save-wrap
+      data.affinity = window.WH_AFF ? window.WH_AFF.capture() : undefined;
       return data;
     };
     S.save = function (g, opts) {
@@ -2667,6 +2679,8 @@
         // CC-WB1: explicit storage write, chest-line shape.
         if (window.WH_WarEffort) stored.warEffort = window.WH_WarEffort.capture();
         if (window.WH_JOURNAL) stored.journal = window.WH_JOURNAL.capture();   // QJR-1
+        // CC-AF1: explicit storage write, journal-line shape
+        stored.affinity = window.WH_AFF ? window.WH_AFF.capture() : undefined;
         window.localStorage.setItem(CFG.save.lsKey, JSON.stringify(stored));
       } catch (e) { /* the base profile stands; the nest re-arms on load */ }
       return true;
@@ -2679,6 +2693,8 @@
       // CC-WB1: a missing warEffort block is a no-op (fresh idle board).
       if (data && window.WH_WarEffort) window.WH_WarEffort.restore(data.warEffort);
       if (window.WH_JOURNAL) window.WH_JOURNAL.restore(data && data.journal);   // QJR-1
+      // CC-AF1: a missing affinity block is a no-op (fresh 0 / crossed {})
+      if (window.WH_AFF) window.WH_AFF.restore(data && data.affinity);
       baseRestore(g, data);
     };
     // S5 quit persist: tab close / reload writes the same capture() profile,
@@ -2860,6 +2876,11 @@
         window.WH_REGION_DEFS.regions[rm.logic.activeId].cfg.terrain.propFootR);
       out.push({ id: p.asset + '@' + p.x + ',' + p.z, x: sx, y: h, z: sz,
                  intensity: inten, weight: 1 });
+      // CC-AF1: a prop row carrying its own colour (the kit fire tier tint)
+      // forwards it; s = the socket being pushed. poolTick already honors
+      // tgt.color (CC-C7 pattern) - the pool tick is NOT edited
+      var s = out[out.length - 1];
+      if (p.color !== undefined) s.color = p.color;
     }
     // Round F: world-level sockets (gate-arch lantern), live in both regions.
     var ws = rm.worldSockets ? rm.worldSockets() : [];

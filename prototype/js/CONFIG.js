@@ -4150,9 +4150,61 @@ window.WH_CONFIG.journal = {
       title: "The farmer's daughter",
       body: "Aldric: 'She is home, hunter. You have given me back my world.' The road is quiet again.",
       source: 'Farmer Aldric'
+    },
+    // CC-AF1 camp folk crossing voices (verbatim from
+    // io/specs/cc-af1-camp-affinity-spec.md A; APPEND ONLY, single-line strings)
+    campAffinityGood: {
+      id: 'camp-affinity-good',
+      title: 'The honored fire',
+      body: 'The camp folk tend my fire a little brighter - word of good deeds travels ahead of me. The garrison claps shoulders on my way through; the moors keep their distance.',
+      source: 'Camp folk'
+    },
+    campAffinityDark: {
+      id: 'camp-affinity-dark',
+      title: 'The watched fire',
+      body: 'The camp folk keep to their tents now. My fire burns low and red, and the shadows between the wagons watch me back. Word of my deeds travels too - the wrong kind.',
+      source: 'Camp folk'
     }
   }
 };
+
+// CC-AF1 CAMP AFFINITY (docs 12 + 11 + 44/45; Nicko MorROWIND order
+// 2026-11-07) - doc 12's single visible good<->evil axis as a deed-driven
+// standing score, js/affinity.js WH_AFF. The kit camp fire tints with the
+// tier; ambient world fires stay amber. EVERY NUMBER IS PROPOSED, NICKO
+// TUNES (doc 12 ruling pass working values).
+window.WH_CONFIG.affinity = {
+  // doc 12 ruling pass working values (PROPOSED, Nicko tunes): |s| >= 80 sworn,
+  // >= 50 honored/feared, else neutral. tier() = first row (desc) with minScore <= s.
+  ladder: [
+    { id: 'sworn-dark',  minScore: -80, label: 'Sworn of the Dark', fire: 0xff2a2a },
+    { id: 'feared',      minScore: -50, label: 'Feared', fire: 0xff5a3c },
+    { id: 'neutral',     minScore: -49, label: 'Neutral', fire: null },
+    { id: 'honored',     minScore: 50,  label: 'Honored', fire: 0xffdf8a },
+    { id: 'sworn-light', minScore: 80,  label: 'Sworn of the Dawn', fire: 0xfff2c8 }
+  ],
+  // deeds: event id -> delta. Kill ids mirror CONFIG.leveling.xpSources keys;
+  // every re-armed kill pays again (the XP law). rescue/warEffortFill repeat by
+  // their own event semantics (rescue is once by quest state; the fill is per day).
+  deeds: {
+    rescue_findDaughter: 25,   // witnessed good deed: the daughter home
+    warEffortFill: 10,          // the garrison is the light war's belly
+    kill_ghoul: 4,              // blight cleansing
+    kill_rotmother: 4,
+    kill_rotspawn: 2,
+    kill_wolf: 0,               // wildlife; row explicit so the map is total
+    kill_bandit: -4,            // moor men of the underworld kin; unwarranted blood
+    kill_coven: 8               // the hunter's trade against the covens
+  },
+  clamp: 100,                   // score hard clamp [-100, +100] (PROPOSED)
+  campTint: { enabled: true },   // kit fires only; ambient world fires stay amber
+  text: {
+    secTitle: 'STANDING',
+    scoreFmt: '{score} standing',
+    barNeutral: '#8a8577'       // v1 bar fill follows tier via cls, see C-UI
+  }
+};
+
 
 // L1 (2026-10-07, io/missions/2026-10-07-cc-l1-leveling.md) LEVELING -
 // js/leveling.js WH_LEVEL. Layer 1 (doc 07): XP -> character level -> 5

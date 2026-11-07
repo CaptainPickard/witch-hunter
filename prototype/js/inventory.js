@@ -634,6 +634,27 @@
       row.appendChild(el('div', 'lvl-cap', (tier ? tier + ' - ' : '') + skillCaption(LV, line)));
       col.appendChild(row);
     });
+
+    // CC-AF1: STANDING (doc 12 axis) at the BOTTOM of the col, after SKILLS;
+    // guarded on WH_AFF - a build without js/affinity.js renders no row.
+    var AFF = window.WH_AFF;
+    if (AFF) {
+      var AC = CFG.affinity, at = AFF.tier(), arow = el('div', 'lvl-skill');
+      col.appendChild(el('div', 'inv-sec', AC.text.secTitle));
+      var atop = el('div', 'lvl-stat-top');
+      atop.appendChild(el('span', 'lvl-stat-name', at.label));
+      atop.appendChild(el('span', 'lvl-stat-pts',
+        AC.text.scoreFmt.replace('{score}', String(AFF.score()))));
+      arow.appendChild(atop);
+      // the bar fill mirrors the tier via its class (C-UI law; style.css)
+      var abar = el('div', 'aff-bar');
+      var afin = el('div', 'aff-fill');
+      afin.className = 'aff-fill fill-' + at.id;
+      afin.style.width = String(Math.round(Math.abs(AFF.score()) / AC.clamp * 100)) + '%';
+      abar.appendChild(afin);
+      arow.appendChild(abar);
+      col.appendChild(arow);
+    }
     return col;
   };
 

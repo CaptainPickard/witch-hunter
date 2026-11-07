@@ -237,6 +237,7 @@
     setOpen(true);
     game.inventoryUI.toast(Q.rescuedToast);
     if (JT && window.WH_JOURNAL) window.WH_JOURNAL.append(JT.rescue.id, JT.rescue.title, JT.rescue.body, undefined, JT.rescue.source);   // QJR-2
+    if (window.WH_AFF) window.WH_AFF.deed('rescue_findDaughter');   // CC-AF1: a witnessed good deed
     return true;
   }
 

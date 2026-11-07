@@ -216,6 +216,7 @@
     setPapersVisible(false);
     rebuildTallyPins();                 // S-3: rebuilt on resolve
     if (JT && window.WH_JOURNAL) window.WH_JOURNAL.append(JT.firstFill.id, JT.firstFill.title, JT.firstFill.body, undefined, JT.firstFill.source);  // QJR-3
+    if (window.WH_AFF) window.WH_AFF.deed('warEffortFill');   // CC-AF1: a fill moves the standing
     toast(over >= 1
       ? (LAD && LAD.overDoneText || 'Requisition filled. The quartermaster pays a bonus for the extra iron.')
       : (RQ.doneText || 'Requisition filled.'));

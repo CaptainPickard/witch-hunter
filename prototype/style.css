@@ -1620,3 +1620,23 @@ html, body {
 .journal-row-body { font-size: 11px; color: #2a231b; line-height: 1.45; }
 .journal-nomatch { color: #6a6350; font-style: italic; font-size: 11px;
   padding: 6px 2px; }
+
+/* CC-AF1 standing (doc 12 axis): the CHARACTER tab STANDING block
+   (js/affinity.js WH_AFF; js/inventory.js renderLeveling). One row of the
+   lvl-bar pattern; the fill colour follows the tier via class. */
+.aff-bar {
+  height: 6px;
+  background: #14110e;
+  border: 2px solid #3d382e;
+  margin: 2px 0;
+}
+
+.aff-fill {
+  height: 100%;
+  background: #8a8577;
+}
+.aff-fill.fill-neutral      { background: #8a8577; }
+.aff-fill.fill-honored      { background: #e3b64f; }
+.aff-fill.fill-feared       { background: #b0472f; }
+.aff-fill.fill-sworn-light  { background: #efe3ad; }
+.aff-fill.fill-sworn-dark   { background: #8f1f1f; }
