@@ -102,6 +102,16 @@
     churchPewBroken: 'art-direction/3d/assets/church-kit/church-pew-broken-pixelated.glb',
     ironFenceSection: 'art-direction/3d/assets/church-kit/iron-fence-section-pixelated.glb',
     ironFenceCorner: 'art-direction/3d/assets/church-kit/iron-fence-corner-pixelated.glb',
+    // CC-B1 (2026-11-07): ruined-chapel landmark pieces (doc 61 P1-2, region B);
+    // all on-disk -pixelated.glb variants, manifest rows only (dims/colliders
+    // derive at load — see io/specs/cc-b1-chapel-spec.md)
+    churchWallWindow: 'art-direction/3d/assets/church-kit/church-wall-window-pixelated.glb',
+    churchWindowFrame: 'art-direction/3d/assets/church-kit/church-window-frame-pixelated.glb',
+    churchRoofBeam: 'art-direction/3d/assets/church-kit/church-roof-beam-pixelated.glb',
+    churchAltar: 'art-direction/3d/assets/church-kit/church-altar-pixelated.glb',
+    churchPulpit: 'art-direction/3d/assets/church-kit/church-pulpit-pixelated.glb',
+    churchPew: 'art-direction/3d/assets/church-kit/church-pew-pixelated.glb',
+    candelabra: 'art-direction/3d/assets/church-kit/candelabra-pixelated.glb',
     // CC-C17 (2026-10-20): Old King's Forest kit (Astrabot Meshy bakes, 512
     // NEAREST + 5-bit; ~1.9-unit normalized GLBs). Region C streaming props -
     // NOT bootCritical. Barn/silo/haybale/rubble/ruin-wall bakes are on disk
