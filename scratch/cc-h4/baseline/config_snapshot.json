@@ -1,0 +1,327 @@
+{
+ "regionJ": {
+  "id": "veil_spire_approach",
+  "name": "The Spire Approach",
+  "center": {
+   "x": 0,
+   "z": -700
+  },
+  "groundRadius": 40,
+  "groundY": 0,
+  "groundColor": 855829,
+  "groundColor2": 1119000,
+  "groundSeed": 1662061763,
+  "scatter": false,
+  "spawn": {
+   "x": 0,
+   "z": -730
+  },
+  "gravityY": -22,
+  "fogColor": 657424,
+  "fogDensity": 0.15,
+  "ambientLightLevel": 0.05,
+  "door": {
+   "planeZ": -738,
+   "doorX": 0,
+   "doorHalfWidth": 2.2,
+   "suspendDepthM": 0,
+   "wallGapPadM": 0,
+   "walkFrom": "veil_spire_approach",
+   "interact": {
+    "from": "veil_galleries",
+    "x": 7.5,
+    "z": -654,
+    "radius": 3.5
+   },
+   "land": {
+    "veil_galleries": {
+     "x": 2,
+     "z": -652,
+     "faceX": 2,
+     "faceZ": -644
+    },
+    "veil_spire_approach": {
+     "x": 0,
+     "z": -730,
+     "faceX": 0,
+     "faceZ": -700
+    }
+   },
+   "fadeIn": 0.3,
+   "fadeOut": 0.5,
+   "exitFadeOut": 0.8,
+   "text": {
+    "prompt": "E - Descend toward the spire"
+   }
+  },
+  "enemies": [
+   {
+    "type": "ghoul",
+    "x": -15,
+    "z": -708
+   },
+   {
+    "type": "ghoul",
+    "x": 15,
+    "z": -708
+   }
+  ],
+  "props": [
+   {
+    "asset": "mourningStatue",
+    "x": -7,
+    "z": -712,
+    "rotY": 4,
+    "scale": 1
+   },
+   {
+    "asset": "mourningStatue",
+    "x": 7,
+    "z": -712,
+    "rotY": 5.28,
+    "scale": 1
+   },
+   {
+    "asset": "mourningStatue",
+    "x": -7,
+    "z": -704,
+    "rotY": 4,
+    "scale": 1
+   },
+   {
+    "asset": "mourningStatue",
+    "x": 7,
+    "z": -704,
+    "rotY": 5.28,
+    "scale": 1
+   },
+   {
+    "asset": "stoneSteps",
+    "x": -2.4,
+    "z": -718,
+    "rotY": 0.6,
+    "scale": 1.1
+   },
+   {
+    "asset": "stoneSteps",
+    "x": 2.4,
+    "z": -718,
+    "rotY": 5.68,
+    "scale": 1.1
+   },
+   {
+    "asset": "okRuinColumn",
+    "x": 0,
+    "z": -700,
+    "rotY": 0,
+    "scale": 2.4
+   },
+   {
+    "asset": "okRuinColumn",
+    "x": -8,
+    "z": -696,
+    "rotY": 0.3,
+    "scale": 1.4
+   },
+   {
+    "asset": "okRuinColumn",
+    "x": 8,
+    "z": -696,
+    "rotY": 5.98,
+    "scale": 1.4
+   },
+   {
+    "asset": "blightcap",
+    "x": -12,
+    "z": -692,
+    "rotY": 3.62,
+    "scale": 0.9
+   },
+   {
+    "asset": "blightcap",
+    "x": 12,
+    "z": -692,
+    "rotY": 0.63,
+    "scale": 0.9
+   },
+   {
+    "asset": "lanternPost",
+    "x": -6,
+    "z": -724,
+    "rotY": 5.2,
+    "scale": 1
+   },
+   {
+    "asset": "skullPile",
+    "x": -13,
+    "z": -723,
+    "rotY": 4.4,
+    "scale": 1
+   },
+   {
+    "asset": "skullPile",
+    "x": -5,
+    "z": -668,
+    "rotY": 3.6,
+    "scale": 1
+   },
+   {
+    "asset": "mossBoulder",
+    "x": 0,
+    "z": -672,
+    "rotY": 2,
+    "scale": 2.2
+   },
+   {
+    "asset": "whWallA",
+    "x": 0,
+    "z": -660,
+    "rotY": 3.14,
+    "scale": 13.019,
+    "sy": 11.69,
+    "sz": 2.4,
+    "y": -0.2,
+    "wall": 9
+   },
+   {
+    "asset": "whWallB",
+    "x": 23.51,
+    "z": -667.64,
+    "rotY": 3.77,
+    "scale": 13.019,
+    "sy": 11.55,
+    "sz": 2.4,
+    "y": -0.2,
+    "wall": 9
+   },
+   {
+    "asset": "whWallA",
+    "x": 38.04,
+    "z": -687.64,
+    "rotY": 4.4,
+    "scale": 13.019,
+    "sy": 11.69,
+    "sz": 2.4,
+    "y": -0.2,
+    "wall": 9
+   },
+   {
+    "asset": "whWallB",
+    "x": 38.04,
+    "z": -712.36,
+    "rotY": 5.03,
+    "scale": 13.019,
+    "sy": 11.55,
+    "sz": 2.4,
+    "y": -0.2,
+    "wall": 9
+   },
+   {
+    "asset": "whWallA",
+    "x": 23.51,
+    "z": -732.36,
+    "rotY": 5.65,
+    "scale": 13.019,
+    "sy": 11.69,
+    "sz": 2.4,
+    "y": -0.2,
+    "wall": 9
+   },
+   {
+    "asset": "whWallB",
+    "x": 0,
+    "z": -740,
+    "rotY": 6.28,
+    "scale": 13.019,
+    "sy": 11.55,
+    "sz": 2.4,
+    "y": -0.2,
+    "wall": 9
+   },
+   {
+    "asset": "whWallA",
+    "x": -23.51,
+    "z": -732.36,
+    "rotY": 6.91,
+    "scale": 13.019,
+    "sy": 11.69,
+    "sz": 2.4,
+    "y": -0.2,
+    "wall": 9
+   },
+   {
+    "asset": "whWallB",
+    "x": -38.04,
+    "z": -712.36,
+    "rotY": 7.54,
+    "scale": 13.019,
+    "sy": 11.55,
+    "sz": 2.4,
+    "y": -0.2,
+    "wall": 9
+   },
+   {
+    "asset": "whWallA",
+    "x": -38.04,
+    "z": -687.64,
+    "rotY": 8.17,
+    "scale": 13.019,
+    "sy": 11.69,
+    "sz": 2.4,
+    "y": -0.2,
+    "wall": 9
+   },
+   {
+    "asset": "whWallB",
+    "x": -23.51,
+    "z": -667.64,
+    "rotY": 8.8,
+    "scale": 13.019,
+    "sy": 11.55,
+    "sz": 2.4,
+    "y": -0.2,
+    "wall": 9
+   }
+  ]
+ },
+ "bodyByType": {
+  "bandit": "banditBody",
+  "ghoul": "ghoulBody",
+  "wolf": "wolfBody",
+  "rotmother": "rotmotherBody",
+  "rotspawn": "rotspawnBody",
+  "coven": "covenBody"
+ },
+ "rigidAnimByType": {
+  "rotmother": "rotmother",
+  "rotspawn": "rotspawn"
+ },
+ "animVariantByType": {
+  "bandit": "bandit",
+  "ghoul": "zombie",
+  "wolf": "wolf",
+  "coven": "bandit"
+ },
+ "enemyKeyOrder": [
+  "rotmother",
+  "rotspawn"
+ ],
+ "deeds": null,
+ "xpSources": {
+  "kill_bandit": 35,
+  "kill_ghoul": 25,
+  "kill_wolf": 20,
+  "kill_rotmother": 240,
+  "kill_rotspawn": 14,
+  "kill_coven": 30,
+  "gather": 5,
+  "cook_meal": 15,
+  "recipe_learn": 40,
+  "discover_region": 50,
+  "discover_node": 10,
+  "discover_foe": 25
+ },
+ "standingParentKeys": [
+  "affinity"
+ ]
+}

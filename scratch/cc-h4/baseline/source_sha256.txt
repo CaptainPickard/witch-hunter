@@ -1,0 +1,5 @@
+150c93083a975963995472fea4203794840ca74c9de3c90aa6557ea89d2015e8  prototype/js/CONFIG.js
+1ba01dad279132f7692b9d69226fecdaa4c96b91b52ab46de132e4baeb707004  prototype/js/enemy.js
+0712f218e7a737f0c835cf7d65c3f9c1be2e531f5361c41058e3f6f50c54b370  prototype/js/assets.js
+26acff7c796ca2907d33f5ae61f82b15da18a3d8c962cfc9a5c7b0d8c309c8c0  prototype/js/region-manager.js
+9e6c43d7252763cc5870c341db85e11b7faeb0352adb63d761b3f9086f19ece1  prototype/js/game.js
