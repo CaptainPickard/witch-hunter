@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Witch Hunter v9 - EPR1 Combat (build 11-07 04:02Z f9fb8f4)</title>
+<title>Witch Hunter v9 - EPR1 Combat (build 11-07 06:18Z 78083ec)</title>
 
 <style>
 /* Witch Hunter prototype v1 - HUD + overlay styling */
@@ -88993,8 +88993,9 @@ window.WH_CONFIG = {
       { asset: 'whWallB', x: 30.48, z: -944.26, rotY: 6.04, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
       { asset: 'whWallA', x: 21.88, z: -946.09, rotY: 6.11, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
       { asset: 'whWallB', x: 13.17, z: -947.31, rotY: 6.18, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
-      { asset: 'whWallA', x: 4.4, z: -947.92, rotY: 6.25, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
-      { asset: 'whWallB', x: -4.4, z: -947.92, rotY: 0.03, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+      // CC-H2 (doc 64 slot H2): the two south-pole flank rows ERASED 2026-11-07
+      // — the garrison breach; the plane rides z -948 (regionH door row), the
+      // aperture lane stays |x| <= 4 (probe: scratch/cc-h2/seat_scan.py).
       { asset: 'whWallA', x: -13.17, z: -947.31, rotY: 0.1, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
       { asset: 'whWallB', x: -21.88, z: -946.09, rotY: 0.17, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
       { asset: 'whWallA', x: -30.48, z: -944.26, rotY: 0.24, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
@@ -89082,6 +89083,154 @@ window.WH_CONFIG = {
       //    lightSockets.lanternPost: hf 0.76, intensity 9.0.
       { asset: 'lanternPost', x: 6.5, z: -706, rotY: 4.72, scale: 2.535 }
     ],
+  },
+
+  // ============================== CC-H2 GARRISON KEEP ==============================
+  // CC-H2 (doc 64 slot H2; doc 66 sec 2-8 recipe instance): the garrison
+  // courtyard layer chained off the lord's hold (G <- H, the E/F chain
+  // stepped one link). First H-chain TWO-SIDED door: the breach in G's south
+  // curtain is a physical plane on BOTH sides (B/C grammar, no walkFrom/no
+  // interact; suspendDepthM 4 lifts BOTH disc clamps - H1a lesson: with 0 the
+  // plane sits outside both playable rims and the breach dies one-way).
+  // Art anchors: concept-06-siege-council + char-04-bannerman-dark (cold
+  // stone #3A424D, ONE amber family; crimson banned this round).
+  regionH: {
+    id: 'fort_garrison',
+    name: 'Garrison Keep',
+    center: { x: 0, z: -1024 },
+    groundRadius: 80,                 // playRadius 78.5 (r 80 minus playerMargin 1.5)
+    groundY: 0,                       // flat disc (one-active-region law)
+    groundColor: 0x33363c,            // garrison slate: one step COLDER than G's 0x2f3339 (H2 = service stratum)
+    groundColor2: 0x2a2d33,           // shadow secondary
+    groundSeed: 1662061651,           // FRESH - differs from every landed seed (1217/1218/1219/1329/1440)
+    scatter: false,                   // hand rows only
+    spawn: { x: 0, z: -955 },         // just past the breach, inside the mouth throat
+    gravityY: -22,                    // every landed region's value
+    // sec DARKNESS: density 0.068 -> d95 = sqrt(-ln 0.05)/0.068 ~ 25.4 m; the
+    // courtyard reads across its whole yard. Shared day/night clock (NO
+    // constantPhase row - surface-adjacent hold stratum, doc 66 sec 2 law).
+    fogColor: 0x7d8289,
+    fogDensity: 0.068,
+    ambientLightLevel: 0.09,
+    // G<->H door (region-defs connections[6]). Shape: the CC-C2 B/C row for
+    // the CONNECTION KEYS (two-sided physical plane, no walkFrom, no
+    // interact), the landed E/F/H1 door rows for every DATA key (door-window
+    // lane, land rows, fades). planeZ -948 = 4 m inside the H2 rim (-944),
+    // 1.5 m inside G's playable south rim (-946.5): reachable BOTH ways with
+    // suspendDepthM 4 (inOpenDoorBand lifts both disc clamps inside the
+    // window). Arch: null (open breach). gatedTo: null (dormant-clock law
+    // does not apply). NO text row (B/C precedent: no interact = no prompt).
+    door: {
+      planeZ: -948,
+      doorX: 0,
+      doorHalfWidth: 4.0,             // the breach lane |x| <= 4
+      suspendDepthM: 4,               // CRITICAL: both-side reach (H1a trap)
+      wallGapPadM: 0,
+      land: {
+        fort_garrison: { x: 0, z: -955, faceX: 0, faceZ: -1100 },   // land INTO H2 = the spawn row, facing the war-table heart
+        lords_hold:    { x: 0, z: -941, faceX: 0, faceZ: -822 }     // walk-back INTO G, facing the hold heart
+      },
+      fadeIn: 0.3,
+      fadeOut: 0.5,
+      exitFadeOut: 0.8
+    },
+    // 2 bandit sentries (the garrison lives HERE - doc 64 H1 note law).
+    // >= 8.0 m from spawn/land, mutual 21.0, >= 4.45 m walk-clear of the ring
+    // (both ~30.0), every prop >= 5.0 m clear (props_scan.py).
+    enemies: [
+      { type: 'bandit', x: -10, z: -975 },
+      { type: 'bandit', x: 11, z: -976 }
+    ],
+    props: [
+      // -- CC-H2 DRESSING (scratch/cc-h2/props_scan.py, ALL PASS; every row >= 4.0 m
+      //    raw of BOTH rings, >= 6.0 m from spawn/land rows, >= 4.0 m mutual,
+      //    >= 5.0 m from both sentries, rho <= 78.5)
+      // -- armory corner (east); the 2 whCampkit rows CARRY LIGHT (lightSockets.
+      //    whCampkit is LIVE: hf 0.25, intensity 3.2 - BV-001 IO adjudication
+      //    2026-11-07, option b: the light law is ONE warm FAMILY, not a socket
+      //    count - H1 Amendment B precedent), so the amber family is FOUR sockets:
+      //    lanternPost 9.0 + banditCampfire 3.2 + whCampkit 3.2 x2.
+      { asset: 'whTent', x: 44, z: -1058, rotY: 5.75, scale: 1 },
+      { asset: 'whCampkit', x: 38, z: -1052, rotY: 0.5, scale: 1 },
+      { asset: 'whCampkit', x: 41, z: -1064, rotY: 1.2, scale: 1 },
+      { asset: 'okRuinColumn', x: 52, z: -1050, rotY: 5.9, scale: 1.4 },
+      // -- dungeon mouth corner (west)
+      { asset: 'stoneSteps', x: -46, z: -1064, rotY: 1.57, scale: 1.3 },
+      { asset: 'skullPile', x: -50, z: -1050, rotY: 4.4, scale: 1 },
+      { asset: 'b6Bones', x: -42, z: -1076, rotY: 2.4, scale: 1 },
+      { asset: 'rubblePile', x: -34, z: -1072, rotY: 5.8, scale: 1.1 },
+      // -- war-table hub (the H1 dais trick: no table asset in the manifest - the
+      //    dais + torch pair carry the tableau v1)
+      { asset: 'stoneSteps', x: 0, z: -1097, rotY: 0, scale: 1.4 },
+      { asset: 'torch', x: 4, z: -1093, rotY: 0, scale: 1 },
+      { asset: 'torch', x: -4, z: -1093, rotY: 0, scale: 1 },
+      // -- the mid-yard sentry brazier + gate lantern + armory campkits: THE ONE
+      //    AMBER FAMILY, FOUR sockets total (lightSockets.banditCampfire hf 0.55
+      //    intensity 3.2 + lightSockets.lanternPost hf 0.76 intensity 9.0 +
+      //    lightSockets.whCampkit hf 0.25 intensity 3.2 x2 - one warm FAMILY,
+      //    H1 Amendment B law; BV-001 resolved option b 2026-11-07). Crimson
+      //    banned (art anchors this round). NOTE: 'torch' has NO lightSockets
+      //    row - pure dressing.
+      { asset: 'banditCampfire', x: 0, z: -990, rotY: 0, scale: 1.8 },
+      { asset: 'lanternPost', x: 6.5, z: -954, rotY: 4.72, scale: 2.535 },
+      // -- yard scatter
+      { asset: 'mossBoulder', x: 26, z: -1000, rotY: 2, scale: 2 },
+      { asset: 'mossBoulder', x: -24, z: -1030, rotY: 4.9, scale: 2.2 },
+      { asset: 'rubblePile', x: 58, z: -992, rotY: 3.62, scale: 1.1 },
+      // -- breach throat flankers (INSIDE H2, flanking the mouth lane; every row
+      //    >= 4.0 m raw of EVERY remaining G ring collider, >= 16.0 m off H2's own
+      //    ring, >= 4.0 m mutual from the manifest above)
+      { asset: 'okFenceStonewall', x: 10, z: -968, rotY: 0, scale: 1.2 },
+      { asset: 'okFenceStonewall', x: -10, z: -968, rotY: 0, scale: 1.2 },
+      { asset: 'whWallB', x: 14.99, z: -945.42, rotY: 3.33, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: 24.72, z: -947.92, rotY: 3.46, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: 34.06, z: -951.61, rotY: 3.58, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: 42.87, z: -956.45, rotY: 3.71, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: 50.99, z: -962.36, rotY: 3.83, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: 58.32, z: -969.24, rotY: 3.96, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: 64.72, z: -976.98, rotY: 4.08, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: 70.1, z: -985.46, rotY: 4.21, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: 74.38, z: -994.55, rotY: 4.34, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: 77.49, z: -1004.1, rotY: 4.46, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: 79.37, z: -1013.97, rotY: 4.59, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: 80.0, z: -1024.0, rotY: 4.71, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: 79.37, z: -1034.03, rotY: 4.84, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: 77.49, z: -1043.9, rotY: 4.96, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: 74.38, z: -1053.45, rotY: 5.09, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: 70.1, z: -1062.54, rotY: 5.22, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: 64.72, z: -1071.02, rotY: 5.34, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: 58.32, z: -1078.76, rotY: 5.47, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: 50.99, z: -1085.64, rotY: 5.59, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: 42.87, z: -1091.55, rotY: 5.72, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: 34.06, z: -1096.39, rotY: 5.84, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: 24.72, z: -1100.08, rotY: 5.97, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: 14.99, z: -1102.58, rotY: 6.09, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: 5.02, z: -1103.84, rotY: 6.22, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: -5.02, z: -1103.84, rotY: 0.06, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: -14.99, z: -1102.58, rotY: 0.19, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: -24.72, z: -1100.08, rotY: 0.31, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: -34.06, z: -1096.39, rotY: 0.44, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: -42.87, z: -1091.55, rotY: 0.57, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: -50.99, z: -1085.64, rotY: 0.69, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: -58.32, z: -1078.76, rotY: 0.82, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: -64.72, z: -1071.02, rotY: 0.94, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: -70.1, z: -1062.54, rotY: 1.07, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: -74.38, z: -1053.45, rotY: 1.19, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: -77.49, z: -1043.9, rotY: 1.32, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: -79.37, z: -1034.03, rotY: 1.45, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: -80.0, z: -1024.0, rotY: 1.57, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: -79.37, z: -1013.97, rotY: 1.7, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: -77.49, z: -1004.1, rotY: 1.82, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: -74.38, z: -994.55, rotY: 1.95, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: -70.1, z: -985.46, rotY: 2.07, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: -64.72, z: -976.98, rotY: 2.2, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: -58.32, z: -969.24, rotY: 2.32, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: -50.99, z: -962.36, rotY: 2.45, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: -42.87, z: -956.45, rotY: 2.58, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: -34.06, z: -951.61, rotY: 2.7, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallB', x: -24.72, z: -947.92, rotY: 2.83, scale: 5.29, sy: 11.55, sz: 2.40, y: -0.2, wall: 8 },
+      { asset: 'whWallA', x: -14.99, z: -945.42, rotY: 2.95, scale: 5.29, sy: 11.69, sz: 2.40, y: -0.2, wall: 8 }
+    ]
   },
 
   // Round E (io/missions/2026-10-05-cc-roundE-veg.md): seeded vegetation
@@ -91946,6 +92095,9 @@ window.WH_ICONS = {
   // no plane-0 side; like E/F above). C0-7 law: the hold never lies ON the
   // C-side plane, so sideOfBoundary(C, 5) = -1.
   regions[CFG.regionG.id] = makeRegion(CFG.regionG, -1);
+  // CC-H2 fort_garrison: side -1 = the plane-0 convention only (H sits on no
+  // plane-0 side). C0-7 law: fort_garrison never lies ON any other connection's plane.
+  regions[CFG.regionH.id] = makeRegion(CFG.regionH, -1);
 
   // CC-H1 lords_hold C<->G gate, shaped EXACTLY on the CC-AD1 crypt row above
   // (connections[3]) with AMENDMENT A: `from` = CFG.regionC.id (H1 hangs off
@@ -91977,6 +92129,40 @@ window.WH_ICONS = {
   // SIDES TABLE (CC-H1a): C occupies z > planeZ -700 (interior reading +1); G occupies z <= -700 (interior -711 reads -1). sideIn(R) must equal sideOfPlane at R's interior (engine law, region-defs sideOfPlane).
   connections[5].sides[CFG.regionC.id] = 1;
   connections[5].sides[CFG.regionG.id] = -1;
+
+  // CC-H2 garrison_keep: the FIRST TWO-SIDED chained door (B/C grammar: the
+  // physical plane exists on BOTH sides - no walkFrom, no interact, no
+  // gatedTo). The breach lane rides x 0 across G's erased south-pole flank
+  // pair; suspendDepthM 4 lifts BOTH disc clamps (planeZ -948 vs G playable
+  // rim -946.5 / H2 playable rim -945.5). Sides table (doc 66 sec 10): BOTH
+  // entries LIVE here (the engine reads sideIn from either active region
+  // every frame): sideOfPlane(G interior -822) = +1 = sideIn(lords_hold);
+  // sideOfPlane(H interior -1024) = -1 = sideIn(fort_garrison). Land rows
+  // per destination (x NOT preserved); cross fires both directions
+  // (tickTransition walks connectionsOf(activeId) with planeIn true in both).
+  var HD = CFG.regionH.door;
+  connections.push({
+    from: CFG.regionG.id,
+    to: CFG.regionH.id,
+    axis: 'z',
+    planeCoord: HD.planeZ,
+    sides: {},
+    door: {
+      doorX: HD.doorX,
+      doorHalfWidth: HD.doorHalfWidth,
+      suspendDepthM: HD.suspendDepthM,
+      wallGapPadM: HD.wallGapPadM,
+      arch: null,
+      gatedTo: null,
+      land: HD.land
+    }
+  });
+  // SIDES TABLE (CC-H2, doc 66 sec 10 interior law): BOTH entries live.
+  // sideOfPlane = z > planeCoord ? 1 : -1 (region-defs). G interior -822:
+  // -822 > -948 = +1. H interior -1024: -1. sideIn(R) == sideOfPlane(R
+  // interior) for EVERY member - asserted by the valspec probe both sides.
+  connections[6].sides[CFG.regionG.id] = 1;
+  connections[6].sides[CFG.regionH.id] = -1;
 
   // ---- THREE-free transition helpers (used by region-manager and tests) ------
 
