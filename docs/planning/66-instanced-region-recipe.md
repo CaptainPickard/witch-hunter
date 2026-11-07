@@ -275,10 +275,12 @@ the spec picks actual hexes from the anchor).
 
 Template fill for H1 (starting points, all PROPOSED):
 
-- id 'lords_hold' (hold_ prefix law). center: outward from C's south rim
-  (the hold is the doc 48 endgame base; C center (0,-366), keep x 0 chain
-  and step z; EXACT seat = probe-verified clear of C dressing on the
-  chosen approach). groundRadius 140 (range 120-160).
+- id 'lords_hold' (hold_ prefix law). center: outward from C's NORTH rim
+  along the x 0 road chain (CORRECTED 2026-11-07: "south rim" was internally
+  inconsistent — the x 0 chain runs NORTH to notch (0, -596); landed seat
+  center (0, -822), r 126, fully outside C's z -646 edge. C center (0,-366),
+  keep x 0 chain and step z; EXACT seat = probe-verified clear of C dressing
+  on the chosen approach). groundRadius landed 126 (claimed range 120-160).
 - groundY 0 flat disc (hold layer 1); courtyard pockets later rounds
   (chained stratum = H2 garrison/armory off H1, E/F pattern).
 - fog near-surface: surface night mood, NOT the subterranean ladder —

@@ -81,7 +81,7 @@ one = write its CONFIG region row + door conn + registry row move.
 
 | slot | reserved for | anchor concept | suggested geometry class | notes |
 |------|--------------|----------------|--------------------------|-------|
-| H1 | Lord's Hold (surface, doc 48 endgame base) | concept-06-siege-council | OWN disc r120-160, heightfield + courtyard pad pockets | hub-and-spoke: war-room table hub, barracks, chapel spokes; gold-on-obsidian accent law; generous footprint per Nicko |
+| H1 | **LIVE — Lord's Hold (surface, doc 48 endgame base), landed 2026-11-07 CC-H1** | concept-06-siege-council | OWN disc r126 LANDED (claim range 120-160), FLAT (no terrain row — heightfield + courtyard pad pockets = H2 scope) | LANDED seat: center (0,-822), spawn (0,-711), gate lane |x|<=4.5 at z -700, door planeZ -700 (conn[5], from regionC walkFrom lords_hold), war-table hub dais (0,-780), 4 braziers + gate lantern = 5 warm sockets one amber family, 89-row curtain wall + 1068 colliders; clearance 141-check PASS, save roundtrip 15/15 PASS; garrison rows (enemies) = H2 |
 | H2 | Garrison Keep courtyard layer | concept-06-siege-council | chained OFF H1 (E/F pattern), flat disc r80 | second stratum under H1: armory/dungeons; same door grammar as conn[3]/[4] |
 | H3 | Veil Spire approach (doc 47 deeper strata / doc 48) | concept-08-veil-spire | OWN disc r40, chained off veil_galleries | crimson-vein interior law; statue gauntlet approach; boss-tier space |
 | H4 | Chapel Under (interior pocket) | new piece needed before build | flat disc r30 off any hold | one-accent rule + erased-figure motif continuation |

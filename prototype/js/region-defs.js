@@ -183,6 +183,46 @@
   connections[4].sides[CFG.regionE.id] = -1;
   connections[4].sides[CFG.regionF.id] = 1;
 
+  // CC-H1 lords_hold: the FIRST surface hold hub (own disc r 126 north of C,
+  // outside C's footprint). side -1 = the plane-0 convention only (G is on
+  // no plane-0 side; like E/F above). C0-7 law: the hold never lies ON the
+  // C-side plane, so sideOfBoundary(C, 5) = -1.
+  regions[CFG.regionG.id] = makeRegion(CFG.regionG, -1);
+
+  // CC-H1 lords_hold C<->G gate, shaped EXACTLY on the CC-AD1 crypt row above
+  // (connections[3]) with AMENDMENT A: `from` = CFG.regionC.id (H1 hangs off
+  // C's north road, NOT the galleries chain). Seat probe:
+  // scratch/cc-h1/seat_scan.py. Axis z, the plane = the hold's gate plane
+  // (G.door.planeZ), the window = the 9 m gate lane, walkFrom the hold ONLY
+  // (walk-back; in C the plane sits outside C's playable band: no crossing,
+  // no clamp). The C-side hook sits ON the north road landing band
+  // (door.interactAt, radius interactM). land rows per region.
+  var GD = CFG.regionG.door;
+  connections.push({
+    from: CFG.regionC.id,
+    to: CFG.regionG.id,
+    axis: 'z',
+    planeCoord: GD.planeZ,
+    sides: {},
+    door: {
+      doorX: GD.doorX,
+      doorHalfWidth: GD.doorHalfWidth,
+      suspendDepthM: GD.suspendDepthM,
+      wallGapPadM: GD.wallGapPadM,
+      arch: null,
+      gatedTo: null,
+      walkFrom: CFG.regionG.id,
+      interact: { from: CFG.regionC.id, x: GD.interactAt.x, z: GD.interactAt.z, radius: GD.interactM },
+      land: GD.land
+    }
+  });
+  // D-symmetry SIDES TABLE: G occupies z <= planeZ (-822 < -700); C is the
+  // FROM region on this chain and occupies z > planeZ. IDENTICAL to conn[3]'s
+  // crypt shape (C -1, pocket +1) - unlike conn[4] no flip needed because C
+  // is both the from AND the z > planeZ region on this chain.
+  connections[5].sides[CFG.regionC.id] = -1;
+  connections[5].sides[CFG.regionG.id] = 1;
+
   // ---- THREE-free transition helpers (used by region-manager and tests) ------
 
   // Returns the connection between two region ids, or null.
