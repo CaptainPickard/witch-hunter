@@ -317,3 +317,31 @@ amendment BEFORE H2.
   (smaller margins), never loosen without a disclosed adjudication note.
 - doc 64 stays the slot ledger; dev merge of feat/world-visuals ONLY on
   Nicko's explicit call (unchanged law; playtest debt currently 10+ rounds).
+
+## 10. Amendment 1 (2026-11-07, CC-H1a): the sides-table interior law
+
+The D-symmetry sides pattern (sec 4 comment shape) carried an inverted-sign
+trap that landed in conn[4] (CC-AD2) and conn[5] (CC-H1) — P0: both doors
+were one-way (first engine tick bounced the player back out; probe
+scratch/cc-h1a/sides_law_probe.js). LAW now:
+
+1. `sideOfPlane(conn, z)` = `z > planeCoord ? 1 : -1` (region-defs). For a
+   `-z`-chained pocket the pocket's interior sits at z < planeCoord, so
+   `sideIn(pocket) = -1` and `sideIn(parent) = +1` there. conn[4] keeps
+   E -1/F +1 because F's corrected plane (-662) is INSIDE F's disc (the
+   gallery interior at land -650 reads +1); conn[5] is C +1/G -1 (G interior
+   -711 z <= -700).
+2. The door plane MUST sit on the pocket's parent-facing EDGE (the D/E
+   mouth grammar: 4 m inside the rim), never at the disc center — a
+   mid-plane disc (F was -640 on an r26 disc -666..-614) has no valid
+   sides sign and broke. Every future claim: assert
+   `sideOfPlane(spawnRow) == sideIn(region)` AND
+   `|planeZ| within (|center| radius band near the parent-facing rim)` in
+   the probe (both in scratch/cc-h1a/sides_law_probe.js — reuse it).
+3. Probe additions for every future instant-region round: first-tick
+   no-cross at spawn + own land row (real RegionManagerLogic.node probe),
+   walk-back crosses to the parent inside the door window. Geometry-only
+   clearances are NOT sufficient (CC-AD2/CC-H1 pass geometry but failed
+   ticks).
+4. Enemy hold line follows the corrected sign automatically
+   (clampEnemyToHomeSide): F ghouls cleared, no relocation needed.
