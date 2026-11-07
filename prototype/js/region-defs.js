@@ -176,10 +176,7 @@
       land: FD.land
     }
   });
-  // D-symmetry SIDES TABLE: F occupies z <= planeZ (the galleries mouth);
-  // E is the FROM region on this chain and occupies z > planeZ. E side -1,
-  // F side +1 (the CC-AD1 conn[3] shape with the sides flipped for this
-  // chain's direction).
+  // SIDES TABLE (CC-H1a): C occupies z > planeZ -700 (interior reading +1); G occupies z <= -700 (interior -711 reads -1). sideIn(R) must equal sideOfPlane at R's interior (engine law, region-defs sideOfPlane).
   connections[4].sides[CFG.regionE.id] = -1;
   connections[4].sides[CFG.regionF.id] = 1;
 
@@ -216,12 +213,9 @@
       land: GD.land
     }
   });
-  // D-symmetry SIDES TABLE: G occupies z <= planeZ (-822 < -700); C is the
-  // FROM region on this chain and occupies z > planeZ. IDENTICAL to conn[3]'s
-  // crypt shape (C -1, pocket +1) - unlike conn[4] no flip needed because C
-  // is both the from AND the z > planeZ region on this chain.
-  connections[5].sides[CFG.regionC.id] = -1;
-  connections[5].sides[CFG.regionG.id] = 1;
+  // SIDES TABLE (CC-H1a): C occupies z > planeZ -700 (interior reading +1); G occupies z <= -700 (interior -711 reads -1). sideIn(R) must equal sideOfPlane at R's interior (engine law, region-defs sideOfPlane).
+  connections[5].sides[CFG.regionC.id] = 1;
+  connections[5].sides[CFG.regionG.id] = -1;
 
   // ---- THREE-free transition helpers (used by region-manager and tests) ------
 

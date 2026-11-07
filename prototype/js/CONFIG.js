@@ -1608,7 +1608,7 @@ window.WH_CONFIG = {
     // puts the player + what they face. fadeSec = the black dip: F-descend
     // 0.3 + 0.5; walk-out 0 + 0.8.
     door: {
-      planeZ: -640,                       // the galleries mouth plane
+      planeZ: -662,                       // the galleries mouth plane (CC-H1a: south-rim grammar, 4 m inside the r26 south rim -666)
       doorX: 0,
       doorHalfWidth: 2.2,             // the tomb-mouth lane (crypt 2.4). PROPOSED
       suspendDepthM: 0,
