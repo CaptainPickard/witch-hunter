@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Witch Hunter v9 - EPR1 Combat (build 11-07 12:39Z 31b7f7c)</title>
+<title>Witch Hunter v9 - EPR1 Combat (build 11-07 14:23Z 1f3a93f)</title>
 
 <style>
 /* Witch Hunter prototype v1 - HUD + overlay styling */
@@ -89460,6 +89460,170 @@ window.WH_CONFIG = {
   ]
   },
 
+  // CC-H5 tithe_vaults: THE VAULTS pocket, the J-mirror (delve strata V4).
+  // Art anchor inherited per the art-block ruling - the Veil chain keeps its
+  // ancestors' frame (concept-08-veil-spire + char-04-bannerman); the 36-set
+  // has no tithe-vault frame and the provider is hard-blocked this wake.
+  regionK: {
+    id: 'tithe_vaults',
+    name: "The Tithe Vaults",
+    center: { x: 0, z: -880 },        // 180 m deeper than J's center (0,-700): one clean
+                                      // stratum gap; K's north rim -846 vs J's ring south
+                                      // point -740 = 106 m of unrendered dark (the
+                                      // one-active-region law makes the gap invisible)
+    groundRadius: 34,                 // PROPOSED (I's 18 x1.9, below J's boss-tier 40)
+    groundY: 0,                       // flat disc
+    groundColor: 0x0b0d12,            // one step colder than J's 0x0d0f15
+    groundColor2: 0x0e1013,
+    groundSeed: 448271909,            // FRESH: differs from every landed seed
+                                      // (1217/1218/1219/1329/1440/1651/1654/1662061763)
+    scatter: false,                   // hand rows only (D/E/F/I/J law)
+    spawn: { x: 0, z: -856 },         // ADJ-E: pairs with the plane -848 (spawn 8 m
+                                      // SOUTH of the walk-back plane: walk-EXIT faces
+                                      // south into the vault, and the crossing cannot
+                                      // re-trigger). SPEC FIX: sec 3/5's pair (-844
+                                      // plane / -856 spawn, 12 m) left the plane OUTSIDE
+                                      // the disc (above) and the landing row ON the
+                                      // walk-back plane's line (ping-pong). The nearest
+                                     // zealot (0,-865) still sits 9.0 m from the landing
+                                      // row - the >= 8.0 spawn floor ADJ-E defends
+    gravityY: -22,                    // every landed region's value
+    // sec DARKNESS: density 0.16 -> d95 = sqrt(-ln 0.05)/0.16 = 10.82 m:
+    // one stratum quieter than J's 11.61. Region row fog/fill/ambient only.
+    fogColor: 0x0a0810,               // the veil fog family
+    fogDensity: 0.16,
+    ambientLightLevel: 0.045,         // J is 0.05; K is one step deeper
+    door: {
+      planeZ: -848,                   // the walk-OUT plane, 2 m inside the north rim
+                                      // (-848 vs rim -846 - the J-mirror pair law).
+                                      // SPEC FIX (sec 3's -844): -844 sat 2 m OUTSIDE
+                                      // the rim (-846 rim < -844 plane), unreachable
+                                      // from inside K under the CC-C2 rim clamp (door
+                                      // connections carry no plane clamp and
+                                      // suspendDepthM 0 gives no door-band extension);
+                                      // every landed plane sits INSIDE its region's
+                                      // disc (J conn[7] -662 vs rim -660, conn[8]
+                                      // -738 vs rim -740)
+      doorX: 0,
+      doorHalfWidth: 2.2,             // the F/J tomb-mouth lane
+      suspendDepthM: 0,               // E/F/D/I/J value: the plane sits INSIDE the disc
+      wallGapPadM: 0,
+      walkFrom: 'tithe_vaults',       // ONE-SIDED: the plane crosses ONLY from K
+                                      // (conn[8] grammar: J keeps no walkFrom)
+      interact: {
+        from: 'veil_spire_approach',  // the J-side hook (conn[8] F-side pattern)
+        x: 7.5, z: -678, radius: 3.5  // 7.5 m NE of the spire-root colonnade approach,
+                                      // INSIDE J's north half; probe-verified clear of
+                                      // every J row (nearest: mossBoulder 9.60 m)
+      },
+      land: {
+        veil_spire_approach: { x: 2, z: -682, faceX: 2, faceZ: -700 },
+                                      // walk back INTO J beside the hook, facing the
+                                      // spire root hall; 20.0 m south of J's walk-out
+                                      // plane -662 (the |dz| arithmetic, N-check)
+        tithe_vaults:  { x: 0, z: -856, faceX: 0, faceZ: -880 }
+                                      // INTO K = the spawn row (8 m south of the
+                                      // plane; no re-trigger), facing the vault gate
+      },
+      fadeIn: 0.3, fadeOut: 0.5, exitFadeOut: 0.8,
+      text: { prompt: 'E - Descend into the tithe vaults' }
+    },
+    // THE ZEALOT PACKS + the drifted dead (doc 47 V4 encounters; doc 34):
+    // zealots defend the vault's north approach, ghouls drift the deeper
+    // coin rows. Zealot type = the CONFIG.enemy.zealot row (bandit chassis
+    // + guard grammar; NO engine edits - bodyByType/animVariantByType map
+    // it onto the banditBody manifest). Seats: each >= 8 m from spawn/land,
+    // mutual >= 15.13, >= 4.45 m ring walk-clear (ghouls rho 29 -> 5.0),
+    // >= 5 m from every non-ring prop row (the N-5 colonnade binding is
+    // healed - see the in-row note; the probe re-derives every floor).
+    enemies: [
+      { type: 'zealot', x: -15, z: -863 },  // SPEC FIX (valspec N-5 binding): the sec-3
+      { type: 'zealot', x:  15, z: -863 },  // seats (+-9,-876) sat 4.12 m from the dais
+                                            // colonnade (+-8,-872), below the >= 5.0
+                                            // enemy-vs-prop floor; moved to the north-
+                                            // wall pack line: props >= 5.39, mutuals
+                                            // >= 15.13, spawn >= 16.55, ring-clear 11.33
+      { type: 'zealot', x: 0, z: -865 },    // ADJ-E: 9.0 m from the landing row (>= 8)
+      { type: 'ghoul', x: -11, z: -892 },
+      { type: 'ghoul', x:  11, z: -892 }
+    ],
+    // CC-H5: the captain nests at the vault gate dais (0,-872), 16 m south
+    // of the spawn row (0,-856) and 8.0 m north of the relocated colossus
+    // (0,-880; SPEC FIX see its row). SHAPE NOTE: the row CARRIES x/z (the
+    // CC-H4 note applies verbatim: region-manager buildRegion passes
+    // row e.x/e.z straight into new WH_Enemy(.., e.x, e.z); the NEST itself
+    // (pool / light / fog / save letter 'K') derives from
+    // CONFIG.enemy.tithecaptain.lair via lairNest - the two agree).
+    lairs: [
+      { type: 'tithecaptain', x: 0, z: -872 }
+    ],
+    // The debt-glow pool at the gate (the H4 scar-pool pattern; the ONE
+    // crimson family's engine half - colors chosen inside the 0xd85050
+    // crimson family; textureSeed FRESH (448271910 = groundSeed + 1;
+    // distinct from every landed seed incl. J's pool 20261107).
+    rotLair: {
+      pool: { radius: 8, segments: 40, rings: 5, lift: 0.08,
+        color: 0x1a0f12, color2: 0x2a1116, speck: 0x5a2028, textureSeed: 448271910,
+        edgeFeather: 0.22 },
+      light: { height: 1.3, intensity: 1.6, color: 0xd85050 },
+      fog: { cards: 8, radiusMin: 2.0, radiusMax: 7.0, heightMin: 0.4, heightMax: 1.4,
+        width: 3.2, height: 1.3, opacity: 0.15, color: 0x8a4550, driftSpeed: 0.12,
+        showWithinM: 70 },
+      cullM: 170
+    },
+    props: [
+      // -- THE VAULT GATE: mourning-statuette guards watching the dais
+      //    (the J gauntlet family continues; the processional ends here)
+      { asset: 'mourningStatue', x: -6, z: -888, rotY: 4.00, scale: 1.00 },
+      { asset: 'mourningStatue', x:  6, z: -888, rotY: 5.28, scale: 1.00 },
+      { asset: 'mourningStatue', x: -6, z: -896, rotY: 4.00, scale: 1.00 },
+      { asset: 'mourningStatue', x:  6, z: -896, rotY: 5.28, scale: 1.00 },
+      { asset: 'stoneSteps',     x: -2.4, z: -893, rotY: 0.60, scale: 1.10 },
+      { asset: 'stoneSteps',     x:  2.4, z: -893, rotY: 5.68, scale: 1.10 },
+      // -- the vault-gate colonnade: flank pair on the dais + the great root
+      //    south of the seat. Root seat fix: the spec row put it at (0,-876),
+      //    4.0 m north of the captain's seat - its own footprint bound the
+      //    boss-seat clear circle at 2.85 m (< the 6.0 AMEND-1 law); (0,-880)
+      //    restores it to 6.85 m (the pillar's own 1.15 map radius becomes the
+      //    binding obstacle; the pre-audit's 7.0 m zealot reading is the
+      //    no-footprint map's number - disclosed in the build note).
+      { asset: 'okRuinColumn', x: -8, z: -872, rotY: 0.30, scale: 1.40 },
+      { asset: 'okRuinColumn', x:  8, z: -872, rotY: 5.98, scale: 1.40 },
+      { asset: 'okRuinColumn', x:  0, z: -880, rotY: 0.00, scale: 2.40 },
+      // -- the ONE crimson family (lamp + caps; the pool is its engine half)
+      { asset: 'lanternPost', x: -13, z: -882, rotY: 5.20, scale: 1 },
+      { asset: 'blightcap',   x: -13, z: -868, rotY: 3.62, scale: 0.90 },
+      { asset: 'blightcap',   x:  13, z: -868, rotY: 0.63, scale: 0.90 },
+      // -- erasure scatter (J's grammar): 2 skull piles, 1 moss boulder
+      { asset: 'skullPile',   x: -16, z: -896, rotY: 4.40, scale: 1.00 },
+      { asset: 'skullPile',   x:   8, z: -908, rotY: 3.60, scale: 1.00 },
+      { asset: 'mossBoulder', x: -14, z: -872, rotY: 2.00, scale: 2.20 },
+      // -- CC-H5 VAULT RING: full 10-row closure, the J ring math on
+      //    groundRadius 34: chord 21.0136 = 2*34*sin(18 deg) =>
+      //    scale 11.067 = chord/1.899; centers k*36 deg on the r34 circle,
+      //    clockwise from north (x = 34 sin a, z = -880 - 34 cos a),
+      //    rotY = 3.14 + k*0.6283. NO omission: the ring is closed behind
+      //    the plane. SPEc-FIG FIX: rows re-derived to the strict 2dp circle
+      //    (sec 3's literals carried up to 2.01 m drift, rho 34.68 on row 2;
+      //    valspec V-3/N-2 law: rho == 34.0 +- 0.05 on LANDED rows + chord
+      //    uniformity within 0.02 - the literal table is context, not law).
+      //    The walk-OUT lane (|x| <= 2.2 at the plane -848) clears the
+      //    north-point row (0,-846) colliders by 2.00 - 0.45 = 1.55 m edge
+      //    distance -- the governing >= 1.0 m lane clearance (the J ring's
+      //    landed figure, carried by the J-mirror geometry).
+      { asset: 'whWallA', x:   0.00, z: -846.00, rotY: 3.14, scale: 11.067, sy: 11.69, sz: 2.40, y: -0.2, wall: 10 },
+      { asset: 'whWallB', x:  19.98, z: -852.49, rotY: 3.77, scale: 11.067, sy: 11.55, sz: 2.40, y: -0.2, wall: 10 },
+      { asset: 'whWallA', x:  32.34, z: -869.49, rotY: 4.40, scale: 11.067, sy: 11.69, sz: 2.40, y: -0.2, wall: 10 },
+      { asset: 'whWallB', x:  32.34, z: -890.51, rotY: 5.03, scale: 11.067, sy: 11.55, sz: 2.40, y: -0.2, wall: 10 },
+      { asset: 'whWallA', x:  19.98, z: -907.51, rotY: 5.65, scale: 11.067, sy: 11.69, sz: 2.40, y: -0.2, wall: 10 },
+      { asset: 'whWallB', x:   0.00, z: -914.00, rotY: 6.28, scale: 11.067, sy: 11.55, sz: 2.40, y: -0.2, wall: 10 },
+      { asset: 'whWallA', x: -19.98, z: -907.51, rotY: 6.91, scale: 11.067, sy: 11.69, sz: 2.40, y: -0.2, wall: 10 },
+      { asset: 'whWallB', x: -32.34, z: -890.51, rotY: 7.54, scale: 11.067, sy: 11.55, sz: 2.40, y: -0.2, wall: 10 },
+      { asset: 'whWallA', x: -32.34, z: -869.49, rotY: 8.17, scale: 11.067, sy: 11.69, sz: 2.40, y: -0.2, wall: 10 },
+      { asset: 'whWallB', x: -19.98, z: -852.49, rotY: 8.80, scale: 11.067, sy: 11.55, sz: 2.40, y: -0.2, wall: 10 }
+    ]
+  },
+
   // Round E (io/missions/2026-10-05-cc-roundE-veg.md): seeded vegetation
   // scatter, built by region-manager whScatterPlan. PARAMETERS ONLY - no
   // placement tables: every position is a pure function of this block, the
@@ -90210,6 +90374,73 @@ window.WH_CONFIG = {
       riseSec: 1.4
     },
 
+    // CC-H5 zealot (Veil Faithful trash pack; bandit chassis + guard grammar):
+    // doc 47 V4 "Veil Faithful zealot packs defending the devotion they
+    // welcome" (doc 04 pack grammar via the bandit chassis ai1; doc 34
+    // soldier guard verbs). Bandit baseline, leaner hp (fasting fanatics).
+    // NO pattern key: cfgFor returns the row as-is (engine law, enemy.js
+    // cfgFor) - a plain-attack trash body; ai1 rides via ai1For (enemy.js
+    // reads cfg.ai1 independent of pattern). All PROPOSED, Nicko tunes.
+    zealot: {
+      hpMax: 60.0,
+      moveSpeed: 3.6,
+      chaseSpeed: 5.0,
+      attackDamage: 12.0,
+      attackRange: 2.4,
+      attackCooldown: 1.4,
+      sightRadius: 16.0,
+      leashRadius: 34.0,
+      staggerTime: 0.4,
+      radius: 0.7,
+      aggroPingInterval: 0.2,
+      attackPhase: { windup: 0.7, active: 0.12, recover: 0.8,
+        hitArcDeg: 50, trackDegPerSec: 180 },        // bandit's values verbatim
+      ai1: { decisionSeconds: 0.4, alwaysKnowsRadius: 4.0,
+        strafeBandInner: 3.4, strafeBandOuter: 7.0, strafeSpeedMult: 0.75,
+        strafeDirFlipSeconds: 1.8, attackRadius: 2.4, attackBias: 0.55,
+        guardChance: 0.45, guardRespondRadius: 6.0, guardSecondsMax: 1.6,
+        guardArcDeg: 50, guardDamageMult: 0.5 }      // bandit's ai1 verbatim
+        // == the parry/discipline grammar comes from the landed AI1 guard
+        // machinery; no engine edits (enemy.js ai1For reads cfg.ai1).
+    },
+
+    // CC-H5 tithecaptain (THE TITHE CAPTAIN - the vault-gate warden): doc 47
+    // V4 "a zealot-captain warden at the vault gate (faction-soldier boss:
+    // doc 04/34 soldier grammar, parry-capable, smaller readable window than
+    // the player's)". ENGINE LAW (enemy.js:152): the lair machinery (save
+    // flag / 3-day re-arm / minions) attaches only to pattern 'boss-slam'
+    // rows - the captain therefore rides a boss-slam chassis TUNED
+    // SOLDIER-DISCIPLINED (the CC-H4 precedent: the Scar-Reader rode the
+    // same chassis): a narrow, fast-tracked shock-slam = the disciplined
+    // shield-wall read, NOT a wild AoE. Guard ai1 (parry-capable, smaller
+    // window than the bandit's) rides ALONGSIDE the slam (ai1For reads
+    // cfg.ai1 independent of pattern). All PROPOSED, Nicko tunes.
+    tithecaptain: {
+      name: 'The Tithe Captain', hp: 320, dmg: 20, speed: 4.2, aggro: 16,
+      pattern: 'boss-slam',
+      slamRadius: 4.2, slamArcDeg: 100, slamWindup: 0.85, slamActive: 0.18,
+      slamRecover: 0.9, slamCooldown: 3.8, slamTrackDegPerSec: 110,
+      engageRange: 4.2,
+      cueDark: 0x1a0508, cueHot: 0xd84a4a,              // the chain's crimson cue family
+      scale: 2.1,                                        // soldier boss vs the 3.0 beast tier
+      lair: { x: 0, y: 8, region: 'K', flagPrefix: 'tithecaptain' },
+                                                   // world (0,-872), key tithecaptain_cleared_K
+      lairRadius: 16,
+      rearm: { days: 3, trigger: 'proximity', radius: 14 },
+      loot: [{ mat: 'stolenCoin', n: [1, 3] }],    // THE TITHE: the collection itself
+      minions: { asset: 'zealot', cap: 2, interval: 7.0, range: 5.0,
+                 dieOnMasterDeath: true },         // his gate guard answers him
+      radius: 1.0,
+      corpseLingerSec: 10, maxCorpses: 8,
+      riseSec: 1.4,
+      barLiftM: 2.2,
+      ai1: { decisionSeconds: 0.4, alwaysKnowsRadius: 4.5,
+        strafeBandInner: 3.6, strafeBandOuter: 7.5, strafeSpeedMult: 0.7,
+        strafeDirFlipSeconds: 2.0, attackRadius: 4.2, attackBias: 0.5,
+        guardChance: 0.6, guardRespondRadius: 6.0, guardSecondsMax: 1.8,
+        guardArcDeg: 45, guardDamageMult: 0.5 }    // smaller readable window: 45 vs 50 deg
+    },
+
     // CC-C5: enemy type -> manifest body + anim.js VARIANTS key (was the
     // bandit/ghoul ternaries in region-manager buildRegion / enemy setBody;
     // an unknown type keeps the old fallbacks: ghoulBody / 'bandit').
@@ -90220,8 +90451,10 @@ window.WH_CONFIG = {
     // rest, ~5 benign anim warns per coven body; death IS universal WH_Death).
     bodyByType: { bandit: 'banditBody', ghoul: 'ghoulBody', wolf: 'wolfBody',
       rotmother: 'rotmotherBody', rotspawn: 'rotspawnBody', coven: 'covenBody',
-      scarreader: 'scarreaderBody' },    // CC-H4: the scar-reader wears the rot chassis
-    animVariantByType: { bandit: 'bandit', ghoul: 'zombie', wolf: 'wolf', coven: 'bandit' },
+      scarreader: 'scarreaderBody',                       // CC-H4: the scar-reader wears the rot chassis
+      zealot: 'banditBody', tithecaptain: 'banditBody' }, // CC-H5: zealot chassis family (bandit manifest); the captain too (symmetry law)
+    animVariantByType: { bandit: 'bandit', ghoul: 'zombie', wolf: 'wolf', coven: 'bandit',
+      zealot: 'bandit', tithecaptain: 'bandit' },
     rigidAnimByType: { rotmother: 'rotmother', rotspawn: 'rotspawn', scarreader: 'rotspawn' },   // CC-H4: crawler variant (scene-02 anchor)
     // CC-C5 WOLF PACKS (doc 62 L7/L8/L9 dens): closed patrol loops (world x,
     // z; walked in row order, last -> first). Each loop crosses its King's
@@ -92534,6 +92767,34 @@ window.WH_ICONS = {
   // of its walk-back plane. The F-side table value follows conn[7].
   connections[8].sides[CFG.regionF.id] = -1;
   connections[8].sides[CFG.regionJ.id] = +1;
+
+  // CC-H5 tithe_vaults: plane-0 convention only; J-side portal is an
+  // interact hook, K-side mouth is a walk-back plane (conn[7] precedent).
+  regions[CFG.regionK.id] = makeRegion(CFG.regionK, -1);
+  var KD = CFG.regionK.door;
+  connections.push({
+    from: CFG.regionJ.id,
+    to: CFG.regionK.id,
+    axis: 'z',
+    planeCoord: KD.planeZ,
+    sides: {},
+    door: {
+      doorX: KD.doorX, doorHalfWidth: KD.doorHalfWidth,
+      suspendDepthM: KD.suspendDepthM, wallGapPadM: KD.wallGapPadM,
+      arch: null, gatedTo: null,
+      walkFrom: CFG.regionK.id,
+      interact: { from: CFG.regionJ.id, x: KD.interact.x, z: KD.interact.z, radius: KD.interact.radius },
+      land: KD.land,
+      fadeIn: KD.fadeIn, fadeOut: KD.fadeOut, exitFadeOut: KD.exitFadeOut,
+      text: KD.text                       // AMENDMENT A: the portal prompt + fades ride the conn
+    }
+  });
+  // E-mirror: J's plane is underground/inactive for this conn; K's interior
+  // is SOUTH of its walk-back plane (-880/-856 < -848). The J-side table
+  // value follows the geometry (J's interior sits NORTH of -848 too), the
+  // K side follows sideOfPlane.
+  connections[9].sides[CFG.regionJ.id] = +1;
+  connections[9].sides[CFG.regionK.id] = -1;
 
   // ---- THREE-free transition helpers (used by region-manager and tests) ------
 
