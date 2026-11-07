@@ -1436,6 +1436,93 @@
         offsetX: -DA.openingCenterFrac * dm.width * ds,
         scale: ds, scaleZ: ds * DA.depthScale });
     });
+    // 6. CC-B2 gate forecourt (io/specs/cc-b2-gate-forecourt-spec.md): iron-
+    // fence runs at z = forecourt.fence.z tying the arch into the chord wall
+    // line + paired lantern posts flanking the approach. ADDITIVE: the stream
+    // 'wall:forecourt' (seed ^ hash of the layer name) seeded draws happen
+    // BEFORE any exclusion/corridor test (butt-discipline law) so a skip never
+    // shifts a later placement; ring/chord/arch/door state above is untouched.
+    // Segments ride the EXISTING generic instancing loop in buildWorld (per-axis
+    // sx/sy/sz, y 0), colliders go into plan.colliders (full footprint r =
+    // width*scale/2 via colliderRadius - ironFence*/lanternPost are NOT trunk-
+    // class), and post sockets carry explicit world y (b3Gate world-socket
+    // precedent: y = height*scale*heightFraction, offset [0,0]).
+    if (W.forecourt) {
+      var F = W.forecourt.fence;
+      var fr = stream('forecourt');          // seeded stream (butt-discipline)
+      var fm = m(F.asset), cm2 = m(F.cornerAsset);
+      if (plan.arch && fm && cm2) {
+        // fence must start OUTSIDE the arch pillar face, never inside it:
+        // max(chordFromX, halfWidth + archPadM + clearM) at plan time
+        var fFromX = Math.max(W.chordFromX,
+          plan.arch.halfWidth + W.forecourt.archPadM + W.forecourt.clearM);
+        var fSpan = F.toX - fFromX;
+        var fLen = fm.width * F.scale;       // sectionLength = meta width * scale
+        var fnc = fSpan > 0
+          ? Math.max(1, Math.ceil(fSpan / (fLen - F.overlapM))) : 0;
+        var fStep = fnc > 0 ? fSpan / fnc : 0;
+        var fcorners = 0, fskips = 0;
+        var fcountE = 0, fcountW = 0;
+        [1, -1].forEach(function (sd) {
+          var kind = sd === 1 ? 'fenceE' : 'fenceW';
+          for (var c = 0; c < fnc; c++) {
+            var isLast = c === fnc - 1;
+            var asset = isLast ? F.cornerAsset : F.asset;
+            var mm2 = isLast ? cm2 : fm;
+            // same seat math both sides (coverage symmetric); the corner rides
+            // the last seat on each side as the run's terminus
+            var x = sd * (fFromX + (c + 0.5) * fStep);
+            // rotY so the section's local X runs along world X; the mirrored
+            // side flips PI to keep the ivy/detail face outward
+            var rotY = sd === 1 ? 0 : Math.PI;
+            fr();                            // fixed seeded draws per placement,
+            fr();                            // taken BEFORE the exclusion test
+            var r = colliderRadius(asset, mm2.width, F.scale);
+            if (whMeetsCorridor(x, F.z, r)) { fskips++; continue; }
+            plan.segments.push({ kind: kind, i: c, asset: asset,
+              x: x, y: 0, z: F.z, rotY: rotY,
+              sx: F.scale, sy: F.scale, sz: F.scale });
+            if (isLast) {
+              fcorners++;
+            }
+            plan.colliders.push({ index: 'forecourt-' + kind + '-' + c,
+              name: asset, x: x, z: F.z, r: r });
+            // fenceE/fenceW count the run's fence SECTIONS per side; the
+            // corner terminus is counted separately in fenceCorners (valspec
+            // A1.e: new collider entries == fenceE + fenceW + fenceCorners)
+            if (!isLast) { if (sd === 1) fcountE++; else fcountW++; }
+          }
+        });
+        plan.stats.fenceE = fcountE;
+        plan.stats.fenceW = fcountW;
+        plan.stats.fenceCorners = fcorners;
+        plan.stats.forecourtSkips = fskips;
+        // posts: 2 fixed CONFIG placements (+ full-footprint colliders + world
+        // sockets with explicit y)
+        var postsPlaced = 0;
+        var PSK = CFG.lightSockets.lanternPost;
+        W.forecourt.posts.forEach(function (P, pi) {
+          var pm2 = m(P.asset);
+          if (!pm2) return;
+          fr();                              // fixed draw per post placement
+          var pr = colliderRadius(P.asset, pm2.width, P.scale);
+          if (whMeetsCorridor(P.x, P.z, pr)) { fskips++; return; }
+          plan.segments.push({ kind: 'post', i: pi, asset: P.asset,
+            x: P.x, y: 0, z: P.z, rotY: P.rotY || 0,
+            sx: P.scale, sy: P.scale, sz: P.scale });
+          postsPlaced++;
+          plan.colliders.push({ index: 'forecourt-post' + pi, name: P.asset,
+            x: P.x, z: P.z, r: pr });
+          if (PSK) {
+            plan.sockets.push({ id: P.asset + '@forecourt' + (P.x < 0 ? 'W' : 'E'),
+              x: P.x, y: pm2.height * P.scale * PSK.heightFraction, z: P.z,
+              intensity: PSK.intensity, weight: 1 });
+          }
+        });
+        plan.stats.posts = postsPlaced;
+        plan.stats.forecourtSkips = fskips;
+      }
+    }
     plan.stats.colliders = plan.colliders.length;
     return plan;
   }

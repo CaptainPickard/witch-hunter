@@ -2863,7 +2863,31 @@ window.WH_CONFIG = {
     // hung height = heightM * scale (0.9 m: the measured gate is ~1.9x the
     // briefed ~8 m arch, so the briefed 0.5 m read as a speck at 6.8 m)
     lantern: { asset: 'whLanternHang', heightM: 0.75, scale: 1.2,
-               topBelowApexM: -0.05 }  // hook top 5 cm INTO the apex stone (attached)
+               topBelowApexM: -0.05 },  // hook top 5 cm INTO the apex stone (attached)
+    // CC-B2 (doc 61 P1-3, io/specs/cc-b2-gate-forecourt-spec.md): gate
+    // forecourt dressing - iron-fence runs tying the arch into the chord wall
+    // line + paired lantern posts flanking the approach. World-level,
+    // additive-only (region-manager whWallPlan section 6, stream 'wall:forecourt').
+    // fromX is NOT taken here: whWallPlan computes it at plan time as
+    // max(chordFromX, arch.halfWidth + archPadM + clearM) so the fence always
+    // starts OUTSIDE the arch pillar face, never inside it.
+    forecourt: {
+      fence: {
+        asset: 'ironFenceSection',      // church-kit; C13b scale law 1.35
+        cornerAsset: 'ironFenceCorner', // terminus piece on each side
+        scale: 1.35,
+        z: -22.9,                       // forecourt line (4.1 m in front of the chord)
+        fromX: 0,                       // sentinel: plan-time max(chordFromX, hw+1.9)
+        toX: 20.0,                      // outward end
+        overlapM: 0.05                  // count uses span/(len - overlap) so ends butt
+      },
+      posts: [
+        { asset: 'lanternPost', x: -6.2, z: -20.5, rotY: 0, scale: 2.535 },  // v3 scale law (roundL)
+        { asset: 'lanternPost', x:  6.2, z: -20.5, rotY: 0, scale: 2.535 }
+      ],
+      archPadM: 1.2,                    // pillar-face clearance: fromX >= halfWidth + this
+      clearM: 0.7                       // ...plus this (spec: max(chordFromX, hw+1.2+0.7))
+    }
   },
 
   preWarm: {
