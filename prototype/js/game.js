@@ -192,7 +192,7 @@
     }
     // CC-LS1: contact-shadow pool builds once at boot (shared geo/tex/mat,
     // no per-frame allocation - P1-8 pool law).
-    if (window.WH_SHCONTACTS) window.WH_SHCONTACTS.init(scene, CFG.contacts);
+    if (window.WH_SHCONTACTS) window.WH_SHCONTACTS.init(game.scene, CFG.contacts);
   }
 
   // ---- HUD -------------------------------------------------------------------
