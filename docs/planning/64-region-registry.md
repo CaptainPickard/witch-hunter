@@ -41,7 +41,10 @@ a spec-from-template.
   P.regionId, camp K.respawn.regionId, message-scoped world region) with
   validRegion() guards — the pattern any new instance's save roundtrip uses.
 - daynight.js: constantPhases.<regionId> = an always-dark sky row (rot_den
-  today; E/F ran WITHOUT one so far — region fog/ambient only).
+  today; E/F ran WITHOUT one so far — region fog/ambient only). CC-C8-EXT
+  (2026-11-08) landed six constant rows: veil_crypt, veil_galleries,
+  armory_deep, veil_spire_approach, tithe_vaults, the_remains; the E/F gap
+  above is historical, and these underworld interiors now hold one look.
 - Scatter (CONFIG.scatter): A/B/C only; D/E/F scatter:false (hand rows only).
 
 ## 2. LIVE region table (values from CONFIG.js @ d5da65a)
