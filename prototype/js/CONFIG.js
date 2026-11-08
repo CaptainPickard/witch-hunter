@@ -2804,6 +2804,73 @@ window.WH_CONFIG = {
     debugMute: false              // dev knob: silence the state toasts below
   },
 
+  // CC-EN1 (io/specs/cc-en1-spec.md): wilderness encounter tables (doc 51
+  // Sec 2.1). Values PROPOSED, Nicko tunes. Consumed by js/encounters.js only.
+  encounters: {
+    enabled: true,
+    director: {
+      regionId: 'darkwood_edge',
+      checkSec: 20,
+      triggerChance: 0.25,
+      cooldownSec: 180,
+      partiesPerNightMax: 2,
+      warnSec: 2.0,
+      warnLine: 'Eyes open in the murk of the Darkwood.',
+      nightTable: 'darkwood_edge',        // which biome table the roll reads
+      seatMinPlayerDistM: 14,
+      seatMinPropM: 3.0,
+      seatMaxSlopeTan: 0.45,
+      nearFireExclusionM: 50,
+      spawnSpacingM: 2.2,                 // lateral spacing between party members
+      boundaryBandM: 6,                   // keep seats >= this off the z=-25 plane
+      nodeM: 2.5,                         // gather-node clearance (CONFIG.scatter.clear.nodeM = 2.5)
+      enemyRowM: 5,                       // static-roster spawn clearance (placement.enemyM = 5)
+      spawnBandR: [0.2, 0.72]             // seat radial band = fraction of playable radius
+    },
+    biomes: {
+      darkwood_edge: {
+        note: 'doc 51 Sec 2.1 darkwood mapping. Live-kit rows only; rows naming '
+            + 'not-yet-built sites are notes, not compositions.',
+        // EN1-4: pending keys F2/F4/F6/F7 carry the full family story.
+        pending: {
+          'F2-tainted-glade-wailcaster': 'gravebound caster pool awaits its kit (doc 51 1.4)',
+          'F4-road-life': 'road life already rolls via CC-AE1 on regionC; the darkwood '
+              + 'side stays a live note until a smuggler chassis exists (doc 51 1.4 F4)',
+          'F6-riches': 'claim-jumpers deferred - no kit row composes them yet (doc 51 Sec 2.1 F6)',
+          'F7-wanderers': 'one-off hand-authored wanderers deferred - no kit (doc 51 Sec 2.1 F7)'
+        },
+        day: [   // DATA ONLY this round (the director never rolls day)
+          { family: 3, label: 'wayfinding bandits', comp: [{ type: 'bandit', n: 2 }], tier: 'T1' }
+        ],
+        night: [
+          { family: 1, label: 'lair-edge wolf pack', comp: [{ type: 'wolf', n: 2 }, { type: 'wolf', n: 1 }], tier: 'T1-T2' },
+          { family: 2, label: 'bound thrall watch', comp: [{ type: 'bandit', n: 2 }], tier: 'T2',
+            note: 'thrall seats = bandit chassis per doc 51 1.4 humanoid-grammar law' },
+          { family: 3, label: 'roadless wayfinding', comp: [{ type: 'bandit', n: 1 }], tier: 'T1' },
+          { family: 5, label: 'grave ghouls', comp: [{ type: 'ghoul', n: 1 }, { type: 'ghoul', n: 2 }], tier: 'T2',
+            note: 'disturbance-spawn only at C; in B the graveyard edge stands in (keepOut chapel is NOT a spawn site)' },
+          { family: 8, label: 'war-scar looters', comp: [{ type: 'bandit', n: 2 }, { type: 'bandit', n: 1 }], tier: 'T2-T3' }
+        ],
+        weights: [0, 0.28, 0.12, 0.15, 0.25, 0.2]   // index 0 = unused slot (1-based family feel)
+      },
+      forest_of_the_old_king: {
+        note: 'doc 51 Sec 2.1 as LIVE in regionC: night road life already rolls via '
+            + 'CC-AE1 (js/ambush.js CONFIG.raid = F4 night). These rows are the '
+            + 'table record of that live behavior + the F1/F5 rows AE1 explicitly '
+            + 'avoids (den mouths, notch arcs). No second director.',
+        // EN1-4: regionC pending keys F1/F6/F7.
+        pending: {
+          'F1-lair-pair': 'dens are authored C sites; the den-mouth day pair stays site data (doc 41 F1)',
+          'F6-riches': 'claim-jumpers deferred - no kit row composes them yet (doc 51 Sec 2.1 F6)',
+          'F7-wanderers': 'one-off hand-authored wanderers deferred - no kit (doc 51 Sec 2.1 F7)'
+        },
+        night: [
+          { family: 4, label: 'night roads (LIVE via AE1)', comp: [{ type: 'bandit', n: 2 }, { type: 'wolf', n: 1 }], tier: 'T1-T2', live: 'cc-ae1' }
+        ]
+      }
+    }
+  },
+
   // CC-H5b Traps as Authored Hazards (io/specs/cc-h5b-hazards-spec.md B2):
   // global primitive block, sibling of CFG.raid. Values consumed by
   // js/hazards.js only. hitCooldownSec is the per-player GLOBAL re-hit gate

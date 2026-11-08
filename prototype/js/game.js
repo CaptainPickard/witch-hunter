@@ -3075,6 +3075,7 @@
       // CC-AE1: night raid director (js/ambush.js) - same init-hook tier as
       // the NPC/chest managers; WH_AMBUSH holds the game ref only.
       if (window.WH_AMBUSH) window.WH_AMBUSH.init(game);
+      if (window.WH_ENCOUNTERS) window.WH_ENCOUNTERS.init(game);
       // CC-H5b: hazards director (js/hazards.js) - same init-hook tier as
       // the NPC/chest managers; the fx wiring hands the module the EXISTING
       // camera-shake channel (triggerShake; no global hit-stop exists).
@@ -3611,6 +3612,7 @@
     // CC-AE1: night raid director (js/ambush.js) - one tick right after the
     // region's enemy sweep ran
     window.WH_AMBUSH.tick(dt);
+    window.WH_ENCOUNTERS.tick(dt);
 
     // CC-H5b: hazards director (js/hazards.js) - one tick right after the
     // ambush sweep, its own call site (no enemy/hazard coupling)
