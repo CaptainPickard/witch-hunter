@@ -191,8 +191,10 @@
       game.flameCards.push(card);
     }
     // CC-LS1: contact-shadow pool builds once at boot (shared geo/tex/mat,
-    // no per-frame allocation - P1-8 pool law).
-    if (window.WH_SHCONTACTS) window.WH_SHCONTACTS.init(scene, CFG.contacts);
+    // no per-frame allocation - P1-8 pool law). Boot-fatal scope bug fixed
+    // 11-07: bare `scene` did not exist in setupLights() (ReferenceError);
+    // the setupScene() local never reaches here - game.scene is the handle.
+    if (window.WH_SHCONTACTS) window.WH_SHCONTACTS.init(game.scene, CFG.contacts);
   }
 
   // ---- HUD -------------------------------------------------------------------
