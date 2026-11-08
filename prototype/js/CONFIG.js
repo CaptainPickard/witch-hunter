@@ -4687,6 +4687,22 @@ window.WH_CONFIG.warEffort = {
     repeatQuotaCapMult: 3,             // quota cap = 3x base (18 ore at base 6)
     repeatBasePayStepPct: 15,          // +15% base pay per repeat
     overDoneText: 'Requisition filled. The quartermaster pays a bonus for the extra iron.'
+  },
+  // CC-WB4 (io/specs/cc-wb4-standing-stone-spec.md, doc 42 Part 2 standing
+  // layer; all PROPOSED, Nicko tunes): the repeat standing bar + the
+  // three-resolve requisition stone tier-up. Art anchor: day-06-council
+  // (banner + stone) and char-03-bannerman-good (stag-and-sun pennant);
+  // palette law: the plinth carries the EXISTING stone-gray neutral token
+  // 0x8a8577 (CONFIG.affinity.text.barNeutral), pole + pennant reuse the
+  // board's own oak/parchment materials - NO red, no second emissive.
+  repeatStanding: 25,                  // CC-WB4: repeats beyond the first need this standing to re-post (PROPOSED, Nicko tunes)
+  stone: {                             // CC-WB4: doc 42 Part 2 three-resolve requisition stone (all PROPOSED, Nicko tunes)
+    thresholdRepeats: 3,               // lifetime resolutions that raise the stone
+    quotaCapMult: 4,                   // stone cap = 4x base = 24 ore (pre-stone cap = ladder.repeatQuotaCapMult = 3 -> 18)
+    payPct: 130,                       // stone base pay multiplier, x1.3, exact milli-unit floor
+    offerText: 'The requisition stone stands at the board. The hold wants more iron for the front.',
+    doneText: "The stone accepts the haul. The quartermaster pays by the stone's word.",
+    crossingToast: 'The hold raises the requisition stone.'
   }
 };
 
@@ -5220,6 +5236,15 @@ window.WH_CONFIG.journal = {
       title: 'Strata requisition',
       source: 'The quartermaster',
       body: 'I took a strata requisition from the Lord\'s Hold board. The quartermaster wants rot-silk and rot-gland from the delve strata below the rot nests - full quota pays coin. Whatever sleeps in the deeper strata stirs when it is robbed.'
+    },
+    // CC-WB4 (io/specs/cc-wb4-standing-stone-spec.md S-1): one-time stone
+    // crossing topic (requisition voice, APPEND ONLY, ledger-safe). Appended
+    // once per lifetime by stoneCrossing() (js/wareffort.js).
+    warEffortStone: {
+      id: 'war-effort-stone',
+      title: 'The requisition stone',
+      source: 'The quartermaster',
+      body: 'Three hauls to the war board and the hold raised its requisition stone. The quartermaster counts larger contracts on it now - the front grows, and the hold grows with it.'
     }
   }
 };
