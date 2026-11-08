@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Witch Hunter v9 - EPR1 Combat (build 11-07 23:32Z 18524ce)</title>
+<title>Witch Hunter v9 - EPR1 Combat (build 11-08 01:11Z 410cc81)</title>
 
 <style>
 /* Witch Hunter prototype v1 - HUD + overlay styling */
@@ -109726,7 +109726,7 @@ window.WH_SHCONTACTS = (function () {
     }
     // CC-LS1: contact-shadow pool builds once at boot (shared geo/tex/mat,
     // no per-frame allocation - P1-8 pool law).
-    if (window.WH_SHCONTACTS) window.WH_SHCONTACTS.init(scene, CFG.contacts);
+    if (window.WH_SHCONTACTS) window.WH_SHCONTACTS.init(game.scene, CFG.contacts);
   }
 
   // ---- HUD -------------------------------------------------------------------
