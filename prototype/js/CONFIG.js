@@ -2956,7 +2956,15 @@ window.WH_CONFIG = {
     // 0 wis = 2.0/s; 10 wis = 3.0/s; 10 wis blocking = 1.5/s
     focusRegenPerSec: 2.0,            // focus regen per second after delay
     focusRegenDelay: 0.5,             // seconds after spend before regen resumes
-    castFocusTaxMult: 1.25            // spell focus tax while weapon in main hand
+    castFocusTaxMult: 1.25,           // spell focus tax while weapon in main hand
+    // P1-4a (io/specs/p1-4a-camera-pullin-spec.md 6): camera obstruction
+    // pull-in — player.js updateCamera samples the target->want segment
+    // against the active region's propColliders circles (exempt never
+    // occludes, the C14 trunk law sets an occluder's top) and pulls the
+    // camera IN to the cleared distance. enabled: false = the pre-change
+    // orbit math exactly (single early-out, no allocation).
+    cameraPull: { enabled: true, camRadiusM: 0.45, skinM: 0.30, samples: 6,
+      trunkTopFrac: 0.45, minFloor: 0.0 }
   },
 
   // v8: pointer-lock mouse bind camera (io/specs/mouse-bind-cam-spec.md 4)

@@ -449,6 +449,33 @@
     return r;
   }
 
+  // P1-4a (io/specs/p1-4a-camera-pullin-spec.md 1): occluder height law over
+  // the SAME C14 classification colliderRadius already runs — vegetation
+  // class (trunk-dominant; canopy leaves are brushable by design) occludes
+  // only its trunk top: nativeHeight * scale * trunkTopFrac; every other
+  // circle is solid mass: nativeHeight * scale.
+  function whOccluderH(name, mh, scale) {
+    if (TRUNK_ASSETS[name] || /tree|oak|birch|sapling|bush|bramble|fern|shrub|stump/i.test(name)) {
+      return mh.height * scale * CFG.player.cameraPull.trunkTopFrac;
+    }
+    return mh.height * scale;
+  }
+
+  // P1-4a design 2: foot y at the prop seat — terrain regions (WH_GROUND.has:
+  // C only) read WH_GROUND.footY with the region's own propFootR (the exact
+  // computeFireSockets guard pattern, game.js); flat regions never touch
+  // window.WH_GROUND (fy = 0). Guard also tolerates the terrain grid not
+  // being built yet (footY's own fallback y = 0) and a missing WH_GROUND
+  // (typeof test, same availability law wh-ground.js loads AFTER CONFIG.js).
+  function whPropFootY(regionId, x, z) {
+    var G = CFG.regionC && DEFS.regions[regionId] && DEFS.regions[regionId].cfg &&
+      DEFS.regions[regionId].cfg.terrain && DEFS.regions[regionId].cfg.terrain.enabled &&
+      typeof window.WH_GROUND !== 'undefined' ? window.WH_GROUND : null;
+    var fr = CFG.regionC && CFG.regionC.terrain ? CFG.regionC.terrain.propFootR : 0;
+    if (!G || !G.has(regionId)) return 0;
+    return G.footY(regionId, x, z, fr);
+  }
+
   // Round E: plan (optional) = whScatterPlan output; its extra trees join the
   // table as ordinary trunk colliders (index 'scatter<i>').
   // Round F: wall (optional) = whWallPlan output; its circles on this
@@ -470,14 +497,25 @@
         if (!m) continue;
         var WR = CFG.boundaryWall.collider.r, len = m.width * p.scale;
         var ax = Math.cos(p.rotY), az = -Math.sin(p.rotY);
+        // P1-4a design 1: boundary-wall segment circles occlude the wall's
+        // full configured height (CFG.boundaryWall.heightM), seated at the
+        // region's foot y (0 on A/B flat ground)
         for (var k = 0; k < p.wall; k++) {
           var t = ((k + 0.5) / p.wall - 0.5) * len;
-          out.circles.push({ index: i + '.' + k, name: p.asset, x: p.x + ax * t, z: p.z + az * t, r: WR });
+          out.circles.push({ index: i + '.' + k, name: p.asset,
+            x: p.x + ax * t, z: p.z + az * t, r: WR,
+            h: CFG.boundaryWall.heightM,
+            fy: whPropFootY(regionId, p.x + ax * t, p.z + az * t) });
         }
         continue;
       }
       var row = { index: i, name: p.asset, x: p.x, z: p.z,
                   r: m ? colliderRadius(p.asset, m.width, p.scale) : 0 };
+      // P1-4a design 1/2: attach occluder height + foot y at construction
+      // time (the fields RIDE the cached rows; consumers see them unchanged
+      // in shape). Meta-missing rows keep r 0 and stay unoccluding (fh 0).
+      row.h = m ? whOccluderH(p.asset, m, p.scale) : 0;
+      row.fy = whPropFootY(regionId, p.x, p.z);
       if (whMeetsCorridor(p.x, p.z, row.r)) out.exempt.push(row);
       else if (row.r > 0) out.circles.push(row);
     }
@@ -485,8 +523,15 @@
       if (!plan.complete) out.complete = false;
       for (var j = 0; j < plan.trees.length; j++) {
         var t = plan.trees[j];
-        if (t.r > 0) out.circles.push({ index: 'scatter' + j, name: t.asset,
-          x: t.x, z: t.z, r: t.r });
+        // P1-4a design 1: scatter trees are C14 vegetation rows — their
+        // occluder top is the trunk only (nativeHeight * scale * frac)
+        if (t.r > 0) {
+          var tm2 = meta(t.asset);
+          out.circles.push({ index: 'scatter' + j, name: t.asset,
+            x: t.x, z: t.z, r: t.r,
+            h: tm2 ? whOccluderH(t.asset, tm2, t.scale) : 12,
+            fy: whPropFootY(regionId, t.x, t.z) });
+        }
       }
     }
     // CC-C2: the world wall bounds the shared A/B disc only (plane-0
@@ -1300,6 +1345,12 @@
     if (!W || !W.enabled) return plan;
     var TWO_PI = Math.PI * 2;
     var DEG = Math.PI / 180;
+    // P1-4a design 1: EVERY whWallPlan circle row is solid mass — the door
+    // segments, arch legs/plugs and forecourt fence/posts rows all carry
+    // h = CFG.boundaryWall.heightM (the Round G full-height law) with the
+    // region rows' fy 0 (rows are constructed region-agnostic; the region
+    // side of the plane is A/B flat ground)
+    var WHM = CFG.boundaryWall.heightM;
     function m(name) {
       var v = meta(name);
       if (!v) plan.complete = false;
@@ -1351,9 +1402,11 @@
       var s = scales[asset];
       plan.segments.push({ kind: kind, i: i, asset: asset, x: x, z: z, rotY: rotY,
         sx: s.sx, sy: s.sy, sz: s.sz });
+      // P1-4a design 1: wall-segment circles occlude the wall's full
+      // configured height (h = CFG.boundaryWall.heightM, fy 0 on the flat A/B disc)
       for (var k = 0; k < cs.length; k++) {
         plan.colliders.push({ index: 'wall-' + kind + i + '.' + k, name: asset,
-          x: cs[k].x, z: cs[k].z, r: CR });
+          x: cs[k].x, z: cs[k].z, r: CR, h: WHM, fy: 0 });
       }
     }
     function drop(kind, i, why) {
@@ -1473,14 +1526,16 @@
         for (a = 0; a < nz; a++) pts.push([x0, z0 + (z1 - z0) * a / nz]);       // inner face
         pts.forEach(function (pt) {
           var w = toWorld(sd * pt[0], pt[1]);
+          // P1-4a design 1: arch legs are solid mass at the wall's height
           plan.colliders.push({ index: 'arch-leg' + (sd === 1 ? 'E' : 'W') + legCount++,
-            name: A.asset, x: w.x, z: w.z, r: LG.r });
+            name: A.asset, x: w.x, z: w.z, r: LG.r, h: WHM, fy: 0 });
         });
         if (A.plugCorners) {
           [hd, -hd].forEach(function (pz) {
             var w = toWorld(sd * (xi + A.plugR), pz);
+            // P1-4a design 1: archetype plugs — same solid-mass h law
             plan.colliders.push({ index: 'arch-plug' + plugCount++, name: A.asset,
-              x: w.x, z: w.z, r: A.plugR });
+              x: w.x, z: w.z, r: A.plugR, h: WHM, fy: 0 });
           });
         }
       });
@@ -1563,8 +1618,11 @@
             if (isLast) {
               fcorners++;
             }
+            // P1-4a design 1: fence sections are solid mass at the wall's
+            // configured height (the mm2 asset row governs only the collider
+            // radius; h is the boundaryWall height law on every solid wall-class row)
             plan.colliders.push({ index: 'forecourt-' + kind + '-' + c,
-              name: asset, x: x, z: F.z, r: r });
+              name: asset, x: x, z: F.z, r: r, h: WHM, fy: 0 });
             // fenceE/fenceW count the run's fence SECTIONS per side; the
             // corner terminus is counted separately in fenceCorners (valspec
             // A1.e: new collider entries == fenceE + fenceW + fenceCorners)
@@ -1589,8 +1647,10 @@
             x: P.x, y: 0, z: P.z, rotY: P.rotY || 0,
             sx: P.scale, sy: P.scale, sz: P.scale });
           postsPlaced++;
+          // P1-4a design 1: lantern posts occlude their own asset height
+          // (full footprint; solid-class per the C14 law)
           plan.colliders.push({ index: 'forecourt-post' + pi, name: P.asset,
-            x: P.x, z: P.z, r: pr });
+            x: P.x, z: P.z, r: pr, h: pm2.height * P.scale, fy: 0 });
           if (PSK) {
             plan.sockets.push({ id: P.asset + '@forecourt' + (P.x < 0 ? 'W' : 'E'),
               x: P.x, y: pm2.height * P.scale * PSK.heightFraction, z: P.z,

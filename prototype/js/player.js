@@ -22,6 +22,34 @@
   var ER = window.WH_CONFIG.combat.er; // EPR1: ER-parity input grammar / backstep / guard raise
   var GATE_EPS = 1e-6;                // EPR1: float slack - a cancel point hit exactly counts as reached
 
+  // P1-4a camera pull-in (io/specs/p1-4a-camera-pullin-spec.md 4/7): all
+  // per-frame pull values live in module-scope CP_* scratch - var-style, NO
+  // allocation in the pull path (no new / [] / {}); the region handle is
+  // resolved LIVE each frame off window.WH_GAME, never cached.
+  var CP = window.WH_CONFIG.player.cameraPull;
+  var CP_RGM = null;                  // the frame's region manager (live read)
+  var CP_CIRCLES = null;              // the frame's collider circles (table.circles ONLY)
+  var CP_REC = null;                  // the frame's lastCameraPull record
+  var CP_C = null;                    // current circle row
+  var CP_N = 0;                       // samples per frame
+  var CP_I = -1;                      // FIRST blocked sample index (-1 = none)
+  var CP_J = 0;                       // circle loop counter
+  var CP_K = 0;                       // sample loop counter
+  var CP_V = 0;                       // verification step counter
+  var CP_T = 0;                       // tClear (pull parameter)
+  var CP_TT = 0;                      // per-sample t
+  var CP_FIN = 0;                     // final pulled want distance
+  var CP_SHRINK = 0;                  // verification step value
+  var CP_RAD = 0;                     // camRadiusM
+  var CP_LIM = 0;                     // per-circle r + R + skin limit
+  var CP_D = 0;                       // scratch distance / squared distance
+  var CP_X = 0, CP_Y = 0, CP_Z = 0;   // candidate point / sample
+  var CP_DX = 0, CP_DY = 0, CP_DZ = 0;   // segment delta target->want
+  var CP_MX = 0, CP_MZ = 0;           // segment midpoint XZ
+  var CP_SY = 0;                      // current verify-segment y end (y basis)
+  var CP_FY = 0, CP_H = 0;            // row band (defaults 12 occluder / -6 floor per spec)
+  var CP_BL = false;                  // still-violated flag (verification)
+
   function deg2rad(d) { return d * Math.PI / 180; }
   function smooth(p) { return p * p * (3 - 2 * p); }   // smoothstep ease
 
@@ -146,6 +174,9 @@
     this.camYaw = Math.PI;            // looking toward -z (into region A)
     this.camPitch = deg2rad(22);
     this.camDist = CFG.camDistance;
+    // P1-4a (io/specs/p1-4a-camera-pullin-spec.md 6): the debug/telemetry
+    // camera pull record - written ONLY by the pull block, NEVER READ there
+    this.lastCameraPull = null;
     this.dragging = false;
     this.lastDragX = 0;
     this.lastDragY = 0;
@@ -2256,6 +2287,115 @@
       Math.cos(this.camYaw) * Math.cos(this.camPitch)
     ).multiplyScalar(effDist);
     var want = target.clone().add(offset);
+
+    // P1-4a camera pull-in (io/specs/p1-4a-camera-pullin-spec.md 4): sample
+    // the target->want segment against the active region's prop colliders
+    // and pull want IN to the first blocked sample when the segment tunnels
+    // through an occluder (circle rows carry h/fy attached in
+    // region-manager whPropColliders/whWallPlan; exempt rows never reach
+    // this loop - the corridor exemption is the corridor's camera law too).
+    // Disabled = EXACTLY the pre-change orbit (single early-out, no work).
+    if (CP.enabled && this.state === 'alive' &&
+        window.WH_GAME && window.WH_GAME.game &&
+        window.WH_GAME.game.regionManager) {
+      CP_RGM = window.WH_GAME.game.regionManager;
+      CP_CIRCLES = CP_RGM.propColliders(CP_RGM.logic.activeId).circles;
+      // pull parameter: tClear = the FIRST blocked sample's t (segment
+      // sample test, spec 4; -1 = the whole segment is clear)
+      CP_N = CP.samples;
+      CP_I = -1;
+      CP_DX = want.x - target.x;
+      CP_DY = want.y - target.y;
+      CP_DZ = want.z - target.z;
+      for (CP_K = 1; CP_K <= CP_N && CP_I < 0; CP_K++) {
+        CP_TT = CP_K / CP_N;
+        CP_X = target.x + CP_DX * CP_TT;
+        CP_Y = target.y + CP_DY * CP_TT;
+        CP_Z = target.z + CP_DZ * CP_TT;
+        CP_RAD = CP.camRadiusM;
+        for (CP_J = 0; CP_J < CP_CIRCLES.length; CP_J++) {
+          CP_C = CP_CIRCLES[CP_J];
+          // unmapped rows occlude conservatively (spec 45-46): h 12, fy -6
+          CP_H = (CP_C.h === undefined || CP_C.h === null) ? 12 : CP_C.h;
+          CP_FY = (CP_C.fy === undefined || CP_C.fy === null) ? -6 : CP_C.fy;
+          // occluders live in the y band [fy - 0.25, fy + h] (inclusive)
+          if (CP_Y < CP_FY - 0.25 || CP_Y > CP_FY + CP_H) continue;
+          CP_LIM = CP_C.r + CP_RAD + CP.skinM;
+          if (CP_LIM <= 0) continue;
+          // XZ circle test at the sample (spec 55-56: <= r + R + skinM)
+          CP_D = (CP_X - CP_C.x) * (CP_X - CP_C.x) +
+            (CP_Z - CP_C.z) * (CP_Z - CP_C.z);
+          if (CP_D <= CP_LIM * CP_LIM) { CP_I = CP_K - 1; break; }
+        }
+      }
+      if (CP_I >= 0) {
+        // first-blocked-sample pull target (spec 63-65): the point on the
+        // segment one sample BEFORE the block
+        CP_T = CP_I / CP_N;
+        CP_X = target.x + CP_DX * CP_T;
+        CP_Y = target.y + CP_DY * CP_T;
+        CP_Z = target.z + CP_DZ * CP_T;
+        // bounded 2-step verification shrink (spec 66-68 + 70): halve the
+        // segment toward the target, retest the shrunk segment, re-pull
+        // per step; stop early when nothing is violated
+        for (CP_V = 0; CP_V < 2; CP_V++) {
+          CP_MX = (CP_X + target.x) / 2;
+          CP_MZ = (CP_Z + target.z) / 2;
+          CP_SY = CP_Y;
+          CP_SHRINK = 0.5;
+          CP_BL = false;
+          for (CP_K = 1; CP_K <= CP_N; CP_K++) {
+            CP_TT = CP_SHRINK * (CP_K / CP_N);
+            CP_X = target.x + (CP_MX - target.x) * CP_TT;
+            CP_Y = target.y + (CP_SY - target.y) * CP_TT;
+            CP_Z = target.z + (CP_MZ - target.z) * CP_TT;
+            CP_RAD = CP.camRadiusM;
+            for (CP_J = 0; CP_J < CP_CIRCLES.length; CP_J++) {
+              CP_C = CP_CIRCLES[CP_J];
+              CP_H = (CP_C.h === undefined || CP_C.h === null) ? 12 : CP_C.h;
+              CP_FY = (CP_C.fy === undefined || CP_C.fy === null) ? -6 : CP_C.fy;
+              if (CP_Y < CP_FY - 0.25 || CP_Y > CP_FY + CP_H) continue;
+              CP_LIM = CP_C.r + CP_RAD + CP.skinM;
+              if (CP_LIM <= 0) continue;
+              CP_D = (CP_X - CP_C.x) * (CP_X - CP_C.x) +
+                (CP_Z - CP_C.z) * (CP_Z - CP_C.z);
+              if (CP_D <= CP_LIM * CP_LIM) { CP_BL = true; break; }
+            }
+            if (CP_BL) break;
+          }
+          if (!CP_BL) break;
+          CP_SHRINK = 0.5;
+          CP_X = target.x + (CP_MX - target.x) * CP_SHRINK;
+          CP_Z = target.z + (CP_MZ - target.z) * CP_SHRINK;
+          CP_Y = target.y + (CP_SY - target.y) * CP_SHRINK;
+        }
+        // FINAL want = the last cleared/verified point on the segment (the
+        // verified pull target), expressed as a distance along the ORIGINAL
+        // orbit segment, floored by camMinDistance (spec 71)
+        CP_FIN = Math.sqrt((CP_X - target.x) * (CP_X - target.x) +
+          (CP_Y - target.y) * (CP_Y - target.y) +
+          (CP_Z - target.z) * (CP_Z - target.z));
+        if (CP_FIN < CFG.camMinDistance) CP_FIN = CFG.camMinDistance;
+        want.set(target.x + (CP_X - target.x), CP_Y, target.z + (CP_Z - target.z));
+        // exact-legacy law: want.y clamped ONLY by the pre-change floor
+        // clamp below (the pull never moves want.y OFF the orbit line)
+        // debug/telemetry record (design 6): written, never read back here
+        if (!this.lastCameraPull) {
+          this.lastCameraPull = { enabled: CP.enabled, activeId: null,
+            t: 0, tClear: 0, dist: 0, effDist: 0, y: 0, sampleCount: 0 };
+        }
+        CP_REC = this.lastCameraPull;
+        CP_REC.enabled = CP.enabled;
+        CP_REC.activeId = CP_RGM.logic.activeId;
+        CP_REC.t = CP_I / CP_N;
+        CP_REC.tClear = CP_T;
+        CP_REC.dist = CP_FIN;
+        CP_REC.effDist = effDist;
+        CP_REC.y = want.y;
+        CP_REC.sampleCount = CP_N;
+      }
+    }
+
     if (want.y < floorY) want.y = floorY;
 
     // 10-04 change order (Nicko): FULL camera decoupling - movement NEVER
