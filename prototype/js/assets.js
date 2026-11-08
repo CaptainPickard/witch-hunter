@@ -222,6 +222,10 @@
       var pageDir = base.slice(0, base.lastIndexOf('/') + 1);
       if (/\/builds\//.test(pageDir)) {
         pageDir = pageDir.replace(/\/builds\/$/, '/');
+        // CC-LS2: also collapse a prototype/ page-dir segment — a bundle
+        // served under .../prototype/builds/ must resolve art URLs at the
+        // serve root, not at .../prototype/art-direction/.
+        pageDir = pageDir.replace(/\/prototype\/$/, '/');
       }
       return new URL(relPath, pageDir).href;
     } catch (e) {

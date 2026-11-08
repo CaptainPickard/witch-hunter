@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Witch Hunter v9 - EPR1 Combat (build 11-08 01:11Z 410cc81)</title>
+<title>Witch Hunter v9 - EPR1 Combat (build 11-08 01:11Z b006d56)</title>
 
 <style>
 /* Witch Hunter prototype v1 - HUD + overlay styling */
@@ -93657,6 +93657,10 @@ window.WH_ICONS = {
       var pageDir = base.slice(0, base.lastIndexOf('/') + 1);
       if (/\/builds\//.test(pageDir)) {
         pageDir = pageDir.replace(/\/builds\/$/, '/');
+        // CC-LS2: also collapse a prototype/ page-dir segment — a bundle
+        // served under .../prototype/builds/ must resolve art URLs at the
+        // serve root, not at .../prototype/art-direction/.
+        pageDir = pageDir.replace(/\/prototype\/$/, '/');
       }
       return new URL(relPath, pageDir).href;
     } catch (e) {
