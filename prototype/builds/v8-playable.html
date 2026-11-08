@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Witch Hunter v9 - EPR1 Combat (build 11-08 01:35Z 57a9adf)</title>
+<title>Witch Hunter v9 - EPR1 Combat (build 11-08 03:01Z 5eb4843)</title>
 
 <style>
 /* Witch Hunter prototype v1 - HUD + overlay styling */
@@ -90246,7 +90246,15 @@ window.WH_CONFIG = {
     // 0 wis = 2.0/s; 10 wis = 3.0/s; 10 wis blocking = 1.5/s
     focusRegenPerSec: 2.0,            // focus regen per second after delay
     focusRegenDelay: 0.5,             // seconds after spend before regen resumes
-    castFocusTaxMult: 1.25            // spell focus tax while weapon in main hand
+    castFocusTaxMult: 1.25,           // spell focus tax while weapon in main hand
+    // P1-4a (io/specs/p1-4a-camera-pullin-spec.md 6): camera obstruction
+    // pull-in — player.js updateCamera samples the target->want segment
+    // against the active region's propColliders circles (exempt never
+    // occludes, the C14 trunk law sets an occluder's top) and pulls the
+    // camera IN to the cleared distance. enabled: false = the pre-change
+    // orbit math exactly (single early-out, no allocation).
+    cameraPull: { enabled: true, camRadiusM: 0.45, skinM: 0.30, samples: 6,
+      trunkTopFrac: 0.45, minFloor: 0.0 }
   },
 
   // v8: pointer-lock mouse bind camera (io/specs/mouse-bind-cam-spec.md 4)
@@ -98514,6 +98522,34 @@ window.WH_ICONS = {
   var ER = window.WH_CONFIG.combat.er; // EPR1: ER-parity input grammar / backstep / guard raise
   var GATE_EPS = 1e-6;                // EPR1: float slack - a cancel point hit exactly counts as reached
 
+  // P1-4a camera pull-in (io/specs/p1-4a-camera-pullin-spec.md 4/7): all
+  // per-frame pull values live in module-scope CP_* scratch - var-style, NO
+  // allocation in the pull path (no new / [] / {}); the region handle is
+  // resolved LIVE each frame off window.WH_GAME, never cached.
+  var CP = window.WH_CONFIG.player.cameraPull;
+  var CP_RGM = null;                  // the frame's region manager (live read)
+  var CP_CIRCLES = null;              // the frame's collider circles (table.circles ONLY)
+  var CP_REC = null;                  // the frame's lastCameraPull record
+  var CP_C = null;                    // current circle row
+  var CP_N = 0;                       // samples per frame
+  var CP_I = -1;                      // FIRST blocked sample index (-1 = none)
+  var CP_J = 0;                       // circle loop counter
+  var CP_K = 0;                       // sample loop counter
+  var CP_V = 0;                       // verification step counter
+  var CP_T = 0;                       // tClear (pull parameter)
+  var CP_TT = 0;                      // per-sample t
+  var CP_FIN = 0;                     // final pulled want distance
+  var CP_SHRINK = 0;                  // verification step value
+  var CP_RAD = 0;                     // camRadiusM
+  var CP_LIM = 0;                     // per-circle r + R + skin limit
+  var CP_D = 0;                       // scratch distance / squared distance
+  var CP_X = 0, CP_Y = 0, CP_Z = 0;   // candidate point / sample
+  var CP_DX = 0, CP_DY = 0, CP_DZ = 0;   // segment delta target->want
+  var CP_MX = 0, CP_MZ = 0;           // segment midpoint XZ
+  var CP_SY = 0;                      // current verify-segment y end (y basis)
+  var CP_FY = 0, CP_H = 0;            // row band (defaults 12 occluder / -6 floor per spec)
+  var CP_BL = false;                  // still-violated flag (verification)
+
   function deg2rad(d) { return d * Math.PI / 180; }
   function smooth(p) { return p * p * (3 - 2 * p); }   // smoothstep ease
 
@@ -98638,6 +98674,9 @@ window.WH_ICONS = {
     this.camYaw = Math.PI;            // looking toward -z (into region A)
     this.camPitch = deg2rad(22);
     this.camDist = CFG.camDistance;
+    // P1-4a (io/specs/p1-4a-camera-pullin-spec.md 6): the debug/telemetry
+    // camera pull record - written ONLY by the pull block, NEVER READ there
+    this.lastCameraPull = null;
     this.dragging = false;
     this.lastDragX = 0;
     this.lastDragY = 0;
@@ -100748,6 +100787,115 @@ window.WH_ICONS = {
       Math.cos(this.camYaw) * Math.cos(this.camPitch)
     ).multiplyScalar(effDist);
     var want = target.clone().add(offset);
+
+    // P1-4a camera pull-in (io/specs/p1-4a-camera-pullin-spec.md 4): sample
+    // the target->want segment against the active region's prop colliders
+    // and pull want IN to the first blocked sample when the segment tunnels
+    // through an occluder (circle rows carry h/fy attached in
+    // region-manager whPropColliders/whWallPlan; exempt rows never reach
+    // this loop - the corridor exemption is the corridor's camera law too).
+    // Disabled = EXACTLY the pre-change orbit (single early-out, no work).
+    if (CP.enabled && this.state === 'alive' &&
+        window.WH_GAME && window.WH_GAME.game &&
+        window.WH_GAME.game.regionManager) {
+      CP_RGM = window.WH_GAME.game.regionManager;
+      CP_CIRCLES = CP_RGM.propColliders(CP_RGM.logic.activeId).circles;
+      // pull parameter: tClear = the FIRST blocked sample's t (segment
+      // sample test, spec 4; -1 = the whole segment is clear)
+      CP_N = CP.samples;
+      CP_I = -1;
+      CP_DX = want.x - target.x;
+      CP_DY = want.y - target.y;
+      CP_DZ = want.z - target.z;
+      for (CP_K = 1; CP_K <= CP_N && CP_I < 0; CP_K++) {
+        CP_TT = CP_K / CP_N;
+        CP_X = target.x + CP_DX * CP_TT;
+        CP_Y = target.y + CP_DY * CP_TT;
+        CP_Z = target.z + CP_DZ * CP_TT;
+        CP_RAD = CP.camRadiusM;
+        for (CP_J = 0; CP_J < CP_CIRCLES.length; CP_J++) {
+          CP_C = CP_CIRCLES[CP_J];
+          // unmapped rows occlude conservatively (spec 45-46): h 12, fy -6
+          CP_H = (CP_C.h === undefined || CP_C.h === null) ? 12 : CP_C.h;
+          CP_FY = (CP_C.fy === undefined || CP_C.fy === null) ? -6 : CP_C.fy;
+          // occluders live in the y band [fy - 0.25, fy + h] (inclusive)
+          if (CP_Y < CP_FY - 0.25 || CP_Y > CP_FY + CP_H) continue;
+          CP_LIM = CP_C.r + CP_RAD + CP.skinM;
+          if (CP_LIM <= 0) continue;
+          // XZ circle test at the sample (spec 55-56: <= r + R + skinM)
+          CP_D = (CP_X - CP_C.x) * (CP_X - CP_C.x) +
+            (CP_Z - CP_C.z) * (CP_Z - CP_C.z);
+          if (CP_D <= CP_LIM * CP_LIM) { CP_I = CP_K - 1; break; }
+        }
+      }
+      if (CP_I >= 0) {
+        // first-blocked-sample pull target (spec 63-65): the point on the
+        // segment one sample BEFORE the block
+        CP_T = CP_I / CP_N;
+        CP_X = target.x + CP_DX * CP_T;
+        CP_Y = target.y + CP_DY * CP_T;
+        CP_Z = target.z + CP_DZ * CP_T;
+        // bounded 2-step verification shrink (spec 66-68 + 70): halve the
+        // segment toward the target, retest the shrunk segment, re-pull
+        // per step; stop early when nothing is violated
+        for (CP_V = 0; CP_V < 2; CP_V++) {
+          CP_MX = (CP_X + target.x) / 2;
+          CP_MZ = (CP_Z + target.z) / 2;
+          CP_SY = CP_Y;
+          CP_SHRINK = 0.5;
+          CP_BL = false;
+          for (CP_K = 1; CP_K <= CP_N; CP_K++) {
+            CP_TT = CP_SHRINK * (CP_K / CP_N);
+            CP_X = target.x + (CP_MX - target.x) * CP_TT;
+            CP_Y = target.y + (CP_SY - target.y) * CP_TT;
+            CP_Z = target.z + (CP_MZ - target.z) * CP_TT;
+            CP_RAD = CP.camRadiusM;
+            for (CP_J = 0; CP_J < CP_CIRCLES.length; CP_J++) {
+              CP_C = CP_CIRCLES[CP_J];
+              CP_H = (CP_C.h === undefined || CP_C.h === null) ? 12 : CP_C.h;
+              CP_FY = (CP_C.fy === undefined || CP_C.fy === null) ? -6 : CP_C.fy;
+              if (CP_Y < CP_FY - 0.25 || CP_Y > CP_FY + CP_H) continue;
+              CP_LIM = CP_C.r + CP_RAD + CP.skinM;
+              if (CP_LIM <= 0) continue;
+              CP_D = (CP_X - CP_C.x) * (CP_X - CP_C.x) +
+                (CP_Z - CP_C.z) * (CP_Z - CP_C.z);
+              if (CP_D <= CP_LIM * CP_LIM) { CP_BL = true; break; }
+            }
+            if (CP_BL) break;
+          }
+          if (!CP_BL) break;
+          CP_SHRINK = 0.5;
+          CP_X = target.x + (CP_MX - target.x) * CP_SHRINK;
+          CP_Z = target.z + (CP_MZ - target.z) * CP_SHRINK;
+          CP_Y = target.y + (CP_SY - target.y) * CP_SHRINK;
+        }
+        // FINAL want = the last cleared/verified point on the segment (the
+        // verified pull target), expressed as a distance along the ORIGINAL
+        // orbit segment, floored by camMinDistance (spec 71)
+        CP_FIN = Math.sqrt((CP_X - target.x) * (CP_X - target.x) +
+          (CP_Y - target.y) * (CP_Y - target.y) +
+          (CP_Z - target.z) * (CP_Z - target.z));
+        if (CP_FIN < CFG.camMinDistance) CP_FIN = CFG.camMinDistance;
+        want.set(target.x + (CP_X - target.x), CP_Y, target.z + (CP_Z - target.z));
+        // exact-legacy law: want.y clamped ONLY by the pre-change floor
+        // clamp below (the pull never moves want.y OFF the orbit line)
+        // debug/telemetry record (design 6): written, never read back here
+        if (!this.lastCameraPull) {
+          this.lastCameraPull = { enabled: CP.enabled, activeId: null,
+            t: 0, tClear: 0, dist: 0, effDist: 0, y: 0, sampleCount: 0 };
+        }
+        CP_REC = this.lastCameraPull;
+        CP_REC.enabled = CP.enabled;
+        CP_REC.activeId = CP_RGM.logic.activeId;
+        CP_REC.t = CP_I / CP_N;
+        CP_REC.tClear = CP_T;
+        CP_REC.dist = CP_FIN;
+        CP_REC.effDist = effDist;
+        CP_REC.y = want.y;
+        CP_REC.sampleCount = CP_N;
+      }
+    }
+
     if (want.y < floorY) want.y = floorY;
 
     // 10-04 change order (Nicko): FULL camera decoupling - movement NEVER
@@ -103030,6 +103178,33 @@ window.WH_ICONS = {
     return r;
   }
 
+  // P1-4a (io/specs/p1-4a-camera-pullin-spec.md 1): occluder height law over
+  // the SAME C14 classification colliderRadius already runs — vegetation
+  // class (trunk-dominant; canopy leaves are brushable by design) occludes
+  // only its trunk top: nativeHeight * scale * trunkTopFrac; every other
+  // circle is solid mass: nativeHeight * scale.
+  function whOccluderH(name, mh, scale) {
+    if (TRUNK_ASSETS[name] || /tree|oak|birch|sapling|bush|bramble|fern|shrub|stump/i.test(name)) {
+      return mh.height * scale * CFG.player.cameraPull.trunkTopFrac;
+    }
+    return mh.height * scale;
+  }
+
+  // P1-4a design 2: foot y at the prop seat — terrain regions (WH_GROUND.has:
+  // C only) read WH_GROUND.footY with the region's own propFootR (the exact
+  // computeFireSockets guard pattern, game.js); flat regions never touch
+  // window.WH_GROUND (fy = 0). Guard also tolerates the terrain grid not
+  // being built yet (footY's own fallback y = 0) and a missing WH_GROUND
+  // (typeof test, same availability law wh-ground.js loads AFTER CONFIG.js).
+  function whPropFootY(regionId, x, z) {
+    var G = CFG.regionC && DEFS.regions[regionId] && DEFS.regions[regionId].cfg &&
+      DEFS.regions[regionId].cfg.terrain && DEFS.regions[regionId].cfg.terrain.enabled &&
+      typeof window.WH_GROUND !== 'undefined' ? window.WH_GROUND : null;
+    var fr = CFG.regionC && CFG.regionC.terrain ? CFG.regionC.terrain.propFootR : 0;
+    if (!G || !G.has(regionId)) return 0;
+    return G.footY(regionId, x, z, fr);
+  }
+
   // Round E: plan (optional) = whScatterPlan output; its extra trees join the
   // table as ordinary trunk colliders (index 'scatter<i>').
   // Round F: wall (optional) = whWallPlan output; its circles on this
@@ -103051,14 +103226,25 @@ window.WH_ICONS = {
         if (!m) continue;
         var WR = CFG.boundaryWall.collider.r, len = m.width * p.scale;
         var ax = Math.cos(p.rotY), az = -Math.sin(p.rotY);
+        // P1-4a design 1: boundary-wall segment circles occlude the wall's
+        // full configured height (CFG.boundaryWall.heightM), seated at the
+        // region's foot y (0 on A/B flat ground)
         for (var k = 0; k < p.wall; k++) {
           var t = ((k + 0.5) / p.wall - 0.5) * len;
-          out.circles.push({ index: i + '.' + k, name: p.asset, x: p.x + ax * t, z: p.z + az * t, r: WR });
+          out.circles.push({ index: i + '.' + k, name: p.asset,
+            x: p.x + ax * t, z: p.z + az * t, r: WR,
+            h: CFG.boundaryWall.heightM,
+            fy: whPropFootY(regionId, p.x + ax * t, p.z + az * t) });
         }
         continue;
       }
       var row = { index: i, name: p.asset, x: p.x, z: p.z,
                   r: m ? colliderRadius(p.asset, m.width, p.scale) : 0 };
+      // P1-4a design 1/2: attach occluder height + foot y at construction
+      // time (the fields RIDE the cached rows; consumers see them unchanged
+      // in shape). Meta-missing rows keep r 0 and stay unoccluding (fh 0).
+      row.h = m ? whOccluderH(p.asset, m, p.scale) : 0;
+      row.fy = whPropFootY(regionId, p.x, p.z);
       if (whMeetsCorridor(p.x, p.z, row.r)) out.exempt.push(row);
       else if (row.r > 0) out.circles.push(row);
     }
@@ -103066,8 +103252,15 @@ window.WH_ICONS = {
       if (!plan.complete) out.complete = false;
       for (var j = 0; j < plan.trees.length; j++) {
         var t = plan.trees[j];
-        if (t.r > 0) out.circles.push({ index: 'scatter' + j, name: t.asset,
-          x: t.x, z: t.z, r: t.r });
+        // P1-4a design 1: scatter trees are C14 vegetation rows — their
+        // occluder top is the trunk only (nativeHeight * scale * frac)
+        if (t.r > 0) {
+          var tm2 = meta(t.asset);
+          out.circles.push({ index: 'scatter' + j, name: t.asset,
+            x: t.x, z: t.z, r: t.r,
+            h: tm2 ? whOccluderH(t.asset, tm2, t.scale) : 12,
+            fy: whPropFootY(regionId, t.x, t.z) });
+        }
       }
     }
     // CC-C2: the world wall bounds the shared A/B disc only (plane-0
@@ -103881,6 +104074,12 @@ window.WH_ICONS = {
     if (!W || !W.enabled) return plan;
     var TWO_PI = Math.PI * 2;
     var DEG = Math.PI / 180;
+    // P1-4a design 1: EVERY whWallPlan circle row is solid mass — the door
+    // segments, arch legs/plugs and forecourt fence/posts rows all carry
+    // h = CFG.boundaryWall.heightM (the Round G full-height law) with the
+    // region rows' fy 0 (rows are constructed region-agnostic; the region
+    // side of the plane is A/B flat ground)
+    var WHM = CFG.boundaryWall.heightM;
     function m(name) {
       var v = meta(name);
       if (!v) plan.complete = false;
@@ -103932,9 +104131,11 @@ window.WH_ICONS = {
       var s = scales[asset];
       plan.segments.push({ kind: kind, i: i, asset: asset, x: x, z: z, rotY: rotY,
         sx: s.sx, sy: s.sy, sz: s.sz });
+      // P1-4a design 1: wall-segment circles occlude the wall's full
+      // configured height (h = CFG.boundaryWall.heightM, fy 0 on the flat A/B disc)
       for (var k = 0; k < cs.length; k++) {
         plan.colliders.push({ index: 'wall-' + kind + i + '.' + k, name: asset,
-          x: cs[k].x, z: cs[k].z, r: CR });
+          x: cs[k].x, z: cs[k].z, r: CR, h: WHM, fy: 0 });
       }
     }
     function drop(kind, i, why) {
@@ -104054,14 +104255,16 @@ window.WH_ICONS = {
         for (a = 0; a < nz; a++) pts.push([x0, z0 + (z1 - z0) * a / nz]);       // inner face
         pts.forEach(function (pt) {
           var w = toWorld(sd * pt[0], pt[1]);
+          // P1-4a design 1: arch legs are solid mass at the wall's height
           plan.colliders.push({ index: 'arch-leg' + (sd === 1 ? 'E' : 'W') + legCount++,
-            name: A.asset, x: w.x, z: w.z, r: LG.r });
+            name: A.asset, x: w.x, z: w.z, r: LG.r, h: WHM, fy: 0 });
         });
         if (A.plugCorners) {
           [hd, -hd].forEach(function (pz) {
             var w = toWorld(sd * (xi + A.plugR), pz);
+            // P1-4a design 1: archetype plugs — same solid-mass h law
             plan.colliders.push({ index: 'arch-plug' + plugCount++, name: A.asset,
-              x: w.x, z: w.z, r: A.plugR });
+              x: w.x, z: w.z, r: A.plugR, h: WHM, fy: 0 });
           });
         }
       });
@@ -104144,8 +104347,11 @@ window.WH_ICONS = {
             if (isLast) {
               fcorners++;
             }
+            // P1-4a design 1: fence sections are solid mass at the wall's
+            // configured height (the mm2 asset row governs only the collider
+            // radius; h is the boundaryWall height law on every solid wall-class row)
             plan.colliders.push({ index: 'forecourt-' + kind + '-' + c,
-              name: asset, x: x, z: F.z, r: r });
+              name: asset, x: x, z: F.z, r: r, h: WHM, fy: 0 });
             // fenceE/fenceW count the run's fence SECTIONS per side; the
             // corner terminus is counted separately in fenceCorners (valspec
             // A1.e: new collider entries == fenceE + fenceW + fenceCorners)
@@ -104170,8 +104376,10 @@ window.WH_ICONS = {
             x: P.x, y: 0, z: P.z, rotY: P.rotY || 0,
             sx: P.scale, sy: P.scale, sz: P.scale });
           postsPlaced++;
+          // P1-4a design 1: lantern posts occlude their own asset height
+          // (full footprint; solid-class per the C14 law)
           plan.colliders.push({ index: 'forecourt-post' + pi, name: P.asset,
-            x: P.x, z: P.z, r: pr });
+            x: P.x, z: P.z, r: pr, h: pm2.height * P.scale, fy: 0 });
           if (PSK) {
             plan.sockets.push({ id: P.asset + '@forecourt' + (P.x < 0 ? 'W' : 'E'),
               x: P.x, y: pm2.height * P.scale * PSK.heightFraction, z: P.z,
