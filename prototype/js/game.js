@@ -63,6 +63,7 @@
     if (!game.renderer) return;   // pre-boot keypress: CONFIG already updated
     var isz = internalSize();
     game.renderer.setSize(isz.w, isz.h, false);   // updateStyle=false - CSS keeps display size
+    if (game.sceneRT) { var s = internalSize(); game.sceneRT.setSize(s.w, s.h); }
   }
 
   function showResReadout() {
@@ -224,6 +225,7 @@
     // dome rig; fog color no longer fills the world via scene.background.
     scene.background = new THREE.Color(0x05070f);
     scene.fog = new THREE.FogExp2(CFG.regionA.fogColor, CFG.regionA.fogDensity);
+    initPostPass();
     return scene;
   }
 
@@ -1982,6 +1984,132 @@
     }
   }
 
+  // ---- WH_POSTPASS_V1: fused, identity-at-defaults linear scene blit ---------
+  var postPass = null;
+  var identityPostRow = { lift: [0, 0, 0], gamma: 1, gain: [1, 1, 1] };
+  function initPostPass() {
+    if (!CFG.post || !CFG.post.enabled || postPass) return;
+    var renderer = game.renderer;
+    var gl = renderer.getContext();
+    var hf = !!(gl.getExtension('EXT_color_buffer_half_float') ||
+      gl.getExtension('EXT_color_buffer_float'));
+    var texType = hf ? THREE.HalfFloatType : THREE.UnsignedByteType;
+    console.log('WH_POSTPASS_V1: RT type ' + (hf ? 'halffloat' : 'ubyteldr'));
+    var size = internalSize();
+    game.sceneRT = new THREE.WebGLRenderTarget(size.w, size.h, {
+      minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter,
+      depthBuffer: true, stencilBuffer: false, type: texType
+    });
+    var D = CFG.post.dither, G = CFG.post.grain, V = CFG.post.vignette;
+    // The vendor chunk declares toneMappingExposure: the uniform key MUST match.
+    var uniforms = {
+      tScene: { value: game.sceneRT.texture },
+      toneMappingExposure: { value: renderer.toneMappingExposure },
+      uLift: { value: new THREE.Vector3(0, 0, 0) },
+      uGain: { value: new THREE.Vector3(1, 1, 1) },
+      uGamma: { value: 1 },
+      uDitherEnabled: { value: D.enabled },
+      uDitherStrength: { value: D.strength },
+      uGrainEnabled: { value: G.enabled },
+      uGrainStrength: { value: G.strength },
+      uGrainSizePx: { value: G.sizePx },
+      uGrainSpeedSeconds: { value: G.speedSeconds },
+      uTimeSec: { value: 0 },
+      uVignetteEnabled: { value: V.enabled },
+      uVignetteRadius: { value: V.radius },
+      uVignetteSoftness: { value: V.softness },
+      uVignetteStrength: { value: V.strength }
+    };
+    var vertexShader = [
+      'varying vec2 vUv;',
+      'void main() {',
+      '  vUv = uv;',
+      '  gl_Position = vec4(position.xy, 0.0, 1.0);',
+      '}'
+    ].join('\n');
+    // Splice vendor Neutral implementation verbatim, not a reimplementation.
+    var fragmentShader = [
+      'uniform sampler2D tScene;',
+      'uniform vec3 uLift;',
+      'uniform vec3 uGain;',
+      'uniform float uGamma;',
+      'uniform bool uDitherEnabled;',
+      'uniform float uDitherStrength;',
+      'uniform bool uGrainEnabled;',
+      'uniform float uGrainStrength;',
+      'uniform float uGrainSizePx;',
+      'uniform float uGrainSpeedSeconds;',
+      'uniform float uTimeSec;',
+      'uniform bool uVignetteEnabled;',
+      'uniform float uVignetteRadius;',
+      'uniform float uVignetteSoftness;',
+      'uniform float uVignetteStrength;',
+      'varying vec2 vUv;',
+      THREE.ShaderChunk['tonemapping_pars_fragment'],
+      '// 4x4 Bayer row-major {0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5}.',
+      'float bayer4(vec2 p) {',
+      '  p = floor(mod(p, 4.0));',
+      '  float x = p.x;',
+      '  float y = p.y;',
+      '  float row0 = x < 1.0 ? 0.0 : (x < 2.0 ? 8.0 : (x < 3.0 ? 2.0 : 10.0));',
+      '  float row1 = x < 1.0 ? 12.0 : (x < 2.0 ? 4.0 : (x < 3.0 ? 14.0 : 6.0));',
+      '  float row2 = x < 1.0 ? 3.0 : (x < 2.0 ? 11.0 : (x < 3.0 ? 1.0 : 9.0));',
+      '  float row3 = x < 1.0 ? 15.0 : (x < 2.0 ? 7.0 : (x < 3.0 ? 13.0 : 5.0));',
+      '  return (y < 1.0 ? row0 : (y < 2.0 ? row1 : (y < 3.0 ? row2 : row3))) / 16.0;',
+      '}',
+      'float whGrain(vec2 pixel, float timeSec) {',
+      '  vec2 cell = floor(pixel / max(uGrainSizePx, 1.0));',
+      '  float phase = floor(timeSec / max(uGrainSpeedSeconds, 0.0001));',
+      '  return fract(sin(dot(cell + vec2(phase, phase * 0.37), vec2(12.9898, 78.233))) * 43758.5453);',
+      '}',
+      'void main() {',
+      '  vec3 col = texture2D(tScene, vUv).rgb;',
+      '  col = NeutralToneMapping(col);',
+      '  // Gain multiplies first, lift adds second, then gamma in linear light.',
+      '  col = col * uGain;',
+      '  col = col + uLift;',
+      '  col = pow(max(col, vec3(0.0)), vec3(uGamma));',
+      '  // Explicit vendor sRGB branch; no colorspace_fragment call (no double encode).',
+      '  col = mix(pow(col.rgb, vec3(0.41666)) * 1.055 - vec3(0.055), col.rgb * 12.92, vec3(lessThanEqual(col.rgb, vec3(0.0031308))));',
+      '  if (uDitherEnabled) col += (bayer4(gl_FragCoord.xy) - 0.5) * (uDitherStrength / 255.0);',
+      '  if (uGrainEnabled) col += (whGrain(gl_FragCoord.xy, uTimeSec) - 0.5) * uGrainStrength * 0.35;',
+      '  // Identity: radius >= 1.0 and softness >= 0.5 bypass vignette entirely.',
+      '  if (uVignetteEnabled && !(uVignetteRadius >= 1.0 && uVignetteSoftness >= 0.5)) {',
+      '    vec2 q = vUv - 0.5;',
+      '    float r2 = dot(q, q) * 4.0;',
+      '    float falloff = smoothstep(uVignetteRadius - max(uVignetteSoftness, 0.0001),',
+      '      uVignetteRadius + max(uVignetteSoftness, 0.0001), r2);',
+      '    col *= 1.0 - clamp(uVignetteStrength, 0.0, 1.0) * falloff;',
+      '  }',
+      '  gl_FragColor = vec4(col, 1.0);',
+      '}'
+    ].join('\n');
+    var blitMat = new THREE.ShaderMaterial({
+      uniforms: uniforms, vertexShader: vertexShader, fragmentShader: fragmentShader,
+      toneMapped: false, depthTest: false, depthWrite: false
+    });
+    var quadScene = new THREE.Scene();
+    quadScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), blitMat));
+    game.postQuad = {
+      scene: quadScene, camera: new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)
+    };
+    postPass = window.WH_POSTPASS = { active: true, uniforms: uniforms, regionId: null };
+  }
+  function postPassTick(dt) {
+    if (!postPass || !postPass.active) return;
+    var U = postPass.uniforms;
+    U.toneMappingExposure.value = game.renderer.toneMappingExposure;
+    U.uTimeSec.value += dt;
+    var id = game.regionManager ? game.regionManager.logic.activeId : CFG.regionA.id;
+    if (postPass.regionId !== id) {
+      var row = CFG.post.regions[id] || identityPostRow;
+      U.uLift.value.set(row.lift[0], row.lift[1], row.lift[2]);
+      U.uGain.value.set(row.gain[0], row.gain[1], row.gain[2]);
+      U.uGamma.value = row.gamma;
+      postPass.regionId = id;
+    }
+  }
+
   // Hand-held GLB instance at its measured size (2026-10-03: longsword
   // 1.988m GLB -> 1.05m hand-held via CONFIG.assets.weaponScale; 10-04
   // roundShield via weaponTargetHeight.roundShield / disc height).
@@ -3587,6 +3715,7 @@
     cemeteryFogTick();  // Round H: graveyard fog ramp (region A)
     skyTick();      // 10-03 order 4: star twinkle clock
     atmosphereTick(dt);  // P1-7: multiply settled density after all fog writers
+    postPassTick(dt);     // post exposure and region grade, after the atmosphere write
     // C1: fire burn + cook channel (after combat so this frame's hits interrupt)
     game.cooking.update(dt);
     game.camp.update();   // C3: camp groups per region, placement ghost, menu close on death
@@ -3601,7 +3730,14 @@
     updateEnemyBars(dt);   // HP1: after the camera update so bars track this frame
     updateDayClock();      // HP2: dormant-gated day/night dial
     updateInteractPrompt();
-    game.renderer.render(game.scene, game.camera);
+    if (window.WH_POSTPASS && window.WH_POSTPASS.active) {
+      game.renderer.setRenderTarget(game.sceneRT);
+      game.renderer.render(game.scene, game.camera);
+      game.renderer.setRenderTarget(null);
+      game.renderer.render(game.postQuad.scene, game.postQuad.camera);
+    } else {
+      game.renderer.render(game.scene, game.camera);
+    }
   }
 
   window.addEventListener('resize', function () {
@@ -3610,6 +3746,7 @@
     game.camera.updateProjectionMatrix();
     var isz = internalSize();   // R3 P0-4: same internal-pixel law as boot
     game.renderer.setSize(isz.w, isz.h, false);
+    if (game.sceneRT) { var s = internalSize(); game.sceneRT.setSize(s.w, s.h); }
   });
 
   if (document.readyState === 'loading') {

@@ -15,6 +15,19 @@ window.WH_CONFIG = {
     shadowMapEnabled: false           // v1: swiftshader software render, shadows off (POC)
   },
 
+  // WH_POSTPASS_V1: ship the post pipeline with creative channels at identity/off.
+  post: {
+    enabled: true,
+    regions: {
+      hold_outskirts: { lift: [0.0, 0.0, 0.0], gamma: 1.0, gain: [1.0, 1.0, 1.0] },
+      darkwood_edge: { lift: [0.0, 0.0, 0.0], gamma: 1.0, gain: [1.0, 1.0, 1.0] },
+      forest_of_the_old_king: { lift: [0.0, 0.0, 0.0], gamma: 1.0, gain: [1.0, 1.0, 1.0] }
+    },
+    dither: { enabled: false, strength: 0.5 },
+    grain: { enabled: false, strength: 0.5, speedSeconds: 0.25, sizePx: 1 },
+    vignette: { enabled: false, radius: 0.72, softness: 0.35, strength: 0.35 }
+  },
+
   lighting: {
     // R2 P0-3 moon night rig: AmbientLight removed entirely - the
     // hemisphere is the only fill, and region.ambientLightLevel scales it
