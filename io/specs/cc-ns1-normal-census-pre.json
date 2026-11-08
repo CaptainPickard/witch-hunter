@@ -1,0 +1,1659 @@
+{
+ "capturedAt": "2026-11-08T07:33:10Z",
+ "files": {
+  "art-direction/3d/assets/armor/buckler-pixelated.glb": {
+   "byteSize": 146772,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     64884,
+     61308
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 2407,
+   "posOffAbs": 37324,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "2efe5b3e829f0f1103e9df05eef898a0ce88749b36f2b144441537de189533bb",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/armor/buckler.glb": {
+   "byteSize": 5370880,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     64884,
+     5285456
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 2407,
+   "posOffAbs": 37284,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "81b76e1796dc04ce9db98a97f8e954d62f4087c4c5645ee302c841bfdffeac8f",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/armor/dark-court-breastplate-pixelated.glb": {
+   "byteSize": 167196,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     100752,
+     37944
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 3397,
+   "posOffAbs": 61312,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "66bed0c5fcf79374b3442567e9578548a7ab0e16dc340c61697c987597b983a1",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/armor/dark-court-breastplate.glb": {
+   "byteSize": 5145696,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     100752,
+     5016484
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 3397,
+   "posOffAbs": 61272,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "63970e6c5591052bd283919e702851ea182508f07f550029278dd88b6f77ed88",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/armor/dark-court-helm-pixelated.glb": {
+   "byteSize": 132856,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     68196,
+     41872
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 2683,
+   "posOffAbs": 37324,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "0cb007759300803f0a075eb9c7222228b68dec39b5cc05e6682c8071cd0cc7d0",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/armor/dark-court-helm.glb": {
+   "byteSize": 5458652,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     68196,
+     5367708
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 2683,
+   "posOffAbs": 37284,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "9faffa9774368c5c847fbfab6c67a2ced6407f1183120a0462ec469ab301ec47",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/armor/light-court-chest-pixelated.glb": {
+   "byteSize": 201048,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     110064,
+     56284
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 4172,
+   "posOffAbs": 61324,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "75cdbf81f3b3d0199504fdfeb79b90fe7bef2a3184ae76b617b7a581c820217d",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/armor/light-court-chest.glb": {
+   "byteSize": 5836608,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     110064,
+     5691884
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 4172,
+   "posOffAbs": 61284,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "421a7ac29c2a415772d65f9551b04175f897dc27df70ebfde0d0e62e96b6713b",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/armor/light-court-helm-pixelated.glb": {
+   "byteSize": 126548,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     62364,
+     45280
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 2198,
+   "posOffAbs": 37308,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "a479b1a2500f5a5e87d183a14a47cd56587d3ffbc952b85772c344a7057b8e70",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/armor/light-court-helm.glb": {
+   "byteSize": 5144324,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     62364,
+     5063096
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 2198,
+   "posOffAbs": 37268,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "f480e5fd704cfa56d30c90c71d32039d3e6849c3c12ae02cc9221e49e547b1a7",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/armor/shadow-court-hood-pixelated.glb": {
+   "byteSize": 140148,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     66756,
+     51556
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 2564,
+   "posOffAbs": 37312,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "fa6d0815a662db59dcbc3433fa602eae5d2e005a682440f62e2905a1cdc57b00",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/armor/shadow-court-hood.glb": {
+   "byteSize": 4660432,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     66756,
+     4571880
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 2564,
+   "posOffAbs": 37272,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "81f1a4eeaf135c4531eed2a6e678794b6ab4f0e54bfaa76c74fa3c9366be38b3",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/armor/tower-shield-pixelated.glb": {
+   "byteSize": 118464,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     57672,
+     45012
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1807,
+   "posOffAbs": 37312,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "778b789103181041b7e0710b53715882188073f3b279744859ff519dd7599acf",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/armor/tower-shield.glb": {
+   "byteSize": 6019920,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     57672,
+     5946508
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1807,
+   "posOffAbs": 37272,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "09e106036f7c735cb7a1f37daba55594293d863240e381c61a1fcb9928feb660",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/armor/undead-husk-armor-pixelated.glb": {
+   "byteSize": 228856,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     123936,
+     60972
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 5328,
+   "posOffAbs": 61324,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "9bdc0c8de11ccc7520fc74bfe3796a687a7037eba0f44ab6a29b5270c648cee8",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/armor/undead-husk-armor.glb": {
+   "byteSize": 5729400,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     123936,
+     5561556
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 5328,
+   "posOffAbs": 61284,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "c6ebd4bc1dd5b853496003849ea6e69159df222455149a5f17855d7c76606658",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/biome_library/m8-boulder-small.glb": {
+   "byteSize": 4127980,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     81072,
+     4032216
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1669,
+   "posOffAbs": 62384,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "6863d20bd0b4d42eb8b2b94b7a01b9c7138ad7791f43bde88169ce699b6c43b0",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/biome_library/raw/wh-bush-snare.glb": {
+   "byteSize": 14777516,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [],
+   "mats": 0,
+   "posAccMinMaxPresent": true,
+   "posCount": 410398,
+   "posOffAbs": 788,
+   "primAttribs": [
+    "POSITION"
+   ],
+   "sha256": "dbb7b27c68e710dfdde1d6ea63bccd071cfcd9a3325b83fc05741df50160b46f",
+   "texcoordAccIndex": null
+  },
+  "art-direction/3d/assets/biome_library/refs/wh-bush-snare-meshy-raw.glb": {
+   "byteSize": 14777516,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [],
+   "mats": 0,
+   "posAccMinMaxPresent": true,
+   "posCount": 410398,
+   "posOffAbs": 788,
+   "primAttribs": [
+    "POSITION"
+   ],
+   "sha256": "dbb7b27c68e710dfdde1d6ea63bccd071cfcd9a3325b83fc05741df50160b46f",
+   "texcoordAccIndex": null
+  },
+  "art-direction/3d/assets/biome_library/wh-bramble.glb": {
+   "byteSize": 4103532,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     119952,
+     3922264
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 7497,
+   "posOffAbs": 31328,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "2834d9e932c92a0150c9e2c9addc3cc4abe726f078ed038019671e72a8cb4aef",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/biome_library/wh-bush-snare.glb": {
+   "byteSize": 55056,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [],
+   "mats": 0,
+   "posAccMinMaxPresent": true,
+   "posCount": 1525,
+   "posOffAbs": 36756,
+   "primAttribs": [
+    "POSITION"
+   ],
+   "sha256": "1b2cc543867c4b29f6d3eabdcdc764d6c3e125d4857088f64b5d7e9b616ff755",
+   "texcoordAccIndex": null
+  },
+  "art-direction/3d/assets/biome_library/wh-reachtree-a.glb": {
+   "byteSize": 4006108,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     167952,
+     3752836
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 10497,
+   "posOffAbs": 43332,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "2380acdb6a49bfb5aa0d176ba0cafb20101d71ed9c9fa36749c9caf6fd7b41f4",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/biome_library/wh-reachtree-b.glb": {
+   "byteSize": 4086620,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     167952,
+     3833348
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 10497,
+   "posOffAbs": 43332,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "11eecb30c8a254c4962abb62be694bc63f6b238e293647a676b47e8c4c14dc44",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/biome_library/wh-reachtree-c.glb": {
+   "byteSize": 3859116,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     168000,
+     3605772
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 10500,
+   "posOffAbs": 43344,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "fe99bfba1e471bc82e4e377eb0a11b6aa7c0821aaee571b8de4ad24b88f00d72",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/church-kit/candelabra-pixelated.glb": {
+   "byteSize": 114496,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     51876,
+     42708
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 2324,
+   "posOffAbs": 25308,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "8ffb2eec7d4e4319108f8b2f23b5e971ada2cf90141ae78f4097747f66331c7f",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/church-kit/candelabra.glb": {
+   "byteSize": 5518964,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     51876,
+     5447212
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 2324,
+   "posOffAbs": 25272,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "aaf3f368435c91ff31806aa15806950fbaed1d68fef9cf93d62d122c6b1a79d2",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/church-kit/church-altar-pixelated.glb": {
+   "byteSize": 121804,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     45360,
+     60872
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1781,
+   "posOffAbs": 25312,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "ca9690071149750ae78e2793bc0e730564e35f81e11dcda9b82861009bec322a",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/church-kit/church-altar.glb": {
+   "byteSize": 5217256,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     45360,
+     5156364
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1781,
+   "posOffAbs": 25272,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "203b944c322eebe1a443d98eb655e30f9dc8a39b9f660434482be60d51c1d1a3",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/church-kit/church-archway-pixelated.glb": {
+   "byteSize": 109172,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     47304,
+     45012
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1942,
+   "posOffAbs": 25320,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "b1ee7cb0956bdb1086c8d9966b2b5ef50bca22fe3070da41519feafbc3fc197b",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/church-kit/church-archway.glb": {
+   "byteSize": 5692524,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     47304,
+     5628404
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1942,
+   "posOffAbs": 25280,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "675e02a3e11d57d6f9b9159c2a8d5f8a927ca87747c2e48bf6816359f7515e24",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/church-kit/church-corner-buttress-pixelated.glb": {
+   "byteSize": 127000,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     44988,
+     66700
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1749,
+   "posOffAbs": 25320,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "d0e9cda396249d76569257cbc0eb317c77dc83638601cc1118191d5b9f85f93b",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/church-kit/church-corner-buttress.glb": {
+   "byteSize": 5629372,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     44988,
+     5569112
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1749,
+   "posOffAbs": 25280,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "69a1b53147c0f0f296b94b7e62862ea1256bb428878121c5964b11f4d9c41278",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/church-kit/church-pew-broken-pixelated.glb": {
+   "byteSize": 111760,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     47556,
+     47176
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1963,
+   "posOffAbs": 25324,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "6a549dbb287c9d7f767b63fcfd993e7200e68561b844a997219f6d0261aa350c",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/church-kit/church-pew-broken.glb": {
+   "byteSize": 6220208,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     47556,
+     6155664
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1963,
+   "posOffAbs": 25284,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "ae26e6a588095f1e93e01525f1828d5d9764a54f7528718563ee838899a88283",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/church-kit/church-pew-pixelated.glb": {
+   "byteSize": 113644,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     43680,
+     55516
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1641,
+   "posOffAbs": 25308,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "4d5870ccca54cde44cf849878919462ccf06b8516e7ec5a1f4e945bad6df02b5",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/church-kit/church-pew.glb": {
+   "byteSize": 6356408,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     43680,
+     6298320
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1641,
+   "posOffAbs": 25268,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "6c9eb314989c8cf0755cafe840a0f0c5ff5d894af5ec3d0fb5676d85cb21ec18",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/church-kit/church-pulpit-pixelated.glb": {
+   "byteSize": 129320,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     50652,
+     59580
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 2221,
+   "posOffAbs": 25320,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "46e3e796776a63a4e6b3b3c18f3021d2d3b18e43033a443db6ab482956538e65",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/church-kit/church-pulpit.glb": {
+   "byteSize": 6336120,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     50652,
+     6266420
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 2221,
+   "posOffAbs": 25280,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "36d929306dcdcf826f231887d59709b827ea929c1b50f761314641f3f3a71981",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/church-kit/church-roof-beam-pixelated.glb": {
+   "byteSize": 144152,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     49788,
+     75848
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 2149,
+   "posOffAbs": 25324,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "0a23f5b2706dd4b82d0865e4f70c4286622846affccdfe80f00722c91efa7f30",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/church-kit/church-roof-beam.glb": {
+   "byteSize": 7325216,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     49788,
+     7256952
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 2149,
+   "posOffAbs": 25284,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "de83b44c5aea0d923b89f6a677a078ba87e4b3ed183e1a5be03bddad4e926f3c",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/church-kit/church-wall-window-pixelated.glb": {
+   "byteSize": 128520,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     46176,
+     66236
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1848,
+   "posOffAbs": 25324,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "1047a5864b26b3df5e976eaba219586b9f01fbb92b8413d51b97d310842e1771",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/church-kit/church-wall-window.glb": {
+   "byteSize": 6297104,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     46176,
+     6234860
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1848,
+   "posOffAbs": 25284,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "ead1afebc04094b3d26b8b9642bcb1511a92bbca05e304e22762c35673a77e64",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/church-kit/church-window-frame-pixelated.glb": {
+   "byteSize": 125376,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     44952,
+     65132
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1746,
+   "posOffAbs": 25324,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "da5addee6488bebd27e64dd7e97b17e23fdbf308d542f9d66c15ba968d7b5c98",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/church-kit/church-window-frame.glb": {
+   "byteSize": 6823632,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     44952,
+     6763428
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1746,
+   "posOffAbs": 25284,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "d683f70423b8c53b285dc9875494f4db88662187a943d0bd4cb146dd42dc7cd7",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/church-kit/dead-tree-pixelated.glb": {
+   "byteSize": 143160,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     64056,
+     51076
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 3338,
+   "posOffAbs": 25324,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "54397c3f2c8894e86abbc7be18e810e94582c441193619f8cf75613c015d706d",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/church-kit/dead-tree.glb": {
+   "byteSize": 5803660,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     64056,
+     5711616
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 3338,
+   "posOffAbs": 25284,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "59b433798cef061d3ceff82b4ada0c8475f411322cea6b7e17c2eaf4dbb150b0",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/church-kit/iron-fence-corner-pixelated.glb": {
+   "byteSize": 121944,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     47616,
+     57260
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1968,
+   "posOffAbs": 25324,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "40f8172c836eb08167b3d5ddda7293355d1ac2492d94b6afc39de7e417faa363",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/church-kit/iron-fence-corner.glb": {
+   "byteSize": 5857108,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     47616,
+     5792464
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1968,
+   "posOffAbs": 25284,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "70153beb1685c7a66dbf2867be6919fd567369ddde8cfdf8f69ef28c4c95a54a",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/church-kit/iron-fence-section-pixelated.glb": {
+   "byteSize": 125376,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     58932,
+     41824
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 2912,
+   "posOffAbs": 25312,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "f5f058310f08c73fd2d5ad832e00964aeb33f7dd26a100a004e2cba0247d9119",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/church-kit/iron-fence-section.glb": {
+   "byteSize": 4651888,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     58932,
+     4568376
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 2912,
+   "posOffAbs": 25272,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "a71fc0d7430b70e7be4a7c71d62238ee6bdd0c488c80796d99895a169743e86c",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/church-kit/lantern-post.glb": {
+   "byteSize": 5065288,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     48900,
+     4998504
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 2075,
+   "posOffAbs": 25284,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "5459c0169d4068908396d493f87e7bb388e476921cc02cbab57e9d700f5229d3",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/church-kit/rubble-pile-pixelated.glb": {
+   "byteSize": 137000,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     53940,
+     61780
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 2495,
+   "posOffAbs": 25320,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "32b547210d67c87dd3d51498098ec71b3e5d1b5872008cebeaae720637876d5b",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/church-kit/rubble-pile.glb": {
+   "byteSize": 5852088,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     53940,
+     5776908
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 2495,
+   "posOffAbs": 25280,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "2933104e0504d340cb6e55dec29c9bb60c6e23c7f10786bd92c7bc463dfcc77e",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/graveyard/buried-coffin-pixelated.glb": {
+   "byteSize": 115212,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     45204,
+     54548
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1767,
+   "posOffAbs": 25324,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "4d2680646cecf32521c9d90c55753692dbb0ebe4f3efd5de52d557420d9465d1",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/graveyard/buried-coffin.glb": {
+   "byteSize": 5234876,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     45204,
+     5174252
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1767,
+   "posOffAbs": 25284,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "a7fb564c1116cd83d04d1d00f2907db4c0483de684ff9e698ce471fb57a3482a",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/graveyard/grave-mound.glb": {
+   "byteSize": 5637124,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     50784,
+     5567204
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 2232,
+   "posOffAbs": 25280,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "2d5a605aa5dece7049cbee3f12995a14345f4725e4b8900ae7b3705e50ba39b3",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/graveyard/gravestone-obelisk-pixelated.glb": {
+   "byteSize": 113656,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     41268,
+     59552
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1439,
+   "posOffAbs": 25324,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "69ff6df083cadc449276dd01fb7101b04a469efa5d5c34663ee3509ce06d1112",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/graveyard/gravestone-obelisk.glb": {
+   "byteSize": 5996880,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     41268,
+     5942816
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1439,
+   "posOffAbs": 25284,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "13da378449dace444215e604993b57a6d5d066e1389f29478f6d571d1525911c",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/graveyard/stone-cross-tilted-pixelated.glb": {
+   "byteSize": 122568,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     42096,
+     67084
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1508,
+   "posOffAbs": 25324,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "7b513a3a3cc42842b121ff5a36c41252d49d933905c3bbe514b6032d942fd4b7",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/graveyard/stone-cross-tilted.glb": {
+   "byteSize": 6595220,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     42096,
+     6539776
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1508,
+   "posOffAbs": 25284,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "67795393254a6fa1c3d64c93a8ecbc9989b1c9c064718811364c24eab62f84a1",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/old_king/ok-fence-corner-v2-pixelated.glb": {
+   "byteSize": 59504,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [],
+   "mats": 0,
+   "posAccMinMaxPresent": true,
+   "posCount": 2398,
+   "posOffAbs": 30728,
+   "primAttribs": [
+    "POSITION"
+   ],
+   "sha256": "1f205a71da221801b30d307dda83b2a0aa34f6d0ef387b98de4763f97aca020b",
+   "texcoordAccIndex": null
+  },
+  "art-direction/3d/assets/old_king/ok-fence-corner-v3-pixelated.glb": {
+   "byteSize": 77924,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [],
+   "mats": 0,
+   "posAccMinMaxPresent": true,
+   "posCount": 3932,
+   "posOffAbs": 30740,
+   "primAttribs": [
+    "POSITION"
+   ],
+   "sha256": "504c6355b6f296d73098be539f85767a004c5575943a7782126a02553fe73afb",
+   "texcoordAccIndex": null
+  },
+  "art-direction/3d/assets/weapons/dagger-pixelated.glb": {
+   "byteSize": 98432,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     43932,
+     39888
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1661,
+   "posOffAbs": 25324,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "7207e3e7df4d397a2084aec548ca8beb14942d2ae459173d51a39ecc4cd5512e",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/weapons/dagger.glb": {
+   "byteSize": 5399632,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     43932,
+     5341128
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1661,
+   "posOffAbs": 25284,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "f05b6ac4fe8573d506894692b0ad9a4ba3ef369965d97a61d19df2bdcbf59f5d",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/weapons/gravedigger-lantern-pixelated.glb": {
+   "byteSize": 121860,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     45024,
+     61500
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1752,
+   "posOffAbs": 25320,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "1705adeac710823227fb838725aa8a96d244415eebf2d50e5e8e0408a7409f42",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/weapons/gravedigger-lantern.glb": {
+   "byteSize": 6388608,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     45024,
+     6328288
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1752,
+   "posOffAbs": 25280,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "ebac1afbb7a6f4286e9c3c1050fd19804da389ce06f33601d235146d5aae0b90",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/weapons/greatsword-pixelated.glb": {
+   "byteSize": 104500,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     44148,
+     45596
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1679,
+   "posOffAbs": 25324,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "06362333c98b4cf233d3b4cf06d659f3a823a82dd0f868f5def29623b0efdf44",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/weapons/greatsword.glb": {
+   "byteSize": 5047000,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     44148,
+     4988132
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1679,
+   "posOffAbs": 25288,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "eca74c5e09f40f9fb13c95c3c7e76b2290f8fcbfdcbc069d2028cc00bb7b9b45",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/weapons/halberd-pixelated.glb": {
+   "byteSize": 102104,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     43164,
+     44836
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1597,
+   "posOffAbs": 25328,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "99a94fe9182d7fe38f201009e72f3069b1bda5aafd03cac73ec3b5b7d8a7fc7c",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/weapons/halberd.glb": {
+   "byteSize": 4433964,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     43164,
+     4376736
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1597,
+   "posOffAbs": 25288,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "1f9a07774b3406195f39e19556bcac923c75e7ce92cfffb8af7d7c7594061eb5",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/weapons/hand-axe-pixelated.glb": {
+   "byteSize": 102660,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     40488,
+     49848
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1375,
+   "posOffAbs": 25312,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "424b84a96d0f0a3db9e1be689d41a59093887bc90a2bd2144f6a33f3557bbecb",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/weapons/hand-axe.glb": {
+   "byteSize": 5938756,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     40488,
+     5885984
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1375,
+   "posOffAbs": 25272,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "e2a93275edee0d78adb31d8570b28b0c68559ad2fd8e8762ae0d0f685ed81126",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/weapons/hunting-bow-pixelated.glb": {
+   "byteSize": 117968,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     45516,
+     56784
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1793,
+   "posOffAbs": 25324,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "e056451f8a8d5845b05d74543fd029afb72392a21ad162cf959b9693572a7674",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/weapons/hunting-bow.glb": {
+   "byteSize": 5323560,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     45516,
+     5262416
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1793,
+   "posOffAbs": 25284,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "98524afc9dc5fe5acb26e9cd9df6b4cf4e3cab43ce28761fe345fce29f0d1746",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/weapons/longsword-pixelated.glb": {
+   "byteSize": 92468,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     40536,
+     39592
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1379,
+   "posOffAbs": 25296,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "77b973cc86474ad3241eb64af152f20884701d0952918856f274a4e6cd4ae90a",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/weapons/longsword.glb": {
+   "byteSize": 4096632,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     40536,
+     4043792
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1379,
+   "posOffAbs": 25260,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "76e5085ca1aca6a4cb6d7ab66f54dd2c748fcdc0ba151e387379cff6cda1af3b",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/weapons/round-shield-pixelated.glb": {
+   "byteSize": 127384,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     44976,
+     67104
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1748,
+   "posOffAbs": 25320,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "168060c555e8e84d3295eacf91c546c42bcd81cffe42091bcd0bbe9e5c53608f",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/weapons/round-shield.glb": {
+   "byteSize": 6617412,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     44976,
+     6557172
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1748,
+   "posOffAbs": 25280,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "26329816a47c4b94fcee709cafd5015d78b72229173afa06e384e321700c1254",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/weapons/war-mace-pixelated.glb": {
+   "byteSize": 108596,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     44964,
+     48336
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1747,
+   "posOffAbs": 25320,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "0d876b6f4db90dcda52845c5f9b279653249db82f9e8c39104ff31c72ff763fd",
+   "texcoordAccIndex": 2
+  },
+  "art-direction/3d/assets/weapons/war-mace.glb": {
+   "byteSize": 5610312,
+   "hasNORMAL": false,
+   "idxCompType": 5125,
+   "imageBufferViews": [
+    [
+     44964,
+     5550088
+    ]
+   ],
+   "mats": 1,
+   "posAccMinMaxPresent": true,
+   "posCount": 1747,
+   "posOffAbs": 25284,
+   "primAttribs": [
+    "POSITION",
+    "TEXCOORD_0"
+   ],
+   "sha256": "11bb71524b6923b6779ca9974369fc14f879f487334954c77dc563bbcbb967d5",
+   "texcoordAccIndex": 2
+  }
+ },
+ "head": "9c0fd6c",
+ "purpose": "CC-NS1 pre-build freeze baseline (IO, pre-Devbot)",
+ "totalGlbSkippedNonGlbFiles": 125,
+ "totalNoNormal": 80
+}
