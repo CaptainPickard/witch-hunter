@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Witch Hunter v9 - EPR1 Combat (build 11-08 03:59Z 7697dd9)</title>
+<title>Witch Hunter v9 - EPR1 Combat (build 11-08 06:11Z 282c27d)</title>
 
 <style>
 /* Witch Hunter prototype v1 - HUD + overlay styling */
@@ -92058,6 +92058,81 @@ window.WH_CONFIG.dayNight = {
       zenithColor: 0x020305, horizonBand: 0x05070a, horizonGlow: 0x0a0d12,
       stars: 0.15,
       discColor: 0xdfe7f2, discGlowColor: 0xa8bce6, discOpacity: 0.2
+    },
+    /* CC-C8-EXT constant rows for the six underworld strata — the clock keeps
+       running outside; these interiors hold ONE look every frame
+       (see doc 64 registry note). */
+    // Veil Crypt (E): first underworld stratum, above the Galleries.
+    // No pano or moon; faint stars sit behind the concept-08 smog.
+    // All PROPOSED, Nicko tunes.
+    veil_crypt: {
+      hemiSkyColor: 0x171c2a, hemiGroundColor: 0x07080a, hemiFillMult: 1.0,
+      lightColor: 0xa8bce6, lightIntensity: 0.0, azimuthDeg: 0, elevationDeg: 30,
+      exposureMult: 0.75,
+      fog: { veil_crypt: { color: 0x0a0810, density: 0.13 } },
+      zenithColor: 0x02030a, horizonBand: 0x080612, horizonGlow: 0x0e0a16,
+      stars: 0.15,
+      discColor: 0xdfe7f2, discGlowColor: 0xa8bce6, discOpacity: 0.2
+    },
+    // Veil Galleries (F): one stratum below the Crypt, colder and darker.
+    // No pano or moon; stars stay faint behind concept-08 smog.
+    // All PROPOSED, Nicko tunes.
+    veil_galleries: {
+      hemiSkyColor: 0x151a26, hemiGroundColor: 0x06070a, hemiFillMult: 1.0,
+      lightColor: 0xa8bce6, lightIntensity: 0.0, azimuthDeg: 0, elevationDeg: 30,
+      exposureMult: 0.75,
+      fog: { veil_galleries: { color: 0x0a0810, density: 0.145 } },
+      zenithColor: 0x020307, horizonBand: 0x070510, horizonGlow: 0x0d0914,
+      stars: 0.12,
+      discColor: 0xdfe7f2, discGlowColor: 0xa8bce6, discOpacity: 0.15
+    },
+    // Armory Deep (I): E-family dark pocket below the open garrison.
+    // No pano or moon; faint stars remain behind concept-08 smog.
+    // All PROPOSED, Nicko tunes.
+    armory_deep: {
+      hemiSkyColor: 0x171c2a, hemiGroundColor: 0x07080a, hemiFillMult: 1.0,
+      lightColor: 0xa8bce6, lightIntensity: 0.0, azimuthDeg: 0, elevationDeg: 30,
+      exposureMult: 0.75,
+      fog: { armory_deep: { color: 0x0a0810, density: 0.13 } },
+      zenithColor: 0x02030a, horizonBand: 0x080612, horizonGlow: 0x0e0a16,
+      stars: 0.15,
+      discColor: 0xdfe7f2, discGlowColor: 0xa8bce6, discOpacity: 0.2
+    },
+    // Spire Approach (J): deeper than the Galleries, above the Vaults.
+    // No pano or moon; stars hide behind concept-08 citadel smog.
+    // All PROPOSED, Nicko tunes.
+    veil_spire_approach: {
+      hemiSkyColor: 0x141823, hemiGroundColor: 0x050609, hemiFillMult: 1.0,
+      lightColor: 0xa8bce6, lightIntensity: 0.0, azimuthDeg: 0, elevationDeg: 30,
+      exposureMult: 0.72,
+      fog: { veil_spire_approach: { color: 0x0a0810, density: 0.15 } },
+      zenithColor: 0x010305, horizonBand: 0x06040d, horizonGlow: 0x0b0812,
+      stars: 0.10,
+      discColor: 0xdfe7f2, discGlowColor: 0xa8bce6, discOpacity: 0.12
+    },
+    // Tithe Vaults (K): one stratum below the Spire Approach.
+    // No pano or moon; faint stars sit behind concept-08 smog.
+    // All PROPOSED, Nicko tunes.
+    tithe_vaults: {
+      hemiSkyColor: 0x12161f, hemiGroundColor: 0x040507, hemiFillMult: 1.0,
+      lightColor: 0xa8bce6, lightIntensity: 0.0, azimuthDeg: 0, elevationDeg: 30,
+      exposureMult: 0.72,
+      fog: { tithe_vaults: { color: 0x0a0810, density: 0.16 } },
+      zenithColor: 0x010204, horizonBand: 0x050309, horizonGlow: 0x090610,
+      stars: 0.08,
+      discColor: 0xdfe7f2, discGlowColor: 0xa8bce6, discOpacity: 0.10
+    },
+    // The Remains (L): deepest stratum, duel chamber below the Vaults.
+    // No pano or moon; stars barely show behind concept-08 smog.
+    // All PROPOSED, Nicko tunes.
+    the_remains: {
+      hemiSkyColor: 0x101419, hemiGroundColor: 0x030406, hemiFillMult: 1.0,
+      lightColor: 0xa8bce6, lightIntensity: 0.0, azimuthDeg: 0, elevationDeg: 30,
+      exposureMult: 0.70,
+      fog: { the_remains: { color: 0x090710, density: 0.17 } },
+      zenithColor: 0x010203, horizonBand: 0x040307, horizonGlow: 0x080510,
+      stars: 0.06,
+      discColor: 0xdfe7f2, discGlowColor: 0xa8bce6, discOpacity: 0.08
     }
   },
   // C2b (io/missions/2026-10-06-cc-c2b-skydome-pools.md) WH_SKYPOOL: painted
