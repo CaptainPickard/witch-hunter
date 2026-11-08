@@ -1973,6 +1973,46 @@
     return g;
   }
 
+  // P1-7 mist builder: separate stream from scatter, stable across rebuilds.
+  function buildMistCards(regionId, group) {
+    var mistCards = CFG.atmos.mistCards;
+    var region = DEFS.regions[regionId];
+    var cv = document.createElement('canvas');
+    cv.width = 64; cv.height = 64;
+    var ctx = cv.getContext('2d');
+    var grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    grad.addColorStop(0, 'rgba(255,255,255,1)');
+    grad.addColorStop(0.35, 'rgba(255,255,255,0.7)');
+    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 64, 64);
+    var mistTex = new THREE.CanvasTexture(cv);
+    mistTex.colorSpace = THREE.SRGBColorSpace;
+    group.userData.whMistTexture = mistTex;
+    var rand = whRng((mistCards.seed ^ whHashStr(regionId + ':mist-cards')) | 0);
+    var radius = mistCards.radiusFrac * whVisualGroundRadius(regionId);
+    var cx = region.center ? region.center.x : 0;
+    var cz = region.center ? region.center.z : 0;
+    for (var mi = 0; mi < mistCards.count; mi++) {
+      var angle = rand() * Math.PI * 2;
+      var r = Math.sqrt(rand()) * radius;
+      var y = mistCards.yMin + (mistCards.yMax - mistCards.yMin) *
+        (mi + rand()) / mistCards.count;
+      var size = mistCards.sizeMin + rand() * (mistCards.sizeMax - mistCards.sizeMin);
+      var opacity = mistCards.opacityMin + rand() *
+        (mistCards.opacityMax - mistCards.opacityMin);
+      var sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: mistTex, color: mistCards.colorHex, transparent: true,
+        opacity: opacity, depthWrite: false, fog: false
+      }));
+      sprite.name = 'mist-card-' + mi;
+      sprite.position.set(cx + Math.cos(angle) * r, y, cz + Math.sin(angle) * r);
+      sprite.scale.set(size, size, 1);
+      group.add(sprite);
+    }
+    if (window.WH_ATMO) window.WH_ATMO.cardsBuilt = mistCards.count;
+  }
+
   // Build a region group from CONFIG data (props + ground + enemies). Pre-warm
   // builds set visible=false.
   RegionManager.prototype.buildRegion = function (regionId, hidden) {
@@ -2063,26 +2103,34 @@
     // region dispose frees its GPU buffers, three re-uploads on re-entry)
     if (hasTerrain) group.add(window.WH_GROUND.mesh(regionId));
 
-    // Cheap mist layer (CONFIG.mistPlane): one large flat semi-transparent
-    // plane at low height. Visual only, no collider. Region-gated by id.
-    var mistCfg = CFG.mistPlane;
-    if (mistCfg && mistCfg.enabled && regionId === mistCfg.regionId) {
-      var mistMat = new THREE.MeshBasicMaterial({
-        color: mistCfg.colorHex,
-        transparent: true,
-        opacity: mistCfg.opacityX100 / 100,
-        side: THREE.DoubleSide,
-        depthWrite: false
-      });
-      var mist = new THREE.Mesh(
-        new THREE.PlaneGeometry(whVisualGroundRadius(regionId) * 2,
-          whVisualGroundRadius(regionId) * 2),
-        mistMat
-      );
-      mist.rotation.x = -Math.PI / 2;
-      mist.position.y = mistCfg.y;
-      mist.name = 'mist-plane';
-      group.add(mist);
+    // P1-7: seeded, camera-facing soft-alpha cards replace B's flat mist
+    // sheet. Each card owns its material; the group's texture is freed once
+    // on region disposal. No card participates in physics/collider lists.
+    var cardsCfg = CFG.atmos && CFG.atmos.mistCards;
+    if (CFG.atmos && CFG.atmos.enabled !== false && cardsCfg &&
+        cardsCfg.enabled && regionId === cardsCfg.regionId) {
+      buildMistCards(regionId, group);
+    } else {
+      // Flag-off rollback: the original single-plane path remains intact.
+      var mistCfg = CFG.mistPlane;
+      if (mistCfg && mistCfg.enabled && regionId === mistCfg.regionId) {
+        var mistMat = new THREE.MeshBasicMaterial({
+          color: mistCfg.colorHex,
+          transparent: true,
+          opacity: mistCfg.opacityX100 / 100,
+          side: THREE.DoubleSide,
+          depthWrite: false
+        });
+        var mist = new THREE.Mesh(
+          new THREE.PlaneGeometry(whVisualGroundRadius(regionId) * 2,
+            whVisualGroundRadius(regionId) * 2),
+          mistMat
+        );
+        mist.rotation.x = -Math.PI / 2;
+        mist.position.y = mistCfg.y;
+        mist.name = 'mist-plane';
+        group.add(mist);
+      }
     }
 
     // 10-03 change order 2: dirt path ribbon (visual only, region-gated by
@@ -2237,6 +2285,9 @@
     if (window.WH_HAZARDS) window.WH_HAZARDS.onRegionDisposed(regionId);
     this.scene.remove(group);
     group.traverse(function (obj) {
+      if (obj.isSprite && obj.name.indexOf('mist-card-') === 0) {
+        obj.material.dispose(); // shared map is freed once below, not per card
+      }
       if (obj.isMesh) {
         if (obj.isInstancedMesh) obj.dispose();   // Round E: instance buffer
         if (obj.geometry) obj.geometry.dispose();
@@ -2250,6 +2301,10 @@
         });
       }
     });
+    if (group.userData.whMistTexture) group.userData.whMistTexture.dispose();
+    if (window.WH_ATMO && regionId === CFG.atmos.mistCards.regionId) {
+      window.WH_ATMO.cardsBuilt = 0;
+    }
     delete this.groups[regionId];
     delete this.enemies[regionId];
     delete this.packs[regionId];        // CC-C5

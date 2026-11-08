@@ -2906,6 +2906,32 @@ window.WH_CONFIG = {
     durationSec: 1.5
   },
 
+  // P1-7 (doc 61): layered atmosphere. The chunk installer bakes height-fog
+  // constants before the first compile; mist cards supersede the old plane.
+  atmos: {
+    enabled: true,
+    heightFog: {
+      enabled: true,
+      yBase: 0.0,
+      yScale: 6.0,
+      minFrac: 0.35,
+      moonTint: 0.45,
+      moonColorHex: 0x778da9
+    },
+    mistCards: {
+      enabled: true,
+      regionId: 'darkwood_edge',
+      count: 9,
+      yMin: 0.6, yMax: 2.6,
+      sizeMin: 7.0, sizeMax: 14.0,
+      opacityMin: 0.05, opacityMax: 0.10,
+      colorHex: 0xc5c9cc,
+      radiusFrac: 0.75,
+      seed: 1234
+    },
+    recede: { enabled: true, mult: 0.55, lerpRate: 3.0 }
+  },
+
   // Darkwood dressing pass: cheap ground mist layer, built by region-manager
   // buildRegion for region B only (y ~ 1.5, double-sided, no collider).
   mistPlane: {

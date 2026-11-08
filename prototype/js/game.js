@@ -128,7 +128,97 @@
     return renderer;
   }
 
+  // P1-7: install before the first scene/material compile. Retain the vendor
+  // strings so a disabled height-fog row leaves all four chunks byte-identical.
+  var whAtmoOriginals = null;
+  var whAtmo = window.WH_ATMO = {
+    installed: false, version: 'WH_ATMO_V1', recedeState: 1,
+    cardsBuilt: 0, originals: null
+  };
+  function WH_installAtmoChunks() {
+    var chunks = THREE.ShaderChunk;
+    if (!whAtmoOriginals) {
+      whAtmoOriginals = {
+        fog_pars_vertex: chunks.fog_pars_vertex,
+        begin_vertex: chunks.begin_vertex,
+        fog_pars_fragment: chunks.fog_pars_fragment,
+        fog_fragment: chunks.fog_fragment
+      };
+      whAtmo.originals = whAtmoOriginals;
+    }
+    var keys = Object.keys(whAtmoOriginals);
+    for (var k = 0; k < keys.length; k++) chunks[keys[k]] = whAtmoOriginals[keys[k]];
+    whAtmo.installed = false;
+    var H = CFG.atmos && CFG.atmos.heightFog;
+    if (!H || CFG.atmos.enabled === false || H.enabled === false) return;
+
+    // Include half the heightfield's ground variation so this divisor cannot
+    // collapse to zero when the editable veil height is flattened (MIST-LAWN).
+    var groundHalfRange = CFG.regionC.terrain.hMax / 2;
+    var rise = H.yScale + groundHalfRange;
+    if (!(rise > 0) || !isFinite(rise)) {
+      console.error('WH_ATMO_V1: invalid fog height range');
+      return;
+    }
+    function glsl(n) { return n.toFixed(6); }
+    var moonColor = new THREE.Color(H.moonColorHex);
+    var L = CFG.lighting;
+    var az = (L.moonAzimuthDeg || 0) * Math.PI / 180;
+    var el = (L.moonElevationDeg || 30) * Math.PI / 180;
+    var distance = L.moonDirectionDistance || 60;
+    // Keep the light's per-axis tenth-meter rounding before normalization.
+    var mx = Math.round(Math.sin(az) * Math.cos(el) * distance * 10) / 10;
+    var my = Math.round(Math.sin(el) * distance * 10) / 10;
+    var mz = -Math.round(Math.cos(az) * Math.cos(el) * distance * 10) / 10;
+    var ml = Math.sqrt(mx * mx + my * my + mz * mz);
+    if (!(ml > 0) || !isFinite(ml)) {
+      console.error('WH_ATMO_V1: invalid moon direction');
+      return;
+    }
+    chunks.fog_pars_vertex += '\n#ifdef USE_FOG\n varying vec3 vWhFogPos;\n#endif // WH_ATMO_V1';
+    chunks.begin_vertex += '\n#ifdef USE_FOG\n #define WH_ATMO_POS\n' +
+      ' vec4 whW4 = vec4( transformed, 1.0 );\n' +
+      ' #ifdef USE_INSTANCING\n whW4 = instanceMatrix * whW4;\n #endif\n' +
+      ' vec3 whWorldPos = ( modelMatrix * whW4 ).xyz;\n' +
+      ' vWhFogPos = whWorldPos;\n#endif // WH_ATMO_V1';
+    // Vertex/fragment preprocessors are separate: a define in begin_vertex
+    // does not carry to fragment. In r185, USE_SIZEATTENUATION distinguishes
+    // the sprite/point shader path from the mesh/line path with begin_vertex.
+    chunks.fog_pars_fragment += '\n#ifdef USE_FOG\n' +
+      ' #if !defined( USE_SIZEATTENUATION )\n #define WH_ATMO_POS\n #endif\n' +
+      ' varying vec3 vWhFogPos;\n' +
+      ' const float atmoYBase = ' + glsl(H.yBase) + ';\n' +
+      ' const float atmoYScaleInv = ' + glsl(1 / rise) + ';\n' +
+      ' const float atmoYMinFrac = ' + glsl(H.minFrac) + ';\n' +
+      ' const float atmoMoonTint = ' + glsl(H.moonTint) + ';\n' +
+      ' const vec3 atmoMoonCol = vec3( ' + glsl(moonColor.r) + ', ' +
+        glsl(moonColor.g) + ', ' + glsl(moonColor.b) + ' );\n' +
+      ' const vec3 atmoMoonDir = vec3( ' + glsl(mx / ml) + ', ' +
+        glsl(my / ml) + ', ' + glsl(mz / ml) + ' );\n' +
+      '#endif // WH_ATMO_V1';
+    chunks.fog_fragment = '#ifdef USE_FOG\n' +
+      ' #ifdef FOG_EXP2\n' +
+      '  #ifdef WH_ATMO_POS\n' +
+      '   float atmoH = clamp( ( vWhFogPos.y - atmoYBase ) * atmoYScaleInv, 0.0, 1.0 );\n' +
+      '   float atmoV = max( dot( normalize( vWhFogPos - cameraPosition ), atmoMoonDir ), 0.0 );\n' +
+      '   float atmoT = atmoMoonTint * ( atmoH * 0.65 + atmoV * 0.35 );\n' +
+      '   vec3 atmoC = mix( fogColor, atmoMoonCol, atmoT );\n' +
+      '   float atmoD = fogDensity * ( atmoYMinFrac + ( 1.0 - atmoYMinFrac ) * ( 1.0 - atmoH ) );\n' +
+      '   float fogFactor = 1.0 - exp( - atmoD * atmoD * vFogDepth * vFogDepth );\n' +
+      '   gl_FragColor.rgb = mix( gl_FragColor.rgb, atmoC, fogFactor );\n' +
+      '  #else\n' +
+      '   float fogFactor = 1.0 - exp( - fogDensity * fogDensity * vFogDepth * vFogDepth );\n' +
+      '   gl_FragColor.rgb = mix( gl_FragColor.rgb, fogColor, fogFactor );\n' +
+      '  #endif\n' +
+      ' #else\n' +
+      '  float fogFactor = smoothstep( fogNear, fogFar, vFogDepth );\n' +
+      '  gl_FragColor.rgb = mix( gl_FragColor.rgb, fogColor, fogFactor );\n' +
+      ' #endif\n#endif // WH_ATMO_V1';
+    whAtmo.installed = true;
+  }
+
   function setupScene() {
+    WH_installAtmoChunks();
     var scene = new THREE.Scene();
     // 10-03 order 4: near-black background - sky luminance comes from the
     // dome rig; fog color no longer fills the world via scene.background.
@@ -1443,6 +1533,51 @@
     var w = t * t * (3 - 2 * t);
     game.scene.fog.density = baseDensity + (cemDensity - baseDensity) * w;
     game.scene.fog.color.lerpColors(baseColor, cemColor, w);
+  }
+
+  // P1-7 Amend 7: capture the fog writer's base while locked so recede
+  // cannot compound where no other writer refreshes density each frame.
+  var atmoRecede = 1;
+  var atmoBaseD = null;
+  var atmoEngaged = false;
+  var atmoLastD = null;
+  function atmosphereTick(dt) {
+    var R = CFG.atmos && CFG.atmos.recede;
+    if (!CFG.atmos || CFG.atmos.enabled === false || !R || R.enabled === false) {
+      if (atmoEngaged && game.scene && game.scene.fog) {
+        game.scene.fog.density = atmoBaseD;
+      }
+      atmoBaseD = null;
+      atmoLastD = null;
+      atmoEngaged = false;
+      atmoRecede = 1;
+      whAtmo.recedeState = 1;
+      return;
+    }
+    var target = game.player && game.player.lockTarget ? R.mult : 1;
+    atmoRecede += (target - atmoRecede) * Math.min(1, dt * R.lerpRate);
+    atmoRecede = Math.min(1, Math.max(R.mult, atmoRecede));
+    // Exponential easing otherwise approaches 1 without reaching it.
+    if (target === 1 && 1 - atmoRecede <= 1e-9) atmoRecede = 1;
+    whAtmo.recedeState = atmoRecede;
+    if (!game.scene || !game.scene.fog) return;
+    var fog = game.scene.fog;
+    if (target < 1 && !atmoEngaged) {
+      atmoBaseD = fog.density;
+      atmoLastD = null;
+      atmoEngaged = true;
+    }
+    if (!atmoEngaged) return;
+    if (atmoLastD !== null && Math.abs(fog.density - atmoLastD) > 1e-9) {
+      atmoBaseD = fog.density;
+    }
+    fog.density = atmoBaseD * atmoRecede;
+    atmoLastD = fog.density;
+    if (atmoRecede === 1) {
+      atmoBaseD = null;
+      atmoLastD = null;
+      atmoEngaged = false;
+    }
   }
 
   // WH_P1_3_REGIONFADE_V1 - P1-3 gate-cross region crossfade
@@ -3451,6 +3586,7 @@
     regionFadeTick(dt);   // WH_P1_3_REGIONFADE_V1 (fog + hemi crossfade)
     cemeteryFogTick();  // Round H: graveyard fog ramp (region A)
     skyTick();      // 10-03 order 4: star twinkle clock
+    atmosphereTick(dt);  // P1-7: multiply settled density after all fog writers
     // C1: fire burn + cook channel (after combat so this frame's hits interrupt)
     game.cooking.update(dt);
     game.camp.update();   // C3: camp groups per region, placement ghost, menu close on death
