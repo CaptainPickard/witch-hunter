@@ -1,0 +1,449 @@
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: [WH_SKYPOOL] art-direction/textures/sky2v2/sky2v2-nightA.jpg failed ([object Event]), retrying once
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: [WH_SKYPOOL] art-direction/textures/sky2v2/sky2v2-nightA.jpg failed twice ([object Event]): keeping the previous sky
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: banditBody failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/races_regen/rigged/orc-male-warrior.mixamo.glb CAUSE: fetch status 404 File not
+CONSOLE: [WH assets] substitution: procedural stand-in for banditBody
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: playerBody failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-gear.glb CAUSE: fetch status 404 Fi
+CONSOLE: [WH assets] substitution: procedural stand-in for playerBody
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: ghoulBody failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/races_regen/rigged/undead-ghoul-male.mixamo.glb CAUSE: fetch status 404 File not
+CONSOLE: [WH assets] substitution: procedural stand-in for ghoulBody
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: wolfBody failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/races_regen/rigged/wolf.rigged.pixelated.glb CAUSE: fetch status 404 File not fou
+CONSOLE: [WH assets] substitution: procedural stand-in for wolfBody
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: playerDagClips failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-dagger.glb CAUSE: fetch status 
+CONSOLE: [WH assets] substitution: procedural stand-in for playerDagClips
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: bramble failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/wh-bramble-pixelated.glb CAUSE: fetch status 404 File not found - mo
+CONSOLE: [WH assets] substitution: procedural stand-in for bramble
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: whCampkit failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/camp/wh-campkit-pixelated.glb CAUSE: fetch status 404 File not found - model + a
+CONSOLE: [WH assets] substitution: procedural stand-in for whCampkit
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: whTent failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/camp/wh-tent-pixelated.glb CAUSE: fetch status 404 File not found - model + animati
+CONSOLE: [WH assets] substitution: procedural stand-in for whTent
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: yewTree failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/m5-pixelated.glb CAUSE: fetch status 404 File not found - model + an
+CONSOLE: [WH assets] substitution: procedural stand-in for yewTree
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: livingOak failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/m16-living-oak-pixelated.glb CAUSE: fetch status 404 File not foun
+CONSOLE: [WH assets] substitution: procedural stand-in for livingOak
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: youngAsh failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/m19-birch-pixelated.glb CAUSE: fetch status 404 File not found - mo
+CONSOLE: [WH assets] substitution: procedural stand-in for youngAsh
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: cemeteryGate failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/m1-pixelated.glb CAUSE: fetch status 404 File not found - model
+CONSOLE: [WH assets] substitution: procedural stand-in for cemeteryGate
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: torch failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/weapons/torch-pixelated.glb CAUSE: fetch status 404 File not found - model + animati
+CONSOLE: [WH assets] substitution: procedural stand-in for torch
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: mossBoulder failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/m9-pixelated.glb CAUSE: fetch status 404 File not found - model 
+CONSOLE: [WH assets] substitution: procedural stand-in for mossBoulder
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: witchwoodTree failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/m17-witchwood-pixelated.glb CAUSE: fetch status 404 File not f
+CONSOLE: [WH assets] substitution: procedural stand-in for witchwoodTree
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: mourningStatue failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/m3-pixelated.glb CAUSE: fetch status 404 File not found - mod
+CONSOLE: [WH assets] substitution: procedural stand-in for mourningStatue
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: deadTree failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/m18-dead-tree-pixelated.glb CAUSE: fetch status 404 File not found 
+CONSOLE: [WH assets] substitution: procedural stand-in for deadTree
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: fallenLog failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/m7-pixelated.glb CAUSE: fetch status 404 File not found - model + 
+CONSOLE: [WH assets] substitution: procedural stand-in for fallenLog
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: reachTreeA failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/wh-reachtree-a-pixelated.glb CAUSE: fetch status 404 File not fou
+CONSOLE: [WH assets] substitution: procedural stand-in for reachTreeA
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: lanternWaymarker failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/b3-waymarker-pixelated.glb CAUSE: fetch status 404 File not
+CONSOLE: [WH assets] substitution: procedural stand-in for lanternWaymarker
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: picketFence failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/m2-pixelated.glb CAUSE: fetch status 404 File not found - model 
+CONSOLE: [WH assets] substitution: procedural stand-in for picketFence
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: treeStump failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/m8-pixelated.glb CAUSE: fetch status 404 File not found - model + 
+CONSOLE: [WH assets] substitution: procedural stand-in for treeStump
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: b3Gate failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/b3-gate-open-pixelated.glb CAUSE: fetch status 404 File not found - m
+CONSOLE: [WH assets] substitution: procedural stand-in for b3Gate
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: lanternPost failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/church-kit/lantern-post-v3-pixelated.glb CAUSE: fetch status 404 File not foun
+CONSOLE: [WH assets] substitution: procedural stand-in for lanternPost
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: youngBirch failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/wh-tree-birch-young-pixelated.glb CAUSE: fetch status 404 File no
+CONSOLE: [WH assets] substitution: procedural stand-in for youngBirch
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: whWallB failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/wh-wall-vinestone-b-pixelated.glb CAUSE: fetch status 404 File not f
+CONSOLE: [WH assets] substitution: procedural stand-in for whWallB
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: banditCampfire failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/m15-bandit-campfire-pixelated.glb CAUSE: fetch status 404 Fil
+CONSOLE: [WH assets] substitution: procedural stand-in for banditCampfire
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: whWallA failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/wh-wall-vinestone-a-pixelated.glb CAUSE: fetch status 404 File not f
+CONSOLE: [WH assets] substitution: procedural stand-in for whWallA
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: reachTreeB failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/wh-reachtree-b-pixelated.glb CAUSE: fetch status 404 File not fou
+CONSOLE: [WH assets] substitution: procedural stand-in for reachTreeB
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: reachTreeC failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/wh-reachtree-c-pixelated.glb CAUSE: fetch status 404 File not fou
+CONSOLE: [WH assets] substitution: procedural stand-in for reachTreeC
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: youngDeadTree failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/wh-tree-dead-young-pixelated.glb CAUSE: fetch status 404 File 
+CONSOLE: [WH assets] substitution: procedural stand-in for youngDeadTree
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: whLanternHang failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/wh-lantern-hang-pixelated.glb CAUSE: fetch status 404 File not
+CONSOLE: [WH assets] substitution: procedural stand-in for whLanternHang
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: graveMound failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/graveyard/grave-mound-pixelated.glb CAUSE: fetch status 404 File not found - mo
+CONSOLE: [WH assets] substitution: procedural stand-in for graveMound
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: dagger failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/weapons/dagger-curved-pixelated.glb CAUSE: fetch status 404 File not found - model 
+CONSOLE: [WH assets] substitution: procedural stand-in for dagger
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: grassTuft failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/wh-grass-tuft-pixelated.glb CAUSE: fetch status 404 File not found
+CONSOLE: [WH assets] substitution: procedural stand-in for grassTuft
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: rubblePile failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/church-kit/rubble-pile-pixelated.glb CAUSE: fetch status 404 File not found - m
+CONSOLE: [WH assets] substitution: procedural stand-in for rubblePile
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: stoneCrossTilted failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/graveyard/stone-cross-tilted-pixelated.glb CAUSE: fetch status 404 File n
+CONSOLE: [WH assets] substitution: procedural stand-in for stoneCrossTilted
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: roundShield failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/weapons/round-shield-pixelated.glb CAUSE: fetch status 404 File not found - mo
+CONSOLE: [WH assets] substitution: procedural stand-in for roundShield
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: ironFenceSection failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/church-kit/iron-fence-section-pixelated.glb CAUSE: fetch status 404 File 
+CONSOLE: [WH assets] substitution: procedural stand-in for ironFenceSection
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: churchCornerButtress failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/church-kit/church-corner-buttress-pixelated.glb CAUSE: fetch status 4
+CONSOLE: [WH assets] substitution: procedural stand-in for churchCornerButtress
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: gravestoneObelisk failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/graveyard/gravestone-obelisk-pixelated.glb CAUSE: fetch status 404 File 
+CONSOLE: [WH assets] substitution: procedural stand-in for gravestoneObelisk
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: churchPewBroken failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/church-kit/church-pew-broken-pixelated.glb CAUSE: fetch status 404 File no
+CONSOLE: [WH assets] substitution: procedural stand-in for churchPewBroken
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: buriedCoffin failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/graveyard/buried-coffin-pixelated.glb CAUSE: fetch status 404 File not found 
+CONSOLE: [WH assets] substitution: procedural stand-in for buriedCoffin
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: handAxe failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/weapons/hand-axe-pixelated.glb CAUSE: fetch status 404 File not found - model + an
+CONSOLE: [WH assets] substitution: procedural stand-in for handAxe
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: churchArchway failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/church-kit/church-archway-pixelated.glb CAUSE: fetch status 404 File not fou
+CONSOLE: [WH assets] substitution: procedural stand-in for churchArchway
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: whBushSnare failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/wh-bush-snare-pixelated.glb CAUSE: fetch status 404 File not fou
+CONSOLE: [WH assets] substitution: procedural stand-in for whBushSnare
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: longsword failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/weapons/longsword-pixelated.glb CAUSE: fetch status 404 File not found - model +
+CONSOLE: [WH assets] substitution: procedural stand-in for longsword
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: rotmotherBody failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/races/rotmother-pixelated.glb CAUSE: fetch status 404 File not found - model
+CONSOLE: [WH assets] substitution: procedural stand-in for rotmotherBody
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: stoneSteps failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/crypt/stone-steps-pixelated.glb CAUSE: fetch status 404 File not found - model 
+CONSOLE: [WH assets] substitution: procedural stand-in for stoneSteps
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: skullPile failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/crypt/skull-pile-pixelated.glb CAUSE: fetch status 404 File not found - model + 
+CONSOLE: [WH assets] substitution: procedural stand-in for skullPile
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: blightcap failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/m14-blightcap-pixelated.glb CAUSE: fetch status 404 File not found
+CONSOLE: [WH assets] substitution: procedural stand-in for blightcap
+CONSOLE: [WH assets] boot barrier: 51 critical assets settled (51 stand-ins); streaming 29 more
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: bushA failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/wh-bush-a-pixelated.glb CAUSE: fetch status 404 File not found - model
+CONSOLE: [WH assets] substitution: procedural stand-in for bushA
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: bushB failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/wh-bush-b-pixelated.glb CAUSE: fetch status 404 File not found - model
+CONSOLE: [WH assets] substitution: procedural stand-in for bushB
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: stoneSarcophagus failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/crypt/stone-sarcophagus-pixelated.glb CAUSE: fetch status 404 File not fo
+CONSOLE: [WH assets] substitution: procedural stand-in for stoneSarcophagus
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: b6Bones failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/b6-bones-pixelated.glb CAUSE: fetch status 404 File not found - mode
+CONSOLE: [WH assets] substitution: procedural stand-in for b6Bones
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: ironFenceCorner failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/church-kit/iron-fence-corner-pixelated.glb CAUSE: fetch status 404 File no
+CONSOLE: [WH assets] substitution: procedural stand-in for ironFenceCorner
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: banditBedroll failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/m16-bandit-bedroll-pixelated.glb CAUSE: fetch status 404 File 
+CONSOLE: [WH assets] substitution: procedural stand-in for banditBedroll
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: churchWallWindow failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/church-kit/church-wall-window-pixelated.glb CAUSE: fetch status 404 File 
+CONSOLE: [WH assets] substitution: procedural stand-in for churchWallWindow
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: churchWindowFrame failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/church-kit/church-window-frame-pixelated.glb CAUSE: fetch status 404 Fil
+CONSOLE: [WH assets] substitution: procedural stand-in for churchWindowFrame
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: churchRoofBeam failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/church-kit/church-roof-beam-pixelated.glb CAUSE: fetch status 404 File not 
+CONSOLE: [WH assets] substitution: procedural stand-in for churchRoofBeam
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: churchPew failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/church-kit/church-pew-pixelated.glb CAUSE: fetch status 404 File not found - mod
+CONSOLE: [WH assets] substitution: procedural stand-in for churchPew
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: churchPulpit failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/church-kit/church-pulpit-pixelated.glb CAUSE: fetch status 404 File not found
+CONSOLE: [WH assets] substitution: procedural stand-in for churchPulpit
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: churchAltar failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/church-kit/church-altar-pixelated.glb CAUSE: fetch status 404 File not found -
+CONSOLE: [WH assets] substitution: procedural stand-in for churchAltar
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: candelabra failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/church-kit/candelabra-pixelated.glb CAUSE: fetch status 404 File not found - mo
+CONSOLE: [WH assets] substitution: procedural stand-in for candelabra
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: okFarmCottage failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/old_king/ok-farm-cottage-pixelated.glb CAUSE: fetch status 404 File not foun
+CONSOLE: [WH assets] substitution: procedural stand-in for okFarmCottage
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: okFarmWell failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/old_king/ok-farm-well-pixelated.glb CAUSE: fetch status 404 File not found - mo
+CONSOLE: [WH assets] substitution: procedural stand-in for okFarmWell
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: okTreePine failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/old_king/ok-tree-pine-pixelated.glb CAUSE: fetch status 404 File not found - mo
+CONSOLE: [WH assets] substitution: procedural stand-in for okTreePine
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: okFencePost failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/old_king/ok-fence-post-pixelated.glb CAUSE: fetch status 404 File not found - 
+CONSOLE: [WH assets] substitution: procedural stand-in for okFencePost
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: okTreeOak failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/old_king/ok-tree-oak-pixelated.glb CAUSE: fetch status 404 File not found - mode
+CONSOLE: [WH assets] substitution: procedural stand-in for okTreeOak
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: okFenceGate failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/old_king/ok-fence-gate-pixelated.glb CAUSE: fetch status 404 File not found - 
+CONSOLE: [WH assets] substitution: procedural stand-in for okFenceGate
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: okFenceStonewall failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/old_king/ok-fence-stonewall-pixelated.glb CAUSE: fetch status 404 File no
+CONSOLE: [WH assets] substitution: procedural stand-in for okFenceStonewall
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: okFenceCornerV2 failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/old_king/ok-fence-corner-v2-pixelated.glb CAUSE: fetch status 404 File not
+CONSOLE: [WH assets] substitution: procedural stand-in for okFenceCornerV2
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: okRuinArch failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/old_king/ok-ruin-arch-pixelated.glb CAUSE: fetch status 404 File not found - mo
+CONSOLE: [WH assets] substitution: procedural stand-in for okRuinArch
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: okRuinColumn failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/old_king/ok-ruin-column-pixelated.glb CAUSE: fetch status 404 File not found 
+CONSOLE: [WH assets] substitution: procedural stand-in for okRuinColumn
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: okFarmBarn failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/old_king/ok-farm-barn-pixelated.glb CAUSE: fetch status 404 File not found - mo
+CONSOLE: [WH assets] substitution: procedural stand-in for okFarmBarn
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: rotspawnBody failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/races/rotspawn-pixelated.glb CAUSE: fetch status 404 File not found - model +
+CONSOLE: [WH assets] substitution: procedural stand-in for rotspawnBody
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: scarreaderBody failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/races/rotmother-pixelated.glb CAUSE: fetch status 404 File not found - mode
+CONSOLE: [WH assets] substitution: procedural stand-in for scarreaderBody
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: farmerBody failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/races_regen/rigged/dwarf-male-smith.rigged.glb CAUSE: fetch status 404 File not
+CONSOLE: [WH assets] substitution: procedural stand-in for farmerBody
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: dwarfFemaleBody failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/races_regen/rigged/dwarf-female.rigged.glb CAUSE: fetch status 404 File no
+CONSOLE: [WH assets] substitution: procedural stand-in for dwarfFemaleBody
+CONSOLE: Failed to load resource: the server responded with a status of 404 (File not found)
+CONSOLE: %c[WH ASSETS] STAND-IN: covenBody failed to load (network) after 3 attempt(s). URL: http://127.0.0.1:8801/prototype/art-direction/3d/assets/races_regen/rigged/elf-dawn-refuser-male.rigged.glb CAUSE: fetch status 404 File
+CONSOLE: [WH assets] substitution: procedural stand-in for covenBody
+CONSOLE: [WH assets] loaded 0 assets, 80 stand-ins
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/textures/particles/particle-ember.png
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/textures/sky2v2/sky2v2-nightA.jpg
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-gear.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/races_regen/rigged/orc-male-warrior.mixamo.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/races_regen/rigged/undead-ghoul-male.mixamo.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/races_regen/rigged/wolf.rigged.pixelated.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/textures/sky2v2/sky2v2-nightA.jpg
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-gear.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/races_regen/rigged/orc-male-warrior.mixamo.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/races_regen/rigged/undead-ghoul-male.mixamo.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/races_regen/rigged/wolf.rigged.pixelated.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/races_regen/rigged/orc-male-warrior.mixamo.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-gear.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/races_regen/rigged/undead-ghoul-male.mixamo.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/races_regen/rigged/wolf.rigged.pixelated.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-dagger.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/wh-bramble-pixelated.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/camp/wh-tent-pixelated.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/camp/wh-campkit-pixelated.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-dagger.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/wh-bramble-pixelated.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/camp/wh-tent-pixelated.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/camp/wh-campkit-pixelated.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-dagger.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/m5-pixelated.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/wh-bramble-pixelated.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/camp/wh-campkit-pixelated.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/camp/wh-tent-pixelated.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/m16-living-oak-pixelated.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/m19-birch-pixelated.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/m1-pixelated.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/m5-pixelated.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/m16-living-oak-pixelated.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/m19-birch-pixelated.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/m1-pixelated.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/m5-pixelated.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/weapons/torch-pixelated.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/m16-living-oak-pixelated.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/m19-birch-pixelated.glb
+NET: 404 http://127.0.0.1:8801/prototype/art-direction/3d/assets/biome_library/m9-pixelated.glb
+FINAL pageerrors=0
+BADCOUNT=243

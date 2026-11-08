@@ -1,0 +1,29 @@
+REQFAILED http://127.0.0.1:8811/builds/v8-playable.html FAILURE=net::ERR_ABORTED
+REQFAILED http://127.0.0.1:8811/art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-gear.glb FAILURE=net::ERR_ABORTED
+REQFAILED http://127.0.0.1:8811/art-direction/3d/assets/biome_library/wh-bramble-pixelated.glb FAILURE=net::ERR_ABORTED
+REQFAILED http://127.0.0.1:8811/art-direction/3d/assets/biome_library/m5-pixelated.glb FAILURE=net::ERR_ABORTED
+REQFAILED http://127.0.0.1:8811/art-direction/3d/assets/biome_library/m16-living-oak-pixelated.glb FAILURE=net::ERR_ABORTED
+REQFAILED http://127.0.0.1:8811/art-direction/3d/assets/biome_library/m1-pixelated.glb FAILURE=net::ERR_ABORTED
+REQFAILED http://127.0.0.1:8811/art-direction/3d/assets/biome_library/m7-pixelated.glb FAILURE=net::ERR_ABORTED
+REQFAILED http://127.0.0.1:8811/art-direction/3d/assets/biome_library/m2-pixelated.glb FAILURE=net::ERR_ABORTED
+REQFAILED http://127.0.0.1:8811/art-direction/3d/assets/biome_library/wh-tree-birch-young-pixelated.glb FAILURE=net::ERR_ABORTED
+REQFAILED http://127.0.0.1:8811/art-direction/3d/assets/graveyard/buried-coffin-pixelated.glb FAILURE=net::ERR_ABORTED
+REQFAILED http://127.0.0.1:8811/art-direction/3d/assets/church-kit/church-pew-broken-pixelated.glb FAILURE=net::ERR_ABORTED
+REQFAILED http://127.0.0.1:8811/art-direction/3d/assets/weapons/hand-axe-pixelated.glb FAILURE=net::ERR_ABORTED
+REQFAILED http://127.0.0.1:8811/art-direction/3d/assets/weapons/longsword-pixelated.glb FAILURE=net::ERR_ABORTED
+[WH assets] boot barrier: 51 critical assets settled (0 stand-ins); streaming 29 more
+REQFAILED http://127.0.0.1:8811/art-direction/3d/assets/church-kit/church-altar-pixelated.glb FAILURE=net::ERR_ABORTED
+REQFAILED http://127.0.0.1:8811/art-direction/3d/assets/church-kit/church-pew-pixelated.glb FAILURE=net::ERR_ABORTED
+REQFAILED http://127.0.0.1:8811/art-direction/3d/assets/church-kit/candelabra-pixelated.glb FAILURE=net::ERR_ABORTED
+REQFAILED http://127.0.0.1:8811/art-direction/3d/assets/old_king/ok-fence-post-pixelated.glb FAILURE=net::ERR_ABORTED
+REQFAILED http://127.0.0.1:8811/art-direction/3d/assets/old_king/ok-fence-corner-v2-pixelated.glb FAILURE=net::ERR_ABORTED
+REQFAILED http://127.0.0.1:8811/art-direction/3d/assets/old_king/ok-ruin-arch-pixelated.glb FAILURE=net::ERR_ABORTED
+REQFAILED http://127.0.0.1:8811/art-direction/3d/assets/races_regen/rigged/dwarf-male-smith.rigged.glb FAILURE=net::ERR_ABORTED
+REQFAILED http://127.0.0.1:8811/art-direction/3d/assets/races_regen/rigged/dwarf-female.rigged.glb FAILURE=net::ERR_ABORTED
+REQFAILED http://127.0.0.1:8811/art-direction/3d/assets/races_regen/rigged/elf-dawn-refuser-male.rigged.glb FAILURE=net::ERR_ABORTED
+[WH assets] loaded 80 assets, 0 stand-ins
+FINAL pageerrors=0
+GATE pageerrors=0: PASS
+GATE glb404=0: PASS
+MAIN-RESP: 200
+ALL GATES PASS

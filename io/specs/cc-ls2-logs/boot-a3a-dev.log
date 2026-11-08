@@ -1,0 +1,8 @@
+REQFAILED http://127.0.0.1:8810/prototype/builds/v8-playable.html FAILURE=net::ERR_ABORTED
+[WH assets] boot barrier: 51 critical assets settled (0 stand-ins); streaming 29 more
+[WH assets] loaded 80 assets, 0 stand-ins
+FINAL pageerrors=0
+GATE pageerrors=0: PASS
+GATE glb404=0: PASS
+MAIN-RESP: 200
+ALL GATES PASS
