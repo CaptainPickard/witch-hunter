@@ -441,21 +441,44 @@
     deadTree: 1, deadTree2: 1, ancientOak: 1, hangingTree: 1,
     twistedSapling: 1, thornbush: 1, bramble: 1, largeFern: 1, deadShrub: 1,
     mossyStump: 1, hollowStump: 1 };
+  // P1-4b (4.2): THE vegetation classifier — colliderRadius, whOccluderH and
+  // the occluder-fade round all read this one function; the C14 name law
+  // lives here and nowhere else (exported on window.WH_RegionManager below).
+  function vegClass(name) {
+    return !!(TRUNK_ASSETS[name] || /tree|oak|birch|sapling|bush|bramble|fern|shrub|stump/i.test(name));
+  }
+  // P1-4b (4.4): per-row dissolve seed — a stable 0..1 hash of the row's
+  // index + name (FNV-1a over 'index|name', then three integer mixes). The
+  // byte-exact law is pinned by the Testerbot probe: the seed column must
+  // diff clean across this round (deterministic, no runtime state).
+  function whFadeSeed(index, name) {
+    var s = String(index) + '|' + String(name);
+    var h = 2166136261;
+    for (var i = 0; i < s.length; i++) {
+      h = h ^ s.charCodeAt(i);
+      h = Math.imul(h, 16777619) >>> 0;
+    }
+    h = h >>> 15;
+    h = Math.imul(h, 2246822519) >>> 0;
+    h = Math.imul(h, 3266489917) >>> 0;
+    h = h ^ (h >>> 13);
+    return (h >>> 0) / 4294967295;
+  }
   function colliderRadius(name, width, scale) {
     var r = width * scale / 2;
-    if (TRUNK_ASSETS[name] || /tree|oak|birch|sapling|bush|bramble|fern|shrub|stump/i.test(name)) {
+    if (vegClass(name)) {
       return r * TRUNK_RATIO;
     }
     return r;
   }
 
   // P1-4a (io/specs/p1-4a-camera-pullin-spec.md 1): occluder height law over
-  // the SAME C14 classification colliderRadius already runs — vegetation
-  // class (trunk-dominant; canopy leaves are brushable by design) occludes
-  // only its trunk top: nativeHeight * scale * trunkTopFrac; every other
-  // circle is solid mass: nativeHeight * scale.
+  // the SAME C14 classification (P1-4b: vegClass, the one shared classifier)
+  // — vegetation class (trunk-dominant; canopy leaves are brushable by
+  // design) occludes only its trunk top: nativeHeight * scale * trunkTopFrac;
+  // every other circle is solid mass: nativeHeight * scale.
   function whOccluderH(name, mh, scale) {
-    if (TRUNK_ASSETS[name] || /tree|oak|birch|sapling|bush|bramble|fern|shrub|stump/i.test(name)) {
+    if (vegClass(name)) {
       return mh.height * scale * CFG.player.cameraPull.trunkTopFrac;
     }
     return mh.height * scale;
@@ -505,12 +528,17 @@
           out.circles.push({ index: i + '.' + k, name: p.asset,
             x: p.x + ax * t, z: p.z + az * t, r: WR,
             h: CFG.boundaryWall.heightM,
-            fy: whPropFootY(regionId, p.x + ax * t, p.z + az * t) });
+            fy: whPropFootY(regionId, p.x + ax * t, p.z + az * t),
+            veg: vegClass(p.asset) ? 1 : 0, seed: whFadeSeed(i + '.' + k, p.asset) });
         }
         continue;
       }
       var row = { index: i, name: p.asset, x: p.x, z: p.z,
                   r: m ? colliderRadius(p.asset, m.width, p.scale) : 0 };
+      // P1-4b (4.3): attach the fade classification + seed at construction
+      // time (the fields RIDE the cached rows, exactly like h/fy above).
+      row.veg = vegClass(p.asset) ? 1 : 0;
+      row.seed = whFadeSeed(row.index, row.name);
       // P1-4a design 1/2: attach occluder height + foot y at construction
       // time (the fields RIDE the cached rows; consumers see them unchanged
       // in shape). Meta-missing rows keep r 0 and stay unoccluding (fh 0).
@@ -530,18 +558,30 @@
           out.circles.push({ index: 'scatter' + j, name: t.asset,
             x: t.x, z: t.z, r: t.r,
             h: tm2 ? whOccluderH(t.asset, tm2, t.scale) : 12,
-            fy: whPropFootY(regionId, t.x, t.z) });
+            fy: whPropFootY(regionId, t.x, t.z),
+            // P1-4b (4.3): veg classification uses the SCATTER name law —
+            // asset NAME here (these rows never went through the old inline
+            // test); the seed uses the row's index string 'scatter<j>'.
+            veg: vegClass(t.asset) ? 1 : 0,
+            seed: whFadeSeed('scatter' + j, t.asset) });
         }
       }
     }
     // CC-C2: the world wall bounds the shared A/B disc only (plane-0
     // members); C's own disc never takes its circles
-    if (wall && DEFS.isMember(DEFS.connections[0], regionId)) {
+    if (wall && DEFS.isMember(DEFS.connections[0], regionId) && regionId) {
       if (!wall.complete) out.complete = false;
       var side = DEFS.regions[regionId].side;
       for (var k = 0; k < wall.colliders.length; k++) {
         var w = wall.colliders[k];
-        if (side * (w.z - CFG.boundary.z) > -WALL_SIDE_PAD_M) out.circles.push(w);
+        if (side * (w.z - CFG.boundary.z) > -WALL_SIDE_PAD_M) {
+          // P1-4b (4.3): the row RIDE happens inside whWallPlan (the veg +
+          // seed fields are on every plan.colliders row); the instance map
+          // rides the plan row in buildWorld, per wall-plan build order.
+          w.wmap = { kind: w.name == null ? '' : (w.name === 'b3Gate' ? 'gate' : 'wall'),
+            index: k };
+          out.circles.push(w);
+        }
       }
     }
     return out;
@@ -595,6 +635,203 @@
   // itself is reused on rebuild). No per-frame work.
 
   var GROUND_CANVAS_CACHE = {};
+
+  // ---------------- P1-4b OCCLUDER FADE --------------------------------------
+  // (spec 4.4/4.6/4.7; enabled flag CONFIG.world.occluderFade.enabled)
+  // A fade TARGET = one circle row resolved to the object/mesh that renders
+  // it. Kinds: 'instanced' = an instanced mesh whose CLONE carries the
+  // whDissolve InstancedBufferAttribute (C cell buckets; the only instanced
+  // rows registered today); 'single' = one object with a per-object
+  // MATERIAL CLONE + whFadeUniform (scatter trees). Resolution is the
+  // per-region whFadeByProp map keyed by row-index strings
+  // {obj, instIdx, kind} (instIdx -1 for singles). The whole registry is
+  // dirty-checked: a target's value changes only when a driver call moves
+  // it; attribute uploads only on change (4.6).
+  var WH_FADE_ATTRS = ['whDissolve'];
+  // whFadePatched flags live on material CLONES (one per fadeable mesh), so a
+  // template patch can never leak into stock meshes (R3: per-clone, never
+  // per template).
+  var whFadeList = [];          // [{region, kind, obj, instIdx, tObj, mesh, t, seed, attr, geo, mat}]
+  var whFadeBuckets = {};       // bucketId(region|row-index) -> whFadeList ENTRY
+  var whFadeByProp = {};        // FIXSPEC F3: whFadeByProp[regionId][tKey] -> {obj, instIdx, kind}
+  var whFadeCounters = { calls: 0, fades: 0, unfades: 0, writes: 0, registered: 0 };
+
+  // P1-4b (4.7A, FIXSPEC F5 + ADDENDUM P4/P5): the discard-dissolve patch.
+  // Self-contained inline world-hash arm (spec 4.8's "either"; V-27 law).
+  // ADDENDUM P4 REALITY (three r185 classic build): alphahash_pars_vertex/
+  // batching_pars_fragment DO NOT EXIST in this bundle (verified by grep —
+  // undefined includes THROW at material compile) — the vertex side
+  // declares its own varyings/uniform and the fragment self-contains.
+  // vWorldPosition is NOT guaranteed on these materials: the patch owns
+  // `varying vec3 whVWorldPos`, computed by EXTENDING project_vertex
+  // (modelMatrix + optional instanceMatrix), never replacing the chunk.
+  // THRESHOLD ARM (P4/P1): dv <= 0 => threshold EXACTLY 0 (rest trees
+  // byte-solid); while dissolving the floor is whSeedMin (CONFIG
+  // world.occluderFade.hashMin, injected as sh.uniforms.whSeedMin, P5).
+  // transparent stays false, depthWrite stays true (V-26); the per-CLONE
+  // whFadePatched flag + customProgramCacheKey (P5: without it three's
+  // program cache shares one program across clones with identical
+  // onBeforeCompile text and the second clone's uniform writes bind to
+  // the first clone's object) make the single-patch law mechanical.
+  function whFadeHashFrag(sh) {
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <dithering_fragment>',
+        '#include <dithering_fragment>\n' +
+        'float whHashX = fract(sin(dot(floor(whVWorldPos), vec3(127.1, 311.7, 74.7))) * 43758.5453);\n' +
+        'float whHashD = (vWhDissolve <= 0.0) ? 0.0 : max(whSeedMin, vWhDissolve);\n' +
+        'if (whHashX < whHashD) discard;');
+  }
+  function whFadeProjectVarying(sh) {
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <project_vertex>',
+        '#include <project_vertex>\n' +
+        'vec4 whW4 = vec4(transformed, 1.0);\n' +
+        '#ifdef USE_INSTANCING\n' +
+        '  whW4 = instanceMatrix * whW4;\n' +
+        '#endif\n' +
+        'whVWorldPos = (modelMatrix * whW4).xyz;');
+  }
+  function whFadePatchMaterial(m) {
+    if (!m || m.whFadePatched) return m;
+    m.whFadePatched = true;
+    m.transparency = false;                       // 4.7: opaque, discard-based
+    m.depthWrite = true;
+    m.onBeforeCompile = function (sh) {
+      sh.uniforms.whSeedMin = {
+        value: window.WH_CONFIG.world.occluderFade.hashMin };   // P5
+      sh.vertexShader = sh.vertexShader
+        .replace('#include <common>',
+          '#include <common>\n#include <batching_pars_vertex>' +
+          '\nattribute float whDissolve;\nuniform float whSeedMin;\nvarying float vWhDissolve;\nvarying vec3 whVWorldPos;')
+        .replace('#include <begin_vertex>',
+          '#include <batching_vertex>\n#include <begin_vertex>\n' +
+          'vWhDissolve = whDissolve;');
+      whFadeProjectVarying(sh);
+      whFadeHashFrag(sh);
+    };
+    m.customProgramCacheKey = function () { return 'whfade:' + m.uuid; }; // P5
+    return m;
+  }
+  // (FIXSPEC F5 + ADDENDUM P3/P5) single-kind uniform variant: ONE
+  // whFadeUniform drives the threshold. Used by BOTH non-instanced
+  // paths (CONFIG prop clones + whBuildSingle scatter). The SAME uniform
+  // OBJECT rides m.userData.whFadeUniform, m.uniforms.whFadeUniform AND
+  // sh.uniforms.whFadeUniform — writes through any surface flow without
+  // re-binding. VS declares the uniform and folds it into vWhDissolve;
+  // the FS is identical to the attribute variant (P4 self-contained).
+  function whFadePatchMaterialSingle(m) {
+    if (!m || m.whFadePatched) return m;
+    m.whFadePatched = true;
+    m.transparency = false;
+    m.depthWrite = true;
+    var u = m.userData.whFadeUniform || { value: 0 };           // P5
+    m.userData.whFadeUniform = u;
+    m.uniforms = m.uniforms || {};
+    m.uniforms.whFadeUniform = u;
+    m.onBeforeCompile = function (sh) {
+      sh.uniforms.whSeedMin = {
+        value: window.WH_CONFIG.world.occluderFade.hashMin };   // P5
+      sh.uniforms.whFadeUniform = u;
+      sh.vertexShader = sh.vertexShader
+        .replace('#include <common>',
+          '#include <common>\nuniform float whSeedMin;\nuniform float whFadeUniform;\nvarying float vWhDissolve;\nvarying vec3 whVWorldPos;')
+        .replace('#include <begin_vertex>',
+          '#include <begin_vertex>\nvWhDissolve = whFadeUniform;');
+      whFadeProjectVarying(sh);
+      whFadeHashFrag(sh);
+    };
+    m.customProgramCacheKey = function () { return 'whfade:' + m.uuid; }; // P5
+    return m;
+  }
+  function whFadeDisposeMaterial(m) {
+    m.whFadePatched = false;
+    m.onBeforeCompile = undefined;
+    m.needsUpdate = true;
+  }
+  // (4.4, FIXSPEC F3 + ADDENDUM P6) registration. kind selects the write
+  // path: 'instanced' (a real InstancedMesh clone: mesh = the built CLONE
+  // with the per-clone whDissolve attr, instIdx >= 0) or 'clone'/'single'
+  // (NON-instanced renders: mesh stays null by design, tObj carries the
+  // per-clone materials; uniform write via tObj traverse). seed = the
+  // ROW's 0..1 fadeSeed (byte-exact whFadeSeed); tKey = the ROW's index
+  // string (the same key whFadeApply is called with). Every entry is
+  // ALSO pushed into the per-region whFadeByProp map (F3's resolution
+  // surface) so disposeRegion can free the clones it owns.
+  function whFadeRegister(region, kind, instIdx, tObj, mesh, seed, tKey) {
+    var bucket = region + '|' + tKey;
+    var e = whFadeBuckets[bucket];
+    if (e === undefined) {
+      e = { region: region, kind: kind, instIdx: instIdx,
+            mesh: mesh || null, tObj: tObj || null, t: 0, seed: seed,
+            attr: null, tKey: tKey, geo: null, mat: null };
+      whFadeList.push(e);
+      whFadeBuckets[bucket] = e;   // the ENTRY (whFadeApply/fadeHas read
+                                   // fields; ADDENDUM P6: buckets map
+                                   // bucket -> entry, no dead index store)
+      whFadeCounters.registered++;
+    }
+    // FIXSPEC F3: the resolution map {obj, instIdx, kind} (a rebuilt row
+    // refreshes the entry in place; a disposed one re-registers fresh).
+    var bp = whFadeByProp[region];
+    if (!bp) { bp = {}; whFadeByProp[region] = bp; }
+    bp[tKey] = { obj: mesh || tObj || null, instIdx: instIdx, kind: kind, entry: e };
+    return e;
+  }
+
+  // P1-4b (4.6, FIXSPEC F4 + ADDENDUM P1/P2) DRIVER: set row
+  // (region|rowIndex)'s dissolve to dv (T-space 0..1), seeded with the
+  // row's byte-exact whFadeSeed (V-8, the 4th argument; the registrar's
+  // entry seed is the fallback). VALUE LAW (P1): the GPU-facing v =
+  // mix(seed, 1, dv) for dv > 0, EXACT 0 for dv <= 0 (rest trees render
+  // 100% solid; no seed residual at rest). Exactly ONE mix exists —
+  // HERE. DIRTY GATE (V-22, v-space): the write happens only when
+  // |e.t - v| > 1e-3 — no attribute/uniform churn on no-change frames.
+  // PATH LAW (P2): the write path selects on e.kind — 'instanced'
+  // (e.mesh + whDissolve attr), 'clone'/'single' (e.tObj traverse,
+  // per-tree whFadeUniform; e.mesh is null by design on those rows).
+  // The traverse walker reads MODULE-SCOPE scratch (zero per-call
+  // closure alloc, V-23); WALK_V carries the value being written.
+  var WALK_V = 0;
+  function whFadeWalk(mo) {
+    if (mo.isMesh && mo.userData.whFadeMaterial && mo.material &&
+        mo.material.uniforms && mo.material.uniforms.whFadeUniform) {
+      mo.material.uniforms.whFadeUniform.value = WALK_V;
+    }
+  }
+  function whFadeApply(region, rowIndex, dv, seedIn) {
+    whFadeCounters.calls++;
+    var e = whFadeBuckets[region + '|' + rowIndex];
+    if (!e) return 0;
+    // P1: the value law (single mix site; dv <= 0 => exact 0)
+    var sv = (seedIn === undefined || seedIn === null) ?
+      (e.seed !== undefined && e.seed !== null ? e.seed : 0) : seedIn;
+    var v = dv > 0 ? sv + (1 - sv) * dv : 0;
+    // V-22 (v-space): dirty gate on the LAST WRITTEN value
+    if (Math.abs(e.t - v) <= 1e-3) return 0;
+    if (dv > 0 && e.t <= 1e-3) whFadeCounters.fades++;
+    if (v <= 1e-3 && e.t > 1e-3) whFadeCounters.unfades++;
+    e.t = v;
+    if (e.kind === 'instanced') {
+      // instanced path: write the instance's whDissolve slot on the mesh's
+      // CLONE geometry (the shader thresholds max(whSeedMin, whDissolve)
+      // itself; a missing mesh/attr is a guarded no-op, P2).
+      if (!e.mesh || !e.mesh.geometry ||
+          !e.mesh.geometry.attributes.whDissolve) return 0;
+      var attr = e.mesh.geometry.attributes.whDissolve;
+      attr.setX(e.instIdx, v);
+      attr.needsUpdate = true;
+    } else {
+      // 'clone'/'single' path (P2): the per-tree material CLONE's
+      // whFadeUniform rides the SAME v the attribute path sees. A
+      // target whose clone objects are gone (pre-warm/teardown edge)
+      // skips the write, keeping the registry consistent.
+      if (!e.tObj || !e.tObj.traverse) return 0;
+      WALK_V = v;
+      e.tObj.traverse(whFadeWalk);
+    }
+    whFadeCounters.writes++;
+    return 1;
+  }
 
   function whRng(seed) {
     // mulberry32: small deterministic PRNG so each region's texture is stable.
@@ -1406,7 +1643,8 @@
       // configured height (h = CFG.boundaryWall.heightM, fy 0 on the flat A/B disc)
       for (var k = 0; k < cs.length; k++) {
         plan.colliders.push({ index: 'wall-' + kind + i + '.' + k, name: asset,
-          x: cs[k].x, z: cs[k].z, r: CR, h: WHM, fy: 0 });
+          x: cs[k].x, z: cs[k].z, r: CR, h: WHM, fy: 0,
+          veg: vegClass(asset) ? 1 : 0, seed: whFadeSeed('wall-' + kind + i + '.' + k, asset) });
       }
     }
     function drop(kind, i, why) {
@@ -1528,14 +1766,18 @@
           var w = toWorld(sd * pt[0], pt[1]);
           // P1-4a design 1: arch legs are solid mass at the wall's height
           plan.colliders.push({ index: 'arch-leg' + (sd === 1 ? 'E' : 'W') + legCount++,
-            name: A.asset, x: w.x, z: w.z, r: LG.r, h: WHM, fy: 0 });
+            name: A.asset, x: w.x, z: w.z, r: LG.r, h: WHM, fy: 0,
+            veg: vegClass(A.asset) ? 1 : 0,
+            seed: whFadeSeed('arch-leg' + (sd === 1 ? 'E' : 'W') + (legCount - 1), A.asset) });
         });
         if (A.plugCorners) {
           [hd, -hd].forEach(function (pz) {
             var w = toWorld(sd * (xi + A.plugR), pz);
             // P1-4a design 1: archetype plugs — same solid-mass h law
             plan.colliders.push({ index: 'arch-plug' + plugCount++, name: A.asset,
-              x: w.x, z: w.z, r: A.plugR, h: WHM, fy: 0 });
+              x: w.x, z: w.z, r: A.plugR, h: WHM, fy: 0,
+              veg: vegClass(A.asset) ? 1 : 0,
+              seed: whFadeSeed('arch-plug' + (plugCount - 1), A.asset) });
           });
         }
       });
@@ -1622,7 +1864,9 @@
             // configured height (the mm2 asset row governs only the collider
             // radius; h is the boundaryWall height law on every solid wall-class row)
             plan.colliders.push({ index: 'forecourt-' + kind + '-' + c,
-              name: asset, x: x, z: F.z, r: r, h: WHM, fy: 0 });
+              name: asset, x: x, z: F.z, r: r, h: WHM, fy: 0,
+              veg: vegClass(asset) ? 1 : 0,
+              seed: whFadeSeed('forecourt-' + kind + '-' + c, asset) });
             // fenceE/fenceW count the run's fence SECTIONS per side; the
             // corner terminus is counted separately in fenceCorners (valspec
             // A1.e: new collider entries == fenceE + fenceW + fenceCorners)
@@ -1650,7 +1894,9 @@
           // P1-4a design 1: lantern posts occlude their own asset height
           // (full footprint; solid-class per the C14 law)
           plan.colliders.push({ index: 'forecourt-post' + pi, name: P.asset,
-            x: P.x, z: P.z, r: pr, h: pm2.height * P.scale, fy: 0 });
+            x: P.x, z: P.z, r: pr, h: pm2.height * P.scale, fy: 0,
+            veg: vegClass(P.asset) ? 1 : 0,
+            seed: whFadeSeed('forecourt-post' + pi, P.asset) });
           if (PSK) {
             plan.sockets.push({ id: P.asset + '@forecourt' + (P.x < 0 ? 'W' : 'E'),
               x: P.x, y: pm2.height * P.scale * PSK.heightFraction, z: P.z,
@@ -1670,7 +1916,20 @@
   // material; matrices are written ONCE here, never per frame. Whole-mesh
   // frustum culling over the instance bounding sphere. Round F: items may
   // carry per-axis sx/sy/sz (+ y) instead of a uniform scale.
-  function whBuildInstanced(name, list) {
+  // P1-4b (FIXSPEC F2): the shared-template attribute machinery of Round 1
+  // is REMOVED (the cross-region instance-collision hazard spec 4.6 froze).
+  // The fadeable path is OPT-IN per caller: whBuildInstanced(name, list,
+  // {fadeable: true}) builds each InstancedMesh on a CLONED geometry that
+  // carries ONE InstancedBufferAttribute 'whDissolve' (Float32, zeros,
+  // length = list.length) added BEFORE the mesh's first render (R2), with
+  // the material's fade patch applied on a material CLONE (R3: never the
+  // template). The SHARED template geometry receives NO attributes and is
+  // NEVER disposed by this round (V-16 ownership law). No caller opts in
+  // today (amended F2: all veg render per-prop; the buckets are r 0) — the
+  // machinery is dormant but wired (registry + disposal cover the clone).
+  // Non-fadeable callers keep the 2-arg call byte-identical.
+  function whBuildInstanced(name, list, opts) {
+    var fadeable = !!(opts && opts.fadeable);
     var tmpl = window.WH_ASSETS.getTemplate(name);
     var out = [];
     if (!tmpl || !list || !list.length) return out;
@@ -1685,7 +1944,22 @@
     tmpl.traverse(function (o) {
       if (!o.isMesh) return;
       local.multiplyMatrices(inv, o.matrixWorld);
-      var im = new THREE.InstancedMesh(o.geometry, o.material, list.length);
+      var geo = o.geometry, fMat = o.material, fAttr = null;
+      if (fadeable) {
+        // FIXSPEC F2: the fadeable mesh owns a CLONED geometry with its OWN
+        // whDissolve attribute (per-region instance space; two regions that
+        // instance the same asset write independent arrays) + a CLONED,
+        // patched material. The template geometry/material stay untouched.
+        geo = o.geometry.clone();
+        fAttr = new THREE.InstancedBufferAttribute(
+          new Float32Array(list.length), 1);   // whDissolve zeros (init 0)
+        geo.setAttribute('whDissolve', fAttr);
+        fMat = whFadePatchMaterial(o.material.clone());
+      }
+      var im = new THREE.InstancedMesh(geo, fMat, list.length);
+      if (fadeable) {
+        im.userData.whFadeClone = { geo: geo, mat: fMat, attr: fAttr };
+      }
       for (var i = 0; i < list.length; i++) {
         var it = list[i];
         pos.set(it.x, it.y || 0, it.z);
@@ -1704,6 +1978,26 @@
       out.push(im);
     });
     return out;
+  }
+
+  // P1-4b (FIXSPEC F2): the dead shared-geometry attribute writer of
+  // Round 1 is REMOVED — writes go through whFadeApply's two paths
+  // (uniform singles / whDissolve instanced), both dirty-checked there.
+
+  // P1-4b (4.6): a fadeable CLONE = a fresh template clone carrying its own
+  // material clone + the injected alphaHash chunks ('single' kind); a stock
+  // mesh shares the template material and must never be faded in place.
+  function whBuildSingle(name) {
+    var tmpl = window.WH_ASSETS.getTemplate(name);
+    if (!tmpl) return window.WH_ASSETS.instance(name);
+    var obj = window.WH_ASSETS.instance(name);
+    obj.traverse(function (o) {
+      if (!o.isMesh) return;
+      // ADDENDUM P3: non-instanced render -> the UNIFORM patcher
+      o.material = whFadePatchMaterialSingle(o.material.clone());
+      o.userData.whFadeMaterial = true;
+    });
+    return obj;
   }
 
   // ---- Live region manager (THREE scene wiring) ------------------------------
@@ -1742,6 +2036,11 @@
     if (table.complete) this.colliders[regionId] = table;
     return table;
   };
+
+  // P1-4b (4.2): the ONE vegetation-classification law (C14 name list +
+  // TRUNK_ASSETS), exported for game.js / player.js / debug. Region-manager
+  // is the only definer; no caller re-types the regex.
+  RegionManager.prototype.vegClass = vegClass;
 
   // Round F: the world wall plan (one for the shared disc; cached once every
   // footprint is known, like the scatter plan; logs its counts once).
@@ -1789,6 +2088,24 @@
     plan.segments.forEach(function (sg) {
       (byAsset[sg.asset] = byAsset[sg.asset] || []).push({ x: sg.x, y: -W.sinkM, z: sg.z,
         rotY: sg.rotY, sx: sg.sx, sy: sg.sy, sz: sg.sz });
+    });
+    // P1-4b (4.3): the plan row -> instance map for wall-plan collider rows,
+    // resolved per asset against byAsset build order (each map entry = the
+    // byAsset list + the instance's index within it) so every plan.colliders
+    // row can address its OWN rendered instance. The arch body (one
+    // WH_ASSETS.instance clone, the gate prop) gets no map (non-instanced).
+    // (Mass rows today: the map is dormant until a fadeable wall asset
+    // exists — the registration guard is veg==1.)
+    var assetCount = {};
+    plan.colliders.forEach(function (pc) {
+      var aname = pc.name;
+      if (!byAsset[aname]) return;
+      var k = assetCount[aname] || 0;
+      var aList = byAsset[aname];
+      if (k < aList.length) {
+        pc.wmap = { asset: aname, kind: 'wall', index: k };
+        assetCount[aname] = k + 1;
+      }
     });
     Object.keys(byAsset).forEach(function (name) {
       whBuildInstanced(name, byAsset[name]).forEach(function (im) {
@@ -2148,6 +2465,25 @@
     // CC-C3: a region whose CONFIG sets cullDistanceM (C only) records every
     // prop for the per-frame visibility cull (cullProps); A/B: no list
     var cullList = regionCfg.cullDistanceM ? [] : null;
+    // P1-4b: the region's collider table (r > 0 veg rows count = the
+    // registry cap) is read here ONLY when the fade is on (off = zero new
+    // work; the table builds lazily off its own path as today).
+    var fadeTable = CFG.world.occluderFade && CFG.world.occluderFade.enabled
+      ? this.propColliders(regionId) : null;
+    // P1-4b (RV-4 FIX, wake 49): the registration lookup is a map over the
+    // region's circle rows keyed by ROW INDEX STRING (whPropColliders
+    // returns {circles, exempt, complete} only — the circleByIdx field the
+    // fix child read never existed). Built once per region build; the prop
+    // loop below resolves its row through this map. Exempt rows are NOT in
+    // circles (never register — V-30 law stands).
+    var circleByIdx = null;
+    if (fadeTable) {
+      circleByIdx = {};
+      var ftC = fadeTable.circles;
+      for (var fci = 0; fci < ftC.length; fci++) {
+        circleByIdx[String(ftC[fci].index)] = ftC[fci];
+      }
+    }
     for (var i = 0; i < regionCfg.props.length; i++) {
       var p = regionCfg.props[i];
       var obj = window.WH_ASSETS.instance(p.asset);
@@ -2160,6 +2496,28 @@
       else obj.scale.setScalar(p.scale);
       if (p.tint !== undefined) whTintObject(obj, p.tint);
       group.add(obj);
+      // P1-4b (4.4): one registry target per collider row r > 0, resolved
+      // by ROW INDEX (prop i => the same row as CONFIG.props[i]); the clone
+      // gets a fade material ONLY when row.veg (R1: never in place).
+      if (fadeTable) {
+        var fk = i + '';
+        var frow = circleByIdx && circleByIdx[fk];
+        if (frow && frow.r > 0) {
+          if (frow.veg) {
+            // this prop clone is the row's render: swap to a fadeable
+            // material (per-clone; the template material is untouched)
+            // ADDENDUM P3: NON-instanced render -> the UNIFORM patcher
+            // (the attribute variant is for real InstancedMesh only)
+            obj.traverse(function (mo) {
+              if (mo.isMesh) {
+                mo.material = whFadePatchMaterialSingle(mo.material.clone());
+                mo.userData.whFadeMaterial = true;
+              }
+            });
+          }
+          whFadeRegister(regionId, 'clone', i, obj, null, frow.seed, fk);
+        }
+      }
       // CC-C8: a row's own cullM = its own hide band (show = cullM x cullShowFrac)
       if (cullList) cullList.push(p.cullM ? { obj: obj, x: p.x, z: p.z, hide2: p.cullM * p.cullM,
         show2: Math.pow(p.cullM * regionCfg.cullShowFrac, 2) } : { obj: obj, x: p.x, z: p.z });
@@ -2176,15 +2534,27 @@
 
     // Round E scatter: extra trees as normal props (colliders via
     // propColliders), bushes + grass as one InstancedMesh per asset.
+    // P1-4b (4.6): each scatter ROW must be addressable for fading — the
+    // tree objects (in plan.trees order, the same order the collider rows
+    // use) join the registry as 'single' targets (row index = list position).
     var plan = this.scatterPlan(regionId);
     for (var si = 0; si < plan.trees.length; si++) {
       var sTree = plan.trees[si];
-      var tObj = window.WH_ASSETS.instance(sTree.asset);
+      // P1-4b: the row's fade target (its material clone + uniform handle).
+      // material cloning happens HERE, once per tree clone (R1) —
+      // whBuildSingle RETURNS the clone; ADDENDUM P3: THIS object is THE
+      // tree (built FIRST, positioned, added to the group) so the visible
+      // render and the registry entry are the same object (the fix child's
+      // double instance left a stock tree visible + a patched clone
+      // orphaned at origin — fixed: ONE instance, added + registered).
+      var tObj = whBuildSingle(sTree.asset);
       tObj.position.set(sTree.x, whGroundFeed(regionId, sTree.x, sTree.z), sTree.z);
       tObj.rotation.y = sTree.rotY;
       tObj.scale.setScalar(sTree.scale);
       group.add(tObj);
       if (cullList) cullList.push({ obj: tObj, x: sTree.x, z: sTree.z });
+      whFadeRegister(regionId, 'single', -1, tObj, tObj,
+        whFadeSeed('scatter' + si, sTree.asset), 'scatter' + si);
     }
     this.cullLists = this.cullLists || {};
     if (cullList) this.cullLists[regionId] = cullList;
@@ -2205,7 +2575,9 @@
         var key = Math.floor(it.x / cellM) + ':' + Math.floor(it.z / cellM);
         (cells[key] = cells[key] || []).push(it);
       });
-      Object.keys(cells).forEach(function (key) {
+      var cellNames = Object.keys(cells);
+      for (var ck = 0; ck < cellNames.length; ck++) {
+        var key = cellNames[ck];
         var list = cells[key], cx = 0, cz = 0, r = 0, q;
         for (q = 0; q < list.length; q++) { cx += list[q].x; cz += list[q].z; }
         cx /= list.length; cz /= list.length;
@@ -2219,7 +2591,7 @@
           group.add(im);
           cullList.push({ obj: im, x: cx, z: cz, hide2: hide * hide, show2: show * show });
         });
-      });
+      }
     });
 
     // enemies (fresh instances; dead state restored below)
@@ -2305,6 +2677,47 @@
     if (window.WH_ATMO && regionId === CFG.atmos.mistCards.regionId) {
       window.WH_ATMO.cardsBuilt = 0;
     }
+    // P1-4b (4.9, FIXSPEC F2/F3): this region's registry entries go (R4: the
+    // driver's next pass must not write into a disposed attribute); the
+    // material CLONES and the CLONED fadeable geometries this round created
+    // are freed here (the SHARED template geometry and materials are NOT).
+    for (var fi = 0; fi < whFadeList.length; fi++) {
+      var fe = whFadeList[fi];
+      if (fe.region !== regionId) continue;
+      var fbBucket = regionId + '|' + fe.tKey;
+      delete whFadeBuckets[fbBucket];
+      var fbp = whFadeByProp[regionId];
+      if (fbp) delete fbp[fe.tKey];
+      if (fe.tObj) {
+        // the clone's per-clone material clones: disposed + flagged off
+        // (the object itself is thrown away with the group below)
+        fe.tObj.traverse(function (mo) {
+          if (mo.isMesh && mo.userData.whFadeMaterial) {
+            var fmats = Array.isArray(mo.material) ? mo.material : [mo.material];
+            fmats.forEach(function (fm) {
+              if (!fm) return;
+              whFadeDisposeMaterial(fm);
+              fm.dispose();
+            });
+            mo.material = null;
+            mo.userData.whFadeMaterial = false;
+          }
+        });
+      }
+      // FIXSPEC F2: a fadeable instanced mesh (kind 'instanced') owns its
+      // CLONED geometry — disposed here with its entry; templates untouched.
+      if (fe.kind === 'instanced' && fe.mesh) {
+        var fc = fe.mesh.userData && fe.mesh.userData.whFadeClone;
+        if (fc) {
+          if (fc.geo) fc.geo.dispose();
+          if (fc.mat) whFadeDisposeMaterial(fc.mat);
+          fe.mesh.userData.whFadeClone = null;
+        }
+      }
+    }
+    var fk2 = whFadeList.length;
+    whFadeList = whFadeList.filter(function (e) { return e.region !== regionId; });
+    if (fk2 !== whFadeList.length) whFadeCounters.registered -= (fk2 - whFadeList.length);
     delete this.groups[regionId];
     delete this.enemies[regionId];
     delete this.packs[regionId];        // CC-C5
@@ -2494,6 +2907,24 @@
   window.WH_RegionManagerLogic = RegionManagerLogic;
   window.WH_ScatterPlan = whScatterPlan;   // Round E: pure, for debug/tests
   window.WH_WallPlan = whWallPlan;         // Round F: pure, for debug/tests
+  // P1-4b (4.2/4.4/4.6): the fade machinery's debug/debug-only surface. The
+  // driver (player.js) reads whFadeApply + fadeHas; Testerbot/debug read the
+  // counters. No new console.log in steady state (4.6 budget).
+  RegionManager.prototype.whFadeApply = function (region, rowIndex, dv) {
+    return whFadeApply(region, rowIndex, dv);
+  };
+  RegionManager.prototype.fadeHas = function (region, rowIndex) {
+    var e = whFadeBuckets[region + '|' + rowIndex];
+    return e !== undefined && e !== null;
+  };
+  RegionManager.prototype.whFadeCounters = function () {
+    return whFadeCounters;
+  };
+  // (Testerbot harness edge, 4.4): register a target without a full region
+  // build (the registry law is identical to the in-build paths).
+  RegionManager.prototype.whFadeRegisterForDebug = function (region, kind, instIdx, tObj, mesh, seed, tKey) {
+    return whFadeRegister(region, kind, instIdx, tObj, mesh, seed, tKey);
+  };
   // C3 camp deploy clearances (js/camp.js): the same pure helpers the
   // scatter uses for the dirt path band, the gate corridor and the rim
   window.WH_RegionGeom = {

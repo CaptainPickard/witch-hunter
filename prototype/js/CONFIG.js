@@ -176,6 +176,18 @@ window.WH_CONFIG = {
     },
     fogNearFactor: 0.25,              // fog near = radius * factor
     fogFarFactor: 1.5,                // fog far = radius * factor
+    // P1-4b (io/specs/p1-4b-occluder-fade-spec.md 4.5/4.7; the FIXSPEC pins
+    // this block under world: — vegetation-class collider rows block the
+    // CAMERA with an alphaHash per-instance dissolve instead of the pull;
+    // mass rows keep the pull. enabled: false = the P1-4a law exactly (veg
+    // rows pull again, no fade writes).
+    occluderFade: {
+      enabled: true,       // false = the P1-4a law exactly (veg rows pull again, no fade writes)
+      dissolveM: 1.2,      // penetration (m past pullFadeSlack) at which a tree is fully dissolved
+      hashMin: 0.02,       // shader dissolve-threshold floor (no full-alpha single-pixel shimmer)
+      pullFadeSlack: 0.25, // m of pull allowed BEFORE fade engages
+      decayPerSec: 2.0     // dissolve values decay toward 0 at this rate when not engaged
+    },
     characterHeight: 1.8              // normalized character height (POC)
   },
 

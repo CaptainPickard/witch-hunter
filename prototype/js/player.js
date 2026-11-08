@@ -49,6 +49,199 @@
   var CP_SY = 0;                      // current verify-segment y end (y basis)
   var CP_FY = 0, CP_H = 0;            // row band (defaults 12 occluder / -6 floor per spec)
   var CP_BL = false;                  // still-violated flag (verification)
+  // P1-4b: post-pull rollback flag for the updateCamera driver call below
+  // (var-style, same zero-allocation law as the CP_* block above).
+  var FD_AFTER = false;
+
+  // ---- P1-4b occluder fade (io/specs/p1-4b-occluder-fade-spec.md 4/7) -------
+  // WH_P1_4B_OCCLUDERFADE_V1. All per-frame fade values live in module-scope
+  // FD_* scratch - var-style, NO allocation in the steady-state path (the
+  // same law as the CP_* block above). The region handle is resolved LIVE
+  // each frame off window.WH_GAME. ONE fade record at a time (4.6).
+  // FIXSPEC F1/F4: the tunables live at WH_CONFIG.world.occluderFade
+  // (EXACTLY the five keys enabled/dissolveM/hashMin/pullFadeSlack/
+  // decayPerSec - no other fade key exists anywhere); the driver reads
+  // ONLY this subtree (no hardcoded law constants).
+  var FD = window.WH_CONFIG.world.occluderFade;
+  var FD_DF = 0;                       // the frame's eased dissolve (t)
+  var FD_PEN = 0;                      // the frame's row penetration (fdRowHit)
+  var FD_FD2 = 0;                      // fd smoothstep scratch (t*t)
+  var FD_RGM = null;                   // the frame's region manager (live read)
+  var FD_ACT = null;                   // the ONE fade record (mutated in place)
+  var FD_C = null;                     // current circle row (scan scratch)
+  var FD_J = 0;                        // scan loop index
+  var FD_TT = 0;                       // sample t
+  var FD_X = 0, FD_Y = 0, FD_Z = 0;    // sample point
+  var FD_TX = 0, FD_TY = 0, FD_TZ = 0; // the frame's segment origin (target)
+  var FD_DX = 0, FD_DY = 0, FD_DZ = 0; // segment delta target->want
+  var FD_H = 0, FD_FY = 0;             // row band (defaults 12 / -6, spec 45-46)
+  var FD_LIM = 0;                      // row's r + slack + R + skin limit
+  var FD_D = 0;                        // scratch squared distance
+  var FD_D2 = 0;                       // the frame's max penetration (fdRowHit)
+  var FD_DV = 0;                       // per-sample penetration scratch
+  var FD_HIT = false;                  // the active row is still engaged
+  var FD_STALE = false;                // this frame's stale-region guard fired
+  var FD_FM = null;                    // window.WH_RegionManager (registry edge)
+  var FD_CIRCLES = null;               // the frame's collider circles table
+
+  // P1-4b (4.5): one row's segment-block test + penetration under the P1-4a
+  // law (samples, camRadius, skin, the [fy - 0.25, fy + h] band). FIXSPEC
+  // F4: returns the row's MAX penetration depth in m (>= 0) instead of a
+  // boolean - fdTick clamps (P - pullFadeSlack) / dissolveM into the ease.
+  // FD_D2/FD_DV are var-style scratch (the zero-alloc law).
+  function fdRowHit(c) {
+    FD_LIM = c.r + CP.camRadiusM + CP.skinM;
+    if (FD_LIM <= 0) return -1;
+    FD_D2 = -1;
+    for (var k = 1; k <= CP.samples; k++) {
+      FD_TT = k / CP.samples;
+      FD_X = FD_TX + FD_DX * FD_TT;
+      FD_Y = FD_TY + FD_DY * FD_TT;
+      FD_Z = FD_TZ + FD_DZ * FD_TT;
+      FD_H = (c.h === undefined || c.h === null) ? 12 : c.h;
+      FD_FY = (c.fy === undefined || c.fy === null) ? -6 : c.fy;
+      if (FD_Y < FD_FY - 0.25 || FD_Y > FD_FY + FD_H) continue;
+      FD_D = (FD_X - c.x) * (FD_X - c.x) + (FD_Z - c.z) * (FD_Z - c.z);
+      if (FD_D <= FD_LIM * FD_LIM) {
+        FD_DV = FD_LIM - Math.sqrt(FD_D);
+        if (FD_DV > FD_D2) FD_D2 = FD_DV;
+      }
+    }
+    return FD_D2;
+  }
+
+  // P1-4b (4.4/4.5): claim a veg row as the active fade target. A row whose
+  // instance is not registered (fadeHas false) is unaddressable - it stays
+  // with the pull (the registered-instance fallback law verbatim).
+  // FIXSPEC F4: the record captures the row's seed (whFadeSeed byte-exact)
+  // and name; the dissolve value is computed per frame in fdApply.
+  function fdClaim(c) {
+    FD_FM = window.WH_RegionManager;
+    if (!FD_FM || !FD_FM.prototype || !FD_RGM.fadeHas) return false;
+    if (FD_ACT) { FD_ACT.rid = null; FD_ACT.idx = null; FD_ACT.x = 0; FD_ACT.z = 0;
+      FD_ACT.r = 0; FD_ACT.fy = null; FD_ACT.h = null;
+      FD_ACT.t = 0; FD_ACT.seed = 0; FD_ACT.name = null; }
+    else { FD_ACT = { rid: null, idx: null, x: 0, z: 0, r: 0, fy: null, h: null,
+      t: 0, seed: 0, name: null }; }   // allocated once, ever
+    if (!FD_RGM.fadeHas(FD_RGM.logic.activeId, c.index)) return false;
+    FD_ACT.rid = FD_RGM.logic.activeId;
+    FD_ACT.idx = c.index;
+    FD_ACT.x = c.x; FD_ACT.z = c.z; FD_ACT.r = c.r;
+    FD_ACT.fy = c.fy; FD_ACT.h = c.h;
+    FD_ACT.t = 0;
+    FD_ACT.seed = c.seed !== undefined ? c.seed : whFadeSeedOf(c);
+    FD_ACT.name = c.name;
+    return true;
+  }
+
+  // P1-4b (4.5, FIXSPEC F4 + ADDENDUM P1): the record's dissolve value.
+  // Penetration P (m, fdRowHit) -> raw t = clamp((P - pullFadeSlack) /
+  // dissolveM, 0, 1); eased = t*t*(3 - 2*t); the RAW eased t rides THE
+  // CALL as dv (ADDENDUM P1: exactly ONE mix(seed,1,dv) exists, in the
+  // registry's whFadeApply — no player-side seed fold). Engaged rows
+  // track the penetration law; un-engaged rows DECAY at decayPerSec
+  // toward 0 (never a jump); the record releases once the value lands.
+  // whFadeApply is dirty-checked at the registry (v-space |old-v| > 1e-3).
+  function fdApply(rec, dt) {
+    if (!rec.rid) return;
+    FD_FM = window.WH_RegionManager;
+    if (!FD_FM || !FD_RGM || !FD_RGM.whFadeApply) return;
+    if (FD_HIT) {
+      // engaged: the ease value rides THIS frame's penetration
+      FD_DF = (FD_PEN - FD.pullFadeSlack) / FD.dissolveM;
+      if (FD_DF < 0) FD_DF = 0; else if (FD_DF > 1) FD_DF = 1;
+      FD_FD2 = FD_DF * FD_DF;
+      FD_DF = FD_FD2 * (3 - 2 * FD_DF);           // smoothstep
+      rec.t = FD_DF;                              // the RAW eased t
+      FD_RGM.whFadeApply(rec.rid, rec.idx, rec.t, rec.seed);
+    } else {
+      // disengage: decay toward 0 at decayPerSec (bounded, never jumps)
+      rec.t -= FD.decayPerSec * dt;
+      if (rec.t < 0) rec.t = 0;
+      FD_RGM.whFadeApply(rec.rid, rec.idx, rec.t, rec.seed);
+      if (rec.t === 0) FD_ACT = null;             // restoration complete
+    }
+  }
+
+  // P1-4b (4.4, FIXSPEC F4 fallback): a row without a cached seed gets the
+  // SAME byte-exact hash computed here (V-8; only reachable for rows the
+  // live table built before the seed column existed - never on the scan).
+  function whFadeSeedOf(c) {
+    var s = String(c.index) + '|' + String(c.name);
+    var h = 2166136261;
+    for (var i = 0; i < s.length; i++) {
+      h = h ^ s.charCodeAt(i);
+      h = Math.imul(h, 16777619) >>> 0;
+    }
+    h = h >>> 15;
+    h = Math.imul(h, 2246822519) >>> 0;
+    h = Math.imul(h, 3266489917) >>> 0;
+    h = h ^ (h >>> 13);
+    return (h >>> 0) / 4294967295;
+  }
+
+  // P1-4b: instant restore + release (flag-off rollback and the stale-region
+  // guard; a disposed registry entry makes apply a no-op). FIXSPEC F4 + ADDENDUM
+  // P1: the restore passes dv = 0 (-> the registry writes v EXACT 0, byte-
+  // solid). ADDENDUM P2: the call now carries the 4-arg (dv, seed) shape.
+  function fdDrop() {
+    if (!FD_ACT) return;
+    if (FD_ACT.t !== 0) {
+      FD_ACT.t = 0;
+      FD_FM = window.WH_RegionManager;
+      if (FD_FM && FD_ACT.rid && FD_RGM && FD_RGM.whFadeApply)
+        FD_RGM.whFadeApply(FD_ACT.rid, FD_ACT.idx, 0, FD_ACT.seed);
+    }
+    FD_ACT = null;
+  }
+
+  // P1-4b (7): the driver. A null flag check + ONE record check in the
+  // steady state; the scan runs only while NO row owns the fade.
+  // FIXSPEC F4: engagement = the row still blocks the segment (any
+  // penetration > 0); the dissolve tracks the penetration law while
+  // engaged and decays at decayPerSec when it is not.
+  function fdTick(target, want, dt) {
+    if (!FD.enabled) { fdDrop(); return; }   // A8 rollback: instant restore
+    FD_RGM = (window.WH_GAME && window.WH_GAME.game) ?
+      window.WH_GAME.game.regionManager : null;
+    if (!FD_RGM) return;
+    if (FD_ACT && FD_ACT.rid !== FD_RGM.logic.activeId) {
+      fdDrop(); FD_STALE = true; return;     // stale-region guard (R4)
+    }
+    FD_TX = target.x; FD_TY = target.y; FD_TZ = target.z;
+    FD_DX = want.x - target.x; FD_DY = want.y - target.y;
+    FD_DZ = want.z - target.z;
+    if (FD_ACT) {
+      // the owned row still blocks the segment? (P = max sample penetration)
+      FD_PEN = fdRowHit(FD_ACT);
+      FD_HIT = FD_PEN > 0;
+      if (!FD_HIT) FD_PEN = 0;
+      fdApply(FD_ACT, dt);
+      return;
+    }
+    if (FD_STALE) { FD_STALE = false; }
+    FD_CIRCLES = FD_RGM.propColliders(FD_RGM.logic.activeId).circles;
+    for (FD_J = 0; FD_J < FD_CIRCLES.length; FD_J++) {
+      FD_C = FD_CIRCLES[FD_J];
+      if (FD_C.veg !== 1) continue;
+      FD_PEN = fdRowHit(FD_C);
+      if (!(FD_PEN > 0)) continue;
+      if (fdClaim(FD_C)) { FD_HIT = true; break; }   // unregistered rows stay with the pull
+    }
+  }
+
+  // P1-4b (2/4.5): the pull SPLIT for one circle row inside the P1-4a sample
+  // loop. True = the row keeps today's pull treatment. The only rows that
+  // lose the pull are fade-owned vegetation rows of the LIVE region. Every
+  // mass row, every unowned or unregistered veg row, and ALL rows when the
+  // flag is off keep the pre-change law (A7/A8). Zero allocation.
+  function fdPullBlock(c) {
+    if (!FD.enabled) return true;
+    if (c.veg !== 1) return true;
+    if (FD_ACT && CP_RGM && FD_ACT.rid === CP_RGM.logic.activeId &&
+        FD_ACT.idx === c.index) return false;
+    return true;
+  }
 
   function deg2rad(d) { return d * Math.PI / 180; }
   function smooth(p) { return p * p * (3 - 2 * p); }   // smoothstep ease
@@ -2325,7 +2518,13 @@
           // XZ circle test at the sample (spec 55-56: <= r + R + skinM)
           CP_D = (CP_X - CP_C.x) * (CP_X - CP_C.x) +
             (CP_Z - CP_C.z) * (CP_Z - CP_C.z);
-          if (CP_D <= CP_LIM * CP_LIM) { CP_I = CP_K - 1; break; }
+          // P1-4b: a fade-owned vegetation row never fires the pull (2: the
+          // segment blocks the camera with a dissolve, not a pull-in) -
+          // fdPullBlock keeps every mass row and unowned veg row on the
+          // pre-change law (A7/A8).
+          if (fdPullBlock(CP_C)) {
+            if (CP_D <= CP_LIM * CP_LIM) { CP_I = CP_K - 1; break; }
+          }
         }
       }
       if (CP_I >= 0) {
@@ -2397,6 +2596,10 @@
     }
 
     if (want.y < floorY) want.y = floorY;
+
+    // P1-4b (7): the driver. Disabled = ONE flag check + no fade writes (A8);
+    // the disabled branch's fdDrop restores any lingering t to 0 instantly.
+    fdTick(target, want, dt);
 
     // 10-04 change order (Nicko): FULL camera decoupling - movement NEVER
     // turns the camera. camYaw changes only from mouse drag / camera
