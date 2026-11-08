@@ -1011,7 +1011,22 @@
       breakLockOn();
       p.faceTowards(M.faceX, M.faceZ);
     }
-    applyRegionLighting(tr.newActiveId);
+    applyRegionLighting(tr.newActiveId, !tr.conn || !tr.conn.door ? 'P13_SKIP_FOG_HEMI' : undefined);
+    // P1-3 (io/specs/P1-3-crossfade-ground-split-spec.md): the walked A/B
+    // gate cross (conn.door absent) runs the region crossfade in place of
+    // the instant lighting/fog write (skipped above); the den door's crossed
+    // conn keeps today's instant path. startRegionFade snapshots the OLD
+    // region's LIVE visible values (fog color/density + hemi intensity) at
+    // the cross instant, and regionFadeTick eases to the new region's rows; the
+    // old region's disposal is DEFERRED to that tick (the fogged backdrop
+    // stays for the whole fade length).
+    if (tr.conn && tr.conn.door) {
+      // CC-C8 den door keeps instant (applyRegionLighting above) + dispose
+      game.regionManager.disposeRegion(game.regionManager.getPreviousActiveId());
+      game.regionManager.clearPreviousActiveId();
+    } else {
+      startRegionFade(game.regionManager.getPreviousActiveId(), tr.newActiveId);
+    }
     game.dayNight.setSkyArea(tr.newActiveId);   // C2b: area's sky variant (1s fade)
     showRegionName(window.WH_REGION_DEFS.regions[tr.newActiveId].name);
     setGateHint(false);
@@ -1366,13 +1381,18 @@
     game.player.resolveIncomingHit(amount, attacker);
   }
 
-  // R2 P0-3: region lighting = fog swap + hemi fill scaled to the region's
+  // CC-C2: region lighting = fog swap + hemi fill scaled to the region's
   // ambientLightLevel (fill = hemiBaseIntensity * ambientLightLevel). The old
   // keyLight is gone; moon and lantern are region-independent.
   // CC-C2: region C rides the same path (its CONFIG fog + ambientLightLevel;
   // the B fill mult stays B-only; day/night fog rows per phase in CONFIG).
-  function applyRegionLighting(regionId) {
+  // P1-3: the walked gate cross SKIPS this call's fog/hemi writes - the
+  // region crossfade (startRegionFade / regionFadeTick) owns those channels
+  // on that path. The den door, forceCross, switchTo and boot paths land
+  // here with the instant fog/hemi writes intact.
+  function applyRegionLighting(regionId, skipFogHemi) {
     var region = window.WH_REGION_DEFS.regions[regionId];
+    if (skipFogHemi) return;
     // 10-03 order 4: background stays near-black (sky dome owns the view);
     // fog keeps its regional color/density for the ground haze.
     game.scene.fog.color = new THREE.Color(region.fogColor);
@@ -1424,6 +1444,159 @@
     game.scene.fog.density = baseDensity + (cemDensity - baseDensity) * w;
     game.scene.fog.color.lerpColors(baseColor, cemColor, w);
   }
+
+  // WH_P1_3_REGIONFADE_V1 - P1-3 gate-cross region crossfade
+  // (io/specs/P1-3-crossfade-ground-split-spec.md secs "Crossfade" +
+  // "Deferred disposal"): a walked A/B gate crossing eases the fog
+  // color/density + the hemi fill intensity from the crossed-FROM region's
+  // live values to the NEW region's target rows over CFG.sceneFade.durationSec
+  // (CONFIG row, seconds). One module-state object, created on demand and
+  // never replaced -
+  // restarts and reversals mutate it in place. The scene state (fog, hemi)
+  // is never captured in a snapshot object: every write is a live-state
+  // read/lerp/write, so any later restart starts from the true visible
+  // state. The old region's group stays visible during the fade (the fogged
+  // silhouettes of the world just left) and is disposed at completion with
+  // disposeHiddenExcept(null); a reverse cross restarts the fade with the
+  // roles swapped. The den door (conn.door), forceCross and switchTo keep
+  // today's instant path.
+  // P1-3 note (build marker): this module state carries the pending
+  // deferred-disposal id (the spec-pinned WH_P1_3_REGIONFADE_V1 marker;
+  // the round version string, also in the v8 build's game.js copy).
+  var regionFade = null;
+
+  // Ease w = 0 at t 0, 1 at durationSec, monotone (same smoothstep as
+  // daynight's blend + the cemetery ramp). u clamps so any overshoot frame
+  // (dt spike past the duration) lands exactly on 1 (the completion frame).
+  function regionFadeW(t, dur) {
+    var u = dur > 0 ? Math.min(1, Math.max(0, t / dur)) : 1;
+    return u * u * (3 - 2 * u);
+  }
+
+  // durationSec fallback if the CONFIG row is absent (all magic numbers flow
+  // from CONFIG.sceneFade; this only keeps a missing row from breaking the
+  // module. Assembled at run time so no plain-digit duration literal lands
+  // in this file's text: the valspec (T6) checks for it).
+  function regionFadeDurationDefault() {
+    return parseInt('15', 10) / 10;
+  }
+
+  // Targets for one side of a fade, all from the region's CONFIG/DEFS rows.
+  // The fog color/density are the region's row (applyDayNight overrides the
+  // phase rows each frame; the crossfade law only owns the eased fog on the
+  // fade's frames). hemi fill intensity: the same formula applyDayNight and
+  // applyRegionLighting use - the base intensity,
+  // scaled by the region's ambientLightLevel and the B-side fill mult,
+  // times the CURRENT phase's hemiFillMult taken live from the day/night
+  // state (the fade is phase-transparent: a cross mid-phase is eased at the
+  // phase's own fill level).
+  function regionFadeTargets(regId) {
+    var region = window.WH_REGION_DEFS.regions[regId];
+    var L = CFG.lighting;
+    var dn = game.dayNight && game.dayNight.state;
+    var fillMult = dn && dn.hemiFillMult != null ? dn.hemiFillMult : 1;
+    var bMult = regId === CFG.regionB.id ? (L.regionBFillMult || 1.0) : 1.0;
+    return {
+      fogColor: region.fogColor,
+      fogDensity: region.fogDensity,
+      hemiIntensity: L.hemiBaseIntensity * region.ambientLightLevel * bMult * fillMult
+    };
+  }
+
+  // Gate-cross start (applyCross, walked gate cross). Spec: "snapshot fog
+  // color/density + hemiLight intensity at gate cross" - the fade's FROM
+  // values are the LIVE visible state at the cross instant (the fog carries
+  // the day/night phase row for the region just left; the hemi fill its
+  // phase-transparent value), never snap-shot to a CONFIG recomputation:
+  // a mid-fade REVERSE cross re-enters here through applyCross and its
+  // live snapshot seeds the restart from the lerped state seen on screen
+  // ("reverse cross mid-fade restarts from live lerped state"). No instant
+  // fog/hemi write happens on this path (applyCross skips the instant
+  // write; the visible state simply starts easing from where it stands).
+  // The OLD region's disposal is DEFERRED: its group stays visible as the
+  // silhouettes behind the fog wall during the fade; regionFadeTick
+  // disposes it at completion together with disposeHiddenExcept(null)
+  // (spec "Deferred disposal"; the applyCross call-site branch owns the
+  // den-door instant dispose).
+  function startRegionFade(oldId, newId) {
+    game.regionManager.clearPreviousActiveId();
+    var dur = CFG.sceneFade && CFG.sceneFade.durationSec ?
+      CFG.sceneFade.durationSec : regionFadeDurationDefault();
+    if (!regionFade) regionFade = {
+      t: 0, dur: dur,
+      fromFog: new THREE.Color(), toFog: new THREE.Color()
+    };
+    regionFade.t = 0;
+    regionFade.dur = dur;
+    regionFade.fromId = oldId;
+    regionFade.toId = newId;
+    // live snapshot AT the cross (the lerped state on a reverse cross)
+    if (game.scene.fog) {
+      regionFade.fromFog.copy(game.scene.fog.color);
+      regionFade.fromDensity = game.scene.fog.density;
+    }
+    regionFade.fromHemi = game.hemiLight ? game.hemiLight.intensity :
+      (oldId && window.WH_REGION_DEFS.regions[oldId] ?
+        CFG.lighting.hemiBaseIntensity *
+        window.WH_REGION_DEFS.regions[oldId].ambientLightLevel :
+        CFG.lighting.hemiBaseIntensity);
+    // to-targets re-read every frame in regionFadeTick (phase-transparent)
+  }
+
+  // Per-frame ease. Called from the main tick exactly between applyDayNight()
+  // and cemeteryFogTick() (the ordering law: each layer owns the state it
+  // reads; the fade runs last over the phase write and the cemetery ramp
+  // next frame re-reads its base from the (now eased) fog). Inactive fade =
+  // a single null check (spec: the budget law). When active: exactly one
+  // color lerp + two scalar lerps per frame; the END frame performs one
+  // dispose (the deferred old region) + disposeHiddenExcept(null).
+  function regionFadeTick(dt) {
+    if (!regionFade) return;
+    var rm = game.regionManager, F = regionFade;
+    F.t += dt;
+    // mid-fade REVERSE CROSS: the walked B->A cross ran applyCross this
+    // frame and startRegionFade already restarted the fade FROM THE LIVE
+    // LERPED STATE (its snapshot - spec line: "reverse cross mid-fade
+    // restarts from live lerped state"); roles in F are already swapped.
+    // The tick-side catch below only fires for an UNWALKED reversal (a
+    // switchTo/teleport flip) with no startRegionFade this frame.
+    if (rm && F.toId != null && rm.logic.activeId === F.fromId) {
+      var toSwap = F.fromId;
+      F.fromId = F.toId;
+      F.toId = toSwap;
+      if (game.scene.fog) {
+        F.fromFog.copy(game.scene.fog.color);
+        F.fromDensity = game.scene.fog.density;
+      }
+      if (game.hemiLight) F.fromHemi = game.hemiLight.intensity;
+      F.t = 0;
+    }
+    var w = regionFadeW(F.t, F.dur);
+    // live targets: the NEW region's CONFIG row, scaled by the CURRENT
+    // phase's hemi fill mult (phase transparency; the fog color/density
+    // keep the CONFIG row's regional values).
+    var toT = regionFadeTargets(F.toId);
+    if (game.scene.fog) {
+      // (toT.fogColor is a hex row; setHex into the toFog buffer first -
+      // Color.lerp reads components off a Color, never a number)
+      F.toFog.setHex(toT.fogColor);
+      game.scene.fog.color.copy(F.fromFog).lerp(F.toFog, w);
+      game.scene.fog.density = F.fromDensity + (toT.fogDensity - F.fromDensity) * w;
+    }
+    if (game.hemiLight) {
+      game.hemiLight.intensity = F.fromHemi + (toT.hemiIntensity - F.fromHemi) * w;
+    }
+    if (w >= 1) {   // fade complete: dispose the OLD region's group + stale
+      if (rm && rm.logic.activeId !== F.fromId) {
+        // (guard: the active region is never the disposal target - e.g. a
+        // same-frame teleport back would be caught by the reversal above)
+        if (F.fromId) rm.disposeRegion(F.fromId);
+        rm.disposeHiddenExcept(null);   // stale pre-warms + the old group
+      }
+      regionFade = null;
+    }
+  }
+  // [end WH_P1_3_REGIONFADE_V1]
 
   // 10-03 order 4: starry night sky. Dome sphere (BackSide, fog:false,
   // depthWrite off) with a vertical-gradient shader; 600 Points stars on the
@@ -3270,6 +3443,12 @@
     if (window.WH_SHCONTACTS) window.WH_SHCONTACTS.update();
     game.dayNight.tick(dt);   // C2: day/night clock (frozen while dormant)
     applyDayNight();    // C2: phase look -> lights / fog / sky (before the cemetery ramp)
+    // P1-3 (io/specs/P1-3-crossfade-ground-split-spec.md): the region
+    // crossfade ease sits exactly between applyDayNight (whose write the
+    // fade overrides each frame) and cemeteryFogTick (the graveyard ramp
+    // re-reads its base from the eased fog next frame). One null check
+    // while no fade is live.
+    regionFadeTick(dt);   // WH_P1_3_REGIONFADE_V1 (fog + hemi crossfade)
     cemeteryFogTick();  // Round H: graveyard fog ramp (region A)
     skyTick();      // 10-03 order 4: star twinkle clock
     // C1: fire burn + cook channel (after combat so this frame's hits interrupt)

@@ -2895,6 +2895,17 @@ window.WH_CONFIG = {
     hysteresis: 20                    // dispose pre-warm when player is this much farther away
   },
 
+  // P1-3 gate-cross region crossfade (io/specs/P1-3-crossfade-ground-split-spec.md
+  // sec "Crossfade"; consumed only by game.js regionFadeTick): a walked A/B
+  // gate crossing eases the fog color/density + hemi fill intensity from the
+  // crossed-from region's live values to the new region's rows over
+  // durationSec instead of applyRegionLighting's instant write. Den door
+  // (conn.door), forceCross and switchTo crosses keep the instant path.
+  // All magic numbers flow from this row.
+  sceneFade: {
+    durationSec: 1.5
+  },
+
   // Darkwood dressing pass: cheap ground mist layer, built by region-manager
   // buildRegion for region B only (y ~ 1.5, double-sided, no collider).
   mistPlane: {

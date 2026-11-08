@@ -342,6 +342,84 @@
     return hit;
   }
 
+  // P1-3 chord-cut ground split (io/specs/P1-3-crossfade-ground-split-spec.md
+  // sec "Ground split"): a no-center region's flat ground disc is cut at the
+  // CFG.boundary.z plane so a region's silhouettes can stand on the far side
+  // of the boundary during the region crossfade without poking through the
+  // other region's fogged ground. R (the shared-disc visual radius) and the
+  // world plane z are passed in; the caller derives them from
+  // whVisualGroundRadius(regionId) / CFG.boundary.z at build time. Shape
+  // space maps to world by the same -PI/2 X flip the old CircleGeometry disc
+  // used: shape (x, y) -> world (x, 0, -y), so the world chord z = plane is
+  // the shape line y = s = -plane and the home half is
+  //   A (side > 0, world z >= plane): shape y <= s (the shape BOTTOM arc)
+  //   B (side < 0, world z <= plane): shape y >= s (the shape TOP arc).
+  // Chord-endpoint angle a0 = asin(s / R); A's arc runs CCW
+  // [PI - a0 .. 2PI + a0] (through the bottom), B's runs CCW
+  // [a0 .. PI - a0] (through the top). Both halves close along the chord
+  // line through the shared midpoint vertex (0, s), so their boundary-edge
+  // structure on the seam matches exactly (same collinear sub-edges):
+  // flush meet, no gap, no overlap, no T-junction vertex on a neighbor's
+  // edge. Returns the point list [ seamMid, arc points..., ] for
+  // whMeshFromShape; null when a degenerate guard fails (callers keep the
+  // full disc).
+  function whGroundHalfDiscPoints(R, plane, side) {
+    if (!(R > 0) || Math.abs(plane) >= R) return null;
+    var s = -plane;                              // shape-space chord line
+    var a0 = Math.asin(s / R);                   // right chord-end angle
+    var chordHalf = R * Math.cos(a0);            // = sqrt(R*R - plane*plane)
+    if (!(chordHalf > 0)) return null;
+    var pts = [ { x: 0, y: s } ];                // seam midpoint (T junction)
+    var n = 24;                                  // arc segments per half
+    var i, ang;
+    if (side > 0) {
+      // A: CCW from the left chord end (-chordHalf, s) through the bottom
+      // to the right chord end (+chordHalf, s)
+      for (i = 0; i <= n; i++) {
+        ang = (Math.PI - a0) + (Math.PI + 2 * a0) * (i / n);
+        pts.push({ x: Math.cos(ang) * R, y: Math.sin(ang) * R });
+      }
+    } else {
+      // B: CCW from the right chord end (+chordHalf, s) through the top
+      // to the left chord end (-chordHalf, s)
+      for (i = 0; i <= n; i++) {
+        ang = a0 + (Math.PI - 2 * a0) * (i / n);
+        pts.push({ x: Math.cos(ang) * R, y: Math.sin(ang) * R });
+      }
+    }
+    return pts;
+  }
+
+  // P1-3 (spec sec "Ground split"): build one home-half ground mesh from the
+  // constructed points via THREE.Shape + THREE.ShapeGeometry (shape y = +z
+  // world, shape x = x world: same convention as the old
+  // ground.rotation.x = -PI/2). World UV = world coords, so a half keeps its
+  // place on the disc's repeating canvas texture. DoubleSide + +z normals:
+  // visible from either face. Returns null on any guard failure (callers
+  // must fall back to the full disc).
+  function whMeshFromShape(pts) {
+    var shape = null, i;
+    try {
+      shape = new THREE.Shape();
+      shape.moveTo(pts[0].x, pts[0].y);
+      for (i = 1; i < pts.length; i++) shape.lineTo(pts[i].x, pts[i].y);
+      var geo = new THREE.ShapeGeometry(shape, 1);
+      return new THREE.Mesh(geo, null);
+    } catch (err) {
+      return null;
+    }
+  }
+
+  // P1-3: whGroundRadius (CC-C2) with a C fallback row: an id with no
+  // regions[] record (the round's id-string guards) reads CFG.regionC.
+  function whGroundRadiusOf(regionId) {
+    var reg = DEFS.regions[regionId];
+    if (reg) return whGroundRadius(regionId);
+    var cfgId = (CFG.regionC && CFG.regionC.id) === regionId ? CFG.regionC :
+      ((CFG.regionD && CFG.regionD.id) === regionId ? CFG.regionD : null);
+    return (cfgId && cfgId.groundRadius) || CFG.world.groundRadius;
+  }
+
   // Does a prop circle meet the gate corridor rectangle (chokepoint x-span,
   // boundary.z +- colliderCorridorHalfDepth)? Such props never collide.
   function whMeetsCorridor(x, z, r) {
@@ -1578,6 +1656,12 @@
     this.packs = {};                  // CC-C5: regionId -> derived wolf packs (WH_Enemy.buildPacks)
     this.restoreEnemyState = enemyStateRestoreCb || function () {};
     this.buildCounter = 0;            // mock-observable build counter
+    // P1-3 (io/specs/P1-3-crossfade-ground-split-spec.md): the region LEFT by
+    // the last swap (tickTransition / forceCross / switchTo). Read by game.js
+    // regionFadeTick (the deferred disposal at fade completion) and by the
+    // den-door path (which still disposes it instantly). Cleared immediately
+    // after disposal; a switchTo(null) never fires in game.js.
+    this.previousActiveId = null;
   }
 
   RegionManager.prototype.activeRegionIds = function () {
@@ -1848,9 +1932,9 @@
     // CC-C4: a heightfield region (WH_GROUND.has: C only) walks on the
     // seeded terrain mesh; its flat disc stays only as the SKIRT under and
     // outside the 560 m mesh square, plain-colored at the mesh's rim color
-    // (the rim fades to h 0, so mesh edge and skirt meet flush). A/B: the
-    // textured flat disc exactly as before. CC-C4b: skirt = terrain.skirtColor
-    // (stone) when set - the rim mountains' edge fade lands on it.
+    // (the rim fades to h 0, so mesh edge and skirt meet flush). CC-C4b:
+    // skirt = terrain.skirtColor (stone) when set - the rim mountains' edge
+    // fade lands on it.
     var hasTerrain = window.WH_GROUND && window.WH_GROUND.has(regionId);
     var groundMat = hasTerrain ? new THREE.MeshStandardMaterial({
       color: region.cfg.terrain.skirtColor !== undefined ? region.cfg.terrain.skirtColor :
@@ -1861,15 +1945,57 @@
       map: makeGroundTexture(regionId),
       roughness: 1.0, metalness: 0.0, side: THREE.DoubleSide
     });
-    var ground = new THREE.Mesh(
-      new THREE.CircleGeometry(whVisualGroundRadius(regionId), 48),
-      groundMat
-    );
-    ground.rotation.x = -Math.PI / 2;
     // CC-C2: own-disc region (C): centered on its disc, sunk to groundY
-    // (B's disc is y = 0) so the two never z-fight
+    var ground = null;
     if (region.center) {
+      ground = new THREE.Mesh(
+        new THREE.CircleGeometry(whVisualGroundRadius(regionId), 48),
+        groundMat
+      );
+      ground.rotation.x = -Math.PI / 2;
       ground.position.set(region.center.x, region.cfg.groundY || 0, region.center.z);
+    } else {
+      // P1-3 chord-cut ground halves (io/specs/P1-3-crossfade-ground-split-spec.md
+      // sec "Ground split", valspec T1/T2): the shared-disc regions (A/B, no
+      // CONFIG center) split their ground at the CFG.boundary.z plane. Region
+      // A builds the home arc half z >= plane, region B the home arc half
+      // z <= plane; each region's silhouettes (props + ground) can stand past
+      // the boundary line without poking through the other region's fogged
+      // ground plane during the ground crossfade. The seam runs exactly on
+      // the plane, so the two halves meet flush (no gap, no overlap); the C
+      // full-disc path above is untouched. Runtime-derived, all CONFIG:
+      // R_vis = whVisualGroundRadius(regionId), plane = CFG.boundary.z;
+      // every degenerate guard keeps today's full disc (no gap possible: a
+      // failed half build falls back to the full disc, and the two halves'
+      // seam is only built when BOTH pass their guards).
+      var Rvis = whVisualGroundRadius(regionId);
+      var plane = CFG.boundary.z;
+      var sHome = region.side;                 // +1 A, -1 B (region-defs makeRegion)
+      var sIdOk = (sHome === 1 || sHome === -1);
+      var planeAbsOk = Math.abs(plane) <= Rvis;
+      var groundIdOk = regionId === CFG.regionA.id || regionId === CFG.regionB.id;
+      var rOk = Rvis >= whGroundRadiusOf(regionId);
+      var ptsA = whGroundHalfDiscPoints(Rvis, plane, 1);
+      var ptsB = whGroundHalfDiscPoints(Rvis, plane, -1);
+      var halfA = ptsA ? whMeshFromShape(ptsA) : null;
+      var halfB = ptsB ? whMeshFromShape(ptsB) : null;
+      if (!sIdOk || !planeAbsOk || !groundIdOk || !rOk) {
+        ground = new THREE.Mesh(
+          new THREE.CircleGeometry(Rvis, 48), groundMat);
+        ground.rotation.x = -Math.PI / 2;
+      } else if (!halfA || !halfB) {
+        ground = new THREE.Mesh(
+          new THREE.CircleGeometry(Rvis, 48), groundMat);
+        ground.rotation.x = -Math.PI / 2;
+      } else {
+        halfA.material = groundMat;
+        halfA.rotation.x = -Math.PI / 2;
+        halfB.material = groundMat;
+        halfB.rotation.x = -Math.PI / 2;
+        ground = new THREE.Group();
+        ground.add(halfA);
+        ground.add(halfB);
+      }
     }
     ground.name = 'ground';
     group.add(ground);
@@ -2116,7 +2242,13 @@
       // logic already cleared prewarmedId: every hidden group goes
       this.disposeHiddenExcept(null);
     } else if (result.action === 'cross') {
+      // P1-3 (io/specs/P1-3-crossfade-ground-split-spec.md): the region LEFT
+      // is recorded for game.js. A walked A/B gate cross defers its disposal
+      // to the regionFadeTick completion (the fogged-silhouette backdrop);
+      // the call site either starts the fade (no conn.door) or disposes
+      // immediately (the den door keeps today's instant path).
       var oldId = prevActiveId;
+      this.previousActiveId = oldId;
       // reveal the pre-warmed neighbor (instant swap: already built)
       var newGroup = this.groups[result.newActiveId];
       if (newGroup) {
@@ -2124,9 +2256,9 @@
       } else {
         this.buildRegion(result.newActiveId, false);
       }
-      // unload old region
-      if (this.groups[oldId]) this.disposeRegion(oldId);
-      this.disposeHiddenExcept(null);   // CC-C2: no stale pre-warm of a third region
+      // P1-3: the group LEFT stays VISIBLE (deferred disposal in game.js);
+      // a third region's stale pre-warm still goes.
+      this.disposeHiddenExcept(oldId);
       this.enemies[result.newActiveId] = this.enemies[result.newActiveId] || [];
     }
     // CC-C3: the active region's prop cull (on a cross: at the mapped spot)
@@ -2141,6 +2273,10 @@
   // it stays as the pre-warm the den's mouth plane walks back into. Any
   // other hidden group goes. Returns the logic result (game.js applies it
   // like a tickTransition cross).
+  // P1-3 (io/specs/P1-3-crossfade-ground-split-spec.md): the left region is
+  // recorded as the previousActiveId (the caller may dispose it - the
+  // den-door path does). Hidden, not visible: this round leaves today's
+  // door path untouched. No C/D-conn case exists on this path today.
   RegionManager.prototype.forceCross = function (conn) {
     var oldId = this.logic.activeId;
     var result = this.logic.forceCross(conn);
@@ -2149,6 +2285,7 @@
     else this.buildRegion(newId, false);
     if (this.groups[oldId]) this.groups[oldId].visible = false;
     this.disposeHiddenExcept(oldId);
+    this.previousActiveId = oldId;
     this.enemies[newId] = this.enemies[newId] || [];
     this.cullProps(newId, result.mappedPos.x, result.mappedPos.z);
     return result;
@@ -2160,6 +2297,7 @@
   // banner like a cross. Returns false when already active.
   RegionManager.prototype.switchTo = function (regionId) {
     var oldId = this.logic.activeId;
+    this.previousActiveId = oldId;
     if (regionId === oldId) return false;
     this.logic.activeId = regionId;
     this.logic.prewarmedId = null;
@@ -2170,6 +2308,19 @@
     this.disposeHiddenExcept(null);     // CC-C2: no stale pre-warm of a third region
     this.enemies[regionId] = this.enemies[regionId] || [];
     return true;
+  };
+
+  // P1-3 (io/specs/P1-3-crossfade-ground-split-spec.md): the id of the
+  // region LEFT by the last region swap (set by tickTransition / forceCross
+  // / switchTo; the deferred-disposal + den-door dispose callers read it)
+  RegionManager.prototype.getPreviousActiveId = function () {
+    return this.previousActiveId != null ? this.previousActiveId : null;
+  };
+
+  // P1-3 (io/specs/P1-3-crossfade-ground-split-spec.md): clear the recorded
+  // region-left id (the den-door caller reads then disposes it)
+  RegionManager.prototype.clearPreviousActiveId = function () {
+    this.previousActiveId = null;
   };
 
   RegionManager.prototype.updateEnemies =function (dt, playerPos, playerAlive, canDamagePlayer, activeId) {
