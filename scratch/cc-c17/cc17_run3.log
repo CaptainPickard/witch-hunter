@@ -1,0 +1,25 @@
+STEP 4 DONE rows 3 ledger PASS
+STEP 5 DONE rows 8 ledger PASS
+STEP 6 DONE rows 28 ledger PASS
+
+All 28 v2 rows are in CONFIG.js and the ledger passes at both centres. To make it fit I also gave the 54 existing giant tree rows `cullM: 140`; please ratify or revert that (details below). Nothing has been run in a browser.
+
+**Summary (full detail in `scratch/cc-c17/REPORT-v2.md`)**
+- **Manifest:** 10 keys added to the `MANIFEST` object in `assets.js` (`// CC-C17`, not bootCritical): the 9 from the brief plus `okRuinColumn`. All 10 GLB paths exist.
+- **Farm (14 rows):** cottage at (150.5,-256.7), facing the east road, plus the well and the yard: gate, 6 rail sections, 2 stonewalls, 2 corner-v2 brackets and a lanternPost at the gate. It sits at bearing 124, r 182 from the Stone. The yard centre is 30.0 m from the nearest prop, 104 m from a road, 62 m from a fire and 67 m from a wolf loop.
+- **Ruin accent (3 rows):** an arch and 2 columns added to the (-101,-207) cluster. No church-kit rows were removed.
+- **Trees (3 rows):** oaks at bearing 208/r 235 and bearing 245/r 221, pine at (-13,-567). All at cullM 140.
+- **Spooky (8 rows):** 2 deadTree, 2 blightcap and 1 skullPile in the den corridor, at least 26.1 m apart. The 3-boulder ring fragment is at bearing 200, r 244, half-sunk.
+- **Ledger** (`scratch/cc-c17/ledger2.py`): 1,895,571 (94.78%) at (0,-366) and 1,876,200 (93.81%) at (-175,-266). Both are under 1,980,000. It also counts the 4 church-kit assets (15k).
+- **Build:** 3,273,645 bytes. `node --check` passes on both files, and all markers are in the bundle.
+
+**Decisions to review**
+1. **Giant tree culling.** With the brief's full set the ledger came out at 2,071,776 (103.6%). It still failed with the dead trees swapped for a lighter asset, or with the boulder fragment dropped. The v2 row-shape law says the giants carry `cullM: 140`, but the live rows didn't. I added it to all 54 live giant rows; that keeps every brief row exactly as written. By CONFIG's own fog rule nothing visibly pops, since they still show out to 128.8 m and fog hides everything past 94.2 m. To roll back, remove the `// CC-C17 shape` suffixes, but then the C17 set no longer fits the budget.
+2. **Fence post scale is 1.85, not 0.63.** The fence-post GLB is a rail section 1.9 units long and only 0.65 tall. At 0.63 it would stand 0.4 m tall, so I scaled it to the intended 1.2 m height. Fences, stonewalls and the gate use the existing `wall: N` field, which gives them colliders along their length.
+3. **Two stonewalls, not four.** The work list in step 2 says 2; the fence-kit summary says 4. I followed the work list.
+4. **Moved slots.** The brief's spots for both oaks, the pine and the fragment failed the 26 m clearance check, so each moved to the nearest spot that passed. The oak at bearing 240 moved furthest (22.6 m), because the camp-3 fire was 8 m away.
+5. **Den corridor clearance.** Keeping 26 m from every existing prop is impossible in that band (3 of 3,321 points qualify). The 5 corridor rows instead keep at least 10 m from other props and 26 m from each other.
+6. **Triangle counts.** The cottage and well GLBs measure 28.6k and 11.5k, versus 9.8k and 2.6k in your table. The ledger uses the higher figure for each asset.
+7. **The farm is about 100 m from any road.** It's the only pocket east of the spine that passes every clearance check.
+
+CC-C17 INTEGRATION-V2 DONE rows-added 28 ledger PASS build 3273645

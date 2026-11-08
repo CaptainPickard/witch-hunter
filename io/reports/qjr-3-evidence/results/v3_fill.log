@@ -1,0 +1,38 @@
+  ok  WH_WarEffort exported
+  ok  no toasts at init
+  ok  no journal writes at init
+  ok  take accepted (idle)
+  ok  award appended requisition exactly once
+  ok  award title === CONFIG verbatim
+  ok  award body === CONFIG verbatim
+  ok  award source === CONFIG verbatim
+  ok  award day = live dayNight.day (7)
+  ok  A9 letter: award append day arg positionally UNDEFINED
+  ok  offer toast fires
+  ok  fill accepted (exact quota)
+  ok  fill: exactly one append call
+  ok  firstFill appended once
+  ok  fill entry id firstFill
+  ok  fill title === CONFIG verbatim
+  ok  fill source === CONFIG verbatim
+  ok  A9 letter: fill append day arg positionally UNDEFINED
+  ok  requisition still exactly once after fill
+  ok  spentToday press consumed
+  ok  spentToday: no journal write
+  ok  still 1+1 entries
+  ok  satchel-full take: press consumed, refusal
+  ok  satchel-full toast
+  ok  satchel-full: journal NOT written
+  ok  second take accepted
+  ok  second award: one append call
+  ok  dedupe: requisition still exactly 1
+  ok  original requisition entry survives intact (day 7, newest-first unchanged)
+  ok  below-quota turn-in consumed
+  ok  below-quota toast
+  ok  below-quota: journal NOT written
+  ok  firstFill still exactly 1
+  ok  over-band fill accepted
+  ok  over-band fill: exactly ONE append call
+  ok  over-band: firstFill still exactly one entry (no double-write)
+  ok  over-band entry is the ORIGINAL firstFill (id dedupe, not a second row)
+V3/V4-CHECK 37/37

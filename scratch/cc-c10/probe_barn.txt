@@ -1,0 +1,2 @@
+{"mode":"config","row":{"asset":"okFarmBarn","x":136.5,"z":-234.7,"rotY":3.15,"scale":5.5,"cullM":140},"probe":{"at":[136.5,-234.7],"cottage":26.1,"props":[26.1,"okFarmCottage@150.5,-256.7"],"fires":[41.5,"banditCampfire@95,-236"],"roads":[133.7,"eastRoad"],"wolfLoops":[52.1,"ss"],"enemies":[34.7,"bandit@102.7,-242.4"],"groundY":1.01,"seatSpanM":0.45,"seatSlopeDeg":5.2,"PASS":true},"scatterNearest":{"d":5.1,"who":"grassTuft"}}
+{"okFarmBarnRows":1,"ALL_PASS":true}

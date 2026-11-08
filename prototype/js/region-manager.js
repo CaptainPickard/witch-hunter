@@ -38,56 +38,180 @@
 
   // Returns null, 'prewarm' (neighbor built hidden), 'dispose' (pre-warm
   // thrown away), or 'cross' (region swap; newActiveId set).
+  // CC-C2: walks EVERY connection of the active region (B has two: the A/B
+  // chokepoint plane and the B/C door). A region with one connection (A,
+  // C) runs exactly the single-connection logic of before.
   RegionManagerLogic.prototype.tickTransition = function (x, z) {
     var result = { action: null, newActiveId: null, mappedPos: null };
-    var conn = DEFS.connectionBetween(this.activeId, DEFS.neighborOf(this.activeId));
-    if (!conn) return result;
+    // CC-C8: only planes that exist in the active region (the C<->D line is
+    // the den mouth: a plane while D is active, nothing while C is)
+    var self = this;
+    var conns = DEFS.connectionsOf(this.activeId).filter(function (c) { return DEFS.planeIn(c, self.activeId); });
+    if (!conns.length) return result;
 
-    var dist = DEFS.distanceToBoundary(conn, z);
-    var neighborId = DEFS.neighborOf(this.activeId);
-    var insideChoke = DEFS.insideChokepoint(conn, x);
-
-    // crossing: player crossed the plane inside the chokepoint corridor.
+    // crossing: player crossed the plane inside the chokepoint corridor (or
+    // a door's window; a locked door never crosses - game.js gate predicate).
     // Direction-agnostic: fires when the player's plane side differs from the
     // ACTIVE region's home side (walking into the neighbor's half), so both
     // A->B and B->A crossings trigger. (The old code compared against the
     // fixed conn.fromSide, which made B->A returns impossible.)
-    var sideNow = DEFS.sideOfPlane(conn, z);
-    var activeSide = DEFS.regions[this.activeId].side;
-    if (insideChoke && sideNow !== activeSide) {
-      // map position across, preserving approach direction: place the player
-      // just past the plane ON THE NEIGHBOR'S HOME SIDE (not merely the
-      // opposite of their current side, which can re-trigger a cross back).
-      var mapped = DEFS.mapPositionAcross(conn, x, z, 2,
-        DEFS.regions[neighborId].side);
-      result.action = 'cross';
-      result.newActiveId = neighborId;
-      result.mappedPos = mapped;
-      this.stateFor(this.activeId).crossed++;
-      this.stateFor(neighborId).crossed++;
-      this.activeId = neighborId;
-      this.prewarmedId = null;         // consumed by the swap
-      this.buildCounts[neighborId] = (this.buildCounts[neighborId] || 0) + 1;
-      return result;
+    for (var i = 0; i < conns.length; i++) {
+      var conn = conns[i];
+      var neighborId = DEFS.otherEnd(conn, this.activeId);
+      var open = conn.door ?
+        DEFS.insideDoorWindow(conn, x) && !this.doorLocked(conn, neighborId) :
+        DEFS.insideChokepoint(conn, x);
+      var sideNow = DEFS.sideOfPlane(conn, z);
+      var activeSide = DEFS.sideIn(conn, this.activeId);
+      if (open && sideNow !== activeSide) {
+        // map position across, preserving approach direction: place the player
+        // just past the plane ON THE NEIGHBOR'S HOME SIDE (not merely the
+        // opposite of their current side, which can re-trigger a cross back).
+        var mapped = DEFS.mapPositionAcross(conn, x, z, 2,
+          DEFS.sideIn(conn, neighborId));
+        // CC-C8: a door with land rows puts the player on the destination's row
+        if (conn.door && conn.door.land && conn.door.land[neighborId]) mapped = landRow(conn, neighborId);
+        result.action = 'cross';
+        result.newActiveId = neighborId;
+        result.mappedPos = mapped;
+        result.conn = conn;
+        this.stateFor(this.activeId).crossed++;
+        this.stateFor(neighborId).crossed++;
+        this.activeId = neighborId;
+        this.prewarmedId = null;         // consumed by the swap
+        this.buildCounts[neighborId] = (this.buildCounts[neighborId] || 0) + 1;
+        return result;
+      }
     }
 
-    // pre-warm: close to boundary, approach direction faces the neighbor
-    if (dist <= this.preWarmDistance && this.prewarmedId !== neighborId) {
-      this.prewarmedId = neighborId;
-      this.buildCounts[neighborId] = (this.buildCounts[neighborId] || 0) + 1;
+    // pre-warm: close to the NEAREST connection's plane, approach direction
+    // faces that neighbor. One pre-warm slot: a held pre-warm is only
+    // replaced after the hysteresis below disposes it (no rebuild thrash
+    // between B's two planes; with one connection this is the old
+    // prewarmedId !== neighborId test).
+    var near = conns[0];
+    for (var j = 1; j < conns.length; j++) {
+      if (DEFS.distanceToBoundary(conns[j], z) < DEFS.distanceToBoundary(near, z)) near = conns[j];
+    }
+    var dist = DEFS.distanceToBoundary(near, z);
+    var nearId = DEFS.otherEnd(near, this.activeId);
+    if (dist <= this.preWarmDistance && this.prewarmedId === null) {
+      this.prewarmedId = nearId;
+      this.buildCounts[nearId] = (this.buildCounts[nearId] || 0) + 1;
       result.action = 'prewarm';
       return result;
     }
 
-    // hysteresis: player turned back beyond pre-warm band -> dispose pre-warm
-    if (this.prewarmedId !== null &&
-        dist > this.preWarmDistance + this.hysteresisDistance) {
-      this.prewarmedId = null;
-      result.action = 'dispose';
-      return result;
+    // hysteresis: player turned back beyond pre-warm band of the pre-warmed
+    // neighbor's own plane -> dispose pre-warm
+    if (this.prewarmedId !== null) {
+      var pc = DEFS.connectionBetween(this.activeId, this.prewarmedId);
+      if (!pc || DEFS.distanceToBoundary(pc, z) > this.preWarmDistance + this.hysteresisDistance) {
+        this.prewarmedId = null;
+        result.action = 'dispose';
+        return result;
+      }
     }
 
     return result;
+  };
+
+  // CC-C8: a door's landing row for a crossing INTO regionId (+ facing)
+  function landRow(conn, regionId) {
+    var L = conn.door.land[regionId];
+    return { x: L.x, z: L.z, faceX: L.faceX, faceZ: L.faceZ };
+  }
+
+  // CC-C8 E-to-enter: the interact door (conn.door.interact) whose C-side
+  // hook is within its radius of pos, or null. Never while the far side is
+  // the active region (the den exits by walking the mouth plane).
+  RegionManagerLogic.prototype.portalNear = function (pos) {
+    var conns = DEFS.connectionsOf(this.activeId);
+    for (var i = 0; i < conns.length; i++) {
+      var I = conns[i].door ? conns[i].door.interact : null;
+      if (!I || I.from !== this.activeId) continue;
+      var dx = pos.x - I.x, dz = pos.z - I.z;
+      if (dx * dx + dz * dz <= I.radius * I.radius) return conns[i];
+    }
+    return null;
+  };
+
+  // CC-C8: the 'cross' of tickTransition fired by an interact (no plane
+  // walk): logic re-pointed to the other end, the player mapped onto its
+  // land row. The region LEFT is kept as the pre-warm (game.js / the live
+  // manager hide it instead of disposing): walking back out is an instant
+  // swap, and its hysteresis never fires inside the 34 m den.
+  RegionManagerLogic.prototype.forceCross = function (conn) {
+    var oldId = this.activeId;
+    var neighborId = DEFS.otherEnd(conn, oldId);
+    this.stateFor(oldId).crossed++;
+    this.stateFor(neighborId).crossed++;
+    this.activeId = neighborId;
+    this.prewarmedId = oldId;
+    this.buildCounts[neighborId] = (this.buildCounts[neighborId] || 0) + 1;
+    return { action: 'cross', newActiveId: neighborId, mappedPos: landRow(conn, neighborId), conn: conn };
+  };
+
+  // CC-C2 tutorial-law gate: crossings INTO conn.door.gatedTo are locked
+  // while the predicate game.js installs (doorGate = !dayNight.dormant
+  // inverted: true = locked) says so. No predicate = open.
+  RegionManagerLogic.prototype.doorGate = null;
+  RegionManagerLogic.prototype.doorLocked = function (conn, toId) {
+    return !!(conn.door && conn.door.gatedTo === toId && this.doorGate && this.doorGate(conn));
+  };
+
+  // CC-C2 radial suspension: inside an OPEN door window within suspendDepthM
+  // of the plane the active region's rim clamp does not apply, so a player
+  // whose disc ends short of the line (C: rim z = -87.5, line -86) can reach
+  // and cross it. The far half of the band only while the door is open
+  // (that frame crosses); a locked door keeps the rim on the far half, so
+  // a player in B's north strip never gains ground past B's rim.
+  RegionManagerLogic.prototype.inOpenDoorBand = function (pos) {
+    var conns = DEFS.connectionsOf(this.activeId);
+    for (var i = 0; i < conns.length; i++) {
+      var conn = conns[i];
+      if (!conn.door || !DEFS.insideDoorWindow(conn, pos.x)) continue;
+      if (!DEFS.planeIn(conn, this.activeId)) continue;   // CC-C8: no plane here
+      var d = DEFS.sideIn(conn, this.activeId) * (pos.z - conn.planeCoord);
+      if (d > conn.door.suspendDepthM || -d > conn.door.suspendDepthM) continue;
+      if (d >= 0 || !this.doorLocked(conn, DEFS.otherEnd(conn, this.activeId))) return true;
+    }
+    return false;
+  };
+
+  // CC-C2 gate AT the line: on the frame the player would cross a LOCKED
+  // door plane out of the active region's home half inside the window, z
+  // is held at the line (crossing-frame hold, not a positional yank).
+  // prevZ = this frame's pre-move z (game.js). A player already past the
+  // line (stepped sideways into the window from B's north strip) is never
+  // held; moving back toward home is always free.
+  RegionManagerLogic.prototype.holdAtLockedDoor = function (prevZ, pos) {
+    var conns = DEFS.connectionsOf(this.activeId);
+    var held = false;
+    for (var i = 0; i < conns.length; i++) {
+      var conn = conns[i];
+      if (!conn.door || !DEFS.insideDoorWindow(conn, pos.x)) continue;
+      if (!this.doorLocked(conn, DEFS.otherEnd(conn, this.activeId))) continue;
+      var s = DEFS.sideIn(conn, this.activeId);
+      if (s * (prevZ - conn.planeCoord) >= 0 && s * (pos.z - conn.planeCoord) < 0) {
+        pos.z = conn.planeCoord;
+        held = true;
+      }
+    }
+    return held;
+  };
+
+  // CC-C2: is the player near a door's arch while it is locked toward the
+  // other side? (game.js reason toast + interact prompt)
+  RegionManagerLogic.prototype.lockedDoorNear = function (pos, radius) {
+    var conns = DEFS.connectionsOf(this.activeId);
+    for (var i = 0; i < conns.length; i++) {
+      var conn = conns[i];
+      if (!conn.door || !this.doorLocked(conn, DEFS.otherEnd(conn, this.activeId))) continue;
+      var dx = pos.x - conn.door.doorX, dz = pos.z - conn.planeCoord;
+      if (dx * dx + dz * dz <= radius * radius) return conn;
+    }
+    return null;
   };
 
   // Boundary clamp for the player: blocked everywhere except inside the
@@ -96,9 +220,13 @@
   // position's current side: a player who walks past the plane outside the
   // corridor is trespassing on the neighbor's side and must be pushed back
   // into their own region, regardless of which side they are now on.
+  // CC-C2: plane 0 applies to its members only (C is not on it); door
+  // connections have NO plane clamp (the plane is a cross-line in the
+  // window, see holdAtLockedDoor).
   RegionManagerLogic.prototype.clampPlayerPlane = function (pos) {
     var conn = DEFS.connections[0];
     if (!conn) return false;
+    if (!DEFS.isMember(conn, this.activeId)) return false;
     var insideChoke = DEFS.insideChokepoint(conn, pos.x);
     if (insideChoke) return false;     // free passage in the corridor
     var homeSide = DEFS.regions[this.activeId].side;   // +1 for A, -1 for B
@@ -113,10 +241,30 @@
   };
 
   // Enemies never cross: hold at the boundary on the home-region side.
+  // CC-C2: per-connection. A/B homes run today's plane-0 rules unchanged;
+  // a home off plane 0 (C) holds margin-deep on its side of EVERY
+  // connection it is a member of, then inside its own disc. (C spawns no
+  // enemies in CC-C2: the rows exist for the next order.)
   RegionManagerLogic.prototype.clampEnemyToHomeSide = function (enemy, boundary) {
     var conn = DEFS.connections[0];
     if (!conn) return false;
     var margin = CFG.enemy.holdAtBoundaryMargin;
+    if (!DEFS.isMember(conn, enemy.homeRegionId)) {
+      var held = false;
+      var homeConns = DEFS.connectionsOf(enemy.homeRegionId);
+      for (var c = 0; c < homeConns.length; c++) {
+        // CC-C8: a plane that does not exist in the home (C's view of the
+        // den mouth) holds nobody; the den's own enemies stay behind it
+        if (!DEFS.planeIn(homeConns[c], enemy.homeRegionId)) continue;
+        var hs = DEFS.sideIn(homeConns[c], enemy.homeRegionId);
+        var lim = homeConns[c].planeCoord + hs * margin;
+        if (hs * (enemy.pos.z - lim) < 0) { enemy.pos.z = lim; held = true; }
+      }
+      var home = DEFS.regions[enemy.homeRegionId];
+      if (home && home.center &&
+          whClampRadialAt(enemy.pos, whPlayRadius(enemy.homeRegionId), home.center)) held = true;
+      return held;
+    }
     var isHomeA = enemy.homeRegionId === CFG.regionA.id;
     var clamped = false;
     if (isHomeA) {
@@ -139,8 +287,16 @@
   // ---- R5 P0-5: world bounds + prop colliders (no THREE import) -------------
 
   // Playable disc radius: player and enemies are held inside it.
-  function whPlayRadius() {
-    return CFG.world.groundRadius - CFG.world.playerMargin;
+  // CC-C2: per region (regionId optional): a region's own groundRadius
+  // (C = 280) else the global CFG.world.groundRadius (A/B, and every
+  // no-argument caller: today's value). playerMargin stays global.
+  function whGroundRadius(regionId) {
+    var reg = regionId ? DEFS.regions[regionId] : null;
+    return (reg && reg.groundRadius) || CFG.world.groundRadius;
+  }
+
+  function whPlayRadius(regionId) {
+    return whGroundRadius(regionId) - CFG.world.playerMargin;
   }
 
   // Visual ground radius per region. FogExp2 is 95% opaque at
@@ -150,7 +306,13 @@
     var W = CFG.world;
     var d95 = Math.sqrt(-Math.log(1 - W.fogOpaqueFrac)) /
       DEFS.regions[regionId].fogDensity;
-    return Math.max(W.groundRadius, whPlayRadius() + W.visualGroundFogMult * d95);
+    var r = Math.max(whGroundRadius(regionId),
+      whPlayRadius(regionId) + W.visualGroundFogMult * d95);
+    // CC-C3: a region may floor it (C: the edge past the 1/255 fog depth of
+    // its thinnest phase fog from any reachable camera); A/B leave the row
+    // unset = the formula alone
+    var floor = DEFS.regions[regionId].cfg.visualGroundMinRadius;
+    return floor ? Math.max(r, floor) : r;
   }
 
   // Radial rim clamp that respects a home-side plane limit (limitZ null = no
@@ -167,6 +329,95 @@
       pos.x = (pos.x < 0 ? -1 : 1) * Math.sqrt(Math.max(0, r * r - limitZ * limitZ));
     }
     return true;
+  }
+
+  // CC-C2: rim clamp for a region with its own disc center (no plane limit:
+  // C's sides are door cross-lines, not walls).
+  function whClampRadialAt(pos, r, center) {
+    pos.x -= center.x;
+    pos.z -= center.z;
+    var hit = whClampRadial(pos, r, 1, null);
+    pos.x += center.x;
+    pos.z += center.z;
+    return hit;
+  }
+
+  // P1-3 chord-cut ground split (io/specs/P1-3-crossfade-ground-split-spec.md
+  // sec "Ground split"): a no-center region's flat ground disc is cut at the
+  // CFG.boundary.z plane so a region's silhouettes can stand on the far side
+  // of the boundary during the region crossfade without poking through the
+  // other region's fogged ground. R (the shared-disc visual radius) and the
+  // world plane z are passed in; the caller derives them from
+  // whVisualGroundRadius(regionId) / CFG.boundary.z at build time. Shape
+  // space maps to world by the same -PI/2 X flip the old CircleGeometry disc
+  // used: shape (x, y) -> world (x, 0, -y), so the world chord z = plane is
+  // the shape line y = s = -plane and the home half is
+  //   A (side > 0, world z >= plane): shape y <= s (the shape BOTTOM arc)
+  //   B (side < 0, world z <= plane): shape y >= s (the shape TOP arc).
+  // Chord-endpoint angle a0 = asin(s / R); A's arc runs CCW
+  // [PI - a0 .. 2PI + a0] (through the bottom), B's runs CCW
+  // [a0 .. PI - a0] (through the top). Both halves close along the chord
+  // line through the shared midpoint vertex (0, s), so their boundary-edge
+  // structure on the seam matches exactly (same collinear sub-edges):
+  // flush meet, no gap, no overlap, no T-junction vertex on a neighbor's
+  // edge. Returns the point list [ seamMid, arc points..., ] for
+  // whMeshFromShape; null when a degenerate guard fails (callers keep the
+  // full disc).
+  function whGroundHalfDiscPoints(R, plane, side) {
+    if (!(R > 0) || Math.abs(plane) >= R) return null;
+    var s = -plane;                              // shape-space chord line
+    var a0 = Math.asin(s / R);                   // right chord-end angle
+    var chordHalf = R * Math.cos(a0);            // = sqrt(R*R - plane*plane)
+    if (!(chordHalf > 0)) return null;
+    var pts = [ { x: 0, y: s } ];                // seam midpoint (T junction)
+    var n = 24;                                  // arc segments per half
+    var i, ang;
+    if (side > 0) {
+      // A: CCW from the left chord end (-chordHalf, s) through the bottom
+      // to the right chord end (+chordHalf, s)
+      for (i = 0; i <= n; i++) {
+        ang = (Math.PI - a0) + (Math.PI + 2 * a0) * (i / n);
+        pts.push({ x: Math.cos(ang) * R, y: Math.sin(ang) * R });
+      }
+    } else {
+      // B: CCW from the right chord end (+chordHalf, s) through the top
+      // to the left chord end (-chordHalf, s)
+      for (i = 0; i <= n; i++) {
+        ang = a0 + (Math.PI - 2 * a0) * (i / n);
+        pts.push({ x: Math.cos(ang) * R, y: Math.sin(ang) * R });
+      }
+    }
+    return pts;
+  }
+
+  // P1-3 (spec sec "Ground split"): build one home-half ground mesh from the
+  // constructed points via THREE.Shape + THREE.ShapeGeometry (shape y = +z
+  // world, shape x = x world: same convention as the old
+  // ground.rotation.x = -PI/2). World UV = world coords, so a half keeps its
+  // place on the disc's repeating canvas texture. DoubleSide + +z normals:
+  // visible from either face. Returns null on any guard failure (callers
+  // must fall back to the full disc).
+  function whMeshFromShape(pts) {
+    var shape = null, i;
+    try {
+      shape = new THREE.Shape();
+      shape.moveTo(pts[0].x, pts[0].y);
+      for (i = 1; i < pts.length; i++) shape.lineTo(pts[i].x, pts[i].y);
+      var geo = new THREE.ShapeGeometry(shape, 1);
+      return new THREE.Mesh(geo, null);
+    } catch (err) {
+      return null;
+    }
+  }
+
+  // P1-3: whGroundRadius (CC-C2) with a C fallback row: an id with no
+  // regions[] record (the round's id-string guards) reads CFG.regionC.
+  function whGroundRadiusOf(regionId) {
+    var reg = DEFS.regions[regionId];
+    if (reg) return whGroundRadius(regionId);
+    var cfgId = (CFG.regionC && CFG.regionC.id) === regionId ? CFG.regionC :
+      ((CFG.regionD && CFG.regionD.id) === regionId ? CFG.regionD : null);
+    return (cfgId && cfgId.groundRadius) || CFG.world.groundRadius;
   }
 
   // Does a prop circle meet the gate corridor rectangle (chokepoint x-span,
@@ -211,6 +462,20 @@
       var p = props[i];
       var m = meta(p.asset);
       if (!m) out.complete = false;
+      // CC-C8: a raised row (the outcrop lintel) takes no ground collider; a
+      // wall row (per-axis segment) takes p.wall circles r collider.r along
+      // its local X (the boundaryWall segCircles tech) instead of one circle
+      if (p.noCollide) continue;
+      if (p.wall) {
+        if (!m) continue;
+        var WR = CFG.boundaryWall.collider.r, len = m.width * p.scale;
+        var ax = Math.cos(p.rotY), az = -Math.sin(p.rotY);
+        for (var k = 0; k < p.wall; k++) {
+          var t = ((k + 0.5) / p.wall - 0.5) * len;
+          out.circles.push({ index: i + '.' + k, name: p.asset, x: p.x + ax * t, z: p.z + az * t, r: WR });
+        }
+        continue;
+      }
       var row = { index: i, name: p.asset, x: p.x, z: p.z,
                   r: m ? colliderRadius(p.asset, m.width, p.scale) : 0 };
       if (whMeetsCorridor(p.x, p.z, row.r)) out.exempt.push(row);
@@ -224,7 +489,9 @@
           x: t.x, z: t.z, r: t.r });
       }
     }
-    if (wall) {
+    // CC-C2: the world wall bounds the shared A/B disc only (plane-0
+    // members); C's own disc never takes its circles
+    if (wall && DEFS.isMember(DEFS.connections[0], regionId)) {
       if (!wall.complete) out.complete = false;
       var side = DEFS.regions[regionId].side;
       for (var k = 0; k < wall.colliders.length; k++) {
@@ -241,8 +508,16 @@
   // Full player clamp = boundary plane + radial rim in ONE call (game.js
   // clampPlayerToBounds returns early on true, so the rim must not depend on
   // the plane clamp not firing). Returns true if either clamp fired.
+  // CC-C2: inside an open door band the rim is suspended (inOpenDoorBand);
+  // a region with its own disc (C) clamps to that disc; A/B unchanged.
   RegionManagerLogic.prototype.clampPlayer = function (pos) {
     var plane = this.clampPlayerPlane(pos);
+    if (this.inOpenDoorBand(pos)) return plane;
+    var reg = DEFS.regions[this.activeId];
+    if (reg.center) {
+      var rimC = whClampRadialAt(pos, whPlayRadius(this.activeId), reg.center);
+      return plane || rimC;
+    }
     var conn = DEFS.connections[0];
     var limitZ = (conn && !DEFS.insideChokepoint(conn, pos.x)) ? conn.planeCoord : null;
     var rim = whClampRadial(pos, whPlayRadius(), DEFS.regions[this.activeId].side, limitZ);
@@ -318,6 +593,14 @@
     var moss = whHexToRgb(0x56583a);
     var puddle = whHexToRgb(0x15171a);
     var rand = whRng(isA ? 1013904223 : 2040042217);
+    // CC-C2: a region with its own ground palette (C deep forest) paints
+    // the same recipe from its CONFIG tones + seed
+    var rc = DEFS.regions[regionId].cfg;
+    if (rc.groundColor !== undefined) {
+      dominant = whHexToRgb(rc.groundColor);
+      secondary = whHexToRgb(rc.groundColor2);
+      rand = whRng(rc.groundSeed);
+    }
 
     // Base: dominant tone.
     ctx.fillStyle = whCss(dominant, 0, rand);
@@ -388,6 +671,8 @@
     tex.anisotropy = Math.min(4, caps ? caps.getMaxAnisotropy() : 4);
     tex.colorSpace = THREE.SRGBColorSpace;
     // R5: repeat scales with the visual disc so texel density stays repeat/90
+    // (CC-C2: per-region visual radius, global 90 reference: C's r ~336
+    // disc gets ~45 repeats = the same ~15 m per tile as A/B)
     var rep = gtc.repeat * whVisualGroundRadius(regionId) / CFG.world.groundRadius;
     tex.repeat.set(rep, rep);
     return tex;
@@ -397,13 +682,15 @@
   // cemetery). Visual-only decal strip through region A's south clearing;
   // trees/lanterns are placed by CONFIG generation relative to the same sway
   // centerline x = swayAmp*sin(2pi(z-zFrom)/swayPeriod). No collider.
-  function buildDirtPathCanvas() {
+  // CC-C4a: seed (optional) = a CFG.roads row's textureSeed; A's ribbon
+  // calls with none = today's canvas.
+  function buildDirtPathCanvas(seed) {
     var size = 128;
     var canvas = document.createElement('canvas');
     canvas.width = size;
     canvas.height = size;
     var ctx = canvas.getContext('2d');
-    var rand = whRng(78002024);
+    var rand = whRng(seed || 78002024);
     var dirt = whHexToRgb(0x5a4a33);      // packed-dirt umber (darkwood canon)
     var dirtDark = whHexToRgb(0x463a27);  // wet-mud tone
     var pebble = whHexToRgb(0x6e5f45);
@@ -533,6 +820,157 @@
     return mesh;
   }
 
+  // ---- CC-C4a: the King's Roads (CONFIG.roads polyline rows) ----------------
+  // A road row is A's dirtPath recipe (halfWidth, tileLengthMeters,
+  // repeatAcrossWidth, the dirt canvas) on a WAYPOINT centerline instead of
+  // the z-swayed line: points = [[x, z], ...] through a Catmull-Rom curve
+  // (or ring = {x, z, r}: a closed circle), resampled every ROAD_STEP_M of
+  // arc, then pushed sideways by swayAmp * sin(2pi s / swayPeriod), ramped
+  // to 0 over swayRampM at both ends so junctions + notch mouths stay put.
+  // A's CFG.world.dirtPath row is NOT migrated: whRoadsFor lists it first
+  // for its region and every caller reads it through whDistToPath exactly as
+  // before (A byte-identical); rows here carry points/ring and take the
+  // polyline path. Lines are pure (no THREE), cached per row id.
+  var ROAD_STEP_M = 2;
+  var ROAD_LINES = {};
+  function whRoadLine(R) {
+    if (ROAD_LINES[R.id]) return ROAD_LINES[R.id];
+    var raw = [], i, k;
+    if (R.ring) {
+      var nr = Math.ceil(2 * Math.PI * R.ring.r / ROAD_STEP_M);
+      for (i = 0; i <= nr; i++) {
+        var th = 2 * Math.PI * i / nr;
+        raw.push(R.ring.x + R.ring.r * Math.cos(th), R.ring.z + R.ring.r * Math.sin(th));
+      }
+    } else {
+      var P = R.points;
+      for (i = 0; i < P.length - 1; i++) {
+        var p0 = P[Math.max(0, i - 1)], p1 = P[i], p2 = P[i + 1], p3 = P[Math.min(P.length - 1, i + 2)];
+        var segN = Math.max(1, Math.ceil(Math.sqrt((p2[0] - p1[0]) * (p2[0] - p1[0]) +
+          (p2[1] - p1[1]) * (p2[1] - p1[1])) / ROAD_STEP_M));
+        for (k = 0; k < segN; k++) {
+          var t = k / segN, t2 = t * t, t3 = t2 * t;
+          raw.push(
+            0.5 * (2 * p1[0] + (p2[0] - p0[0]) * t + (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 +
+              (3 * p1[0] - p0[0] - 3 * p2[0] + p3[0]) * t3),
+            0.5 * (2 * p1[1] + (p2[1] - p0[1]) * t + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 +
+              (3 * p1[1] - p0[1] - 3 * p2[1] + p3[1]) * t3));
+        }
+      }
+      raw.push(P[P.length - 1][0], P[P.length - 1][1]);
+    }
+    var n = raw.length / 2, s = [0];
+    for (i = 1; i < n; i++) {
+      var ex = raw[2 * i] - raw[2 * i - 2], ez = raw[2 * i + 1] - raw[2 * i - 1];
+      s.push(s[i - 1] + Math.sqrt(ex * ex + ez * ez));
+    }
+    var L = s[n - 1], amp = R.swayAmp || 0, ramp = R.swayRampM || 1;
+    var pts = [], minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+    for (i = 0; i < n; i++) {
+      var a = Math.max(0, i - 1), b = Math.min(n - 1, i + 1);
+      var tx = raw[2 * b] - raw[2 * a], tz = raw[2 * b + 1] - raw[2 * a + 1];
+      var tl = Math.sqrt(tx * tx + tz * tz) || 1;
+      var w = Math.min(1, s[i] / ramp, (L - s[i]) / ramp);
+      w = w * w * (3 - 2 * w);
+      var off = amp ? amp * w * Math.sin(2 * Math.PI * s[i] / R.swayPeriod) : 0;
+      var x = raw[2 * i] + tz / tl * off, z = raw[2 * i + 1] - tx / tl * off;
+      pts.push(x, z);
+      minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+      minZ = Math.min(minZ, z); maxZ = Math.max(maxZ, z);
+    }
+    return (ROAD_LINES[R.id] = { pts: pts, n: n,
+      minX: minX, maxX: maxX, minZ: minZ, maxZ: maxZ });
+  }
+
+  // Every road of a region: A's dirtPath row (if its region) + CFG.roads rows.
+  function whRoadsFor(regionId) {
+    var out = [], DP = CFG.world.dirtPath;
+    if (DP && DP.regionId === regionId) out.push(DP);
+    (CFG.roads || []).forEach(function (R) { if (R.regionId === regionId) out.push(R); });
+    return out;
+  }
+
+  // Horizontal distance from (x, z) to a road's centerline. A's dirtPath row:
+  // whDistToPath (unchanged). Polyline rows: exact within ROAD_FAR_M of the
+  // line's bounding box, else the box distance (a lower bound - every caller
+  // only asks "closer than a band <= ROAD_FAR_M?").
+  var ROAD_FAR_M = 30;
+  function whDistToRoad(R, x, z) {
+    if (!R.points && !R.ring) return whDistToPath(R, x, z);
+    var Ln = whRoadLine(R);
+    var bx = Math.max(Ln.minX - x, 0, x - Ln.maxX), bz = Math.max(Ln.minZ - z, 0, z - Ln.maxZ);
+    var bd = Math.sqrt(bx * bx + bz * bz);
+    if (bd > ROAD_FAR_M) return bd;
+    var p = Ln.pts, best = Infinity;
+    for (var i = 0; i < Ln.n - 1; i++) {
+      var ax = p[2 * i], az = p[2 * i + 1];
+      var ex = p[2 * i + 2] - ax, ez = p[2 * i + 3] - az;
+      var len2 = ex * ex + ez * ez;
+      var t = len2 > 0 ? ((x - ax) * ex + (z - az) * ez) / len2 : 0;
+      t = Math.max(0, Math.min(1, t));
+      var dx = x - (ax + ex * t), dz = z - (az + ez * t);
+      var d = dx * dx + dz * dz;
+      if (d < best) best = d;
+    }
+    return Math.sqrt(best);
+  }
+
+  // Ribbon for one CFG.roads row: 3 vertices across (edge, center, edge) so a
+  // cross-slope crease of the heightfield cannot swallow the middle; every
+  // vertex seats on WH_GROUND.heightAt + R.lift in a heightfield region
+  // (else R.lift over y 0). Same decal material recipe as A's ribbon.
+  var ROAD_CANVAS = {};
+  function buildRoad(regionId, R) {
+    var Ln = whRoadLine(R), p = Ln.pts, hw = R.halfWidth;
+    var G = window.WH_GROUND, terr = G && G.has(regionId);
+    var positions = [], uvs = [], indices = [], arc = 0;
+    for (var i = 0; i < Ln.n; i++) {
+      var a = Math.max(0, i - 1), b = Math.min(Ln.n - 1, i + 1);
+      var tx = p[2 * b] - p[2 * a], tz = p[2 * b + 1] - p[2 * a + 1];
+      var tl = Math.sqrt(tx * tx + tz * tz) || 1;
+      var nx = tz / tl, nz = -tx / tl;    // left normal in XZ (A's convention)
+      if (i > 0) {
+        var dx = p[2 * i] - p[2 * i - 2], dz = p[2 * i + 1] - p[2 * i - 1];
+        arc += Math.sqrt(dx * dx + dz * dz);
+      }
+      for (var c = -1; c <= 1; c++) {
+        var vx = p[2 * i] + nx * hw * c, vz = p[2 * i + 1] + nz * hw * c;
+        positions.push(vx, (terr ? G.heightAt(regionId, vx, vz) : 0) + R.lift, vz);
+        uvs.push((c + 1) / 2 * R.repeatAcrossWidth, arc / R.tileLengthMeters);
+      }
+      if (i > 0) {
+        var q = i * 3;
+        indices.push(q - 3, q, q - 2,  q - 2, q, q + 1,
+                     q - 2, q + 1, q - 1,  q - 1, q + 1, q + 2);
+      }
+    }
+    var geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3));
+    geo.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(uvs), 2));
+    geo.setIndex(indices);
+    geo.computeVertexNormals();
+    var cv = ROAD_CANVAS[R.textureSeed] = ROAD_CANVAS[R.textureSeed] ||
+      buildDirtPathCanvas(R.textureSeed);
+    var tex = new THREE.CanvasTexture(cv);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.magFilter = THREE.NearestFilter;
+    tex.minFilter = THREE.NearestMipmapLinearFilter;
+    tex.generateMipmaps = true;
+    tex.colorSpace = THREE.SRGBColorSpace;
+    var caps = window.WH_GAME && window.WH_GAME.renderer &&
+      window.WH_GAME.renderer.capabilities;
+    tex.anisotropy = Math.min(4, caps ? caps.getMaxAnisotropy() : 4);
+    var mat = new THREE.MeshStandardMaterial({
+      color: 0xffffff, map: tex,
+      roughness: 1.0, metalness: 0.0, side: THREE.DoubleSide,
+      polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1
+    });
+    var mesh = new THREE.Mesh(geo, mat);
+    mesh.name = 'road-' + R.id;
+    return mesh;
+  }
+
   // ---- Round E: seeded vegetation scatter (THREE-free, pure) -----------------
   // whScatterPlan(regionId, meta) is a pure function of CONFIG (scatter block,
   // region props/spawn/enemies/nodes, dirt path, boundary/chokepoint) and the
@@ -561,22 +999,53 @@
     return rows[rows.length - 1];
   }
 
+  // CC-C4a: a region's scatter params = CFG.scatter with the region's
+  // cfg.scatterOverrides laid over it (one level deep: an object key merges
+  // key-by-key, anything else - arrays, numbers - replaces). No override
+  // row (A/B) = CFG.scatter itself, the very same object.
+  function whScatterCfg(cfg) {
+    var SC = CFG.scatter, O = cfg.scatterOverrides;
+    if (!O) return SC;
+    var out = {};
+    Object.keys(SC).forEach(function (k) { out[k] = SC[k]; });
+    Object.keys(O).forEach(function (k) {
+      var base = SC[k], ov = O[k];
+      if (base && ov && typeof base === 'object' && typeof ov === 'object' &&
+          !Array.isArray(base) && !Array.isArray(ov)) {
+        var m = {};
+        Object.keys(base).forEach(function (j) { m[j] = base[j]; });
+        Object.keys(ov).forEach(function (j) { m[j] = ov[j]; });
+        out[k] = m;
+      } else {
+        out[k] = ov;
+      }
+    });
+    return out;
+  }
+
+  // meta(name) -> {width, height}; CC-C4a: meta.heightAt(x, z) (optional) =
+  // the terrain seat, carried on every instance as y (the plan stays pure:
+  // the caller hands the height function in; none = no y, A/B as before).
   function whScatterPlan(regionId, meta) {
-    var SC = CFG.scatter;
     var plan = { trees: [], instances: {}, complete: true,
       stats: { trees: 0, treeMisses: 0, ringBushes: 0, ringSkipped: 0,
                freeBushes: 0, grass: 0 } };
-    if (!SC || !SC.enabled) return plan;
+    if (!CFG.scatter || !CFG.scatter.enabled) return plan;
     var reg = DEFS.regions[regionId];
     var cfg = reg.cfg;
+    if (cfg.scatter === false) return plan;   // CC-C2 gate (a region may still opt out)
+    var SC = whScatterCfg(cfg);
     var C = SC.clear;
     var side = reg.side;
     var plane = CFG.boundary.z;
-    var rPlay = whPlayRadius();
-    var DP = CFG.world.dirtPath;
-    var hasPath = !!(DP && DP.regionId === regionId);
+    // CC-C4a: an own-disc region (C) samples + bounds on its disc; A/B: the
+    // shared disc at the origin with the plane side test (unchanged calls)
+    var ctr = reg.center;
+    var rPlay = ctr ? whPlayRadius(regionId) : whPlayRadius();
+    var roads = whRoadsFor(regionId);
     var gx = CFG.chokepoint.centerX;
     var TWO_PI = Math.PI * 2;
+    var heightAt = meta.heightAt || null;
 
     function m(name) {
       var v = meta(name);
@@ -604,17 +1073,42 @@
     var enemyCount = (cfg.enemies || []).length;
 
     function inRegion(x, z, pad) {
+      if (ctr) {
+        var cx = x - ctr.x, cz = z - ctr.z;
+        // CC-C4b: no flora on the rim ring (clear.floraMaxH, C only)
+        if (heightAt && C.floraMaxH !== undefined && heightAt(x, z) > C.floraMaxH) return false;
+        return Math.sqrt(cx * cx + cz * cz) <= rPlay - pad;
+      }
       if (Math.sqrt(x * x + z * z) > rPlay - pad) return false;
       return side === 1 ? z > plane + pad : z < plane - pad;
     }
-    // spawn + gate (point and collider corridor) + path band
+    // road bands: pathM = a fixed band from every centerline (trees, free
+    // bushes); null = each road's own ribbon half-width + grass.pathPadM
+    // (grass, rings, colonies). A: its one dirtPath row, the same tests.
+    function nearRoad(x, z, pathM) {
+      for (var r = 0; r < roads.length; r++) {
+        var lim = pathM === null ? roads[r].halfWidth + SC.grass.pathPadM : pathM;
+        if (whDistToRoad(roads[r], x, z) < lim) return true;
+      }
+      return false;
+    }
+    // CC-C2: door mouths of this region's door connections stay clear like
+    // the A/B gate point (gateM); A has none
+    var doors = DEFS.connectionsOf(regionId).filter(function (c) {
+      return !!c.door && DEFS.planeIn(c, regionId);   // CC-C8: physical doors only
+    });
+    // spawn + gate (point and collider corridor) + door mouths + path band
     function clearOfWorld(x, z, pathM) {
       var dx = x - reg.spawn.x, dz = z - reg.spawn.z;
       if (dx * dx + dz * dz < C.spawnM * C.spawnM) return false;
       dx = x - gx; dz = z - plane;
       if (dx * dx + dz * dz < C.gateM * C.gateM) return false;
+      for (var d = 0; d < doors.length; d++) {
+        dx = x - doors[d].door.doorX; dz = z - doors[d].planeCoord;
+        if (dx * dx + dz * dz < C.gateM * C.gateM) return false;
+      }
       if (whMeetsCorridor(x, z, 0)) return false;
-      if (hasPath && whDistToPath(DP, x, z) < pathM) return false;
+      if (nearRoad(x, z, pathM)) return false;
       return true;
     }
     var keepOut = (SC.keepOut || []).filter(function (k) { return k.regionId === regionId; });
@@ -645,11 +1139,13 @@
     function sampleDisc(rand) {
       var rr = rPlay * Math.sqrt(rand());
       var th = TWO_PI * rand();
+      if (ctr) return { x: ctr.x + rr * Math.cos(th), z: ctr.z + rr * Math.sin(th) };
       return { x: rr * Math.cos(th), z: rr * Math.sin(th) };
     }
     function addInstance(name, x, z, rotY, scale) {
-      (plan.instances[name] = plan.instances[name] || []).push(
-        { x: x, z: z, rotY: rotY, scale: scale });
+      var it = { x: x, z: z, rotY: rotY, scale: scale };
+      if (heightAt) it.y = heightAt(x, z);   // CC-C4a: exact terrain seat (C)
+      (plan.instances[name] = plan.instances[name] || []).push(it);
     }
 
     // 1. extra trees: best-candidate - of N valid samples keep the one
@@ -691,7 +1187,7 @@
     plan.stats.trees = plan.trees.length;
 
     var B = SC.bushes;
-    var grassPathM = hasPath ? DP.halfWidth + SC.grass.pathPadM : 0;
+    var grassPathM = null;               // per-road ribbon band (nearRoad)
     function bushPick(rand, rows) {
       var bp = whPickWeighted(rand, rows);
       var h = lerp([bp[2], bp[3]], rand());
@@ -703,6 +1199,9 @@
 
     // 2. bush rings around EVERY tree (CONFIG ring hosts, then scatter trees)
     var R = B.atTreeRing;
+    // CC-C4a: R.pathM (optional, C) = rings keep the trees' centerline band;
+    // unset (A/B) = the ribbon band, as before
+    var ringPathM = R.pathM !== undefined ? R.pathM : grassPathM;
     var rr2 = stream('rings');
     for (var h = 0; h < trees.length; h++) {
       var host = trees[h];
@@ -713,7 +1212,7 @@
         var rad = host.trunk * lerp(R.radiusFrac, rr2());
         var bp2 = bushPick(rr2, R.assets || B.assets);
         var bx = host.x + Math.cos(ang) * rad, bz = host.z + Math.sin(ang) * rad;
-        if (!inRegion(bx, bz, 0) || !clearOfWorld(bx, bz, grassPathM) ||
+        if (!inRegion(bx, bz, 0) || !clearOfWorld(bx, bz, ringPathM) ||
             hitsCircles(bx, bz, bp2.own, host)) { plan.stats.ringSkipped++; continue; }
         addInstance(bp2.name, bx, bz, bp2.rotY, bp2.scale);
         plan.stats.ringBushes++;
@@ -746,6 +1245,41 @@
       addInstance(G.asset, gs.x, gs.z, grot, gsc);
       plan.stats.grass++;
     }
+
+    // 5. CC-C4a ground colonies (SC.groundLayers, absent for A/B): per layer
+    // `clusters` colonies of [min,max] items within spreadM of a seed point;
+    // seeds obey the tree/free-bush rules (+ nearTreeFrac of them start at a
+    // ring host's trunk band), items the grass rules. Fixed draws per item.
+    (SC.groundLayers || []).forEach(function (L) {
+      var lm = m(L.asset);
+      var rl = stream('layer:' + L.id);
+      var made = 0, items = 0;
+      for (var la = 0; la < L.clusters * 30 && made < L.clusters; la++) {
+        var ls = sampleDisc(rl);
+        var nu = rl(), npick = rl(), nang = rl() * TWO_PI, nrad = rl();
+        if (trees.length && nu < L.nearTreeFrac) {
+          var th2 = trees[Math.floor(npick * trees.length)];
+          var rad2 = th2.trunk * lerp(L.treeBandFrac, nrad);
+          ls = { x: th2.x + Math.cos(nang) * rad2, z: th2.z + Math.sin(nang) * rad2 };
+        }
+        if (!inRegion(ls.x, ls.z, C.edgeM) || !clearOfWorld(ls.x, ls.z, C.pathM) ||
+            !clearOfPoints(ls.x, ls.z)) continue;
+        made++;
+        var nItems = L.perCluster[0] + Math.floor(rl() * (L.perCluster[1] - L.perCluster[0] + 1));
+        for (var li = 0; li < nItems; li++) {
+          var lr = L.spreadM * Math.sqrt(rl()), lth = rl() * TWO_PI;
+          var lh = lerp(L.height, rl());
+          var lrot = rl() * TWO_PI;
+          var lsc = lm && lm.height > 0 ? lh / lm.height : 1;
+          var lx = ls.x + lr * Math.cos(lth), lz = ls.z + lr * Math.sin(lth);
+          if (!inRegion(lx, lz, 0) || !clearOfWorld(lx, lz, grassPathM) ||
+              hitsCircles(lx, lz, lm ? lm.width * lsc / 2 : 0, null)) continue;
+          addInstance(L.asset, lx, lz, lrot, lsc);
+          items++;
+        }
+      }
+      plan.stats['layer:' + L.id] = made + '/' + items;
+    });
     return plan;
   }
 
@@ -759,9 +1293,10 @@
   function whWallPlan(meta) {
     var W = CFG.boundaryWall;
     var plan = { segments: [], colliders: [], arch: null, lantern: null, sockets: [],
+      doorArches: [],
       complete: true,
       stats: { ring: 0, chordE: 0, chordW: 0, nudged: 0, drops: 0, dropReasons: [],
-               overDropLimit: false, colliders: 0 } };
+               overDropLimit: false, colliders: 0, doorGap: 0 } };
     if (!W || !W.enabled) return plan;
     var TWO_PI = Math.PI * 2;
     var DEG = Math.PI / 180;
@@ -830,6 +1365,18 @@
     // 1. ring: N segments around the full circle, chord <= length - overlap
     // so neighbours butt; asset alternates; radial jitter is a circular
     // 1-2-1 smoothing of per-segment uniform draws (no hard steps).
+    // CC-C2: door connections cut the ring - a segment whose x-extent meets
+    // the door window (+ wallGapPadM) near the door plane is not built (no
+    // mesh, no colliders); draws are taken first, so no other segment moves
+    var doorConns = DEFS.connections.filter(function (c) { return !!c.door; });
+    function inDoorGap(x, z) {
+      for (var d = 0; d < doorConns.length; d++) {
+        var dr = doorConns[d].door;
+        if (Math.abs(x - dr.doorX) < dr.doorHalfWidth + dr.wallGapPadM + L / 2 &&
+            Math.abs(z - doorConns[d].planeCoord) < L) return true;
+      }
+      return false;
+    }
     var R = W.radius;
     var N = Math.ceil(TWO_PI * R / (L - W.overlapM));
     var rr = stream('ring');
@@ -846,6 +1393,7 @@
       // front face) then points at the disc center
       var rot = -th - Math.PI / 2 + rotJ[i];
       var asset = W.assets[i % W.assets.length];
+      if (inDoorGap(r0 * Math.cos(th), r0 * Math.sin(th))) { plan.stats.doorGap++; continue; }
       var placed = false, why = null;
       for (var nd = 0; nd <= EX.nudgeMaxM + 1e-9; nd += EX.nudgeStepM) {
         var rx = (r0 - nd) * Math.cos(th), rz = (r0 - nd) * Math.sin(th);
@@ -954,6 +1502,105 @@
         }
       }
     }
+    // 5. CC-C2 door arches (region-defs conn.door.arch): the gate-arch fit
+    // math on the door's own row; VISUAL ONLY (no leg colliders - the
+    // door's gate logic is the door; region-manager holdAtLockedDoor)
+    doorConns.forEach(function (c) {
+      var DA = c.door.arch;
+      var dm = DA ? m(DA.asset) : null;
+      if (!dm || !(dm.width > 0)) return;
+      var ds = DA.fitOpening / (DA.openingFrac * dm.width);
+      plan.doorArches.push({ asset: DA.asset, x: DA.x, z: DA.z, rotY: DA.rotY,
+        offsetX: -DA.openingCenterFrac * dm.width * ds,
+        scale: ds, scaleZ: ds * DA.depthScale });
+    });
+    // 6. CC-B2 gate forecourt (io/specs/cc-b2-gate-forecourt-spec.md): iron-
+    // fence runs at z = forecourt.fence.z tying the arch into the chord wall
+    // line + paired lantern posts flanking the approach. ADDITIVE: the stream
+    // 'wall:forecourt' (seed ^ hash of the layer name) seeded draws happen
+    // BEFORE any exclusion/corridor test (butt-discipline law) so a skip never
+    // shifts a later placement; ring/chord/arch/door state above is untouched.
+    // Segments ride the EXISTING generic instancing loop in buildWorld (per-axis
+    // sx/sy/sz, y 0), colliders go into plan.colliders (full footprint r =
+    // width*scale/2 via colliderRadius - ironFence*/lanternPost are NOT trunk-
+    // class), and post sockets carry explicit world y (b3Gate world-socket
+    // precedent: y = height*scale*heightFraction, offset [0,0]).
+    if (W.forecourt) {
+      var F = W.forecourt.fence;
+      var fr = stream('forecourt');          // seeded stream (butt-discipline)
+      var fm = m(F.asset), cm2 = m(F.cornerAsset);
+      if (plan.arch && fm && cm2) {
+        // fence must start OUTSIDE the arch pillar face, never inside it:
+        // max(chordFromX, halfWidth + archPadM + clearM) at plan time
+        var fFromX = Math.max(W.chordFromX,
+          plan.arch.halfWidth + W.forecourt.archPadM + W.forecourt.clearM);
+        var fSpan = F.toX - fFromX;
+        var fLen = fm.width * F.scale;       // sectionLength = meta width * scale
+        var fnc = fSpan > 0
+          ? Math.max(1, Math.ceil(fSpan / (fLen - F.overlapM))) : 0;
+        var fStep = fnc > 0 ? fSpan / fnc : 0;
+        var fcorners = 0, fskips = 0;
+        var fcountE = 0, fcountW = 0;
+        [1, -1].forEach(function (sd) {
+          var kind = sd === 1 ? 'fenceE' : 'fenceW';
+          for (var c = 0; c < fnc; c++) {
+            var isLast = c === fnc - 1;
+            var asset = isLast ? F.cornerAsset : F.asset;
+            var mm2 = isLast ? cm2 : fm;
+            // same seat math both sides (coverage symmetric); the corner rides
+            // the last seat on each side as the run's terminus
+            var x = sd * (fFromX + (c + 0.5) * fStep);
+            // rotY so the section's local X runs along world X; the mirrored
+            // side flips PI to keep the ivy/detail face outward
+            var rotY = sd === 1 ? 0 : Math.PI;
+            fr();                            // fixed seeded draws per placement,
+            fr();                            // taken BEFORE the exclusion test
+            var r = colliderRadius(asset, mm2.width, F.scale);
+            if (whMeetsCorridor(x, F.z, r)) { fskips++; continue; }
+            plan.segments.push({ kind: kind, i: c, asset: asset,
+              x: x, y: 0, z: F.z, rotY: rotY,
+              sx: F.scale, sy: F.scale, sz: F.scale });
+            if (isLast) {
+              fcorners++;
+            }
+            plan.colliders.push({ index: 'forecourt-' + kind + '-' + c,
+              name: asset, x: x, z: F.z, r: r });
+            // fenceE/fenceW count the run's fence SECTIONS per side; the
+            // corner terminus is counted separately in fenceCorners (valspec
+            // A1.e: new collider entries == fenceE + fenceW + fenceCorners)
+            if (!isLast) { if (sd === 1) fcountE++; else fcountW++; }
+          }
+        });
+        plan.stats.fenceE = fcountE;
+        plan.stats.fenceW = fcountW;
+        plan.stats.fenceCorners = fcorners;
+        plan.stats.forecourtSkips = fskips;
+        // posts: 2 fixed CONFIG placements (+ full-footprint colliders + world
+        // sockets with explicit y)
+        var postsPlaced = 0;
+        var PSK = CFG.lightSockets.lanternPost;
+        W.forecourt.posts.forEach(function (P, pi) {
+          var pm2 = m(P.asset);
+          if (!pm2) return;
+          fr();                              // fixed draw per post placement
+          var pr = colliderRadius(P.asset, pm2.width, P.scale);
+          if (whMeetsCorridor(P.x, P.z, pr)) { fskips++; return; }
+          plan.segments.push({ kind: 'post', i: pi, asset: P.asset,
+            x: P.x, y: 0, z: P.z, rotY: P.rotY || 0,
+            sx: P.scale, sy: P.scale, sz: P.scale });
+          postsPlaced++;
+          plan.colliders.push({ index: 'forecourt-post' + pi, name: P.asset,
+            x: P.x, z: P.z, r: pr });
+          if (PSK) {
+            plan.sockets.push({ id: P.asset + '@forecourt' + (P.x < 0 ? 'W' : 'E'),
+              x: P.x, y: pm2.height * P.scale * PSK.heightFraction, z: P.z,
+              intensity: PSK.intensity, weight: 1 });
+          }
+        });
+        plan.stats.posts = postsPlaced;
+        plan.stats.forecourtSkips = fskips;
+      }
+    }
     plan.stats.colliders = plan.colliders.length;
     return plan;
   }
@@ -1006,8 +1653,15 @@
     this.scene = scene;
     this.groups = {};                 // regionId -> THREE.Group (visible or pre-warm)
     this.enemies = {};                // regionId -> [WH_Enemy]
+    this.packs = {};                  // CC-C5: regionId -> derived wolf packs (WH_Enemy.buildPacks)
     this.restoreEnemyState = enemyStateRestoreCb || function () {};
     this.buildCounter = 0;            // mock-observable build counter
+    // P1-3 (io/specs/P1-3-crossfade-ground-split-spec.md): the region LEFT by
+    // the last swap (tickTransition / forceCross / switchTo). Read by game.js
+    // regionFadeTick (the deferred disposal at fade completion) and by the
+    // den-door path (which still disposes it instantly). Cleared immediately
+    // after disposal; a switchTo(null) never fires in game.js.
+    this.previousActiveId = null;
   }
 
   RegionManager.prototype.activeRegionIds = function () {
@@ -1108,6 +1762,18 @@
       }
       group.add(arch);
     }
+    // CC-C2: door arches (world group: seen from both sides of the door)
+    plan.doorArches.forEach(function (D) {
+      var da = new THREE.Group();          // unscaled: origin = opening center
+      da.name = 'door-arch';
+      da.position.set(D.x, 0, D.z);
+      da.rotation.y = D.rotY;
+      var dg = window.WH_ASSETS.instance(D.asset);
+      dg.position.x = D.offsetX;
+      dg.scale.set(D.scale, D.scale, D.scaleZ);
+      da.add(dg);
+      group.add(da);
+    });
     this.scene.add(group);
     this.worldGroup = group;
     return group;
@@ -1118,9 +1784,16 @@
   RegionManager.prototype.scatterPlan = function (regionId) {
     this.scatterPlans = this.scatterPlans || {};
     if (this.scatterPlans[regionId]) return this.scatterPlans[regionId];
-    var plan = whScatterPlan(regionId, function (name) {
+    var meta = function (name) {
       return window.WH_ASSETS.getMeta(name);
-    });
+    };
+    // CC-C4a: a heightfield region seats every instance on the exact B-TRI
+    // ground (tiny ground cover: the exact seat, not footY); A/B: none
+    var G = window.WH_GROUND;
+    if (G && G.has(regionId)) {
+      meta.heightAt = function (x, z) { return G.heightAt(regionId, x, z); };
+    }
+    var plan = whScatterPlan(regionId, meta);
     if (plan.complete) {
       this.scatterPlans[regionId] = plan;
       console.log('[WH scatter] ' + regionId + ' ' + JSON.stringify(plan.stats));
@@ -1188,6 +1861,58 @@
     return report;
   };
 
+  // CC-C4 prop y-feed: the terrain seat under a prop's footprint (min ground
+  // at its center + 4 points at terrain.propFootR) in a heightfield region;
+  // 0 everywhere else (A/B: today's y).
+  function whGroundFeed(regionId, x, z) {
+    var G = window.WH_GROUND;
+    if (!G || !G.has(regionId)) return 0;
+    return G.footY(regionId, x, z, DEFS.regions[regionId].cfg.terrain.propFootR);
+  }
+
+  // CC-C8: per-row tint - clone this instance's materials (the shared
+  // template material stays untouched) and multiply their colour
+  function whTintObject(obj, hex) {
+    var tint = new THREE.Color(hex);
+    obj.traverse(function (o) {
+      if (!o.isMesh || !o.material) return;
+      var list = Array.isArray(o.material) ? o.material : [o.material];
+      var out = list.map(function (m) {
+        var c = m.clone();
+        if (c.color) c.color.multiply(tint);
+        return c;
+      });
+      o.material = Array.isArray(o.material) ? out : out[0];
+    });
+  }
+
+  // CC-C8 outcrop dressing (region C): the rot stains (enemy.js rotPoolMesh,
+  // the CC-C7 nest pool builder: terrain-conforming, one per stains row at
+  // its own radius) + the doorway void (a black card in the recess, fogged
+  // like the rock around it). null when the region has no stains row.
+  function whBuildRotStains(regionId, RL) {
+    if (!RL || !RL.stains || !window.WH_Enemy || !window.WH_Enemy.rotPoolMesh) return null;
+    var g = new THREE.Group();
+    g.name = 'rot-stains';
+    RL.stains.forEach(function (st, k) {
+      var P = {};
+      Object.keys(RL.pool).forEach(function (key) { P[key] = RL.pool[key]; });
+      P.radius = st.radius;
+      P.textureSeed = RL.pool.textureSeed + k;
+      g.add(window.WH_Enemy.rotPoolMesh(regionId, st.x, st.z, P));
+    });
+    if (RL.void) {
+      var V = RL.void;
+      var card = new THREE.Mesh(new THREE.PlaneGeometry(V.width, V.height),
+        new THREE.MeshBasicMaterial({ color: V.color, side: THREE.DoubleSide }));
+      card.name = 'den-door-void';
+      card.position.set(V.x, whGroundFeed(regionId, V.x, V.z) + V.height / 2 - 0.3, V.z);
+      card.rotation.y = V.rotY;
+      g.add(card);
+    }
+    return g;
+  }
+
   // Build a region group from CONFIG data (props + ground + enemies). Pre-warm
   // builds set visible=false.
   RegionManager.prototype.buildRegion = function (regionId, hidden) {
@@ -1204,18 +1929,79 @@
 
     // ground disc: procedural pixel-art canvas texture (boot-time, cached),
     // region-biased blotch mix (A olive-dominant, B charcoal-dominant)
-    var groundMat = new THREE.MeshStandardMaterial({
+    // CC-C4: a heightfield region (WH_GROUND.has: C only) walks on the
+    // seeded terrain mesh; its flat disc stays only as the SKIRT under and
+    // outside the 560 m mesh square, plain-colored at the mesh's rim color
+    // (the rim fades to h 0, so mesh edge and skirt meet flush). CC-C4b:
+    // skirt = terrain.skirtColor (stone) when set - the rim mountains' edge
+    // fade lands on it.
+    var hasTerrain = window.WH_GROUND && window.WH_GROUND.has(regionId);
+    var groundMat = hasTerrain ? new THREE.MeshStandardMaterial({
+      color: region.cfg.terrain.skirtColor !== undefined ? region.cfg.terrain.skirtColor :
+        region.cfg.terrain.meshColorMoss,
+      roughness: 0.95, metalness: 0.0, side: THREE.DoubleSide
+    }) : new THREE.MeshStandardMaterial({
       color: 0xffffff,
       map: makeGroundTexture(regionId),
       roughness: 1.0, metalness: 0.0, side: THREE.DoubleSide
     });
-    var ground = new THREE.Mesh(
-      new THREE.CircleGeometry(whVisualGroundRadius(regionId), 48),
-      groundMat
-    );
-    ground.rotation.x = -Math.PI / 2;
+    // CC-C2: own-disc region (C): centered on its disc, sunk to groundY
+    var ground = null;
+    if (region.center) {
+      ground = new THREE.Mesh(
+        new THREE.CircleGeometry(whVisualGroundRadius(regionId), 48),
+        groundMat
+      );
+      ground.rotation.x = -Math.PI / 2;
+      ground.position.set(region.center.x, region.cfg.groundY || 0, region.center.z);
+    } else {
+      // P1-3 chord-cut ground halves (io/specs/P1-3-crossfade-ground-split-spec.md
+      // sec "Ground split", valspec T1/T2): the shared-disc regions (A/B, no
+      // CONFIG center) split their ground at the CFG.boundary.z plane. Region
+      // A builds the home arc half z >= plane, region B the home arc half
+      // z <= plane; each region's silhouettes (props + ground) can stand past
+      // the boundary line without poking through the other region's fogged
+      // ground plane during the ground crossfade. The seam runs exactly on
+      // the plane, so the two halves meet flush (no gap, no overlap); the C
+      // full-disc path above is untouched. Runtime-derived, all CONFIG:
+      // R_vis = whVisualGroundRadius(regionId), plane = CFG.boundary.z;
+      // every degenerate guard keeps today's full disc (no gap possible: a
+      // failed half build falls back to the full disc, and the two halves'
+      // seam is only built when BOTH pass their guards).
+      var Rvis = whVisualGroundRadius(regionId);
+      var plane = CFG.boundary.z;
+      var sHome = region.side;                 // +1 A, -1 B (region-defs makeRegion)
+      var sIdOk = (sHome === 1 || sHome === -1);
+      var planeAbsOk = Math.abs(plane) <= Rvis;
+      var groundIdOk = regionId === CFG.regionA.id || regionId === CFG.regionB.id;
+      var rOk = Rvis >= whGroundRadiusOf(regionId);
+      var ptsA = whGroundHalfDiscPoints(Rvis, plane, 1);
+      var ptsB = whGroundHalfDiscPoints(Rvis, plane, -1);
+      var halfA = ptsA ? whMeshFromShape(ptsA) : null;
+      var halfB = ptsB ? whMeshFromShape(ptsB) : null;
+      if (!sIdOk || !planeAbsOk || !groundIdOk || !rOk) {
+        ground = new THREE.Mesh(
+          new THREE.CircleGeometry(Rvis, 48), groundMat);
+        ground.rotation.x = -Math.PI / 2;
+      } else if (!halfA || !halfB) {
+        ground = new THREE.Mesh(
+          new THREE.CircleGeometry(Rvis, 48), groundMat);
+        ground.rotation.x = -Math.PI / 2;
+      } else {
+        halfA.material = groundMat;
+        halfA.rotation.x = -Math.PI / 2;
+        halfB.material = groundMat;
+        halfB.rotation.x = -Math.PI / 2;
+        ground = new THREE.Group();
+        ground.add(halfA);
+        ground.add(halfB);
+      }
+    }
     ground.name = 'ground';
     group.add(ground);
+    // CC-C4: the terrain mesh (built once, ~27 ms, cached by WH_GROUND; a
+    // region dispose frees its GPU buffers, three re-uploads on re-entry)
+    if (hasTerrain) group.add(window.WH_GROUND.mesh(regionId));
 
     // Cheap mist layer (CONFIG.mistPlane): one large flat semi-transparent
     // plane at low height. Visual only, no collider. Region-gated by id.
@@ -1243,16 +2029,41 @@
     // CFG.world.dirtPath.regionId; no collider, polygon-offset decal).
     var dirtPath = buildDirtPath(regionId);
     if (dirtPath) group.add(dirtPath);
+    // CC-C4a: the region's CFG.roads ribbons (C: the King's Roads; unlit -
+    // no light rows exist for roads; one mesh per road = 5 draw calls in C)
+    (CFG.roads || []).forEach(function (R) {
+      if (R.regionId === regionId) group.add(buildRoad(regionId, R));
+    });
 
     // props from manifest
     var regionCfg = region.cfg;
+    // CC-C3: a region whose CONFIG sets cullDistanceM (C only) records every
+    // prop for the per-frame visibility cull (cullProps); A/B: no list
+    var cullList = regionCfg.cullDistanceM ? [] : null;
     for (var i = 0; i < regionCfg.props.length; i++) {
       var p = regionCfg.props[i];
       var obj = window.WH_ASSETS.instance(p.asset);
-      obj.position.set(p.x, p.y || 0, p.z);
+      obj.position.set(p.x, whGroundFeed(regionId, p.x, p.z) + (p.y || 0), p.z);
       obj.rotation.y = p.rotY;
-      obj.scale.setScalar(p.scale);
+      // CC-C8: a wall row is per-axis (scale = length, sy / sz = height /
+      // thickness, the boundaryWall segment look); tint = this row's own
+      // material copy multiplied (rot egg sacs; the template stays clean)
+      if (p.sy !== undefined) obj.scale.set(p.scale, p.sy, p.sz !== undefined ? p.sz : p.scale);
+      else obj.scale.setScalar(p.scale);
+      if (p.tint !== undefined) whTintObject(obj, p.tint);
       group.add(obj);
+      // CC-C8: a row's own cullM = its own hide band (show = cullM x cullShowFrac)
+      if (cullList) cullList.push(p.cullM ? { obj: obj, x: p.x, z: p.z, hide2: p.cullM * p.cullM,
+        show2: Math.pow(p.cullM * regionCfg.cullShowFrac, 2) } : { obj: obj, x: p.x, z: p.z });
+    }
+    // CC-C8: the outcrop's rot stains (mouth pool + trail) + the doorway
+    // void card (CONFIG regionC.rotLair; the C7 nest pool builder)
+    var stains = whBuildRotStains(regionId, regionCfg.rotLair);
+    if (stains) {
+      group.add(stains);
+      var RL = regionCfg.rotLair;
+      if (cullList) cullList.push({ obj: stains, x: RL.stains[0].x, z: RL.stains[0].z,
+        hide2: RL.cullM * RL.cullM, show2: Math.pow(RL.cullM * regionCfg.cullShowFrac, 2) });
     }
 
     // Round E scatter: extra trees as normal props (colliders via
@@ -1261,31 +2072,74 @@
     for (var si = 0; si < plan.trees.length; si++) {
       var sTree = plan.trees[si];
       var tObj = window.WH_ASSETS.instance(sTree.asset);
-      tObj.position.set(sTree.x, 0, sTree.z);
+      tObj.position.set(sTree.x, whGroundFeed(regionId, sTree.x, sTree.z), sTree.z);
       tObj.rotation.y = sTree.rotY;
       tObj.scale.setScalar(sTree.scale);
       group.add(tObj);
+      if (cullList) cullList.push({ obj: tObj, x: sTree.x, z: sTree.z });
     }
+    this.cullLists = this.cullLists || {};
+    if (cullList) this.cullLists[regionId] = cullList;
+    // CC-C4a: a region with scatterCellM (C) buckets each asset's instances
+    // into scatterCellM grid cells: one InstancedMesh per (asset, cell) that
+    // joins the cull list as ONE object at its centroid, hidden whole when the
+    // player is past scatterCullM + the cell's radius (no per-instance
+    // culling). A/B: one InstancedMesh per asset, frustum culling only.
+    var cellM = regionCfg.scatterCellM;
     Object.keys(plan.instances).forEach(function (name) {
-      whBuildInstanced(name, plan.instances[name]).forEach(function (im) {
-        group.add(im);
+      var all = plan.instances[name];
+      if (!cellM || !cullList) {
+        whBuildInstanced(name, all).forEach(function (im) { group.add(im); });
+        return;
+      }
+      var cells = {};
+      all.forEach(function (it) {
+        var key = Math.floor(it.x / cellM) + ':' + Math.floor(it.z / cellM);
+        (cells[key] = cells[key] || []).push(it);
+      });
+      Object.keys(cells).forEach(function (key) {
+        var list = cells[key], cx = 0, cz = 0, r = 0, q;
+        for (q = 0; q < list.length; q++) { cx += list[q].x; cz += list[q].z; }
+        cx /= list.length; cz /= list.length;
+        for (q = 0; q < list.length; q++) {
+          r = Math.max(r, Math.sqrt((list[q].x - cx) * (list[q].x - cx) +
+            (list[q].z - cz) * (list[q].z - cz)));
+        }
+        var hide = regionCfg.scatterCullM + r;
+        var show = regionCfg.scatterCullM * regionCfg.cullShowFrac + r;
+        whBuildInstanced(name, list).forEach(function (im) {
+          group.add(im);
+          cullList.push({ obj: im, x: cx, z: cz, hide2: hide * hide, show2: show * show });
+        });
       });
     });
 
     // enemies (fresh instances; dead state restored below)
+    // CC-C8: + the region's lair rows (regionD.lairs: the rot mother),
+    // instanced AFTER the enemy rows on the same body path, same per-index
+    // dead state (the den's roster: index 0 = her)
     this.enemies[regionId] = [];
-    for (var j = 0; j < regionCfg.enemies.length; j++) {
-      var e = regionCfg.enemies[j];
+    var enemyRows = regionCfg.enemies.concat(regionCfg.lairs || []);
+    for (var j = 0; j < enemyRows.length; j++) {
+      var e = enemyRows[j];
       var enemy = new window.WH_Enemy(e.type, this.scene, regionId, e.x, e.z);
-      var bodyName = e.type === 'bandit' ? 'banditBody' : 'ghoulBody';
+      // CC-C5: type -> body via CONFIG.enemy.bodyByType (was the bandit /
+      // ghoul ternary); a type's bodyHeight / bodyYawDeg (wolf) override the
+      // humanoid characterHeight / facing - bandit / ghoul carry neither.
+      var bodyName = window.WH_Enemy.bodyNameFor(e.type);
+      var eCfg = CFG.enemy[e.type] || {};
       var eBody = window.WH_ASSETS.instance(bodyName);
-      var eScale = CFG.world.characterHeight /
+      var eScale = (eCfg.bodyHeight || CFG.world.characterHeight) /
         (window.WH_ASSETS.groundHeight(bodyName) || CFG.world.characterHeight);
       eBody.scale.setScalar(eScale);
       eBody.position.y = -(window.WH_ASSETS.groundMinY(bodyName) * eScale);
       // Enemy bob writes the holder position; keep the lift on one level.
       eBody.children[0].position.y += window.WH_ASSETS.groundMinY(bodyName);
+      if (eCfg.bodyYawDeg) eBody.rotation.y = eCfg.bodyYawDeg * Math.PI / 180;
       enemy.setBody(eBody);
+      // CC-LS1: per-enemy contact blob; radius from body meta width x scale
+      if (window.WH_SHCONTACTS) window.WH_SHCONTACTS.attach(enemy,
+        { bodyName: bodyName, scale: eScale });
       this.enemies[regionId].push(enemy);
       group.add(enemy.root);
     }
@@ -1299,6 +2153,14 @@
         this.enemies[regionId][k].deadFall = 1;
       }
     }
+    // CC-C5: wolf packs DERIVED from the alive list just restored (dead rows
+    // stay out), never persisted: a partial kill rebuilds around survivors
+    this.packs[regionId] = window.WH_Enemy.buildPacks(this.enemies[regionId],
+      regionCfg.enemies, regionId);
+
+    // CC-H5b: hand hazards (the Tithe Vaults flame vents) hang their group
+    // off this region group (disposeRegion frees it with the region)
+    if (window.WH_HAZARDS) window.WH_HAZARDS.onRegionBuilt(regionId, group);
 
     group.visible = !hidden;
     this.scene.add(group);
@@ -1310,6 +2172,9 @@
   RegionManager.prototype.disposeRegion = function (regionId) {
     var group = this.groups[regionId];
     if (!group) return;
+    // CC-H5b: drop the module's per-region rows (the group itself is freed
+    // by the traverse below - it is a child of this region group)
+    if (window.WH_HAZARDS) window.WH_HAZARDS.onRegionDisposed(regionId);
     this.scene.remove(group);
     group.traverse(function (obj) {
       if (obj.isMesh) {
@@ -1327,23 +2192,63 @@
     });
     delete this.groups[regionId];
     delete this.enemies[regionId];
+    delete this.packs[regionId];        // CC-C5
+    if (this.cullLists) delete this.cullLists[regionId];   // CC-C3
+  };
+
+  // CC-C3 per-frame visibility cull (C only: regions without a cull list,
+  // A/B, return at once). Distance from the PLAYER (x, z) to each recorded
+  // prop: visible props hide past cullDistanceM, hidden props re-show inside
+  // cullDistanceM * cullShowFrac (hysteresis, no flicker at the band). Both
+  // bands sit past C's fog-invisible depth (CONFIG.regionC ledger), so the
+  // toggle is never seen. No allocation; no geometry rebuild.
+  RegionManager.prototype.cullProps = function (regionId, x, z) {
+    var list = this.cullLists && this.cullLists[regionId];
+    if (!list) return;
+    var cfg = DEFS.regions[regionId].cfg;
+    var hide2 = cfg.cullDistanceM * cfg.cullDistanceM;
+    var show = cfg.cullDistanceM * cfg.cullShowFrac, show2 = show * show;
+    for (var i = 0; i < list.length; i++) {
+      var c = list[i], dx = c.x - x, dz = c.z - z, d2 = dx * dx + dz * dz;
+      // CC-C4a: a scatter cell carries its own bands (scatterCullM + radius)
+      if (c.obj.visible) {
+        if (d2 > (c.hide2 || hide2)) c.obj.visible = false;
+      } else if (d2 < (c.show2 || show2)) {
+        c.obj.visible = true;
+      }
+    }
   };
 
   // Main per-frame entry. Applies transition logic to live scene. Returns the
   // transition result for the caller (HUD updates etc).
+  // CC-C2: with more than one neighbor the hidden (pre-warm) group and the
+  // region left behind are tracked by id, not by neighborOf (single
+  // neighbor: the same groups as before).
+  RegionManager.prototype.disposeHiddenExcept = function (keepId) {
+    var self = this;
+    Object.keys(this.groups).forEach(function (rid) {
+      if (rid !== keepId && rid !== self.logic.activeId && !self.groups[rid].visible) {
+        self.disposeRegion(rid);
+      }
+    });
+  };
+
   RegionManager.prototype.tickTransition = function (x, z) {
+    var prevActiveId = this.logic.activeId;
     var result = this.logic.tickTransition(x, z);
     if (result.action === 'prewarm') {
       this.buildRegion(result.newActiveId || this.logic.prewarmedId, true);
     } else if (result.action === 'dispose') {
-      var pid = this.logic.prewarmedId;
-      // logic already cleared prewarmedId; find what it was via groups
-      var neighbor = DEFS.neighborOf(this.logic.activeId);
-      if (neighbor && this.groups[neighbor] && !this.groups[neighbor].visible) {
-        this.disposeRegion(neighbor);
-      }
+      // logic already cleared prewarmedId: every hidden group goes
+      this.disposeHiddenExcept(null);
     } else if (result.action === 'cross') {
-      var oldId = DEFS.neighborOf(result.newActiveId);
+      // P1-3 (io/specs/P1-3-crossfade-ground-split-spec.md): the region LEFT
+      // is recorded for game.js. A walked A/B gate cross defers its disposal
+      // to the regionFadeTick completion (the fogged-silhouette backdrop);
+      // the call site either starts the fade (no conn.door) or disposes
+      // immediately (the den door keeps today's instant path).
+      var oldId = prevActiveId;
+      this.previousActiveId = oldId;
       // reveal the pre-warmed neighbor (instant swap: already built)
       var newGroup = this.groups[result.newActiveId];
       if (newGroup) {
@@ -1351,17 +2256,80 @@
       } else {
         this.buildRegion(result.newActiveId, false);
       }
-      // unload old region
-      if (this.groups[oldId]) this.disposeRegion(oldId);
+      // P1-3: the group LEFT stays VISIBLE (deferred disposal in game.js);
+      // a third region's stale pre-warm still goes.
+      this.disposeHiddenExcept(oldId);
       this.enemies[result.newActiveId] = this.enemies[result.newActiveId] || [];
     }
+    // CC-C3: the active region's prop cull (on a cross: at the mapped spot)
+    this.cullProps(this.logic.activeId,
+      result.mappedPos ? result.mappedPos.x : x,
+      result.mappedPos ? result.mappedPos.z : z);
     return result;
   };
 
-  RegionManager.prototype.updateEnemies = function (dt, playerPos, playerAlive, canDamagePlayer, activeId) {
+  // CC-C8 E-to-enter: the interact door's cross (logic.forceCross). The
+  // target is built (or revealed); the region LEFT is hidden, not disposed -
+  // it stays as the pre-warm the den's mouth plane walks back into. Any
+  // other hidden group goes. Returns the logic result (game.js applies it
+  // like a tickTransition cross).
+  // P1-3 (io/specs/P1-3-crossfade-ground-split-spec.md): the left region is
+  // recorded as the previousActiveId (the caller may dispose it - the
+  // den-door path does). Hidden, not visible: this round leaves today's
+  // door path untouched. No C/D-conn case exists on this path today.
+  RegionManager.prototype.forceCross = function (conn) {
+    var oldId = this.logic.activeId;
+    var result = this.logic.forceCross(conn);
+    var newId = result.newActiveId;
+    if (this.groups[newId]) this.groups[newId].visible = true;
+    else this.buildRegion(newId, false);
+    if (this.groups[oldId]) this.groups[oldId].visible = false;
+    this.disposeHiddenExcept(oldId);
+    this.previousActiveId = oldId;
+    this.enemies[newId] = this.enemies[newId] || [];
+    this.cullProps(newId, result.mappedPos.x, result.mappedPos.z);
+    return result;
+  };
+
+  // C3 death respawn at a camp in the OTHER region: the 'cross' swap of
+  // tickTransition without walking the gate (target built or revealed, old
+  // region disposed, logic re-pointed). game.js applies lighting / sky /
+  // banner like a cross. Returns false when already active.
+  RegionManager.prototype.switchTo = function (regionId) {
+    var oldId = this.logic.activeId;
+    this.previousActiveId = oldId;
+    if (regionId === oldId) return false;
+    this.logic.activeId = regionId;
+    this.logic.prewarmedId = null;
+    this.logic.buildCounts[regionId] = (this.logic.buildCounts[regionId] || 0) + 1;
+    if (this.groups[regionId]) this.groups[regionId].visible = true;
+    else this.buildRegion(regionId, false);
+    if (this.groups[oldId]) this.disposeRegion(oldId);
+    this.disposeHiddenExcept(null);     // CC-C2: no stale pre-warm of a third region
+    this.enemies[regionId] = this.enemies[regionId] || [];
+    return true;
+  };
+
+  // P1-3 (io/specs/P1-3-crossfade-ground-split-spec.md): the id of the
+  // region LEFT by the last region swap (set by tickTransition / forceCross
+  // / switchTo; the deferred-disposal + den-door dispose callers read it)
+  RegionManager.prototype.getPreviousActiveId = function () {
+    return this.previousActiveId != null ? this.previousActiveId : null;
+  };
+
+  // P1-3 (io/specs/P1-3-crossfade-ground-split-spec.md): clear the recorded
+  // region-left id (the den-door caller reads then disposes it)
+  RegionManager.prototype.clearPreviousActiveId = function () {
+    this.previousActiveId = null;
+  };
+
+  RegionManager.prototype.updateEnemies =function (dt, playerPos, playerAlive, canDamagePlayer, activeId) {
     var list = this.enemies[activeId] || [];
     var boundary = { z: CFG.boundary.z };
     var self = this;
+    // CC-C5: pack FSM first (patrol slots / regroup / pack aggro), then the
+    // members' own updates read it this frame. A/B: no packs, a no-op.
+    window.WH_Enemy.updatePacks(this.packs[activeId], dt);
     for (var i = 0; i < list.length; i++) {
       var e = list[i];
       e.update(dt, playerPos, playerAlive, canDamagePlayer, boundary, this);
@@ -1380,7 +2348,9 @@
     // record dead state for persistence
     var st = this.logic.stateFor(activeId);
     for (var m = 0; m < list.length; m++) {
-      if (list[m].fsm === 'dead') st.enemies[m] = 'dead';
+      // CC-AE1: raid-member corpses stay TRANSIENT - raiders are not CONFIG
+      // roster rows; saving their indexes would inflate regionStates forever.
+      if (list[m].fsm === 'dead' && !list[m].raidMember) st.enemies[m] = 'dead';
     }
   };
 
@@ -1409,4 +2379,13 @@
   window.WH_RegionManagerLogic = RegionManagerLogic;
   window.WH_ScatterPlan = whScatterPlan;   // Round E: pure, for debug/tests
   window.WH_WallPlan = whWallPlan;         // Round F: pure, for debug/tests
+  // C3 camp deploy clearances (js/camp.js): the same pure helpers the
+  // scatter uses for the dirt path band, the gate corridor and the rim
+  window.WH_RegionGeom = {
+    distToPath: whDistToPath,
+    roadsFor: whRoadsFor,             // CC-C4a: A's dirtPath + CFG.roads rows
+    distToRoad: whDistToRoad,
+    meetsCorridor: whMeetsCorridor,
+    playRadius: whPlayRadius
+  };
 })();

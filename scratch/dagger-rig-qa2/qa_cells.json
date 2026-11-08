@@ -1,0 +1,80 @@
+{
+ "WH_DagSlashR2L": [
+  [
+   "rest/start",
+   0.0
+  ],
+  [
+   "windup end",
+   0.0658
+  ],
+  [
+   "impact",
+   0.0938
+  ],
+  [
+   "strike end",
+   0.1447
+  ],
+  [
+   "mid recover",
+   0.2
+  ],
+  [
+   "end",
+   0.25
+  ]
+ ],
+ "WH_DagSlashL2R": [
+  [
+   "rest/start",
+   0.0
+  ],
+  [
+   "windup end",
+   0.0658
+  ],
+  [
+   "impact",
+   0.1062
+  ],
+  [
+   "strike end",
+   0.1447
+  ],
+  [
+   "mid recover",
+   0.2
+  ],
+  [
+   "end",
+   0.25
+  ]
+ ],
+ "WH_DagSlashR2Lb": [
+  [
+   "rest/start",
+   0.0
+  ],
+  [
+   "impact",
+   0.0936
+  ],
+  [
+   "strike end",
+   0.1278
+  ],
+  [
+   "hold end",
+   0.2278
+  ],
+  [
+   "mid settle",
+   0.37
+  ],
+  [
+   "end",
+   0.52
+  ]
+ ]
+}

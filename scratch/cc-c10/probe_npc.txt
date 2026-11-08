@@ -1,0 +1,1 @@
+{"source":"CONFIG.regionC.npc","at":[146.5,-264.5],"rotY":3.15,"heightAt":3.51,"footY_r0_4":3.51,"slope1mDeg":3.77,"cottageM":8.77,"nearestProp":[5.2,"okFenceStonewall@141.7,-266.5"],"centreM":178.23,"interactM":3,"cullM":120,"PASS":true}

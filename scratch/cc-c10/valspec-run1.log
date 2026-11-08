@@ -1,0 +1,19 @@
+I couldn't write the valspec: the harness denied permission to create `io/specs/testerbot-spec-wh-cc-c10-farmer.md` in this worktree. I didn't try to get around it with a shell redirect. That matches the known worktree-dispatch limit: Write is blocked unless the run uses acceptEdits.
+
+The full spec is finished. Its text is in the Write call in this session's transcript, so IO can apply it from there, or re-dispatch me with acceptEdits or an Edit/Write allow rule for that path. It has 22 line-verified anchors (L1–L22) against e3444ec, the pre-Devbot smoke table, probes for A1–A7 plus a scope/preservation check, and 12 amendments.
+
+The required finish line isn't true yet, so I'm reporting the failure in its place:
+
+VALSPEC NOT WRITTEN io/specs/testerbot-spec-wh-cc-c10-farmer.md (Write permission denied; spec ready) anchors 22 amendments 12
+
+B-amendment summary for IO:
+1. **B1 Barrow / A6:** "Barrow" appears nowhere in the code. `CFG.regionC.door` (the locked toast at `game.js:1940`) is the B/C arch at z −86. The quest's SW den door is `CFG.regionD.door`, and it has no lock. The A6 check therefore requires both doors to stay byte-identical. Calling the den "Old King's Barrow" is a lore/copy call for IO and Nicko.
+2. **B2:** From the farmstead, the den mouth is due West, not SW. "SW" is only true from the map centre. This is CONFIG copy for Nicko to tune; recorded, not gated.
+3. **B3 (needs a ruling):** The pixelated farmer bake would land in `art-direction/3d/assets/races_regen/rigged/`, which is outside write scope, and `tools/` has no pixelate pipeline (the only precedent is `scratch/cc-c17/intake_pixelate.py`). The source dwarf GLB is raw. IO should choose: (a) allow exactly one new `dwarf-male-smith.rigged.pixelated.glb`, or (b) waive the art law and ship the raw placeholder.
+4. **B4:** The game.js scope can't work as written. npc.js also needs an init call site (after `:2517`), an update call in the loop tail (`:3060-3065`), and a talk branch in `updateInteractPrompt` (`:2158`). I sanctioned hunks H1–H6.
+5. **B5:** With index.html limited to one script tag and style.css out of scope, the HUD quest line and the dialog overlay must be built in JS with inline styles. The quest line can't reuse `#wh-gate-hint`, and camp.js's `el()` is private, so npc.js needs its own copy.
+6. **B6:** The brief's name-plate model doesn't exist: the lantern waymarker is a GLB with a light, not a DOM label. A label is recorded, not gated.
+7. **B7 (important):** Re-running `ledger2.py` as-is crashes (KeyError on `okFarmBarn` at `:22-23`), its probe would report the barn as missing, and it doesn't count the farmer. I sanctioned `scratch/cc-c10/ledger3` copies to fix that. The homestead is 186 m from (0,−366), outside both 170 m ledger circles, so I added a third gated centre at (150.5,−256.7).
+8. **B8:** `prototype/builds/v8-playable.html` is tracked and rebuilt every order but missing from the write scope; I sanctioned it.
+9. **B9–B11:** Recorded only: the prompt wording ("Talk (E)" vs the house style "E - …"), the farmer standing in its rigged bind pose (likely an A/T-pose, with a stand-in box until the asset loads), and the em dash vs ASCII hyphen.
+10. **B12:** The talk hook is pinned between `tryNotch` and `tryGather` in the `interact()` chain (`game.js:1863`), and the prompt branch sits at the same position.

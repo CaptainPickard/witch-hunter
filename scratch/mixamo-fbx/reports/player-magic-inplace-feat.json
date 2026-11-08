@@ -1,0 +1,183 @@
+{
+  "limit_m": 0.3,
+  "metric": "max |hips_xy(t) - hips_xy(start)|, world metres",
+  "clips": {
+    "WH_Mag_Cast1H": {
+      "src": "/workspace/witch-hunter/scratch/mixamo-fbx/magic-pack/Standing 1H Magic Attack 01.fbx",
+      "frames": [
+        1,
+        70
+      ],
+      "bones": 65,
+      "max_hips_travel_xy_m": 0.16768622234288627,
+      "net_hips_travel_xy_m": 0.007697933363126948,
+      "hips_z_range_m": 0.0958290696144104,
+      "in_place": true
+    },
+    "WH_Mag_Cast2H": {
+      "src": "/workspace/witch-hunter/scratch/mixamo-fbx/magic-pack/Standing 2H Magic Area Attack 02.fbx",
+      "frames": [
+        1,
+        95
+      ],
+      "bones": 65,
+      "max_hips_travel_xy_m": 0.13553200976634935,
+      "net_hips_travel_xy_m": 0.00023097948828343528,
+      "hips_z_range_m": 0.30694901943206787,
+      "in_place": true
+    },
+    "WH_Mag_Idle": {
+      "src": "/workspace/witch-hunter/scratch/mixamo-fbx/magic-pack/standing idle.fbx",
+      "frames": [
+        1,
+        55
+      ],
+      "bones": 65,
+      "max_hips_travel_xy_m": 0.06320864873828062,
+      "net_hips_travel_xy_m": 0.001403551957397725,
+      "hips_z_range_m": 0.055719971656799316,
+      "in_place": true
+    },
+    "WH_Mag_Idle02": {
+      "src": "/workspace/witch-hunter/scratch/mixamo-fbx/magic-pack/standing idle 02.fbx",
+      "frames": [
+        1,
+        157
+      ],
+      "bones": 65,
+      "max_hips_travel_xy_m": 0.10361442632410951,
+      "net_hips_travel_xy_m": 7.752386395505353e-08,
+      "hips_z_range_m": 0.04921025037765503,
+      "in_place": true
+    },
+    "WH_Mag_WalkF": {
+      "src": "/workspace/witch-hunter/scratch/mixamo-fbx/magic-pack/Standing Walk Forward.fbx",
+      "frames": [
+        1,
+        35
+      ],
+      "bones": 65,
+      "max_hips_travel_xy_m": 1.8908233148979077,
+      "net_hips_travel_xy_m": 1.8908233148979077,
+      "hips_z_range_m": 0.05526095628738403,
+      "in_place": false
+    },
+    "WH_Mag_WalkB": {
+      "src": "/workspace/witch-hunter/scratch/mixamo-fbx/magic-pack/Standing Walk Back.fbx",
+      "frames": [
+        1,
+        37
+      ],
+      "bones": 65,
+      "max_hips_travel_xy_m": 1.453800289891661,
+      "net_hips_travel_xy_m": 1.453800289891661,
+      "hips_z_range_m": 0.06329494714736938,
+      "in_place": false
+    },
+    "WH_Mag_RunF": {
+      "src": "/workspace/witch-hunter/scratch/mixamo-fbx/magic-pack/Standing Run Forward.fbx",
+      "frames": [
+        1,
+        23
+      ],
+      "bones": 65,
+      "max_hips_travel_xy_m": 2.8791766073554763,
+      "net_hips_travel_xy_m": 2.8791766073554763,
+      "hips_z_range_m": 0.07830071449279785,
+      "in_place": false
+    },
+    "WH_Mag_RunB": {
+      "src": "/workspace/witch-hunter/scratch/mixamo-fbx/magic-pack/Standing Run Back.fbx",
+      "frames": [
+        1,
+        20
+      ],
+      "bones": 65,
+      "max_hips_travel_xy_m": 2.060760767199099,
+      "net_hips_travel_xy_m": 2.060760767199099,
+      "hips_z_range_m": 0.0843743085861206,
+      "in_place": false
+    },
+    "WH_Mag_TurnL": {
+      "src": "/workspace/witch-hunter/scratch/mixamo-fbx/magic-pack/Standing Turn Left 90.fbx",
+      "frames": [
+        1,
+        49
+      ],
+      "bones": 65,
+      "max_hips_travel_xy_m": 0.18294369315431347,
+      "net_hips_travel_xy_m": 0.03431264474773005,
+      "hips_z_range_m": 0.04431992769241333,
+      "in_place": true
+    },
+    "WH_Mag_TurnR": {
+      "src": "/workspace/witch-hunter/scratch/mixamo-fbx/magic-pack/Standing Turn Right 90.fbx",
+      "frames": [
+        1,
+        50
+      ],
+      "bones": 65,
+      "max_hips_travel_xy_m": 0.23077051313266797,
+      "net_hips_travel_xy_m": 0.021567262370679314,
+      "hips_z_range_m": 0.03626608848571777,
+      "in_place": true
+    },
+    "WH_Mag_Jump": {
+      "src": "/workspace/witch-hunter/scratch/mixamo-fbx/magic-pack/Standing Jump.fbx",
+      "frames": [
+        1,
+        71
+      ],
+      "bones": 65,
+      "max_hips_travel_xy_m": 0.11468228062893022,
+      "net_hips_travel_xy_m": 0.0004183586842266668,
+      "hips_z_range_m": 0.839627206325531,
+      "in_place": true
+    },
+    "WH_Mag_ReactSmall": {
+      "src": "/workspace/witch-hunter/scratch/mixamo-fbx/magic-pack/Standing React Small From Front.fbx",
+      "frames": [
+        1,
+        36
+      ],
+      "bones": 65,
+      "max_hips_travel_xy_m": 0.022857726392426263,
+      "net_hips_travel_xy_m": 0.0003915422929851532,
+      "hips_z_range_m": 0.03131568431854248,
+      "in_place": true
+    },
+    "WH_Mag_ReactLarge": {
+      "src": "/workspace/witch-hunter/scratch/mixamo-fbx/magic-pack/Standing React Large From Front.fbx",
+      "frames": [
+        1,
+        42
+      ],
+      "bones": 65,
+      "max_hips_travel_xy_m": 1.132629053439961,
+      "net_hips_travel_xy_m": 1.1259102206677285,
+      "hips_z_range_m": 0.08118122816085815,
+      "in_place": false
+    },
+    "WH_Mag_DeathBack": {
+      "src": "/workspace/witch-hunter/scratch/mixamo-fbx/magic-pack/Standing React Death Backward.fbx",
+      "frames": [
+        1,
+        107
+      ],
+      "bones": 65,
+      "max_hips_travel_xy_m": 0.9530183452242058,
+      "net_hips_travel_xy_m": 0.9006193997338486,
+      "hips_z_range_m": 0.8443848639726639,
+      "in_place": false
+    }
+  },
+  "violators": [
+    "WH_Mag_WalkF",
+    "WH_Mag_WalkB",
+    "WH_Mag_RunF",
+    "WH_Mag_RunB",
+    "WH_Mag_ReactLarge",
+    "WH_Mag_DeathBack"
+  ],
+  "pass": false
+}

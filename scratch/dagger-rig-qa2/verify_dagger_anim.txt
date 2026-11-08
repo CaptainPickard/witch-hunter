@@ -1,0 +1,62 @@
+PASS pristine BIN prefix byte-identical (4368528 of 4400644 bytes)
+PASS pristine JSON 'asset' entries identical
+PASS pristine JSON 'scene' entries identical
+PASS pristine JSON 'scenes' entries identical
+PASS pristine JSON 'nodes' entries identical
+PASS pristine JSON 'animations' entries identical
+PASS pristine JSON 'materials' entries identical
+PASS pristine JSON 'meshes' entries identical
+PASS pristine JSON 'textures' entries identical
+PASS pristine JSON 'images' entries identical
+PASS pristine JSON 'skins' entries identical
+PASS pristine JSON 'accessors' entries identical
+PASS pristine JSON 'bufferViews' entries identical
+PASS pristine JSON 'samplers' entries identical
+PASS 9 animations == 6 pristine + 3 new, names exact: ['WH_Attack1', 'WH_Death', 'WH_Hit', 'WH_Idle', 'WH_Run', 'WH_Walk', 'WH_DagSlashR2L', 'WH_DagSlashL2R', 'WH_DagSlashR2Lb']
+PASS JOINTS_0 bytes identical
+PASS WEIGHTS_0 bytes identical
+PASS POSITION bytes identical
+PASS skins + inverseBindMatrices bytes identical
+PASS texture bytes identical (1 images)
+PASS bone rest TRS identical (max 0.0e+00)
+PASS R_Hand weapon-socket rest basis untouched (max 0.0e+00)
+PASS pristine WH_Attack1 round-trip sampled (max 6.1e-08)
+PASS pristine WH_Death round-trip sampled (max 7.7e-08)
+PASS pristine WH_Hit round-trip sampled (max 6.0e-08)
+PASS pristine WH_Idle round-trip sampled (max 6.9e-08)
+PASS pristine WH_Run round-trip sampled (max 6.6e-08)
+PASS pristine WH_Walk round-trip sampled (max 7.3e-08)
+PASS WH_DagSlashR2L: 60 LINEAR channels
+PASS WH_DagSlashR2L: curves finite, unit quats (max |q|-1 2.2e-06)
+PASS WH_DagSlashR2L: Root static
+PASS WH_DagSlashR2L: duration 0.3800s vs spec 0.38s (+0.00 %, law 5 %)
+PASS WH_DagSlashR2L: impact t=0.140s inside strike window [0.10, 0.22]
+PASS WH_DagSlashR2L: impact t=0.140s in target band [0.10, 0.16] (peak wrist 25.7 m/s)
+PASS WH_DagSlashR2L: hand sweeps R->L through the strike (x -0.786 -> +0.238, dx +1.025; vx at impact +24.2 m/s)
+PASS WH_DagSlashR2L: no skinned-body ground penetration (min y -1.00001 over 44 samples; keys -1.00001; ground -1.0)
+PASS WH_DagSlashR2L: wrist sane / no pose explosion - R_Hand local max 59.4 deg from rest (<=90); max key step 102.5 deg (R_Forearm, <120); worst step / (source rate x 3.92 src frames/key) = 0.91 (<=1.05); wrist reversals 3
+   WH_DagSlashR2L: {"duration_s": 0.3799999952316284, "spec_s": 0.38, "keys": 11, "impact_s": 0.13989999890327454, "peak_wrist_mps": 25.69, "dx": 1.025, "min_skinned_y": -1.00001, "wrist_max_deg": 59.4, "bone_step_max_deg": 102.5, "bone_step_max": "R_Forearm", "step_vs_source_ratio": 0.906, "wrist_reversals": 3}
+PASS WH_DagSlashL2R: 60 LINEAR channels
+PASS WH_DagSlashL2R: curves finite, unit quats (max |q|-1 1.7e-06)
+PASS WH_DagSlashL2R: Root static
+PASS WH_DagSlashL2R: duration 0.3800s vs spec 0.38s (+0.00 %, law 5 %)
+PASS WH_DagSlashL2R: impact t=0.119s inside strike window [0.10, 0.22]
+PASS WH_DagSlashL2R: impact t=0.119s in target band [0.10, 0.16] (peak wrist 21.1 m/s)
+PASS WH_DagSlashL2R: hand sweeps L->R through the strike (x -0.440 -> -0.754, dx -0.314; vx at impact -4.2 m/s)
+PASS WH_DagSlashL2R: no skinned-body ground penetration (min y -1.00001 over 44 samples; keys -1.00000; ground -1.0)
+PASS WH_DagSlashL2R: wrist sane / no pose explosion - R_Hand local max 60.4 deg from rest (<=90); max key step 82.0 deg (R_UpperArm, <120); worst step / (source rate x 4.92 src frames/key) = 0.81 (<=1.05); wrist reversals 4
+   WH_DagSlashL2R: {"duration_s": 0.3799999952316284, "spec_s": 0.38, "keys": 11, "impact_s": 0.11900000274181366, "peak_wrist_mps": 21.09, "dx": -0.314, "min_skinned_y": -1.00001, "wrist_max_deg": 60.4, "bone_step_max_deg": 82.0, "bone_step_max": "R_UpperArm", "step_vs_source_ratio": 0.814, "wrist_reversals": 4}
+PASS WH_DagSlashR2Lb: 60 LINEAR channels
+PASS WH_DagSlashR2Lb: curves finite, unit quats (max |q|-1 2.2e-06)
+PASS WH_DagSlashR2Lb: Root static
+PASS WH_DagSlashR2Lb: duration 0.7000s vs spec 0.70s (+0.00 %, law 5 %)
+PASS WH_DagSlashR2Lb: impact t=0.160s inside strike window [0.10, 0.22]
+PASS WH_DagSlashR2Lb: impact t=0.160s in target band [0.10, 0.22] (peak wrist 28.2 m/s)
+PASS WH_DagSlashR2Lb: hand sweeps R->L through the strike (x -0.832 -> +0.361, dx +1.193; vx at impact +27.7 m/s)
+PASS WH_DagSlashR2Lb: no skinned-body ground penetration (min y -1.00001 over 80 samples; keys -1.00001; ground -1.0)
+PASS WH_DagSlashR2Lb: wrist sane / no pose explosion - R_Hand local max 62.9 deg from rest (<=90); max key step 79.4 deg (R_Hand, <120); worst step / (source rate x 3.82 src frames/key) = 0.89 (<=1.05); wrist reversals 3
+PASS WH_DagSlashR2Lb: recover HOLDS - wrist <= 3.28 m/s for 0.10 s after strike end (<= 30 % of peak 28.2)
+PASS WH_DagSlashR2Lb: recover SETTLES toward guard - hand-to-start 1.048 m at strike end -> 0.044 m at end; final wrist 0.23 m/s
+   WH_DagSlashR2Lb: {"duration_s": 0.699999988079071, "spec_s": 0.7, "keys": 18, "impact_s": 0.16040000319480896, "peak_wrist_mps": 28.24, "dx": 1.193, "min_skinned_y": -1.00001, "wrist_max_deg": 62.9, "bone_step_max_deg": 79.4, "bone_step_max": "R_Hand", "step_vs_source_ratio": 0.894, "wrist_reversals": 3, "hold_max_mps": 3.278, "hand_to_guard_strike_end": 1.048, "hand_to_guard_end": 0.044, "end_wrist_mps": 0.231}
+PASS chain side sequence R->L, L->R, R->L (dx signs [1, -1, 1])
+VERIFY PASS

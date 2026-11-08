@@ -1,0 +1,11 @@
+globalThis.window = globalThis; globalThis.self = globalThis;
+const path = require('path');
+globalThis.__R = '/tmp/wh-worldfeat';
+require(path.join(globalThis.__R, 'prototype/js/CONFIG.js'));
+const C = globalThis.window.WH_CONFIG;
+const props = C.regionA.props;
+let holes = 0;
+props.forEach((p, i) => { if (p === undefined || p === null) { holes++; console.log('HOLE at index', i); } });
+const wb = props.filter(p => p && p.asset === 'warBoard');
+console.log('props length', props.length, 'holes', holes, 'warBoard rows', wb.length);
+console.log('warEffort present:', !!C.warEffort, '| items.warOrder:', !!C.items.warOrder);

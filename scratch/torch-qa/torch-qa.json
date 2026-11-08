@@ -1,0 +1,39 @@
+{
+ "faces": 30325,
+ "verts": 22587,
+ "extents": [
+  0.3342,
+  1.8988,
+  0.3341
+ ],
+ "bounds": [
+  [
+   -0.1698,
+   -0.9513,
+   -0.1685
+  ],
+  [
+   0.1644,
+   0.9475,
+   0.1657
+  ]
+ ],
+ "tex": [
+  512,
+  512
+ ],
+ "five_bit": true,
+ "channel_levels": [
+  32,
+  29,
+  20
+ ],
+ "amber_area_pct": 7.92,
+ "amber_lowest_face_hnorm": 0.811,
+ "amber_area_below_0p70h_pct": 0.0,
+ "non_accent_mean_rgb": [
+  24,
+  20,
+  17
+ ]
+}

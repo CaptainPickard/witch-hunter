@@ -10,6 +10,9 @@
   'use strict';
 
   var CFG = window.WH_CONFIG.player;
+  var MCFG = window.WH_CONFIG.mouse || {};   // v8: mouse-bind config lives at
+                                             // the WH_CONFIG root (mirrors the
+                                             // CONFIG.touch convention)
   var LOCK = window.WH_CONFIG.lockOn;
   var ANIM = window.WH_CONFIG.anim;
   var AW = ANIM.attack;
@@ -97,19 +100,42 @@
     this.focusMax = CFG.focusMax;
     this.focusRegenBlock = 0;         // seconds until focus regen resumes
 
-    // v7: weave / loadout state. activeLoadout 1 = weapon+spell,
-    // 2 = weapon+shield. The offhand implement is derived from it.
+    // v7: weave / loadout state. Order B: activeLoadout is derived from the
+    // left hand for the HUD pips (1 = qSwap[0] glove, 2 = qSwap[1] shield,
+    // 0 = anything else); Q swaps the left hand between the two.
     this.activeLoadout = 1;
-    this.offhand = 'spell';           // 'spell' | 'shield' (derived)
     this.toggling = false;            // loadout toggle busy window
     this.toggleTimer = 0;
-    this.castWindup = 0;              // seconds left of cast windup
-    this.castCooldown = 0;            // seconds left of cast cooldown
-    this.regripTimer = 0;             // belt re-grip busy window
-    this.selectedBeltSlot = 0;        // 0-based index into the 5 belt slots
-    this.belt = ['firebolt', null, null, null, null];   // spell ids / null
+    this.pendingQSwap = null;         // item id Q puts in the left hand on completion
+    this.pendingQSwapHand = 'left';   // AB1: the hand pendingQSwap lands in (bar item slots)
+    // AB1: getter for the HUD-owned action bar map (game.js sets it; null =
+    // CONFIG.actionbar.defaults). Read through actionSlot(i) only.
+    this.actionMapSource = null;
+    // R-64.4: the picked class's bar defaults (CONFIG.startingClasses[id]
+    // .belt); null = CONFIG.actionbar.defaults (no class / old saves).
+    this.actionDefaults = null;
+    // Order C (2026-10-05) dual-wield casting: fully independent per-hand
+    // cast state ('main' = right hand, 'off' = left hand). Both hands may be
+    // mid-windup at once; each completes and cools down on its own.
+    this.cast = { main: newCastState(), off: newCastState() };
+    // two pointers into the ONE belt list (0-based slot index per hand):
+    // Digit1-5 sets main, Shift+Digit1-5 sets off
+    this.bindings = { main: 0, off: 0 };
+    this.belt = V7.belt.defaultSpells.slice();          // spell ids / null
     this.consumables = [{ id: 'healthPotion', charges: V7.consumable.healthPotion.charges }, null];
-    this.offhandGlow = null;          // emissive sphere mesh at the left anchor
+    this.casterGlows = null;          // { right, left } glow orbs per hand (game.js)
+    // Order B (2026-10-05) free per-hand equip: one gear item id (or null)
+    // per hand, single instances (an item is in a hand OR the inventory).
+    // Combat reads ONLY CONFIG.items[id].kind per hand (Order C:
+    // handAction - LMB acts with the right hand, RMB with the left). Belt
+    // keys bind spells to hands and never touch the hands.
+    this.hands = { right: null, left: null };
+    this.casterMode = false;          // MAGANIM: both hands caster implements (evalCasterMode)
+    this.inventory = null;            // game.js setupInventory wires the Inventory
+    this.itemMeshes = {};             // item id -> its hand mesh (game.js instances)
+    this.handMeshes = {};             // stage 2: per-hand item meshes { right, left } (torch: both hands at once)
+    this.sword = null;                // = itemMeshes of the melee item (armed glow)
+    this.shield = null;               // = itemMeshes of the shield item
 
     // v7: armed finisher state (doc 04 ruling part A)
     this.armedTimer = 0;              // > 0 = armed finisher ready
@@ -125,8 +151,18 @@
     this.lastDragY = 0;
     this.lastManualCamT = -1e9;       // timestamp of last manual camera drag
 
+    // v8: pointer-lock mouse bind state (io/specs/mouse-bind-cam-spec.md 5)
+    this.mouseBound = false;          // desired/actual bind state, synced via
+                                      // pointerlockchange (single source of truth)
+    this.mouseChipEl = null;          // HUD chip element, cached in bindInput
+
     // lock-on state (D3)
     this.lockTarget = null;           // enemy object or null
+
+    // 10-05 inventory Order A: true while the inventory screen is open.
+    // Movement / combat / camera input is ignored; key states keep tracking
+    // so held keys resume the instant it closes. The world keeps running.
+    this.inputSuspended = false;
 
     // visual root (body added by game after assets load)
     this.root = new THREE.Group();
@@ -147,22 +183,83 @@
     this.bodyBaseX = meshRoot.position.x || 0;
     this.yawFrame.add(this.body);
     if (window.WH_ASSETS.getClips('playerBody').length) {
-      this.anim = new window.WH_CharacterAnim(meshRoot, window.WH_ASSETS.getClips('playerBody'),
-        { variant: 'sword' });
+      // DAG: + the WH_Dag* chain clips from the clip-source GLB (same rig);
+      // only dagger move ids reach them (anim.js MOVE_NAMES).
+      var dagClips = window.WH_ASSETS.getClips('playerDagClips').filter(function (c) {
+        return /^WH_Dag/.test(c.name);
+      });
+      this.anim = new window.WH_CharacterAnim(meshRoot,
+        window.WH_ASSETS.getClips('playerBody').concat(dagClips), { variant: 'sword' });
+      this.anim.setVariant(this.casterMode ? 'caster' : 'warrior');   // MAGANIM B3
     }
   };
 
+  // Order B: mounts are measured for an item's NATIVE hand
+  // (CONFIG.equip.nativeHand); the other hand gets the hand-local mount
+  // mirrored by CONFIG.equip.mirrorScale (S R S for the rotation, S p for
+  // the offset - a proper rotation again, roll angles flip sign).
+  function isMirrored(itemId, hand) {
+    var nat = window.WH_CONFIG.equip.nativeHand[itemId];
+    return !!nat && nat !== hand;
+  }
+
+  function mirrorQuat(q) {
+    var s = window.WH_CONFIG.equip.mirrorScale;
+    var S = new THREE.Matrix4().makeScale(s[0], s[1], s[2]);
+    var m = new THREE.Matrix4().makeRotationFromQuaternion(q);
+    return q.setFromRotationMatrix(S.clone().multiply(m).multiply(S));
+  }
+
+  function mirrorVec(v) {
+    var s = window.WH_CONFIG.equip.mirrorScale;
+    return v.set(v.x * s[0], v.y * s[1], v.z * s[2]);
+  }
+
+  // S3 tweak: shared scratch for the per-frame torch-carry overlay (avoids
+  // per-frame allocations in applyTorchCarryPost). Unit +X axis forever.
+  var AX_X = new THREE.Vector3(1, 0, 0);
+  var TORCH_Q_SCRATCH = new THREE.Quaternion();
+
+  function boneFor(body, hand) {
+    return body ? body.getObjectByName(hand === 'left' ? 'L_Hand' : 'R_Hand') : null;
+  }
+
   // The skinned hand is the socket. Only stand-ins retain the old rigid pivot.
-  Player.prototype.setWeapon = function (mesh) {
-    var hand = this.body && this.body.getObjectByName('R_Hand');
-    // 10-04: re-equip drops the previous mesh / stand-in pivot first.
-    if (this.sword && this.sword !== mesh && this.sword.parent) this.sword.parent.remove(this.sword);
-    if (this.weaponPivot) { this.yawFrame.remove(this.weaponPivot); this.weaponPivot = null; }
-    this.sword = mesh;
-    this.swordBaseEmissive = null;   // armed-glow base re-sampled per mesh
-    if (hand) {
-      this.weaponHand = hand;
-      hand.add(mesh);
+  // Order B: hand = 'right' | 'left'; the melee mesh mounts on either one.
+  Player.prototype.mountWeapon = function (mesh, hand, itemId) {
+    var bone = boneFor(this.body, hand);
+    if (this.weaponPivot) {
+      this.weaponPivot.remove(mesh);
+      this.yawFrame.remove(this.weaponPivot);
+      this.weaponPivot = null;
+    }
+    if (mesh.parent) mesh.parent.remove(mesh);
+    var wm = window.WH_CONFIG.assets.weaponMount;
+    // DAG: the mesh's own weapon def. Right hand = the wielded moveset
+    // (this.weaponId, as before - also the WH_DEBUG.equipWeapon mesh swap);
+    // a melee item carried LEFT while another melee is wielded right (e.g.
+    // longsword left + dagger right) keeps its own moveset's grip + blade
+    // axis (longsword -Y vs dagger +Y) instead of the right hand's.
+    var leftMv = hand === 'left' && this.hasMeleeRight() &&
+      itemDef(itemId) && itemDef(itemId).moveset;
+    var wid = leftMv && MV.weapons[leftMv] ? leftMv : this.weaponId;
+    // Grip anchor (Nicko 10-03): the instance is a groundAlign HOLDER whose
+    // inner mesh was lifted so the GLB's raw min-Y rests at holder y=0 -
+    // which put the sword TIP at/behind the fist (hand on mid-blade, hilt
+    // floating behind: "hilt at the opposite end"). Slide the INNER mesh
+    // down by the measured grip height in HOLDER-LOCAL Y (the mount
+    // rotation maps holder -Y to hand-local +Z grip-forward, so a -Y
+    // shift moves the grip ONTO the fist and the tip forward in front).
+    // Measured: sword grip at raw y~+0.65 -> holder y 1.637 (CONFIG).
+    // Offset is in raw GLB units and scales with the weapon correctly.
+    // Order B: applied once per mesh - remounts must not stack it.
+    if (!mesh.userData.whGripApplied) {
+      mesh.userData.whGripApplied = true;
+      var gripY = (wm && wm.gripHolderY) ? (wm.gripHolderY[wid] || 0) : 0;
+      if (gripY && mesh.children[0]) mesh.children[0].position.y -= gripY;
+    }
+    if (bone) {
+      bone.add(mesh);
       mesh.position.set(0, 0, 0);
       // Grip mount (2026-10-03 re-measure): the longsword GLB's blade tip
       // lies along mesh-local -Y, and the fist's grip-forward direction is
@@ -171,12 +268,11 @@
       // setWeapon time, letting the animation pose leak in -- blade ended up
       // parallel to the forearm with the hilt on the wrong end. This mount
       // is pose-independent, so it holds through idle, walk, and swings.
-      var wm = window.WH_CONFIG.assets.weaponMount;
       var mountRotation = new THREE.Quaternion();
       if (wm && wm.enabled) {
         // 10-04: blade axis per weapon (longsword -Y = unchanged mount;
         // handAxe +Y = the bandit axe's measured mapping in enemy.js).
-        var bladeY = this.getWeaponDef().bladeAxisY || -1;
+        var bladeY = (MV.weapons[wid] || this.getWeaponDef()).bladeAxisY || -1;
         mountRotation.setFromUnitVectors(
           new THREE.Vector3(0, bladeY, 0), new THREE.Vector3(0, 0, 1));
         // Blade-edge tuning roll about the grip axis. Sign verified: rolling
@@ -188,28 +284,25 @@
           mountRotation.premultiply(new THREE.Quaternion().setFromAxisAngle(
             new THREE.Vector3(0, 0, 1), wm.rollDeg * Math.PI / 180));
         }
+        if (isMirrored(itemId, hand)) mirrorQuat(mountRotation);
       }
       mesh.quaternion.copy(mountRotation);
-      // Grip anchor (Nicko 10-03): the instance is a groundAlign HOLDER whose
-      // inner mesh was lifted so the GLB's raw min-Y rests at holder y=0 -
-      // which put the sword TIP at/behind the fist (hand on mid-blade, hilt
-      // floating behind: "hilt at the opposite end"). Slide the INNER mesh
-      // down by the measured grip height in HOLDER-LOCAL Y (the mount
-      // rotation maps holder -Y to hand-local +Z grip-forward, so a -Y
-      // shift moves the grip ONTO the fist and the tip forward in front).
-      // Measured: sword grip at raw y~+0.65 -> holder y 1.637 (CONFIG).
-      // Offset is in raw GLB units and scales with the weapon correctly.
-      var gripY = (wm && wm.gripHolderY) ? (wm.gripHolderY[this.weaponId] || 0) : 0;
-      if (gripY && mesh.children[0]) {
-        mesh.children[0].position.y -= gripY;
-      }
       return;
     }
-    this.weaponPivot = new THREE.Group();
-    this.yawFrame.add(this.weaponPivot);
-    this.weaponPivot.add(mesh);
-    this.swordBase = window.WH_CONFIG.moveset.idlePose;
-    this.resetWeaponPose();
+    // rigid stand-in: right hand = the animated pivot, left = mirrored idle anchor
+    var ip = window.WH_CONFIG.moveset.idlePose;
+    if (hand === 'right') {
+      this.weaponPivot = new THREE.Group();
+      this.yawFrame.add(this.weaponPivot);
+      this.weaponPivot.add(mesh);
+      mesh.position.set(0, 0, 0);
+      this.swordBase = ip;
+      this.resetWeaponPose();
+    } else {
+      this.yawFrame.add(mesh);
+      mesh.position.set(-ip.pos[0], ip.pos[1], ip.pos[2]);
+      mesh.rotation.set(ip.rot[0], -ip.rot[1], -ip.rot[2]);
+    }
   };
 
   // 10-04 moveset framework accessors. The weapon def / move defs are read
@@ -230,12 +323,13 @@
   };
 
   // Swap the active moveset (chain resets). mesh optional: game.js passes the
-  // new weapon instance so the hand mount follows the weapon id.
+  // new weapon instance, which replaces the melee item's hand mesh (debug
+  // WH_DEBUG.equipWeapon; the melee item itself stays the same item id).
   Player.prototype.equipWeapon = function (id, mesh) {
     if (!MV.weapons[id]) return false;
     this.cancelAttack();
     this.weaponId = id;
-    if (mesh) this.setWeapon(mesh);
+    if (mesh) this.setItemMesh(this.meleeItemId(), mesh);
     return true;
   };
 
@@ -264,6 +358,12 @@
     this.keys = {};
     document.addEventListener('keydown', function (e) {
       self.keys[e.code] = true;
+      // v8: Backquote toggles the pointer-lock mouse bind (spec section 5;
+      // Esc is NOT handled here - the native exit resyncs via pointerlockchange).
+      // Ahead of the inventory gate so it can always unbind; bindMouse itself
+      // refuses while the screen is open.
+      if (e.code === 'Backquote' && !e.repeat) self.toggleMouseBind();
+      if (self.inputSuspended) return;   // 10-05: inventory screen open
       if (e.code === 'Space') {
         e.preventDefault();
         // EPR1 (A1-A3): the dodge acts on RELEASE (sampleDodgeInput); latch the
@@ -274,12 +374,15 @@
         e.preventDefault();
         if (self.onLockToggle) self.onLockToggle();  // game.js decides engage/break
       }
-      // v7: Q = loadout toggle (busy window, resets chain, keeps armed)
+      // v7: Q = loadout toggle (busy window, resets chain, keeps armed).
+      // Order B: swaps the left hand glove <-> shield.
       if (e.code === 'KeyQ' && !e.repeat) self.toggleLoadout();
-      // v7: Digit1-5 = belt spell selection (never touches chain/armed)
+      // AB1: Digit1-5 = action bar slot select (spell slot -> MAIN binding,
+      // item slot -> equip); Shift+Digit1-5 = OFF binding on spell slots
+      // (Order C semantics, never touches hands/chain/armed)
       if (e.code.indexOf('Digit') === 0 && !e.repeat) {
         var n = parseInt(e.code.slice(5), 10);
-        if (n >= 1 && n <= V7.belt.slots) self.selectBeltSlot(n - 1);
+        if (n >= 1 && n <= V7.actionbar.slots) self.selectActionSlot(n - 1, e.shiftKey);
       }
       // v7: R / T = consumable belt slots 1 / 2
       if (e.code === 'KeyR' && !e.repeat) self.useConsumable(0);
@@ -290,26 +393,40 @@
       if (e.code === 'Space') self.dodgeKeyDown = false;   // EPR1: release -> sampleDodgeInput
     });
     document.addEventListener('mousedown', function (e) {
+      if (self.inputSuspended) return;   // 10-05: clicks belong to the inventory screen
+      // Order C: LMB = main-hand action, RMB = off-hand action
+      // (CONFIG.equip.twoHand), both through handButton
       if (e.button === 0) {
-        self.tryAttack();
+        // v8: UI clicks (chip and any non-canvas DOM) are UI-only - no attack,
+        // no drag start, no auto-rebind. The chip's own click handler toggles
+        // bind via the chip path (N6); the canvas auto-rebind path (N5) only
+        // ever arms from real canvas-surface presses.
+        if (!e.target || e.target.id !== 'wh-canvas') return;
+        self.handButton('lmb', true);
+        // v8: auto-rebind on a canvas-surface LMB while unbound (spec section 5);
+        // rides along with the attack - drag-start lines below stay untouched.
+        if (!self.lockTarget && !self.mouseBound &&
+            MCFG.autoBindOnCanvasClick) {
+          self.bindMouse();
+        }
         if (!self.lockTarget) {
           self.dragging = true;
           self.lastDragX = e.clientX;
           self.lastDragY = e.clientY;
         }
       }
-      // v6: RMB hold to block (opens the parry window)
       if (e.button === 2) {
         e.preventDefault();
-        // v7: RMB routes by offhand implement: spell -> cast, shield -> block
-        if (self.offhand === 'spell') self.tryCast();
-        else self.tryBlock();
+        self.handButton('rmb', true);
       }
     });
     document.addEventListener('mouseup', function (e) {
-      if (e.button === 0) self.dragging = false;
-      // v7: RMB release ends block only when the implement is a shield
-      if (e.button === 2 && self.offhand === 'shield') self.endBlock();
+      if (e.button === 0) {
+        self.dragging = false;
+        self.handButton('lmb', false);
+      }
+      // v7: release ends a held block (no-op otherwise)
+      if (e.button === 2) self.handButton('rmb', false);
     });
     // v6: RMB must not open the browser context menu
     document.addEventListener('contextmenu', function (e) {
@@ -318,24 +435,111 @@
       return false;
     });
     document.addEventListener('mousemove', function (e) {
-      if (!self.dragging || self.lockTarget) return;   // mouse cam disabled while locked
+      if (self.lockTarget) return;            // lock-on owns the camera (keep)
+      if (self.inputSuspended) return;        // 10-05: inventory screen open - camera input ignored
+      if (self.mouseBound && document.pointerLockElement) {
+        var mdx = e.movementX || 0, mdy = e.movementY || 0;
+        if (mdx === 0 && mdy === 0) return;
+        self.lastManualCamT = performance.now() / 1000;
+        self.applyCamDelta(mdx * (MCFG.pointerLockSensMult != null ? MCFG.pointerLockSensMult : 1.0),
+                           mdy * (MCFG.pointerLockSensMult != null ? MCFG.pointerLockSensMult : 1.0));
+        return;
+      }
+      if (!self.dragging) return;             // unbound mouse: no drag, no camera
       var dx = e.clientX - self.lastDragX;
       var dy = e.clientY - self.lastDragY;
       self.lastDragX = e.clientX;
       self.lastDragY = e.clientY;
       if (dx !== 0 || dy !== 0) self.lastManualCamT = performance.now() / 1000;
-      self.camYaw -= dx * deg2rad(CFG.mouseSensDegPerPx);
-      self.camPitch += dy * deg2rad(CFG.mouseSensDegPerPx);
-      self.camPitch = Math.max(deg2rad(CFG.camPitchMinDeg), Math.min(deg2rad(CFG.camPitchMaxDeg), self.camPitch));
+      self.applyCamDelta(dx, dy);
     });
     document.addEventListener('wheel', function (e) {
+      if (self.inputSuspended) return;
       self.camDist += (e.deltaY > 0 ? 1 : -1) * 0.8;
       self.camDist = Math.max(CFG.camMinDistance, Math.min(CFG.camMaxDistance, self.camDist));
     }, { passive: true });
+    // v8: pointer lock state is the single source of truth for mouseBound -
+    // fires on bind, on Esc/native exit, on request failure. NO Esc key handler.
+    document.addEventListener('pointerlockchange', function () {
+      self.syncMouseChip();
+    });
+    // v8: HUD chip toggle (pointer-events:auto on the chip in style.css)
+    var chip = document.getElementById('wh-mouse-chip');
+    if (chip) {
+      this.mouseChipEl = chip;
+      chip.addEventListener('click', function (ev) {
+        ev.preventDefault();
+        self.toggleMouseBind();
+      });
+    }
+  };
+
+  // v8 pointer-lock mouse bind (io/specs/mouse-bind-cam-spec.md section 5)
+
+  Player.prototype.applyCamDelta = function (dxPx, dyPx) {
+    this.camYaw -= dxPx * deg2rad(CFG.mouseSensDegPerPx);
+    this.camPitch += dyPx * deg2rad(CFG.mouseSensDegPerPx);
+    this.camPitch = Math.max(deg2rad(CFG.camPitchMinDeg),
+      Math.min(deg2rad(CFG.camPitchMaxDeg), this.camPitch));
+  };
+
+  Player.prototype.bindMouse = function () {
+    if (document.pointerLockElement || !document.body.requestPointerLock) return;
+    if (this.inputSuspended) return;  // 10-05 Order A: never lock over the open inventory screen
+    var el = document.getElementById('wh-canvas');
+    var self = this;
+    var res = null;
+    try {
+      res = el.requestPointerLock();
+    } catch (e) {
+      // N7: sync-throw fault injection must never surface uncaught
+      this.syncMouseChip();
+      return;
+    }
+    if (res && typeof res.then === 'function') {
+      res.then(function () { self.syncMouseChip(); },
+               function () { self.syncMouseChip(); });
+    }
+  };
+
+  Player.prototype.unbindMouse = function () {
+    if (document.pointerLockElement) document.exitPointerLock();
+    this.syncMouseChip();
+  };
+
+  Player.prototype.toggleMouseBind = function () {
+    this.mouseBound ? this.unbindMouse() : this.bindMouse();
+  };
+
+  Player.prototype.syncMouseChip = function () {
+    this.mouseBound = !!document.pointerLockElement;
+    if (this.mouseChipEl) {
+      this.mouseChipEl.textContent =
+        this.mouseBound ? 'MOUSE: BOUND [`]' : 'MOUSE: UNBOUND [`]';
+    }
+  };
+
+  // EPR1: camera-relative move input -> normalized world xz direction
+  // (null when there is none). The roll basis for requestDodge /
+  // consumeQueuedDodge - same basis the walk block applies in update().
+  Player.prototype.inputDirWorld = function () {
+    var mx = this.moveInput.x, mz = this.moveInput.z;
+    if (!mx && !mz) return null;
+    var len = Math.sqrt(mx * mx + mz * mz);
+    mx /= len; mz /= len;
+    // camera forward (W) = (sin(camYaw + PI), cos(camYaw + PI));
+    // screen-right = cross(up, cameraBack) = (-fz, fx)
+    var fx = Math.sin(this.camYaw + Math.PI), fz = Math.cos(this.camYaw + Math.PI);
+    var rx = -fz, rz = fx;
+    var wx = fx * (-mz) + rx * mx;
+    var wz = fz * (-mz) + rz * mx;
+    var wl = Math.sqrt(wx * wx + wz * wz);
+    if (wl < 1e-4) return null;
+    return { x: wx / wl, z: wz / wl };
   };
 
   Player.prototype.collectMoveInput = function () {
-    var k = this.keys;
+    var k = this.inputSuspended ? {} : this.keys;
     var ix = 0, iz = 0;
     if (k['KeyW']) iz -= 1;
     if (k['KeyS']) iz += 1;
@@ -347,22 +551,28 @@
     this.sprinting = !!(k['ShiftLeft'] || k['ShiftRight']) || this.dodgeSprint;
   };
 
-  // EPR1: world-space unit direction of the live WASD / touch-stick keys on
-  // the camera-yaw basis update() walks on, or null with no move input.
-  Player.prototype.inputDirWorld = function () {
-    var k = this.keys;
-    var mx = (k['KeyD'] ? 1 : 0) - (k['KeyA'] ? 1 : 0);
-    var mz = (k['KeyS'] ? 1 : 0) - (k['KeyW'] ? 1 : 0);
-    if (mx === 0 && mz === 0) return null;
-    var len = Math.sqrt(mx * mx + mz * mz);
-    mx /= len; mz /= len;
-    var fx = Math.sin(this.camYaw + Math.PI), fz = Math.cos(this.camYaw + Math.PI);
-    return { x: fx * (-mz) - fz * mx, z: fz * (-mz) + fx * mx };
+  // 10-05 inventory Order A: suspend / restore player input. Suspending
+  // drops an active camera drag and a held guard (RMB release would land
+  // on the open screen); anything already in flight (swing, roll, cast
+  // windup) plays out. Restore is instant - nothing to rebuild.
+  // v8: the open screen owns the cursor - opening it unbinds a bound mouse
+  // (CONFIG.mouse.unbindOnUiOpen), closing it rebinds an unbound mouse
+  // when CONFIG.mouse.rebindOnUiClose is on.
+  Player.prototype.setInputSuspended = function (on) {
+    var wasSuspended = this.inputSuspended;
+    this.inputSuspended = !!on;
+    if (on) {
+      this.dragging = false;
+      this.endBlock();
+      if (MCFG.unbindOnUiOpen) this.unbindMouse();
+    } else if (wasSuspended && MCFG.rebindOnUiClose && !this.mouseBound) {
+      this.bindMouse();
+    }
   };
 
-  // EPR1 (spec 3.1, EPR1-A7): tryRoll() keeps meaning "roll now" for the
-  // touch dodge button - never a backstep, no tap/hold gesture (the
-  // keyboard Space grammar is sampleDodgeInput below).
+  // 10-04 (Nicko, souls-style): roll cancels attack RECOVER only - windup
+  // and strike are committed. Attack cannot start during roll. v7: also
+  // refused during the loadout toggle busy window.
   Player.prototype.tryRoll = function () {
     this.requestDodge(false);
   };
@@ -465,8 +675,9 @@
   // guardRaiseSec later. During a swing the held RMB is queued and accepted
   // at the move's guard cancel point (the swing plays out underneath).
   Player.prototype.tryBlock = function () {
-    this.guardQueued = false;
-    if (this.state !== 'alive' || this.rolling || this.backstep) return;
+    if (this.state !== 'alive' || this.rolling || this.attacking) return;
+    if (this.toggling) return;              // Order B: the shield is mid-swap until Q lands
+    if (!this.canGuard()) return;           // Order C: a shield in the LEFT hand (DAGBLEED: or a dagger guard)
     if (this.guardBroken) return;
     if (this.stamina < window.WH_CONFIG.block.guardBreakMinStamina) return;
     if (this.attacking && !this.cancelOpen('guard')) {
@@ -478,11 +689,14 @@
     this.blocking = true;
     this.blockActive = false;
     this.guardRaiseTimer = ER.guardRaiseSec;
-    this.parryTimer = window.WH_CONFIG.block.parryWindow;
+    // L1 Shield / Defense rank: + up to 0.05 s at rank 100 (0 at rank 1)
+    this.parryTimer = window.WH_CONFIG.block.parryWindow +
+      (window.WH_LEVEL ? window.WH_LEVEL.skillPassive('shieldDefense', 'parryWindow') : 0);
   };
 
   Player.prototype.endBlock = function () {
     this.blocking = false;
+    this.blockButton = null;
     this.blockActive = false;
     this.guardRaiseTimer = 0;
     this.guardQueued = false;
@@ -516,11 +730,34 @@
     if (this.onGuardBreak) this.onGuardBreak();
   };
 
-  // v7: loadout toggle I <-> II. Busy window blocks attack/cast/block/roll.
-  // Resets the combo chain; KEEPS the armedTimer running; if armed at the
-  // toggle moment, banks the cross-finisher.
+  // v7: loadout toggle busy window (blocks attack/cast/block/roll), resets
+  // the combo chain, KEEPS the armedTimer running; if armed at the toggle
+  // moment, banks the cross-finisher. Order B: Q = LEFT-HAND SWAP between
+  // CONFIG.equip.qSwap[0] (magic glove) and [1] (round shield): left holds
+  // the glove -> the shield goes in, anything else -> the glove goes in.
+  // The incoming item must be in the INVENTORY, else a refusal toast and
+  // nothing changes (no window, no chain reset). The swap lands when the
+  // window completes (update()); the outgoing item returns to the inventory.
   Player.prototype.toggleLoadout = function () {
     if (this.state !== 'alive' || this.toggling) return;
+    var pair = window.WH_CONFIG.equip.qSwap;
+    var target = this.hands.left === pair[0] ? pair[1] : pair[0];
+    this.selectItemEquip(target, 'left');
+  };
+
+  // AB1: the Q swap generalized - put item id into hand through the same
+  // busy window (CONFIG.loadout.toggleSeconds), block drop, chain reset and
+  // armed banking as Q. Inventory-only source (swap-parity: the outgoing
+  // item returns to the inventory when the window lands, update()); not
+  // owned = refusal toast, nothing changes. Returns true when the window
+  // started.
+  Player.prototype.selectItemEquip = function (id, hand) {
+    if (this.state !== 'alive' || this.toggling) return false;
+    if (!this.inventory || this.inventory.countOf(id) <= 0) {
+      return this.refuseEquip(itemName(id) + ' not in inventory');
+    }
+    this.pendingQSwap = id;
+    this.pendingQSwapHand = hand;
     this.endBlock();                     // shield grip is dropped by the swap
     this.toggling = true;
     this.toggleTimer = V7.loadout.toggleSeconds;
@@ -531,15 +768,129 @@
     this.endCombo();
     // armed survives the toggle inside its window; cross-finisher banks
     if (this.armedTimer > 0) this.crossArmed = true;
+    return true;
+  };
+
+  // ---- AB1: player-mappable action bar ----------------------------------------
+  // Entry { kind: 'spell' | 'item', id } in CONFIG.actionbar.slots slots. The
+  // HUD (game.js) owns the map + editing; the player owns validation and
+  // reads the map only through actionSlot(i).
+  var BINDABLE_KINDS = ['melee', 'shield', 'caster', 'torch'];
+
+  // Gear with a hand mount: same mesh rule as equipItem (dormant shields /
+  // swords are not bindable), minus CONFIG.actionbar.pickerExclude.
+  function isBindableItem(id) {
+    var d = itemDef(id);
+    if (!d || d.category !== 'gear' || !d.hands || !d.hands.length) return false;
+    if (BINDABLE_KINDS.indexOf(d.kind) < 0) return false;
+    if (!d.mesh && (d.kind === 'shield' || d.kind === 'melee')) return false;
+    return (V7.actionbar.pickerExclude || []).indexOf(id) < 0;
+  }
+
+  function isSpellId(id) {
+    return Object.prototype.hasOwnProperty.call(V7.spell, id) &&
+      !!V7.spell[id] && typeof V7.spell[id] === 'object' && !!V7.spell[id].kind;
+  }
+
+  function validActionEntry(e) {
+    if (!e || typeof e !== 'object' || typeof e.id !== 'string') return false;
+    if (e.kind === 'spell') return isSpellId(e.id);
+    if (e.kind === 'item') return isBindableItem(e.id);
+    return false;
+  }
+
+  // The hand a bar item goes in: CONFIG.equip.nativeHand, else the first
+  // allowed hand (shield / torch / glove -> left, longsword -> right).
+  function actionHandOf(id) {
+    var d = itemDef(id);
+    var nat = window.WH_CONFIG.equip.nativeHand[id];
+    return nat && d.hands.indexOf(nat) >= 0 ? nat : d.hands[0];
+  }
+
+  // Slot i's binding (runtime map entry, or that slot's default when the
+  // entry is missing / invalid), or null.
+  Player.prototype.actionSlot = function (i) {
+    var m = this.actionMapSource ? this.actionMapSource() : null;
+    var e = m && m[i];
+    if (validActionEntry(e)) return e;
+    var d = (this.actionDefaults || V7.actionbar.defaults)[i];
+    return validActionEntry(d) ? d : null;
+  };
+
+  // Is slot i's spell castable right now (learned + an implement in hand)?
+  // false for item slots. The HUD darkens spell slots that fail this.
+  Player.prototype.actionSpellLive = function (i) {
+    var e = this.actionSlot(i);
+    return !!(e && e.kind === 'spell' && this.hasCaster() && this.belt.indexOf(e.id) >= 0);
+  };
+
+  // Digit key / bar tap. spell slot: no implement or not learned = refusal
+  // flash (like an empty slot), else the Order C belt bind (shift = OFF
+  // hand). item slot: shift = 'Not a spell' refusal; held in a hand = no-op;
+  // else the Q-swap window into its native hand (selectItemEquip).
+  Player.prototype.selectActionSlot = function (i, shift) {
+    if (this.state !== 'alive') return;
+    if (i < 0 || i >= V7.actionbar.slots) return;
+    var e = this.actionSlot(i);
+    if (!e) {
+      if (this.onCastRefusal) this.onCastRefusal('empty-slot');
+      return;
+    }
+    if (e.kind === 'spell') {
+      var b = this.belt.indexOf(e.id);
+      if (b < 0 || !this.hasCaster()) {
+        if (this.onCastRefusal) this.onCastRefusal(b < 0 ? 'empty-slot' : 'no-implement');
+        return;
+      }
+      // AB1.1 (Nicko 10-06 playtest): with ONE caster hand, a plain select
+      // retunes it (offhand-only glove now works). With TWO caster hands
+      // (dual gloves), plain = main, Shift = off (Order C per-hand rule
+      // preserved, C5 regression avoided). A Shift when the LEFT hand is
+      // non-caster is a no-op (nothing to retune there).
+      var castRole = null;
+      if (this.isCasterHand('left') && this.isCasterHand('right')) {
+        castRole = shift ? 'off' : 'main';
+      } else if (this.isCasterHand('left')) {
+        castRole = 'off';
+      } else {
+        castRole = 'main';
+      }
+      this.pressBeltKey(b, castRole);
+      return;
+    }
+    if (shift) { this.refuseEquip('Not a spell'); return; }
+    if (this.handOf(e.id)) return;           // already active
+    this.selectItemEquip(e.id, actionHandOf(e.id));
   };
 
   Player.prototype.getActiveLoadout = function () {
     return this.activeLoadout;
   };
 
-  // v7: belt spell selection (Digit1-5). Swaps the bound spell, starts the
-  // regrip window. NEVER touches the combo chain or armed state.
-  Player.prototype.selectBeltSlot = function (i) {
+  // ---- Order C: per-hand cast state + bindings --------------------------------
+  // role 'main' = right hand, 'off' = left hand.
+  var ROLE_HAND = { main: 'right', off: 'left' };
+  var HAND_ROLE = { right: 'main', left: 'off' };
+  var ROLES = ['main', 'off'];
+
+  function newCastState() {
+    // windup: seconds left (> 0 = mid-cast), spellId: the spell being cast,
+    // cooldown: seconds until this hand may cast again, regrip: this hand's
+    // re-grip busy window (new binding / implement just entered the hand)
+    return { windup: 0, spellId: null, cooldown: 0, regrip: 0 };
+  }
+
+  function roleOf(handOrRole) {
+    return HAND_ROLE[handOrRole] || (ROLE_HAND[handOrRole] ? handOrRole : 'main');
+  }
+
+  // v7: belt spell selection, Order C: binds belt slot i to one hand ('main'
+  // default = Digit1-5, 'off' = Shift+Digit1-5). Magic canon 10-05: spells
+  // are knowledge, the belt is 5 quick slots over them; a binding is a
+  // pointer into the belt. Starts THAT hand's regrip only while it holds a
+  // caster. NEVER touches the combo chain, armed state, or the hands.
+  Player.prototype.selectBeltSlot = function (i, role) {
+    role = roleOf(role);
     if (this.state !== 'alive') return;
     if (i < 0 || i >= V7.belt.slots) return;
     if (!this.belt[i]) {
@@ -547,56 +898,623 @@
       if (this.onCastRefusal) this.onCastRefusal('empty-slot');
       return;
     }
-    this.selectedBeltSlot = i;
-    this.regripTimer = V7.belt.regripSeconds;
-    // glow color follows the selection (mesh owned by game.js visuals)
-    if (this.onSpellSelected) this.onSpellSelected(this.belt[i]);
+    this.bindings[role] = i;
+    if (this.isCasterHand(ROLE_HAND[role])) this.cast[role].regrip = V7.belt.regripSeconds;
+    if (this.onSpellSelected) this.onSpellSelected(this.belt[i], role);
   };
 
-  Player.prototype.getSelectedSpellId = function () {
-    return this.belt[this.selectedBeltSlot];
+  // Digit key (Order B/C): bind that slot's learned spell to the hand.
+  // Empty slot = refusal flash; the hand's current slot = no-op. A cast
+  // still winding up in THAT hand belongs to the old spell and is dropped.
+  Player.prototype.pressBeltKey = function (i, role) {
+    role = roleOf(role);
+    if (this.state !== 'alive') return;
+    if (i < 0 || i >= V7.belt.slots) return;
+    if (this.belt[i] && i === this.bindings[role]) return;
+    if (this.belt[i]) this.dropPendingCast(role);
+    this.selectBeltSlot(i, role);
   };
 
-  // v7: RMB-cast refusal conditions (AC: roll/attacking-strike/toggle/regrip/
-  // guard break/dead/focus). Windup-stage attacks ALLOW the weave cast.
-  Player.prototype.canCast = function () {
-    if (this.state !== 'alive') return false;
-    if (this.rolling || this.backstep || this.toggling || this.regripTimer > 0) return false;   // EPR1: backstep = roll
-    if (this.guardBroken) return false;
-    if (this.offhand !== 'spell') return false;
-    if (this.attacking && this.getAttackStage() !== 'windup') return false;
-    if (this.castCooldown > 0 || this.castWindup > 0) return false;
-    var spellId = this.getSelectedSpellId();
-    if (!spellId) return false;
-    var S = V7.spell[spellId];
-    return this.focus >= S.focusCost * CFG.castFocusTaxMult;
+  // Learned spells (CHARACTER tab list): the belt's filled slots for now.
+  // Books / scrolls (learn-on-read) will add to the belt later. main / off
+  // = which hand binding points at the slot.
+  Player.prototype.getKnownSpells = function () {
+    var out = [];
+    for (var i = 0; i < this.belt.length; i++) {
+      if (this.belt[i]) {
+        out.push({ slot: i, id: this.belt[i],
+                   main: i === this.bindings.main, off: i === this.bindings.off });
+      }
+    }
+    return out;
   };
 
-  // v7: cast entry (RMB with spell implement). Refusal = HUD flash.
-  // CASTING NEVER RESETS THE CHAIN: comboIndex/comboQueued untouched.
-  Player.prototype.tryCast = function () {
-    if (!this.canCast()) {
-      if (this.onCastRefusal) this.onCastRefusal('cast-refused');
+  // Spell bound to a hand ('main' / 'off' or 'right' / 'left'), or null.
+  Player.prototype.getBoundSpellId = function (role) {
+    return this.belt[this.bindings[roleOf(role)]] || null;
+  };
+
+  // A cast still in windup belongs to the implement / binding being put
+  // away: drop it (no focus spent; deliberate, so no fizzle flash). No role
+  // = both hands.
+  Player.prototype.dropPendingCast = function (role) {
+    var roles = role ? [roleOf(role)] : ROLES;
+    for (var r = 0; r < roles.length; r++) {
+      var c = this.cast[roles[r]];
+      c.windup = 0;
+      c.spellId = null;
+    }
+  };
+
+  // Focus already promised to OTHER hands mid-windup (spent on completion).
+  // A new cast must fit beside it, so a focus-starved hand refuses at the
+  // press instead of both windups completing on one cast's worth of focus.
+  Player.prototype.focusReserved = function (exceptRole) {
+    var sum = 0;
+    for (var r = 0; r < ROLES.length; r++) {
+      var c = this.cast[ROLES[r]];
+      if (ROLES[r] !== exceptRole && c.windup > 0 && c.spellId) sum += castCost(c.spellId);
+    }
+    return sum;
+  };
+
+  // L1: x the spell's school-line focus cost passive (x1 at rank 1 / no line)
+  function castCost(spellId) {
+    var LV = window.WH_LEVEL, line = LV ? LV.spellLine(spellId) : null;
+    return V7.spell[spellId].focusCost * CFG.castFocusTaxMult *
+      (line ? LV.skillMult(line, 'focusCost') : 1);
+  }
+
+  // ---- Order B: hands ---------------------------------------------------------
+
+  function itemDef(id) {
+    return id ? (window.WH_CONFIG.items[id] || null) : null;
+  }
+
+  function kindOf(id) {
+    var d = itemDef(id);
+    return d ? d.kind || null : null;
+  }
+
+  function itemName(id) {
+    var d = itemDef(id);
+    return d ? d.name : String(id);
+  }
+
+  function otherHand(hand) {
+    return hand === 'right' ? 'left' : 'right';
+  }
+
+  // capability flags: the single source for every combat gate
+  Player.prototype.hasCaster = function () {
+    return !!this.casterHand();
+  };
+
+  Player.prototype.casterHand = function () {
+    if (kindOf(this.hands.left) === 'caster') return 'left';
+    if (kindOf(this.hands.right) === 'caster') return 'right';
+    return null;
+  };
+
+  // Order C: does this hand ('right' / 'left') hold a casting implement?
+  Player.prototype.isCasterHand = function (hand) {
+    return kindOf(this.hands[hand]) === 'caster';
+  };
+
+  Player.prototype.hasShield = function () {
+    return kindOf(this.hands.left) === 'shield' || kindOf(this.hands.right) === 'shield';
+  };
+
+  Player.prototype.hasMeleeRight = function () {
+    return kindOf(this.hands.right) === 'melee';
+  };
+
+  // R-64.3: the item defs in the hands (right, left; empty hands skipped).
+  // Both hands count, so dual gloves are two pieces. WH_LEVEL.magicDefense
+  // totals item stats over this.
+  Player.prototype.equippedItems = function () {
+    var out = [];
+    ['right', 'left'].forEach(function (h) {
+      var d = itemDef(this.hands[h]);
+      if (d) out.push(d);
+    }, this);
+    return out;
+  };
+
+  Player.prototype.handOf = function (id) {
+    if (this.hands.right === id) return 'right';
+    if (this.hands.left === id) return 'left';
+    return null;
+  };
+
+  // The melee item whose mesh/moveset the swing code drives: the one in the
+  // right hand, else the first melee item in CONFIG.items.
+  Player.prototype.meleeItemId = function () {
+    if (this.hasMeleeRight()) return this.hands.right;
+    var items = window.WH_CONFIG.items;
+    for (var id in items) if (items[id].kind === 'melee') return id;
+    return null;
+  };
+
+  // Order C: a shield blocks only from the LEFT hand (right = carried).
+  Player.prototype.hasShieldLeft = function () {
+    return kindOf(this.hands.left) === 'shield';
+  };
+
+  // DAGBLEED: a dagger in either hand opens the guard / parry window with no
+  // shield. The dagger guard parries only - block mitigation stays the
+  // shield's (resolveIncomingHit step 3) - and only its parries can bleed.
+  Player.prototype.isDaggerGuard = function () {
+    return !this.hasShieldLeft() && this.handOf('dagger') !== null;
+  };
+
+  // DAGBLEED: the guard needs a left-hand shield (Order C) or a dagger guard
+  Player.prototype.canGuard = function () {
+    return this.hasShieldLeft() || this.isDaggerGuard();
+  };
+
+  // Order C two-button combat. What a hand's button does, from what the
+  // hand holds: right melee -> the attack chain, caster -> cast that hand's
+  // binding, left shield -> hold-to-block, anything else -> null (inert).
+  Player.prototype.handAction = function (hand) {
+    var k = kindOf(this.hands[hand]);
+    if (k === 'melee' && hand === 'right') return 'attack';
+    if (k === 'caster') return 'cast';
+    if (k === 'shield' && hand === 'left') return 'block';
+    // DAGBLEED: an otherwise inert left button guards with a dagger held
+    if (hand === 'left' && this.isDaggerGuard()) return 'block';
+    return null;
+  };
+
+  // CONFIG.equip.twoHand maps a button ('lmb' / 'rmb') to 'mainHand' (right)
+  // or 'offHand' (left).
+  Player.prototype.buttonHand = function (button) {
+    return window.WH_CONFIG.equip.twoHand[button] === 'offHand' ? 'left' : 'right';
+  };
+
+  // THE dispatch for both combat buttons; mouse (LMB/RMB) and touch
+  // (attack/block buttons) both call it. down = press, else release. A
+  // release only ends a block that this button started.
+  Player.prototype.handButton = function (button, down) {
+    var hand = this.buttonHand(button);
+    if (!down) {
+      if (this.blockButton === button) {
+        this.blockButton = null;
+        this.endBlock();
+      }
       return;
     }
-    var spellId = this.getSelectedSpellId();
-    var S = V7.spell[spellId];
-    this.castWindup = S.castWindup;      // fizzle check runs during windup
-    this.pendingSpellId = spellId;
+    var a = this.handAction(hand);
+    if (a === 'attack') this.tryAttack();
+    else if (a === 'cast') this.tryCast(hand);
+    else if (a === 'block') {
+      this.tryBlock();
+      if (this.blocking) this.blockButton = button;
+    }
   };
 
-  // v7: windup completion -> spawn the Firebolt, spend focus WITH the
-  // one-hand tax (weapon in main hand = tax always in this slice),
-  // start the cast cooldown. Called by game.js (which owns projectiles).
-  // Returns the spawn request or null.
-  Player.prototype.completeCast = function () {
-    var spellId = this.pendingSpellId;
-    this.pendingSpellId = null;
+  Player.prototype.refuseEquip = function (text) {
+    if (this.onEquipRefusal) this.onEquipRefusal(text);
+    return false;
+  };
+
+  // Equip item id into hand ('right' | 'left'). Sources: the OTHER hand (a
+  // move - never a duplicate) unless inventoryOnly, else the inventory. A
+  // displaced item in the target hand returns to the inventory; drawing from
+  // the inventory frees a slot for it (gear stacks to 1), a hand-to-hand
+  // move needs a free slot or is refused "Inventory full". Returns true when
+  // the item ends up in that hand. D-amend: a melee/shield item with no mesh
+  // (dormant buckler / towerShield) is refused unless force (WH_DEBUG only).
+  Player.prototype.equipItem = function (id, hand, inventoryOnly, force) {
+    var d = itemDef(id);
+    if (!d || d.category !== 'gear' || !d.hands) return this.refuseEquip(itemName(id) + ' cannot be equipped');
+    if (!d.mesh && (d.kind === 'shield' || d.kind === 'melee') && !force) return this.refuseEquip('No visual - asset pending');
+    if (d.hands.indexOf(hand) < 0) return this.refuseEquip(d.name + ' cannot go in the ' + hand + ' hand');
+    if (this.hands[hand] === id) return true;
+    var other = otherHand(hand);
+    var fromOther = !inventoryOnly && this.hands[other] === id;
+    var inv = this.inventory;
+    if (!fromOther && (!inv || inv.countOf(id) <= 0)) return this.refuseEquip(d.name + ' not in inventory');
+    var displaced = this.hands[hand];
+    if (displaced && fromOther && !inv.hasRoomFor(displaced)) return this.refuseEquip('Inventory full');
+    // hands first, inventory second: the inventory's onChange redraw then
+    // already sees the final hands
+    if (fromOther) this.hands[other] = null;
+    this.hands[hand] = id;
+    if (!fromOther) inv.removeItem(id, 1);
+    if (displaced) inv.addItem(displaced, 1);
+    this.handsChanged();
+    return true;
+  };
+
+  // Hand -> inventory. Refused (toast, item stays) when the inventory is full.
+  Player.prototype.unequipHand = function (hand) {
+    var id = this.hands[hand];
+    if (!id) return false;
+    if (!this.inventory || !this.inventory.hasRoomFor(id)) return this.refuseEquip('Inventory full');
+    this.hands[hand] = null;
+    this.inventory.addItem(id, 1);
+    this.handsChanged();
+    return true;
+  };
+
+  // Boot: move CONFIG.equip.defaultHands items out of the starting kit
+  // (R-64.4: or the picked class's hands). inventoryOnly: the same id in
+  // both hands (Magician dual gloves) draws two pieces, never a move.
+  Player.prototype.equipDefaultHands = function (hands) {
+    var dh = hands || window.WH_CONFIG.equip.defaultHands;
+    if (dh.right) this.equipItem(dh.right, 'right', true);
+    if (dh.left) this.equipItem(dh.left, 'left', true);
+  };
+
+  // Combat side effects of any hand change, then visuals + listeners.
+  Player.prototype.handsChanged = function () {
+    var melee = this.hasMeleeRight();
+    if (!melee && this.attacking) this.cancelAttack();      // no blade, no swing
+    if (melee && this.hands.right !== this.lastRightItem) {
+      var mv = itemDef(this.hands.right).moveset;
+      if (mv && MV.weapons[mv] && mv !== this.weaponId) {
+        this.cancelAttack();
+        this.weaponId = mv;
+      }
+    }
+    this.lastRightItem = this.hands.right;
+    if (!this.canGuard()) this.endBlock();          // Order C: guard = left-hand shield (DAGBLEED: or dagger)
+    // Order C, per hand: an implement leaving drops that hand's windup; an
+    // implement entering (new item in the hand) starts that hand's regrip
+    if (!this.lastHandItems) this.lastHandItems = { right: null, left: null };
+    for (var r = 0; r < ROLES.length; r++) {
+      var h = ROLE_HAND[ROLES[r]];
+      if (!this.isCasterHand(h)) this.dropPendingCast(ROLES[r]);
+      else if (this.hands[h] !== this.lastHandItems[h]) this.cast[ROLES[r]].regrip = V7.belt.regripSeconds;
+      this.lastHandItems[h] = this.hands[h];
+    }
+    // MAGANIM B3/B4: the body variant follows the hands; a hand change ends
+    // a running cast shot
+    this.evalCasterMode();
+    if (this.anim) this.anim.endCastShot();
+    var pair = window.WH_CONFIG.equip.qSwap;
+    this.activeLoadout = this.hands.left === pair[0] ? 1 : this.hands.left === pair[1] ? 2 : 0;
+    this.applyHandVisuals();
+    if (this.onHandsChanged) this.onHandsChanged(this.hands);
+  };
+
+  // MAGANIM (R-65.3 / R-65.4): full-caster mode = BOTH hands hold a
+  // CONFIG.assets.caster.items implement; one glove = warrior body. Runs on
+  // hand changes only (handsChanged: equip / unequip, boot default hands,
+  // class pick, save restore), never per frame.
+  Player.prototype.evalCasterMode = function () {
+    var items = window.WH_CONFIG.assets.caster.items;
+    this.casterMode = items.indexOf(this.hands.right) >= 0 && items.indexOf(this.hands.left) >= 0;
+    if (this.anim) this.anim.setVariant(this.casterMode ? 'caster' : 'warrior');
+  };
+
+  // Register an item's hand mesh (game.js instances the GLB). One-time prep
+  // here; applyHandVisuals mounts it on whichever hand holds the item.
+  // Stage 2: kind 'torch' takes a second instance (twin) - one mesh per hand,
+  // so torch + torch shows two torches.
+  Player.prototype.setItemMesh = function (id, mesh, twin) {
+    if (kindOf(id) === 'torch') {
+      var prev = this.handMeshes[id];
+      if (prev) {
+        if (prev.left && prev.left.parent) prev.left.parent.remove(prev.left);
+        if (prev.right && prev.right.parent) prev.right.parent.remove(prev.right);
+      }
+      this.handMeshes[id] = { left: prepTorch(mesh), right: twin ? prepTorch(twin) : null };
+      this.applyHandVisuals();
+      return;
+    }
+    var old = this.itemMeshes[id];
+    if (old && old !== mesh) {
+      if (old.parent) old.parent.remove(old);
+      if (this.weaponPivot && old === this.sword) {
+        this.yawFrame.remove(this.weaponPivot);
+        this.weaponPivot = null;
+      }
+    }
+    this.itemMeshes[id] = mesh;
+    mesh.userData.whHand = null;
+    var k = kindOf(id);
+    if (k === 'melee') {
+      this.sword = mesh;
+      this.swordBaseEmissive = null;     // armed-glow base re-sampled per mesh
+    } else if (k === 'shield') {
+      this.shield = mesh;
+      prepShield(mesh);
+    }
+    this.applyHandVisuals();
+  };
+
+  // Shield prep (once per mesh, before any mount): centre the disc on its
+  // X/Y and put its back-most point on the holder origin, so the mount
+  // offset is where the shield's back meets the fist.
+  function prepShield(mesh) {
+    var inner = mesh.children[0];
+    if (!inner || mesh.userData.whShieldPrepped) return;
+    mesh.userData.whShieldPrepped = true;
+    mesh.updateMatrixWorld(true);
+    var box = new THREE.Box3().setFromObject(inner);
+    var s = mesh.scale.x || 1;
+    var c = box.getCenter(new THREE.Vector3()).multiplyScalar(1 / s);
+    inner.position.x -= c.x;
+    inner.position.y -= c.y;
+    inner.position.z -= box.min.z / s;
+  }
+
+  // Torch prep (once per mesh, before any mount): slide the inner mesh so
+  // the measured grip sits on the holder origin, and hang the hand-light
+  // anchor at the flame (CONFIG.assets.torchMount, raw GLB units).
+  function prepTorch(mesh) {
+    if (!mesh || mesh.userData.whTorchPrepped) return mesh;
+    mesh.userData.whTorchPrepped = true;
+    var TM = window.WH_CONFIG.assets.torchMount;
+    if (mesh.children[0]) mesh.children[0].position.y -= TM.gripHolderY;
+    var anchor = new THREE.Object3D();
+    anchor.position.y = TM.lightHolderY - TM.gripHolderY;
+    mesh.add(anchor);
+    mesh.userData.whLightAnchor = anchor;
+    mesh.userData.whHand = null;
+    mesh.visible = false;
+    return mesh;
+  }
+
+  // Stage 2: the flame anchor of the torch mesh in this hand (light.js hangs
+  // the hand's follow light there), or null when the hand holds no mounted
+  // per-hand mesh.
+  Player.prototype.handLightAnchor = function (hand) {
+    var set = this.handMeshes[this.hands[hand]];
+    var m = set ? set[hand] : null;
+    return m && m.parent && m.visible ? m.userData.whLightAnchor || null : null;
+  };
+
+  // S3 tweak (10-06): raised-arm torch carry. Runs AFTER the mixer each frame
+  // (game.js calls it right after syncPlayer): the mixer overwrites every arm
+  // bone's quaternion each frame its clip keys that bone (all 13 clips key the
+  // arms), so reading quat fresh and writing q_clip * q_carry is a clean
+  // per-frame overlay - nothing accumulates, no un-apply. No latched flags
+  // (D9): torchCarryW {right,left} is the only state, eased toward
+  // torch-in-hand-and-alive ? 1 : 0 over carry.easeSec (both directions).
+  // Axis = bone-local +X (measured on combat-chain.glb: limbs run bone-local
+  // +Y; both arms' local X ~ world -X, so +X lifts forward+out; right hand
+  // mirrors with the SAME sign - computed 19.4deg like left's 20.0deg).
+  // Composition order = q_clip * q_carry (carry applied in the bone's
+  // post-clip frame) - matches the measured chain m_local * R(lift).
+  Player.prototype.applyTorchCarryPost = function (dt) {
+    var cfg = window.WH_CONFIG.assets.torchMount.carry;
+    if (!cfg || !this.body || !this.anim) return;
+    if (!this.torchCarryW) this.torchCarryW = { right: 0, left: 0 };
+    for (var hi = 0; hi < 2; hi++) {
+      var hand = hi === 0 ? 'right' : 'left';
+      var target = this.handOf('torch') === hand && this.state === 'alive' ? 1 : 0;
+      var w = this.torchCarryW[hand];
+      var step = dt / (cfg.easeSec || 0.25);
+      if (w < target) w = Math.min(target, w + step);
+      else if (w > target) w = Math.max(target, w - step);
+      this.torchCarryW[hand] = w;
+      if (w <= 0) continue;
+      var ua = boneFor(this.body, hand);
+      if (ua) {
+        TORCH_Q_SCRATCH.setFromAxisAngle(AX_X, (cfg.liftDeg || 0) * Math.PI / 180 * w);
+        ua.quaternion.multiply(TORCH_Q_SCRATCH);
+      }
+      var fb = this.body.getObjectByName(hand === 'left' ? 'L_Forearm' : 'R_Forearm');
+      if (fb && cfg.bendDeg) {
+        TORCH_Q_SCRATCH.setFromAxisAngle(AX_X, (cfg.bendDeg || 0) * Math.PI / 180 * w);
+        fb.quaternion.multiply(TORCH_Q_SCRATCH);
+      }
+    }
+  };
+
+  // Each registered mesh follows its item: mounted on the hand holding it,
+  // detached + hidden while the item is in the inventory. Remount only on a
+  // hand change (mounts are constant hand-local transforms).
+  Player.prototype.applyHandVisuals = function () {
+    for (var id in this.itemMeshes) {
+      var mesh = this.itemMeshes[id];
+      var hand = this.handOf(id);
+      if (!hand) {
+        if (this.weaponPivot && mesh === this.sword) {
+          this.yawFrame.remove(this.weaponPivot);
+          this.weaponPivot = null;
+        }
+        if (mesh.parent) mesh.parent.remove(mesh);
+        mesh.visible = false;
+        mesh.userData.whHand = null;
+        continue;
+      }
+      mesh.visible = true;
+      if (mesh.userData.whHand === hand && mesh.parent) continue;
+      mesh.userData.whHand = hand;
+      var k = kindOf(id);
+      if (k === 'melee') this.mountWeapon(mesh, hand, id);
+      else if (k === 'shield') this.mountShield(mesh, hand, id);
+    }
+    // stage 2 per-hand meshes: the right/left instance shows iff that hand
+    // holds the item (both may - torch + torch)
+    for (var pid in this.handMeshes) {
+      for (var hi = 0; hi < 2; hi++) {
+        var h = hi === 0 ? 'right' : 'left';
+        var m = this.handMeshes[pid][h];
+        if (!m) continue;
+        if (this.hands[h] !== pid) {
+          if (m.parent) m.parent.remove(m);
+          m.visible = false;
+          m.userData.whHand = null;
+          continue;
+        }
+        m.visible = true;
+        if (m.userData.whHand === h && m.parent) continue;
+        m.userData.whHand = h;
+        this.mountTorch(m, h, pid);
+      }
+    }
+  };
+
+  // Stage 2 S3: torch on a skinned hand - raw +Y (butt -> flame) onto the
+  // hand-local headAxis at the fist centroid (CONFIG.assets.torchMount,
+  // measured for nativeHand.torch, mirrored for the other hand). The rigid
+  // stand-in body has no bones: idle anchor on yawFrame, mirrored per hand.
+  // S3 tweak (10-06): with the raised-arm carry (applyTorchCarryPost), a
+  // straightenAxis turns the shaft to TRUE vertical: qt = setFromUnitVectors
+  // (meshY -> straightenAxis) is multiplied UNDER the head-axis q, so
+  // meshY -qt-> mesh target -q-> hand target t_hand -rig-> world +Y.
+  // Mirrored with the mount for the off hand (verified: L exact vertical,
+  // R 0.7deg off - rig asymmetry). No per-frame mesh writes; the eased bone
+  // lift animates the whole mount.
+  Player.prototype.mountTorch = function (mesh, hand, itemId) {
+    if (mesh.parent) mesh.parent.remove(mesh);
+    var TM = window.WH_CONFIG.assets.torchMount;
+    var bone = boneFor(this.body, hand);
+    if (bone) {
+      bone.add(mesh);
+      var q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0),
+        new THREE.Vector3().fromArray(TM.headAxis).normalize());
+      if (TM.rollDeg) {
+        q.premultiply(new THREE.Quaternion().setFromAxisAngle(
+          new THREE.Vector3().fromArray(TM.headAxis).normalize(), TM.rollDeg * Math.PI / 180));
+      }
+      if (TM.carry && TM.carry.straightenAxis) {
+        // mesh-space correction: shaft axis (0,1,0) -> straightenAxis, then
+        // q carries it into hand space; q*qt maps meshY all the way to t_hand
+        var qt = new THREE.Quaternion().setFromUnitVectors(
+          new THREE.Vector3(0, 1, 0),
+          new THREE.Vector3().fromArray(TM.carry.straightenAxis).normalize());
+        q.multiply(qt);
+      }
+      var off = new THREE.Vector3().fromArray(TM.offset);
+      if (isMirrored(itemId, hand)) {
+        mirrorQuat(q);
+        mirrorVec(off);
+      }
+      mesh.quaternion.copy(q);
+      mesh.position.copy(off);
+    } else {
+      var ip = window.WH_CONFIG.moveset.idlePose;
+      this.yawFrame.add(mesh);
+      mesh.position.set((hand === 'left' ? -1 : 1) * ip.pos[0], ip.pos[1], ip.pos[2]);
+      mesh.rotation.set(0, 0, 0);
+    }
+  };
+
+  // Mount the round shield on a skinned hand (constant hand-local mount
+  // measured offline for L_Hand, CONFIG.assets.shieldMount; mirrored for
+  // R_Hand); the rigid stand-in body has no bones, so it falls back to the
+  // idle anchor on yawFrame (mirrored per hand).
+  Player.prototype.mountShield = function (mesh, hand, itemId) {
+    if (mesh.parent) mesh.parent.remove(mesh);
+    var SM = window.WH_CONFIG.assets.shieldMount;
+    var bone = boneFor(this.body, hand);
+    if (bone) {
+      bone.add(mesh);
+      // raw +Z (boss side) -> faceAxis, raw +Y (disc up) -> upAxis
+      var f = new THREE.Vector3().fromArray(SM.faceAxis).normalize();
+      var u = new THREE.Vector3().fromArray(SM.upAxis);
+      u.addScaledVector(f, -u.dot(f)).normalize();
+      var x = new THREE.Vector3().crossVectors(u, f);
+      var q = new THREE.Quaternion().setFromRotationMatrix(
+        new THREE.Matrix4().makeBasis(x, u, f));
+      // rollDeg: same convention as weaponMount (about hand-local +Z, CCW)
+      if (SM.rollDeg) {
+        q.premultiply(new THREE.Quaternion().setFromAxisAngle(
+          new THREE.Vector3(0, 0, 1), SM.rollDeg * Math.PI / 180));
+      }
+      var off = new THREE.Vector3().fromArray(SM.offset);
+      if (isMirrored(itemId, hand)) {
+        mirrorQuat(q);
+        mirrorVec(off);
+      }
+      mesh.quaternion.copy(q);
+      mesh.position.copy(off);
+    } else {
+      // stand-in: face outward on its side of the body, outside the weapon anchor
+      var ip = window.WH_CONFIG.moveset.idlePose;
+      var side = hand === 'left' ? -1 : 1;
+      this.yawFrame.add(mesh);
+      mesh.rotation.set(0, side * (ip.pos[0] > 0 ? 1 : -1) * Math.PI / 2, 0);
+      mesh.position.set(side * ip.pos[0], ip.pos[1], ip.pos[2]);
+    }
+  };
+
+  // v7: cast refusal conditions (AC: roll/attacking-strike/toggle/regrip/
+  // guard break/dead/focus). Windup-stage attacks ALLOW the weave cast.
+  // Order C: per hand (role 'main' / 'off' or hand 'right' / 'left') - the
+  // hand needs its own implement, its own windup/cooldown/regrip clear, and
+  // the shared focus pool minus what the other hand has already promised.
+  Player.prototype.canCast = function (role) {
+    role = roleOf(role);
+    var c = this.cast[role];
+    if (this.state !== 'alive') return false;
+    if (this.rolling || this.toggling || c.regrip > 0) return false;
+    if (this.guardBroken) return false;
+    if (!this.isCasterHand(ROLE_HAND[role])) return false;   // implement in THIS hand
+    if (this.attacking && this.getAttackStage() !== 'windup') return false;
+    if (c.cooldown > 0 || c.windup > 0) return false;
+    var spellId = this.getBoundSpellId(role);
+    if (!spellId) return false;
+    return this.focus - this.focusReserved(role) >= castCost(spellId);
+  };
+
+  // v7: cast entry. Refusal = HUD flash. Order C: starts THIS hand's windup
+  // with its binding; the other hand is untouched.
+  // CASTING NEVER RESETS THE CHAIN: comboIndex/comboQueued untouched.
+  Player.prototype.tryCast = function (role) {
+    role = roleOf(role);
+    if (!this.canCast(role)) {
+      if (this.onCastRefusal) this.onCastRefusal('cast-refused', role);
+      return false;
+    }
+    var spellId = this.getBoundSpellId(role);
+    var c = this.cast[role];
+    c.windup = V7.spell[spellId].castWindup;   // fizzle check runs during windup
+    c.spellId = spellId;
+    // MAGANIM B4 (R-65.5): presentation one-shot at the windup start - the
+    // caster body casts two-handed, a single caster hand one-handed
+    // MAGICLASS: the off (left) hand plays the mirrored Cast1H_L
+    var shot1H = role === 'off' ? 'Cast1H_L' : 'Cast1H';
+    if (this.anim) this.anim.castShot(this.casterMode ? 'Cast2H' : shot1H);
+    // CAST1H (R2): a single-glove bolt fires at the shot's hand-extension
+    // peak - the same windup clock, stretched (0.46 * 2.3 / 2.25). Only when
+    // THIS hand's 1H shot really plays (main Cast1H / off Cast1H_L); Cast2H
+    // keeps castWindup.
+    var key = this.anim && this.anim.castShotKey;
+    if (!this.casterMode && V7.spell[spellId].kind === 'projectile' &&
+        ((key === 'Cast1H' && role === 'main') || (key === 'Cast1H_L' && role === 'off'))) {
+      var K = window.WH_CONFIG.assets.caster;
+      c.windup = Math.max(0, c.windup, K.fire1HFraction * K.cast1HClipSeconds / K.castShotSpeed);
+    }
+    return true;
+  };
+
+  // Order C: tick both hands' windups (game.js loop, which owns the spawned
+  // spells). Returns the completed cast requests (0, 1 or 2 this frame).
+  Player.prototype.tickCasts = function (dt) {
+    var out = [];
+    if (this.state !== 'alive') return out;
+    for (var r = 0; r < ROLES.length; r++) {
+      var c = this.cast[ROLES[r]];
+      if (c.windup <= 0) continue;
+      c.windup -= dt;
+      if (c.windup > 0) continue;
+      c.windup = 0;
+      var req = this.completeCast(ROLES[r]);
+      if (req) out.push(req);
+    }
+    return out;
+  };
+
+  // v7: windup completion -> spend focus WITH the one-hand tax (weapon in
+  // main hand = tax always in this slice), start THIS hand's cooldown.
+  // Returns the spawn request { spellId, role, hand, origin, dirX, dirZ }
+  // or null; game.js spawns from that hand's glow anchor.
+  Player.prototype.completeCast = function (role) {
+    role = roleOf(role);
+    var c = this.cast[role];
+    var spellId = c.spellId;
+    c.spellId = null;
     if (!spellId) return null;
     var S = V7.spell[spellId];
-    var cost = S.focusCost * CFG.castFocusTaxMult;
-    this.spendFocus(cost);
-    this.castCooldown = S.castCooldown;
+    this.spendFocus(castCost(spellId));
+    c.cooldown = S.castCooldown;
     // aim at the lock target, else straight ahead of facing
     var dx = Math.sin(this.yaw), dz = Math.cos(this.yaw);
     if (this.lockTarget) {
@@ -605,19 +1523,32 @@
       var d = Math.sqrt(tdx * tdx + tdz * tdz);
       if (d > 0.001) { dx = tdx / d; dz = tdz / d; }
     }
-    return { spellId: spellId, origin: this.pos, dirX: dx, dirZ: dz };
+    return { spellId: spellId, role: role, hand: ROLE_HAND[role],
+             origin: this.pos, dirX: dx, dirZ: dz };
   };
 
-  // v7: damage during castWindup fizzles the cast: NO focus spent,
-  // no projectile. HUD fizzle flash via callback.
+  // Order C: windup progress 0..1 for a hand (glow pulse), 0 when idle.
+  Player.prototype.castProgress = function (role) {
+    var c = this.cast[roleOf(role)];
+    if (c.windup <= 0 || !c.spellId) return 0;
+    var w = V7.spell[c.spellId].castWindup;
+    // CAST1H (R5): clamped - a fire-at-peak windup runs longer than castWindup
+    return w > 0 ? Math.max(0, Math.min(1, 1 - c.windup / w)) : 1;
+  };
+
+  // v7: damage during a windup fizzles the cast: NO focus spent, no
+  // projectile. HUD fizzle flash via callback. Order C: fizzles every hand
+  // mid-windup (one flash).
   Player.prototype.cancelCastFizzle = function () {
-    if (this.castWindup > 0) {
-      this.castWindup = 0;
-      this.pendingSpellId = null;
-      if (this.onFizzle) this.onFizzle();
-      return true;
+    var any = false;
+    for (var r = 0; r < ROLES.length; r++) {
+      if (this.cast[ROLES[r]].windup > 0) any = true;
     }
-    return false;
+    if (!any) return false;
+    this.dropPendingCast();
+    if (this.anim) this.anim.endCastShot();   // MAGANIM B4: fizzle ends the shot
+    if (this.onFizzle) this.onFizzle();
+    return true;
   };
 
   Player.prototype.spendFocus = function (amount) {
@@ -689,26 +1620,44 @@
       this.spendStamina(BLK.parryStaminaCost);
       attacker.enterStagger(BLK.riposteStaggerDur);
       attacker.riposteArmed = true;          // next player hit does bonus damage
+      // DAGBLEED: a dagger parry (never a shield parry) rolls the bleed; the
+      // tick basis is the parried swing's raw (pre-mitigation) damage
+      var BL = window.WH_CONFIG.combat.bleed;
+      if (this.isDaggerGuard() && window.WH_GAME && Math.random() < BL.parryChance) {
+        window.WH_GAME.applyBleedToEnemy(attacker, BL.tickFraction * damage, BL.durationSec);
+      }
+      if (this.anim) this.anim.shieldParry();  // Order D: deflect swipe (presentation)
       this.endBlock();
       if (this.onParry) this.onParry(attacker);
       return false;                          // zero damage
     }
 
-    // 3. block: only if attacker is within the block arc of player facing
-    if (this.blockActive && attacker && attacker.pos && attackerInArc) {
-      var staminaCost = Math.max(1, Math.round(damage * BLK.staminaCostMult));
+    // 3. block: only if attacker is within the block arc of player facing.
+    // DAGBLEED: mitigation is the shield's - a dagger guard past its parry
+    // window takes the full hit (step 4).
+    if (this.blockActive && this.hasShieldLeft() && attacker && attacker.pos && attackerInArc) {
+      // L1 Shield / Defense rank: block stamina drain reduction (x1 at rank 1)
+      var drainMult = window.WH_LEVEL ? window.WH_LEVEL.skillMult('shieldDefense', 'blockDrain') : 1;
+      var staminaCost = Math.max(1, Math.round(damage * BLK.staminaCostMult * drainMult));
       this.stamina = Math.max(0, this.stamina - staminaCost);
       this.staminaRegenBlock = CFG.staminaRegenDelay;
       var chip = damage * (1 - BLK.absorb);
-      // takeDamage() reports whether hp was applied, not whether the chip
-      // killed; the guard break keys off the post-hit state instead.
-      var applied = this.takeDamage(chip);
-      if (this.stamina <= 0 && this.state === 'alive') {
-        this.guardBreak();                   // stun, block off, armed cleared
-      } else if (this.onBlock) {
-        this.onBlock(attacker, chip);
+      var dead = this.takeDamage(chip);
+      if (this.stamina <= 0 && !dead) {
+        // guard break: stun, block disabled until stamina recovers
+        this.guardBroken = true;
+        this.guardBreakTimer = BLK.guardBreakStun;
+        this.endBlock();
+        this.stamina = 0;
+        if (this.onGuardBreak) this.onGuardBreak();
+      } else {
+        // Order D: shield recoil replaces the chip's generic hit reaction
+        if (this.anim && !dead) this.anim.shieldImpact();
+        if (this.onBlock) this.onBlock(attacker, chip);
       }
-      return applied;
+      // L1: was `return applied` (undeclared since a merge - a ReferenceError
+      // thrown out of every blocked hit); dead holds takeDamage's applied flag
+      return dead;
     }
 
     // 4. full damage (existing path)
@@ -722,7 +1671,8 @@
   // starts at the strike); a buffered LMB replaces a queued dodge. A press
   // while idle always starts the chain at chain[0].
   Player.prototype.tryAttack = function () {
-    if (this.state !== 'alive' || this.rolling || this.backstep || this.toggling) return;
+    if (this.state !== 'alive' || this.rolling || this.toggling) return;
+    if (!this.hasMeleeRight()) return;     // Order B: chain needs melee in the RIGHT hand
     if (this.blocking) return;              // v6: must release RMB to attack
     if (this.attacking) {
       var stage = this.getAttackStage();
@@ -744,8 +1694,14 @@
     var idx = (typeof nextIndex === 'number') ? nextIndex : 0;
     if (idx >= this.getChainCap()) idx = 0;
     var M = this.getChainMove(idx);
-    if (this.stamina < M.staminaCost) return false;
-    this.spendStamina(M.staminaCost);
+    // L1 Long Blade rank: attack stamina cost reduction (x1 at rank 1).
+    // DAG: the wielded weapon's line (WH_LEVEL.weaponLine) - longsword /
+    // handAxe = longBlade as before; dagger = shortBlade (no staminaCost
+    // passive v1 -> x1, the Long Blade discount does not carry over).
+    var cost = M.staminaCost * (window.WH_LEVEL ?
+      window.WH_LEVEL.skillMult(window.WH_LEVEL.weaponLine(this.weaponId), 'staminaCost') : 1);
+    if (this.stamina < cost) return false;
+    this.spendStamina(cost);
     this.attacking = true;
     this.attackMoveId = this.getWeaponDef().chain[idx];
     this.attackMove = M;
@@ -855,9 +1811,14 @@
 
   Player.prototype.takeDamage = function (amount) {
     if (this.iframes > 0 || this.state !== 'alive') return false;
+    // L1 Ward: damage reduction after the enemy / chip numbers (0 with no
+    // points; CONFIG.leveling.statCurves.ward cap 60%)
+    if (window.WH_LEVEL) amount *= 1 - window.WH_LEVEL.statTotal('ward');
     this.hp = Math.max(0, this.hp - amount);
-    if (this.anim) this.anim.hit();
-    // v7: hp loss during castWindup fizzles the cast (no focus spent)
+    // MAGANIM: big hits (>= largeHitFraction of max hp) pick the large
+    // reaction (caster ReactLarge; warrior plays WH_Hit either way)
+    if (this.anim) this.anim.hit(amount >= this.hpMax * window.WH_CONFIG.assets.caster.largeHitFraction);
+    // v7: hp loss during a cast windup fizzles the cast (no focus spent)
     this.cancelCastFizzle();
     if (this.hp <= 0) {
       this.state = 'dying';
@@ -886,7 +1847,8 @@
       halfAngle: deg2rad(M.halfAngleDeg),
       damage: M.damage * (this.pendingDamageMult || 1),
       ghoulMult: M.damageGhoulMult || 1,
-      moveId: this.attackMoveId
+      moveId: this.attackMoveId,
+      weaponId: this.weaponId       // DAG: the skill line a landed hit trains
     };
   };
 
@@ -993,8 +1955,13 @@
     if (this.focusRegenBlock > 0) {
       this.focusRegenBlock -= dt;
     } else if (this.focus < this.focusMax) {
+      // R-64.1/64.2: 2.0 base * (1 + 0.05 * wisdomPoints) * other mults
+      // (blocking 0.5): 0 wis = 2.0/s, 10 wis = 3.0/s, 10 wis blocking = 1.5/s
+      var focusMult = window.WH_LEVEL && window.WH_LEVEL.magicRegenMult ?
+        window.WH_LEVEL.magicRegenMult() : 1;
+      var focusBlockMult = this.blocking ? window.WH_CONFIG.block.blockingRegenMult : 1;
       this.focus = Math.min(this.focusMax,
-        this.focus + CFG.focusRegenPerSec * dt);
+        this.focus + CFG.focusRegenPerSec * focusMult * focusBlockMult * dt);
     }
 
     // ---- v7: weave timers ----
@@ -1002,20 +1969,27 @@
       this.toggleTimer -= dt;
       if (this.toggleTimer <= 0) {
         this.toggling = false;
-        this.activeLoadout = 3 - this.activeLoadout;  // v7: flip 1<->2 on toggle complete
-        this.offhand = this.activeLoadout === 2 ? 'shield' : 'spell';
+        // Order B: the Q swap lands on completion. Inventory-only source,
+        // re-checked here (the screen may have moved it meanwhile).
+        // AB1: bar item slots land in their own hand (pendingQSwapHand).
+        var qItem = this.pendingQSwap;
+        this.pendingQSwap = null;
+        if (qItem) this.equipItem(qItem, this.pendingQSwapHand || 'left', true);
       }
     }
-    if (this.regripTimer > 0) this.regripTimer = Math.max(0, this.regripTimer - dt);
-    if (this.castCooldown > 0) this.castCooldown = Math.max(0, this.castCooldown - dt);
+    // Order C: per-hand regrip + cooldown (windups tick in tickCasts)
+    for (var cr = 0; cr < ROLES.length; cr++) {
+      var cs = this.cast[ROLES[cr]];
+      if (cs.regrip > 0) cs.regrip = Math.max(0, cs.regrip - dt);
+      if (cs.cooldown > 0) cs.cooldown = Math.max(0, cs.cooldown - dt);
+    }
     // armed finisher window decays; expiry clears armed AND crossArmed
     if (this.armedTimer > 0) {
       this.armedTimer = Math.max(0, this.armedTimer - dt);
       if (this.armedTimer <= 0) this.crossArmed = false;
     }
-    // offhand implement derived from the active loadout (1 = spell, 2 = shield)
-    this.offhand = this.activeLoadout === 2 ? 'shield' : 'spell';
-    if (this.blocking && this.offhand !== 'shield') this.endBlock();
+    // Order C: a guard needs a shield in the LEFT hand (DAGBLEED: or a dagger guard)
+    if (this.blocking && !this.canGuard()) this.endBlock();
 
     // EPR1: keyboard Space grammar (dodge on release / sprint while held)
     this.sampleDodgeInput(dt);
@@ -1113,17 +2087,18 @@
         var len = Math.sqrt(mx * mx + mz * mz);
         mx /= len; mz /= len;
         var speed = sprintingNow ? CFG.sprintSpeed : CFG.walkSpeed;
+        // L1 Speed: walk / sprint pace only (1 with no points); roll and
+        // backstep keep their EPR1 curves
+        if (window.WH_LEVEL) speed *= window.WH_LEVEL.statTotal('speed');
         if (sprintingNow) {
           this.spendStamina(CFG.sprintStaminaPerSec * dt);
         }
-        // EPR1 (B4): from the move cancel point to the swing's end the walk
-        // restores to moveCancelWalkMult x walkSpeed; before it the per-stage
-        // moveMultWhileAttacking gates walk input exactly as before.
-        if (this.attacking) {
-          if (this.cancelOpen('move')) speed = CFG.walkSpeed * ER.moveCancelWalkMult;
-          else speed *= this.getWeaponDef().moveMultWhileAttacking[this.getAttackStage()] || 0;
+        if (this.attacking) speed *= this.getWeaponDef().moveMultWhileAttacking[this.getAttackStage()] || 0;
+        if (this.blocking) {
+          // D-amend: shield weight class (left hand = the blocking shield)
+          var sb = (itemDef(this.hands.left) || {}).block;
+          speed *= sb && sb.moveMult != null ? sb.moveMult : window.WH_CONFIG.block.moveMult;
         }
-        if (this.blocking) speed *= window.WH_CONFIG.block.moveMult;  // v6
         this.animMoveSpeed = speed;
         // camera yaw basis: camera forward projected on xz plane.
         // Camera sits at yaw = camYaw BEHIND the player, so camera forward
@@ -1250,6 +2225,20 @@
   };
 
   Player.prototype.updateCamera = function (dt) {
+    // Order E1 (Nicko 10-05): lock-on changes ONLY the camera yaw - it aims
+    // so the target sits straight ahead of the player. Anchor, distance and
+    // pitch stay exactly the unlocked orbit below (no midpoint re-anchor, no
+    // extra zoom), so the player stays framed like unlocked play.
+    if (this.lockTarget && this.state === 'alive') {
+      var t = this.lockTarget;
+      var dx = t.pos.x - this.pos.x;
+      var dz = t.pos.z - this.pos.z;
+      // camera sits opposite the target relative to the player
+      if (dx * dx + dz * dz > 0.000001) {
+        var lockLerp = 1 - Math.exp(-LOCK.camLerp * dt);
+        this.camYaw += shortestAngle(Math.atan2(dx, dz) + Math.PI - this.camYaw) * lockLerp;
+      }
+    }
     // orbit camera behind player
     var target = this.pos.clone();
     target.y += CFG.camHeight;
@@ -1269,39 +2258,13 @@
     var want = target.clone().add(offset);
     if (want.y < floorY) want.y = floorY;
 
-    if (this.lockTarget && this.state === 'alive') {
-      // D3: camera follows so the target stays framed. Aim camera yaw so the
-      // target is straight ahead of the player; pull back a bit for framing.
-      var t = this.lockTarget;
-      var dx = t.pos.x - this.pos.x;
-      var dz = t.pos.z - this.pos.z;
-      var dist = Math.sqrt(dx * dx + dz * dz);
-      // camera should sit opposite the target relative to the player
-      var wantYaw = dist > 0.001 ? Math.atan2(dx, dz) + Math.PI : this.camYaw;
-      var wantDist = Math.min(CFG.camMaxDistance,
-        Math.max(this.camDist, dist + LOCK.camExtraDistance));
-      var lerp = 1 - Math.exp(-LOCK.camLerp * dt);
-      this.camYaw += shortestAngle(wantYaw - this.camYaw) * lerp;
-      // frame slightly above midpoint between player and target
-      target.x = (this.pos.x + t.pos.x) / 2;
-      target.z = (this.pos.z + t.pos.z) / 2;
-      var midDist = dist / 2;
-      offset.set(
-        Math.sin(this.camYaw) * Math.cos(this.camPitch),
-        Math.sin(this.camPitch),
-        Math.cos(this.camYaw) * Math.cos(this.camPitch)
-      ).multiplyScalar(Math.max(CFG.camMinDistance, midDist + LOCK.camExtraDistance));
-      want = target.clone().add(offset);
-      if (want.y < floorY) want.y = floorY;
-      this.camera.position.lerp(want, lerp);
-    } else {
-      // 10-04 change order (Nicko): FULL camera decoupling - movement NEVER
-      // turns the camera. camYaw changes only from mouse drag / camera
-      // joystick (both stamp lastManualCamT); lock-on keeps its own framing
-      // above. The old v3.1 movement auto-follow is gone.
-      var lerp2 = 1 - Math.exp(-CFG.camFollowLerp * dt);
-      this.camera.position.lerp(want, lerp2);
-    }
+    // 10-04 change order (Nicko): FULL camera decoupling - movement NEVER
+    // turns the camera. camYaw changes only from mouse drag / camera
+    // joystick (both stamp lastManualCamT) and the lock-on yaw aim above.
+    // The old v3.1 movement auto-follow is gone. Position follow is the same
+    // locked or not (the lock yaw swing is already smoothed by LOCK.camLerp).
+    var lerp2 = 1 - Math.exp(-CFG.camFollowLerp * dt);
+    this.camera.position.lerp(want, lerp2);
     if (this.camera.position.y < floorY) this.camera.position.y = floorY;
     this.camera.lookAt(target);
   };
@@ -1344,10 +2307,9 @@
     this.focusRegenBlock = 0;
     this.toggling = false;
     this.toggleTimer = 0;
-    this.castWindup = 0;
-    this.castCooldown = 0;
-    this.regripTimer = 0;
-    this.pendingSpellId = null;
+    this.pendingQSwap = null;              // Order B: hands themselves persist through death
+    this.pendingQSwapHand = 'left';
+    this.cast = { main: newCastState(), off: newCastState() };   // Order C: both hands
     this.armedTimer = 0;
     this.crossArmed = false;
     this.atkYawOffset = 0;
@@ -1356,6 +2318,11 @@
     if (this.anim) this.anim.revive();
     if (this.body && !this.anim) { this.body.rotation.x = 0; this.body.rotation.y = this.atkYawOffset; }
   };
+
+  // AB1: action bar validation, shared with the HUD map loader / picker
+  Player.validActionEntry = validActionEntry;
+  Player.isBindableItem = isBindableItem;
+  Player.isSpellId = isSpellId;
 
   window.WH_Player = Player;
 })();

@@ -1,0 +1,287 @@
+{
+ "glb": "art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-sword.glb",
+ "upper": [
+  "Spine",
+  "Chest",
+  "Neck",
+  "Head",
+  "L_Shoulder",
+  "L_UpperArm",
+  "L_Forearm",
+  "L_Hand",
+  "R_Shoulder",
+  "R_UpperArm",
+  "R_Forearm",
+  "R_Hand"
+ ],
+ "lower": [
+  "Hips",
+  "Root",
+  "L_Thigh",
+  "L_Shin",
+  "L_Foot",
+  "R_Thigh",
+  "R_Shin",
+  "R_Foot"
+ ],
+ "overlap": [],
+ "orphanNodes": [],
+ "neverAnimated": [
+  "WH_Body",
+  "WH_Armature"
+ ],
+ "clips": {
+  "WH_Attack1": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_Death": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_Hit": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_Idle": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_Run": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_SlashL2R": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_SlashR2L": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_Thrust": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_Walk": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_ShieldRaise": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_ShieldImpact": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_ParrySwipe": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_GuardBreakStagger": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_SwordIdle": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_SwordWalk": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_SwordRun": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_SwordWalkBack": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_SwordIdleAlt": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_ShieldBlockIdle": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_ShieldCrouchIdle": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_SwordStrafeL": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_SwordStrafeR": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_SwordTurnL": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_SwordTurnR": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_SwordCrouchIdle": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_SS_SlashR2L": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_SS_SlashL2R": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_SS_Overhead": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_Mag_Cast1H": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_Mag_Cast2H": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_Mag_Idle": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_Mag_Idle02": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_Mag_WalkF": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_Mag_WalkB": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_Mag_RunF": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_Mag_RunB": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_Mag_TurnL": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_Mag_TurnR": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_Mag_Jump": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_Mag_ReactSmall": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_Mag_ReactLarge": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  },
+  "WH_Mag_DeathBack": {
+   "channels": 60,
+   "upperNodes": 12,
+   "lowerNodes": 8,
+   "orphanNodes": []
+  }
+ }
+}

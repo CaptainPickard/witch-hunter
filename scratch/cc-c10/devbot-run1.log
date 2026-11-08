@@ -1,0 +1,35 @@
+I've built CC-C10: Farmer Aldric stands in the homestead yard and opens a 3-line dialog. Line 3 sets `findDaughter` to active, which shows the HUD line and survives save and reload. A barn now sits behind the cottage. Nothing has been played in a browser — the checks are offline probes only, so your playtest is the real acceptance. HEAD is still e3444ec and nothing was committed.
+
+**Checks:**
+- `node --check` passes on all edited and new JS.
+- The farmer and barn placement probes pass. Every distance was checked offline before the row was pasted into CONFIG.
+- An offline run of the dialog with a fake page (no browser) passed all 27 steps. It covers lines 1→2→3, the quest activating once, the short line on re-talk, Esc closing, closing on death or region change, and restoring old or bad save data as 'available'.
+- **Tri ledger passes at all three centres:**
+
+| Centre | Worst | % of 2M |
+|---|---|---|
+| (0,-366) | 1,895,571 | 94.78% |
+| (-175,-266) | 1,876,200 | 93.81% |
+| homestead (150.5,-256.7) | 1,789,446 | 89.47% |
+
+**What I placed:**
+- **Farmer:** at (146.5,-264.5), inside the yard gate facing the road. Talk range is 3 m, prompt "E - Talk to Farmer Aldric", and he hides past 120 m.
+- **Barn:** at (136.5,-234.7). Its nearest neighbour is the cottage at 26.1 m (the minimum allowed). The nearest camp fire is 41.5 m away, the nearest road 133.7 m, and the ground under it is fairly flat (5.2°).
+- **Quest state:** kept in one place, `npc.js`. Saving, loading and the HUD line all read from there.
+
+**Rulings applied:** raw dwarf body with the art-law waiver (B3b), WEST direction copy (B2), "Old King's Barrow" naming with both door paths untouched (B1), talk hook between `tryNotch` and `tryGather` (B12).
+
+**What you'll see in the playtest:**
+- The farmer stands in a T/A-pose with an unpixelated 2048 texture, as expected for this placeholder.
+- He shows as a grey box until his 4.3 MB model finishes streaming in. That file adds to the total download.
+- If the quest ever reaches 'complete', re-talking still gives the "Bring her home" line. CC-C11 needs to add completion dialog.
+- You can walk through the farmer; he has no collider.
+
+**Other changes beyond the brief:**
+- Extra CONFIG keys: name-plate height and range, an "Esc close" hint, and the HUD text.
+- The farmer's model is swapped in by `npc.js` itself, not the asset loader's built-in swap. The built-in path would have drawn him at the wrong spot.
+- Two extra scratch scripts: the dialog check and a GLB size reader.
+
+The bundle is 3,289,591 bytes. The report is at `io/reports/2026-10-25-cc-c10-farmer.md`, and the summary with probe outputs is at `/tmp/delegation_result_ccc10_build.md`.
+
+CC-C10 DONE farmer farmerBody quest findDaughter ledger PASS build 3289591

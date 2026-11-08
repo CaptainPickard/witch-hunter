@@ -1,0 +1,106 @@
+inputs: G ring post-erase colliders 1044 | H2 ring colliders 384
+0 whTent (44,-1058) rho <= 78.5                               55.61 <=  78.5  ok
+0 whTent raw >= 4.0 from G ring post-erase                   114.05 >=   4.0  ok
+0 whTent raw >= 4.0 from H2 ring                              24.42 >=   4.0  ok
+0 whTent >= 6.0 from spawn/lands                             112.00 >=   6.0  ok
+0 whTent >= 5.0 from both sentries                            88.39 >=   5.0  ok
+1 whCampkit (38,-1052) rho <= 78.5                            47.20 <=  78.5  ok
+1 whCampkit raw >= 4.0 from G ring post-erase                107.10 >=   4.0  ok
+1 whCampkit raw >= 4.0 from H2 ring                           32.80 >=   4.0  ok
+1 whCampkit >= 6.0 from spawn/lands                          104.18 >=   6.0  ok
+1 whCampkit >= 5.0 from both sentries                         80.65 >=   5.0  ok
+2 whCampkit (41,-1064) rho <= 78.5                            57.28 <=  78.5  ok
+2 whCampkit raw >= 4.0 from G ring post-erase                119.44 >=   4.0  ok
+2 whCampkit raw >= 4.0 from H2 ring                           22.73 >=   4.0  ok
+2 whCampkit >= 6.0 from spawn/lands                          116.46 >=   6.0  ok
+2 whCampkit >= 5.0 from both sentries                         92.97 >=   5.0  ok
+3 okRuinColumn (52,-1050) rho <= 78.5                         58.14 <=  78.5  ok
+3 okRuinColumn raw >= 4.0 from G ring post-erase             107.81 >=   4.0  ok
+3 okRuinColumn raw >= 4.0 from H2 ring                        21.92 >=   4.0  ok
+3 okRuinColumn >= 6.0 from spawn/lands                       108.30 >=   6.0  ok
+3 okRuinColumn >= 5.0 from both sentries                      84.60 >=   5.0  ok
+4 stoneSteps (-46,-1064) rho <= 78.5                          60.96 <=  78.5  ok
+4 stoneSteps raw >= 4.0 from G ring post-erase               120.29 >=   4.0  ok
+4 stoneSteps raw >= 4.0 from H2 ring                          19.08 >=   4.0  ok
+4 stoneSteps >= 6.0 from spawn/lands                         118.31 >=   6.0  ok
+4 stoneSteps >= 5.0 from both sentries                        96.01 >=   5.0  ok
+5 skullPile (-50,-1050) rho <= 78.5                           56.36 <=  78.5  ok
+5 skullPile raw >= 4.0 from G ring post-erase                107.34 >=   4.0  ok
+5 skullPile raw >= 4.0 from H2 ring                           23.66 >=   4.0  ok
+5 skullPile >= 6.0 from spawn/lands                          107.35 >=   6.0  ok
+5 skullPile >= 5.0 from both sentries                         85.00 >=   5.0  ok
+6 b6Bones (-42,-1076) rho <= 78.5                             66.84 <=  78.5  ok
+6 b6Bones raw >= 4.0 from G ring post-erase                  131.44 >=   4.0  ok
+6 b6Bones raw >= 4.0 from H2 ring                             13.16 >=   4.0  ok
+6 b6Bones >= 6.0 from spawn/lands                            128.08 >=   6.0  ok
+6 b6Bones >= 5.0 from both sentries                          105.95 >=   5.0  ok
+7 rubblePile (-34,-1072) rho <= 78.5                          58.82 <=  78.5  ok
+7 rubblePile raw >= 4.0 from G ring post-erase               126.22 >=   4.0  ok
+7 rubblePile raw >= 4.0 from H2 ring                          21.25 >=   4.0  ok
+7 rubblePile >= 6.0 from spawn/lands                         121.84 >=   6.0  ok
+7 rubblePile >= 5.0 from both sentries                        99.92 >=   5.0  ok
+8 stoneSteps (0,-1097) rho <= 78.5                            73.00 <=  78.5  ok
+8 stoneSteps raw >= 4.0 from G ring post-erase               149.56 >=   4.0  ok
+8 stoneSteps raw >= 4.0 from H2 ring                           7.13 >=   4.0  ok
+8 stoneSteps >= 6.0 from spawn/lands                         142.00 >=   6.0  ok
+8 stoneSteps >= 5.0 from both sentries                       121.50 >=   5.0  ok
+9 torch (4,-1093) rho <= 78.5                                 69.12 <=  78.5  ok
+9 torch raw >= 4.0 from G ring post-erase                    145.37 >=   4.0  ok
+9 torch raw >= 4.0 from H2 ring                               10.89 >=   4.0  ok
+9 torch >= 6.0 from spawn/lands                              138.06 >=   6.0  ok
+9 torch >= 5.0 from both sentries                            117.21 >=   5.0  ok
+10 torch (-4,-1093) rho <= 78.5                               69.12 <=  78.5  ok
+10 torch raw >= 4.0 from G ring post-erase                   145.38 >=   4.0  ok
+10 torch raw >= 4.0 from H2 ring                              10.88 >=   4.0  ok
+10 torch >= 6.0 from spawn/lands                             138.06 >=   6.0  ok
+10 torch >= 5.0 from both sentries                           117.96 >=   5.0  ok
+11 banditCampfire (0,-990) rho <= 78.5                        34.00 <=  78.5  ok
+11 banditCampfire raw >= 4.0 from G ring post-erase           43.26 >=   4.0  ok
+11 banditCampfire raw >= 4.0 from H2 ring                     46.64 >=   4.0  ok
+11 banditCampfire >= 6.0 from spawn/lands                     35.00 >=   6.0  ok
+11 banditCampfire >= 5.0 from both sentries                   17.80 >=   5.0  ok
+12 lanternPost (6,-954) rho <= 78.5                           70.30 <=  78.5  ok
+12 lanternPost raw >= 4.0 from G ring post-erase               6.82 >=   4.0  ok
+12 lanternPost raw >= 4.0 from H2 ring                        10.29 >=   4.0  ok
+12 lanternPost >= 6.0 from spawn/lands                         6.58 >=   6.0  ok
+12 lanternPost >= 5.0 from both sentries                      22.46 >=   5.0  ok
+13 mossBoulder (26,-1000) rho <= 78.5                         35.38 <=  78.5  ok
+13 mossBoulder raw >= 4.0 from G ring post-erase              53.83 >=   4.0  ok
+13 mossBoulder raw >= 4.0 from H2 ring                        44.62 >=   4.0  ok
+13 mossBoulder >= 6.0 from spawn/lands                        51.97 >=   6.0  ok
+13 mossBoulder >= 5.0 from both sentries                      28.30 >=   5.0  ok
+14 mossBoulder (-24,-1030) rho <= 78.5                        24.74 <=  78.5  ok
+14 mossBoulder raw >= 4.0 from G ring post-erase              83.36 >=   4.0  ok
+14 mossBoulder raw >= 4.0 from H2 ring                        55.27 >=   4.0  ok
+14 mossBoulder >= 6.0 from spawn/lands                        78.75 >=   6.0  ok
+14 mossBoulder >= 5.0 from both sentries                      56.75 >=   5.0  ok
+15 rubblePile (58,-992) rho <= 78.5                           66.24 <=  78.5  ok
+15 rubblePile raw >= 4.0 from G ring post-erase               53.60 >=   4.0  ok
+15 rubblePile raw >= 4.0 from H2 ring                         13.76 >=   4.0  ok
+15 rubblePile >= 6.0 from spawn/lands                         68.80 >=   6.0  ok
+15 rubblePile >= 5.0 from both sentries                       49.65 >=   5.0  ok
+flanker (10,-968) raw >= 16.0 from H2 ring (margin law)       23.12 >=  16.0  ok
+flanker (10,-968) raw >= 4.0 from G ring post-erase           20.29 >=   4.0  ok
+flanker (10,-968) >= 4.0 mutual from manifest                 14.43 >=   4.0  ok
+flanker (-10,-968) raw >= 16.0 from H2 ring (margin law)      23.12 >=  16.0  ok
+flanker (-10,-968) raw >= 4.0 from G ring post-erase          20.31 >=   4.0  ok
+flanker (-10,-968) >= 4.0 mutual from manifest                21.64 >=   4.0  ok
+---
+MANIFEST: 16 rows
+  { asset: 'whTent', x: 44.0, z: -1058.0, rotY: 5.75, scale: 1.0 },
+  { asset: 'whCampkit', x: 38.0, z: -1052.0, rotY: 0.5, scale: 1.0 },
+  { asset: 'whCampkit', x: 41.0, z: -1064.0, rotY: 1.2, scale: 1.0 },
+  { asset: 'okRuinColumn', x: 52.0, z: -1050.0, rotY: 5.9, scale: 1.4 },
+  { asset: 'stoneSteps', x: -46.0, z: -1064.0, rotY: 1.57, scale: 1.3 },
+  { asset: 'skullPile', x: -50.0, z: -1050.0, rotY: 4.4, scale: 1.0 },
+  { asset: 'b6Bones', x: -42.0, z: -1076.0, rotY: 2.4, scale: 1.0 },
+  { asset: 'rubblePile', x: -34.0, z: -1072.0, rotY: 5.8, scale: 1.1 },
+  { asset: 'stoneSteps', x: 0.0, z: -1097.0, rotY: 0.0, scale: 1.4 },
+  { asset: 'torch', x: 4.0, z: -1093.0, rotY: 0.0, scale: 1.0 },
+  { asset: 'torch', x: -4.0, z: -1093.0, rotY: 0.0, scale: 1.0 },
+  { asset: 'banditCampfire', x: 0.0, z: -990.0, rotY: 0.0, scale: 1.8 },
+  { asset: 'lanternPost', x: 6.5, z: -954.0, rotY: 4.72, scale: 2.535 },
+  { asset: 'mossBoulder', x: 26.0, z: -1000.0, rotY: 2.0, scale: 2.0 },
+  { asset: 'mossBoulder', x: -24.0, z: -1030.0, rotY: 4.9, scale: 2.2 },
+  { asset: 'rubblePile', x: 58.0, z: -992.0, rotY: 3.62, scale: 1.1 },
+MANIFEST CHECKS: PASS

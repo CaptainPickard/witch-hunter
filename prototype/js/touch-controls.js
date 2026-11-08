@@ -26,7 +26,7 @@
   var editBarEl = null;     // edit toolbar (lock, +/- scale, reset, done)
   var lockChipEl = null;    // always-visible lock chip (re-enter edit mode)
   var controls = {};        // name -> { el, nub }
-  var order = ['stick', 'cam', 'sprint', 'attack', 'lockon', 'dodge', 'block'];
+  var order = ['stick', 'cam', 'sprint', 'attack', 'lockon', 'dodge', 'block', 'interact'];
   var GAME_KEYS = {
     stick: ['KeyW', 'KeyA', 'KeyS', 'KeyD'],
     sprint: ['ShiftLeft']
@@ -172,7 +172,8 @@
     attack: { glyph: '\u2694', label: 'Attack' },
     lockon: { glyph: '\u2318', label: 'Lock-On' },
     dodge:  { glyph: '\u21C4', label: 'Dodge' },
-    block:  { glyph: '\u25CE', label: 'Shield/Cast' }
+    block:  { glyph: '\u25CE', label: 'Off Hand' },
+    interact: { glyph: '\u25C8', label: 'Use' }
   };
   var LOCKED_GLYPH = '\uD83D\uDD12';      // closed lock
   var UNLOCKED_GLYPH = '\uD83D\uDD13';    // open lock
@@ -241,6 +242,7 @@
     });
     if (savedState) applySavedState(savedState);
     applyScale();
+    sanitizeLayout();         // TC-FIX1 (F3): repair stale off-screen layouts
   }
 
   // ---- toggle / show / hide ------------------------------------------------
@@ -330,29 +332,58 @@
     var minus = el('button', '', editBarEl);
     minus.textContent = '\u2212';
     minus.title = 'Smaller';
-    minus.addEventListener('click', function () { nudgeScale(-0.1); });
+    // TC-FIX1 (RC2): edit-bar buttons activate on pointerdown (same proven
+    // 10-03 pattern as buildToggle: pointerdown acts, click only swallows).
+    // Without this, the round div-style buttons ignore taps on Nicko's phone
+    // and the layer becomes unrecoverable; synthetic click is swallowed so
+    // desktop mouse still fires exactly once via pointerdown.
+    minus.addEventListener('pointerdown', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      nudgeScale(-0.1);
+    });
+    minus.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+    });
 
     var plus = el('button', '', editBarEl);
     plus.textContent = '+';
     plus.title = 'Bigger';
-    plus.addEventListener('click', function () { nudgeScale(0.1); });
+    plus.addEventListener('pointerdown', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      nudgeScale(0.1);
+    });
+    plus.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+    });
 
     var lockBtn = el('button', '', editBarEl);
     lockBtn.id = 'wh-touch-lockbtn';
     lockBtn.textContent = LOCKED_GLYPH;
     lockBtn.title = unlocked ? 'Lock placement (saves layout)' : 'Unlock placement';
-    lockBtn.addEventListener('click', function () {
+    lockBtn.addEventListener('pointerdown', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
       unlocked = !unlocked;
       rootEl.classList.toggle('unlocked', unlocked);
       lockBtn.textContent = unlocked ? UNLOCKED_GLYPH : LOCKED_GLYPH;
       if (!unlocked) saveState();   // locking placement saves the layout
       lockBtn.classList.toggle('amber', unlocked);
     });
+    lockBtn.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+    });
 
     var resetBtn = el('button', '', editBarEl);
     resetBtn.textContent = 'Reset';
     resetBtn.title = 'Restore default layout';
-    resetBtn.addEventListener('click', function () {
+    resetBtn.addEventListener('pointerdown', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
       scale = TC.scaleDefault || 1.0;
       order.forEach(function (name) {
         var c = controls[name];
@@ -364,15 +395,25 @@
       applyScale();
       saveState();
     });
+    resetBtn.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+    });
 
     var doneBtn = el('button', 'amber', editBarEl);
     doneBtn.textContent = 'Done';
     doneBtn.title = 'Lock placement and play';
-    doneBtn.addEventListener('click', function () {
+    doneBtn.addEventListener('pointerdown', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
       unlocked = false;
       rootEl.classList.remove('unlocked');
       setEditMode(false);         // locking saves layout (saveState inside)
       saveState();
+    });
+    doneBtn.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
     });
   }
 
@@ -475,9 +516,12 @@
     var c = controls[dragName];
     if (!c) return;
     var r = c.el.getBoundingClientRect();
-    // keep control CENTER inside the viewport (never fully off-screen)
-    var x = clamp(ev.clientX - dragOffX + r.width / 2, 0, window.innerWidth);
-    var y = clamp(ev.clientY - dragOffY + r.height / 2, 0, window.innerHeight);
+    // TC-FIX1 (RC1): clamp the placed TOP-LEFT point so the FULL element
+    // stays inside the viewport. (The old code clamped the CENTER and wrote
+    // it into style.left/top, letting the box hang over the right/bottom
+    // edge; endDrag then persisted the off-screen position.)
+    var x = clamp(ev.clientX - dragOffX, 0, window.innerWidth - r.width);
+    var y = clamp(ev.clientY - dragOffY, 0, window.innerHeight - r.height);
     c.el.style.left = (x / window.innerWidth * 100) + '%';
     c.el.style.top = (y / window.innerHeight * 100) + '%';
   }
@@ -576,6 +620,7 @@
     prev.y = ev.clientY;
     var p = getPlayer();
     if (!p || p.lockTarget) return;   // same rule as mouse cam: dead while locked
+    if (p.inputSuspended) return;     // 10-05: inventory screen open
     if (dx === 0 && dy === 0) return;
     var sens = ((TC.sensDegPerPx !== undefined) ? TC.sensDegPerPx
       : window.WH_CONFIG.player.mouseSensDegPerPx) * Math.PI / 180;
@@ -594,9 +639,10 @@
   // ---- buttons -----------------------------------------------------------------
   function btnPress(name) {
     var p = getPlayer();
-    if (!p) return;
+    if (!p || p.inputSuspended) return;   // 10-05: inventory screen open
     if (name === 'attack') {
-      if (p.tryAttack) p.tryAttack();
+      // Order C: attack button = LMB path (main-hand action)
+      if (p.handButton) p.handButton('lmb', true);
     } else if (name === 'lockon') {
       if (p.onLockToggle) p.onLockToggle();
     } else if (name === 'dodge') {
@@ -605,21 +651,20 @@
       var on = p.keys['ShiftLeft'] && keysWritten['ShiftLeft'];
       setSprint(!on);
     } else if (name === 'block') {
-      // v6/v7 RMB routing replica (player.js ~218-231): spell -> tryCast,
-      // shield -> tryBlock on press + endBlock on release (press-hold).
-      if (p.offhand === 'spell') {
-        if (p.tryCast) p.tryCast();
-      } else {
-        if (p.tryBlock) p.tryBlock();
-      }
+      // Order C: block button = RMB path (off-hand action: left caster ->
+      // cast, left shield -> block on press, endBlock on release = press-hold)
+      if (p.handButton) p.handButton('rmb', true);
+    } else if (name === 'interact') {
+      // S3b: the E key on phone - shared game.js interact() entry point
+      if (window.WH_DEBUG && window.WH_DEBUG.interact) window.WH_DEBUG.interact();
     }
   }
 
   function btnRelease(name) {
-    if (name !== 'block') return;
+    if (name !== 'block' && name !== 'attack') return;
     var p = getPlayer();
     if (!p) return;
-    if (p.offhand !== 'spell' && p.endBlock) p.endBlock();
+    if (p.handButton) p.handButton(name === 'attack' ? 'lmb' : 'rmb', false);
   }
 
   function setSprint(on) {
@@ -672,6 +717,29 @@
       }
     });
     applyScale();
+  }
+
+  // TC-FIX1 (F3): load-time sanitation. Stale RC1-era saves can carry
+  // fractions that render partially/fully off-screen (they were recorded
+  // from center-clamped top-left writes), and a fraction in [0,1] cannot
+  // see the element's pixel size. Repair uses the RENDERED rect: clamp the
+  // top-left into [0, innerWidth - rect.width] / [0, innerHeight -
+  // rect.height], rewrite as viewport fractions, persist. Runs in
+  // buildControls AFTER applySavedState + applyScale so sizes exist before
+  // the clamps are computed (scripts load at body end, elements are laid out).
+  function sanitizeLayout() {
+    order.forEach(function (name) {
+      var c = controls[name];
+      if (!c) return;
+      var fx = fracX(c.el, name);
+      var fy = fracY(c.el, name);
+      var rect = c.el.getBoundingClientRect();
+      var leftPx = clamp(fx * window.innerWidth, 0, window.innerWidth - rect.width);
+      var topPx = clamp(fy * window.innerHeight, 0, window.innerHeight - rect.height);
+      c.el.style.left = (leftPx / window.innerWidth * 100) + '%';
+      c.el.style.top = (topPx / window.innerHeight * 100) + '%';
+    });
+    saveState();              // repaired layout is persisted immediately
   }
 
   // ---- public API ----------------------------------------------------------------

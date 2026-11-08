@@ -1,0 +1,101 @@
+diff --git a/prototype/js/CONFIG.js b/prototype/js/CONFIG.js
+index 7606c3f..292f44c 100644
+--- a/prototype/js/CONFIG.js
++++ b/prototype/js/CONFIG.js
+@@ -226,6 +226,13 @@ window.WH_CONFIG = {
+       { asset: 'graveMound', x: -17.5, z: 24.5, rotY: 2.4, scale: 1.55 },
+       { asset: 'buriedCoffin', x: 6.5, z: 12.5, rotY: 0.4, scale: 1.5 },
+       { asset: 'mossBoulder', x: -20.5, z: -12.5, rotY: 4.4, scale: 1.15 },
++      // CC-WB1: data-locked SEAT record for the war-effort contract board
++      // (5.9,-15.5 rotY 3.14, ground-truthed). The MESH is code-built in
++      // js/wareffort.js, which claims this row at load before any region
++      // build - a manifest-less asset would withhold region A's wall/scatter
++      // plans and draw a grey stand-in, so the row documents the seat and the
++      // module builds its own board mesh (IO B-6 art law holds).
++      { asset: 'warBoard', x: 5.9, z: -15.5, rotY: 3.14 },
+       { asset: 'treeStump', x: 20.5, z: 2.5, rotY: 3.1, scale: 1.1 }
+  ,
+ 
+@@ -3160,7 +3167,14 @@ window.WH_CONFIG.items = {
+                     flavor: 'Earthy, bitter, strangely fortifying' },
+   blandMush:      { id: 'blandMush', name: 'Bland Mush', glyph: 'BM', category: 'food',
+                     weight: 15, useHint: { kind: 'eat', buff: 'blandMush' },
+-                    flavor: 'A sad grey mush' }
++                    flavor: 'A sad grey mush' },
++  // CC-WB1: war-effort requisition paper (doc 42 Part 3). Row-law per the
++  // valspec C1 anchor (mirrors the rot-silk/rot-gland valuables at 3136-3145):
++  // category 'valuable' (stacks, no inventory category change); glyph
++  // fallback law, no icon PNG (ironOre WH1-W2 precedent).
++  warOrder:       { id: 'warOrder', name: 'War Order', glyph: 'WO',
++                    category: 'valuable', stackCap: 99, material: true,
++                    flavor: 'A garrison order: iron or coin for the war effort at the hold board.' }
+ };
+ 
+ // C1 (io/missions/2026-10-05-cc-c1-cooking.md): cooking at a fire station.
+@@ -3368,6 +3382,66 @@ window.WH_CONFIG.camp = {
+   }
+ };
+ 
++// CC-WB1 (doc 42 Part 3, doc 37-C11 lifecycle): war-effort requisition board -
++// a CONTRACT LOOP anchored at the hold (region A, south road). The board hands
++// out ONE Requisition paper per in-game day; filling it means mining ironOre
++// at Redseam (CC-WM1, already live) and turning 6 ore in at the board for a
++// coin reward. Module js/wareffort.js (WH_WarEffort); state rides the save
++// wrap (B-5), NOT localStorage this round.
++window.WH_CONFIG.warEffort = {
++  lsKey: 'wh_wareffort_v1',            // unused this round; state rides the save-wrap (B-5)
++  boardSeat: { regionId: 'hold_outskirts', x: 5.9, z: -15.5, rotY: 3.14 },
++    // PROPOSED, Nicko tunes. Pre-spec lock BY DATA: scratch/cc-wb1/site_scan.js —
++    // (6.7,-14.5) chosen then shifted to (5.9,-15.5): > 4.6 m from every
++    // regionA static prop (nearest originally 3.34 m bandit row = enemy, 8.09 m
++    // statics; clearance re-verified at final seat: nearest static
++    // mossBoulder (10.5,-14.5) = 5.36 m), 88.6 m from spawn, on the south
++    // road sight-line (churchArchway x=8 z=-58), 566.8 m from the Redseam
++    // seam center. Region A is FLAT (WH_GROUND.has = false by design; board
++    // sits y=0).
++  rotYFacesRoadNorth: true,            // PROPOSED: papers face the incoming traveler
++  // CC-WB1 board block (valspec B-1.1 schema): CONFIG-level prompt/title the
++  // module prompt paths read; per-day contract rows below are the turn-in
++  // desks day 1/2/3. Board values PROPOSED, Nicko tunes.
++  board: { rangeM: 2.6 },              // PROPOSED: interact radius, chest-feel
++  prompt: 'E - War Board',             // valspec B-2: prompt is an 'E - ' string
++  title: 'WAR BOARD',                  // panel title string
++  // Turned-in / expiry toasts (valspec B-1.1: {id} in the granted toast,
++  // {name} in the dawn-expiry toast; both replaced at runtime).
++  turnedInToast: '{id} requisition turned in - the quartermaster marks the board.',
++  expiryToast: 'Day {name} requisition expired - the board posts fresh papers.',
++  // Day rows (valspec B-1.1): day1 = iron (one-time), day2/day3 = coins
++  // (daily). ironOre / stolenCoin already live (CONFIG.items / CC-WM1).
++  day1: {
++    title: 'Iron Requisition', reward: { id: 'warOrder', count: 1 },
++    requires: { id: 'ironOre', count: 6 },        // PROPOSED, Nicko tunes (8 veins, ~1 E-dig each)
++    once: true,                          // day-1 contract never re-signs (37-C11 law)
++    offerText: 'The garrison wants iron for the war. Bring 6 iron ore to this board.'
++  },
++  day2: {
++    title: 'Coin Requisition', reward: { id: 'warOrder', count: 1 },
++    requires: { id: 'stolenCoin', count: 12 },    // PROPOSED, Nicko tunes
++    daily: true,                         // re-signs each dawn
++    offerText: 'The quartermaster pays for coin recovered from bandit camps. Bring 12 stolen coins.'
++  },
++  day3: {
++    title: 'War Ledger Renewal', reward: { id: 'warOrder', count: 1 },
++    requires: { id: 'stolenCoin', count: 12 },    // PROPOSED, Nicko tunes
++    daily: true,                         // the day-3 re-sign path: never blocked
++    resign: true,                        // exposes the re-sign entry statically (valspec B-7.2)
++    offerText: 'The war ledger signs on for the long haul. Bring 12 stolen coins to renew.'
++  },
++  requisition: {
++    itemId: 'warOrder',                // B-2
++    oreItemId: 'ironOre',              // CC-WM1 item, already live
++    oreRequired: 6,                    // PROPOSED, Nicko tunes (8 veins, ~1 E-dig each)
++    reward: { id: 'stolenCoin', count: 3 },  // PROPOSED, Nicko tunes; reward authority = THIS table only (37-C11)
++    title: 'War Requisition',
++    offerText: 'The garrison wants iron for the war. Bring 6 iron ore to this board.',
++    doneText: 'Requisition filled. The quartermaster marks the board.'
++  }
++};
++
+ // C2 (io/missions/2026-10-05-cc-c2-daynight.md): day/night cycle
+ // (js/daynight.js WH_DAYNIGHT). One cycle = dawn > day > dusk > night over
+ // dayLengthSec. Each phase row is the look the phase HOLDS; the first

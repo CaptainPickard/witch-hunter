@@ -25,7 +25,9 @@
     </div>
     <div id="wh-region-name"></div>
     <div id="wh-gate-hint">Enter the Darkwood</div>
+    <div id="wh-gather-prompt"></div>
     <div id="wh-lock-reticle"></div>
+    <div id="wh-mouse-chip" title="Backquote toggles mouse bind">MOUSE: UNBOUND [`]</div>
     <div id="wh-death-overlay"><div id="wh-death-text">You died</div><div id="wh-death-sub">Respawning...</div></div>
     <!-- 2026-10-03 boot loading screen: title over a real per-asset progress
          bar (tick count lives in js/assets.js). Replaces the bare text note. -->
@@ -41,14 +43,45 @@
 <script src="vendor/skeleton-utils.classic.js"></script>
 <script src="js/moveset.js"></script>
 <script src="js/CONFIG.js"></script>
+<script src="js/wh-ground.js"></script>
+<script src="js/icons-data.js"></script>
 <script src="js/region-defs.js"></script>
 <script src="js/assets.js"></script>
 <script src="js/anim.js"></script>
 <script src="js/spells.js"></script>
+<script src="js/inventory.js"></script>
+<script src="js/cooking.js"></script>
+<script src="js/daynight.js"></script>
+<script src="js/light.js"></script>
+<script src="js/gather.js"></script>
+<script src="js/corpse-loot.js"></script>
+<!-- L1: WH_LEVEL before player.js (player / inventory / game read it at
+     runtime; the first read is game.js boot applyBuffStats - save.js has no
+     load-order tie to it) -->
+<script src="js/leveling.js"></script>
+<script src="js/affinity.js"></script>
 <script src="js/player.js"></script>
 <script src="js/enemy.js"></script>
 <script src="js/region-manager.js"></script>
+<script src="js/camp.js"></script>
+<script src="js/npc.js"></script>
+<script src="js/chest.js"></script>
+<script src="js/wareffort.js"></script>
+<!-- CC-WB3: strata board module loads right after the war board module -->
+<script src="js/strataeffort.js"></script>
+<script src="js/journal.js"></script>
+<!-- QJR-4: bestiary codex loads right after the journal module it rides -->
+<script src="js/bestiary.js"></script>
+<script src="js/save.js"></script>
 <script src="js/touch-controls.js"></script>
+<!-- CC-C12: DIAGNOSTIC ONLY - wolf anim readout; inert without ?whdbg=1 -->
+<script src="js/wolf-debug.js"></script>
+<!-- CC-AE1: night raid director (needs WH_Enemy + WH_CONFIG at load; game refs at runtime) -->
+<script src="js/ambush.js"></script>
+<!-- CC-H5b: traps as authored hazards (needs WH_CONFIG at load; game refs at
+     runtime - same band as ambush.js: after region-manager, before game.js) -->
+<script src="js/hazards.js"></script>
+<script src="js/shadows.js"></script>
 <script src="js/game.js"></script>
 </body>
 </html>

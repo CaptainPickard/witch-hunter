@@ -1,0 +1,15 @@
+I wrote the valspec to `io/specs/testerbot-spec-wh-cc-c10-farmer.md` exactly as I composed it in the first run. It's the only file I touched, and I ran no mutating git commands.
+
+VALSPEC AUTHORED io/specs/testerbot-spec-wh-cc-c10-farmer.md anchors 22 amendments 12
+
+B-amendment summary for IO:
+1. **B1:** No "Barrow" exists in the code. The locked toast at `game.js:1940` belongs to the B/C arch (`CFG.regionC.door`). The SW den door (`CFG.regionD.door`) has no lock. So A6 requires both doors to stay byte-identical, and calling the den "Old King's Barrow" is a lore call for IO and Nicko.
+2. **B2:** From the farmstead, the den is due West, not SW. The dialog copy is Nicko's to tune; recorded, not gated.
+3. **B3 (needs a ruling):** The pixelated farmer bake would land outside write scope, and `tools/` has no pixelate pipeline. IO should choose: (a) allow exactly one new `dwarf-male-smith.rigged.pixelated.glb`, or (b) waive the art law and ship the raw placeholder.
+4. **B4:** The game.js scope also needs an npc.js init call, an update call in the loop, and the talk-prompt branch. I sanctioned hunks H1–H6.
+5. **B5:** The HUD quest line and the dialog overlay have to be built in JS with inline styles. The quest line can't reuse `#wh-gate-hint`, and npc.js needs its own copy of `el()`.
+6. **B6:** There is no DOM name-plate model to copy (the lantern waymarker has none). A label is recorded, not gated.
+7. **B7 (important):** Re-running `ledger2.py` unchanged crashes on the barn row (KeyError), and neither ledger script counts the farmer. I sanctioned `scratch/cc-c10/ledger3` copies to fix that. I also added a third gated ledger centre at the homestead, because it lies outside both of the brief's ledger circles.
+8. **B8:** The rebuilt bundle `prototype/builds/v8-playable.html` is tracked but missing from the write scope; I sanctioned it.
+9. **B9–B11:** Recorded only: the prompt wording ("Talk (E)" vs the house style "E - …"), the farmer likely standing in an A/T-pose (with a stand-in box until the asset loads), and the em dash vs hyphen.
+10. **B12:** The talk hook goes between `tryNotch` and `tryGather` in the interact chain.

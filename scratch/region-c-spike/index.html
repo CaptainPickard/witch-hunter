@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CC-C1 · Region C heightfield spike</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #b9c6c4; }
+  canvas { display: block; }
+  #hud {
+    position: fixed; top: 8px; left: 8px; margin: 0; padding: 8px 10px;
+    font: 11px/1.35 ui-monospace, Menlo, Consolas, monospace; color: #e8ecea;
+    background: rgba(16, 20, 18, 0.72); border-radius: 4px; white-space: pre;
+    pointer-events: none; max-height: calc(100% - 32px); overflow: hidden;
+  }
+  #hud b { color: #fff; }
+  #hud .warn { color: #ffcf6e; }
+  #hud .ok { color: #9fe39a; }
+  #results {
+    display: none; position: fixed; right: 8px; top: 8px; width: 46%; height: 60%;
+    font: 11px/1.35 ui-monospace, Menlo, Consolas, monospace;
+    background: rgba(16, 20, 18, 0.9); color: #e8ecea; border: 1px solid #556;
+  }
+</style>
+</head>
+<body>
+<pre id="hud">loading…</pre>
+<textarea id="results" readonly spellcheck="false"></textarea>
+<!-- Vendored Three.js r185 (classic build) from the game tree; read-only reference. -->
+<script src="../../prototype/vendor/three.classic.js"></script>
+<script src="region-c-spike.js"></script>
+</body>
+</html>

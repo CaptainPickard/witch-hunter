@@ -1,0 +1,38 @@
+{
+ "WH_DagSlashR2L": {
+  "fbx": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield slash (5).fbx",
+  "src_frames": [
+   5.28,
+   17.5,
+   41
+  ],
+  "impact_out": 0.13,
+  "out": 0.38
+ },
+ "WH_DagSlashL2R": {
+  "fbx": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield attack (3).fbx",
+  "src_frames": [
+   7.16,
+   22.5,
+   52
+  ],
+  "impact_out": 0.13,
+  "out": 0.38,
+  "despin_knots": [
+   7.16,
+   31,
+   52
+  ]
+ },
+ "WH_DagSlashR2Lb": {
+  "fbx": "/workspace/witch-hunter/scratch/mixamo-fbx/swordpack/sword and shield slash (5).fbx",
+  "src_frames": [
+   2.8333,
+   17.5,
+   41
+  ],
+  "impact_out": 0.16,
+  "strike_end_out": 0.22,
+  "out": 0.7
+ }
+}

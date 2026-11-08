@@ -1,0 +1,19 @@
+I couldn't do the integration: this session can't write files or run scripts, so nothing was changed. No CONFIG.js or assets.js edits, no probes, ledger or build, and no REPORT-v2.md. The brief says to log blockers in REPORT-v2.md and carry on, but writing that file was refused too.
+
+**What was refused:**
+- Writing files under `scratch/cc-c17/` (I tried `c17_lib.cjs` and `REPORT-v2.md`). Edits to CONFIG.js and assets.js would hit the same wall.
+- `touch`, `node -e`, and even the ledger probe you said works (`node scratch/cc_c8_ledger_probe.js /tmp/wh-worldfeat 0 -366 170`) all came back "requires approval".
+- Since the session is non-interactive, nobody can approve them. This matches the known worktree-dispatch limit: writes need acceptEdits mode, and node/python3 runs need Bash allow rules.
+
+**To unblock:** re-dispatch with `--permission-mode acceptEdits` plus Bash allow rules for `node`, `python3` and `touch`, or with your own permission settings. Then steps 1–8 can run as briefed.
+
+**Things the re-run needs to know:**
+1. **The manifest is `var MANIFEST = {` near the top of `prototype/js/assets.js`**, next to `deadTree`, `blightcap` and `skullPile`. It is not `window.WH_CONFIG.assets`, which is a settings object; `scratch/cc-c17/RUN_TASK.md` confirms this.
+2. **The manifest needs 10 keys, not 9.** Step 3 places 2 ok-ruin-column rows, but the brief's manifest list leaves out `okRuinColumn`. RUN_TASK.md approves adding it as the 10th key.
+3. **The bearing-240 oak lands in a bandit camp.** Bearing 240, r 232 from the Stone works out to about (-200.9, -250.0). That is roughly 8 m from camp 3's fire at (-207.8, -246.0), which itself sits exactly on bearing 240, r 240. The oak has to move, for example to bearing 234–236 or a smaller radius, and pass the probe.
+4. **The brief disagrees with itself on stonewall count.** The fence-kit section says 4 stonewall rows; step 2 says 2. I'd follow step 2 and note it in the report.
+5. **The N-bend pine may sit too close to the road.** At (-15, -570) it is about 12.7 m from the northRoad centreline. After the 2.2 m half-width and its own ~1.3 m trunk, the gap is about 9.2 m. The cc13b road floor is 10 m (4 m plus the road's 6 m sway), so the pine may need to move about 1 m west.
+6. **The cc13b probe template is out of date.** Its road table still lists `denTrail` and `denTrailNotch`, which were removed in CC-C15. The farm probe should read roads, `cooking.stations` fires and `enemy.wolfPacks` loops straight from CONFIG.js, the way `cc_c8_ledger_probe.js` loads it.
+7. **The planned set is 28 rows:** farm 14, ruin 3, trees 3, spooky 8. Before culling, that adds about 311k tris (using the measured counts), more than the brief's ~175k estimate. So the ledger has to confirm the ≤ 1,980,000 PASS at both probe centres; the estimate alone isn't enough.
+
+CC-C17 INTEGRATION-V2 BLOCKED rows-added 0 ledger NOT-RUN build NOT-RUN (file writes and script runs denied in this non-interactive session)

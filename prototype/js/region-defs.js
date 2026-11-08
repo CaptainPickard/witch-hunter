@@ -25,13 +25,25 @@
       fogDensity: cfgRegion.fogDensity,
       ambientLightLevel: cfgRegion.ambientLightLevel,
       enemies: cfgRegion.enemies,
-      props: cfgRegion.props
+      props: cfgRegion.props,
+      // CC-C2: a region with its own disc (regionC) carries center +
+      // groundRadius; A/B leave them unset = the shared disc at the origin,
+      // radius CFG.world.groundRadius (today's path)
+      center: cfgRegion.center || null,
+      groundRadius: cfgRegion.groundRadius || null
     };
   }
 
   var regions = {};
   regions[CFG.regionA.id] = makeRegion(CFG.regionA, 1);
   regions[CFG.regionB.id] = makeRegion(CFG.regionB, -1);
+  // CC-C2: side is the plane-0 (A/B) convention only; C lies on the -z side
+  // of it but is NOT a member of connections[0]. Door sides live
+  // per-connection (conn.sides) - B is -1 on plane 0 and +1 on the B/C plane.
+  regions[CFG.regionC.id] = makeRegion(CFG.regionC, -1);
+  // CC-C8: the den (own disc, flat; side -1 = the plane-0 convention only,
+  // D is on no plane-0 side - its one door's sides live in conn.sides)
+  regions[CFG.regionD.id] = makeRegion(CFG.regionD, -1);
 
   // Region adjacency: each region lists the regions reachable from it and the
   // single chokepoint crossing that connects them. Entrances/exits exist ONLY
@@ -45,8 +57,309 @@
       fromSide: 1,                      // A side is +z
       chokepointCenterX: CFG.chokepoint.centerX,
       chokepointHalfWidth: CFG.chokepoint.width / 2
+    },
+    // CC-C2: B/C DOOR on B's north edge. The plane z = planeCoord exists
+    // only as a cross-line INSIDE the door window (no wall anywhere else);
+    // sides are per-connection (B occupies z >= -86, C z <= -86). gatedTo:
+    // crossings INTO this region obey the game.js gate predicate (tutorial
+    // law: locked while the day/night clock is dormant).
+    {
+      from: CFG.regionB.id,
+      to: CFG.regionC.id,
+      axis: 'z',
+      planeCoord: CFG.regionC.door.planeZ,
+      sides: {},
+      door: {
+        doorX: CFG.regionC.door.doorX,
+        doorHalfWidth: CFG.regionC.door.doorHalfWidth,
+        suspendDepthM: CFG.regionC.door.suspendDepthM,
+        wallGapPadM: CFG.regionC.door.wallGapPadM,
+        arch: CFG.regionC.door.arch,
+        gatedTo: CFG.regionC.id
+      }
     }
   ];
+  connections[1].sides[CFG.regionB.id] = 1;
+  connections[1].sides[CFG.regionC.id] = -1;
+  // CC-C8: C<->D DOOR, the B/C door pattern with three additions (CONFIG.
+  // regionD.door): walkFrom = the plane crossing exists ONLY while the den
+  // is active (its ring mouth; in C the line would run through the forest,
+  // so there it is no crossing, no prewarm, no clamp, no scatter clear);
+  // interact = the C-side E hook that crosses (region-manager forceCross);
+  // land = per-destination landing rows (x is NOT preserved: the outcrop
+  // and the den mouth are ~60 m apart). No gatedTo: the dormant-clock law
+  // does not apply. D occupies z >= planeZ (+1), C the far side (-1).
+  var DD = CFG.regionD.door;
+  connections.push({
+    from: CFG.regionC.id,
+    to: CFG.regionD.id,
+    axis: 'z',
+    planeCoord: DD.planeZ,
+    sides: {},
+    door: {
+      doorX: DD.doorX,
+      doorHalfWidth: DD.doorHalfWidth,
+      suspendDepthM: DD.suspendDepthM,
+      wallGapPadM: DD.wallGapPadM,
+      arch: null,
+      gatedTo: null,
+      walkFrom: CFG.regionD.id,
+      interact: { from: CFG.regionC.id, x: DD.interactAt.x, z: DD.interactAt.z, radius: DD.interactM },
+      land: DD.land
+    }
+  });
+  connections[2].sides[CFG.regionC.id] = -1;
+  connections[2].sides[CFG.regionD.id] = 1;
+
+  // CC-AD1 veil_crypt: the crypt (own disc r 20 beneath the north notch). side -1 = the
+  // plane-0 convention only (E is on no plane-0 side). C0-7 law: the crypt
+  // never lies ON the C-side plane z = -612, so sideOfBoundary(C, 3) = -1.
+  regions[CFG.regionE.id] = makeRegion(CFG.regionE, -1);
+
+  // CC-AD1 veil_crypt C<->E tomb door, shaped EXACTLY on the CC-C8 row above (connections[2]):
+  // axis z, the plane = the crypt-side mouth (E.door.planeZ), the window =
+  // the door's walkable lane, walkFrom the crypt ONLY (walk-back; in C the
+  // line runs underground: no crossing, no clamp). The C-side E hook sits at
+  // the notch mouth (door.interactAt, radius interactM). land rows per region.
+  var ED = CFG.regionE.door;
+  connections.push({
+    from: CFG.regionC.id,
+    to: CFG.regionE.id,
+    axis: 'z',
+    planeCoord: ED.planeZ,
+    sides: {},
+    door: {
+      doorX: ED.doorX,
+      doorHalfWidth: ED.doorHalfWidth,
+      suspendDepthM: ED.suspendDepthM,
+      wallGapPadM: ED.wallGapPadM,
+      arch: null,
+      gatedTo: null,
+      walkFrom: CFG.regionE.id,
+      interact: { from: CFG.regionC.id, x: ED.interactAt.x, z: ED.interactAt.z, radius: ED.interactM },
+      land: ED.land
+    }
+  });
+  // C0-3 SIDES TABLE: regionE occupies z <= planeZ (D-symmetry: D is
+  // z >= planeZ on its conn). E side +1, C side -1.
+  connections[3].sides[CFG.regionC.id] = -1;
+  connections[3].sides[CFG.regionE.id] = 1;
+
+  // CC-AD2 veil_galleries: the galleries (own disc r 26 beneath the crypt's
+  // west flank). side -1 = the plane-0 convention only (F is on no plane-0
+  // side). C0-7 law: the galleries never lie ON the C-side plane, so
+  // sideOfBoundary(F, any C-conn) = -1.
+  regions[CFG.regionF.id] = makeRegion(CFG.regionF, -1);
+
+  // CC-AD2 veil_galleries E<->F tomb door, shaped EXACTLY on the CC-AD1
+  // crypt row above (connections[3]): axis z, the plane = the galleries
+  // mouth (F.door.planeZ), the window = the door's walkable lane, walkFrom
+  // the galleries ONLY (walk-back; in E the line runs underground: no
+  // crossing, no clamp). The E-side F hook sits at the crypt's west aisle
+  // aperture (door.interactAt, radius interactM). land rows per region.
+  var FD = CFG.regionF.door;
+  connections.push({
+    from: CFG.regionE.id,
+    to: CFG.regionF.id,
+    axis: 'z',
+    planeCoord: FD.planeZ,
+    sides: {},
+    door: {
+      doorX: FD.doorX,
+      doorHalfWidth: FD.doorHalfWidth,
+      suspendDepthM: FD.suspendDepthM,
+      wallGapPadM: FD.wallGapPadM,
+      arch: null,
+      gatedTo: null,
+      walkFrom: CFG.regionF.id,
+      interact: { from: CFG.regionE.id, x: FD.interactAt.x, z: FD.interactAt.z, radius: FD.interactM },
+      land: FD.land
+    }
+  });
+  // SIDES TABLE (CC-H1a): C occupies z > planeZ -700 (interior reading +1); G occupies z <= -700 (interior -711 reads -1). sideIn(R) must equal sideOfPlane at R's interior (engine law, region-defs sideOfPlane).
+  connections[4].sides[CFG.regionE.id] = -1;
+  connections[4].sides[CFG.regionF.id] = 1;
+
+  // CC-H1 lords_hold: the FIRST surface hold hub (own disc r 126 north of C,
+  // outside C's footprint). side -1 = the plane-0 convention only (G is on
+  // no plane-0 side; like E/F above). C0-7 law: the hold never lies ON the
+  // C-side plane, so sideOfBoundary(C, 5) = -1.
+  regions[CFG.regionG.id] = makeRegion(CFG.regionG, -1);
+  // CC-H2 fort_garrison: side -1 = the plane-0 convention only (H sits on no
+  // plane-0 side). C0-7 law: fort_garrison never lies ON any other connection's plane.
+  regions[CFG.regionH.id] = makeRegion(CFG.regionH, -1);
+
+  // CC-H1 lords_hold C<->G gate, shaped EXACTLY on the CC-AD1 crypt row above
+  // (connections[3]) with AMENDMENT A: `from` = CFG.regionC.id (H1 hangs off
+  // C's north road, NOT the galleries chain). Seat probe:
+  // scratch/cc-h1/seat_scan.py. Axis z, the plane = the hold's gate plane
+  // (G.door.planeZ), the window = the 9 m gate lane, walkFrom the hold ONLY
+  // (walk-back; in C the plane sits outside C's playable band: no crossing,
+  // no clamp). The C-side hook sits ON the north road landing band
+  // (door.interactAt, radius interactM). land rows per region.
+  var GD = CFG.regionG.door;
+  connections.push({
+    from: CFG.regionC.id,
+    to: CFG.regionG.id,
+    axis: 'z',
+    planeCoord: GD.planeZ,
+    sides: {},
+    door: {
+      doorX: GD.doorX,
+      doorHalfWidth: GD.doorHalfWidth,
+      suspendDepthM: GD.suspendDepthM,
+      wallGapPadM: GD.wallGapPadM,
+      arch: null,
+      gatedTo: null,
+      walkFrom: CFG.regionG.id,
+      interact: { from: CFG.regionC.id, x: GD.interactAt.x, z: GD.interactAt.z, radius: GD.interactM },
+      land: GD.land
+    }
+  });
+  // SIDES TABLE (CC-H1a): C occupies z > planeZ -700 (interior reading +1); G occupies z <= -700 (interior -711 reads -1). sideIn(R) must equal sideOfPlane at R's interior (engine law, region-defs sideOfPlane).
+  connections[5].sides[CFG.regionC.id] = 1;
+  connections[5].sides[CFG.regionG.id] = -1;
+
+  // CC-H2 garrison_keep: the FIRST TWO-SIDED chained door (B/C grammar: the
+  // physical plane exists on BOTH sides - no walkFrom, no interact, no
+  // gatedTo). The breach lane rides x 0 across G's erased south-pole flank
+  // pair; suspendDepthM 4 lifts BOTH disc clamps (planeZ -948 vs G playable
+  // rim -946.5 / H2 playable rim -945.5). Sides table (doc 66 sec 10): BOTH
+  // entries LIVE here (the engine reads sideIn from either active region
+  // every frame): sideOfPlane(G interior -822) = +1 = sideIn(lords_hold);
+  // sideOfPlane(H interior -1024) = -1 = sideIn(fort_garrison). Land rows
+  // per destination (x NOT preserved); cross fires both directions
+  // (tickTransition walks connectionsOf(activeId) with planeIn true in both).
+  var HD = CFG.regionH.door;
+  connections.push({
+    from: CFG.regionG.id,
+    to: CFG.regionH.id,
+    axis: 'z',
+    planeCoord: HD.planeZ,
+    sides: {},
+    door: {
+      doorX: HD.doorX,
+      doorHalfWidth: HD.doorHalfWidth,
+      suspendDepthM: HD.suspendDepthM,
+      wallGapPadM: HD.wallGapPadM,
+      arch: null,
+      gatedTo: null,
+      land: HD.land
+    }
+  });
+  // SIDES TABLE (CC-H2, doc 66 sec 10 interior law): BOTH entries live.
+  // sideOfPlane = z > planeCoord ? 1 : -1 (region-defs). G interior -822:
+  // -822 > -948 = +1. H interior -1024: -1. sideIn(R) == sideOfPlane(R
+  // interior) for EVERY member - asserted by the valspec probe both sides.
+  connections[6].sides[CFG.regionG.id] = 1;
+  connections[6].sides[CFG.regionH.id] = -1;
+
+  // CC-H2b armory_deep: plane-0 convention only; H-side portal is an
+  // interact hook, I-side mouth is a walk-back plane (E/C precedent).
+  regions[CFG.regionI.id] = makeRegion(CFG.regionI, -1);
+  var ID = CFG.regionI.door;
+  connections.push({
+    from: CFG.regionH.id,
+    to: CFG.regionI.id,
+    axis: 'z',
+    planeCoord: ID.planeZ,
+    sides: {},
+    door: {
+      doorX: ID.doorX, doorHalfWidth: ID.doorHalfWidth,
+      suspendDepthM: ID.suspendDepthM, wallGapPadM: ID.wallGapPadM,
+      arch: null, gatedTo: null,
+      walkFrom: CFG.regionI.id,
+      interact: { from: CFG.regionH.id, x: ID.interact.x, z: ID.interact.z, radius: ID.interact.radius },
+      land: ID.land,
+      fadeIn: ID.fadeIn, fadeOut: ID.fadeOut, exitFadeOut: ID.exitFadeOut,
+      text: ID.text                       // AMENDMENT A: the portal prompt + fades ride the conn
+    }
+  });
+  // E-mirror: H's plane is underground/inactive; I's interior is north
+  // of its walk-back plane. The H-side table value follows conn[3].
+  connections[7].sides[CFG.regionH.id] = -1;
+  connections[7].sides[CFG.regionI.id] = +1;
+
+  // CC-H3 veil_spire_approach: plane-0 convention only; F-side portal is an
+  // interact hook, J-side mouth is a walk-back plane (conn[7] precedent).
+  regions[CFG.regionJ.id] = makeRegion(CFG.regionJ, -1);
+  var JD = CFG.regionJ.door;
+  connections.push({
+    from: CFG.regionF.id,
+    to: CFG.regionJ.id,
+    axis: 'z',
+    planeCoord: JD.planeZ,
+    sides: {},
+    door: {
+      doorX: JD.doorX, doorHalfWidth: JD.doorHalfWidth,
+      suspendDepthM: JD.suspendDepthM, wallGapPadM: JD.wallGapPadM,
+      arch: null, gatedTo: null,
+      walkFrom: CFG.regionJ.id,
+      interact: { from: CFG.regionF.id, x: JD.interact.x, z: JD.interact.z, radius: JD.interact.radius },
+      land: JD.land,
+      fadeIn: JD.fadeIn, fadeOut: JD.fadeOut, exitFadeOut: JD.exitFadeOut,
+      text: JD.text                       // AMENDMENT A: the portal prompt + fades ride the conn
+    }
+  });
+  // E-mirror: F's plane is underground/inactive; J's interior is north
+  // of its walk-back plane. The F-side table value follows conn[7].
+  connections[8].sides[CFG.regionF.id] = -1;
+  connections[8].sides[CFG.regionJ.id] = +1;
+
+  // CC-H5 tithe_vaults: plane-0 convention only; J-side portal is an
+  // interact hook, K-side mouth is a walk-back plane (conn[7] precedent).
+  regions[CFG.regionK.id] = makeRegion(CFG.regionK, -1);
+  var KD = CFG.regionK.door;
+  connections.push({
+    from: CFG.regionJ.id,
+    to: CFG.regionK.id,
+    axis: 'z',
+    planeCoord: KD.planeZ,
+    sides: {},
+    door: {
+      doorX: KD.doorX, doorHalfWidth: KD.doorHalfWidth,
+      suspendDepthM: KD.suspendDepthM, wallGapPadM: KD.wallGapPadM,
+      arch: null, gatedTo: null,
+      walkFrom: CFG.regionK.id,
+      interact: { from: CFG.regionJ.id, x: KD.interact.x, z: KD.interact.z, radius: KD.interact.radius },
+      land: KD.land,
+      fadeIn: KD.fadeIn, fadeOut: KD.fadeOut, exitFadeOut: KD.exitFadeOut,
+      text: KD.text                       // AMENDMENT A: the portal prompt + fades ride the conn
+    }
+  });
+  // E-mirror: J's plane is underground/inactive for this conn; K's interior
+  // is SOUTH of its walk-back plane (-880/-856 < -848). The J-side table
+  // value follows the geometry (J's interior sits NORTH of -848 too), the
+  // K side follows sideOfPlane.
+  connections[9].sides[CFG.regionJ.id] = +1;
+  connections[9].sides[CFG.regionK.id] = -1;
+
+  // CC-H6 the_remains: plane-0 convention only; K-side portal is an
+  // interact hook, L-side mouth is a walk-back plane (conn[9] precedent).
+  regions[CFG.regionL.id] = makeRegion(CFG.regionL, -1);
+  var LD = CFG.regionL.door;
+  connections.push({
+    from: CFG.regionK.id,
+    to: CFG.regionL.id,
+    axis: 'z',
+    planeCoord: LD.planeZ,
+    sides: {},
+    door: {
+      doorX: LD.doorX, doorHalfWidth: LD.doorHalfWidth,
+      suspendDepthM: LD.suspendDepthM, wallGapPadM: LD.wallGapPadM,
+      arch: null, gatedTo: null,
+      walkFrom: CFG.regionL.id,
+      interact: { from: CFG.regionK.id, x: LD.interact.x, z: LD.interact.z, radius: LD.interact.radius },
+      land: LD.land,
+      fadeIn: LD.fadeIn, fadeOut: LD.fadeOut, exitFadeOut: LD.exitFadeOut,
+      text: LD.text                       // AMENDMENT A: the portal prompt + fades ride the conn
+    }
+  });
+  // E-mirror: K's plane is underground/inactive for this conn; L's interior
+  // is SOUTH of its walk-back plane (-1044 < -1036). K-side value follows
+  // the geometry (K's interior sits NORTH of -1036), L follows sideOfPlane.
+  connections[10].sides[CFG.regionK.id] = +1;
+  connections[10].sides[CFG.regionL.id] = -1;
 
   // ---- THREE-free transition helpers (used by region-manager and tests) ------
 
@@ -65,6 +378,42 @@
   function insideChokepoint(conn, x) {
     return x >= conn.chokepointCenterX - conn.chokepointHalfWidth &&
            x <= conn.chokepointCenterX + conn.chokepointHalfWidth;
+  }
+
+  // CC-C2: is x inside a door connection's window? (|x - doorX| <= half-width)
+  function insideDoorWindow(conn, x) {
+    return !!conn.door && Math.abs(x - conn.door.doorX) <= conn.door.doorHalfWidth;
+  }
+
+  // CC-C2 per-connection membership + sides. A connection without a sides
+  // table (connections[0], A/B) reads the region's plane-0 side (today's
+  // convention, unchanged).
+  function isMember(conn, regionId) {
+    return conn.from === regionId || conn.to === regionId;
+  }
+
+  function otherEnd(conn, regionId) {
+    return conn.from === regionId ? conn.to : conn.from;
+  }
+
+  function sideIn(conn, regionId) {
+    return conn.sides ? conn.sides[regionId] : regions[regionId].side;
+  }
+
+  // Every connection a region is a member of, in table order.
+  function connectionsOf(regionId) {
+    var out = [];
+    for (var i = 0; i < connections.length; i++) {
+      if (isMember(connections[i], regionId)) out.push(connections[i]);
+    }
+    return out;
+  }
+
+  // CC-C8: does this connection's plane exist while regionId is active? A
+  // door with walkFrom is a plane only in that region (the den mouth); every
+  // other connection (A/B, B/C) is physical on both sides, as before.
+  function planeIn(conn, regionId) {
+    return !conn.door || !conn.door.walkFrom || conn.door.walkFrom === regionId;
   }
 
   // Which side of the boundary plane is z on, relative to the connection?
@@ -96,7 +445,8 @@
     return sideOfPlane(conn, z) === conn.fromSide;
   }
 
-  // Neighbor id for a region (v1: single neighbor per region).
+  // Neighbor id for a region (v1: first neighbor in table order; CC-C2 the
+  // region manager walks connectionsOf instead).
   function neighborOf(regionId) {
     for (var i = 0; i < connections.length; i++) {
       if (connections[i].from === regionId) return connections[i].to;
@@ -114,6 +464,12 @@
     mapPositionAcross: mapPositionAcross,
     distanceToBoundary: distanceToBoundary,
     isOnFromSide: isOnFromSide,
-    neighborOf: neighborOf
+    neighborOf: neighborOf,
+    insideDoorWindow: insideDoorWindow,
+    isMember: isMember,
+    otherEnd: otherEnd,
+    sideIn: sideIn,
+    connectionsOf: connectionsOf,
+    planeIn: planeIn
   };
 })();

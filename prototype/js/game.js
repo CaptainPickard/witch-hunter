@@ -29,7 +29,10 @@
     transitionFlash: 0,
     shakeTimer: 0,                    // v3 camera shake remaining seconds
     shakeSeed: 0,                     // per-pulse random phase
-    firebolts: []                     // v7: live Firebolt projectiles
+    firebolts: [],                    // v7: live Firebolt projectiles
+    enemyBolts: [],                   // CC-EC1: live WH_CovenBolt enemies' bolts (magicDefense loop)
+    radiances: [],                    // 10-04: the ONE Radiance effect (max 1, kept parked)
+    corpseLoot: null                  // S4: WH_CORPSE_LOOT.Manager (kill loot lives on the body)
   };
   window.WH_GAME = game;
 
@@ -160,18 +163,11 @@
     game.scene.add(moon.target);
     game.moonLight = moon;
 
-    // Player lantern: PointLight parented into the player chain. Attach target
-    // is game.player.yawFrame when available, else game.player.root (boot order
-    // note: setupLights runs before the player exists; the lantern lights the
-    // scene rig at boot and re-parents below).
-    var lantern = new THREE.PointLight(L.lanternColor, L.lanternIntensity,
-      L.lanternDistance, L.lanternDecay);
-    var attach = (game.player && (game.player.yawFrame || game.player.root)) ||
-      game.scene;
-    var off = L.lanternAnchorOffset;
-    lantern.position.set(off[0], off[1], off[2]);
-    attach.add(lantern);
-    game.lantern = lantern;
+    // 10-05 light radius order: the R2 player lantern is deleted. Player
+    // light is earned (hand items / bound spells / projectiles), all owned by
+    // WH_PlayerLight; its lights are created here, before the first render,
+    // at intensity 0 so the scene light count never changes (M-19).
+    game.playerLight = new window.WH_PlayerLight.PlayerLight(game.scene);
 
     // R2 P1-8: fixed pool of 4 PointLights + flame cards, created ONCE at boot
     // BEFORE the first render so the shader light count never changes (M-19).
@@ -194,22 +190,24 @@
       game.scene.add(card);
       game.flameCards.push(card);
     }
-  }
-
-  // R2 P0-3: re-parent the lantern into the player's yawFrame once the player
-  // body exists (left-hip anchor = left side of the character, yawFrame space,
-  // so the light turns with the player). Called from boot after setBody().
-  function attachPlayerLantern() {
-    var L = CFG.lighting;
-    if (!game.lantern || !game.player || !game.player.yawFrame) return;
-    if (game.lantern.parent !== game.player.yawFrame) {
-      game.player.yawFrame.add(game.lantern);
-    }
-    var off = L.lanternAnchorOffset;
-    game.lantern.position.set(off[0], off[1], off[2]);
+    // CC-LS1: contact-shadow pool builds once at boot (shared geo/tex/mat,
+    // no per-frame allocation - P1-8 pool law).
+    if (window.WH_SHCONTACTS) window.WH_SHCONTACTS.init(scene, CFG.contacts);
   }
 
   // ---- HUD -------------------------------------------------------------------
+
+  // CC-C10: the findDaughter quest line shows only while the quest is active
+  function updateQuestLine() {
+    var on = !!window.WH_NPC && window.WH_NPC.questState() === 'active';   // findDaughter === 'active'
+    // CC-C11: active+rescued and complete have their own CONFIG HUD copy.
+    var detail = window.WH_NPC && window.WH_NPC.questStateDetail();
+    if (detail && detail.state === 'complete') on = true;
+    if (detail) game.hud.questLine.textContent = detail.state === 'complete' ? CFG.regionC.quest.hudComplete :
+      detail.rescued ? CFG.regionC.quest.hudRescued : CFG.regionC.quest.hudText;
+    var el = game.hud.questLine;
+    if (el.style.opacity !== (on ? '1' : '0')) el.style.opacity = on ? '1' : '0';
+  }
 
   function setupHud() {
     game.hud = {
@@ -217,25 +215,51 @@
       stamBar: document.getElementById('wh-stam-bar'),
       regionName: document.getElementById('wh-region-name'),
       gateHint: document.getElementById('wh-gate-hint'),
+      gatherPrompt: document.getElementById('wh-gather-prompt'),
       fps: document.getElementById('wh-fps'),
       death: document.getElementById('wh-death-overlay'),
       loadNote: document.getElementById('wh-load-note'),
       reticle: document.getElementById('wh-lock-reticle')
     };
+    // CC-C10 quest line: one line under #wh-gate-hint (bottom 18%), its own
+    // element (setGateHint owns the hint's text); shown by updateQuestLine
+    var questLine = document.createElement('div');
+    questLine.id = 'wh-quest-line';
+    questLine.textContent = CFG.regionC.quest.hudText;
+    questLine.style.cssText = 'position:absolute;bottom:calc(18% - 28px);width:100%;text-align:center;' +
+      'font-size:13px;letter-spacing:2px;color:#c9bf9f;text-shadow:0 1px 6px rgba(0,0,0,0.9);' +
+      'opacity:0;transition:opacity 0.4s ease;pointer-events:none;';
+    document.getElementById('wh-hud').appendChild(questLine);
+    game.hud.questLine = questLine;
     // 2026-10-03 boot loading screen: title + REAL progress bar overlay.
     // The bar is the fraction of manifest assets settled (loaded OR
     // stand-in); assets.js fires one tick per asset settle.
     game.hud.bootBar = document.getElementById('wh-boot-bar');
     game.hud.bootBarFill = document.getElementById('wh-boot-bar-fill');
     game.hud.bootSub = document.getElementById('wh-boot-sub');
+    // 2026-10-11 asset pipeline: the bar counts the boot-critical assets
+    // only (the barrier; the rest stream in after) and a bytes row under it
+    // shows the MB received, or the plain-language stall line for the
+    // slowest asset on a slow link.
     game.hud.bootAssetsDone = 0;
-    game.hud.bootAssetsTotal = Object.keys(window.WH_ASSETS.MANIFEST).length;
-    window.WH_ASSETS.setBootProgressCb(function () {
-      game.hud.bootAssetsDone++;
+    game.hud.bootAssetsTotal = window.WH_ASSETS.CRITICAL.length;
+    var bootBytes = document.createElement('div');
+    bootBytes.id = 'wh-boot-bytes';
+    bootBytes.style.cssText = 'margin-top:6px;font-size:11px;letter-spacing:1px;' +
+      'color:#6f665a;text-transform:none;min-height:14px;';
+    game.hud.bootSub.parentNode.insertBefore(bootBytes, game.hud.bootSub.nextSibling);
+    game.hud.bootBytes = bootBytes;
+    window.WH_ASSETS.setBootProgressCb(function (st) {
+      game.hud.bootAssetsDone = st.done;
       game.hud.bootBarFill.style.width =
-        Math.round(100 * game.hud.bootAssetsDone / game.hud.bootAssetsTotal) + '%';
-      game.hud.bootSub.textContent = 'Loading assets... ' +
-        game.hud.bootAssetsDone + ' / ' + game.hud.bootAssetsTotal;
+        Math.round(100 * st.done / Math.max(1, st.total)) + '%';
+      game.hud.bootSub.textContent = 'Loading assets... ' + st.done + ' / ' + st.total;
+      var mb = function (b) { return (b / 1e6).toFixed(1); };
+      bootBytes.textContent = st.stall ?
+        'slow link: still working, ' + mb(st.stall.loaded) + ' MB of ' +
+          (st.stall.total ? mb(st.stall.total) : '?') + ' MB, ' +
+          Math.round(st.stall.elapsedMs / 1000) + ' s elapsed' :
+        mb(st.loadedBytes) + ' MB received';
     });
     // v6: block/parry feedback cues, DOM only. The stamina bar already exists
     // in index.html and reflects the drain via updateHud.
@@ -250,6 +274,34 @@
     game.hud.guardBreakText = gbText;
     game.hud.flashTimer = 0;
     game.hud.flashTimerMax = 0;
+
+    // HP1: enemy health bar pool parent. One .wh-ehb per enemy, created on
+    // demand by updateEnemyBars (Map keyed by the Enemy object).
+    var ehbRoot = document.createElement('div');
+    ehbRoot.id = 'wh-enemy-bars';
+    document.getElementById('wh-hud').appendChild(ehbRoot);
+    game.hud.enemyBarsRoot = ehbRoot;
+    game.hud.enemyBars = new Map();
+
+    // HP2: day/night clock dial + needle (pure CSS, no numbers). Size/colors
+    // come from CFG.hud.dayClock via CSS vars; updateDayClock shows it only
+    // while the day clock runs (not dormant).
+    var DC = CFG.hud.dayClock;
+    var dayClock = document.createElement('div');
+    dayClock.id = 'wh-day-clock';
+    dayClock.style.setProperty('--dc-size', DC.sizePx + 'px');
+    dayClock.style.setProperty('--dc-top', DC.topPx + 'px');
+    dayClock.style.setProperty('--dc-frame', DC.frameColor);
+    dayClock.style.setProperty('--dc-day', DC.daySeg);
+    dayClock.style.setProperty('--dc-night', DC.nightSeg);
+    dayClock.style.setProperty('--dc-needle', DC.needleColor);
+    dayClock.style.setProperty('--dc-needle-len', Math.round(DC.sizePx * 0.5 * DC.needleLenFrac) + 'px');
+    var dayClockNeedle = document.createElement('div');
+    dayClockNeedle.className = 'wh-dc-needle';
+    dayClock.appendChild(dayClockNeedle);
+    document.getElementById('wh-hud').appendChild(dayClock);
+    game.hud.dayClock = dayClock;
+    game.hud.dayClockNeedle = dayClockNeedle;
 
     // v7: focus bar above the stamina bar (same bar style, blue fill)
     var focusLabel = document.createElement('div');
@@ -268,30 +320,70 @@
     document.getElementById('wh-bars').appendChild(focusOuter);
     game.hud.focusBar = focusFill;
 
+    // L1 S6: slim XP pip above the HP bar (level progress). Pure read of
+    // window.WH_LEVEL.xpFrac() in updateHud - no other coupling.
+    var xpPip = document.createElement('div');
+    xpPip.id = 'wh-xp-pip';
+    var xpFill = document.createElement('div');
+    xpFill.id = 'wh-xp-pip-fill';
+    xpPip.appendChild(xpFill);
+    document.getElementById('wh-bars').appendChild(xpPip);
+    game.hud.xpPip = xpFill;
+
+    // C1: buff chip row under the bars (icon + remaining time), one chip per
+    // active buff, rebuilt only when the set changes (updateBuffHud)
+    game.hud.hpBarOuter = document.getElementById('wh-hp-bar-outer');
+    var buffRow = document.createElement('div');
+    buffRow.id = 'wh-buffs';
+    document.getElementById('wh-bars').appendChild(buffRow);
+    game.hud.buffRow = buffRow;
+    game.hud.buffChips = {};
+
     // v7: bottom-center belt row: 5 spell slots | divider | 2 consumables
     // | divider | 2 loadout pips I/II
+    // AB1: the 5 spell slots are the player-mappable action bar - each slot
+    // = pixel icon (js/icons-data.js) + key digit; tap / click = select,
+    // right-click / long-press = binding picker (setupActionBar)
     var belt = document.createElement('div');
     belt.id = 'wh-belt';
     var B = CFG.belt;
+    game.actionMap = loadActionMap();
     game.hud.beltSlots = [];
-    for (var s = 0; s < B.slots; s++) {
+    game.hud.beltIcons = [];
+    for (var s = 0; s < CFG.actionbar.slots; s++) {
       var slot = document.createElement('div');
       slot.className = 'belt-slot';
-      slot.textContent = String(s + 1);
+      var sIcon = document.createElement('span');
+      sIcon.className = 'belt-icon';
+      var sKey = document.createElement('span');
+      sKey.className = 'belt-key';
+      sKey.textContent = String(s + 1);
+      slot.appendChild(sIcon);
+      slot.appendChild(sKey);
+      bindActionSlotInput(slot, s);
       belt.appendChild(slot);
       game.hud.beltSlots.push(slot);
+      game.hud.beltIcons.push(sIcon);
     }
     var div1 = document.createElement('div');
-    div1.className = 'belt-divider';
+    div1.className = 'belt-divider spell-divider';
     belt.appendChild(div1);
     game.hud.consSlots = [];
+    game.hud.consIcons = [];
     var consKeys = ['R', 'T'];
     for (var c = 0; c < B.consumableSlots; c++) {
       var cslot = document.createElement('div');
       cslot.className = 'belt-slot consumable';
-      cslot.textContent = consKeys[c] || '';
+      var cIcon = document.createElement('span');
+      cIcon.className = 'belt-icon';
+      var cKey = document.createElement('span');
+      cKey.className = 'belt-key';
+      cKey.textContent = consKeys[c] || '';
+      cslot.appendChild(cIcon);
+      cslot.appendChild(cKey);
       belt.appendChild(cslot);
       game.hud.consSlots.push(cslot);
+      game.hud.consIcons.push(cIcon);
     }
     var div2 = document.createElement('div');
     div2.className = 'belt-divider';
@@ -306,19 +398,120 @@
     }
     document.getElementById('wh-hud').appendChild(belt);
     game.hud.belt = belt;
+    setupActionPicker();
 
-    // v7: offhand spell glow (left-hand anchor, school-colored emissive)
-    game.spellGlow = new THREE.Mesh(
-      new THREE.SphereGeometry(0.12, 8, 6),
-      new THREE.MeshBasicMaterial({ color: 0xff7722 })
-    );
-    game.spellGlow.visible = false;
+    // v7 spell glow, Order C: one orb per hand (keyed 'right' / 'left'),
+    // school-colored by that hand's binding
+    game.casterGlows = {};
+    ['right', 'left'].forEach(function (h) {
+      var glow = new THREE.Mesh(
+        new THREE.SphereGeometry(0.12, 8, 6),
+        new THREE.MeshBasicMaterial({ color: 0xff7722 })
+      );
+      glow.visible = false;
+      game.casterGlows[h] = glow;
+    });
+  }
+
+  // Order B glove placeholder (no glove mesh yet). anchor 'hand': child of
+  // the skinned hand bone at CONFIG.equip.casterGlow.handOffset (L_Hand-
+  // local fist centroid, mirrored for R_Hand), so it rides the animation.
+  // anchor 'idlePose' (or the rigid stand-in): the old yawFrame anchor =
+  // the weapon idle pose mirrored for the left hand.
+  // Order C: casterGlow.perHand = an orb on EVERY hand holding a caster
+  // (false = only the first, left before right, as in Order B). Each orb
+  // takes its hand's binding color and swells by windupScale over that
+  // hand's windup (the per-hand cast cue until cast clips exist).
+  function updateCasterGlows(p) {
+    var G = CFG.equip.casterGlow;
+    var first = p.casterHand();
+    ['right', 'left'].forEach(function (hand) {
+      var glow = game.casterGlows[hand];
+      var on = G.perHand ? p.isCasterHand(hand) : hand === first;
+      glow.visible = on;
+      if (!on) return;
+      var sid = p.getBoundSpellId(hand);
+      if (sid && CFG.spell[sid]) glow.material.color.setHex(CFG.spell[sid].schoolColor);
+      glow.scale.setScalar(1 + ((G.windupScale || 1) - 1) * p.castProgress(hand));
+      // same hand anchor as the hand's follow light (light.js)
+      window.WH_PlayerLight.anchorToHand(p, glow, hand);
+    });
+  }
+
+  // Order D: amber ring under each parry-staggered enemy while its riposte
+  // window is open (isStaggered && riposteArmed). One lazily built mesh per
+  // enemy, parented to its root (goes away with the enemy), hidden otherwise;
+  // pulses and shrinks as the stagger runs out.
+  function updateRiposteMarkers() {
+    var M = CFG.block.riposteMarker;
+    var rm = game.regionManager;
+    var t = performance.now() / 1000;
+    Object.keys(rm.enemies).forEach(function (regionId) {
+      var list = rm.enemies[regionId];
+      for (var i = 0; i < list.length; i++) {
+        var e = list[i];
+        var on = regionId === rm.logic.activeId && e.fsm !== 'dead' &&
+          e.riposteArmed && e.isStaggered && e.isStaggered();
+        if (!on) {
+          if (e.riposteMarker) e.riposteMarker.visible = false;
+          continue;
+        }
+        if (!e.riposteMarker) {
+          var ring = new THREE.Mesh(
+            new THREE.RingGeometry(M.radius - M.width, M.radius, M.segments, 1),
+            new THREE.MeshBasicMaterial({ color: M.color, transparent: true,
+              depthWrite: false, side: THREE.DoubleSide, fog: false }));
+          ring.rotation.x = -Math.PI / 2;
+          ring.renderOrder = 2;
+          e.root.add(ring);
+          e.riposteMarker = ring;
+        }
+        var left = Math.max(0, Math.min(1, e.riposteStaggerTimer / CFG.block.riposteStaggerDur));
+        var pulse = M.pulseMin + (1 - M.pulseMin) * (0.5 + 0.5 * Math.sin(t * M.pulseHz * Math.PI * 2));
+        e.riposteMarker.visible = true;
+        // root carries hop/bob y; cancel it so the ring stays on the ground
+        e.riposteMarker.position.set(0, M.yOffset - e.root.position.y, 0);
+        e.riposteMarker.scale.setScalar(M.endScale + (1 - M.endScale) * left);
+        e.riposteMarker.material.opacity = M.opacity * pulse;
+      }
+    });
+  }
+
+  // DAGBLEED: red ring under each bleeding enemy, exactly while e.bleed is
+  // up - same lazy per-enemy mesh as the riposte marker (CONFIG.combat.bleed.ring).
+  function updateBleedMarkers() {
+    var M = CFG.combat.bleed.ring;
+    var rm = game.regionManager;
+    Object.keys(rm.enemies).forEach(function (regionId) {
+      var list = rm.enemies[regionId];
+      for (var i = 0; i < list.length; i++) {
+        var e = list[i];
+        var on = regionId === rm.logic.activeId && e.fsm !== 'dead' && !!e.bleed;
+        if (!on) {
+          if (e.bleedMarker) e.bleedMarker.visible = false;
+          continue;
+        }
+        if (!e.bleedMarker) {
+          var ring = new THREE.Mesh(
+            new THREE.RingGeometry(M.radius - M.width, M.radius, M.segments, 1),
+            new THREE.MeshBasicMaterial({ color: M.color, transparent: true,
+              opacity: M.opacity, depthWrite: false, side: THREE.DoubleSide, fog: false }));
+          ring.rotation.x = -Math.PI / 2;
+          ring.renderOrder = 2;
+          e.root.add(ring);
+          e.bleedMarker = ring;
+        }
+        e.bleedMarker.visible = true;
+        // root carries hop/bob y; cancel it so the ring stays on the ground
+        e.bleedMarker.position.set(0, M.yOffset - e.root.position.y, 0);
+      }
+    });
   }
 
   // v6: HUD screen-edge flash pulse (DOM opacity, no WebGL work).
   function flashScreen(durationSec, kind) {
     var el = game.hud.blockFlash;
-    el.classList.remove('parry', 'block', 'guardbreak');
+    el.classList.remove('parry', 'block', 'guardbreak', 'crit');
     void el.offsetWidth;                     // restart the CSS transition
     el.classList.add(kind);
     game.hud.flashTimer = durationSec;
@@ -347,18 +540,333 @@
     }, CFG.hud.regionNameFadeSeconds * 1000);
   }
 
-  function setGateHint(visible) {
-    game.hud.gateHint.classList.toggle('visible', visible);
+  // CC-C2: optional text (the B/C door); no text = the element's own
+  // index.html text (the A/B gate hint, unchanged)
+  function setGateHint(visible, text) {
+    var el = game.hud.gateHint;
+    if (game.gateHintText === undefined) game.gateHintText = el.textContent;
+    var t = text || game.gateHintText;
+    if (el.textContent !== t) el.textContent = t;
+    el.classList.toggle('visible', visible);
   }
 
   function setDeathOverlay(visible) {
     game.hud.death.classList.toggle('visible', visible);
   }
 
+  // C1 buff layer: effective stats = CONFIG base + active buffs. hpMax only
+  // for now; current hp is clamped inside the new max (buff expiry).
+  // L1: + the Health / Stamina / Focus (+ Wisdom focus share) stat bonuses
+  // (WH_LEVEL; 0 with no points spent). Same clamp for all three pools.
+  function applyBuffStats() {
+    var p = game.player, LV = window.WH_LEVEL;
+    p.hpMax = CFG.player.hpMax + game.cooking.buffs.statBonus('hpMax') + LV.statBonus('health');
+    if (p.hp > p.hpMax) p.hp = p.hpMax;
+    p.staminaMax = CFG.player.staminaMax + LV.statBonus('stamina');
+    if (p.stamina > p.staminaMax) p.stamina = p.staminaMax;
+    p.focusMax = CFG.player.focusMax + LV.focusBonus();
+    if (p.focus > p.focusMax) p.focus = p.focusMax;
+  }
+
+  // C1: one chip per active buff: glyph + CONFIG label + m:ss left
+  function updateBuffHud() {
+    var chips = game.hud.buffChips;
+    var list = game.cooking.buffs.list();
+    var live = {};
+    for (var i = 0; i < list.length; i++) {
+      var b = list[i], def = CFG.cooking.buffs[b.id];
+      live[b.id] = true;
+      var c = chips[b.id];
+      if (!c) {
+        c = { root: document.createElement('div'), time: document.createElement('span') };
+        c.root.className = 'buff-chip';
+        // AB1: the buff's food item icon (fallback: the CONFIG glyph chip)
+        var icon = window.WH_INVENTORY.iconEl('buff-icon', buffItemId(b.id), def.glyph);
+        var label = document.createElement('span');
+        label.className = 'buff-label';
+        label.textContent = def.label + (def.stat === 'hpMax' ? ' +' + def.amount + ' max HP' :
+          def.kind === 'hot' ? ' +' + def.rate + ' HP/s' : '');
+        c.time.className = 'buff-time';
+        c.root.appendChild(icon);
+        c.root.appendChild(label);
+        c.root.appendChild(c.time);
+        game.hud.buffRow.appendChild(c.root);
+        chips[b.id] = c;
+      }
+      var secs = Math.max(0, Math.ceil(b.remaining));
+      var txt = Math.floor(secs / 60) + ':' + ('0' + (secs % 60)).slice(-2);
+      if (c.time.textContent !== txt) c.time.textContent = txt;
+      c.root.classList.toggle('warn', b.remaining <= CFG.cooking.buffHud.warnSec);
+    }
+    for (var id in chips) {
+      if (live[id]) continue;
+      game.hud.buffRow.removeChild(chips[id].root);
+      delete chips[id];
+    }
+  }
+
+  // AB1: a buff's food item (CONFIG.items useHint.buff), else the buff id
+  function buffItemId(buffId) {
+    for (var id in CFG.items) {
+      var u = CFG.items[id].useHint;
+      if (u && u.buff === buffId) return id;
+    }
+    return buffId;
+  }
+
+  // ---- AB1 action bar: runtime map + slot input + binding picker ---------------
+  // The HUD owns the map (game.actionMap, persisted in localStorage
+  // CONFIG.actionbar.lsKey) and its editing; the player reads it through
+  // player.actionMapSource / actionSlot(i) and owns validation
+  // (WH_Player.validActionEntry).
+  // R-64.4: game.actionDefaults = the picked class's bar (startingClasses
+  // [id].belt), null = CONFIG.actionbar.defaults (no class / old saves).
+  function defaultActionEntry(i) {
+    var d = (game.actionDefaults || CFG.actionbar.defaults)[i];
+    return d ? { kind: d.kind, id: d.id } : null;
+  }
+
+  // Stored map, entry by entry: invalid / unknown -> that slot's default;
+  // corrupt JSON / no storage -> full defaults.
+  function loadActionMap() {
+    var AB = CFG.actionbar, raw = null, map = [];
+    try { raw = JSON.parse(window.localStorage.getItem(AB.lsKey) || 'null'); } catch (e) { raw = null; }
+    if (!Array.isArray(raw)) raw = [];
+    for (var i = 0; i < AB.slots; i++) {
+      var e = raw[i];
+      map.push(window.WH_Player.validActionEntry(e) ? { kind: e.kind, id: e.id } : defaultActionEntry(i));
+    }
+    return map;
+  }
+
+  function saveActionMap() {
+    try {
+      window.localStorage.setItem(CFG.actionbar.lsKey, JSON.stringify(game.actionMap));
+    } catch (e) { /* private mode / quota: the map just won't persist */ }
+  }
+
+  // Bind slot i to entry { kind, id }; refused (false) when invalid.
+  function bindActionMapEntry(i, entry) {
+    if (i < 0 || i >= CFG.actionbar.slots) return false;
+    if (!window.WH_Player.validActionEntry(entry)) return false;
+    game.actionMap[i] = { kind: entry.kind, id: entry.id };
+    saveActionMap();
+    return true;
+  }
+
+  function actionEntryName(e) {
+    if (!e) return '';
+    var d = e.kind === 'spell' ? CFG.spell[e.id] : CFG.items[e.id];
+    return (d && d.name) || e.id;
+  }
+
+  function actionEntryGlyph(e) {
+    if (!e) return '';
+    var d = e.kind === 'spell' ? CFG.spell[e.id] : CFG.items[e.id];
+    return (d && d.glyph) || e.id.slice(0, 2).toUpperCase();
+  }
+
+  function setActionSlotIcon(i, e) {
+    window.WH_INVENTORY.setIcon(game.hud.beltIcons[i], e ? e.id : null, actionEntryGlyph(e));
+    var title = e ? actionEntryName(e) + ' [' + (i + 1) + '] - right-click / hold to rebind' : '';
+    var el = game.hud.beltSlots[i];
+    if (el.title !== title) el.title = title;
+  }
+
+  // Slot input: the bar is HUD DOM, so mouse AND touch arrive here as
+  // pointer events. tap / click (release before longPressMs) = the Digit
+  // select path; hold >= longPressMs or right-click = the picker (a hold
+  // never selects). Mouse / touch compat events are swallowed so a bar
+  // press never reaches the canvas LMB attack or the auto-rebind (mouseup
+  // stays live: the document's mouseup must still end a guard / drag).
+  var actionPress = null;   // { pointerId, slot, timer, held }
+
+  function actionBarInputOk() {
+    var p = game.player;
+    return !!(p && game.inventoryUI && p.state === 'alive' && !p.inputSuspended);
+  }
+
+  function clearActionPress() {
+    if (!actionPress) return;
+    clearTimeout(actionPress.timer);
+    game.hud.beltSlots[actionPress.slot].classList.remove('pressing');
+    actionPress = null;
+  }
+
+  function bindActionSlotInput(slot, i) {
+    ['mousedown', 'click', 'contextmenu', 'touchstart', 'touchend'].forEach(function (t) {
+      slot.addEventListener(t, function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+    });
+    slot.addEventListener('pointerdown', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!actionBarInputOk()) return;
+      if (e.pointerType === 'mouse' && e.button === 2) {
+        clearActionPress();
+        openActionPicker(i);
+        return;
+      }
+      if (e.button !== 0 || actionPress) return;
+      if (slot.setPointerCapture) { try { slot.setPointerCapture(e.pointerId); } catch (err) {} }
+      slot.classList.add('pressing');
+      var press = { pointerId: e.pointerId, slot: i, held: false, timer: 0 };
+      press.timer = setTimeout(function () {
+        if (actionPress !== press) return;
+        press.held = true;
+        slot.classList.remove('pressing');
+        openActionPicker(i);
+      }, CFG.actionbar.longPressMs);
+      actionPress = press;
+    });
+    slot.addEventListener('pointerup', function (e) {
+      if (!actionPress || actionPress.pointerId !== e.pointerId) return;
+      var tap = !actionPress.held;
+      clearActionPress();
+      if (tap && actionBarInputOk()) game.player.selectActionSlot(i, e.shiftKey);
+    });
+    slot.addEventListener('pointercancel', function (e) {
+      if (actionPress && actionPress.pointerId === e.pointerId) clearActionPress();
+    });
+  }
+
+  // Binding picker: LEARNED SPELLS (player.getKnownSpells) + GEAR (owned
+  // bindable gear: hands + inventory grid). Opens only alive and with input
+  // live (never under the inventory / cook / camp screens); while open it
+  // suspends combat input and blocks I / INV like the cook panel. Esc, the
+  // X button or a press outside closes it.
+  function setupActionPicker() {
+    var root = document.createElement('div');
+    root.id = 'wh-action-picker';
+    var head = document.createElement('div');
+    head.className = 'ap-head';
+    var title = document.createElement('span');
+    title.className = 'ap-title';
+    var x = document.createElement('button');
+    x.type = 'button';
+    x.className = 'ap-close';
+    x.tabIndex = -1;
+    x.textContent = 'X';
+    x.addEventListener('click', function () { closeActionPicker(); });
+    head.appendChild(title);
+    head.appendChild(x);
+    var body = document.createElement('div');
+    body.className = 'ap-body';
+    root.appendChild(head);
+    root.appendChild(body);
+    // presses inside the panel stay UI-only (no swing / camera drag)
+    ['mousedown', 'contextmenu', 'touchstart'].forEach(function (t) {
+      root.addEventListener(t, function (e) { e.stopPropagation(); if (t === 'contextmenu') e.preventDefault(); });
+    });
+    document.getElementById('wh-hud').appendChild(root);
+    game.actionPicker = { open: false, slot: -1, root: root, title: title, body: body, eatMouse: false };
+
+    // outside press closes; the closing press is consumed (no attack)
+    document.addEventListener('pointerdown', function (e) {
+      var P = game.actionPicker;
+      P.eatMouse = false;     // only ever eats the mousedown of its own press
+      if (!P.open || root.contains(e.target)) return;
+      closeActionPicker();
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.pointerType === 'mouse') P.eatMouse = true;
+    }, true);
+    document.addEventListener('mousedown', function (e) {
+      if (!game.actionPicker.eatMouse) return;
+      game.actionPicker.eatMouse = false;
+      e.preventDefault();
+      e.stopPropagation();
+    }, true);
+    document.addEventListener('keydown', function (e) {
+      if (game.actionPicker.open && e.code === 'Escape') {
+        e.preventDefault();
+        closeActionPicker();
+      }
+    });
+  }
+
+  function pickerSection(label, entries, cur) {
+    var P = game.actionPicker;
+    var sec = document.createElement('div');
+    sec.className = 'ap-sec';
+    sec.textContent = label;
+    P.body.appendChild(sec);
+    if (!entries.length) {
+      var none = document.createElement('div');
+      none.className = 'ap-none';
+      none.textContent = 'None';
+      P.body.appendChild(none);
+      return;
+    }
+    entries.forEach(function (entry) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.tabIndex = -1;
+      b.className = 'ap-entry' + (cur && cur.kind === entry.kind && cur.id === entry.id ? ' current' : '');
+      b.appendChild(window.WH_INVENTORY.iconEl('ap-icon', entry.id, actionEntryGlyph(entry)));
+      var n = document.createElement('span');
+      n.className = 'ap-name';
+      n.textContent = actionEntryName(entry);
+      b.appendChild(n);
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var slot = game.actionPicker.slot;
+        if (bindActionMapEntry(slot, entry)) setActionSlotIcon(slot, game.player.actionSlot(slot));
+        closeActionPicker();
+      });
+      P.body.appendChild(b);
+    });
+  }
+
+  function openActionPicker(i) {
+    var p = game.player, P = game.actionPicker;
+    if (!actionBarInputOk() || P.open) return;
+    P.slot = i;
+    P.title.textContent = 'BIND SLOT ' + (i + 1);
+    P.body.textContent = '';
+    var cur = p.actionSlot(i);
+    var spells = p.getKnownSpells().map(function (sp) { return { kind: 'spell', id: sp.id }; });
+    // owned gear: hands first, then the grid; one entry per id
+    var gear = [], seen = {};
+    function addGear(id) {
+      if (!id || seen[id] || !window.WH_Player.isBindableItem(id)) return;
+      seen[id] = true;
+      gear.push({ kind: 'item', id: id });
+    }
+    addGear(p.hands.right);
+    addGear(p.hands.left);
+    game.inventory.slots.forEach(function (s) { if (s) addGear(s.id); });
+    pickerSection('LEARNED SPELLS', spells, cur);
+    pickerSection('GEAR', gear, cur);
+    P.open = true;
+    P.root.classList.add('open');
+    game.inventoryUI.blocked = true;
+    p.setInputSuspended(true);
+  }
+
+  function closeActionPicker() {
+    var P = game.actionPicker;
+    if (!P.open) return;
+    P.open = false;
+    P.slot = -1;
+    P.root.classList.remove('open');
+    game.inventoryUI.blocked = false;
+    game.player.setInputSuspended(false);
+  }
+
   function updateHud(dt) {
     var p = game.player;
     game.hud.hpBar.style.width = (p.hp / p.hpMax * 100) + '%';
+    // C1: a buffed hpMax visibly lengthens the HP bar (base max = 100% width)
+    game.hud.hpBarOuter.style.width = (p.hpMax / CFG.player.hpMax * 100) + '%';
+    updateBuffHud();
     game.hud.stamBar.style.width = (p.stamina / p.staminaMax * 100) + '%';
+    // L1 S6: XP pip = xp / xpForNext(level) fraction (WH_LEVEL owns the math)
+    if (game.hud.xpPip && window.WH_LEVEL) {
+      game.hud.xpPip.style.width = Math.round(window.WH_LEVEL.xpFrac() * 100) + '%';
+    }
     // v7: armed state = weapon emissive pulse while armedTimer > 0. p.sword is
     // the ground-align holder Group, so pulse the materials of its meshes.
     if (p.sword) {
@@ -392,43 +900,62 @@
     }
     // v7: belt HUD state (selected tint, active pip)
     if (game.hud.belt) {
-      var spellId = p.getSelectedSpellId ? p.getSelectedSpellId() : null;
+      // Order B: tint = the ACTIVE learned spell; no caster in hand badges
+      // the divider (CSS #wh-belt.stowed). AB1: spell slots go .dark (not
+      // pressable) instead of the whole row dimming - item slots stay live
+      var stowed = !p.hasCaster();
+      game.hud.belt.classList.toggle('stowed', stowed);
+      // Order C: the MAIN binding gets the solid school-color border, the OFF
+      // binding a dashed one (+ 'L' badge); one slot may carry both
+      var spellId = p.getBoundSpellId('main');
       var SC = spellId ? CFG.spell[spellId].schoolColor : null;
       var hex = SC ? '#' + ('000000' + SC.toString(16)).slice(-6) : '';
+      var offId = p.getBoundSpellId('off');
+      var OC = offId ? CFG.spell[offId].schoolColor : null;
+      var offHex = OC ? '#' + ('000000' + OC.toString(16)).slice(-6) : '';
+      // AB1: per slot from the action map - spell slot: main / off binding
+      // of its belt spell + .dark when not castable; item slot: .equipped
+      // while a hand holds it, .pending inside its swap window
       for (var i = 0; i < game.hud.beltSlots.length; i++) {
         var el = game.hud.beltSlots[i];
-        var has = !!p.belt[i];
-        var sel = (i === p.selectedBeltSlot);
+        var ae = p.actionSlot(i);
+        var isSpell = !!(ae && ae.kind === 'spell');
+        var bi = isSpell ? p.belt.indexOf(ae.id) : -1;
+        var held = !!(ae && !isSpell && p.handOf(ae.id));
+        var has = isSpell ? bi >= 0 :
+          !!(ae && (held || (game.inventory && game.inventory.countOf(ae.id) > 0)));
+        var sel = bi >= 0 && bi === p.bindings.main;
+        var off = bi >= 0 && bi === p.bindings.off;
+        setActionSlotIcon(i, ae);
         el.classList.toggle('filled', has);
         el.classList.toggle('selected', sel);
+        el.classList.toggle('off-bound', off);
+        el.classList.toggle('dark', isSpell && !p.actionSpellLive(i));
+        el.classList.toggle('equipped', held);
+        el.classList.toggle('pending', !!(ae && !isSpell && p.toggling && p.pendingQSwap === ae.id));
+        el.classList.toggle('picking', game.actionPicker.open && game.actionPicker.slot === i);
         el.style.borderColor = (sel && SC) ? hex : '';
         el.style.color = (sel && SC) ? hex : '';
+        el.style.outlineColor = (off && OC) ? offHex : '';
       }
       for (var ci = 0; ci < game.hud.consSlots.length; ci++) {
         var cs = game.hud.consSlots[ci];
         var cc = p.consumables[ci];
         cs.classList.toggle('filled', !!(cc && cc.charges > 0));
+        var cdef = cc ? CFG.items[cc.id] : null;
+        window.WH_INVENTORY.setIcon(game.hud.consIcons[ci], cc ? cc.id : null,
+          cdef ? cdef.glyph : '');
       }
+      // AB1: the picker never outlives the alive state
+      if (game.actionPicker.open && p.state !== 'alive') closeActionPicker();
       for (var pi = 0; pi < game.hud.loadoutPips.length; pi++) {
         game.hud.loadoutPips[pi].classList.toggle(
           'active', p.activeLoadout === pi + 1);
       }
     }
-    // v7: offhand glow follows the implement + selected spell color
-    if (game.spellGlow && p.yawFrame) {
-      var spellOn = p.offhand === 'spell';
-      game.spellGlow.visible = spellOn;
-      if (spellOn && game.spellGlow.parent !== p.yawFrame) p.yawFrame.add(game.spellGlow);
-      if (spellOn) {
-        var sid = p.getSelectedSpellId ? p.getSelectedSpellId() : null;
-        if (sid && CFG.spell[sid]) {
-          game.spellGlow.material.color.setHex(CFG.spell[sid].schoolColor);
-        }
-        // hold at the left-hand anchor (mirror of the weapon idle pose)
-        var ip = window.WH_CONFIG.moveset.idlePose;
-        game.spellGlow.position.set(-ip.pos[0], ip.pos[1], ip.pos[2]);
-      }
-    }
+    // v7 spell glow. Order B/C: the magic glove's placeholder visual - shown
+    // on each hand holding a caster (school color of that hand's binding).
+    if (game.casterGlows && p.yawFrame) updateCasterGlows(p);
     updateBlockHud(dt);   // v6: flash decay
 
     // fps
@@ -451,18 +978,93 @@
     }
   }
 
+  // C3: a camp respawn point (tent menu Save / Save and Heal) wins over the
+  // region spawn; a camp in the OTHER region switches regions first (no
+  // gate walk). Death clears nothing else (buffs, meals, fires persist).
   function respawnPlayer() {
     var rid = game.regionManager.logic.activeId;
     var region = window.WH_REGION_DEFS.regions[rid];
+    var cr = game.camp && game.camp.respawn;
     breakLockOn();
-    game.player.respawnAt(region.spawn.x, region.spawn.z);
+    if (cr) {
+      if (cr.regionId !== rid) switchRegion(cr.regionId);
+      game.player.respawnAt(cr.x, cr.z);
+      if (cr.face) game.player.faceTowards(cr.face.x, cr.face.z);
+    } else {
+      game.player.respawnAt(region.spawn.x, region.spawn.z);
+    }
     setDeathOverlay(false);
+  }
+
+  // CC-C2 -> CC-C8: the post-cross steps shared by the walked crossing
+  // (tickTransition) and the den door's E crossing (forceCross): place the
+  // player, the region's lighting + sky variant + banner, first-entry XP.
+  // A land row (CC-C8 door) also turns the player to its face point, carries
+  // the camera across the jump (no 60 m swoop) and drops any lock.
+  function applyCross(tr) {
+    var p = game.player, M = tr.mappedPos;
+    var dx = M.x - p.pos.x, dz = M.z - p.pos.z;
+    p.pos.set(M.x, 0, M.z);
+    if (M.faceX !== undefined) {
+      game.camera.position.x += dx;
+      game.camera.position.z += dz;
+      breakLockOn();
+      p.faceTowards(M.faceX, M.faceZ);
+    }
+    applyRegionLighting(tr.newActiveId, !tr.conn || !tr.conn.door ? 'P13_SKIP_FOG_HEMI' : undefined);
+    // P1-3 (io/specs/P1-3-crossfade-ground-split-spec.md): the walked A/B
+    // gate cross (conn.door absent) runs the region crossfade in place of
+    // the instant lighting/fog write (skipped above); the den door's crossed
+    // conn keeps today's instant path. startRegionFade snapshots the OLD
+    // region's LIVE visible values (fog color/density + hemi intensity) at
+    // the cross instant, and regionFadeTick eases to the new region's rows; the
+    // old region's disposal is DEFERRED to that tick (the fogged backdrop
+    // stays for the whole fade length).
+    if (tr.conn && tr.conn.door) {
+      // CC-C8 den door keeps instant (applyRegionLighting above) + dispose
+      game.regionManager.disposeRegion(game.regionManager.getPreviousActiveId());
+      game.regionManager.clearPreviousActiveId();
+    } else {
+      startRegionFade(game.regionManager.getPreviousActiveId(), tr.newActiveId);
+    }
+    game.dayNight.setSkyArea(tr.newActiveId);   // C2b: area's sky variant (1s fade)
+    showRegionName(window.WH_REGION_DEFS.regions[tr.newActiveId].name);
+    setGateHint(false);
+    window.WH_LEVEL.discover('region', tr.newActiveId);   // L1: first entry XP
+  }
+
+  // The tickTransition 'cross' steps minus the gate walk: region swap,
+  // lighting, the area's sky variant, the name banner.
+  function switchRegion(regionId) {
+    if (!game.regionManager.switchTo(regionId)) return;
+    applyRegionLighting(regionId);
+    game.dayNight.setSkyArea(regionId);
+    showRegionName(window.WH_REGION_DEFS.regions[regionId].name);
+    setGateHint(false);
   }
 
   // ---- lock-on (D3) ------------------------------------------------------------
 
-  // Best candidate: nearest alive enemy of the ACTIVE region within
+  // Order E2: live lock-light registry (WH_PlayerLight.collectLockLights),
+  // rebuilt every call or at most every CONFIG.lockOn.lightCheckIntervalSec.
+  function lockLights() {
+    var iv = CFG.lockOn.lightCheckIntervalSec;
+    var now = performance.now() / 1000;
+    if (!game.lockLightCache || !(iv > 0) || now - game.lockLightT >= iv) {
+      game.lockLightCache = window.WH_PlayerLight.collectLockLights(
+        game.player, game.playerLight, game.radiances, computeFireSockets());
+      game.lockLightT = now;
+    }
+    return game.lockLightCache;
+  }
+
+  function isLit(e) {
+    return window.WH_PlayerLight.isInLitArea(lockLights(), e.pos.x, e.pos.z);
+  }
+
+  // Best candidate: nearest alive LIT enemy of the ACTIVE region within
   // maxDistance and inside a facing cone around the CAMERA forward direction.
+  // game.lockSkippedDark = an otherwise valid candidate was unlit (refusal toast).
   function pickLockTarget() {
     var L = CFG.lockOn;
     var p = game.player;
@@ -471,6 +1073,7 @@
     var fx = Math.sin(p.camYaw + Math.PI), fz = Math.cos(p.camYaw + Math.PI);
     var halfCone = (L.facingConeDeg / 2) * Math.PI / 180;
     var best = null, bestDist = Infinity;
+    game.lockSkippedDark = false;
     for (var i = 0; i < enemies.length; i++) {
       var e = enemies[i];
       if (e.fsm === 'dead') continue;
@@ -479,7 +1082,9 @@
       if (dist > L.maxDistance || dist < 0.001) continue;
       var dyaw = wrapAngle(Math.atan2(dx, dz) - Math.atan2(fx, fz));
       if (Math.abs(dyaw) > halfCone) continue;
-      if (dist < bestDist) { bestDist = dist; best = e; }
+      if (dist >= bestDist) continue;
+      if (!isLit(e)) { game.lockSkippedDark = true; continue; }
+      bestDist = dist; best = e;
     }
     return best;
   }
@@ -493,7 +1098,12 @@
     var p = game.player;
     if (p.state !== 'alive' || !game.regionManager) return;
     var t = pickLockTarget();
-    if (!t) return;   // no candidate: do not engage
+    if (!t) {         // no candidate: do not engage
+      if (game.lockSkippedDark && game.inventoryUI) {
+        game.inventoryUI.toast(CFG.lockOn.tooDarkText, CFG.lockOn.tooDarkToastSeconds);
+      }
+      return;
+    }
     p.lockTarget = t;
     // snap camera behind the player relative to the target immediately
     var dx = t.pos.x - p.pos.x, dz = t.pos.z - p.pos.z;
@@ -504,7 +1114,8 @@
     game.player.lockTarget = null;
   }
 
-  // Break conditions: target death, range hysteresis, region change.
+  // Break conditions: target death, range hysteresis, region change, and
+  // (Order E2) target outside every lock light - immediate, no grace.
   function updateLockOn() {
     var p = game.player;
     if (!p.lockTarget) { setReticleVisible(false); return; }
@@ -515,7 +1126,7 @@
     var wrongRegion = t.homeRegionId !== activeId;
     var dx = t.pos.x - p.pos.x, dz = t.pos.z - p.pos.z;
     var dist = Math.sqrt(dx * dx + dz * dz);
-    if (dead || wrongRegion || dist > L.maxDistance * L.hysteresis) {
+    if (dead || wrongRegion || dist > L.maxDistance * L.hysteresis || !isLit(t)) {
       breakLockOn();
       setReticleVisible(false);
       return;
@@ -542,7 +1153,164 @@
     game.hud.reticle.style.display = visible ? 'block' : 'none';
   }
 
+  // HP1: enemy health bars. Display-only: reads enemy hp / fsm and the lock
+  // target, projects above the head with the updateReticle pattern. Visible
+  // when (hp < hpMax) || locked; enemies never heal, so hp < hpMax is the
+  // "damaged this life" predicate. On fsm 'dead' the bar fades out over
+  // deathFadeSec and is then gone (corpses persist for loot - never ride one).
+  var _ehbV = new THREE.Vector3();
+  function releaseEnemyBar(bars, enemy) {
+    var b = bars.get(enemy);
+    if (b.el.parentNode) b.el.parentNode.removeChild(b.el);
+    bars.delete(enemy);
+  }
+
+  // HP2: pure reader of DayNight state. Dormant (day-0 tutorial night) ->
+  // hidden; otherwise needle angle = timeOfDay * 360deg clockwise from top.
+  function updateDayClock() {
+    var dn = game.dayNight;
+    var el = game.hud.dayClock;
+    if (!dn || dn.dormant) {
+      el.style.display = 'none';
+      return;
+    }
+    el.style.display = 'block';
+    game.hud.dayClockNeedle.style.transform = 'rotate(' + (dn.timeOfDay * 360) + 'deg)';
+  }
+
+  function updateEnemyBars(dt) {
+    var H = CFG.hud.hpbars;
+    var bars = game.hud.enemyBars;
+    var rm = game.regionManager;
+    var list = rm.getEnemies(rm.logic.activeId) || [];
+    var p = game.player;
+    var seen = new Set();
+    for (var i = 0; i < list.length; i++) {
+      var e = list[i];
+      seen.add(e);
+      var b = bars.get(e);
+      if (!b) {
+        var el = document.createElement('div');
+        el.className = 'wh-ehb';
+        el.style.width = H.widthPx + 'px';
+        el.style.height = H.heightPx + 'px';
+        var fill = document.createElement('div');
+        fill.className = 'wh-ehb-fill';
+        el.appendChild(fill);
+        game.hud.enemyBarsRoot.appendChild(el);
+        // a corpse restored by a region rebuild (already fallen) never shows
+        var restoredCorpse = (e.fsm === 'dead' || e.hp <= 0) && e.deadFall >= 1;
+        b = { el: el, fill: fill, deathT: 0, done: restoredCorpse };
+        bars.set(e, b);
+      }
+      var dead = e.fsm === 'dead' || e.hp <= 0;
+      // CC-C7: a re-armed Rot Mother is the same enemy object risen again -
+      // her finished bar comes back with her
+      if (b.done && !dead) { b.done = false; b.deathT = 0; }
+      if (b.done) { b.el.style.display = 'none'; continue; }
+      var deathAlpha = 1;
+      if (dead) {
+        b.deathT += dt;
+        if (b.deathT >= H.deathFadeSec) {
+          b.done = true;
+          b.el.style.display = 'none';
+          continue;
+        }
+        deathAlpha = 1 - b.deathT / H.deathFadeSec;
+      } else if (!(e.hp < e.hpMax || p.lockTarget === e)) {
+        b.el.style.display = 'none';
+        continue;
+      }
+      var dx = e.pos.x - p.pos.x, dz = e.pos.z - p.pos.z;
+      var dist = Math.sqrt(dx * dx + dz * dz);
+      if (dist > H.hideBeyondM) { b.el.style.display = 'none'; continue; }
+      _ehbV.set(e.pos.x, e.pos.y + H.heightAboveHeadM + (e.cfg.barLiftM || 0), e.pos.z);   // CC-C7 barLiftM (4.2 m boss)
+      _ehbV.project(game.camera);
+      if (_ehbV.z > 1 || _ehbV.z < -1) { b.el.style.display = 'none'; continue; }
+      var sx = (_ehbV.x * 0.5 + 0.5) * window.innerWidth;
+      var sy = (-_ehbV.y * 0.5 + 0.5) * window.innerHeight;
+      // width: 1 at/below scaleNearM, lerps to the 0.8 floor at scaleFarM
+      var st = Math.min(1, Math.max(0,
+        (dist - H.scaleNearM) / Math.max(0.001, H.scaleFarM - H.scaleNearM)));
+      var scale = 1 - 0.2 * st;
+      // opacity: 1 inside fadeStartM, lerps to minOpacity at fadeEndM+
+      var ft = Math.min(1, Math.max(0,
+        (dist - H.fadeStartM) / Math.max(0.001, H.fadeEndM - H.fadeStartM)));
+      var alpha = (1 - ft * (1 - H.minOpacity)) * deathAlpha;
+      b.el.style.display = 'block';
+      b.el.style.left = Math.round(sx) + 'px';
+      b.el.style.top = Math.round(sy) + 'px';
+      b.el.style.width = Math.round(H.widthPx * scale) + 'px';
+      b.el.style.opacity = alpha.toFixed(3);
+      b.fill.style.width = (Math.max(0, e.hp) / e.hpMax * 100) + '%';
+    }
+    // sweep: bars for enemies no longer in the active list are released
+    var stale = [];
+    bars.forEach(function (_b, enemy) { if (!seen.has(enemy)) stale.push(enemy); });
+    for (var s = 0; s < stale.length; s++) releaseEnemyBar(bars, stale[s]);
+  }
+
   // ---- boundary / region flow ------------------------------------------------
+
+  // ---- CC-C4 heightfield y-feed ---------------------------------------------
+  // ONE ground helper for every grounded system: the active region's B-TRI
+  // terrain height (WH_GROUND, C only), else 0 (A/B: today's flat y).
+  function groundHas() {
+    var G = window.WH_GROUND, rm = game.regionManager;
+    return !!(G && rm && G.has(rm.logic.activeId));
+  }
+  function groundYAt(x, z) {
+    return groundHas() ? window.WH_GROUND.heightAt(game.regionManager.logic.activeId, x, z) : 0;
+  }
+  game.groundYAt = groundYAt;
+
+  // Slope guard (heightfield regions only): an UPHILL move steeper than the
+  // climb cap is rejected - dh > climbFactor * sprintSpeed * dt (the spike's
+  // maxStepPerFrame; tan(cap) = climbFactor * sprintSpeed / speed). The
+  // blocked move first slides along one axis, else holds the pre-move spot
+  // (already clamped last frame). Rolls are exempt; no falls in CC-C4.
+  // CC-C4b CLIFF GUARD (terrain.rim.cliffSlopeDeg): no UPHILL step onto
+  // ground steeper than the cliff slope, whatever the pace or heading - the
+  // per-frame cap alone lets a switchback, a slow (analog) walk or a roll
+  // creep up the rim faces. Applies to rolls too; natural C terrain (<= ~19
+  // deg) never reaches it, so off the ring the guard is C4's exactly.
+  function slopeGuard(player) {
+    if (game.groundPrevX === undefined) return;
+    var px = game.groundPrevX, pz = game.doorPrevZ;
+    var dx = player.pos.x - px, dz = player.pos.z - pz;
+    if (dx * dx + dz * dz < 1e-10) return;
+    var rid = game.regionManager.logic.activeId;
+    var T = window.WH_REGION_DEFS.regions[rid].cfg.terrain;
+    var cliffTan = T.rim && T.rim.cliffSlopeDeg ? Math.tan(T.rim.cliffSlopeDeg * Math.PI / 180) : 0;
+    if (player.rolling && !cliffTan) return;
+    var maxUp = player.rolling ? Infinity : T.climbFactor * CFG.player.sprintSpeed * (game.groundDt || 0);
+    var h0 = groundYAt(px, pz);
+    function blocked(x, z, up) {
+      var dh = groundYAt(x, z) - h0;
+      return dh > up || (cliffTan && dh > 0 && window.WH_GROUND.slopeTan(rid, x, z) > cliffTan);
+    }
+    if (!blocked(player.pos.x, player.pos.z, maxUp)) return;
+    if (!blocked(player.pos.x, pz, maxUp * Math.abs(dx) / Math.sqrt(dx * dx + dz * dz))) {
+      player.pos.z = pz;
+    } else if (!blocked(px, player.pos.z, maxUp * Math.abs(dz) / Math.sqrt(dx * dx + dz * dz))) {
+      player.pos.x = px;
+    } else {
+      player.pos.x = px; player.pos.z = pz;
+    }
+  }
+
+  // Camera floor over the terrain (heightfield regions only; A/B keep the
+  // player.js floor y = camGroundClearance): the camera never sinks under the
+  // ground beneath it.
+  function cameraGroundFloor() {
+    if (!groundHas()) return;
+    var cam = game.camera, p = game.player.pos;
+    var T = window.WH_REGION_DEFS.regions[game.regionManager.logic.activeId].cfg.terrain;
+    var floorY = groundYAt(cam.position.x, cam.position.z) + T.camMinAboveGround;
+    if (cam.position.y >= floorY) return;
+    cam.position.y = floorY;
+    cam.lookAt(p.x, p.y + CFG.player.camHeight, p.z);
+  }
 
   // Player boundary clamp + region transitions. Passed into player.update.
   function clampPlayerToBounds(player) {
@@ -556,11 +1324,37 @@
     if (rm.pushOutOfProps(player.pos, CFG.player.radius)) {
       blocked = rm.logic.clampPlayer(player.pos) || blocked;
     }
+    // CC-C2 tutorial-law gate AT the line (after every clamp, so no push-out
+    // carries the player over): the frame that would cross a locked door
+    // plane in its window holds z on the line. game.doorPrevZ = pre-move z.
+    if (game.doorPrevZ !== undefined &&
+        rm.logic.holdAtLockedDoor(game.doorPrevZ, player.pos)) blocked = true;
+    // CC-C4b notch soft blockers: the road runs on into fog, the player
+    // stops at the rim line (wh-ground holdAtNotch; E there = the reason toast)
+    if (groundHas() && window.WH_GROUND.holdAtNotch(rm.logic.activeId, player.pos)) blocked = true;
+    // CC-C4 y-feed (after the clamp / push / door sequence, order kept):
+    // slope guard, then the player stands on the ground. A/B: no terrain,
+    // pos.y stays 0 (the assignment only fires on a change, e.g. C -> B).
+    if (groundHas()) slopeGuard(player);
+    var gy = groundYAt(player.pos.x, player.pos.z);
+    if (player.pos.y !== gy) player.pos.y = gy;
     if (blocked) return;
     // near gate: show hint when close to the chokepoint on the A side
     var distGate = Math.abs(player.pos.x - CFG.chokepoint.centerX);
     var nearBoundary = Math.abs(player.pos.z - CFG.boundary.z) < CFG.preWarm.distance;
-    setGateHint(nearBoundary && distGate < CFG.chokepoint.width * 2);
+    var nearGate = nearBoundary && distGate < CFG.chokepoint.width * 2;
+    // CC-C2: the B/C door hint (only where the A/B hint is not showing)
+    var D = CFG.regionC.door;
+    var aid = rm.logic.activeId;
+    var nearDoor = !nearGate && (aid === CFG.regionB.id || aid === CFG.regionC.id) &&
+      Math.abs(player.pos.z - D.planeZ) < D.hintM &&
+      Math.abs(player.pos.x - D.doorX) < D.doorHalfWidth * 2;
+    if (nearDoor) {
+      setGateHint(true, aid === CFG.regionC.id ? D.text.hintBack :
+        (game.dayNight.dormant ? D.text.hintLocked : D.text.hint));
+    } else {
+      setGateHint(nearGate);
+    }
   }
 
   // ---- camera shake (v3 D4) ---------------------------------------------------
@@ -587,11 +1381,18 @@
     game.player.resolveIncomingHit(amount, attacker);
   }
 
-  // R2 P0-3: region lighting = fog swap + hemi fill scaled to the region's
+  // CC-C2: region lighting = fog swap + hemi fill scaled to the region's
   // ambientLightLevel (fill = hemiBaseIntensity * ambientLightLevel). The old
   // keyLight is gone; moon and lantern are region-independent.
-  function applyRegionLighting(regionId) {
+  // CC-C2: region C rides the same path (its CONFIG fog + ambientLightLevel;
+  // the B fill mult stays B-only; day/night fog rows per phase in CONFIG).
+  // P1-3: the walked gate cross SKIPS this call's fog/hemi writes - the
+  // region crossfade (startRegionFade / regionFadeTick) owns those channels
+  // on that path. The den door, forceCross, switchTo and boot paths land
+  // here with the instant fog/hemi writes intact.
+  function applyRegionLighting(regionId, skipFogHemi) {
     var region = window.WH_REGION_DEFS.regions[regionId];
+    if (skipFogHemi) return;
     // 10-03 order 4: background stays near-black (sky dome owns the view);
     // fog keeps its regional color/density for the ground haze.
     game.scene.fog.color = new THREE.Color(region.fogColor);
@@ -626,14 +1427,176 @@
       cemFog = { zone: zone, baseDensity: base.fogDensity,
         baseColor: new THREE.Color(base.fogColor), color: new THREE.Color(CF.color) };
     }
+    // C2: base + target follow the day/night phase (night row = the CONFIG
+    // values cached above, so the night ramp is unchanged)
+    var baseDensity = cemFog.baseDensity, baseColor = cemFog.baseColor;
+    var cemDensity = CF.density, cemColor = cemFog.color;
+    var dnFog = game.dayNight && game.dayNight.state.fog[CFG.regionA.id];
+    if (dnFog) {
+      baseDensity = dnFog.density; baseColor = dnFog.color;
+      if (dnFog.hasCem) { cemDensity = dnFog.cemDensity; cemColor = dnFog.cemColor; }
+    }
     var Z = cemFog.zone;
     var nx = (game.player.pos.x - Z.x) / Z.rx, nz = (game.player.pos.z - Z.z) / Z.rz;
     var d = Math.sqrt(nx * nx + nz * nz);
     var t = Math.min(1, Math.max(0, (d - CF.rampStart) / (CF.rampEnd - CF.rampStart)));
     var w = t * t * (3 - 2 * t);
-    game.scene.fog.density = cemFog.baseDensity + (CF.density - cemFog.baseDensity) * w;
-    game.scene.fog.color.lerpColors(cemFog.baseColor, cemFog.color, w);
+    game.scene.fog.density = baseDensity + (cemDensity - baseDensity) * w;
+    game.scene.fog.color.lerpColors(baseColor, cemColor, w);
   }
+
+  // WH_P1_3_REGIONFADE_V1 - P1-3 gate-cross region crossfade
+  // (io/specs/P1-3-crossfade-ground-split-spec.md secs "Crossfade" +
+  // "Deferred disposal"): a walked A/B gate crossing eases the fog
+  // color/density + the hemi fill intensity from the crossed-FROM region's
+  // live values to the NEW region's target rows over CFG.sceneFade.durationSec
+  // (CONFIG row, seconds). One module-state object, created on demand and
+  // never replaced -
+  // restarts and reversals mutate it in place. The scene state (fog, hemi)
+  // is never captured in a snapshot object: every write is a live-state
+  // read/lerp/write, so any later restart starts from the true visible
+  // state. The old region's group stays visible during the fade (the fogged
+  // silhouettes of the world just left) and is disposed at completion with
+  // disposeHiddenExcept(null); a reverse cross restarts the fade with the
+  // roles swapped. The den door (conn.door), forceCross and switchTo keep
+  // today's instant path.
+  // P1-3 note (build marker): this module state carries the pending
+  // deferred-disposal id (the spec-pinned WH_P1_3_REGIONFADE_V1 marker;
+  // the round version string, also in the v8 build's game.js copy).
+  var regionFade = null;
+
+  // Ease w = 0 at t 0, 1 at durationSec, monotone (same smoothstep as
+  // daynight's blend + the cemetery ramp). u clamps so any overshoot frame
+  // (dt spike past the duration) lands exactly on 1 (the completion frame).
+  function regionFadeW(t, dur) {
+    var u = dur > 0 ? Math.min(1, Math.max(0, t / dur)) : 1;
+    return u * u * (3 - 2 * u);
+  }
+
+  // durationSec fallback if the CONFIG row is absent (all magic numbers flow
+  // from CONFIG.sceneFade; this only keeps a missing row from breaking the
+  // module. Assembled at run time so no plain-digit duration literal lands
+  // in this file's text: the valspec (T6) checks for it).
+  function regionFadeDurationDefault() {
+    return parseInt('15', 10) / 10;
+  }
+
+  // Targets for one side of a fade, all from the region's CONFIG/DEFS rows.
+  // The fog color/density are the region's row (applyDayNight overrides the
+  // phase rows each frame; the crossfade law only owns the eased fog on the
+  // fade's frames). hemi fill intensity: the same formula applyDayNight and
+  // applyRegionLighting use - the base intensity,
+  // scaled by the region's ambientLightLevel and the B-side fill mult,
+  // times the CURRENT phase's hemiFillMult taken live from the day/night
+  // state (the fade is phase-transparent: a cross mid-phase is eased at the
+  // phase's own fill level).
+  function regionFadeTargets(regId) {
+    var region = window.WH_REGION_DEFS.regions[regId];
+    var L = CFG.lighting;
+    var dn = game.dayNight && game.dayNight.state;
+    var fillMult = dn && dn.hemiFillMult != null ? dn.hemiFillMult : 1;
+    var bMult = regId === CFG.regionB.id ? (L.regionBFillMult || 1.0) : 1.0;
+    return {
+      fogColor: region.fogColor,
+      fogDensity: region.fogDensity,
+      hemiIntensity: L.hemiBaseIntensity * region.ambientLightLevel * bMult * fillMult
+    };
+  }
+
+  // Gate-cross start (applyCross, walked gate cross). Spec: "snapshot fog
+  // color/density + hemiLight intensity at gate cross" - the fade's FROM
+  // values are the LIVE visible state at the cross instant (the fog carries
+  // the day/night phase row for the region just left; the hemi fill its
+  // phase-transparent value), never snap-shot to a CONFIG recomputation:
+  // a mid-fade REVERSE cross re-enters here through applyCross and its
+  // live snapshot seeds the restart from the lerped state seen on screen
+  // ("reverse cross mid-fade restarts from live lerped state"). No instant
+  // fog/hemi write happens on this path (applyCross skips the instant
+  // write; the visible state simply starts easing from where it stands).
+  // The OLD region's disposal is DEFERRED: its group stays visible as the
+  // silhouettes behind the fog wall during the fade; regionFadeTick
+  // disposes it at completion together with disposeHiddenExcept(null)
+  // (spec "Deferred disposal"; the applyCross call-site branch owns the
+  // den-door instant dispose).
+  function startRegionFade(oldId, newId) {
+    game.regionManager.clearPreviousActiveId();
+    var dur = CFG.sceneFade && CFG.sceneFade.durationSec ?
+      CFG.sceneFade.durationSec : regionFadeDurationDefault();
+    if (!regionFade) regionFade = {
+      t: 0, dur: dur,
+      fromFog: new THREE.Color(), toFog: new THREE.Color()
+    };
+    regionFade.t = 0;
+    regionFade.dur = dur;
+    regionFade.fromId = oldId;
+    regionFade.toId = newId;
+    // live snapshot AT the cross (the lerped state on a reverse cross)
+    if (game.scene.fog) {
+      regionFade.fromFog.copy(game.scene.fog.color);
+      regionFade.fromDensity = game.scene.fog.density;
+    }
+    regionFade.fromHemi = game.hemiLight ? game.hemiLight.intensity :
+      (oldId && window.WH_REGION_DEFS.regions[oldId] ?
+        CFG.lighting.hemiBaseIntensity *
+        window.WH_REGION_DEFS.regions[oldId].ambientLightLevel :
+        CFG.lighting.hemiBaseIntensity);
+    // to-targets re-read every frame in regionFadeTick (phase-transparent)
+  }
+
+  // Per-frame ease. Called from the main tick exactly between applyDayNight()
+  // and cemeteryFogTick() (the ordering law: each layer owns the state it
+  // reads; the fade runs last over the phase write and the cemetery ramp
+  // next frame re-reads its base from the (now eased) fog). Inactive fade =
+  // a single null check (spec: the budget law). When active: exactly one
+  // color lerp + two scalar lerps per frame; the END frame performs one
+  // dispose (the deferred old region) + disposeHiddenExcept(null).
+  function regionFadeTick(dt) {
+    if (!regionFade) return;
+    var rm = game.regionManager, F = regionFade;
+    F.t += dt;
+    // mid-fade REVERSE CROSS: the walked B->A cross ran applyCross this
+    // frame and startRegionFade already restarted the fade FROM THE LIVE
+    // LERPED STATE (its snapshot - spec line: "reverse cross mid-fade
+    // restarts from live lerped state"); roles in F are already swapped.
+    // The tick-side catch below only fires for an UNWALKED reversal (a
+    // switchTo/teleport flip) with no startRegionFade this frame.
+    if (rm && F.toId != null && rm.logic.activeId === F.fromId) {
+      var toSwap = F.fromId;
+      F.fromId = F.toId;
+      F.toId = toSwap;
+      if (game.scene.fog) {
+        F.fromFog.copy(game.scene.fog.color);
+        F.fromDensity = game.scene.fog.density;
+      }
+      if (game.hemiLight) F.fromHemi = game.hemiLight.intensity;
+      F.t = 0;
+    }
+    var w = regionFadeW(F.t, F.dur);
+    // live targets: the NEW region's CONFIG row, scaled by the CURRENT
+    // phase's hemi fill mult (phase transparency; the fog color/density
+    // keep the CONFIG row's regional values).
+    var toT = regionFadeTargets(F.toId);
+    if (game.scene.fog) {
+      // (toT.fogColor is a hex row; setHex into the toFog buffer first -
+      // Color.lerp reads components off a Color, never a number)
+      F.toFog.setHex(toT.fogColor);
+      game.scene.fog.color.copy(F.fromFog).lerp(F.toFog, w);
+      game.scene.fog.density = F.fromDensity + (toT.fogDensity - F.fromDensity) * w;
+    }
+    if (game.hemiLight) {
+      game.hemiLight.intensity = F.fromHemi + (toT.hemiIntensity - F.fromHemi) * w;
+    }
+    if (w >= 1) {   // fade complete: dispose the OLD region's group + stale
+      if (rm && rm.logic.activeId !== F.fromId) {
+        // (guard: the active region is never the disposal target - e.g. a
+        // same-frame teleport back would be caught by the reversal above)
+        if (F.fromId) rm.disposeRegion(F.fromId);
+        rm.disposeHiddenExcept(null);   // stale pre-warms + the old group
+      }
+      regionFade = null;
+    }
+  }
+  // [end WH_P1_3_REGIONFADE_V1]
 
   // 10-03 order 4: starry night sky. Dome sphere (BackSide, fog:false,
   // depthWrite off) with a vertical-gradient shader; 600 Points stars on the
@@ -733,7 +1696,8 @@
       blending: THREE.AdditiveBlending,
       uniforms: {
         map: { value: buildStarTexture() },
-        time: { value: 0 }
+        time: { value: 0 },
+        vis: { value: 1.0 }           // C2: star visibility (daynight phase; night = 1)
       },
       vertexShader: [
         'attribute float aSize;',
@@ -751,11 +1715,12 @@
       ].join('\n'),
       fragmentShader: [
         'uniform sampler2D map;',
+        'uniform float vis;',
         'varying vec3 vColor;',
         'varying float vTw;',
         'void main() {',
         '  vec4 tx = texture2D(map, gl_PointCoord);',
-        '  gl_FragColor = vec4(vColor * vTw, 1.0) * tx;',
+        '  gl_FragColor = vec4(vColor * vTw, 1.0) * tx * vis;',
         '}'
       ].join('\n'),
       vertexColors: true
@@ -802,7 +1767,8 @@
     group.add(glow);
     group.add(core);
 
-    game.sky = { group: group, stars: stars, starMat: starMat };
+    game.sky = { group: group, stars: stars, starMat: starMat, domeMat: domeMat,
+      glow: glow, core: core };
     game.scene.add(group);
   }
 
@@ -811,18 +1777,673 @@
     if (game.sky && game.sky.starMat) {
       game.sky.starMat.uniforms.time.value = performance.now() / 1000;
     }
+    // CC-C2: the dome (r 400, camera far 500) is anchored at the origin for
+    // the shared A/B disc; in a region with its own disc (C spans z -646..
+    // -86) it rides the camera so it never clips or gets walked through
+    var rm = game.regionManager;
+    if (game.sky && game.sky.group && rm) {
+      var reg = window.WH_REGION_DEFS.regions[rm.logic.activeId];
+      if (reg && reg.center) {
+        game.sky.group.position.set(game.camera.position.x, 0, game.camera.position.z);
+      } else if (game.sky.group.position.x !== 0 || game.sky.group.position.z !== 0) {
+        game.sky.group.position.set(0, 0, 0);
+      }
+    }
   }
 
-  // 10-04: instance + mount the player weapon and switch its moveset
-  // (CONFIG.moveset.weapons[id]). Measured sizing (2026-10-03): longsword
-  // 1.988m GLB -> 1.05m hand-held via CONFIG.assets.weaponScale.
+  // C2: push the day/night look (js/daynight.js state) into the scene. Same
+  // formulas as setupLights / setupSky / applyRegionLighting with the phase
+  // row in place of the CONFIG constants; the night row IS those constants
+  // and its mults are 1, so night renders exactly today's look. The one
+  // moon directional doubles as the sun (no new lights; pool untouched).
+  var dnDir = null;
+  function applyDayNight() {
+    var dn = game.dayNight;
+    if (!dn) return;
+    var S = dn.state, L = CFG.lighting;
+    var rid = game.regionManager ? game.regionManager.logic.activeId : CFG.regionA.id;
+    var region = window.WH_REGION_DEFS.regions[rid];
+    if (game.hemiLight) {
+      game.hemiLight.color.copy(S.hemiSkyColor);
+      game.hemiLight.groundColor.copy(S.hemiGroundColor);
+      var mult = rid === CFG.regionB.id ? (L.regionBFillMult || 1.0) : 1.0;
+      game.hemiLight.intensity = L.hemiBaseIntensity * region.ambientLightLevel * mult * S.hemiFillMult;
+    }
+    var az = (S.azimuthDeg || 0) * Math.PI / 180;
+    var el = (S.elevationDeg || 30) * Math.PI / 180;
+    if (game.moonLight) {
+      var dir = L.moonDirectionDistance || 60;
+      game.moonLight.color.copy(S.lightColor);
+      game.moonLight.intensity = S.lightIntensity;
+      game.moonLight.position.set(
+        Math.round(Math.sin(az) * Math.cos(el) * dir * 10) / 10,
+        Math.round(Math.sin(el) * dir * 10) / 10,
+        -Math.round(Math.cos(az) * Math.cos(el) * dir * 10) / 10
+      );
+    }
+    game.renderer.toneMappingExposure = CFG.renderer.toneMappingExposure * S.exposureMult;
+    var f = S.fog[rid];
+    if (f && game.scene.fog) {
+      game.scene.fog.color.copy(f.color);
+      game.scene.fog.density = f.density;
+    }
+    if (game.sky) {
+      var U = game.sky.domeMat.uniforms;
+      U.zenith.value.copy(S.zenithColor);
+      U.band.value.copy(S.horizonBand);
+      U.glow.value.copy(S.horizonGlow);
+      game.sky.starMat.uniforms.vis.value = S.stars;
+      game.sky.stars.visible = S.stars > 0;
+      // sky disc: moon by night, sun by day, on the directional's bearing
+      if (!dnDir) dnDir = new THREE.Vector3();
+      dnDir.set(Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el))
+        .multiplyScalar(CFG.sky.moonDistance);
+      game.sky.core.position.copy(dnDir);
+      game.sky.glow.position.copy(dnDir);
+      game.sky.core.material.color.copy(S.discColor);
+      game.sky.glow.material.color.copy(S.discGlowColor);
+      game.sky.core.material.opacity = S.discOpacity;
+      game.sky.glow.material.opacity = S.discOpacity;
+    }
+  }
+
+  // Hand-held GLB instance at its measured size (2026-10-03: longsword
+  // 1.988m GLB -> 1.05m hand-held via CONFIG.assets.weaponScale; 10-04
+  // roundShield via weaponTargetHeight.roundShield / disc height).
+  function instanceHandMesh(name) {
+    var mesh = window.WH_ASSETS.instance(name);
+    if (!mesh) return null;
+    mesh.scale.setScalar(window.WH_ASSETS.weaponScale(name));
+    return mesh;
+  }
+
+  // 10-04 debug path (WH_DEBUG.equipWeapon): swap the melee moveset
+  // (CONFIG.moveset.weapons[id]) and its hand mesh.
   function equipPlayerWeapon(id) {
     if (!CFG.moveset.weapons[id]) return false;
-    var mesh = window.WH_ASSETS.instance(id);
+    var mesh = instanceHandMesh(id);
     if (!mesh) return false;
-    mesh.scale.setScalar(window.WH_ASSETS.weaponScale(id));
-    game.player.root.add(mesh);
     return game.player.equipWeapon(id, mesh);
+  }
+
+  // Order B: one mesh per gear item with a CONFIG.items[id].mesh asset (the
+  // magic glove has none yet - its placeholder is the spell glow). The
+  // player mounts each on whichever hand holds it, hidden while stowed.
+  function setupHandMeshes() {
+    for (var id in CFG.items) {
+      var d = CFG.items[id];
+      if (d.category !== 'gear' || !d.mesh) continue;
+      var mesh = instanceHandMesh(d.mesh);
+      // stage 2: a torch can fill both hands at once -> a twin instance
+      var twin = mesh && d.kind === 'torch' ? instanceHandMesh(d.mesh) : null;
+      if (mesh) game.player.setItemMesh(id, mesh, twin);
+    }
+  }
+
+  // Order C: a cast spawns at the CASTING hand's glow orb (world position,
+  // so right-glove casts leave the right hand and left-glove casts the
+  // left). Fallback (orb not anchored yet): the old chest-height origin.
+  function castOrigin(req) {
+    var glow = game.casterGlows && game.casterGlows[req.hand];
+    if (glow && glow.parent) {
+      var w = glow.getWorldPosition(new THREE.Vector3());
+      return { x: w.x, y: w.y, z: w.z };
+    }
+    return { x: req.origin.x, y: 1.2, z: req.origin.z };
+  }
+
+  // 10-04: Radiance cast. Max one: a recast refreshes the existing effect
+  // (timer back to full, fade back up), even after it expired and parked.
+  function castRadiance(spellId) {
+    var fx = game.radiances[0];
+    if (fx) {
+      fx.refresh();
+    } else {
+      fx = window.WH_SPELLS.spawn(game.scene, spellId);
+      if (!fx) return;
+      game.radiances.push(fx);
+    }
+    fx.attach(game.player);
+  }
+
+  // ---- R-64.4 starting classes ------------------------------------------------
+  // The kit path, parameterized: no classId = today's single kit (CONFIG
+  // .inventory.startingItems + equip.defaultHands, belt + bar untouched),
+  // else CONFIG.startingClasses[classId] rows: kit into the grid, hands
+  // pulled out of it, spell knowledge (the belt), bar defaults.
+  function classDef(classId) {
+    var C = CFG.startingClasses;
+    return classId && C.order.indexOf(classId) >= 0 ? C[classId] : null;
+  }
+
+  function giveStartingKit(classId) {
+    var cls = classDef(classId);
+    game.inventory.fillStartingItems(cls ? cls.kit : null);
+    game.player.equipDefaultHands(cls ? cls.hands : null);
+    if (!cls) return;
+    game.player.belt = cls.spells.slice();
+    game.player.bindings = { main: 0, off: 0 };
+    setClassId(classId);
+  }
+
+  // The chosen class (display-only v1 beyond the kit; the save carries it)
+  // and its bar defaults for the player + the HUD map. Unknown id = null.
+  function setClassId(classId) {
+    var cls = classDef(classId);
+    game.classId = cls ? classId : null;
+    game.actionDefaults = cls ? cls.belt : null;
+    game.player.actionDefaults = game.actionDefaults;
+  }
+
+  // NEW GAME pick: the load-time fallback kit leaves (grid emptied, hands
+  // cleared like WH_SAVE.restore does), the class kit goes in, and the
+  // action bar resets to the class bar (persisted like a rebind).
+  function pickStartingClass(classId) {
+    var p = game.player, inv = game.inventory;
+    if (!classDef(classId)) return;
+    for (var i = 0; i < inv.slots.length; i++) inv.slots[i] = null;
+    p.hands = { right: null, left: null };
+    p.lastHandItems = { right: null, left: null };
+    p.handsChanged();
+    giveStartingKit(classId);
+    game.actionMap = [];
+    for (var s = 0; s < CFG.actionbar.slots; s++) game.actionMap.push(defaultActionEntry(s));
+    saveActionMap();
+    inv.changed();
+    if (game.inventoryUI) game.inventoryUI.render();
+  }
+
+  // ---- 10-05 inventory (Order A) ------------------------------------------------
+  // The player's Inventory + the I-key screen. Opening the screen suspends
+  // player movement/combat/camera input (player.setInputSuspended); the
+  // world keeps running.
+  function setupInventory(classId) {
+    var INV = window.WH_INVENTORY;
+    game.inventory = new INV.Inventory();
+    INV.active = game.inventory;
+    game.player.inventory = game.inventory;
+    // fresh-spawn kit (CONFIG.inventory.startingItems), then Order B pulls
+    // CONFIG.equip.defaultHands out of it into the hands (glove left,
+    // longsword right). Boot only - death keeps inventory + hands.
+    // R-64.4: classId = that class's kit / hands / spells / bar instead.
+    giveStartingKit(classId);
+    var p = game.player;
+    game.inventoryUI = new INV.InventoryUI({
+      inventory: game.inventory,
+      onOpenChange: function (open) {
+        p.setInputSuspended(open);
+        if (!open) window.WH_LEVEL.commit();   // L1: closing locks this visit's stat points
+      },
+      leveling: window.WH_LEVEL,      // L1: CHARACTER tab level / stats / skills column
+      classId: function () { return game.classId || null; },   // R-64.5: CHARACTER tab class row
+      onDrop: dropFromSlot,
+      // C1: food eaten from the grid (EAT / E) - cooking owns buffs
+      onUse: function (i) { return game.cooking.eat(i); },
+      canUse: function (id) { return game.cooking.canEat(id); },
+      // Order B CHARACTER tab: the UI only calls these, player owns the rules
+      equip: {
+        hands: function () { return p.hands; },
+        equip: function (id, hand, fromInventory) { return p.equipItem(id, hand, fromInventory); },
+        unequip: function (hand) { return p.unequipHand(hand); },
+        spells: function () { return p.getKnownSpells(); },
+        bindSpell: function (slot, role) { p.pressBeltKey(slot, role); }
+      }
+    });
+    p.onEquipRefusal = function (text) {
+      game.inventoryUI.toast(text);
+      flashScreen(CFG.block.blockFlashSeconds, 'block');
+    };
+    p.onHandsChanged = function () { game.inventoryUI.render(); };
+    setupLevelHooks();
+    game.worldItems = new INV.WorldItems(game.scene);
+    // region manager is built after setupInventory - hand over a getter
+    game.corpseLoot = new window.WH_CORPSE_LOOT.Manager(game.scene,
+      function () { return game.regionManager; });
+    window.WH_Enemy.onKilled = storeCorpseLoot;
+    // CC-EC1: enemy-caster bolt hand-off (mirrors onKilled) - a cast cycle
+    // spawns the bolt in enemy.js, game.js owns the array + the hit loop.
+    window.WH_Enemy.onEnemyBolt = function (bolt) { game.enemyBolts.push(bolt); };
+    // stage 2: gather nodes from every region's CONFIG nodes list
+    game.gatherNodes = new window.WH_GATHER.NodeManager(game.scene,
+      window.WH_REGION_DEFS.regions);
+    // C1 cooking: fire stations (CONFIG.cooking.stations) + the COOK panel.
+    // The panel suspends input like the inventory screen and blocks I / INV.
+    game.cooking = new window.WH_COOKING.Cooking({
+      inventory: game.inventory,
+      player: p,
+      toast: function (text) { game.inventoryUI.toast(text); },
+      onOpenChange: function (open) {
+        game.inventoryUI.blocked = open;
+        p.setInputSuspended(open);
+      },
+      dropAtFeet: dropAtFeet,
+      dayNight: game.dayNight,        // C2: day buffs + meal cap ride the day clock
+      // CC-C6B: fires burn only in the active region (manager built later - getter)
+      activeRegionId: function () { return game.regionManager ? game.regionManager.logic.activeId : null; },
+      // L1: every finished cook + the first cook of a recipe earn XP
+      onCooked: function (resultId, learned) {
+        window.WH_LEVEL.awardXP('cook_meal');
+        if (learned) window.WH_LEVEL.awardXP('recipe_learn');
+      }
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.code !== CFG.inventoryUI.pickupKey || e.repeat) return;
+      if (game.camp && game.camp.onInteractKey()) return;   // C3: E confirms camp placement
+      interact();
+    });
+  }
+
+  // ---- L1 leveling (CONFIG.leveling, js/leveling.js WH_LEVEL) --------------------
+  // WH_LEVEL is pure state; game.js feeds it events and surfaces its moments.
+  function setupLevelHooks() {
+    var LV = window.WH_LEVEL, T = CFG.leveling.text;
+    LV.onLevelUp = function (level, pts) {
+      game.inventoryUI.toast(T.levelUp.replace('{n}', level).replace('{pts}', pts),
+        CFG.leveling.levelToastSeconds);
+    };
+    LV.onRankUp = function (line, rank) {
+      game.inventoryUI.toast(T.rankUp.replace('{name}', CFG.leveling.skillLines[line].name)
+        .replace('{n}', rank), CFG.leveling.rankToastSeconds);
+    };
+    // CHARACTER tab live while open (XP / ranks / +- clicks); the pools
+    // re-derive every frame in applyBuffStats
+    LV.onChange = function () {
+      var ui = game.inventoryUI;
+      if (ui && ui.open && ui.tab === 'character') ui.renderCharacter();
+    };
+    // CC-AF1: STANDING column re-render, same shape as the leveling hook
+    // (guarded single call - the module may be absent)
+    var AFF = window.WH_AFF;
+    if (AFF) {
+      AFF.onChange = function () {
+        var ui = game.inventoryUI;
+        if (ui && ui.open && ui.tab === 'character') ui.renderCharacter();
+      };
+    }
+  }
+
+  // S3b: the one world-interact entry point - E key, touch USE button
+  // (WH_DEBUG.interact) and future chests/doors all route through here.
+  // A ground item in reach wins (G-drop boxes), then an unlooted corpse,
+  // then a cooking station (C1), then a camp sleep module (C3 tent menu),
+  // else the nearest ready node.
+  function interact() {
+    if (game.player.inputSuspended || game.player.state !== 'alive') return false;
+    var p = game.player.pos;
+    return tryPickup() || lootCorpseNearest(p.x, p.z, CFG.corpseLoot.lootRadius) ||
+      tryCookStation() || tryCampSleep() || tryDenDoor() || tryDoorway() || tryNotch() || tryTalkNpc() ||
+      tryRescue() || tryChest() || tryWareffort() || tryStrata() || tryGather();   // CC-C11: talk -> rescue -> chest -> gather (CC-WB1: board before gather; CC-WB3: strata board after the war board)
+  }
+
+  // CC-WB1: war-effort requisition board (js/wareffort.js) - a contract loop
+  // next to the south road: take a requisition, mine Redseam iron, fill it
+  // here for coins. Board checks before gather nodes (B-4).
+  function tryWareffort() {
+    return !!(window.WH_WarEffort && window.WH_WarEffort.tryOpen());
+  }
+
+  // CC-WB3: strata requisition board (js/strataeffort.js) - the WB1 grammar
+  // on a second board at Lord's Hold (region G): take a requisition, turn in
+  // the delve harvest (rot-silk + rot-gland) for a fixed coin reward. Branch
+  // ADDED AFTER tryWareffort(): the boards are far apart and each is region-
+  // gated, so the two are mutually exclusive.
+  function tryStrata() {
+    return !!(window.WH_StrataEffort && window.WH_StrataEffort.tryOpen());
+  }
+
+  // ---- CC-C8 the Rot Mother's den door (CONFIG.regionD.door) ----------------------
+  // E-to-enter (the notch-examine interact family): within interactM of the
+  // outcrop opening, E dips to black (the death overlay element, non-lethal:
+  // black, no text) and crosses C -> D at the bottom of the dip. The exit is
+  // the den mouth's walk-back plane (tickTransition) with the same dip lifting.
+  // No pause, no menu: the world keeps running under the overlay.
+  function denDoorNear() {
+    return game.regionManager.logic.portalNear(game.player.pos);
+  }
+
+  function tryDenDoor() {
+    var conn = denDoorNear();
+    if (!conn) return false;
+    if (game.denFade) return true;          // already on the way in
+    var D = conn.door;
+    startDenFade(D.fadeIn, D.fadeOut, function () {
+      applyCross(game.regionManager.forceCross(conn));
+    });
+    return true;
+  }
+
+  // the dip: opacity 0 -> 1 over inSec, onPeak, 1 -> 0 over outSec. Inline
+  // styles on #wh-death-overlay (black, text hidden) override its class
+  // while it runs and are all cleared after; a death mid-dip cancels it (the
+  // death overlay owns the element again; a pending cross never fires).
+  function startDenFade(inSec, outSec, onPeak) {
+    var el = game.hud.death;
+    el.style.transition = 'none';
+    el.style.background = '#000';
+    for (var i = 0; i < el.children.length; i++) el.children[i].style.visibility = 'hidden';
+    game.denFade = { t: 0, inSec: inSec, outSec: outSec, onPeak: onPeak || null };
+    el.style.opacity = inSec > 0 ? '0' : '1';
+    if (!(inSec > 0)) denFadePeak();
+  }
+
+  function denFadePeak() {
+    var F = game.denFade, cb = F.onPeak;
+    F.onPeak = null;
+    if (cb) cb();
+  }
+
+  function endDenFade() {
+    var el = game.hud.death;
+    el.style.transition = '';
+    el.style.background = '';
+    el.style.opacity = '';
+    for (var i = 0; i < el.children.length; i++) el.children[i].style.visibility = '';
+    game.denFade = null;
+  }
+
+  function denFadeTick(dt) {
+    var F = game.denFade;
+    if (!F) return;
+    if (game.player.state !== 'alive') { endDenFade(); return; }
+    F.t += dt;
+    var a;
+    if (F.t < F.inSec) a = F.t / F.inSec;
+    else {
+      if (F.onPeak) denFadePeak();
+      a = F.outSec > 0 ? 1 - (F.t - F.inSec) / F.outSec : 0;
+    }
+    if (a <= 0 && F.t >= F.inSec) { endDenFade(); return; }
+    game.hud.death.style.opacity = String(Math.max(0, Math.min(1, a)));
+  }
+
+  // ---- CC-C2 B/C doorway (CONFIG.regionC.door) -----------------------------------
+  // E near the arch while the door is locked (tutorial law: the day/night
+  // clock is dormant until the first camp Save and Heal) names the reason.
+  function lockedDoorNear() {
+    return game.regionManager.logic.lockedDoorNear(game.player.pos, CFG.regionC.door.interactM);
+  }
+
+  function tryDoorway() {
+    if (!lockedDoorNear()) return false;
+    game.inventoryUI.toast(CFG.regionC.door.text.locked);
+    return true;
+  }
+
+  // ---- CC-C4b notch soft blockers (CONFIG.regionC.notchText) --------------------
+  // E near a rim notch's mouth names the reason (the toast surface above).
+  function notchNear() {
+    var p = game.player.pos;
+    return groundHas() ? window.WH_GROUND.notchNear(game.regionManager.logic.activeId,
+      p.x, p.z, CFG.regionC.notchText.interactM) : null;
+  }
+
+  function tryNotch() {
+    if (!notchNear()) return false;
+    game.inventoryUI.toast(CFG.regionC.notchText.locked);
+    return true;
+  }
+
+  // ---- CC-C10 farmer talk (CONFIG.regionC.npc, js/npc.js WH_NPC) -----------------
+  // E / USE within interactM of Farmer Aldric (Region C only) opens his
+  // dialog panel; false when WH_NPC is absent, out of range or not in C.
+  function npcNear() {
+    return !!(window.WH_NPC && window.WH_NPC.talkPrompt());
+  }
+
+  function tryTalkNpc() {
+    if (!npcNear()) return false;
+    return window.WH_NPC.openDialog();
+  }
+
+  // CC-C11: the rescue interaction and quest-unlocked deployed-site chest.
+  function tryRescue() {
+    return !!(window.WH_NPC && window.WH_NPC.tryRescue());
+  }
+  function tryChest() {
+    return !!(window.WH_Chest && window.WH_Chest.tryOpen());
+  }
+
+  // ---- C1 cooking stations (CONFIG.cooking, js/cooking.js) -----------------------
+  function nearestCookStation() {
+    var p = game.player.pos;
+    return game.cooking.nearestStation(p.x, p.z, game.regionManager.logic.activeId);
+  }
+
+  // E: lit station = open the COOK panel; burnt / too low = feed it deadwood.
+  function tryCookStation() {
+    var st = nearestCookStation();
+    if (!st) return false;
+    game.cooking.interactStation(st);
+    return true;
+  }
+
+  // ---- C3 camps (CONFIG.camp, js/camp.js) ------------------------------------------
+  function nearestCampSleep() {
+    var p = game.player.pos;
+    return game.camp ? game.camp.nearestSleep(p.x, p.z, game.regionManager.logic.activeId) : null;
+  }
+
+  // E: bedroll / tent in reach = the TENT MENU (Save / Save and Heal)
+  function tryCampSleep() {
+    var hit = nearestCampSleep();
+    if (!hit) return false;
+    game.camp.interactSleep(hit);
+    return true;
+  }
+
+  // G on the selected stack: 1 unit, or the whole stack with Shift.
+  // drop.mode 'void' deletes it; 'physical' puts one item entity carrying
+  // the dropped count at the player's feet + scatter.
+  function dropFromSlot(slotIndex, wholeStack) {
+    var s = game.inventory.slotAt(slotIndex);
+    if (!s) return;
+    var taken = game.inventory.removeFromSlot(slotIndex, wholeStack ? s.count : 1);
+    if (CFG.inventory.drop.mode === 'void') {
+      game.inventoryUI.toast('Dropped ' + window.WH_INVENTORY.itemDef(taken.id).name +
+        ' x' + taken.count);
+      return;
+    }
+    dropAtFeet(taken.id, taken.count);
+  }
+
+  // One item entity carrying count at the player's feet + scatter (G-drop,
+  // C1 cook result / refund that no longer fits the bag).
+  function dropAtFeet(id, count) {
+    var D = CFG.inventory.drop;
+    // uniform point in the scatter disc, then the player's own bounds +
+    // prop push-out so a drop never lands somewhere it cannot be walked to
+    var ang = Math.random() * Math.PI * 2;
+    var r = D.scatterRadius * Math.sqrt(Math.random());
+    var p = game.player.pos;
+    var at = new THREE.Vector3(p.x + Math.sin(ang) * r, 0, p.z + Math.cos(ang) * r);
+    var rm = game.regionManager;
+    rm.logic.clampPlayer(at);
+    if (rm.pushOutOfProps(at, CFG.player.radius)) rm.logic.clampPlayer(at);
+    game.worldItems.spawn(id, count, at.x, at.z, rm.logic.activeId);
+  }
+
+  // ---- stage 2: enemy drops (CONFIG.drops) ---------------------------------------
+  // Weighted pick over [{ id, weight }]: P(entry) = weight / sum of weights.
+  function weightedPick(pool) {
+    var total = 0, i;
+    for (i = 0; i < pool.length; i++) total += pool[i].weight;
+    var r = Math.random() * total;
+    for (i = 0; i < pool.length; i++) {
+      r -= pool[i].weight;
+      if (r < 0) return pool[i];
+    }
+    return pool.length ? pool[pool.length - 1] : null;
+  }
+
+  // S1 roll: the guaranteed stack plus a bonusChance weighted bonus item.
+  // L1 Luck: then one extra weighted bonus pick at the Luck chance
+  // (statTotal('luck') = points x perPoint, 0 with no points; explicit
+  // Math.random, independent of the base bonus roll).
+  function rollDrops() {
+    var D = CFG.drops;
+    var items = [{ id: D.guaranteed.id, count: D.guaranteed.count }];
+    if (Math.random() < D.bonusChance) {
+      var b = weightedPick(D.bonusPool);
+      if (b) items.push({ id: b.id, count: 1 });
+    }
+    if (Math.random() < window.WH_LEVEL.statTotal('luck')) {
+      var lb = weightedPick(D.bonusPool);
+      if (lb) items.push({ id: lb.id, count: 1 });
+    }
+    return items;
+  }
+
+  // Enemy.onKilled (S4): the roll is stored ON the corpse (enemy.corpseLoot),
+  // never spawned as boxes - the body glows until it is looted empty.
+  // L1: the same one kill entry point awards the kill XP (enemy.js never
+  // imports WH_LEVEL) + the first-of-kind foe discovery.
+  // CC-C7: a type with its own CONFIG.enemy[type].loot rows ([{ mat, n:
+  // [min, max] }], rot mother / rot spawn) rolls ONLY those (uniform integer
+  // per row, 0 = nothing); every other type keeps the shared CONFIG.drops.
+  function rollTypeLoot(rows) {
+    var items = [];
+    for (var i = 0; i < rows.length; i++) {
+      var lo = rows[i].n[0], hi = rows[i].n[1];
+      var count = lo + Math.floor(Math.random() * (hi - lo + 1));
+      if (count > 0 && CFG.items[rows[i].mat]) items.push({ id: rows[i].mat, count: count });
+    }
+    return items;
+  }
+
+  function storeCorpseLoot(enemy) {
+    var typeCfg = CFG.enemy[enemy.type];
+    game.corpseLoot.attach(enemy, typeCfg && typeCfg.loot ? rollTypeLoot(typeCfg.loot) : rollDrops());
+    window.WH_LEVEL.awardXP('kill_' + enemy.type);
+    window.WH_LEVEL.discover('foe', enemy.type);
+    if (window.WH_AFF) window.WH_AFF.deed('kill_' + enemy.type);   // CC-AF1: the standing ledger (kill_wolf 0 = no-op)
+  }
+
+  // USE / E: everything that fits off the nearest unlooted corpse in reach;
+  // what does not fit stays on the body (it keeps glowing). False = no
+  // corpse in reach, so the interact chain falls through to gathering.
+  function lootCorpseNearest(x, z, radius) {
+    var L = CFG.corpseLoot;
+    var corpse = game.corpseLoot.nearest(x, z, radius, game.regionManager.logic.activeId);
+    if (!corpse) return false;
+    var r = game.corpseLoot.loot(corpse, game.inventory);
+    if (!r.taken.length) {
+      game.inventoryUI.toast(L.fullText);
+      return true;
+    }
+    var parts = r.taken.map(function (t) {
+      return window.WH_INVENTORY.itemDef(t.id).name + ' x' + t.count;
+    });
+    // CC-C7 drop-log: the first loot of an item carrying a dropLog line
+    // (rot-silk / rot-gland) appends its journal line once per session (one
+    // toast: a second toast would replace the loot line), held 2x as long
+    game.dropLogSeen = game.dropLogSeen || {};
+    var journal = [];
+    r.taken.forEach(function (t) {
+      var d = CFG.items[t.id];
+      if (d && d.dropLog && !game.dropLogSeen[t.id]) {
+        game.dropLogSeen[t.id] = true;
+        journal.push(d.dropLog);
+      }
+    });
+    game.inventoryUI.toast(L.lootToast.replace('{list}', parts.join(', ')) +
+      (r.remaining ? L.partialSuffix : '') + (journal.length ? ' - ' + journal.join(' ') : ''),
+      journal.length ? CFG.inventoryUI.toastSeconds * 2 : undefined);
+    return true;
+  }
+
+  // E: nearest item entity within pickupRadius goes into the inventory
+  // (stack-join first). Whatever does not fit stays on the ground.
+  function tryPickup() {
+    var p = game.player.pos;
+    var ent = game.worldItems.nearest(p.x, p.z, CFG.inventory.drop.pickupRadius,
+      game.regionManager.logic.activeId);
+    if (!ent) return false;
+    var added = game.inventory.addItem(ent.id, ent.count);
+    var name = window.WH_INVENTORY.itemDef(ent.id).name;
+    if (added <= 0) {
+      game.inventoryUI.toast('Inventory full');
+      return true;
+    }
+    ent.count -= added;
+    if (ent.count <= 0) {
+      game.worldItems.remove(ent);
+      game.inventoryUI.toast('Picked up ' + name + ' x' + added);
+    } else {
+      game.inventoryUI.toast('Inventory full');
+    }
+    return true;
+  }
+
+  // ---- stage 2: gather nodes (CONFIG.gather, js/gather.js) ----------------------
+  function nearestGatherNode() {
+    var p = game.player.pos;
+    return game.gatherNodes.nearestReady(p.x, p.z, CFG.gather.interactRadius,
+      game.regionManager.logic.activeId);
+  }
+
+  // E: harvest the whole yield or refuse (full inventory, node stays ready).
+  function tryGather() {
+    var node = nearestGatherNode();
+    if (!node) return false;
+    var r = game.gatherNodes.harvest(node, game.inventory,
+      window.WH_LEVEL.statTotal('luck'));     // L1 Luck: extra-unit roll
+    if (!r.ok) {
+      game.inventoryUI.toast(CFG.gather.fullText);
+      return true;
+    }
+    game.inventoryUI.toast(CFG.gather.gatherToast
+      .replace('{name}', window.WH_INVENTORY.itemDef(r.itemId).name)
+      .replace('{n}', r.count));
+    // L1: gather XP + first harvest of this node type
+    window.WH_LEVEL.awardXP('gather');
+    window.WH_LEVEL.discover('node', node.type);
+    return true;
+  }
+
+  // One interact prompt (the wh-gather-prompt element) mirroring interact():
+  // nothing while a ground item would take the press (pickup has no
+  // prompt), 'USE - Loot' for an unlooted corpse, the cook station prompt
+  // (C1), else 'E - Gather {name}'.
+  function updateInteractPrompt() {
+    var p = game.player;
+    var activeId = game.regionManager.logic.activeId;
+    var text = '';
+    if (p.state === 'alive' && !p.inputSuspended &&
+        !game.worldItems.nearest(p.pos.x, p.pos.z, CFG.inventory.drop.pickupRadius, activeId)) {
+      var st;
+      if (game.corpseLoot.nearest(p.pos.x, p.pos.z, CFG.corpseLoot.lootRadius, activeId)) {
+        text = CFG.corpseLoot.promptText;
+      } else if ((st = nearestCookStation())) {
+        text = game.cooking.promptFor(st);   // C1: cook / burnt / too low
+      } else if (nearestCampSleep()) {
+        text = CFG.camp.text.prompt;         // C3: tent menu
+      } else if (denDoorNear()) {
+        text = denDoorNear().door.text.prompt; // C8/AD1 veil_crypt: the den + crypt doorways (conn-carried prompt)
+      } else if (lockedDoorNear()) {
+        text = CFG.regionC.door.text.prompt; // CC-C2: locked B/C door
+      } else if (notchNear()) {
+        text = CFG.regionC.notchText.prompt; // CC-C4b: rim notch mouth
+      } else if (npcNear()) {
+        text = CFG.regionC.npc.dialog.prompt; // CC-C10: talk to the farmer
+      // CC-C11: prompt priority mirrors the E chain.
+      } else if (window.WH_NPC && window.WH_NPC.rescuePrompt()) {
+        text = CFG.regionC.quest.rescuePrompt;
+      } else if (window.WH_Chest && window.WH_Chest.interactPrompt()) {
+        text = window.WH_Chest.interactPrompt();
+      // CC-WB1: war board prompt (same shape as the chest branch above).
+      } else if (window.WH_WarEffort && window.WH_WarEffort.interactPrompt()) {
+        text = window.WH_WarEffort.interactPrompt();
+      // CC-WB3: strata board prompt, same shape, branch AFTER the war board.
+      } else if (window.WH_StrataEffort && window.WH_StrataEffort.interactPrompt()) {
+        text = window.WH_StrataEffort.interactPrompt();
+      } else {
+        var node = nearestGatherNode();
+        if (node) text = CFG.gather.promptText.replace('{name}', CFG.gather.nodeTypes[node.type].name);
+      }
+    }
+    var el = game.hud.gatherPrompt;
+    if (el.textContent !== text) el.textContent = text;
+    el.classList.toggle('visible', !!text);
   }
 
   // ---- WH_DEBUG hooks ----------------------------------------------------------
@@ -830,6 +2451,21 @@
   function setupDebugHooks() {
     window.WH_DEBUG = {
       version: 'v1',
+      // C2: day/night clock readout (C3: only a camp Save and Heal starts
+      // the cycle - no debug beginCycle)
+      get dayNight() {
+        var dn = game.dayNight;
+        return { dormant: dn.dormant, day: dn.day, phase: dn.phase,
+          timeOfDay: dn.timeOfDay, nightMatches: dn.nightMatches };
+      },
+      // C3 camps: placement state, sites (+ kit fire fuel), world camps, respawn
+      get camp() { return game.camp ? game.camp.debugState() : null; },
+      getCamp: function () { return game.camp; },
+      // CC-C4: the ground y-feed (active region; A/B 0) + dev-only raycast
+      groundYAt: function (x, z) { return groundYAt(x, z); },
+      groundRaycast: function (x, z) {
+        return window.WH_GROUND ? window.WH_GROUND.debugRaycast(game.regionManager.logic.activeId, x, z) : NaN;
+      },
       getPlayerPosition: function () {
         var p = game.player.pos;
         return { x: p.x, y: p.y, z: p.z };
@@ -850,6 +2486,7 @@
         });
       },
       getPlayer: function () { return game.player; },
+      getCooking: function () { return game.cooking; },   // C1 stations / panel state
       getRegionManager: function () { return game.regionManager; },
       getAssetMeta: function (name) { return window.WH_ASSETS.getMeta(name); },
       getLightPool: function () {
@@ -943,17 +2580,63 @@
       getFocus: function () { return game.player.focus; },
       setFocus: function (v) { game.player.focus = v; game.player.focusRegenBlock = 0.1; },  // v7: brief regen pause for debug stability
       getBelt: function () { return game.player.getBelt(); },
-      selectBeltSlot: function (i) { game.player.selectBeltSlot(i); },
+      selectBeltSlot: function (i, role) { game.player.selectBeltSlot(i, role); },   // role 'main' (default) / 'off'
+      pressBeltKey: function (i, role) { game.player.pressBeltKey(i, role); },
+      // AB1 action bar: select = the Digit / tap path; bind = the picker path
+      getActionMap: function () { return game.actionMap.map(function (e) { return e && { kind: e.kind, id: e.id }; }); },
+      selectActionSlot: function (i, shift) { game.player.selectActionSlot(i, !!shift); },
+      bindActionSlot: function (i, kind, id) { return bindActionMapEntry(i, { kind: kind, id: id }); },
+      openActionPicker: function (i) { openActionPicker(i); },
+      closeActionPicker: function () { closeActionPicker(); },
+      // Order B hand hooks
+      // Order C: lmb / rmb = what each button does right now
+      // ('attack' | 'cast' | 'block' | null)
+      getHands: function () {
+        var p = game.player;
+        return { right: p.hands.right, left: p.hands.left,
+                 caster: p.hasCaster(), shield: p.hasShield(), meleeRight: p.hasMeleeRight(),
+                 shieldLeft: p.hasShieldLeft(),
+                 lmb: p.handAction(p.buttonHand('lmb')), rmb: p.handAction(p.buttonHand('rmb')) };
+      },
+      // fromInventory = take the item from the grid even when the other hand
+      // holds the same id (second glove); force = equip a mesh-less dormant
+      // shield anyway (D-amend AC DA2: addItem('buckler', 1) first)
+      equipItem: function (id, hand, fromInventory, force) { return game.player.equipItem(id, hand, fromInventory, force); },
+      handButton: function (button, down) { game.player.handButton(button, down !== false); },
+      // S3b: same dispatch as the E key (pickup, then gather)
+      interact: function () { return interact(); },
+      // S4: unlooted corpses with a live effect / stored loot
+      getCorpseLoot: function () {
+        return game.corpseLoot.fx.map(function (r) {
+          return { type: r.enemy.type, state: r.state, x: r.enemy.pos.x, z: r.enemy.pos.z,
+                   loot: (r.enemy.corpseLoot || []).slice() };
+        });
+      },
+      unequipHand: function (hand) { return game.player.unequipHand(hand); },
       getActiveLoadout: function () { return game.player.activeLoadout; },
       toggleLoadout: function () { game.player.toggleLoadout(); },
-      getOffhand: function () { return game.player.offhand; },
+      // Order C: per-hand { windup, spellId, cooldown, regrip } + shared bits
       getCastState: function () {
         var p = game.player;
+        function hand(c) {
+          return { windup: c.windup, spellId: c.spellId, cooldown: c.cooldown, regrip: c.regrip };
+        }
+        return { main: hand(p.cast.main), off: hand(p.cast.off),
+                 focus: p.focus, toggling: p.toggling };
+      },
+      getBindings: function () {
+        var p = game.player;
+        return { main: { slot: p.bindings.main, spell: p.getBoundSpellId('main') },
+                 off: { slot: p.bindings.off, spell: p.getBoundSpellId('off') } };
+      },
+      bindSpell: function (slot, role) { game.player.pressBeltKey(slot, role || 'main'); },
+      tryCast: function (role) { return game.player.tryCast(role || 'main'); },
+      getRadianceState: function () {
+        var fx = game.radiances[0];
         return {
-          windup: p.castWindup,
-          cooldown: p.castCooldown,
-          regrip: p.regripTimer,
-          toggling: p.toggling
+          active: !!(fx && fx.active),
+          remainingSeconds: fx ? fx.remaining : 0,
+          lightIntensity: fx ? fx.light.intensity : 0
         };
       },
       getArmedState: function () {
@@ -965,6 +2648,27 @@
           return { x: f.pos.x, z: f.pos.z, alive: f.alive };
         });
       },
+      // 10-05 inventory hooks (AC E setup: addItem('longsword', 24) fills
+      // every slot - gear stacks to 1)
+      getInventory: function () {
+        var out = [];
+        game.inventory.forEachSlot(function (sl) { out.push(sl); });
+        return out;
+      },
+      addItem: function (id, count) { return game.inventory.addItem(id, count); },
+      getWorldItems: function () {
+        return game.worldItems.list.map(function (it) {
+          return { id: it.id, count: it.count, x: it.x, z: it.z, regionId: it.regionId };
+        });
+      },
+      // stage 2: gather node states (playtest / report checks)
+      getGatherNodes: function () {
+        return game.gatherNodes.nodes.map(function (n) {
+          return { type: n.type, regionId: n.regionId, x: n.x, z: n.z, state: n.state,
+                   respawnIn: n.state === 'dormant' ? n.readyAt - game.gatherNodes.now() : 0 };
+        });
+      },
+      isInventoryOpen: function () { return !!(game.inventoryUI && game.inventoryUI.open); },
       useConsumable: function (slot) { game.player.useConsumable(slot); },
       getConsumables: function () { return game.player.getConsumables(); },
       getCombo: function () {
@@ -983,15 +2687,20 @@
       60, window.innerWidth / window.innerHeight, 0.1, 500);
     setupLights();
     setupSky();           // 10-03 order 4: starry night dome + stars + moon
+    // C2: day/night clock - boots DORMANT on today's night look (tutorial law)
+    game.dayNight = new window.WH_DAYNIGHT.DayNight();
+    game.dayNight.attachSky(game.sky, CFG.regionA.id);   // C2b WH_SKYPOOL: painted dome panos
     setupHud();
     bindResTunerKeys();   // 10-03 F1/F2 pixel-fidelity keys
     showResReadout();     // visible at boot so the knob is discoverable; dims after 2.5s
 
     game.player = new window.WH_Player(game.scene, game.camera);
-    game.player.offhandGlow = game.spellGlow;  // v7: expose glow mesh on player for debug hooks
+    game.player.casterGlows = game.casterGlows;  // Order C: per-hand orbs, exposed for debug hooks
     game.scene.add(game.player.root);
     // D3: player delegates the F-key toggle to the game's lock-on logic
     game.player.onLockToggle = toggleLockOn;
+    // AB1: the player reads the HUD-owned action bar map through this getter
+    game.player.actionMapSource = function () { return game.actionMap; };
 
     // v7: weave HUD feedback callbacks
     game.player.onCastRefusal = function () {
@@ -1000,22 +2709,24 @@
     game.player.onFizzle = function () {
       flashScreen(CFG.block.parryFlashSeconds, 'parry');
     };
-    game.player.onSpellSelected = function (spellId) {
-      var SC = CFG.spell[spellId];
-      if (SC && game.spellGlow) {
-        game.spellGlow.material.color.setHex(SC.schoolColor);
-      }
-    };
     game.player.onPotion = function () {
       flashScreen(CFG.block.blockFlashSeconds, 'block');
     };
 
     // v6: block/parry HUD feedback callbacks (player must exist first)
-    game.player.onParry = function () {
+    // Order D: the attacker's swing visibly deflects on block AND parry; a
+    // parry also plays the enemy hit reaction (its stagger read) and the
+    // riposte marker (updateRiposteMarkers) shows while the window is open.
+    game.player.onParry = function (attacker) {
+      window.WH_LEVEL.useSkill('shieldDefense', 'parry');   // L1: parries train Shield / Defense
       flashScreen(CFG.block.parryFlashSeconds, 'parry');
+      if (attacker && attacker.deflect) attacker.deflect(game.player.pos);
+      if (attacker && attacker.anim && CFG.block.parryEnemyHitReact) attacker.anim.hit();
     };
-    game.player.onBlock = function () {
+    game.player.onBlock = function (attacker) {
+      window.WH_LEVEL.useSkill('shieldDefense', 'block');   // L1: blocked hits train Shield / Defense
       flashScreen(CFG.block.blockFlashSeconds, 'block');
+      if (attacker && attacker.deflect) attacker.deflect(game.player.pos);
     };
     game.player.onGuardBreak = function () {
       flashScreen(CFG.block.guardBreakFlashSeconds, 'guardbreak');
@@ -1029,8 +2740,12 @@
     };
 
     setupDebugHooks();
+    setupSaveHooks();     // C4: game.c4 restore helpers + quit persist
 
+    // 2026-10-11: resolves on the bootCritical assets (the boot barrier);
+    // the deferred rest streams in behind the running game.
     window.WH_ASSETS.preloadAll().then(function () {
+      game.hud.bootBytes.textContent = '';
       // player body + weapon. Normalize to CFG.world.characterHeight
       // (raw Meshy characters are 2.0 tall; the pixelated variants of some
       // props differ, so normalize by measured height).
@@ -1042,32 +2757,289 @@
       // The animated holder owns this scaled lift; do not apply it twice.
       pBody.children[0].position.y += window.WH_ASSETS.groundMinY('playerBody');
       game.player.setBody(pBody);
-      attachPlayerLantern();   // R2 P0-3: lantern now player-parented (left-hip anchor)
+      // CC-LS1: player contact blob (radius from body meta width)
+      if (window.WH_SHCONTACTS) window.WH_SHCONTACTS.attach(game.player,
+        { bodyName: 'playerBody' });
       // v3: register the weapon with the player so attack stages drive its
       // pose. 10-04: which weapon = CONFIG.moveset.playerWeapon.
-      equipPlayerWeapon(CFG.moveset.playerWeapon);
+      setupHandMeshes();    // Order B: longsword + shield meshes, mounted per hand
+      setupInventory();     // 10-05 inventory Order A (+ Order B default hands)
 
       // initial region A
       game.regionManager = new window.WH_RegionManager(game.scene);
+      // CC-C2 tutorial law: the B/C door is locked while the clock is
+      // dormant - the same !dayNight.dormant predicate as every
+      // first-sleep-gated thing (js/daynight.js; js/camp.js owns beginCycle)
+      game.regionManager.logic.doorGate = function () { return game.dayNight.dormant; };
       game.regionManager.buildRegion(CFG.regionA.id, false);
       var region = window.WH_REGION_DEFS.regions[CFG.regionA.id];
       game.player.pos.set(region.spawn.x, 0, region.spawn.z);
       game.player.faceTowards(0, 0);     // boot spawn faces map center (Nicko 10-03)
       applyRegionLighting(CFG.regionA.id);
       showRegionName(region.name);
-      // 2026-10-03: smooth fade-out of the boot overlay from CONFIG
-      // (hud.bootOverlayFadeMs); .hidden also releases pointer-events, and
-      // game.hud.loadNote stays in the DOM for any later reuse.
-      var fadeMs = (CFG.hud && typeof CFG.hud.bootOverlayFadeMs === 'number') ?
-        CFG.hud.bootOverlayFadeMs : 900;
-      game.hud.loadNote.style.transition =
-        'opacity ' + (fadeMs / 1000) + 's ease';
-      game.hud.loadNote.classList.add('hidden');
-
-      game.running = true;
-      game.lastFrame = performance.now();
-      requestAnimationFrame(loop);
+      // C3 camps: deploy (CAMP button), world camps, tent menu, respawn point.
+      // Built after the region manager (clearance checks read it).
+      game.camp = new window.WH_CAMP.Camp({
+        scene: game.scene,
+        camera: game.camera,
+        player: game.player,
+        cooking: game.cooking,
+        dayNight: game.dayNight,
+        regionManager: function () { return game.regionManager; },
+        toast: function (text) { game.inventoryUI.toast(text); },
+        applyBuffStats: applyBuffStats,
+        onOpenChange: function (open) {
+          game.inventoryUI.blocked = open;
+          game.player.setInputSuspended(open);
+        },
+        // C4 save profile (js/save.js): camp menu Save / Save and Heal / LOAD
+        profile: {
+          has: function () { return window.WH_SAVE.has(); },
+          save: function (c) { return window.WH_SAVE.save(game, { respawnCamp: c }); },
+          restore: function () { window.WH_SAVE.restore(game, window.WH_SAVE.load(game)); }
+        }
+      });
+      // CC-C10: Farmer Aldric + his dialog panel (js/npc.js; built lazily on the first C visit)
+      if (window.WH_NPC) window.WH_NPC.init(game);
+      // CC-C11: chest manager follows the NPC quest owner and the deployed camp manager.
+      if (window.WH_Chest) window.WH_Chest.init(game);
+      // CC-WB1: war-effort board manager (js/wareffort.js) - same init-hook
+      // tier as the chest; builds the board mesh and holds the game ref.
+      if (window.WH_WarEffort) window.WH_WarEffort.init(game);
+      // CC-WB3: strata board manager (js/strataeffort.js) - same init-hook
+      // tier, right after the war board; builds its own board mesh (region G).
+      if (window.WH_StrataEffort) window.WH_StrataEffort.init(game);
+      // CC-AE1: night raid director (js/ambush.js) - same init-hook tier as
+      // the NPC/chest managers; WH_AMBUSH holds the game ref only.
+      if (window.WH_AMBUSH) window.WH_AMBUSH.init(game);
+      // CC-H5b: hazards director (js/hazards.js) - same init-hook tier as
+      // the NPC/chest managers; the fx wiring hands the module the EXISTING
+      // camera-shake channel (triggerShake; no global hit-stop exists).
+      if (window.WH_HAZARDS) {
+        game.hazardsFx = { shake: triggerShake };
+        window.WH_HAZARDS.init(game);
+      }
+      if (window.WH_JOURNAL) window.WH_JOURNAL.init(game);   // QJR-1: journal core
+      // QJR-4: the codex module rides the journal's init-hook tier (load
+      // order: js/bestiary.js AFTER js/journal.js in index.html).
+      if (window.WH_BESTIARY) window.WH_BESTIARY.init(game);   // QJR-4: bestiary codex
+      // C4 boot CONTINUE: with a save the overlay waits for the player's row
+      // (CONTINUE = restore the profile, NEW GAME = the fresh flow; the
+      // profile is never wiped - the first camp save replaces it). The
+      // profile is only read here, after every asset settled.
+      // R-64.6: every fresh flow (NEW GAME row, or no save at all) picks a
+      // class first (bootChoice); CONTINUE boots exactly as before.
+      if (window.WH_SAVE.has()) showBootRows(bootChoice);
+      else bootChoice(false);
     });
+  }
+
+  // C4: local helpers WH_SAVE.restore drives (game.c4)
+  function setupSaveHooks() {
+    game.c4 = {
+      entered: false,               // the world is live (boot rows handled)
+      applyBuffStats: applyBuffStats,
+      switchRegion: switchRegion,
+      breakLockOn: breakLockOn,
+      reloadActionMap: function () { game.actionMap = loadActionMap(); },
+      setClassId: setClassId        // R-64.5: restore hands the saved class through
+    };
+    // CC-C7: the nest flags ride an additive optional profile block 'lairs'
+    // ({ rotmother_cleared_C: dayOfDeath } while cleared; schema v1, an older
+    // profile = every nest armed), registered here so save.js stays as is:
+    // capture() gains the block, save() writes it next to save.js's own
+    // write (same key, same v / ts), restore() hands it to WH_Enemy first.
+    // CC-C10: the quest flags ride a second additive block 'questState'
+    // ({ findDaughter: one of CONFIG.regionC.quest.states }; schema v1, an
+    // older profile / a bad value = 'available'). Holder = js/npc.js WH_NPC
+    // (questState / restoreQuest) - capture, save, restore and the HUD quest
+    // line all read that one state; death never touches it.
+    var S = window.WH_SAVE;
+    var baseCapture = S.capture, baseSave = S.save, baseRestore = S.restore;
+    S.capture = function (g, opts) {
+      var data = baseCapture(g, opts);
+      data.lairs = window.WH_Enemy.captureLairs();
+      if (window.WH_NPC) data.questState = { findDaughter: window.WH_NPC.questState() };   // CC-C10
+      // CC-C11: retain the C10 wrap and enrich its existing findDaughter row.
+      if (window.WH_NPC) data.questState.findDaughter = window.WH_NPC.questStateDetail();
+      if (window.WH_Chest) data.chest = window.WH_Chest.capture();
+      // CC-WB1: board state rides the save-wrap ({active, postedDay, resolvedDay}).
+      if (window.WH_WarEffort) data.warEffort = window.WH_WarEffort.capture();
+      // CC-WB3: strata board state rides the save-wrap too, chest-line shape.
+      if (window.WH_StrataEffort) data.strataEffort = window.WH_StrataEffort.capture();
+      if (window.WH_JOURNAL) data.journal = window.WH_JOURNAL.capture();   // QJR-1
+      if (window.WH_BESTIARY) data.bestiary = window.WH_BESTIARY.capture();   // QJR-4
+      // CC-AF1: the standing ledger + its once-map ride the save-wrap
+      data.affinity = window.WH_AFF ? window.WH_AFF.capture() : undefined;
+      return data;
+    };
+    S.save = function (g, opts) {
+      if (!baseSave(g, opts)) return false;
+      try {
+        var stored = JSON.parse(window.localStorage.getItem(CFG.save.lsKey) || 'null');
+        if (!stored) return true;
+        stored.lairs = window.WH_Enemy.captureLairs();
+        if (window.WH_NPC) stored.questState = { findDaughter: window.WH_NPC.questState() };   // CC-C10
+        // CC-C11: the explicit storage write follows the house save-wrap pattern.
+        if (window.WH_NPC) stored.questState.findDaughter = window.WH_NPC.questStateDetail();
+        if (window.WH_Chest) stored.chest = window.WH_Chest.capture();
+        // CC-WB1: explicit storage write, chest-line shape.
+        if (window.WH_WarEffort) stored.warEffort = window.WH_WarEffort.capture();
+        // CC-WB3: explicit storage write, chest-line shape (strata board).
+        if (window.WH_StrataEffort) stored.strataEffort = window.WH_StrataEffort.capture();
+        if (window.WH_JOURNAL) stored.journal = window.WH_JOURNAL.capture();   // QJR-1
+        // QJR-4: explicit storage write, journal-line shape.
+        if (window.WH_BESTIARY) stored.bestiary = window.WH_BESTIARY.capture();   // QJR-4
+        // CC-AF1: explicit storage write, journal-line shape
+        stored.affinity = window.WH_AFF ? window.WH_AFF.capture() : undefined;
+        window.localStorage.setItem(CFG.save.lsKey, JSON.stringify(stored));
+      } catch (e) { /* the base profile stands; the nest re-arms on load */ }
+      return true;
+    };
+    S.restore = function (g, data) {
+      if (data) window.WH_Enemy.restoreLairs(data.lairs);
+      if (data && window.WH_NPC) window.WH_NPC.restoreQuest(data.questState);   // CC-C10
+      // CC-C11: a missing chest block is a no-op (fresh model stays empty).
+      if (data && window.WH_Chest) window.WH_Chest.restore(data.chest);
+      // CC-WB1: a missing warEffort block is a no-op (fresh idle board).
+      if (data && window.WH_WarEffort) window.WH_WarEffort.restore(data.warEffort);
+      // CC-WB3: a missing strataEffort block is a no-op (fresh idle board).
+      if (data && window.WH_StrataEffort) window.WH_StrataEffort.restore(data.strataEffort);
+      if (window.WH_JOURNAL) window.WH_JOURNAL.restore(data && data.journal);   // QJR-1
+      // QJR-4: a missing bestiary block is a no-op (fresh empty codex).
+      if (window.WH_BESTIARY) window.WH_BESTIARY.restore(data && data.bestiary);   // QJR-4
+      // CC-AF1: a missing affinity block is a no-op (fresh 0 / crossed {})
+      if (window.WH_AFF) window.WH_AFF.restore(data && data.affinity);
+      baseRestore(g, data);
+    };
+    // S5 quit persist: tab close / reload writes the same capture() profile,
+    // once, best-effort and quiet - only once a cycle has begun (day > 0 or
+    // a deployed camp), never on a fresh untouched boot, never while dead.
+    var quitSaved = false;
+    function quitPersist() {
+      if (quitSaved || !game.c4.entered || !game.player || game.player.state !== 'alive') return;
+      if (!(game.dayNight.day > 0 || game.camp.sites.length > 0)) return;
+      quitSaved = true;
+      window.WH_SAVE.save(game);
+    }
+    window.addEventListener('beforeunload', quitPersist);
+    window.addEventListener('pagehide', quitPersist);
+    window.addEventListener('pageshow', function (e) { if (e.persisted) quitSaved = false; });
+  }
+
+  // C4: CONTINUE / NEW GAME rows under the boot bar (assets already settled)
+  function showBootRows(done) {
+    var T = CFG.save.text;
+    game.hud.bootSub.textContent = '';
+    var rows = document.createElement('div');
+    rows.id = 'wh-boot-rows';
+    [[T.continue, true], [T.newGame, false]].forEach(function (r) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.tabIndex = -1;
+      btn.className = 'cook-btn boot-row-btn' + (r[1] ? ' boot-continue' : '');
+      btn.textContent = r[0];
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (rows.parentNode) rows.parentNode.removeChild(rows);
+        done(r[1]);
+      });
+      rows.appendChild(btn);
+    });
+    game.hud.loadNote.appendChild(rows);
+  }
+
+  // R-64.6: CONTINUE -> enterWorld(true), no picker. NEW GAME -> the class
+  // picker, then the picked kit replaces the load-time fallback kit and
+  // the world boots fresh.
+  function bootChoice(cont) {
+    if (cont) {
+      // 2026-10-11 two-phase loader: a restore may switch to a region whose
+      // build reads deferred assets (C's bushA/bushB scatter templates) -
+      // CONTINUE waits for the stream phase so no plan builds footprint-less.
+      game.hud.bootSub.textContent = 'Loading assets...';
+      window.WH_ASSETS.whenAllSettled().then(function () { enterWorld(true); });
+      return;
+    }
+    showClassPicker(function (classId) {
+      pickStartingClass(classId);
+      enterWorld(false);
+    });
+  }
+
+  // R-64.6 class picker rows (boot-row family, built like showBootRows):
+  // one row per CONFIG.startingClasses.order entry, the class label + its
+  // two kit lines on the face. FINAL ON CLICK (no confirm, no back); keys
+  // 1-N pick the Nth row. The key listener sits in the window capture
+  // phase so digits never reach the action bar while the picker is up.
+  function showClassPicker(done) {
+    var C = CFG.startingClasses;
+    game.hud.bootSub.textContent = '';
+    var rows = document.createElement('div');
+    rows.id = 'wh-boot-rows';
+    rows.className = 'boot-class-rows';
+    var picked = false;
+    function pick(classId) {
+      if (picked) return;
+      picked = true;
+      window.removeEventListener('keydown', onKey, true);
+      if (rows.parentNode) rows.parentNode.removeChild(rows);
+      done(classId);
+    }
+    function onKey(e) {
+      var m = /^(?:Digit|Numpad)(\d)$/.exec(e.code || '');
+      var i = m ? Number(m[1]) - 1 : -1;
+      if (i < 0 || i >= C.order.length) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      pick(C.order[i]);
+    }
+    C.order.forEach(function (id, i) {
+      var cls = C[id];
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.tabIndex = -1;
+      btn.className = 'cook-btn boot-row-btn boot-class-btn';
+      var head = document.createElement('span');
+      head.className = 'boot-class-name';
+      head.textContent = (i + 1) + '  ' + cls.label.toUpperCase();
+      btn.appendChild(head);
+      cls.lines.forEach(function (line) {
+        var l = document.createElement('span');
+        l.className = 'boot-class-line';
+        l.textContent = line;
+        btn.appendChild(l);
+      });
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        pick(id);
+      });
+      rows.appendChild(btn);
+    });
+    window.addEventListener('keydown', onKey, true);
+    game.hud.loadNote.appendChild(rows);
+  }
+
+  // Boot tail: restore (CONTINUE) on the ready scene, fade the overlay, run.
+  function enterWorld(cont) {
+    if (cont) window.WH_SAVE.restore(game, window.WH_SAVE.load(game));
+    // L1: the region you stand in at entry is known ground (no XP)
+    window.WH_LEVEL.discover('region', game.regionManager.logic.activeId, true);
+    game.c4.entered = true;
+    // 2026-10-03: smooth fade-out of the boot overlay from CONFIG
+    // (hud.bootOverlayFadeMs); .hidden also releases pointer-events, and
+    // game.hud.loadNote stays in the DOM for any later reuse.
+    var fadeMs = (CFG.hud && typeof CFG.hud.bootOverlayFadeMs === 'number') ?
+      CFG.hud.bootOverlayFadeMs : 900;
+    game.hud.loadNote.style.transition =
+      'opacity ' + (fadeMs / 1000) + 's ease';
+    game.hud.loadNote.classList.add('hidden');
+
+    game.running = true;
+    game.lastFrame = performance.now();
+    requestAnimationFrame(loop);
   }
 
   // R2 P1-8: light socket registry. Static sockets come from the CONFIG props
@@ -1076,11 +3048,27 @@
   // CONFIG tables (no scene walk; region-manager.js untouched) and bolt y
   // comes from the bolt's own pos (Vector3).
   function computeSockets() {
+    var out = computeFireSockets();
+    var bolts = game.firebolts || [];
+    for (var j = 0; j < bolts.length; j++) {
+      var b = bolts[j];
+      if (!b || !b.alive) continue;
+      out.push({ id: 'firebolt#' + j, x: b.pos.x, y: b.pos.y, z: b.pos.z,
+                 intensity: 1.8, weight: 0.6 });
+    }
+    return out;
+  }
+
+  // Static fire-prop sockets of the active region (also the Order E2 'world'
+  // lock lights).
+  function computeFireSockets() {
     var out = [];
     var rm = game.regionManager;
     if (!rm) return out;
     var reg = window.WH_REGION_DEFS.regions[rm.logic.activeId];
     var props = reg && reg.cfg && reg.cfg.props ? reg.cfg.props : [];
+    // C3: deployed kit fires light like any CONFIG fire prop
+    if (game.camp) props = props.concat(game.camp.fireProps(rm.logic.activeId));
     var S = CFG.lightSockets;
     for (var i = 0; i < props.length; i++) {
       var p = props[i];
@@ -1095,37 +3083,34 @@
       var ox = off[0] * c + off[1] * sn;
       var oz = -off[0] * sn + off[1] * c;
       var sx = p.x + ox * p.scale, sz = p.z + oz * p.scale;
+      // C1: a burnt-out cooking station's socket goes dark
+      var inten = game.cooking ? game.cooking.socketIntensity(rm.logic.activeId, p, sd.intensity)
+        : sd.intensity;
+      // CC-C4: sockets ride the prop's terrain seat (A/B: + 0)
+      if (groundHas()) h += window.WH_GROUND.footY(rm.logic.activeId, p.x, p.z,
+        window.WH_REGION_DEFS.regions[rm.logic.activeId].cfg.terrain.propFootR);
       out.push({ id: p.asset + '@' + p.x + ',' + p.z, x: sx, y: h, z: sz,
-                 intensity: sd.intensity, weight: 1 });
+                 intensity: inten, weight: 1 });
+      // CC-AF1: a prop row carrying its own colour (the kit fire tier tint)
+      // forwards it; s = the socket being pushed. poolTick already honors
+      // tgt.color (CC-C7 pattern) - the pool tick is NOT edited
+      var s = out[out.length - 1];
+      if (p.color !== undefined) s.color = p.color;
     }
     // Round F: world-level sockets (gate-arch lantern), live in both regions.
     var ws = rm.worldSockets ? rm.worldSockets() : [];
     for (var w = 0; w < ws.length; w++) out.push(ws[w]);
-    var bolts = game.firebolts || [];
-    for (var j = 0; j < bolts.length; j++) {
-      var b = bolts[j];
-      if (!b || !b.alive) continue;
-      out.push({ id: 'firebolt#' + j, x: b.pos.x, y: b.pos.y, z: b.pos.z,
-                 intensity: 1.8, weight: 0.6 });
+    // CC-C7: the active region's rot-nest lights (always on, green tint,
+    // no flame card - poolTick reads socket.color / socket.noCard)
+    var ls = window.WH_Enemy.lairSockets(rm.logic.activeId);
+    for (var q = 0; q < ls.length; q++) out.push(ls[q]);
+    // CC-H5b: the hazards' wick rows (warn/blast vents ONLY - zero rows at
+    // rest; noCard true + cueHex color, the lair-socket grammar)
+    if (window.WH_HAZARDS) {
+      var hs = window.WH_HAZARDS.socketsFor(rm.logic.activeId);
+      for (var hq = 0; hq < hs.length; hq++) out.push(hs[hq]);
     }
     return out;
-  }
-
-  // R2 P0-3 (fix during validation): lantern flicker — the CONFIG band
-  // (lanternFlickerPct 5) was previously unused; apply the audit's
-  // deterministic two-sine wobble (no Math.random per spec) to the lantern.
-  // Game-time driven via performance.now so it advances even at SwiftShader
-  // low fps. Amplitude = lanternIntensity * flickerPct/100 (±0.325 @6.5).
-  function lanternTick() {
-    if (!game.lantern) return;
-    var LT = CFG.lighting;
-    var pct = LT.lanternFlickerPct !== undefined
-      ? LT.lanternFlickerPct : 0;
-    if (!pct) return;
-    var t = performance.now() / 1000;
-    var w = 0.6 * Math.sin(7.3 * t) + 0.4 * Math.sin(3.1 * t + 1.7);
-    var base = LT.lanternIntensity !== undefined ? LT.lanternIntensity : 6.5;
-    game.lantern.intensity = base * (1 + w * pct / 100);
   }
 
   // R2 P1-8: nearest-socket handoff. One pass per frame: sort sockets by
@@ -1155,14 +3140,92 @@
       if (tgt) {
         l.position.set(tgt.x, tgt.y, tgt.z);
         l.whSocketId = tgt.id;
+        // CC-C7: a tinted socket (rot-nest light) sets its own colour; every
+        // other socket keeps the pool's fire colour
+        l.color.setHex(tgt.color !== undefined ? tgt.color : CFG.lightPool.color);
       }
       var card = game.flameCards[i];
       if (card) {
-        var on = !!tgt && l.intensity > 0.06;
+        var on = !!tgt && !tgt.noCard && l.intensity > 0.06;   // CC-C7: no flame over the rot-light
         card.visible = on;
         if (on) card.position.set(tgt.x,
           tgt.y + 0.06 * Math.sin(2.1 * game.lightPoolT + i * 1.7), tgt.z);
       }
+    }
+  }
+
+  // DAGBLEED: start (or refresh) a bleed on an enemy. dps = damage per
+  // second (callers pass tickFraction x the proccing hit's dealt damage).
+  // CONFIG.combat.bleed.refresh 'reset': one instance per enemy - a re-proc
+  // restarts the full duration and the newer force replaces the older (never
+  // stacks). Enemy.update applies the ticks.
+  function applyBleedToEnemy(enemy, dps, durationSec) {
+    if (!enemy || enemy.fsm === 'dead' || !(dps > 0)) return;
+    var BL = CFG.combat.bleed;
+    enemy.bleed = {
+      dps: dps,
+      ticks: Math.max(1, Math.round(durationSec / BL.tickSec)),
+      next: BL.tickSec
+    };
+  }
+  game.applyBleedToEnemy = applyBleedToEnemy;
+
+  // ---- CC-C7 POISON-LITE v1 + slam knockback (player side) --------------------
+  // doc 62 sec 5.2: damage + slow debuff, NOT a status system. One instance:
+  // a re-apply REFRESHES dps / slow / duration (never stacks). The DOT ticks
+  // once per POISON_TICK_SEC; a non-lethal tick is quiet (no flinch, no cast
+  // fizzle), a lethal one takes the full player.takeDamage death path. The
+  // slow scales the move this update made (walk / sprint / roll / root motion
+  // alike) before the ordinary bounds / props / door / ground clamp. Death
+  // or respawn clears both. enemy.js slamImpact is the only caller.
+  var POISON_TICK_SEC = 1.0;
+  game.poison = null;               // { dps, slow, ticks, next }
+  game.knock = null;                // { x, z, speed, t }
+  function applyPlayerPoison(def, text) {
+    if (!def || !game.player || game.player.state !== 'alive') return;
+    var fresh = !game.poison;
+    game.poison = { dps: def.dps, slow: def.slow,
+      ticks: Math.max(1, Math.round(def.duration / POISON_TICK_SEC)), next: POISON_TICK_SEC };
+    if (fresh && text) game.inventoryUI.toast(text);
+  }
+  function knockbackPlayer(dirX, dirZ, meters, seconds) {
+    var t = Math.max(0.05, seconds || 0.25);
+    game.knock = { x: dirX, z: dirZ, speed: meters / t, t: t };
+  }
+  game.applyPlayerPoison = applyPlayerPoison;
+  game.knockbackPlayer = knockbackPlayer;
+
+  // player.update's clamp callback: slow + knockback first, then the clamp
+  // (game.groundPrevX / doorPrevZ = this frame's pre-move spot)
+  function clampPlayerWithStatus(player) {
+    if (game.poison && player.state === 'alive') {
+      var k = 1 - game.poison.slow;
+      player.pos.x = game.groundPrevX + (player.pos.x - game.groundPrevX) * k;
+      player.pos.z = game.doorPrevZ + (player.pos.z - game.doorPrevZ) * k;
+    }
+    if (game.knock) {
+      var step = Math.min(game.groundDt || 0, game.knock.t);
+      player.pos.x += game.knock.x * game.knock.speed * step;
+      player.pos.z += game.knock.z * game.knock.speed * step;
+      game.knock.t -= game.groundDt || 0;
+      if (game.knock.t <= 0) game.knock = null;
+    }
+    clampPlayerToBounds(player);
+  }
+
+  function poisonTick(dt) {
+    var P = game.poison, p = game.player;
+    if (p.state !== 'alive') { game.poison = null; game.knock = null; return; }
+    if (!P) return;
+    P.next -= dt;
+    while (P && P.next <= 0) {
+      var dmg = P.dps * POISON_TICK_SEC;
+      var ward = window.WH_LEVEL ? window.WH_LEVEL.statTotal('ward') : 0;
+      if (p.hp - dmg * (1 - ward) <= 0) p.takeDamage(dmg);   // lethal: the real death path
+      else p.hp -= dmg * (1 - ward);
+      P.ticks -= 1;
+      P.next += POISON_TICK_SEC;
+      if (P.ticks <= 0 || p.state !== 'alive') { game.poison = P = null; }
     }
   }
 
@@ -1179,23 +3242,45 @@
     var rm = game.regionManager;
 
     // player + transition logic
-    game.player.update(dt, clampPlayerToBounds);
+    game.doorPrevZ = game.player.pos.z;   // CC-C2: door gate crossing-frame test
+    game.groundPrevX = game.player.pos.x; // CC-C4: slope guard pre-move spot (+ doorPrevZ)
+    game.groundDt = dt;
+    game.player.update(dt, clampPlayerWithStatus);   // CC-C7: poison slow + slam knockback, then the clamp
+    poisonTick(dt);                                  // CC-C7: poison-lite DOT
 
-    // ---- v7: cast windup tick (fires the bolt at windup end) ----
-    if (game.player.castWindup > 0 && game.player.state === 'alive') {
-      game.player.castWindup -= dt;
-      if (game.player.castWindup <= 0) {
-        game.player.castWindup = 0;
-        var req = game.player.completeCast();
-        if (req && window.WH_SPELLS) {
-          var bolt = window.WH_SPELLS.spawn(
-            game.scene, req.spellId,
-            { x: req.origin.x, y: 1.2, z: req.origin.z },
-            req.dirX, req.dirZ);
-          if (bolt) game.firebolts.push(bolt);
+    // ---- v7: cast windup tick (fires the bolt at windup end). Order C: both
+    // hands tick independently; 0-2 casts complete per frame. ----
+    var casts = game.player.tickCasts(dt);
+    for (var ci = 0; ci < casts.length && window.WH_SPELLS; ci++) {
+      var req = casts[ci];
+      // L1: a completed cast trains its school line (CONFIG.leveling.spellLines)
+      var castLine = window.WH_LEVEL.spellLine(req.spellId);
+      if (castLine) window.WH_LEVEL.useSkill(castLine, 'cast');
+      if (CFG.spell[req.spellId].kind === 'followLight') {
+        castRadiance(req.spellId);
+      } else {
+        var bolt = window.WH_SPELLS.spawn(
+          game.scene, req.spellId, castOrigin(req), req.dirX, req.dirZ);
+        // L1 Wisdom: spell power multiplies the bolt's CONFIG damage here
+        // (spells.js stays frozen; the bolt reads this.damage on hit), then
+        // the school line's damage passive (x1 at rank 1 / no line)
+        if (bolt) {
+          bolt.damage *= window.WH_LEVEL.statTotal('wisdom') *
+            (castLine ? window.WH_LEVEL.skillMult(castLine, 'damage') : 1);
         }
+        if (bolt) game.firebolts.push(bolt);
       }
     }
+
+    // ---- 10-04: Radiance tick. Independent of the left hand, roll, toggle,
+    // and player state (keeps following through death + respawn). ----
+    for (var ra = 0; ra < game.radiances.length; ra++) game.radiances[ra].update(dt);
+
+    // 10-05: dropped item entities (spin + active-region visibility);
+    // S4: unlooted-corpse glow + sparks (disposed with their corpse)
+    game.worldItems.update(dt, rm.logic.activeId);
+    game.corpseLoot.update(dt, rm.logic.activeId);
+    game.gatherNodes.update(dt, rm.logic.activeId);   // stage 2: respawn tick + markers
 
     // ---- v7: projectile update + collision vs enemies ----
     if (game.firebolts.length > 0) {
@@ -1207,19 +3292,66 @@
       }
       game.firebolts = keep;
     }
+
+    // ---- CC-EC1: enemy bolts (coven casters) - update + collision vs PLAYER.
+    // same keep-alive filter shape as the firebolt loop above. The MD choice:
+    // magicDefense applies HERE, at this call site, EXACTLY ONCE
+    // (reduced = round(dmg * (1 - WH_LEVEL magicDefense fraction))); player.js's
+    // resolveIncomingHit is NOT modified (no double mitigation). Art anchor:
+    // art-direction/concepts/char-09-coven-wizard.png - the bolt is the frame's
+    // ONE cyan accent (0x4fd8c8 family); no red/orange in this block.
+    if (game.enemyBolts.length > 0) {
+      var playerPosEB = game.player.pos;
+      var keepEB = [];
+      for (var eb = 0; eb < game.enemyBolts.length; eb++) {
+        var boltEB = game.enemyBolts[eb];
+        if (boltEB.alive && boltEB.update(dt, playerPosEB)) {
+          if (boltEB.spent && !boltEB.hitApplied) {
+            boltEB.hitApplied = true;   // CC-EC1 IO fix: ONE damage application
+            // per bolt — spent stays true for the 0.15s hit-flash window, so
+            // gating on the first spent frame here prevents the multi-hit.
+            // Damage routes through resolveIncomingHit for roll/block/parry
+            // handling; MD applies here, once:
+            var dmgEB = boltEB.damage;   // CONFIG.enemySpell.covenBolt.damage read as-is
+            var reducedEB = Math.round(dmgEB * (1 - window.WH_LEVEL.magicDefense()));
+            // bare {isSpell, pos} attacker: NO enterStagger, so resolveIncoming-
+            // Hit's parry branch can never stagger a bolt; shield block chips the
+            // already-reduced amount; roll i-frames early-exit unchanged. When the
+            // player is dead (or immune) the hit resolves to false harmlessly - a
+            // spent bolt dies on its 0.15s flash either way and never hits twice.
+            damagePlayerFromEnemy(reducedEB, {
+              isSpell: true,
+              pos: { x: boltEB.pos.x, y: boltEB.pos.y, z: boltEB.pos.z }
+            });
+          }
+          keepEB.push(boltEB);
+        }
+      }
+      game.enemyBolts = keepEB;
+    }
+    denFadeTick(dt);                       // CC-C8: the den door's black dip
     var tr = rm.tickTransition(game.player.pos.x, game.player.pos.z);
     if (tr.action === 'cross') {
       // position already mapped by logic; apply to player
-      game.player.pos.set(tr.mappedPos.x, 0, tr.mappedPos.z);
-      applyRegionLighting(tr.newActiveId);
-      showRegionName(window.WH_REGION_DEFS.regions[tr.newActiveId].name);
-      setGateHint(false);
+      applyCross(tr);
+      // CC-C8: walking out of the den mouth = the same dip, lifting from black
+      if (tr.conn && tr.conn.door && tr.conn.door.land && !game.denFade) {
+        startDenFade(0, tr.conn.door.exitFadeOut, null); // C8/AD1: exitFade rides the crossed conn
+      }
     }
 
     // enemies (active region only)
     rm.updateEnemies(dt, game.player.pos, game.player.state === 'alive',
       function (amount, attacker) { damagePlayerFromEnemy(amount, attacker); },
       rm.logic.activeId);
+
+    // CC-AE1: night raid director (js/ambush.js) - one tick right after the
+    // region's enemy sweep ran
+    window.WH_AMBUSH.tick(dt);
+
+    // CC-H5b: hazards director (js/hazards.js) - one tick right after the
+    // ambush sweep, its own call site (no enemy/hazard coupling)
+    if (window.WH_HAZARDS) window.WH_HAZARDS.tick(dt);
 
     // attack sweep vs enemies
     var sweep = game.player.consumeAttackSweep();
@@ -1240,9 +3372,33 @@
           dmg *= CFG.block.riposteMult;
           e.riposteArmed = false;
         }
+        // L1 Long Blade rank: damage passive (x1 at rank 1). DAG: the
+        // sweep's weapon line (WH_LEVEL.weaponLine): longsword / handAxe =
+        // longBlade as before, dagger = shortBlade (+2% / rank)
+        var meleeLine = window.WH_LEVEL.weaponLine(sweep.weaponId);
+        dmg *= window.WH_LEVEL.skillMult(meleeLine, 'damage');
+        // L1 Precision: melee crit roll (chance 0 with no points = no roll
+        // effect; Math.random is the explicit, only randomness here). DAG:
+        // + the line's critChance passive (Short Blade +1% / rank; lines
+        // without one add 0, so the longsword roll is unchanged)
+        var crit = Math.random() < window.WH_LEVEL.statTotal('precision') +
+          window.WH_LEVEL.skillPassive(meleeLine, 'critChance');
+        if (crit) {
+          dmg *= CFG.leveling.critMult;
+          flashScreen(CFG.leveling.critFlashSeconds, 'crit');
+        }
         // v3: pass hit direction (player -> enemy) for stagger knockback
         var hitDir = dist > 0.001 ? { x: dx / dist, z: dz / dist } : null;
+        var hpBefore = e.hp;
         e.takeDamage(dmg, hitDir);
+        // DAGBLEED: dagger main-hand hits roll the bleed (longsword / handAxe
+        // never do); basis = this hit's dealt damage (post line mult, crit,
+        // and the enemy's own guard mult - read off the hp it removed)
+        if (sweep.weaponId === 'dagger' && Math.random() < CFG.combat.bleed.hitChance) {
+          applyBleedToEnemy(e, CFG.combat.bleed.tickFraction * (hpBefore - e.hp),
+            CFG.combat.bleed.durationSec);
+        }
+        window.WH_LEVEL.useSkill(meleeLine, 'hit');   // L1: a landed hit trains Long Blade (DAG: dagger -> Short Blade)
         // v7: 3rd chain strike landing (consumeAttackSweep consumed) arms
         // the armed finisher window. Use chainHits counter (robust to
         // comboIndex resets from recoverFullyElapsed). 10-04: threshold is
@@ -1259,6 +3415,9 @@
     // Animation is presentation-only: sample the FSM after combat has consumed
     // its strike window, then advance every mixer before rendering.
     if (game.player.anim) game.player.anim.syncPlayer(game.player, dt);
+    // S3 tweak: raised-arm torch carry - additive bone overlay, must run
+    // after the player mixer so it composes onto the clip's fresh pose.
+    if (game.player.anim) game.player.applyTorchCarryPost(dt);
     var animRegions = Object.keys(rm.enemies);
     for (var ar = 0; ar < animRegions.length; ar++) {
       var animList = rm.enemies[animRegions[ar]];
@@ -1267,16 +3426,45 @@
       }
     }
 
+    updateRiposteMarkers();   // Order D
+    updateBleedMarkers();     // DAGBLEED
+
     // lock-on break conditions + reticle (D3)
     updateLockOn();
 
     game.player.updateCamera(dt);
+    cameraGroundFloor();   // CC-C4 (C only)
     applyCameraShake(dt);
     poolTick(dt);   // R2: fixed light pool nearest-socket handoff
+    // 10-05: earned player light - hand lights follow hands + bindings this
+    // frame, projectile lights follow live bolts (flicker per light)
+    game.playerLight.update(game.player, game.firebolts);
+    // CC-LS1: contact blobs ride the actors' ground this frame
+    if (window.WH_SHCONTACTS) window.WH_SHCONTACTS.update();
+    game.dayNight.tick(dt);   // C2: day/night clock (frozen while dormant)
+    applyDayNight();    // C2: phase look -> lights / fog / sky (before the cemetery ramp)
+    // P1-3 (io/specs/P1-3-crossfade-ground-split-spec.md): the region
+    // crossfade ease sits exactly between applyDayNight (whose write the
+    // fade overrides each frame) and cemeteryFogTick (the graveyard ramp
+    // re-reads its base from the eased fog next frame). One null check
+    // while no fade is live.
+    regionFadeTick(dt);   // WH_P1_3_REGIONFADE_V1 (fog + hemi crossfade)
     cemeteryFogTick();  // Round H: graveyard fog ramp (region A)
-    lanternTick();  // R2: lantern wobble (CONFIG lanternFlickerPct)
     skyTick();      // 10-03 order 4: star twinkle clock
+    // C1: fire burn + cook channel (after combat so this frame's hits interrupt)
+    game.cooking.update(dt);
+    game.camp.update();   // C3: camp groups per region, placement ghost, menu close on death
+    if (window.WH_NPC) window.WH_NPC.update(dt);   // CC-C10: farmer show/cull, name plate, dialog close on death
+    if (window.WH_JOURNAL) window.WH_JOURNAL.update(dt);   // QJR-1
+    if (window.WH_BESTIARY) window.WH_BESTIARY.update(dt);   // QJR-4: event-driven codex
+    // CC-C11: spawn / re-place / region gate after the camp and quest updates.
+    if (window.WH_Chest) window.WH_Chest.update(dt);
+    updateQuestLine();    // CC-C10: HUD quest line (findDaughter active)
+    applyBuffStats();   // C1: effective hpMax from active food buffs
     updateHud(dt);
+    updateEnemyBars(dt);   // HP1: after the camera update so bars track this frame
+    updateDayClock();      // HP2: dormant-gated day/night dial
+    updateInteractPrompt();
     game.renderer.render(game.scene, game.camera);
   }
 

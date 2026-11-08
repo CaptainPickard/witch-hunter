@@ -1,0 +1,67 @@
+{
+ "round_trip": {
+  "vertex_data_max_diff": {
+   "JOINTS_0": 0.0,
+   "NORMAL": 0.0,
+   "POSITION": 0.0,
+   "TEXCOORD_0": 0.0,
+   "WEIGHTS_0": 0.0,
+   "indices": 0.0
+  },
+  "rest_trs": 0.0,
+  "r_hand_socket": 0.0,
+  "ibm": 0.0,
+  "WH_Attack1": 6.079379766266158e-08,
+  "WH_Death": 7.691085424088584e-08,
+  "WH_Hit": 5.961376048357891e-08,
+  "WH_Idle": 6.860490742166547e-08,
+  "WH_Run": 6.424047382935782e-08,
+  "WH_Walk": 7.323109230128466e-08
+ },
+ "clips": {
+  "WH_DagSlashR2L": {
+   "duration_s": 0.3799999952316284,
+   "spec_s": 0.38,
+   "duration_err_pct": 0.0,
+   "ground_samples": 22,
+   "min_vertex_y": -1.0,
+   "min_tip_y": 0.1053,
+   "hand_dx": 0.4991,
+   "blade_yaw_deg": 122.7,
+   "blade_max_pitch_deg": 4.9,
+   "max_hand_y": 0.3397,
+   "shoulder_y": 0.555
+  },
+  "WH_DagSlashL2R": {
+   "duration_s": 0.3799999952316284,
+   "spec_s": 0.38,
+   "duration_err_pct": 0.0,
+   "ground_samples": 22,
+   "min_vertex_y": -1.0,
+   "min_tip_y": 0.1053,
+   "hand_dx": -0.4922,
+   "blade_yaw_deg": 122.5,
+   "blade_max_pitch_deg": 5.4,
+   "max_hand_y": 0.3495,
+   "shoulder_y": 0.555
+  },
+  "WH_DagSlashR2Lb": {
+   "duration_s": 0.699999988079071,
+   "spec_s": 0.7,
+   "duration_err_pct": 0.0,
+   "ground_samples": 35,
+   "min_vertex_y": -1.0,
+   "min_tip_y": 0.1053,
+   "hand_dx": 0.5468,
+   "blade_yaw_deg": 126.9,
+   "blade_max_pitch_deg": 3.9,
+   "max_hand_y": 0.3494,
+   "shoulder_y": 0.555
+  }
+ },
+ "ground_ref": {
+  "bind_min_y": -0.9999999158797015,
+  "idle_t0_min_y": -1.0039998559958763
+ },
+ "fails": []
+}

@@ -1,0 +1,29 @@
+CC-C17b INTEGRATION V2 — you are Claude Code performing the spooky-forest integration in the repo at /tmp/wh-worldfeat (branch feat/world-visuals, worktree).
+
+READ FIRST (source of truth): /tmp/wh-worldfeat/io/missions/2026-10-20-cc-c17b-integration-v2.md
+Then EXECUTE its order of work (steps 0-8) EXACTLY: 9 manifest assets, trimmed farm site, ruin accent, sentinel trees, spooky den-corridor dressing, full ledger2 at both probe centres, build v8 + markers, REPORT-v2.md.
+
+RECON FACTS (verified this round, 2026-10-20 05:0x — these carry, do not re-derive):
+- All pixelated GLBs EXIST at art-direction/3d/assets/old_king/ including ok-fence-corner-v2-pixelated.glb (2499 tris, 59504 bytes) and ok-fence-corner-v3 (do not use v3; brief wants v2).
+- Measured tris (glTF accessor count/3, width/height from accessor min/max): okFarmCottage 28632 (w 1.65 h 1.90), okFarmWell 11481 (1.42/1.90), okTreeOak 28721 (1.85/1.83), okTreePine 23999 (0.85/1.87), okFencePost 2866 (1.90/0.65), okFenceGate 2588 (1.89/1.80), okFenceStonewall 2487 (1.89/0.65), okFenceCornerV2 2499 (1.89/1.27), okRuinArch 7900 (1.36/1.90), okRuinColumn 4140 (0.96/1.89).
+- The brief's tree-line says ~57.4k oak — the actual bake is 28721 tris; use the MEASURED numbers in your ledger.
+- Ledger probe (works): node scratch/cc_c8_ledger_probe.js /tmp/wh-worldfeat 0 -366 170   and  -175 -266 170. Baseline (no C17 rows): 93.3% at (14,-280) and 92.1% at (-11,-294); missing tri rows: churchArchway,churchCornerButtress,stoneSteps,stoneCrossTilted -> count 4k/2k/5k/4k in YOUR ledger2 per the brief.
+- blightcap + skullPile manifest keys ALREADY EXIST (assets.js m14/crypt kit) — the spooky rows reuse them; deadTree already in CONFIG tri table. Do NOT re-add manifest keys for those.
+- CONFIG.js regionC props array currently ends at the 4 CC-C16b banditCampfire rows (around line 1053-1057, closing bracket after). Append your CC-C17 rows before the closing bracket, each row commented // CC-C17. Keep EVERY existing row untouched (C16b fires, C13b clusters, C8 outcrop, all else).
+- assets.js: window.WH_CONFIG.assets manifest object sits near the top (m14 keys around line 68-72). Add your 9 keys as one commented block // CC-C17 (ok-Farm-Cottage style path: art-direction/3d/assets/old_king/<kebab-name>-pixelated.glb). No other assets.js changes.
+- region-manager.js colliderRadius uses regex /tree|oak|birch|sapling|bush|bramble|fern|shrub|stump/ x 0.25 TRUNK — so okTreeOak/okTreePine/deadTree get trunk colliders, fences/wells/columns full footprint.
+- Region C center: CONFIG.regionC.center is (0, -366); den outcrop doorway interactAt (-163.4, -202.6); den corridor bearing 225 band r 200-235 from the Stone.
+
+ORDER OF WORK (v2 brief steps): 0 recon carried -> 1 manifest -> 2 FARM probe+rows -> 3 RUIN accent (arch+2 columns at the (-101,-207) cluster; cluster-envelope probe) -> 4 TREES (2 oak sentinels bearing 210/240 r 232, 12-14 scale + 1 pine at N bend (-15,-570) scale 12) -> 5 SPOOKY (2 deadTree + 2 blightcap + 1 skullPile along bearing 225 band spaced ~26 m, r 200-235 + 3 mossBoulder ring fragment bearing 200 r 238 scale 2.2-2.8) -> 6 ledger2.py in scratch/cc-c17/ (repo-stub pattern like scratch/cc_c8_ledger_probe.js; add your measured tri rows + the 4 stub rows 4k/2k/5k/4k; run BOTH centres (0,-366) + (-175,-266) R 170; PASS = both <= 1980000) -> 7 python3 tools/build_v8.py + node --check prototype/js/CONFIG.js + grep markers -> 8 scratch/cc-c17/REPORT-v2.md.
+
+ROW SHAPE LAW: every new CONFIG row = { asset: 'x', x: N, z: N, rotY: N, scale: N, cullM: 140 } — cullM 140 for tall assets (oak/pine); cullM 120 for small props (fence posts, blightcap, skullPile) per the brief's local scatter cull band.
+
+PROBE BEFORE PASTE: for the farm site, write scratch/cc-c17/farm_probe.cjs (pattern: scratch/cc13b_probe.cjs — parse CONFIG.js rows, segDist road model, colliderR with trunk rule, gates: cluster-centre rule vs other props >= 26, roads >= 35, fires >= 45, wolf loops >= 60, NOT bearing 225 +-15, zones 48) and RUN it; only then paste rows into CONFIG.js. Re-run after paste to confirm the file matches.
+
+HARD LAWS: NO git add/commit/push. NO harness/browser/dev-server. node --check prototype/js/CONFIG.js after EVERY edit. Probes before paste. Do not move den/tent/cook-fire/Stone rows. Write scope: prototype/js/CONFIG.js + prototype/js/assets.js (manifest only) + scratch/ + io/reports/.
+
+FINISH LINE — your final message must contain EXACTLY one line:
+CC-C17 INTEGRATION-V2 DONE rows-added <N> ledger PASS build <bytes>
+where <N> = rows you added to CONFIG.js and <bytes> = the build_v8.py output size of prototype/builds/v8-playable.html.
+
+If a step is blocked, DO NOT stop early: report the blocker in scratch/cc-c17/REPORT-v2.md under BLOCKERS and continue with the unblocked steps.

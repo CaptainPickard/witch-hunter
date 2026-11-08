@@ -1,0 +1,77 @@
+[
+{
+"asset": "deadTree",
+"x": -144.7,
+"z": -180.8,
+"rotY": 1.1,
+"scale": 8.6,
+"cullM": 140,
+"_c": "CC-C17 den-corridor dead tree (N of the approach)"
+},
+{
+"asset": "deadTree",
+"x": -176.5,
+"z": -233.0,
+"rotY": 3.4,
+"scale": 9.2,
+"cullM": 140,
+"_c": "CC-C17 den-corridor dead tree (S of the approach)"
+},
+{
+"asset": "skullPile",
+"x": -148.7,
+"z": -206.6,
+"rotY": 2.4,
+"scale": 1.2,
+"cullM": 120,
+"_c": "CC-C17 den-corridor skull pile (nearest the mouth)"
+},
+{
+"asset": "blightcap",
+"x": -149.8,
+"z": -233.5,
+"rotY": 0.5,
+"scale": 1.4,
+"cullM": 120,
+"_c": "CC-C17 den-corridor blightcap"
+},
+{
+"asset": "blightcap",
+"x": -123.1,
+"z": -199.6,
+"rotY": 2.2,
+"scale": 1.6,
+"cullM": 120,
+"_c": "CC-C17 den-corridor blightcap"
+},
+{
+"asset": "mossBoulder",
+"x": -76.3,
+"z": -140.4,
+"rotY": 0.9,
+"scale": 2.8,
+"y": -1.18,
+"cullM": 120,
+"_c": "CC-C17 ring fragment (half-swallowed, sink 0.3 x height)"
+},
+{
+"asset": "mossBoulder",
+"x": -80.7,
+"z": -144.2,
+"rotY": 3.1,
+"scale": 2.2,
+"y": -0.93,
+"cullM": 120,
+"_c": "CC-C17 ring fragment (half-swallowed, sink 0.3 x height)"
+},
+{
+"asset": "mossBoulder",
+"x": -86.6,
+"z": -144.1,
+"rotY": 5.0,
+"scale": 2.5,
+"y": -1.05,
+"cullM": 120,
+"_c": "CC-C17 ring fragment (half-swallowed, sink 0.3 x height)"
+}
+]

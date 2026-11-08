@@ -1,0 +1,303 @@
+// CC-WB1 war-effort contract board - io/missions/2026-11-06-cc-wb1-warboard.md
+// (IO spec io/specs/cc-wb1-warboard-spec.md; valspec io/specs/cc-wb1-warboard-valspec.md).
+// window export: WH_WAREFFORT (WH_WarEffort alias, IO-spec name). IIFE 'use strict' body, chest.js clone convention.
+;(function () {
+  'use strict';
+  var CFG = window.WH_CONFIG;
+  var W = CFG.warEffort || {};         // module reads only; every field guarded (chest.js law)
+  var RQ = W.requisition || {};
+  var game = null, body = null, panel = null, rowBtns = null;
+  var open = false;
+  // State model: the day-row desks (valspec B-5/B-7) ride { done } per dayKey;
+  // { active, postedDay, resolvedDay } documents the board lifecycle (IO B-5
+  // payload keys; capture/restore round-trips exactly these + done).
+  var state = { active: false, postedDay: null, resolvedDay: null, done: {} };
+
+  function el(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  // The CONFIG prop row is the data-locked SEAT record (B-1); the module
+  // claims it at load, before any region build - a manifest-less asset would
+  // withhold region A's wall/scatter plans (region-manager meta gate) and
+  // draw a grey stand-in, so the row documents the seat and the module builds
+  // its own board mesh (IO B-6 art law holds: code-built, engine untouched).
+  function claimSeatRow() {
+    var A = CFG.regionA;
+    if (!A || !A.props) return null;
+    for (var i = 0; i < A.props.length; i++) {
+      if (A.props[i] && A.props[i].asset === 'warBoard') return A.props.splice(i, 1)[0];
+    }
+    return null;
+  }
+  var seatRow = claimSeatRow();
+
+  function boardPos() {                // {x,z} for tests (IO B-3 surface)
+    var s = (seatRow && typeof seatRow.x === 'number') ? seatRow : (W.boardSeat || {});
+    return { x: s.x, z: s.z };
+  }
+
+  function dayNumber() {               // 0 = dormant tutorial night (daynight census (b))
+    return (game && game.dayNight && typeof game.dayNight.day === 'number') ? game.dayNight.day : 0;
+  }
+
+  // NEW DAY LAW: one requisition per day. No timers, no tick hook - the roll
+  // runs on interaction only (cheap, deterministic, doc 42 cadence).
+  function rollDay() {
+    var d = dayNumber();
+    if (state.resolvedDay !== null && d > state.resolvedDay) {
+      toast((W.expiryToast || 'Day {name} requisition expired.')
+        .replace('{name}', String(state.resolvedDay)));
+      state.active = false; state.postedDay = null; state.resolvedDay = null;
+    }
+  }
+
+  function toast(t) {
+    if (game && game.inventoryUI && typeof game.inventoryUI.toast === 'function') {
+      game.inventoryUI.toast(t);
+    }
+  }
+
+  // Bag reads: the game surface's live inventory first (game.inventory ===
+  // the WH_INVENTORY.active instance at runtime, census (e)); the static
+  // facade stands in when a caller hands no live bag (probe shim).
+  function inv() {
+    var gi = game && game.inventory;
+    if (gi && typeof gi.addItem === 'function' && typeof gi.countOf === 'function') return gi;
+    return window.WH_INVENTORY || null;
+  }
+  function itemName(id) {
+    var def = CFG.items ? CFG.items[id] : null;
+    return (def && def.name) || id;
+  }
+  function invCount(id) {
+    var bag = inv();
+    return bag && typeof bag.countOf === 'function' ? (bag.countOf(id) || 0) : 0;
+  }
+
+  // today's desk: day1/day2 rows live on their day; day3 re-signs forever
+  // (the never-blocked law) - day 4+ reads the day3 renewal desk.
+  function todayKey() {
+    var d = dayNumber();
+    if (d <= 1) return 'day1';
+    if (d === 2) return 'day2';
+    return 'day3';
+  }
+
+  // B-5/B-7 turn-in desks: tryTurnIn(dayKey) runs that day row against the
+  // inventory accessors (addItem/removeItem/countOf). Returns true on a
+  // live, unfilled, right-day contract that was just filled.
+  function tryTurnIn(dayKey) {
+    var row = W[dayKey];
+    var bag = inv();
+    if (!row || typeof row !== 'object' || !row.requires || !row.reward ||
+        !bag || typeof bag.removeItem !== 'function' ||
+        typeof bag.addItem !== 'function' || typeof bag.countOf !== 'function') return false;
+    if (dayNumber() !== Number(dayKey.slice(3))) return false;       // wrong-day refusal
+    state.done = state.done || {};
+    if (row.once && state.done[dayKey]) return false;                // day-1: one-time
+    if (row.daily && state.done[dayKey] === dayNumber()) return false; // daily: same-day repeat
+    var req = row.requires, removed = bag.removeItem(req.id, req.count) || 0;
+    if (removed < req.count) {                                       // partial fit: take back (gather law)
+      if (removed > 0) bag.addItem(req.id, removed);
+      toast('Not enough ' + itemName(req.id) + '. (' + invCount(req.id) + '/' + req.count + ')');
+      return false;
+    }
+    var rw = row.reward, granted = bag.addItem(rw.id, rw.count) || 0;
+    state.done[dayKey] = dayNumber();
+    state.active = false; state.resolvedDay = dayNumber();
+    toast((W.turnedInToast || '{id} requisition turned in.')
+      .replace('{id}', itemName(rw.id)));
+    return granted > 0;
+  }
+
+  // Day-3 re-sign: a function plus a static flag so the never-blocked law is
+  // provable without a turn (valspec B-7.2 accepts either shape).
+  function renew() {
+    var k = todayKey(), row = W[k];
+    if (!row) return false;
+    if (row.once) return !state.done[k];
+    return state.done[k] !== dayNumber();
+  }
+
+  // ---- board body: concept-04-tavern anchor (art law) -----------------------------
+  // Desaturated oak / parchment cream / oxidized iron; ONE amber emissive
+  // lantern = the single warm note. No red anywhere.
+  function buildBody(pos) {
+    var root = new THREE.Group();
+    root.name = 'cc-wb1-war-effort-board';
+    var oak = new THREE.MeshStandardMaterial({ color: 0x4a3a2a, roughness: 1 });
+    var dark = new THREE.MeshStandardMaterial({ color: 0x3d2b1f, roughness: 0.95 });
+    var parch = new THREE.MeshStandardMaterial({ color: 0xd2b48c, roughness: 1,
+      side: THREE.DoubleSide });
+    var iron = new THREE.MeshStandardMaterial({ color: 0x6e6a63, roughness: 0.8, metalness: 0.4 });
+    var pl = new THREE.Mesh(new THREE.BoxGeometry(0.18, 2.2, 0.18), oak);
+    pl.position.set(-0.8, 1.1, 0); root.add(pl);                     // posts
+    var pr = pl.clone(); pr.position.x = 0.8; root.add(pr);
+    var frame = new THREE.Mesh(new THREE.BoxGeometry(1.9, 1.1, 0.12), dark);
+    frame.position.y = 1.5; root.add(frame);                         // board face
+    for (var i = 0; i < 3; i++) {                                    // parchment papers
+      var p = new THREE.Mesh(new THREE.PlaneGeometry(0.48, 0.62), parch);
+      p.position.set(-0.55 + i * 0.55, 1.5 + (i - 1) * 0.06, 0.08);
+      p.rotation.y = (i - 1) * 0.06;                                 // slight rotY jitter (nail slouch)
+      root.add(p);
+    }
+    var strip = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.09, 0.05), iron);
+    strip.position.set(0, 2.0, 0.08); root.add(strip);               // iron bracket strip
+    var arm = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.05, 0.05), iron);
+    arm.position.set(0.68, 2.34, 0.1); root.add(arm);                // lantern arm
+    var lamp = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.22, 0.16),
+      new THREE.MeshStandardMaterial({ color: 0x332a1a, roughness: 0.6,
+        emissive: 0xffb347, emissiveIntensity: 0.9 }));              // THE one amber accent (lone hex: grep law)
+    lamp.position.set(0.85, 2.26, 0.1); root.add(lamp);
+    root.position.set(pos.x, 0, pos.z);                              // region A FLAT: y = 0
+    root.rotation.y = pos.rotY;
+    game.scene.add(root);
+    return root;
+  }
+
+  // ---- panel (live page only; the node shim has no DOM) ----------------------------
+  function buildPanel() {
+    var root = el('div'); root.id = 'wh-wareffort-menu';
+    root.style.cssText = 'position:absolute;inset:0;display:none;align-items:flex-end;justify-content:center;' +
+      'padding-bottom:8%;box-sizing:border-box;background:rgba(5,4,3,.6);z-index:20;' +
+      'font-family:monospace;color:#d8d2c0;image-rendering:pixelated;user-select:none;';
+    var box = el('div', 'inv-panel'); box.style.cssText = 'max-width:640px;width:94%;max-height:82vh;overflow-y:auto;';
+    root.appendChild(box);
+    box.appendChild(el('div', 'inv-title', W.title || 'WAR BOARD'));
+    box.appendChild(el('div', 'inv-hint', 'One requisition per day - fill it at the board.'));
+    rowBtns = el('div', 'cook-btns');
+    rowBtns.style.cssText = 'display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;';
+    box.appendChild(rowBtns);
+    var row = el('div', 'cook-btns');
+    var done = el('button', 'cook-btn', 'Close');
+    done.type = 'button'; done.tabIndex = -1; done.addEventListener('click', close);
+    row.appendChild(done); box.appendChild(row);
+    box.appendChild(el('div', 'inv-hint', 'Esc close.'));
+    document.getElementById('wh-root').appendChild(root);
+    panel = root;
+  }
+
+  function renderRows() {
+    if (!panel || !rowBtns) return;
+    var keys = ['day1', 'day2', 'day3'];
+    rowBtns.textContent = '';
+    keys.forEach(function (k) {
+      var rowDef = W[k] || {}, req = rowDef.requires || {};
+      var doneToday = state.done && state.done[k] === dayNumber();
+      var gone = rowDef.once && state.done && state.done[k];
+      var label = (rowDef.title || k) + ' - ' + itemName(req.id) +
+        ' ' + invCount(req.id) + '/' + (req.count || 0) +
+        (gone ? ' (signed)' : doneToday ? ' (signed today)' : '');
+      var btn = el('button', 'cook-btn', label);
+      btn.type = 'button'; btn.tabIndex = -1;
+      btn.disabled = gone || doneToday || !renew();
+      btn.addEventListener('click', function () { tryTurnIn(k); renderRows(); });
+      rowBtns.appendChild(btn);
+    });
+  }
+
+  // proximity gate: region A + CONFIG board radius (chest.js law). The
+  // regionManager read is optional so probe shims without one still gate on
+  // distance alone (the live page always has the manager).
+  function near() {
+    if (!game || !game.player || !game.player.pos) return false;
+    if (game.regionManager) {
+      var activeId = game.regionManager.logic.activeId;
+      if (activeId !== 'hold_outskirts') return false;
+    }
+    var p = game.player.pos, pos = boardPos();
+    var B = W.board || {};
+    var r = B.rangeM || 2.6;           // PROPOSED, chest-feel (board block comment)
+    return game.player.state === 'alive' && !game.player.inputSuspended &&
+      Math.hypot(p.x - pos.x, p.z - pos.z) <= r;
+  }
+
+  // prompt: the CONFIG string near the board, the close hint while open,
+  // empty far (valspec B-2 contract).
+  function interactPrompt() {
+    if (open) return 'Esc to close - War Board';
+    return near() ? (W.prompt || 'E - War Board') : '';
+  }
+
+  function tryBoard() {                // proximity-gated E interaction
+    if (!near() || open) return false;
+    rollDay();
+    renderRows();                      // no-op without a DOM panel
+    open = true;
+    if (panel) panel.style.display = 'flex';
+    if (game.inventoryUI) game.inventoryUI.blocked = true;
+    if (game.player.setInputSuspended) game.player.setInputSuspended(true);
+    return true;
+  }
+  function tryOpen() { return tryBoard(); }   // IO-spec B-3 name (same gate)
+
+  function close() {
+    if (!open) return;
+    open = false;
+    if (panel) panel.style.display = 'none';
+    if (game && game.inventoryUI) game.inventoryUI.blocked = false;
+    if (game && game.player && game.player.setInputSuspended) game.player.setInputSuspended(false);
+  }
+  function isOpen() { return open; }
+
+  // C-9 persistence: capture() = plain JSON of the payload keys; restore()
+  // merges known-shape only, null/undefined = no-op (chest.js law), an
+  // object with none of the payload keys = fresh idle board. Nested per-day
+  // rows ({ day1: { done: true }, day2: { doneDay: n } }) merge into done.
+  function capture() {
+    return { active: state.active, postedDay: state.postedDay,
+      resolvedDay: state.resolvedDay, done: state.done };
+  }
+  function restore(data) {
+    if (data === undefined || data === null || typeof data !== 'object') return;
+    var known = 'active' in data || 'postedDay' in data ||
+      'resolvedDay' in data || 'done' in data;
+    if (!known && !('day1' in data || 'day2' in data || 'day3' in data)) {
+      state.active = false; state.postedDay = null; state.resolvedDay = null; state.done = {};
+      return;
+    }
+    state.active = data.active === true;
+    state.postedDay = typeof data.postedDay === 'number' ? data.postedDay : null;
+    state.resolvedDay = typeof data.resolvedDay === 'number' ? data.resolvedDay : null;
+    state.done = state.done || {};
+    if (data.done && typeof data.done === 'object') {
+      Object.keys(data.done).forEach(function (k) {
+        if (typeof data.done[k] === 'number') state.done[k] = data.done[k];
+      });
+    }
+    ['day1', 'day2', 'day3'].forEach(function (k) {                  // nested per-day rows
+      var r = data[k];
+      if (!r || typeof r !== 'object') return;
+      if (r.done === true) state.done[k] = state.done[k] || 1;
+      if (typeof r.done === 'number') state.done[k] = r.done;
+      if (typeof r.doneDay === 'number') state.done[k] = r.doneDay;
+    });
+    renderRows();
+  }
+
+  function init(g) {
+    game = g;
+    var pos = boardPos();
+    pos.rotY = (seatRow && typeof seatRow.rotY === 'number') ? seatRow.rotY : 3.14;
+    if (game && game.scene && window.THREE) body = buildBody(pos);
+    if (typeof document !== 'undefined' && document.getElementById('wh-root')) {
+      buildPanel();
+      document.addEventListener('keydown', function (e) {
+        if (e.code !== 'Escape' || e.repeat || !open) return;
+        e.preventDefault(); close();
+      });
+    }
+  }
+
+  window.WH_WAREFFORT = { init: init, interactPrompt: interactPrompt, tryBoard: tryBoard,
+    tryOpen: tryOpen, close: close, isOpen: isOpen, tryTurnIn: tryTurnIn, renew: renew,
+    day3Available: true, capture: capture, restore: restore, boardPos: boardPos
+  };
+  // IO-spec naming: single source of truth, second name (spec B-3 said
+  // WH_WarEffort; valspec pins WH_WAREFFORT - the module serves both).
+  window.WH_WarEffort = window.WH_WAREFFORT;
+})();

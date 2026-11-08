@@ -62,9 +62,30 @@
     fallenLog: 'art-direction/3d/assets/biome_library/m7-pixelated.glb',
     treeStump: 'art-direction/3d/assets/biome_library/m8-pixelated.glb',
     mossBoulder: 'art-direction/3d/assets/biome_library/m9-pixelated.glb',
+    // CC-C7 nest props: the EXISTING biome-library bone/rib pile (B6 batch,
+    // on disk since the biome pass; 10,889 tris) - first manifest row.
+    b6Bones: 'art-direction/3d/assets/biome_library/b6-bones-pixelated.glb',
+    // CC-C8 den furniture: the EXISTING m14 blightcap (5,786 tris) + the crypt
+    // kit's stone steps (4,843) and skull pile (4,733) - first manifest rows.
+    blightcap: 'art-direction/3d/assets/biome_library/m14-blightcap-pixelated.glb',
+    stoneSteps: 'art-direction/3d/assets/crypt/stone-steps-pixelated.glb',
+    skullPile: 'art-direction/3d/assets/crypt/skull-pile-pixelated.glb',
+    // CC-C11: crypt furniture (already pixelated, deferred).
+    stoneSarcophagus: 'art-direction/3d/assets/crypt/stone-sarcophagus-pixelated.glb',
     // R2: darkwood light-socket props (doc 61 batches B2/B3)
     banditCampfire: 'art-direction/3d/assets/biome_library/m15-bandit-campfire-pixelated.glb',
     lanternWaymarker: 'art-direction/3d/assets/biome_library/b3-waymarker-pixelated.glb',
+    // C3 camps (js/camp.js): the bandit camp's world bedroll + the kit's
+    // placeholder bedroll (CONFIG.camp.assets)
+    banditBedroll: 'art-direction/3d/assets/biome_library/m16-bandit-bedroll-pixelated.glb',
+    // C3.1c (Nicko 10-06): HIS Meshy tent (share C78d78, task 01a1130b) -
+    // dreary medieval 1-person canvas, door +Z, bed roll modeled inside.
+    // 1584k tris raw -> 30k decimated, per-face UV medoid, 512+5bit.
+    // (scratch/tent_bake_c31c.py + tent_rebake_nodefault.py)
+    whTent: 'art-direction/3d/assets/camp/wh-tent-pixelated.glb',
+    // CK1 (Nicko 10-07): the player camp kit - ONE composed site, 4 root nodes
+    // (tent / bedroll / firepit / pegs); camp.js makePiece extracts per node.
+    whCampkit: 'art-direction/3d/assets/camp/wh-campkit-pixelated.glb',
 
     // church-kit props + trees
     // Round K (io/roundK-provenance.md): Meshy lantern-post-v2, one welded piece, decimated
@@ -81,23 +102,104 @@
     churchPewBroken: 'art-direction/3d/assets/church-kit/church-pew-broken-pixelated.glb',
     ironFenceSection: 'art-direction/3d/assets/church-kit/iron-fence-section-pixelated.glb',
     ironFenceCorner: 'art-direction/3d/assets/church-kit/iron-fence-corner-pixelated.glb',
+    // CC-B1 (2026-11-07): ruined-chapel landmark pieces (doc 61 P1-2, region B);
+    // all on-disk -pixelated.glb variants, manifest rows only (dims/colliders
+    // derive at load — see io/specs/cc-b1-chapel-spec.md)
+    churchWallWindow: 'art-direction/3d/assets/church-kit/church-wall-window-pixelated.glb',
+    churchWindowFrame: 'art-direction/3d/assets/church-kit/church-window-frame-pixelated.glb',
+    churchRoofBeam: 'art-direction/3d/assets/church-kit/church-roof-beam-pixelated.glb',
+    churchAltar: 'art-direction/3d/assets/church-kit/church-altar-pixelated.glb',
+    churchPulpit: 'art-direction/3d/assets/church-kit/church-pulpit-pixelated.glb',
+    churchPew: 'art-direction/3d/assets/church-kit/church-pew-pixelated.glb',
+    candelabra: 'art-direction/3d/assets/church-kit/candelabra-pixelated.glb',
+    // CC-C17 (2026-10-20): Old King's Forest kit (Astrabot Meshy bakes, 512
+    // NEAREST + 5-bit; ~1.9-unit normalized GLBs). Region C streaming props -
+    // NOT bootCritical. Barn/silo/haybale/rubble/ruin-wall bakes are on disk
+    // but deferred (tri budget); ok-fence-corner v2 IS wired (IO v2 ruling).
+    okFarmCottage: 'art-direction/3d/assets/old_king/ok-farm-cottage-pixelated.glb',
+    okFarmWell: 'art-direction/3d/assets/old_king/ok-farm-well-pixelated.glb',
+    okTreeOak: 'art-direction/3d/assets/old_king/ok-tree-oak-pixelated.glb',
+    okTreePine: 'art-direction/3d/assets/old_king/ok-tree-pine-pixelated.glb',
+    okFencePost: 'art-direction/3d/assets/old_king/ok-fence-post-pixelated.glb',
+    okFenceGate: 'art-direction/3d/assets/old_king/ok-fence-gate-pixelated.glb',
+    okFenceStonewall: 'art-direction/3d/assets/old_king/ok-fence-stonewall-pixelated.glb',
+    okFenceCornerV2: 'art-direction/3d/assets/old_king/ok-fence-corner-v2-pixelated.glb',
+    okRuinArch: 'art-direction/3d/assets/old_king/ok-ruin-arch-pixelated.glb',
+    okRuinColumn: 'art-direction/3d/assets/old_king/ok-ruin-column-pixelated.glb',
+    // CC-C10 (2026-10-25): the farm barn (29,499 tris, 512 NEAREST + 5-bit bake
+    // from CC-C17; one regionC.props row at the homestead, cullM 140).
+    okFarmBarn: 'art-direction/3d/assets/old_king/ok-farm-barn-pixelated.glb',
 
     // characters (whanim1 rigged exports; props below stay rigid)
     // 10-04: rigged copy + WH_SlashR2L/WH_SlashL2R/WH_Thrust chain clips
     // (scratch/blender_chain_clips.py). Rollback: human-hunter-male.rigged.glb
+    // Order D: + WH_ShieldRaise/WH_ShieldImpact/WH_ParrySwipe/
+    // WH_GuardBreakStagger (scratch/blender_shield_clips.py, appended by
+    // scratch/glb_append_clips.py - the 9 earlier clips are byte-identical).
     // 10-05 Round C: combat-chain.glb + 12 Mixamo WH_Sword*/WH_Shield* clips
     // (scratch/mixamo_player.json; chain clips byte-identical). Rollback:
     // human-hunter-male.combat-chain.glb
-    // Round D: + 3 Mixamo WH_SS_* chain attacks (24 total).
-    playerBody: 'art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-sword.glb',
+    // IO GEAR 2026-10-26: playerBody = combat-gear.glb = combat-sword.glb +
+    // skinned witch-hat (Head bone) + belt satchel (Hips bone) appended via
+    // append-only GLB splice (nodes/materials/meshes/accessors appended; the
+    // 43 clips and the base BIN chunk are byte-identical prefixes; gear
+    // JOINTS_0 remapped to the base skin joint order). Rollback:
+    // human-hunter-male.combat-sword.glb. Splicer + author:
+    // scratch/io_gear_author.py / scratch/io_gear_splice.py
+    playerBody: 'art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-gear.glb',
+    // DAG (2026-10-09) CLIP SOURCE ONLY (never instanced): a rigged.glb copy
+    // + WH_DagSlashR2L / WH_DagSlashL2R / WH_DagSlashR2Lb (Phase A2,
+    // scratch/blender_dagger_clips.py; same 22 nodes / 20 joints). player.js
+    // setBody merges its WH_Dag* clips into the playerBody CharacterAnim, so
+    // combat-sword.glb stays byte-identical. A failed load = no dagger clips
+    // (dagger moves fall back to the shared 'attack' clip like handAxe).
+    playerDagClips: 'art-direction/3d/assets/races_regen/rigged/human-hunter-male.combat-dagger.glb',
     banditBody: 'art-direction/3d/assets/races_regen/rigged/orc-male-warrior.mixamo.glb',
     // 10-05: rigged copy + 7 Mixamo WH_*_Zombie clips (13 total).
     // Rollback: undead-ghoul-male.rigged.glb
     ghoulBody: 'art-direction/3d/assets/races_regen/rigged/undead-ghoul-male.mixamo.glb',
+    // CC-C5 (2026-10-11): the rigged wolf (21 joints, 6 WH_Wolf_* clips; the
+    // 512px 5-bit atlas is embedded - mesh/skin/clips byte-identical to
+    // wolf.rigged.glb, so no BODY_PNG row). Region C packs only.
+    wolfBody: 'art-direction/3d/assets/races_regen/rigged/wolf.rigged.pixelated.glb',
+    // CC-C7 (2026-10-12): the Rot Mother boss (17,573 tris) + her rot spawn
+    // (2,094 tris), the SHIPPED 512px 5-bit pixelated bakes (raw-texture
+    // twins rotmother.glb / rotspawn.glb are NOT for the game). UNRIGGED: no
+    // CHARACTERS row (0 clips) - anim.js RIGID_CLIPS placeholders play.
+    rotmotherBody: 'art-direction/3d/assets/races/rotmother-pixelated.glb',
+    rotspawnBody: 'art-direction/3d/assets/races/rotspawn-pixelated.glb',
+    // CC-H4 (2026-11-07): the Scar-Reader wears the SAME unrigged rot chassis
+    // as the rot mother (separate registry key = separate cached template =
+    // fully isolated bodies). Per-instance tint (sec 2.3) SKIPPED + disclosed
+    // in the CC-H4 build note. Still no CHARACTERS row (0 clips).
+    scarreaderBody: 'art-direction/3d/assets/races/rotmother-pixelated.glb',
+    // CC-C10 (2026-10-25): Farmer Aldric PLACEHOLDER body = the RAW rigged dwarf
+    // smith (28,024 tris, 2048 JPEG texture, 6 WH_* clips unused). IO ruling B3b:
+    // art-law waiver until Astrabot's farmer lands; no CHARACTERS / BODY_PNG row,
+    // static bind pose (js/npc.js clones it with WHSkeletonUtils, no mixer).
+    farmerBody: 'art-direction/3d/assets/races_regen/rigged/dwarf-male-smith.rigged.glb',
+    // CC-C11: RAW bind-pose daughter placeholder; Astrabot replacement pending.
+    dwarfFemaleBody: 'art-direction/3d/assets/races_regen/rigged/dwarf-female.rigged.glb',
+    // CC-EC1 (2026-11-06): Coven Acolyte caster body. census: the preferred
+    // human-female-caster.rigged.glb does NOT exist (expected deviation ED-1) -
+    // sanctioned fallback = the raw rigged elf dawn-refuser (6 universal
+    // WH_* clips: Idle/Walk/Run/Attack1/Hit/Death; CHARACTERS.covenBody 6
+    // captures them). Raw 2048 JPEG texture (the elf has no pixelated bake;
+    // no races_regen/rspec/ dir) - BODY_PNG omitted (ED-2), body renders raw.
+    // Art anchor: art-direction/concepts/char-09-coven-wizard.png - charcoal /
+    // deep-teal robes; the ONE cyan accent arrives with the bolt + cast glow,
+    // NOT here (placeholder robe palette, accent law governs the spell only).
+    covenBody: 'art-direction/3d/assets/races_regen/rigged/elf-dawn-refuser-male.rigged.glb',
 
     // weapons (pixelated)
     longsword: 'art-direction/3d/assets/weapons/longsword-pixelated.glb',
-    handAxe: 'art-direction/3d/assets/weapons/hand-axe-pixelated.glb'
+    handAxe: 'art-direction/3d/assets/weapons/hand-axe-pixelated.glb',
+    // DAG (2026-10-09) curved Meshy dagger (scratch/dagger_bake.py; NORMAL baked in)
+    dagger: 'art-direction/3d/assets/weapons/dagger-curved-pixelated.glb',
+    // 10-04 left-hand shield (no NORMAL attribute: prepTemplate rebuilds it)
+    roundShield: 'art-direction/3d/assets/weapons/round-shield-pixelated.glb',
+    // 10-05 hand torch (scratch/torch_bake.py; NORMAL baked in)
+    torch: 'art-direction/3d/assets/weapons/torch-pixelated.glb'
   };
 
   // R4: rigged body -> offline-baked atlas (512 NEAREST + 5-bit posterize).
@@ -138,7 +240,23 @@
 
   var cache = {};      // logical name -> ground-aligned THREE.Group template
   var clips = {};      // logical character name -> shared AnimationClip objects
-  var CHARACTERS = { playerBody: true, banditBody: true, ghoulBody: true };
+  // value = expected clip count (load sanity check). Order B: playerBody's
+  // combat-chain.glb legitimately holds 9 (6 whanim1 + WH_SlashR2L /
+  // WH_SlashL2R / WH_Thrust) - the old flat "6" warned on every boot.
+  // Order D: 13 = those 9 + the 4 shield/block clips.
+  // Round C: 25 = those 13 + 12 Mixamo sword/shield clips (combat-sword.glb).
+  // Round D: 28 = 13 + 12 + 3 Mixamo WH_SS_* chain attacks (the old "27"
+  // here was off by one - the GLB census is 28).
+  // MAGANIM Phase A: 42 = 28 + 14 WH_Mag_* (Lite Magic Pack, 5477e98).
+  // DAG: playerDagClips 9 = 6 whanim1 + 3 WH_Dag* (clip source only).
+  // CC-C5: wolfBody 6 = WH_Wolf_Idle/Walk/Run/Attack1/Hit/Death.
+  // IO GEAR 10-26: playerBody 43 unchanged - gear splice adds ZERO clips.
+  // CC-EC1: covenBody 6 = the elf dawn-refuser's 6 universal WH_* clips
+  // (Idle/Walk/Run/Attack1/Hit/Death) - REQUIRED: without this row the loader
+  // captures zero clips (:714 gate) and instances share one skeleton
+  // (:814 cloneTemplate) instead of WHSkeletonUtils clones.
+  var CHARACTERS = { playerBody: 43, banditBody: 6, ghoulBody: 6, playerDagClips: 9, wolfBody: 6,
+    covenBody: 6 };
   var failed = {};     // logical name -> true (stand-in substituted)
   var loadedCount = 0;
   var GROUND_META = {}; // holder uuid -> measured height, width, raw groundMinY
@@ -157,16 +275,94 @@
   var BODY_RETRY_DELAY_MS =
     (CFG.assets && typeof CFG.assets.bodyRetryDelayMs === 'number') ?
       CFG.assets.bodyRetryDelayMs : 750;
-  var bootFailures = [];
+  var bootFailures = [];   // failed boot-critical assets (the loud red line)
+  var lateFailures = [];   // failed deferred assets (dim line under it)
+
+  // 2026-10-11 asset pipeline (io/missions/2026-10-11-asset-pipeline.md):
+  // ~90 MB / 50 parallel fetches on a ~1 MB/s phone pipe under a flat 20 s
+  // abort timed every multi-MB GLB out. Now: CONFIG.assets.bootCritical
+  // loads first through a small pool (criticalPoolSize), the boot barrier
+  // opens on those alone, the rest stream after (streamPoolSize) and
+  // late-swap any stand-in instance handed out meanwhile. Each attempt's
+  // timeout scales with the asset size and a timed-out fetch is ABORTED
+  // (a zombie download would keep eating the pipe while its retry runs).
+  var AC = CFG.assets || {};
+  function cfgNum(key, dflt) { return typeof AC[key] === 'number' ? AC[key] : dflt; }
+  var BYTES_PER_MB = 1e6;
+  var TIMEOUT_PER_MB = cfgNum('assetTimeoutMsPerMb', 6000);
+  var TIMEOUT_MIN_MS = cfgNum('assetTimeoutMinMs', 20000);
+  var TIMEOUT_MAX_MS = cfgNum('assetTimeoutMaxMs', 120000);
+  var CRITICAL_POOL = Math.max(1, cfgNum('criticalPoolSize', 4));
+  var STREAM_POOL = Math.max(1, cfgNum('streamPoolSize', 6));
+  var STALL_LINE_MS = cfgNum('stallLineAfterMs', 8000);
+
+  // clamp(perMb x sizeMB, min, max); size unknown (0) = the min.
+  function timeoutForBytes(bytes) {
+    var ms = TIMEOUT_PER_MB * (bytes > 0 ? bytes : 0) / BYTES_PER_MB;
+    return Math.round(Math.min(TIMEOUT_MAX_MS, Math.max(TIMEOUT_MIN_MS, ms)));
+  }
+  function mbText(bytes) { return (bytes / BYTES_PER_MB).toFixed(1); }
+
+  // Boot-critical names in CONFIG order (unknown names dropped loudly);
+  // DEFERRED = every other manifest name in manifest order.
+  var IS_CRITICAL = {};
+  var CRITICAL = (AC.bootCritical || []).filter(function (name) {
+    if (!MANIFEST[name]) {
+      console.warn('[WH assets] bootCritical names no manifest asset: ' + name);
+      return false;
+    }
+    if (IS_CRITICAL[name]) return false;
+    IS_CRITICAL[name] = true;
+    return true;
+  });
+  var DEFERRED = Object.keys(MANIFEST).filter(function (name) { return !IS_CRITICAL[name]; });
+
+  var status = {};         // name -> 'queued' | 'loading' | 'loaded' | 'failed'
+  var knownBytes = {};     // name -> size learned from Content-Length (retries inherit)
+  var active = {};         // name -> { loaded, total, start } of the attempt in flight
+  var firstStart = {};     // name -> first attempt start (the stall line's clock)
+  var pendingHolders = {}; // name -> stand-in holders handed out before it settled
+  var bootDone = false;
 
   // 2026-10-03 loading screen (Nicko change order): REAL per-asset progress.
-  // game.js registers a callback fired on each manifest asset settling
-  // (loaded OR stand-in), so the bar fraction is settled/total; retry
-  // backoff just delays that asset's tick.
+  // game.js registers a callback; 2026-10-11 it receives bootState() (the
+  // boot-critical settled/total + received bytes + the slowest stalled
+  // asset) on every critical settle, on byte progress (throttled) and on a
+  // 1 s heartbeat until the boot barrier opens.
   var bootProgressCb = null;
+  var lastProgressEmit = 0;
   function setBootProgressCb(fn) { bootProgressCb = fn; }
-  function bootProgressTick() {
-    if (bootProgressCb) bootProgressCb();
+  function bootState() {
+    var st = { done: 0, total: CRITICAL.length, loadedBytes: 0, knownBytes: 0, stall: null };
+    var t = Date.now();
+    CRITICAL.forEach(function (name) {
+      var s = status[name], a = active[name];
+      if (s === 'loaded' || s === 'failed') st.done++;
+      if (a) {
+        st.loadedBytes += a.loaded;
+        st.knownBytes += a.total;
+        var elapsed = t - firstStart[name];
+        if (elapsed >= STALL_LINE_MS && (!st.stall || elapsed > st.stall.elapsedMs)) {
+          st.stall = { name: name, loaded: a.loaded, total: a.total, elapsedMs: elapsed };
+        }
+      } else if (s === 'loaded') {
+        st.loadedBytes += knownBytes[name] || 0;
+        st.knownBytes += knownBytes[name] || 0;
+      }
+    });
+    return st;
+  }
+  function bootProgressTick(force) {
+    if (!bootProgressCb || bootDone) return;
+    var t = Date.now();
+    if (!force && t - lastProgressEmit < 250) return;
+    lastProgressEmit = t;
+    bootProgressCb(bootState());
+  }
+  function bootHeartbeat() {
+    if (bootDone) return;
+    bootProgressTick(true);
+    setTimeout(bootHeartbeat, 1000);
   }
 
   function classifyError(err) {
@@ -181,8 +377,10 @@
 
   // HUD stamp: persistent one-liner in #wh-hud naming each stand-in asset +
   // cause, visible for the whole session regardless of the load-note lifecycle.
+  // 2026-10-11: the loud line lists FAILED boot-critical assets only; failed
+  // deferred (streamed) assets sit on a small dim line below it.
   function flushAssetFailureNote() {
-    if (!bootFailures.length) return;
+    if (!bootFailures.length && !lateFailures.length) return;
     var parent = document.getElementById('wh-hud');
     if (!parent) return;
     var el = document.getElementById('wh-asset-fail-note');
@@ -193,13 +391,28 @@
         'color:#ff9d9d;z-index:40;letter-spacing:0.5px;text-transform:none;';
       parent.appendChild(el);
     }
-    el.textContent = 'Asset stand-in: ' + bootFailures.join(', ');
+    el.textContent = bootFailures.length ? 'Asset stand-in: ' + bootFailures.join(', ') : '';
+    if (!lateFailures.length) return;
+    var late = document.getElementById('wh-asset-fail-late');
+    if (!late) {
+      late = document.createElement('div');
+      late.id = 'wh-asset-fail-late';
+      late.style.cssText = 'font-size:10px;color:#a88;opacity:0.7;margin-top:2px;';
+      el.appendChild(late);
+    }
+    late.textContent = 'streamed stand-in: ' + lateFailures.join(', ');
   }
 
   function makeStandIn(name) {
     // Procedural box/cone stand-in per spec hard constraint 5. Logged.
     console.warn('[WH assets] substitution: procedural stand-in for ' + name);
     failed[name] = true;
+    return buildStandIn(name);
+  }
+
+  // The stand-in geometry alone: makeStandIn (final, marks failed) and the
+  // placeholder instance() hands out while an asset is still in flight.
+  function buildStandIn(name) {
     var group = new THREE.Group();
     var mat = new THREE.MeshStandardMaterial({
       color: CFG.assets.standInColor,
@@ -264,6 +477,12 @@
     // DoubleSide for safety (R3), NearestFilter on pixelated textures (R2).
     group.traverse(function (obj) {
       if (!obj.isMesh) return;
+      // 10-04: GLBs exported without NORMAL (round shield, some legacy
+      // props) light as black under lit materials; rebuild before use.
+      if (obj.geometry && obj.geometry.attributes &&
+          obj.geometry.attributes.position && !obj.geometry.attributes.normal) {
+        obj.geometry.computeVertexNormals();
+      }
       if (obj.isSkinnedMesh) obj.frustumCulled = false;
       obj.castShadow = false;
       obj.receiveShadow = false;
@@ -333,6 +552,9 @@
       registerEmbeddedImagePlugin.blobPolicy =
         fetch(document.baseURI, { credentials: 'same-origin' })
           .then(function (response) {
+            // 2026-10-11: only the headers matter - drop the page body (the
+            // inlined build is MBs that would share the boot pipe)
+            if (response.body && response.body.cancel) response.body.cancel().catch(function () {});
             var csp = response.headers.get('content-security-policy');
             if (!csp) return true;
             var match = csp.match(/(?:^|;)\s*connect-src\s+([^;]+)/i);
@@ -401,30 +623,95 @@
     });
   }
 
+  // Stream the GLB bytes through fetch so the loader sees Content-Length +
+  // per-chunk progress and can ABORT on timeout (GLTFLoader.load keeps its
+  // FileLoader private). onBytes(received, contentLength or 0).
+  function fetchBytes(url, ctrl, onBytes) {
+    return fetch(url, { credentials: 'same-origin', signal: ctrl ? ctrl.signal : undefined })
+      .then(function (res) {
+        if (!res.ok) throw new Error('fetch status ' + res.status + ' ' + (res.statusText || ''));
+        var len = parseInt(res.headers.get('Content-Length') || '', 10) || 0;
+        onBytes(0, len);
+        if (!res.body || !res.body.getReader) {
+          return res.arrayBuffer().then(function (buf) {
+            onBytes(buf.byteLength, len);
+            return buf;
+          });
+        }
+        var reader = res.body.getReader(), chunks = [], got = 0;
+        function pump() {
+          return reader.read().then(function (r) {
+            if (r.done) {
+              var out = new Uint8Array(got), off = 0;
+              chunks.forEach(function (c) { out.set(c, off); off += c.byteLength; });
+              return out.buffer;
+            }
+            chunks.push(r.value);
+            got += r.value.byteLength;
+            onBytes(got, len);
+            return pump();
+          });
+        }
+        return pump();
+      });
+  }
+
   // One load attempt, racing the per-attempt timeout. Resolves {ok:true,gltf}
-  // or {ok:false,info:{reason,msg}}; never rejects.
+  // or {ok:false,info:{reason,msg}}; never rejects. 2026-10-11: the deadline
+  // (from attempt start) = timeoutForBytes(size): the size inherited from an
+  // earlier attempt, else Content-Length once headers land, else the bytes
+  // received so far - re-armed as the size becomes known. Covers fetch +
+  // parse like the old flat timeout; on expiry the fetch is aborted.
   function loadAttempt(name, url) {
     return new Promise(function (resolve) {
-      var settled = false;
-      var mgr = new THREE.LoadingManager();
-      var loader = new window.WHGLTFLoader(mgr);
-      registerEmbeddedImagePlugin(loader, mgr);
-      var timer = setTimeout(function () {
-        if (settled) return;
-        settled = true;
-        resolve({ ok: false, info: { reason: 'timeout/abort',
-          msg: 'no response within ' + CFG.assets.timeoutMs + 'ms' } });
-      }, CFG.assets.timeoutMs);
-      loader.load(url, function (gltf) {
+      var settled = false, timer = null, limit = 0;
+      var start = Date.now();
+      var ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+      var job = active[name] = { loaded: 0, total: knownBytes[name] || 0, start: start };
+      if (firstStart[name] === undefined) firstStart[name] = start;
+      function finish(v) {
         if (settled) return;
         settled = true;
         clearTimeout(timer);
-        resolve({ ok: true, gltf: gltf });
-      }, undefined, function (err) {
-        if (settled) return;
-        settled = true;
+        if (active[name] === job) delete active[name];
+        resolve(v);
+      }
+      function arm() {
+        var ms = timeoutForBytes(Math.max(knownBytes[name] || 0, job.loaded));
+        if (ms === limit) return;
+        limit = ms;
         clearTimeout(timer);
-        resolve({ ok: false, info: classifyError(err) });
+        timer = setTimeout(function () {
+          if (settled) return;
+          if (ctrl) ctrl.abort();
+          finish({ ok: false, info: { reason: 'timeout/abort',
+            msg: 'no complete response within ' + limit + 'ms (' + mbText(job.loaded) +
+              ' of ' + (job.total ? mbText(job.total) : '?') + ' MB)' } });
+        }, Math.max(0, start + ms - Date.now()));
+      }
+      arm();
+      fetchBytes(url, ctrl, function (loaded, total) {
+        if (settled) return;
+        job.loaded = loaded;
+        if (total > 0) {
+          job.total = total;
+          knownBytes[name] = total;
+        }
+        arm();
+        if (IS_CRITICAL[name]) bootProgressTick(false);
+      }).then(function (buf) {
+        if (settled) return;
+        if (!knownBytes[name]) knownBytes[name] = buf.byteLength;
+        var mgr = new THREE.LoadingManager();
+        var loader = new window.WHGLTFLoader(mgr);
+        registerEmbeddedImagePlugin(loader, mgr);
+        loader.parse(buf, url.slice(0, url.lastIndexOf('/') + 1), function (gltf) {
+          finish({ ok: true, gltf: gltf });
+        }, function (err) {
+          finish({ ok: false, info: classifyError(err) });
+        });
+      }, function (err) {
+        finish({ ok: false, info: classifyError(err) });
       });
     });
   }
@@ -436,6 +723,7 @@
     // failures do NOT retry (a corrupt file stays corrupt) - only network
     // and timeout/abort classes do. Stand-in fallback always remains.
     var maxAttempts = 1 + BODY_RETRY_COUNT;
+    status[name] = 'loading';
     function attempt(n) {
       return loadAttempt(name, url).then(function (v) {
         if (v.ok) return v;
@@ -455,11 +743,9 @@
         var root = v.gltf.scene;
         if (CHARACTERS[name]) {
           clips[name] = v.gltf.animations || [];
-          // playerBody combat-sword.glb: 9 chain + 12 Sword (Round C) + 3 SS (Round D).
-          var expected = name === 'playerBody' ? 24 : 6;
-          if (clips[name].length !== expected) {
-            console.warn('[WH assets] expected ' + expected + ' clips for ' + name +
-              ', got ' + clips[name].length);
+          if (clips[name].length !== CHARACTERS[name]) {
+            console.warn('[WH assets] expected ' + CHARACTERS[name] + ' clips for ' +
+              name + ', got ' + clips[name].length);
           }
         }
         prepTemplate(root, isPixelated);
@@ -468,6 +754,8 @@
         return new Promise(function (resolve) {
           swapBodyMap(name, root, function () {
             loadedCount++;
+            status[name] = 'loaded';
+            lateSwap(name);
             resolve(cache[name]);
           });
         });
@@ -480,41 +768,119 @@
         ' CAUSE: ' + info.msg + ' - model + animations dead for this session.',
         'background:#4d0000;color:#ffdddd;padding:2px 6px;font-weight:bold');
       cache[name] = makeStandIn(name);
-      bootFailures.push(name + ' (' + info.reason + ' - ' + info.msg + ')');
+      status[name] = 'failed';
+      delete pendingHolders[name];   // the handed-out stand-ins simply stay
+      (IS_CRITICAL[name] ? bootFailures : lateFailures)
+        .push(name + ' (' + info.reason + ' - ' + info.msg + ')');
       flushAssetFailureNote();
       return cache[name];
     });
     // 2026-10-03 loading screen: tick exactly once per asset, after it
     // settles as loaded OR stand-in (swapBodyMap atlas wait included).
     return settled.then(function (res) {
-      bootProgressTick();
+      if (IS_CRITICAL[name]) bootProgressTick(true);
       return res;
     });
   }
 
-  // Preload every manifest entry. Resolves when all settle (failures become
-  // stand-ins, never block boot).
-  function preloadAll() {
-    var jobs = [];
-    Object.keys(MANIFEST).forEach(function (name) {
-      var url = RESOLVED[name];
-      jobs.push(loadOne(name, url, url.indexOf('-pixelated') !== -1));
+  function loadByName(name) {
+    var url = RESOLVED[name];
+    return loadOne(name, url, url.indexOf('-pixelated') !== -1);
+  }
+
+  // At most `size` loads in flight, started in list order; resolves once
+  // every name settled (loadOne never rejects).
+  function runPool(names, size, run) {
+    return new Promise(function (resolve) {
+      var next = 0, inFlight = 0, done = 0;
+      if (!names.length) { resolve(); return; }
+      function pump() {
+        while (inFlight < size && next < names.length) {
+          inFlight++;
+          run(names[next++]).then(function () {
+            inFlight--;
+            done++;
+            if (done === names.length) resolve();
+            else pump();
+          });
+        }
+      }
+      pump();
     });
-    return Promise.all(jobs).then(function () {
+  }
+
+  // 2026-10-11 two-phase preload. Resolves (the BOOT BARRIER) once every
+  // bootCritical asset settled; failures become stand-ins, never block boot.
+  // The deferred names then stream through the larger pool - whenAllSettled()
+  // resolves when they are in too.
+  var bootPromise = null, allPromise = null;
+  function preloadAll() {
+    if (bootPromise) return bootPromise;
+    Object.keys(MANIFEST).forEach(function (name) { status[name] = 'queued'; });
+    bootHeartbeat();
+    bootPromise = runPool(CRITICAL, CRITICAL_POOL, loadByName).then(function () {
+      bootDone = true;
+      console.log('[WH assets] boot barrier: ' + CRITICAL.length + ' critical assets settled (' +
+        bootFailures.length + ' stand-ins); streaming ' + DEFERRED.length + ' more');
+      return cache;
+    });
+    allPromise = bootPromise.then(function () {
+      return runPool(DEFERRED, STREAM_POOL, loadByName);
+    }).then(function () {
       console.log('[WH assets] loaded ' + loadedCount + ' assets, ' +
         Object.keys(failed).length + ' stand-ins');
       return cache;
     });
+    return bootPromise;
+  }
+
+  function whenAllSettled() {
+    preloadAll();
+    return allPromise;
   }
 
   // Rigged characters need independently rebound bones; props remain rigid.
-  function instance(name) {
-    var tmpl = cache[name];
-    if (!tmpl) return makeStandIn(name);
+  function cloneTemplate(name, tmpl) {
     if (CHARACTERS[name] && clips[name] && clips[name].length) {
       return window.WHSkeletonUtils.clone(tmpl);
     }
     return tmpl.clone(true);
+  }
+
+  // 2026-10-11: an asset still in flight hands out a placeholder stand-in
+  // (NOT marked failed); lateSwap puts the real mesh into that same holder
+  // when the asset lands, so the caller's placement transform stays. A
+  // late-swapped rigged body gets the mesh, not the clips (the boot bodies
+  // are all bootCritical, so no live caller hits that).
+  function instance(name) {
+    var tmpl = cache[name];
+    if (!tmpl) {
+      if (status[name] === 'queued' || status[name] === 'loading') {
+        var holder = buildStandIn(name);
+        (pendingHolders[name] = pendingHolders[name] || []).push(holder);
+        return holder;
+      }
+      return makeStandIn(name);
+    }
+    return cloneTemplate(name, tmpl);
+  }
+
+  function lateSwap(name) {
+    var list = pendingHolders[name];
+    if (!list) return;
+    delete pendingHolders[name];
+    list.forEach(function (holder) {
+      var old = holder.children[0];
+      holder.remove(old);
+      old.traverse(function (o) {
+        if (!o.isMesh) return;
+        o.geometry.dispose();
+        o.material.dispose();
+      });
+      holder.add(cloneTemplate(name, cache[name]).children[0]);
+      holder.updateMatrixWorld(true);
+    });
+    console.log('[WH assets] late swap: ' + name + ' replaced ' + list.length + ' stand-in(s)');
   }
 
   window.WH_ASSETS = {
@@ -523,6 +889,11 @@
     resolveUrl: resolveUrl,
     setBootProgressCb: setBootProgressCb,
     preloadAll: preloadAll,
+    whenAllSettled: whenAllSettled,
+    CRITICAL: CRITICAL,
+    DEFERRED: DEFERRED,
+    bootState: bootState,
+    timeoutForBytes: timeoutForBytes,
     instance: instance,
     getClips: function (name) { return clips[name] || []; },
     getTemplate: function (name) { return cache[name] || null; },
@@ -546,6 +917,7 @@
     weaponScale: weaponScale,
     isLoaded: function (name) { return !!cache[name]; },
     isFailed: function (name) { return !!failed[name]; },
+    isPending: function (name) { return status[name] === 'queued' || status[name] === 'loading'; },
     loadedCount: function () { return loadedCount; }
   };
 })();

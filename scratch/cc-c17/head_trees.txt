@@ -1,0 +1,8 @@
+CC-C17 SENTINEL TREES (v2 step 4): 2 okTreeOak framing the den approach + 1 okTreePine
+at the N road bend. The brief's nominal slots fail the 26 m gate (bearing 210: boulder
+17.8 m; bearing 240: camp-3 fire 8.0 m; (-15, -570): scree boulder 22.7 m), so each
+row = the NEAREST clear slot (scratch/cc-c17/gen_trees.py, deterministic scan, no RNG):
+props >= 26, fires >= 26, road >= 8 + trunk, den opening >= 26, seat slope <= 31 deg.
+Oaks: bearing 208 r 235 (props 26.3, den 69.0) + bearing 245 r 221 (props 26.4, fire
+27.6, den 79.1); pine: road 10.4, props 26.1. ~1.9-unit GLBs: oak 13 / 12.5 (~24 m),
+pine 12 (~22 m). cullM 140 (tall: culls past the prop band). PROPOSED, Nicko tunes.

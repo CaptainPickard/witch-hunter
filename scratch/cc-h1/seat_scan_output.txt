@@ -1,0 +1,117 @@
+C prop rows parsed: 252
+northRoad points: [(-3.0, -420.0), (-12.0, -460.0), (5.0, -500.0), (-5.0, -540.0)]
+hook (5.00, -500): OK | crypt-sep  96.1 | notch  96.1 | rC 134.1
+hook (3.50, -506): OK | crypt-sep  90.1 | notch  90.1 | rC 140.0
+hook (2.00, -512): OK | crypt-sep  84.0 | notch  84.0 | rC 146.0
+hook (0.50, -518): OK | crypt-sep  78.0 | notch  78.0 | rC 152.0
+hook (-1.00, -524): OK | crypt-sep  72.0 | notch  72.0 | rC 158.0
+hook (-2.50, -530): OK | crypt-sep  66.0 | notch  66.0 | rC 164.0
+hook (-4.00, -536): OK | crypt-sep  60.1 | notch  60.1 | rC 170.0
+hook (-5.00, -540): OK | crypt-sep  56.2 | notch  56.2 | rC 174.1
+---
+SEAT: hook (5.0, -500) | planeZ -700.0 | H1 center (0, -822.0)
+ring: N 90 chord 8.79 scale 4.63 (raw 1.899)
+ring rows 89 (omitted: the 90-deg segment)
+  seg 0: (4.40, -696.08) rotY 3.18 scale 4.63 wall 12
+  seg 1: (13.17, -696.69) rotY 3.25 scale 4.63 wall 12
+  seg 88: (-13.17, -696.69) rotY 3.04 scale 4.63 wall 12
+  seg 89: (-4.40, -696.08) rotY 3.11 scale 4.63 wall 12
+colliders 1068
+colliders inside the door lane window: 0 (want 0)
+nearest collider to the lane plane points: 3.91 (want >= 1.0)
+octant coverage (E,NE,N,NW,W,SW,S,SE): [122, 135, 136, 135, 134, 135, 136, 135]
+empty octants (gap arcs only expected): []
+land: lords_hold (0, -711.0) | forest_of_the_old_king (5.0, -500)
+FROZEN SPEC NUMBERS: planeZ -700.0 doorX 0.0 doorHalfWidth 4.5 interactAt (5.0, -500) interactM 3.5
+spawn (0, -711.0) | groundRadius 126 | center (0, -822.0)
+ALL SEAT CHECKS: PASS (hook (5.0, -500))
+RING ROWS (seg i, x, z, rotY, scale, wall):
+  { asset: 'whWallA', x: 4.4, z: -696.08, rotY: 3.18, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: 13.17, z: -696.69, rotY: 3.25, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: 21.88, z: -697.91, rotY: 3.32, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: 30.48, z: -699.74, rotY: 3.39, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: 38.94, z: -702.17, rotY: 3.46, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: 47.2, z: -705.17, rotY: 3.53, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: 55.23, z: -708.75, rotY: 3.6, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: 63.0, z: -712.88, rotY: 3.67, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: 70.46, z: -717.54, rotY: 3.74, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: 77.57, z: -722.71, rotY: 3.8, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: 84.31, z: -728.36, rotY: 3.87, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: 90.64, z: -734.47, rotY: 3.94, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: 96.52, z: -741.01, rotY: 4.01, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: 101.94, z: -747.94, rotY: 4.08, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: 106.85, z: -755.23, rotY: 4.15, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: 111.25, z: -762.85, rotY: 4.22, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: 115.11, z: -770.75, rotY: 4.29, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: 118.4, z: -778.91, rotY: 4.36, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: 121.12, z: -787.27, rotY: 4.43, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: 123.25, z: -795.8, rotY: 4.5, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: 124.77, z: -804.46, rotY: 4.57, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: 125.69, z: -813.21, rotY: 4.64, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: 125.69, z: -830.79, rotY: 4.78, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: 124.77, z: -839.54, rotY: 4.85, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: 123.25, z: -848.2, rotY: 4.92, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: 121.12, z: -856.73, rotY: 4.99, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: 118.4, z: -865.09, rotY: 5.06, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: 115.11, z: -873.25, rotY: 5.13, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: 111.25, z: -881.15, rotY: 5.2, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: 106.85, z: -888.77, rotY: 5.27, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: 101.94, z: -896.06, rotY: 5.34, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: 96.52, z: -902.99, rotY: 5.41, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: 90.64, z: -909.53, rotY: 5.48, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: 84.31, z: -915.64, rotY: 5.55, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: 77.57, z: -921.29, rotY: 5.62, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: 70.46, z: -926.46, rotY: 5.69, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: 63.0, z: -931.12, rotY: 5.76, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: 55.23, z: -935.25, rotY: 5.83, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: 47.2, z: -938.83, rotY: 5.9, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: 38.94, z: -941.83, rotY: 5.97, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: 30.48, z: -944.26, rotY: 6.04, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: 21.88, z: -946.09, rotY: 6.11, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: 13.17, z: -947.31, rotY: 6.18, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: 4.4, z: -947.92, rotY: 6.25, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: -4.4, z: -947.92, rotY: 0.03, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: -13.17, z: -947.31, rotY: 0.1, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: -21.88, z: -946.09, rotY: 0.17, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: -30.48, z: -944.26, rotY: 0.24, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: -38.94, z: -941.83, rotY: 0.31, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: -47.2, z: -938.83, rotY: 0.38, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: -55.23, z: -935.25, rotY: 0.45, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: -63.0, z: -931.12, rotY: 0.52, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: -70.46, z: -926.46, rotY: 0.59, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: -77.57, z: -921.29, rotY: 0.66, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: -84.31, z: -915.64, rotY: 0.73, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: -90.64, z: -909.53, rotY: 0.8, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: -96.52, z: -902.99, rotY: 0.87, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: -101.94, z: -896.06, rotY: 0.94, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: -106.85, z: -888.77, rotY: 1.01, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: -111.25, z: -881.15, rotY: 1.08, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: -115.11, z: -873.25, rotY: 1.15, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: -118.4, z: -865.09, rotY: 1.22, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: -121.12, z: -856.73, rotY: 1.29, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: -123.25, z: -848.2, rotY: 1.36, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: -124.77, z: -839.54, rotY: 1.43, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: -125.69, z: -830.79, rotY: 1.5, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: -126.0, z: -822.0, rotY: 1.57, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: -125.69, z: -813.21, rotY: 1.64, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: -124.77, z: -804.46, rotY: 1.71, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: -123.25, z: -795.8, rotY: 1.78, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: -121.12, z: -787.27, rotY: 1.85, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: -118.4, z: -778.91, rotY: 1.92, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: -115.11, z: -770.75, rotY: 1.99, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: -111.25, z: -762.85, rotY: 2.06, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: -106.85, z: -755.23, rotY: 2.13, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: -101.94, z: -747.94, rotY: 2.2, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: -96.52, z: -741.01, rotY: 2.27, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: -90.64, z: -734.47, rotY: 2.34, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: -84.31, z: -728.36, rotY: 2.41, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: -77.57, z: -722.71, rotY: 2.48, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: -70.46, z: -717.54, rotY: 2.55, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: -63.0, z: -712.88, rotY: 2.62, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: -55.23, z: -708.75, rotY: 2.69, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: -47.2, z: -705.17, rotY: 2.76, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: -38.94, z: -702.17, rotY: 2.83, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: -30.48, z: -699.74, rotY: 2.9, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: -21.88, z: -697.91, rotY: 2.97, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallA', x: -13.17, z: -696.69, rotY: 3.04, scale: 4.63, sy: 11.69, sz: 2.40, y: -0.2, wall: 12 },
+  { asset: 'whWallB', x: -4.4, z: -696.08, rotY: 3.11, scale: 4.63, sy: 11.55, sz: 2.40, y: -0.2, wall: 12 },

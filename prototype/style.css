@@ -110,6 +110,23 @@ html, body {
   letter-spacing: 0.5px;
 }
 
+/* --- mouse bind chip (10-05 Nicko: pointer-lock camera bind toggle) --- */
+#wh-mouse-chip {
+  position: absolute;
+  bottom: 14px;
+  right: 16px;
+  font-family: monospace;
+  font-size: 12px;
+  color: #d8d2c0;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid #6a6350;
+  padding: 4px 8px;
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+
 /* --- region name --- */
 #wh-region-name {
   position: absolute;
@@ -196,6 +213,74 @@ html, body {
   border-radius: 2px;
 }
 
+/* --- HP1 enemy health bars: HUD DOM projected above the head. Player HP
+       bar family fill, .bar-outer frame, pixel register (hard 1px edges).
+       Size comes from CFG.hud.hpbars (set inline by game.js). --- */
+#wh-enemy-bars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.wh-ehb {
+  position: absolute;
+  left: -100px;
+  top: -100px;
+  display: none;
+  pointer-events: none;
+  box-sizing: border-box;
+  transform: translate(-50%, -50%);
+  border: 1px solid #5a5344;
+  border-radius: 1px;
+  background: rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+  image-rendering: pixelated;
+}
+
+.wh-ehb-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(180deg, #8f2f2a, #5e1d19);
+}
+
+/* --- HP2 day/night clock: top-center circular dial. Right half = day
+       (amber-muted), left half = night (blue-grey); one warm needle pivoting
+       at center, rotated per frame from timeOfDay (top = wake). No numbers,
+       no textures. Size/colors from CFG.hud.dayClock (CSS vars set by
+       game.js). --- */
+#wh-day-clock {
+  position: absolute;
+  top: var(--dc-top, 14px);
+  left: 50%;
+  width: var(--dc-size, 64px);
+  height: var(--dc-size, 64px);
+  margin-left: calc(var(--dc-size, 64px) / -2);
+  display: none;
+  box-sizing: border-box;
+  pointer-events: none;
+  border: 2px solid var(--dc-frame, #5a5344);
+  border-radius: 50%;
+  background: conic-gradient(from 0deg,
+    var(--dc-day, #8a6b3a) 0deg 180deg,
+    var(--dc-night, #23283a) 180deg 360deg);
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.45);
+  image-rendering: pixelated;
+}
+
+.wh-dc-needle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 2px;
+  height: var(--dc-needle-len, 13px);
+  margin-left: -1px;
+  margin-top: calc(var(--dc-needle-len, 13px) * -1);
+  background: var(--dc-needle, #d8c9a0);
+  transform-origin: 50% 100%;
+  transform: rotate(0deg);
+}
+
 /* --- boot loading screen (2026-10-03, darkwood palette; amber = the ONE
        accent, matching the reticle/soul fill #d8b24a) --- */
 #wh-load-note {
@@ -270,6 +355,11 @@ html, body {
   box-shadow: inset 0 0 100px 30px rgba(200, 40, 40, 0.6);
   background: rgba(180, 30, 30, 0.12);
 }
+#wh-block-flash.crit {
+  /* L1 Precision: gold screen-edge flash on a melee crit */
+  box-shadow: inset 0 0 90px 24px rgba(216, 178, 74, 0.7);
+  background: rgba(216, 178, 74, 0.08);
+}
 #wh-guard-break-text {
   position: absolute;
   left: 50%;
@@ -301,23 +391,68 @@ html, body {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 10px;
+  padding: 4px 10px;
   background: rgba(0, 0, 0, 0.55);
   border: 1px solid #5a5344;
   border-radius: 3px;
   font-family: monospace;
+  /* AB1: the bar is pressable (tap / click / long-press / right-click); the
+     HUD layer itself stays click-through. No z-index: the inventory / cook
+     / camp modals (20+) keep covering it. */
+  pointer-events: auto;
 }
 
+/* AB1: 34px slots around a 24px icon (48px art at 1/2 - 1:1 on 2x screens);
+   the slot digit sits in the corner */
 .belt-slot {
-  width: 30px;
-  height: 30px;
-  line-height: 30px;
+  position: relative;
+  box-sizing: border-box;
+  width: 34px;
+  height: 34px;
+  line-height: 32px;
   text-align: center;
-  font-size: 13px;
+  font-size: 12px;
   color: #6a6350;
   border: 1px solid #3d382e;
   border-radius: 2px;
   background: rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: none;
+}
+
+.belt-slot.consumable {
+  cursor: default;
+}
+
+.belt-icon {
+  display: inline-block;
+  vertical-align: middle;
+  line-height: normal;
+  pointer-events: none;
+}
+
+.belt-icon.wh-icon {
+  width: 24px;
+  height: 24px;
+  opacity: 0.55;
+}
+
+.belt-slot.filled .belt-icon.wh-icon {
+  opacity: 1;
+}
+
+.belt-key {
+  position: absolute;
+  left: 2px;
+  bottom: 1px;
+  font-size: 8px;
+  line-height: 8px;
+  color: #8a7f70;
+  text-shadow: 1px 1px 0 #000;
+  pointer-events: none;
 }
 
 .belt-slot.filled {
@@ -327,11 +462,59 @@ html, body {
 
 .belt-slot.selected {
   border-width: 2px;
-  line-height: 28px;
+  line-height: 30px;
+}
+
+/* AB1: the item slot whose item a hand holds - amber accent; .pending =
+   inside its 0.8s swap window */
+.belt-slot.equipped {
+  border: 2px solid #d8b24a;
+  line-height: 30px;
+  background: rgba(216, 178, 74, 0.12);
+}
+
+.belt-slot.pending {
+  border: 2px dashed #d8b24a;
+  line-height: 30px;
+}
+
+/* AB1 glove-gate: spell slot with no implement in hand (or unlearned) -
+   dark and refused on press */
+.belt-slot.dark {
+  filter: grayscale(1) brightness(0.45);
+  opacity: 0.6;
+}
+
+/* AB1: long-press in progress / slot being rebound in the picker */
+.belt-slot.pressing {
+  background: rgba(216, 178, 74, 0.2);
+}
+
+.belt-slot.picking {
+  outline: 2px solid #d8b24a;
+  outline-offset: 2px;
 }
 
 .belt-slot.consumable {
   color: #8fa07a;
+}
+
+/* Order C: the OFF (left) hand binding - dashed outline in its school color
+   plus an 'L' badge; the MAIN binding keeps the solid .selected border */
+.belt-slot.off-bound {
+  position: relative;
+  outline: 2px dashed #7a7160;
+  outline-offset: 2px;
+}
+
+.belt-slot.off-bound::after {
+  content: 'L';
+  position: absolute;
+  top: -14px;
+  right: -2px;
+  font-size: 9px;
+  line-height: 10px;
+  color: #c9b88a;
 }
 
 .belt-divider {
@@ -358,3 +541,1152 @@ html, body {
   border-color: #c9a94a;
   background: rgba(201, 169, 74, 0.12);
 }
+
+/* 10-04: shield in the left hand - spell slots dim, divider badged 'S' */
+.belt-divider.spell-divider {
+  position: relative;
+}
+
+/* AB1: the whole-row dim is now per slot - spell slots go .belt-slot.dark,
+   item slots stay pressable (the 'S' divider badge below still marks it) */
+
+#wh-belt.stowed .belt-divider.spell-divider::after {
+  content: 'S';
+  position: absolute;
+  top: -15px;
+  left: -3px;
+  font-size: 10px;
+  color: #c9b88a;
+}
+
+/* --- 2026-10-05 inventory screen (Order A). Darkwood frame, square stepped
+       borders (pixel look, no radius/blur), amber = the ONE accent
+       (selection), matching the boot bar / reticle #d8b24a. --- */
+#wh-inv {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 4, 3, 0.55);
+  z-index: 20;                  /* above the HUD, below the boot overlay (30) */
+  font-family: monospace;
+  color: #d8d2c0;
+  image-rendering: pixelated;
+  user-select: none;
+}
+
+#wh-inv.open {
+  display: flex;
+}
+
+.inv-panel {
+  background: #1a1510;
+  border: 4px solid #4a4034;
+  box-shadow: 0 0 0 4px #14110e, inset 0 0 0 2px #2a231b;
+  padding: 14px 18px 12px;
+}
+
+.inv-title {
+  text-align: center;
+  font-size: 18px;
+  letter-spacing: 6px;
+  color: #e3dcc4;
+  text-shadow: 2px 2px 0 #0a0806;
+  margin-bottom: 10px;
+}
+
+.inv-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid #4a4034;
+  margin-bottom: 12px;
+}
+
+.inv-tab {
+  padding: 4px 12px;
+  font-size: 12px;
+  letter-spacing: 3px;
+  color: #6a6350;
+  background: #14110e;
+  border: 2px solid #3d382e;
+  border-bottom: none;
+  cursor: pointer;
+}
+
+.inv-tab.active {
+  color: #d8d2c0;
+  background: #2a231b;
+  border-color: #5a5344;
+}
+
+.inv-grid {
+  display: grid;
+  gap: 4px;
+}
+
+.inv-slot {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  background: #0f0c09;
+  border: 2px solid #2a241c;
+  box-shadow: inset 2px 2px 0 #070504;
+  cursor: pointer;
+}
+
+.inv-slot.filled {
+  background: #221c15;
+  border-color: #5a5344;
+}
+
+.inv-slot.selected {
+  border-color: #d8b24a;
+}
+
+.inv-glyph {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 13px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  color: #c9bf9f;
+}
+
+.inv-count {
+  position: absolute;
+  right: 3px;
+  bottom: 1px;
+  font-size: 11px;
+  color: #e3dcc4;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.inv-hint {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #8a7f70;
+}
+
+/* Order B: CHARACTER tab - hands + spells | inventory gear list */
+.inv-char {
+  min-height: 220px;
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.inv-char-col {
+  width: 200px;
+}
+
+/* L1: CHARACTER tab level / stats / skills column (inventory.js renderLeveling) */
+/* L1 S6 (IO): slim XP pip above the HP bar (level progress; updateHud width) */
+#wh-xp-pip {
+  height: 4px;
+  width: 100%;
+  background: #14110e;
+  border: 1px solid #3d382e;
+  margin-bottom: 3px;
+}
+
+#wh-xp-pip-fill {
+  height: 100%;
+  width: 0%;
+  background: #d8b24a;
+}
+
+.inv-lvl-col {
+  width: 230px;
+  max-height: 62vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* R-64.5: CHARACTER tab class row (display-only, only with a picked class) */
+.lvl-class {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+.lvl-class-key {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #8a7f70;
+}
+
+.lvl-class-name {
+  color: #d8b24a;
+}
+
+.lvl-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+.lvl-badge {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #14110e;
+  background: #d8b24a;
+  padding: 1px 4px;
+}
+
+.lvl-bar {
+  height: 6px;
+  background: #14110e;
+  border: 2px solid #3d382e;
+  margin: 2px 0;
+}
+
+.lvl-bar-fill {
+  height: 100%;
+  background: #d8b24a;
+}
+
+.lvl-cap {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #8a7f70;
+}
+
+.lvl-stat,
+.lvl-skill {
+  margin-bottom: 5px;
+}
+
+.lvl-stat-top {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.lvl-stat-name {
+  flex: 1;
+  color: #d8d2c0;
+}
+
+.lvl-stat-pts {
+  color: #e3d27a;
+  min-width: 22px;
+  text-align: right;
+}
+
+.lvl-skill .lvl-stat-pts {
+  min-width: 0;
+}
+
+.lvl-btn {
+  width: 20px;
+  padding: 0;
+}
+
+.inv-hand-btn.lvl-btn:disabled {
+  color: #3d382e;
+  border-color: #2a231b;
+  cursor: default;
+}
+
+.inv-sec {
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: #8a7f70;
+  border-bottom: 2px solid #2a231b;
+  margin: 2px 0 6px;
+  padding-bottom: 2px;
+}
+
+.inv-sec ~ .inv-sec {
+  margin-top: 12px;
+}
+
+.inv-hand,
+.inv-gear {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px;
+  margin-bottom: 4px;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+
+.inv-hand {
+  flex-wrap: wrap;
+  cursor: default;
+}
+
+.inv-hand.filled,
+.inv-gear {
+  cursor: pointer;
+}
+
+.inv-hand.filled:hover,
+.inv-gear:hover,
+.inv-spell:hover {
+  border-color: #d8b24a;
+}
+
+.inv-hand-label {
+  width: 100%;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #6a6350;
+}
+
+.inv-hand-slot,
+.inv-gear .inv-slot {
+  flex: none;
+}
+
+.inv-hand-name,
+.inv-gear-name {
+  flex: 1;
+  font-size: 13px;
+  color: #d8d2c0;
+}
+
+.inv-hand:not(.filled) .inv-hand-name {
+  color: #6a6350;
+}
+
+.inv-gear-text {
+  flex: 1;
+}
+
+.inv-gear-hands {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #8a7f70;
+}
+
+.inv-gear-list {
+  max-height: 210px;
+  overflow-y: auto;
+}
+
+.inv-hand-btn {
+  font-family: monospace;
+  font-size: 11px;
+  color: #c9bf9f;
+  background: #14110e;
+  border: 2px solid #3d382e;
+  padding: 1px 3px;
+  cursor: pointer;
+}
+
+.inv-hand-btn:hover {
+  color: #e3d27a;
+  border-color: #d8b24a;
+}
+
+.inv-spell {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 3px 4px;
+  margin-bottom: 3px;
+  font-size: 13px;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+
+.inv-spell-key {
+  color: #6a6350;
+}
+
+/* Order C: MAIN (R) / OFF (L) spell binding columns */
+.inv-bind {
+  display: flex;
+  gap: 8px;
+}
+
+.inv-bind-col {
+  flex: 1;
+  min-width: 0;
+}
+
+.inv-bind-cur {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 6px;
+}
+
+.inv-bind-cur .inv-slot {
+  width: 32px;
+  height: 32px;
+}
+
+.inv-bind-cur .inv-glyph {
+  top: 6px;
+  font-size: 13px;
+}
+
+/* AB1: pixel icons (js/icons-data.js, 48px art) on every glyph surface -
+   nearest-neighbour scaling only, never blurred */
+.wh-icon {
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+}
+
+.inv-glyph.wh-icon {
+  top: 0;
+  left: 0;
+  width: 48px;
+  height: 48px;
+}
+
+.inv-bind-cur .inv-glyph.wh-icon {
+  top: 4px;
+  left: 4px;
+  width: 24px;
+  height: 24px;
+}
+
+.inv-bind-cur .inv-hand-name {
+  font-size: 12px;
+}
+
+.inv-bind-note {
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #a0574a;
+}
+
+.inv-bind-col .inv-spell {
+  font-size: 12px;
+}
+
+.inv-spell.active .inv-spell-name {
+  color: #e3d27a;
+}
+
+.inv-spell-mark {
+  margin-left: auto;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #d8b24a;
+}
+
+.inv-soon {
+  font-size: 13px;
+  letter-spacing: 3px;
+  color: #6a6350;
+}
+
+.inv-tip {
+  position: fixed;
+  display: none;
+  pointer-events: none;
+  background: #14110e;
+  border: 2px solid #5a5344;
+  padding: 4px 8px;
+  z-index: 25;
+}
+
+.inv-tip-name {
+  font-size: 13px;
+  color: #e3dcc4;
+}
+
+.inv-tip-cat {
+  font-size: 11px;
+  color: #8a7f70;
+}
+
+/* Order B: INV open/close button (bottom-left; left/bottom inline from
+   CONFIG.inventoryUI.openButton). Above the modal (20) and the touch
+   layer's toggle (45) so it stays clickable in every state. */
+#wh-inv-btn {
+  position: fixed;
+  z-index: 46;
+  min-width: 44px;
+  height: 30px;
+  padding: 0 8px;
+  font-family: monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #c9bf9f;
+  background: #1a1510;
+  border: 2px solid #4a4034;
+  box-shadow: 0 0 0 2px #14110e, inset 0 0 0 1px #2a231b;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+#wh-inv-btn:hover {
+  border-color: #c9a94a;
+}
+
+#wh-inv-btn.active {
+  color: #e3d27a;
+  border-color: #d8b24a;
+}
+
+/* toast: "Dropped Bandage x1" / "Inventory full" */
+#wh-toast {
+  position: absolute;
+  bottom: 70px;
+  width: 100%;
+  text-align: center;
+  font-family: monospace;
+  font-size: 14px;
+  letter-spacing: 2px;
+  color: #e3dcc4;
+  text-shadow: 1px 1px 0 #000, 0 0 6px rgba(0, 0, 0, 0.9);
+  opacity: 0;
+  transition: opacity 0.2s linear;
+  z-index: 22;
+}
+
+#wh-toast.visible {
+  opacity: 1;
+}
+
+/* stage 2: "E - Gather Herb Bundle" while a ready gather node is in reach */
+#wh-gather-prompt {
+  position: absolute;
+  bottom: 96px;
+  width: 100%;
+  text-align: center;
+  font-family: monospace;
+  font-size: 14px;
+  letter-spacing: 2px;
+  color: #cfe0c4;
+  text-shadow: 1px 1px 0 #000, 0 0 6px rgba(0, 0, 0, 0.9);
+  opacity: 0;
+  transition: opacity 0.15s linear;
+  pointer-events: none;
+  z-index: 22;
+}
+
+#wh-gather-prompt.visible {
+  opacity: 1;
+}
+
+/* --- C1 cook panel (js/cooking.js). Same modal + frame as the inventory
+       screen (#wh-inv / .inv-panel); amber = the channel progress. --- */
+#wh-cook {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 4, 3, 0.55);
+  z-index: 20;
+  font-family: monospace;
+  color: #d8d2c0;
+  image-rendering: pixelated;
+  user-select: none;
+}
+
+#wh-cook.open {
+  display: flex;
+}
+
+.cook-panel {
+  width: 320px;
+}
+
+.cook-fuel {
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #d8b24a;
+  margin-bottom: 6px;
+}
+
+.cook-hint {
+  text-align: center;
+  font-size: 12px;
+  font-style: italic;
+  letter-spacing: 1px;
+  color: #9a8fb8;
+  margin-bottom: 8px;
+}
+
+.cook-pot {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.cook-pot-names {
+  text-align: center;
+  font-size: 11px;
+  color: #8a7f70;
+  margin: 6px 0;
+  min-height: 13px;
+}
+
+.cook-progress {
+  height: 8px;
+  background: #0f0c09;
+  border: 2px solid #2a241c;
+  margin: 4px 0 8px;
+}
+
+.cook-progress-fill {
+  height: 100%;
+  width: 0;
+  background: #d8b24a;
+}
+
+.cook-btns {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.cook-btn {
+  min-width: 84px;
+  height: 28px;
+  font-family: monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #c9bf9f;
+  background: #221c15;
+  border: 2px solid #5a5344;
+  cursor: pointer;
+}
+
+.cook-btn:hover:not(:disabled) {
+  border-color: #c9a94a;
+}
+
+.cook-btn:disabled {
+  color: #5a5344;
+  border-color: #2a241c;
+  cursor: default;
+}
+
+.cook-ings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 52px;
+}
+
+.inv-slot.cook-spent {
+  opacity: 0.4;
+  cursor: default;
+}
+
+#wh-cook.channel .cook-ings,
+#wh-cook.channel .cook-recipes {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.cook-recipe {
+  display: flex;
+  justify-content: space-between;
+}
+
+/* C4: cook panel pixel icons (js/icons-data.js via WH_INVENTORY.setIcon),
+   24px like the AB1 belt slots; centered in the 48px pot / ingredient tiles */
+.inv-glyph.cook-icon.wh-icon {
+  top: 12px;
+  left: 12px;
+  width: 24px;
+  height: 24px;
+}
+
+.cook-recipe .cook-icon.wh-icon {
+  display: inline-block;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  vertical-align: middle;
+}
+
+.cook-recipe .inv-spell-name {
+  flex: 1;
+}
+
+.cook-rec-ings {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* C1: buff chips under the bars (game.js updateBuffHud) */
+#wh-buffs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.buff-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 6px 2px 2px;
+  font-family: monospace;
+  font-size: 11px;
+  color: #d8d2c0;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid #5a5344;
+}
+
+.buff-icon {
+  padding: 1px 3px;
+  font-weight: bold;
+  color: #1a1510;
+  background: #c07a3a;
+}
+
+/* AB1: food item icon in place of the glyph chip */
+.buff-icon.wh-icon {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  /* .buff-icon's background shorthand resets these - restate them */
+  background-color: transparent;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+.buff-time {
+  color: #d8b24a;
+}
+
+.buff-chip.warn .buff-time {
+  animation: wh-buff-blink 1s steps(2, start) infinite;
+}
+
+@keyframes wh-buff-blink {
+  to { visibility: hidden; }
+}
+
+/* C1: EAT button under the grid (selected food stack) */
+.inv-use-btn {
+  display: block;
+  margin: 8px auto 0;
+  min-width: 84px;
+  height: 26px;
+  font-family: monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #e3d27a;
+  background: #221c15;
+  border: 2px solid #d8b24a;
+  cursor: pointer;
+}
+
+.inv-tip-flavor {
+  font-style: italic;
+}
+
+/* C1: campsite-kit button (C3: press = camp placement, js/camp.js). Same
+   frame as the INV button; left/bottom inline from CONFIG.cooking.kitButton. */
+#wh-camp-btn {
+  position: fixed;
+  z-index: 46;
+  min-width: 44px;
+  height: 30px;
+  padding: 0 8px;
+  font-family: monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #c9bf9f;
+  background: #1a1510;
+  border: 2px solid #4a4034;
+  box-shadow: 0 0 0 2px #14110e, inset 0 0 0 1px #2a231b;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+#wh-camp-btn:hover {
+  border-color: #c9a94a;
+}
+
+#wh-camp-btn.active {
+  color: #e3d27a;
+  border-color: #d8b24a;
+}
+
+/* --- C3 camps (js/camp.js): TENT MENU = the cook panel's modal + frame,
+       one button row per option (touch-sized); placement PLACE / CANCEL
+       bar; Save and Heal fade to black. --- */
+#wh-camp-menu {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 4, 3, 0.55);
+  z-index: 20;
+  font-family: monospace;
+  color: #d8d2c0;
+  image-rendering: pixelated;
+  user-select: none;
+}
+
+#wh-camp-menu.open {
+  display: flex;
+}
+
+.camp-menu-panel {
+  width: 240px;
+}
+
+.camp-menu-btns {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.camp-menu-btn {
+  height: 36px;
+}
+
+/* C4: LOAD row while no save exists (still clickable: refusal toast) */
+.camp-menu-btn.dim {
+  color: #5a5344;
+  border-color: #2a241c;
+}
+
+/* C4: boot CONTINUE / NEW GAME rows under the boot bar (only with a save).
+   #wh-hud is pointer-events: none - the rows opt back in. */
+#wh-boot-rows {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  margin-top: 22px;
+  width: 220px;
+  pointer-events: auto;
+}
+
+#wh-load-note.hidden #wh-boot-rows {
+  pointer-events: none;
+}
+
+.boot-row-btn {
+  height: 36px;
+  touch-action: manipulation;
+}
+
+.boot-row-btn.boot-continue {
+  border-color: #d8b24a;
+  color: #d8d2c0;
+}
+
+/* R-64.6: NEW GAME class picker rows (same boot-row family; each row
+   carries its class name + two kit lines, final on click / key 1-N) */
+#wh-boot-rows.boot-class-rows {
+  width: 280px;
+}
+
+.boot-row-btn.boot-class-btn {
+  height: auto;
+  min-height: 56px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  text-align: left;
+}
+
+.boot-class-name {
+  color: #d8d2c0;
+}
+
+.boot-class-line {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #9a9078;
+}
+
+#wh-camp-place {
+  position: absolute;
+  left: 50%;
+  bottom: 84px;
+  transform: translateX(-50%);
+  display: none;
+  z-index: 21;
+  margin: 0;
+}
+
+#wh-camp-place.open {
+  display: flex;
+}
+
+#wh-camp-place .cook-btn {
+  height: 34px;
+  background: #1a1510;
+  touch-action: manipulation;
+}
+
+#wh-sleep-fade {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  transition-property: opacity;
+  transition-timing-function: ease;
+  z-index: 25;
+}
+
+#wh-sleep-fade.on {
+  opacity: 1;
+}
+
+/* --- AB1 action bar binding picker (js/game.js openActionPicker): right-
+       click / long-press a bar slot. Darkwood frame like the inventory
+       screen, amber = the ONE accent (current binding). Sits just above the
+       bar (bar 20px + 44px row + gap), above the touch layer (40). --- */
+#wh-action-picker {
+  position: absolute;
+  left: 50%;
+  bottom: 72px;
+  transform: translateX(-50%);
+  display: none;
+  min-width: 200px;
+  max-width: 90vw;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 6px 8px 8px;
+  background: rgba(15, 12, 9, 0.94);
+  border: 2px solid #4a4034;
+  box-shadow: 0 0 0 2px #14110e, inset 0 0 0 1px #2a231b;
+  font-family: monospace;
+  color: #d8d2c0;
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  z-index: 42;
+}
+
+#wh-action-picker.open {
+  display: block;
+}
+
+.ap-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.ap-title {
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #d8b24a;
+}
+
+.ap-close {
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  font-family: monospace;
+  font-size: 12px;
+  color: #c9bf9f;
+  background: #1a1510;
+  border: 2px solid #4a4034;
+  cursor: pointer;
+}
+
+.ap-close:hover {
+  border-color: #c9a94a;
+}
+
+.ap-sec {
+  margin: 6px 0 3px;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #8a7f70;
+}
+
+.ap-none {
+  font-size: 11px;
+  color: #6a6350;
+  padding: 2px 4px;
+}
+
+.ap-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 36px;
+  margin: 2px 0;
+  padding: 2px 6px 2px 2px;
+  font-family: monospace;
+  font-size: 12px;
+  text-align: left;
+  color: #d8d2c0;
+  background: #0f0c09;
+  border: 2px solid #2a241c;
+  cursor: pointer;
+}
+
+.ap-entry:hover {
+  border-color: #5a5344;
+  background: #221c15;
+}
+
+.ap-entry.current {
+  border-color: #d8b24a;
+}
+
+.ap-icon {
+  flex: none;
+  width: 24px;
+  min-height: 24px;
+  line-height: 24px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: bold;
+  color: #c9bf9f;
+}
+
+.ap-icon.wh-icon {
+  height: 24px;
+}
+
+/* QJR-1 journal (js/journal.js): darkwood frame + parchment page insert;
+   single amber rule accent. Button mirrors the camp button body. */
+#wh-journal-btn {
+  position: fixed;
+  z-index: 46;
+  min-width: 44px;
+  height: 30px;
+  padding: 0 8px;
+  font-family: monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #c9bf9f;
+  background: #1a1510;
+  border: 2px solid #4a4034;
+  box-shadow: 0 0 0 2px #14110e, inset 0 0 0 1px #2a231b;
+  cursor: pointer;
+  display: block;
+  user-select: none;
+  touch-action: manipulation;
+}
+#wh-journal-btn:hover { border-color: #c9a94a; }
+#wh-journal { position:absolute; inset:0; display:none; align-items:center;
+  justify-content:center; background: rgba(5,4,3,0.55); z-index:20;
+  font-family:monospace; color:#d8d2c0; image-rendering:pixelated;
+  user-select:none; }
+#wh-journal.open { display:flex; }
+.journal-panel { width:320px; max-height:70vh; display:flex; flex-direction:column; }
+.journal-rule { height:2px; background:#d8b24a; margin:6px 0 10px; }
+.journal-page { background:#e3dcc4; color:#221c15; border:2px solid #4a4034;
+  box-shadow: inset 0 0 0 2px #d3c8a8; padding:10px 12px; overflow-y:auto;
+  flex:1 1 auto; min-height:0; }
+.journal-row { padding:6px 2px; border-bottom:1px solid #b7ac8f; }
+.journal-row:last-child { border-bottom:none; }
+.journal-row-title { font-size:12px; letter-spacing:1px; color:#2a231b; }
+.journal-row-day { font-size:10px; color:#6a6350; font-style:italic; margin-top:2px; }
+.journal-empty { color:#6a6350; font-style:italic; font-size:11px; padding:6px 2px; }
+/* QJR-2 journal dialogue capture + search (js/journal.js, js/npc.js):
+   parchment scrap search pinned above the page, body lines, amber accents.
+   Anchors: concept-04-tavern + concept-01-darkwood. */
+#wh-journal-search { width: 100%; box-sizing: border-box; margin: 8px 0;
+  padding: 5px 8px; font-family: monospace; font-size: 11px;
+  letter-spacing: 1px; color: #221c15; background: #d3c8a8;
+  border: 2px solid #4a4034; box-shadow: inset 0 0 0 1px #e3dcc4;
+  outline: none; }
+#wh-journal-search:focus { border-color: #d8b24a; }
+.journal-row-body { font-size: 11px; color: #2a231b; line-height: 1.45; }
+.journal-nomatch { color: #6a6350; font-style: italic; font-size: 11px;
+  padding: 6px 2px; }
+
+/* CC-AF1 standing (doc 12 axis): the CHARACTER tab STANDING block
+   (js/affinity.js WH_AFF; js/inventory.js renderLeveling). One row of the
+   lvl-bar pattern; the fill colour follows the tier via class. */
+.aff-bar {
+  height: 6px;
+  background: #14110e;
+  border: 2px solid #3d382e;
+  margin: 2px 0;
+}
+
+.aff-fill {
+  height: 100%;
+  background: #8a8577;
+}
+.aff-fill.fill-neutral      { background: #8a8577; }
+.aff-fill.fill-honored      { background: #e3b64f; }
+.aff-fill.fill-feared       { background: #b0472f; }
+.aff-fill.fill-sworn-light  { background: #efe3ad; }
+.aff-fill.fill-sworn-dark   { background: #8f1f1f; }
+
+/* QJR-4 BESTIARY CODEX (js/journal.js tabs + js/bestiary.js rows; EOF append
+   law). The J panel's second tab JOURNAL | BESTIARY reuses the inv-tab
+   grammar; the codex page reuses the parchment .journal-page (a
+   .bestiary-page modifier for its own rows). Sigils carry ONE accent each
+   via the .codex-accent-* classes mapped from the EXISTING palette tokens
+   below; no gradients, no glow, no new hex. Anchors: concept-06-siege-
+   council (sacred-archive codex) + concept-01-darkwood (field-guide). */
+.wh-journal-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid #4a4034;
+  margin-bottom: 12px;
+}
+
+.wh-journal-tab {
+  padding: 4px 12px;
+  font-size: 12px;
+  letter-spacing: 3px;
+  color: #6a6350;
+  background: #14110e;
+  border: 2px solid #3d382e;
+  border-bottom: none;
+  cursor: pointer;
+}
+
+.wh-journal-tab.active {
+  color: #d8d2c0;
+  background: #2a231b;
+  border-color: #5a5344;
+}
+
+.bestiary-row { padding: 6px 2px; border-bottom: 1px solid #b7ac8f; }
+.bestiary-row:last-child { border-bottom: none; }
+.bestiary-head { display: flex; align-items: center; gap: 8px; }
+.bestiary-row-sigil { font-size: 16px; line-height: 1; width: 18px; text-align: center; }
+.bestiary-row-title { font-size: 12px; letter-spacing: 1px; color: #2a231b; }
+.bestiary-row-stamp { font-size: 10px; color: #6a6350; font-style: italic; margin-top: 2px; }
+.bestiary-row-page { font-size: 11px; color: #2a231b; line-height: 1.45; margin-top: 2px; }
+.bestiary-row-locked .bestiary-row-sigil { color: #6a6350; }
+.bestiary-row-locked .bestiary-row-title { color: #6a6350; font-style: italic; }
+.bestiary-footer { color: #6a6350; font-style: italic; font-size: 11px; padding: 6px 2px; }
+.bestiary-hint { display: none; }
+
+/* Codex accent classes (QJR-4): each maps ONE existing palette token onto a
+   row's sigil glyph only (one accent per row; page stays parchment). */
+.codex-accent-amber   { color: #c9a94a; }
+.codex-accent-crimson { color: #b0472f; }
+.codex-accent-bone    { color: #d8d2c0; }
+.codex-accent-ash     { color: #7a7160; }
