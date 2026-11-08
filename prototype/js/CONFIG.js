@@ -4698,7 +4698,10 @@ window.WH_CONFIG.dayNight = {
         hold_outskirts: { color: 0x9aa0a3, density: 0.012, cemColor: 0x7f8ea6, cemDensity: 0.030 },
         darkwood_edge: { color: 0x6f7477, density: 0.024 },
         // CC-C2 Region C deep-forest fog (night = CONFIG.regionC verbatim). PROPOSED, Nicko tunes
-        forest_of_the_old_king: { color: 0x59625b, density: 0.033 }
+        forest_of_the_old_king: { color: 0x59625b, density: 0.033 },
+        // CC-PFG1 phase-fog rows: G/H phase-keyed fog entries (doc 64 gap). PROPOSED, Nicko tunes
+        lords_hold: { color: 0x8a8f96, density: 0.08 },
+        fort_garrison: { color: 0x7d8289, density: 0.068 }
       },
       zenithColor: 0x070a18, horizonBand: 0x2b3350, horizonGlow: 0x8f98ad,
       stars: 1.0,
@@ -4713,7 +4716,9 @@ window.WH_CONFIG.dayNight = {
         hold_outskirts: { color: 0xa29a98, density: 0.011, cemColor: 0x8e8c9c, cemDensity: 0.026 },
         darkwood_edge: { color: 0x77736f, density: 0.021 },
         // CC-C2 Region C deep-forest fog (night = CONFIG.regionC verbatim). PROPOSED, Nicko tunes
-        forest_of_the_old_king: { color: 0x5f6660, density: 0.030 }
+        forest_of_the_old_king: { color: 0x5f6660, density: 0.030 },
+        lords_hold: { color: 0x9c9184, density: 0.068 },
+        fort_garrison: { color: 0x8b827a, density: 0.058 }
       },
       zenithColor: 0x262c44, horizonBand: 0x6e5e66, horizonGlow: 0xa8948a,
       stars: 0.35,
@@ -4729,7 +4734,9 @@ window.WH_CONFIG.dayNight = {
         hold_outskirts: { color: 0xa4a8a6, density: 0.008, cemColor: 0x9aa1a8, cemDensity: 0.020 },
         darkwood_edge: { color: 0x80857f, density: 0.017 },
         // CC-C2 Region C deep-forest fog (night = CONFIG.regionC verbatim). PROPOSED, Nicko tunes
-        forest_of_the_old_king: { color: 0x6a716a, density: 0.025 }
+        forest_of_the_old_king: { color: 0x6a716a, density: 0.025 },
+        lords_hold: { color: 0xa2a8ab, density: 0.045 },
+        fort_garrison: { color: 0x9aa0a3, density: 0.038 }
       },
       zenithColor: 0x56606e, horizonBand: 0x868d92, horizonGlow: 0xa9adab,
       stars: 0.0,
@@ -4744,7 +4751,9 @@ window.WH_CONFIG.dayNight = {
         hold_outskirts: { color: 0x9c9496, density: 0.012, cemColor: 0x868aa0, cemDensity: 0.027 },
         darkwood_edge: { color: 0x726e6c, density: 0.022 },
         // CC-C2 Region C deep-forest fog (night = CONFIG.regionC verbatim). PROPOSED, Nicko tunes
-        forest_of_the_old_king: { color: 0x5c625c, density: 0.031 }
+        forest_of_the_old_king: { color: 0x5c625c, density: 0.031 },
+        lords_hold: { color: 0x84807a, density: 0.088 },
+        fort_garrison: { color: 0x78736c, density: 0.076 }
       },
       zenithColor: 0x1c2238, horizonBand: 0x664e58, horizonGlow: 0x9c8478,
       stars: 0.25,
