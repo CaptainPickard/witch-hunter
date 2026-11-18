@@ -1,2 +1,0 @@
-?? io/specs/cc-h4-scar-reader-spec.md
-?? scratch/cc-h4/
